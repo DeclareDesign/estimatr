@@ -4,7 +4,8 @@
 lm_robust_se <- function(formula,
                          data = data,
                          alpha = .05,
-                         se_type = "HC2") {
+                         se_type = "HC2",
+                         coefficient_name = "Z") {
 
   design_matrix <- model.matrix.default(formula, data = data)
   variable_names <- colnames(design_matrix)
@@ -23,6 +24,7 @@ lm_robust_se <- function(formula,
   ci_lower <- coef - qt(1 - alpha / 2, df = df) * se
   ci_upper <- coef + qt(1 - alpha / 2, df = df) * se
 
+  return_frame <-
   data.frame(
     variable_names = variable_names,
     est = coef,
@@ -31,5 +33,7 @@ lm_robust_se <- function(formula,
     ci_lower = ci_lower,
     ci_upper = ci_upper
   )
+
+  return(subset(return_frame, variable_names %in% coefficient_name))
 
 }
