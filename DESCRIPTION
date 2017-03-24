@@ -1,17 +1,15 @@
 Package: DDestimate
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Fast Estimators for Social Science Research
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
-Encoding: UTF-8
-LazyData: true
-Imports:
-    Rcpp (>= 0.12.7),
-    RcppArmadillo
-LinkingTo: Rcpp, RcppArmadillo
+Authors@R: c(person("Graeme", "Blair", email = "graeme.blair@ucla.edu", role = c("aut", "cre")),
+             person("Jasper", "Cooper", email = "jjc2247@columbia.edu", role = c("aut")),
+             person("Alexander", "Coppock", email = "alex.coppock@yale.edu", role = c("aut")),
+             person("Macartan", "Humphreys", email = "macartan@gmail.com", role = c("aut")))
+Description: Tools for Simulating Data Before Data Collection
+    This software allows the user to create mock data that follows
+    the structure of future data to be collected.
+Depends:
+    R (>= 3.3.0)
+License: All rights reserved
 RoxygenNote: 5.0.1
-Suggests: testthat
