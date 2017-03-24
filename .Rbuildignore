@@ -4,3 +4,4 @@ README.md
 ^.*\.Rproj$
 ^\.Rproj\.user$
 appveyor.yml
+^appveyor\.yml$
