@@ -9,12 +9,12 @@ Authors@R: c(person("Graeme", "Blair", email = "graeme.blair@ucla.edu", role = c
 Description: Tools for Simulating Data Before Data Collection
     This software allows the user to create mock data that follows
     the structure of future data to be collected.
-Depends:
-    R (>= 3.3.0)
+License: All rights reserved
+Encoding: UTF-8
+LazyData: true
 Imports:
     Rcpp (>= 0.12.7),
     RcppArmadillo
 LinkingTo: Rcpp, RcppArmadillo
-License: All rights reserved
 RoxygenNote: 5.0.1
 Suggests: testthat

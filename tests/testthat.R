@@ -1,4 +1,4 @@
 library(testthat)
-library(estimatorpack)
+library(DDestimate)
 
-test_check("estimatorpack")
+test_check("DDestimate")
