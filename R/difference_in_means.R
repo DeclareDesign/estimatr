@@ -93,15 +93,9 @@ weighted_var_internal <- function(w, x, xWbar){
 }
 
 #' Built-in Estimators: Blocked Difference-in-means
-#'
-#' @param formula An object of class "formula", such as Y ~ Z
-#' @param data A data.frame, often created by \code{\link{draw_population}}.
-#' @param weights An optional vector of weights (not yet implemented).
-#' @param subset An optional vector specifying a subset of observations to be used.
-#' @param block_variable_name The name of the blocking variable.
-#' @param cluster_variable_name The (optional) name of a clustered variable. The function will first collapse the data by cluster before calculating the difference-in-means.
-#' @param cluster_collapse_function The (optional) function to use to collapse the data by cluster. Default is \code{mean}.
-#' @param alpha The significance level, 0.05 by default.
+#' @importFrom dplyr bind_rows
+#' @importFrom magrittr %>%
+#' @importFrom purrr map
 #'
 #' @export
 difference_in_means_blocked <-

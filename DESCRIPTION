@@ -14,7 +14,10 @@ Encoding: UTF-8
 LazyData: true
 Imports:
     Rcpp (>= 0.12.7),
-    RcppArmadillo
+    RcppArmadillo,
+    dplyr,
+    purrr,
+    magrittr
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 5.0.1
 Suggests: testthat

@@ -10,7 +10,7 @@ lm_robust_se <- function(formula,
   variable_names <- colnames(design_matrix)
 
   outcome <- data[, all.vars(formula[[2]])]
-  fit <- lm_robust_helper(y = outcome, X = design_matrix, type = type)
+  fit <- lm_robust_helper(y = outcome, X = design_matrix, type = se_type)
 
   N <- nrow(design_matrix)
   k <- ncol(design_matrix)

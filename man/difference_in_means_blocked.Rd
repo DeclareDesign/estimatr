@@ -8,23 +8,6 @@ difference_in_means_blocked(formula, block_variable_name = NULL,
   condition1 = NULL, condition2 = NULL, data, weights = NULL,
   subset = NULL, alpha = 0.05)
 }
-\arguments{
-\item{formula}{An object of class "formula", such as Y ~ Z}
-
-\item{block_variable_name}{The name of the blocking variable.}
-
-\item{data}{A data.frame, often created by \code{\link{draw_population}}.}
-
-\item{weights}{An optional vector of weights (not yet implemented).}
-
-\item{subset}{An optional vector specifying a subset of observations to be used.}
-
-\item{alpha}{The significance level, 0.05 by default.}
-
-\item{cluster_variable_name}{The (optional) name of a clustered variable. The function will first collapse the data by cluster before calculating the difference-in-means.}
-
-\item{cluster_collapse_function}{The (optional) function to use to collapse the data by cluster. Default is \code{mean}.}
-}
 \description{
 Built-in Estimators: Blocked Difference-in-means
 }
