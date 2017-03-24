@@ -34,7 +34,6 @@ List lm_robust_helper(const arma::vec & y, const arma::mat & X, const String typ
 
   arma::sp_mat D_hat(n, n);
   arma::mat Vcov_hat;
-  double df_correction;
 
   if(type == "HC0"){
     D_hat.diag() = ei2;

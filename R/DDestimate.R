@@ -4,5 +4,6 @@
 #'
 #' @docType package
 #' @useDynLib DDestimate
+#' @importFrom Rcpp evalCpp
 #' @name DDestimate
 NULL
