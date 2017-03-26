@@ -2,10 +2,28 @@ language: r
 sudo: false
 cache: packages
 warnings_are_errors: false
+
+os:
+  - linux
+  - osx
+
+env:
+  global:
+    - OS=$(uname -s)
+
 r_github_packages:
   - jimhester/covr
+
 after_success:
   - Rscript -e 'covr::coveralls()'
+
+after_failure:
+  - if [ ${OS} = Darwin ]; then cat /Users/travis/build/graemeblair/DDestimate/DDestimate.Rcheck/00check.log; fi
+  - if [ ${OS} = Darwin ]; then cat /Users/travis/build/graemeblair/DDestimate/DDestimate.Rcheck/00install.out; fi
+  - if [ ${OS} != Darwin ]; then cat /home/travis/build/graemeblair/DDestimate/DDestimate.Rcheck/00check.log; fi
+  - if [ ${OS} != Darwin ]; then cat /home/travis/build/graemeblair/DDestimate/DDestimate.Rcheck/00install.out; fi
+  - ./travis-tool.sh dump_logs
+
 notifications:
   email:
     recipients:
