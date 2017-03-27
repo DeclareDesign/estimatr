@@ -14,3 +14,4 @@ Imports:
     magrittr
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 5.0.1
+Suggests: testthat
