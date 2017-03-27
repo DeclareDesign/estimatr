@@ -1,7 +1,7 @@
 #' Built-in Estimators: Difference-in-means
 #'
 #' @param formula An object of class "formula", such as Y ~ Z
-#' @param data A data.frame, often created by \code{\link{draw_population}}.
+#' @param data A data.frame.
 #' @param weights An optional vector of weights (not yet implemented).
 #' @param subset An optional vector specifying a subset of observations to be used.
 #' @param alpha The significance level, 0.05 by default.

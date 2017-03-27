@@ -1,23 +1,16 @@
 Package: DDestimate
 Type: Package
-Title: Fast Estimators for Social Science Research
-Version: 0.1.0
-Authors@R: c(person("Graeme", "Blair", email = "graeme.blair@ucla.edu", role = c("aut", "cre")),
-             person("Jasper", "Cooper", email = "jjc2247@columbia.edu", role = c("aut")),
-             person("Alexander", "Coppock", email = "alex.coppock@yale.edu", role = c("aut")),
-             person("Macartan", "Humphreys", email = "macartan@gmail.com", role = c("aut")))
-Description: Tools for Simulating Data Before Data Collection
-    This software allows the user to create mock data that follows
-    the structure of future data to be collected.
-License: All rights reserved
-Encoding: UTF-8
-LazyData: true
+Title: What the package does (short line)
+Version: 1.0
+Date: 2017-03-26
+Author: Who wrote it
+Maintainer: Who to complain to <yourfault@somewhere.net>
+Description: More about what it does (maybe more than one line)
+License: What license is it under?
 Imports:
-    Rcpp (>= 0.12.7),
-    RcppArmadillo,
+    Rcpp (>= 0.12.10),
     dplyr,
     purrr,
     magrittr
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 5.0.1
-Suggests: testthat

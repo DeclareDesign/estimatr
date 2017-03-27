@@ -10,7 +10,7 @@ difference_in_means(formula, condition1 = NULL, condition2 = NULL, data,
 \arguments{
 \item{formula}{An object of class "formula", such as Y ~ Z}
 
-\item{data}{A data.frame, often created by \code{\link{draw_population}}.}
+\item{data}{A data.frame.}
 
 \item{weights}{An optional vector of weights (not yet implemented).}
 
