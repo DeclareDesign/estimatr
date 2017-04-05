@@ -2,7 +2,7 @@
 
 #' @export
 lm_robust_se <- function(formula,
-                         data = data,
+                         data,
                          alpha = .05,
                          se_type = "HC2",
                          coefficient_name = "Z") {
