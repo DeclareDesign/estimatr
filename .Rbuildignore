@@ -5,3 +5,4 @@ README.md
 ^\.Rproj\.user$
 appveyor.yml
 ^appveyor\.yml$
+CONDUCT.md
