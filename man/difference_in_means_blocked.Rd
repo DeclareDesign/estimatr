@@ -11,4 +11,3 @@ difference_in_means_blocked(formula, block_variable_name = NULL,
 \description{
 Built-in Estimators: Blocked Difference-in-means
 }
-

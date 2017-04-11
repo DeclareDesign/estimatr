@@ -21,4 +21,3 @@ difference_in_means(formula, condition1 = NULL, condition2 = NULL, data,
 \description{
 Built-in Estimators: Difference-in-means
 }
-
