@@ -15,7 +15,7 @@ use_model <- function(...,
 
   ## how to generally get the p-value and CI?
 
-  ##p <- 2 * pt(abs(coef), df = df, lower.tail = FALSE)
+  ##p <- 2 * pt(abs(coef / se), df = df, lower.tail = FALSE)
   ##ci_lower <- coef - qt(1 - alpha / 2, df = df) * se
   ##ci_upper <- coef + qt(1 - alpha / 2, df = df) * se
 
