@@ -23,13 +23,9 @@ r_github_packages:
 
 after_success:
   - Rscript -e 'covr::coveralls()'
-
-after_failure:
-  - if [ ${OS} = Darwin ]; then cat /Users/travis/build/graemeblair/DDestimate/DDestimate.Rcheck/00check.log; fi
-  - if [ ${OS} = Darwin ]; then cat /Users/travis/build/graemeblair/DDestimate/DDestimate.Rcheck/00install.out; fi
-  - if [ ${OS} != Darwin ]; then cat /home/travis/build/graemeblair/DDestimate/DDestimate.Rcheck/00check.log; fi
-  - if [ ${OS} != Darwin ]; then cat /home/travis/build/graemeblair/DDestimate/DDestimate.Rcheck/00install.out; fi
-  - ./travis-tool.sh dump_logs
+  - test $TRAVIS_OS_NAME == "osx" && Rscript -e "devtools::build(binary = TRUE, args = c('--preclean'))"
+  - test $TRAVIS_OS_NAME == "linux" && Rscript -e "devtools::build()"
+  - test $TRAVIS_REPO_SLUG == "DeclareDesign/DDestimate" && test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && bash deploy.sh
 
 notifications:
   email:
