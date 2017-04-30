@@ -4,7 +4,8 @@ PKG_REPO=$PWD
 cd ..
 
 addToDrat(){
-  mkdir drat; cd drat
+  mkdir drat
+  cd drat
 
   ## Set up Repo parameters
   git init
@@ -17,9 +18,11 @@ addToDrat(){
   git fetch upstream 2>err.txt
   git checkout master
 
-  Rscript -e "for(pkg in dir('..', pattern = '.t*z')) { drat::insertPackage(paste0('../', pkg), \
+  Rscript -e "path <- ifelse(.Platform\$OS.type == 'windows', file.path('..', '${APPVEYOR_PROJECT_NAME:-$PKG_REPO}'), file.path('..')); \
+  for(pkg in dir(path, pattern = ifelse(.Platform\$OS.type == 'windows', '.zip', '.t*z'))) { print(paste('processing', pkg)); \
+  drat::insertPackage(file = file.path(path, pkg), \
   repodir = '.', \
-  commit='Travis update $PKG_REPO: build $TRAVIS_BUILD_NUMBER', branch = 'master') }"
+  commit='Travis update ${APPVEYOR_PROJECT_NAME:-$PKG_REPO} build ${APPVEYOR_REPO_COMMIT:-$TRAVIS_COMMIT}', branch = 'master') }"
 
   git push 2>err.txt
 
