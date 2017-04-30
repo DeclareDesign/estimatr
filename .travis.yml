@@ -20,6 +20,7 @@ env:
 
 r_github_packages:
   - jimhester/covr
+  - graemeblair/drat
 
 after_success:
   - Rscript -e 'covr::coveralls()'
