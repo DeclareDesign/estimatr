@@ -7,3 +7,5 @@ appveyor.yml
 ^appveyor\.yml$
 CONDUCT.md
 ^docs$
+deploy.sh
+_pkgdown.yml

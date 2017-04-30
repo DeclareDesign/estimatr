@@ -1,4 +1,4 @@
 library(testthat)
-library(DDestimate)
+library(estimatr)
 
 test_check("DDestimate")

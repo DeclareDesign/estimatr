@@ -1,4 +1,3 @@
-library(DDestimate)
 
 df <- data.frame(Y = rnorm(100), Z = rbinom(100, 1, .5), X = rnorm(100))
 

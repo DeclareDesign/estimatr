@@ -5,8 +5,8 @@
 #' @docType package
 #' @useDynLib estimatr
 #' @importFrom Rcpp evalCpp
-#' @importFrom stats sd var model.matrix.default pt qt var weighted.mean
-#' @name DDestimate
+#' @importFrom stats sd var model.matrix.default pt qt var weighted.mean lm vcov
+#' @name estimatr
 NULL
 
 
