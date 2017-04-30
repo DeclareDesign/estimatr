@@ -5,8 +5,27 @@
 #' @param weights An optional vector of weights (not yet implemented).
 #' @param subset An optional vector specifying a subset of observations to be used.
 #' @param alpha The significance level, 0.05 by default.
+#' @param condition1 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. Will use standard r ordering by default.
+#' @param condition2 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. Will use standard r ordering by default.
+#'
+#'
+#' @details These functions implement difference-in-means estimation, with and without blocking. Standard errors are estimated as the square root of the sum of the within-group variances, divided by their respective sample sizes (Equation 3.6 in Gerber and Green 2012). If blocked, the difference in means estimate is taken in each block, then averaged together according to block size.
+#'
 #'
 #' @export
+#'
+#' @examples
+#'
+#'  df <- data.frame(Y = rnorm(100),
+#'                   Z = sample(1:3, 100, replace = TRUE),
+#'                   block = sample(c("A", "B", "C"), 100, replace = TRUE))
+#'
+#'  difference_in_means(Y ~ Z, data = df)
+#'  difference_in_means(Y ~ Z, condition1 = 3, condition2 = 2, data = df)
+#'
+#'  difference_in_means_blocked(Y ~ Z, block_variable_name = block, data = df)
+#'  difference_in_means_blocked(Y ~ Z, block_variable_name = block, condition1 = 3, condition2 = 2, data = df)
+#'
 difference_in_means <-
   function(formula,
            condition1 = NULL,
@@ -93,10 +112,14 @@ weighted_var_internal <- function(w, x, xWbar){
 }
 
 #' Built-in Estimators: Blocked Difference-in-means
+#'
+#' @param block_variable_name The bare (unquote) name of the block variable
+#'
 #' @importFrom dplyr bind_rows
 #' @importFrom magrittr %>%
 #' @importFrom purrr map
 #'
+#' @rdname difference_in_means
 #' @export
 difference_in_means_blocked <-
   function(formula,
