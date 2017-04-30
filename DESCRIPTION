@@ -1,4 +1,4 @@
-Package: DDestimate
+Package: estimatr
 Type: Package
 Title: What the package does (short line)
 Version: 1.0
@@ -6,7 +6,7 @@ Date: 2017-03-26
 Author: Who wrote it
 Maintainer: Who to complain to <yourfault@somewhere.net>
 Description: More about what it does (maybe more than one line)
-License: What license is it under?
+License: All rights reserved
 Imports:
     Rcpp (>= 0.12.10),
     dplyr,

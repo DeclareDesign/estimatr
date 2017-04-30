@@ -1,9 +1,9 @@
-#' DDestimate package
+#' estimatr package
 #'
 #' Some stuff about what this package is
 #'
 #' @docType package
-#' @useDynLib DDestimate
+#' @useDynLib estimatr
 #' @importFrom Rcpp evalCpp
 #' @importFrom stats sd var model.matrix.default pt qt var weighted.mean
 #' @name DDestimate

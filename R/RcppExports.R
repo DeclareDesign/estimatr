@@ -3,6 +3,6 @@
 
 #' @export
 lm_robust_helper <- function(y, X, type) {
-    .Call('DDestimate_lm_robust_helper', PACKAGE = 'DDestimate', y, X, type)
+    .Call('estimatr_lm_robust_helper', PACKAGE = 'estimatr', y, X, type)
 }
 
