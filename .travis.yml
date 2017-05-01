@@ -11,8 +11,9 @@ os:
 env:
   global:
   - OS=$(uname -s)
-  matrix:
-    secure: fMOfPuBI3sNrsPD1xxsz9mfsHCGDkyu75OFY1D63qLr7xEfV1+ZN4DPRFqkN2SGfOXoveSAscBZd/3aNbjsN1klD34ivWhrl5TkWMTcGySZuR1y9FqqMIeQmRzNsEkcIdFiR3kfSB0gwlzUMcwTNEYJ++OrOKfRTWJE8j8Si1HfoHIFcOpbbEqwNhzKXmi9lINl3J0wUjhQwAPsx7Gt04ZBy3PQPhKMN5hCks1DjJUbluMuysl3KWEBNrC0fXKIQAAB4UrglR22vn8f+u+yIkXwBxMO0QCHG6A3sK5bVjS9kxJ+gqDBizg7maLn0WQ2XaQk/2s0JS/sfbE9qM0gDtC1yHZadQ24bah2Uyti4x/93sMHhpf6jVJzNNFLf5HJkQILhsIaTmAkH2RmDlTGMPJm5RXCoGtgoCxHdQezTqadpg/YMGsc3L9o3+6Vqw7j/kXxk0FYF3bU2X+FBPmGCWLtZH+tQI0l8oa1en5r96txTlfiS4P3C4pSZQciqoG6CEni5c/aXABZw9nEVBR9vZBxBTLZYk14sMb2ZWT1fLfhQU0j4mjNvo0o4ug6pN5A0MZglvHde5yXWIHlFrdhekw1xUqBqVvjCcX1SlIA2t1rZY5eluxHi+nY3e+6CQSpuPsjF+ye8m7vykFQwWMYyUEgCL4VGlM2Gu6NsI+D5faw=
+  - secure: fMOfPuBI3sNrsPD1xxsz9mfsHCGDkyu75OFY1D63qLr7xEfV1+ZN4DPRFqkN2SGfOXoveSAscBZd/3aNbjsN1klD34ivWhrl5TkWMTcGySZuR1y9FqqMIeQmRzNsEkcIdFiR3kfSB0gwlzUMcwTNEYJ++OrOKfRTWJE8j8Si1HfoHIFcOpbbEqwNhzKXmi9lINl3J0wUjhQwAPsx7Gt04ZBy3PQPhKMN5hCks1DjJUbluMuysl3KWEBNrC0fXKIQAAB4UrglR22vn8f+u+yIkXwBxMO0QCHG6A3sK5bVjS9kxJ+gqDBizg7maLn0WQ2XaQk/2s0JS/sfbE9qM0gDtC1yHZadQ24bah2Uyti4x/93sMHhpf6jVJzNNFLf5HJkQILhsIaTmAkH2RmDlTGMPJm5RXCoGtgoCxHdQezTqadpg/YMGsc3L9o3+6Vqw7j/kXxk0FYF3bU2X+FBPmGCWLtZH+tQI0l8oa1en5r96txTlfiS4P3C4pSZQciqoG6CEni5c/aXABZw9nEVBR9vZBxBTLZYk14sMb2ZWT1fLfhQU0j4mjNvo0o4ug6pN5A0MZglvHde5yXWIHlFrdhekw1xUqBqVvjCcX1SlIA2t1rZY5eluxHi+nY3e+6CQSpuPsjF+ye8m7vykFQwWMYyUEgCL4VGlM2Gu6NsI+D5faw=
+  - secure: v8QFBz6X8oQVqyKQOnBE23bN4WOvpkqPp/Or6RBKPqXlK6H5QVjRnxurP+fWJ1LPN4WaJDNQ4LoNnhjiOMJspooiyWWYdv3LX0PR0aUOhQS3wW+j51fRr/Yf7MfUFdrsyDNqrzt0uRiZt0dVNlqZMAqzF9zLfHN+X0HT7O0RU3C493Z7HcpPzUn+Q0MHUnTg8+C8fIt90LGqO2ndtr2Kyc0Am5dcp7i9uLbZey+mrMBeQN9aAC1xl7ujFjjlOR82ygoMmWwsd9IJupoQVE5FR39Ow1Jq0oatk3tajkETk/avSar08O0AD/zLjazXBLAdksGIvVrHkCWsTfHt97nHLqNI4N4p6Khd6iJkdsjW48ER/gqqzMxmJTvLpAMTSZiy+j0gR6ltxp5W4nZqzB18boo5uk/N7GUhjf7VqcOFHhBI95n549OCcOe+iG2l+C+DrFa/heBExo5dUriVRenXQI5cSV88ugvihfySK3XcPo54klxrZ6HFsZYlNVCElKJlGQd8J3D8y8vd77GQDnD/2aAayOxXw5eZS7bAQdOkw1hCy2Eopsohom2j0qUBgJ7ZDp+lJiO+qWtb4Iqixr17Bfh23r7ew5X0FP4Y7VA8s7+043pc17H/jzDj904k+7fKTC7RGapMNYQ5RHndct7uTe6NH7R/y8Gt7cUPutfYriI=
+  - secure: PoMVh0KzD9YiQT1FWtvbFM/dK7YjMu67PqpGqIODnv7TgBCTztwgHtbDle5uQK+wIfkCX/lGBNDJF3Am+B3Z16xlixZhsUFt9RBPCN/vRBjZZagL2dlfaHzkzpULgPa1PQp/GJmjlPf3ViIaC+cWa+lARvgpdQOv1kDbKR7cHK32YiAY3wVWbQDH4uxruet5MfM/OpM+6fYBaewGZrzyeqgVVpgJ5hdBIqxcXFygCxfPW5lE4f5C3qfDvqFFJH3zuElBZRgvbh4lOtgOFduoKQQPOagSuCQRxPQfG7Pl4xXJanyFmI05pswzSP1wp8EBidUq8SM+2IolydRTXtrAGzVeBATf9YC2Q7FaSwvXURzd22HqNSDHZOncd2in89XlgxLYT8AeNMqGO1I9qbnVplMDY9qR1ZtRqISaTK2rRGLfCkBzUN8QghY3asK6w5soJHxFK7HVbdC4+krZkgb1EVdiU8AMdeiMtQnHUsTBqhI8lroODVYrAcjQ/D75HSWYO0074oFd3Wsom/mHWa5vsiyLyGO7wrS57oFyXXJ21CBHXwxQ5AoJ5Gl7SxqmRxlr/WL38kbr+DTT3GvjEDOsj8Z7b8Nmf7Ro80zd2dxqXhsTECBqet7sNIAdViJrKZtMLa0HZmu2dUHZYwY6xsIcRe5PmujPE9DSUqPrURW9STg=
 r_github_packages:
 - jimhester/covr
 - graemeblair/drat
@@ -24,8 +25,10 @@ after_success:
 - test $TRAVIS_OS_NAME == "osx" && Rscript -e "devtools::build(binary = TRUE, args
   = c('--preclean'))"
 - test $TRAVIS_OS_NAME == "linux" && Rscript -e "devtools::build()"
-- test $TRAVIS_OS_NAME == "linux" && test $TRAVIS_R_VERSION == "3.4.0" && Rscript -e "pkgdown::build_site()"
-- test $TRAVIS_REPO_SLUG == "DeclareDesign/estimatr" && test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && bash deploy.sh
+- test $TRAVIS_OS_NAME == "linux" && test $TRAVIS_R_VERSION == "3.4.0" && Rscript
+  -e "pkgdown::build_site()"
+- test $TRAVIS_REPO_SLUG == "DeclareDesign/estimatr" && test $TRAVIS_PULL_REQUEST
+  == "false" && test $TRAVIS_BRANCH == "master" && bash deploy.sh
 deploy:
   provider: s3
   bucket: declaredesign-web
@@ -37,7 +40,6 @@ deploy:
   upload-dir: estimatr
   on:
     branch: master
-    condition: $TRAVIS_OS_NAME == "linux"
     condition: $TRAVIS_R_VERSION = "3.4.0"
 notifications:
   email:
