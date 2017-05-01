@@ -16,6 +16,7 @@ env:
 r_github_packages:
 - jimhester/covr
 - graemeblair/drat
+- hadley/pkgdown
 r_packages:
 - git2r
 after_success:
