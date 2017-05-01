@@ -1,9 +1,19 @@
 
 ## will this work for lm, glm, ...?
+#' Estimate and Summarize a Model
+#'
+#' @param ... arguments passed to model
+#'
+#' @param model a modeling function like \code{\link{lm}} or \code{\link{glm}}.  Must have coef() and vcov() methods.
+#' @param data A data.frame.
+#' @param alpha The significance level, 0.05 by default. (not yet implemented)
+#' @param coefficient_name a character or character vector that indicates which coefficients should be reported. Defaults to "Z".
+#'
 #' @export
 use_model <- function(...,
                       model = lm,
                       data,
+                      alpha,
                       coefficient_name = "Z") {
 
   fit <- do.call(model, args = c(list(...), list(data = data)))

@@ -1,15 +1,20 @@
 #' Built-in Estimators: Difference-in-means
 #'
 #' @param formula An object of class "formula", such as Y ~ Z
+#' @param block_variable_name The bare (unquote) name of the block variable. Use for blocked designs only.
 #' @param data A data.frame.
 #' @param weights An optional vector of weights (not yet implemented).
 #' @param subset An optional vector specifying a subset of observations to be used.
 #' @param alpha The significance level, 0.05 by default.
-#' @param condition1 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. Will use standard r ordering by default.
-#' @param condition2 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. Will use standard r ordering by default.
+#' @param condition1 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
+#' @param condition2 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
 #'
 #'
-#' @details These functions implement difference-in-means estimation, with and without blocking. Standard errors are estimated as the square root of the sum of the within-group variances, divided by their respective sample sizes (Equation 3.6 in Gerber and Green 2012). If blocked, the difference in means estimate is taken in each block, then averaged together according to block size.
+#' @details This function implements difference-in-means estimation, with and without blocking. Standard errors are estimated as the square root of the sum of the within-group variances, divided by their respective sample sizes (Equation 3.6 in Gerber and Green 2012). If blocked, the difference in means estimate is taken in each block, then averaged together according to block size.
+#'
+#' @importFrom dplyr bind_rows
+#' @importFrom magrittr %>%
+#' @importFrom purrr map
 #'
 #'
 #' @export
@@ -23,11 +28,12 @@
 #'  difference_in_means(Y ~ Z, data = df)
 #'  difference_in_means(Y ~ Z, condition1 = 3, condition2 = 2, data = df)
 #'
-#'  difference_in_means_blocked(Y ~ Z, block_variable_name = block, data = df)
-#'  difference_in_means_blocked(Y ~ Z, block_variable_name = block, condition1 = 3, condition2 = 2, data = df)
+#'  difference_in_means(Y ~ Z, block_variable_name = block, data = df)
+#'  difference_in_means(Y ~ Z, block_variable_name = block, condition1 = 3, condition2 = 2, data = df)
 #'
 difference_in_means <-
   function(formula,
+           block_variable_name = NULL,
            condition1 = NULL,
            condition2 = NULL,
            data,
@@ -45,60 +51,58 @@ difference_in_means <-
       data <- data[r, ]
     }
 
-    Y <- data[, all.vars(formula[[2]])]
-    t <- data[, all.vars(formula[[3]])]
+    if(is.null(substitute(block_variable_name))){
 
-    if (is.factor(t)) {
-      condition_names <- levels(t)
-    } else{
-      condition_names <- sort(unique(t))
-    }
+    return_df <- difference_in_means_internal(formula,
+                                              condition1 = condition1,
+                                              condition2 = condition2,
+                                              data = data,
+                                              weights = weights, alpha = alpha)
+    return_df <- within(return_df,{
+      df <- N - 2
+      p <- 2 * pt(abs(est / se), df = df, lower.tail = FALSE)
+      ci_lower <- est - qt(1 - alpha / 2, df = df) * se
+      ci_upper <- est + qt(1 - alpha / 2, df = df) * se
+    })
 
-    if (is.null(condition1) & is.null(condition2)) {
-      condition1 <- condition_names[1]
-      condition2 <- condition_names[2]
-    }
 
-    N <- length(Y)
-
-    Y2 <- Y[t == condition2]
-    Y1 <- Y[t == condition1]
-
-    weights <- eval(substitute(weights), data)
-
-    if (is.null(weights)) {
-      diff <- mean(Y2) - mean(Y1)
-
-      se <- sqrt(var(Y2) / length(Y2) + var(Y1) / length(Y1))
-
-    } else {
-
-      w2 <- weights[t == condition2]
-      w1 <- weights[t == condition1]
-
-      mean2 <- weighted.mean(Y2, w2)
-      mean1 <- weighted.mean(Y1, w1)
-      diff <-  mean2 - mean1
-
-      se <- sqrt(weighted_var_internal(w2, Y2, mean2) + weighted_var_internal(w1, Y1, mean1))
-    }
-
-    df <- N - 2
-    p <- 2 * pt(abs(diff / se), df = df, lower.tail = FALSE)
-    ci_lower <- diff - qt(1 - alpha / 2, df = df) * se
-    ci_upper <- diff + qt(1 - alpha / 2, df = df) * se
-
-    return_df <- data.frame(
-      est = diff,
-      se = se,
-      p = p,
-      ci_lower = ci_lower,
-      ci_upper = ci_upper,
-      df = df
-    )
+    return_df <- return_df[,c("est", "se", "p", "ci_lower", "ci_upper", "df")]
 
     return(return_df)
+    } else {
 
+      blocks <- eval(substitute(block_variable_name), data)
+
+      block_estimates <-
+        data %>%
+        split(blocks) %>%
+        map(~difference_in_means_internal(formula, data = .,
+                                          condition1 = condition1,
+                                          condition2 = condition2,
+                                          weights = weights, alpha = alpha)) %>%
+        bind_rows()
+
+      N_overall <- with(block_estimates, sum(N))
+      diff <- with(block_estimates, sum(est * N/N_overall))
+      se <- with(block_estimates, sqrt(sum(se^2 * (N/N_overall)^2)))
+
+      ## we don't know if this is correct!
+      df <- N_overall - 2
+      p <- 2 * pt(abs(diff / se), df = df, lower.tail = FALSE)
+      ci_lower <- diff - qt(1 - alpha / 2, df = df) * se
+      ci_upper <- diff + qt(1 - alpha / 2, df = df) * se
+
+      return_df <- data.frame(
+        est = diff,
+        se = se,
+        p = p,
+        ci_lower = ci_lower,
+        ci_upper = ci_upper,
+        df = df
+      )
+
+      return(return_df)
+    }
   }
 
 
@@ -111,62 +115,6 @@ weighted_var_internal <- function(w, x, xWbar){
                                                                                                                    wbar) ^ 2)))
 }
 
-#' Built-in Estimators: Blocked Difference-in-means
-#'
-#' @param block_variable_name The bare (unquote) name of the block variable
-#'
-#' @importFrom dplyr bind_rows
-#' @importFrom magrittr %>%
-#' @importFrom purrr map
-#'
-#' @rdname difference_in_means
-#' @export
-difference_in_means_blocked <-
-  function(formula,
-           block_variable_name = NULL,
-           condition1 = NULL,
-           condition2 = NULL,
-           data,
-           weights = NULL,
-           subset = NULL,
-           alpha = .05) {
-
-    if (!is.null(subset)){
-      condition_call <- substitute(condition)
-      r <- eval(condition_call, data)
-      data <- data[r, ]
-    }
-
-    blocks <- eval(substitute(block_variable_name), data)
-
-    block_estimates <-
-      data %>%
-      split(blocks) %>%
-      map(~difference_in_means_internal(formula, data = ., weights = weights, alpha = alpha)) %>%
-      bind_rows()
-
-    N_overall <- with(block_estimates, sum(N))
-    diff <- with(block_estimates, sum(est * N/N_overall))
-    se <- with(block_estimates, sqrt(sum(se^2 * (N/N_overall)^2)))
-
-    ## we don't know if this is correct!
-    df <- N_overall - 2
-    p <- 2 * pt(abs(diff / se), df = df, lower.tail = FALSE)
-    ci_lower <- diff - qt(1 - alpha / 2, df = df) * se
-    ci_upper <- diff + qt(1 - alpha / 2, df = df) * se
-
-    return_df <- data.frame(
-      est = diff,
-      se = se,
-      p = p,
-      ci_lower = ci_lower,
-      ci_upper = ci_upper,
-      df = df
-    )
-
-    return(return_df)
-
-  }
 
 
 difference_in_means_internal <-

@@ -2,22 +2,19 @@
 % Please edit documentation in R/difference_in_means.R
 \name{difference_in_means}
 \alias{difference_in_means}
-\alias{difference_in_means_blocked}
 \title{Built-in Estimators: Difference-in-means}
 \usage{
-difference_in_means(formula, condition1 = NULL, condition2 = NULL, data,
-  weights = NULL, subset = NULL, alpha = 0.05)
-
-difference_in_means_blocked(formula, block_variable_name = NULL,
-  condition1 = NULL, condition2 = NULL, data, weights = NULL,
-  subset = NULL, alpha = 0.05)
+difference_in_means(formula, block_variable_name = NULL, condition1 = NULL,
+  condition2 = NULL, data, weights = NULL, subset = NULL, alpha = 0.05)
 }
 \arguments{
 \item{formula}{An object of class "formula", such as Y ~ Z}
 
-\item{condition1}{names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. Will use standard r ordering by default.}
+\item{block_variable_name}{The bare (unquote) name of the block variable. Use for blocked designs only.}
 
-\item{condition2}{names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. Will use standard r ordering by default.}
+\item{condition1}{names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.}
+
+\item{condition2}{names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.}
 
 \item{data}{A data.frame.}
 
@@ -26,16 +23,12 @@ difference_in_means_blocked(formula, block_variable_name = NULL,
 \item{subset}{An optional vector specifying a subset of observations to be used.}
 
 \item{alpha}{The significance level, 0.05 by default.}
-
-\item{block_variable_name}{The bare (unquote) name of the block variable}
 }
 \description{
 Built-in Estimators: Difference-in-means
-
-Built-in Estimators: Blocked Difference-in-means
 }
 \details{
-These functions implement difference-in-means estimation, with and without blocking. Standard errors are estimated as the square root of the sum of the within-group variances, divided by their respective sample sizes (Equation 3.6 in Gerber and Green 2012). If blocked, the difference in means estimate is taken in each block, then averaged together according to block size.
+This function implements difference-in-means estimation, with and without blocking. Standard errors are estimated as the square root of the sum of the within-group variances, divided by their respective sample sizes (Equation 3.6 in Gerber and Green 2012). If blocked, the difference in means estimate is taken in each block, then averaged together according to block size.
 }
 \examples{
 
@@ -46,7 +39,7 @@ These functions implement difference-in-means estimation, with and without block
  difference_in_means(Y ~ Z, data = df)
  difference_in_means(Y ~ Z, condition1 = 3, condition2 = 2, data = df)
 
- difference_in_means_blocked(Y ~ Z, block_variable_name = block, data = df)
- difference_in_means_blocked(Y ~ Z, block_variable_name = block, condition1 = 3, condition2 = 2, data = df)
+ difference_in_means(Y ~ Z, block_variable_name = block, data = df)
+ difference_in_means(Y ~ Z, block_variable_name = block, condition1 = 3, condition2 = 2, data = df)
 
 }

@@ -1,6 +1,16 @@
 
 
+#' Ordinary Least Squares with Robust Standard Errors
+#'
+#' @param formula an object of class formula, as in \code{\link{lm}}.
+#'
+#' @param data A data.frame.
+#' @param alpha The significance level, 0.05 by default.
+#' @param se_type The sort of standard error sought -- "HCO", "HC1", "HC2", "HC3", or "classical". "HC2" by default
+#' @param coefficient_name a character or character vector that indicates which coefficients should be reported. Defaults to "Z".
+#'
 #' @export
+#'
 lm_robust_se <- function(formula,
                          data,
                          alpha = .05,
@@ -34,6 +44,11 @@ lm_robust_se <- function(formula,
     ci_upper = ci_upper
   )
 
-  return(subset(return_frame, variable_names %in% coefficient_name))
+    which_coefs <- return_frame$variable_names %in% coefficient_name
+
+  # if ever we can figure out all the use cases in the test....
+  # which_coefs <- return_frame$variable_names %in% deparse(substitute(coefficient_name))
+
+  return(return_frame[which_coefs, ])
 
 }
