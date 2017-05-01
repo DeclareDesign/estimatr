@@ -23,8 +23,21 @@ after_success:
 - test $TRAVIS_OS_NAME == "osx" && Rscript -e "devtools::build(binary = TRUE, args
   = c('--preclean'))"
 - test $TRAVIS_OS_NAME == "linux" && Rscript -e "devtools::build()"
-- test $TRAVIS_REPO_SLUG == "DeclareDesign/estimatr" && test $TRAVIS_PULL_REQUEST
-  == "false" && test $TRAVIS_BRANCH == "master" && bash deploy.sh
+- test $TRAVIS_OS_NAME == "linux" && test $TRAVIS_R_VERSION == "3.4.0" && Rscript -e "pkgdown::build_site()"
+- test $TRAVIS_REPO_SLUG == "DeclareDesign/estimatr" && test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && bash deploy.sh
+deploy:
+  provider: s3
+  bucket: declaredesign-web
+  region: us-west-1
+  local-dir: docs
+  skip_cleanup: true
+  access_key_id: "$AWS_KEY"
+  secret_access_key: "$AWS_SECRET_KEY"
+  upload-dir: estimatr
+  on:
+    branch: master
+    condition: $TRAVIS_OS_NAME == "linux"
+    condition: $TRAVIS_R_VERSION = "3.4.0"
 notifications:
   email:
     recipients:
