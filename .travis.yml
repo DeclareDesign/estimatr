@@ -31,13 +31,12 @@ after_success:
   == "false" && test $TRAVIS_BRANCH == "master" && bash deploy.sh
 deploy:
   provider: s3
-  bucket: declaredesign-web
+  bucket: declaredesign-estimatr
   region: us-west-1
   local-dir: docs
   skip_cleanup: true
   access_key_id: "$AWS_KEY"
   secret_access_key: "$AWS_SECRET_KEY"
-  upload-dir: estimatr
   on:
     branch: master
     condition: $TRAVIS_R_VERSION = "3.4.0"
