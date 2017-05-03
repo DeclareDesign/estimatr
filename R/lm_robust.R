@@ -5,6 +5,7 @@
 #' @param formula an object of class formula, as in \code{\link{lm}}.
 #'
 #' @param data A data.frame.
+#' @param weights the bare (unquoted) names of the weights variable in the supplied data.
 #' @param alpha The significance level, 0.05 by default.
 #' @param se_type The sort of standard error sought -- "HCO", "HC1", "HC2", "HC3", or "classical". "HC2" by default
 #' @param coefficient_name a character or character vector that indicates which coefficients should be reported. Defaults to "Z".
@@ -13,6 +14,7 @@
 #'
 lm_robust_se <- function(formula,
                          data,
+                         weights = NULL,
                          alpha = .05,
                          se_type = "HC2",
                          coefficient_name = "Z") {
@@ -21,6 +23,13 @@ lm_robust_se <- function(formula,
   variable_names <- colnames(design_matrix)
 
   outcome <- data[, all.vars(formula[[2]])]
+
+  if (!is.null(substitute(weights))) {
+    weights <-  eval(substitute(weights), data)
+    outcome <- sqrt(weights) * outcome
+    design_matrix <- sqrt(weights) * design_matrix
+  }
+
   fit <- lm_robust_helper(y = outcome, X = design_matrix, type = se_type)
 
   N <- nrow(design_matrix)
