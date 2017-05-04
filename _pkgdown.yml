@@ -2,7 +2,7 @@ navbar:
   type: default
   left:
   - text: Reference
-    href: reference/
+    href: reference/index.html
   - text: "Packages"
     menu:
       - text: DeclareDesign
