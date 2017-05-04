@@ -10,8 +10,10 @@ navbar:
       - text: randomizr
         href: http://randomizr.declaredesign.org
       - text: fabricatr
-        href: http://randomizr.declaredesign.org
+        href: http://fabricatr.declaredesign.org
       - text: estimatr
         href: http://estimatr.declaredesign.org
   - text: "Discussion Board"
     href: http://discuss.declaredesign.org
+  - text: "DeclareDesign home"
+    href: https://declaredesign.org

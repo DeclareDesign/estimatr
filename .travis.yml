@@ -24,6 +24,8 @@ after_success:
 - Rscript -e 'covr::coveralls()'
 - test $TRAVIS_OS_NAME == "osx" && Rscript -e "devtools::build(binary = TRUE, args
   = c('--preclean'))"
+- test $TRAVIS_OS_NAME == "linux" && test $TRAVIS_R_VERSION == "3.4.0" && Rscript
+  -e "devtools::install()"
 - test $TRAVIS_OS_NAME == "linux" && Rscript -e "devtools::build()"
 - test $TRAVIS_OS_NAME == "linux" && test $TRAVIS_R_VERSION == "3.4.0" && Rscript
   -e "pkgdown::build_site()"
