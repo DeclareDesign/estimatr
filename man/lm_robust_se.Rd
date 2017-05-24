@@ -4,13 +4,15 @@
 \alias{lm_robust_se}
 \title{Ordinary Least Squares with Robust Standard Errors}
 \usage{
-lm_robust_se(formula, data, alpha = 0.05, se_type = "HC2",
+lm_robust_se(formula, data, weights = NULL, alpha = 0.05, se_type = "HC2",
   coefficient_name = "Z")
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}.}
 
 \item{data}{A data.frame.}
+
+\item{weights}{the bare (unquoted) names of the weights variable in the supplied data.}
 
 \item{alpha}{The significance level, 0.05 by default.}
 
