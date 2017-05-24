@@ -21,12 +21,11 @@ r_packages:
 - git2r
 - covr
 after_success:
-- Rscript -e 'covr::coveralls()'
+- test $TRAVIS_OS_NAME == "linux" && Rscript -e 'covr::coveralls()'
 - test $TRAVIS_OS_NAME == "osx" && Rscript -e "devtools::build(binary = TRUE, args
   = c('--preclean'))"
 - test $TRAVIS_OS_NAME == "linux" && Rscript -e "devtools::build()"
-- test $TRAVIS_REPO_SLUG == "DeclareDesign/estimatr" && test $TRAVIS_PULL_REQUEST
-  == "false" && test $TRAVIS_BRANCH == "master" && bash deploy.sh
+- test $TRAVIS_REPO_SLUG == "DeclareDesign/estimatr" && test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && $TRAVIS_R_VERSION = "3.4.0" && bash deploy.sh
 notifications:
   email:
     recipients:
