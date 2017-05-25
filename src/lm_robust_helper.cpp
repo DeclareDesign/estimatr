@@ -7,7 +7,6 @@
 #include <RcppArmadillo.h>
 using namespace Rcpp;
 
-//' @export
 // [[Rcpp::export]]
 List lm_robust_helper(const arma::vec & y, const arma::mat & X, const String type) {
 

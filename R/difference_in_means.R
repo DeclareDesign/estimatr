@@ -58,13 +58,11 @@ difference_in_means <-
                                               condition2 = condition2,
                                               data = data,
                                               weights = weights, alpha = alpha)
-    return_df <- within(return_df,{
-      df <- N - 2
-      p <- 2 * pt(abs(est / se), df = df, lower.tail = FALSE)
-      ci_lower <- est - qt(1 - alpha / 2, df = df) * se
-      ci_upper <- est + qt(1 - alpha / 2, df = df) * se
-    })
 
+    return_df$df <- with(return_df, N - 2)
+    return_df$p <- with(return_df, 2 * pt(abs(est / se), df = df, lower.tail = FALSE))
+    return_df$ci_lower <- with(return_df, est - qt(1 - alpha / 2, df = df) * se)
+    return_df$ci_upper <- with(return_df, est + qt(1 - alpha / 2, df = df) * se)
 
     return_df <- return_df[,c("est", "se", "p", "ci_lower", "ci_upper", "df")]
 

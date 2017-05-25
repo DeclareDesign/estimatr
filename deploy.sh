@@ -25,6 +25,6 @@ Rscript -e "path <- ifelse(.Platform\$OS.type == 'windows', file.path('..', '${A
 
 git add *
 
-git commit -m 'Travis update $PKG_REPO build $TRAVIS_COMMIT'
+git commit -m "Travis update $PKG_REPO build $TRAVIS_COMMIT"
 
 git push
