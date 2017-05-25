@@ -19,3 +19,13 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+
+static const R_CallMethodDef CallEntries[] = {
+    {"estimatr_lm_robust_helper", (DL_FUNC) &estimatr_lm_robust_helper, 3},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_estimatr(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
+}
