@@ -17,7 +17,12 @@ git remote add upstream "https://$GH_TOKEN@github.com/DeclareDesign/declaredesig
 git fetch upstream
 git checkout master
 
-Rscript -e "path <- ifelse(.Platform\$OS.type == 'windows', file.path('..', '${APPVEYOR_PROJECT_NAME:-$PKG_REPO}'), file.path('..')); \
+## move file to the right place (/bin/contrib etc)
+
+## do write_PACKAGES which updates the PACKAGES file appropriately
+
+Rscript -e "source('update_repo.R') \
+  path <- ifelse(.Platform\$OS.type == 'windows', file.path('..', '${APPVEYOR_PROJECT_NAME:-$PKG_REPO}'), file.path('..')); \
   for(pkg in dir(path, pattern = ifelse(.Platform\$OS.type == 'windows', '.zip', '.t*z'))) { print(paste('processing', pkg)); \
   drat::insertPackage(file = file.path(path, pkg), \
   repodir = '.', \
