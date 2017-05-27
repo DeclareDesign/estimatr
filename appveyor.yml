@@ -44,3 +44,7 @@ artifacts:
 
   - path: '\*_*.zip'
     name: Bits
+
+environment:
+  GH_TOKEN:
+    secure: /EgVnW++QtqS0Bz89k2B8nrf7dwcL8bMXp/WCHkcdSor7JX7SRk51L+0iZUvgQJm
