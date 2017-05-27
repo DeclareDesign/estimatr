@@ -1,6 +1,7 @@
 #!/bin/bash
 set -o errexit -o nounset
 PKG_REPO=$PWD
+COMMIT="${TRAVIS_COMMIT:-$APPVEYOR_REPO_COMMIT}"
 cd ..
 
 mkdir repo
@@ -21,6 +22,6 @@ Rscript update_repo.R
 
 git add *
 
-git commit -m "Travis update $PKG_REPO build $TRAVIS_COMMIT"
+git commit -m "Travis update $PKG_REPO build $COMMIT"
 
 git push
