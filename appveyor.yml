@@ -19,6 +19,9 @@ build_script:
 test_script:
   - travis-tool.sh run_tests
 
+on_success:
+  - sh deploy.sh
+
 on_failure:
   - 7z a failure.zip *.Rcheck\*
   - appveyor PushArtifact failure.zip

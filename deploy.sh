@@ -3,8 +3,8 @@ set -o errexit -o nounset
 PKG_REPO=$PWD
 cd ..
 
-mkdir drat
-cd drat
+mkdir repo
+cd repo
 
 ## Set up Repo parameters
 git init
@@ -16,10 +16,6 @@ git config --global push.default simple
 git remote add upstream "https://$GH_TOKEN@github.com/DeclareDesign/declaredesign.github.io.git"
 git fetch upstream
 git checkout master
-
-## move file to the right place (/bin/contrib etc)
-
-## do write_PACKAGES which updates the PACKAGES file appropriately
 
 Rscript update_repo.R
 
