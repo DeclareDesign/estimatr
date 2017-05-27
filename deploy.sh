@@ -21,7 +21,7 @@ git checkout master
 
 ## do write_PACKAGES which updates the PACKAGES file appropriately
 
-Rscript -e "source('update_repo.R')"
+Rscript ../update_repo.R
 
 git add *
 
