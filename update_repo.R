@@ -15,10 +15,10 @@ getPathForPackage <- function(file) {
     if (fields["OSflavour"] == "") {
       # non-binary package, treated as Mavericks
       message("Note: Non-binary OS X package will be installed in Mavericks path.")
-      fields["Mavericks"] <- "yes"
+      fields["El-Capitan"] <- "yes"
     }
-    if (unname(fields["Mavericks"]) == "yes") {
-      ret <- file.path("bin", "macosx", "mavericks", "contrib", rversion)
+    if (unname(fields["El-Capitan"]) == "yes") {
+      ret <- file.path("bin", "macosx", "el-capitan", "contrib", rversion)
     } else {
       ret <- file.path("bin", "macosx", "contrib", rversion)
     }
@@ -52,5 +52,19 @@ files <-
 print(paste('processing', pkg))
 
 for (f in files) {
+  pkgdir <- file.path(repodir, reldir)
+
+  if (!file.exists(pkgdir)) {
+    ## TODO: this could be in a git branch, need checking
+    if (!dir.create(pkgdir, recursive = TRUE)) {
+      stop("Directory ", pkgdir, " couldn't be created\n", call. = FALSE)
+    }
+  }
+
+  ## copy file into repo
+  if (!file.copy(f, pkgdir, overwrite = TRUE)) {
+    stop("File ", f, " can not be copied to ", pkgdir, call. = FALSE)
+  }
+
   write_PACKAGES(pkgdir, type = identifyPackageType(f), ...)
 }
