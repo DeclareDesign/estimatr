@@ -21,12 +21,7 @@ git checkout master
 
 ## do write_PACKAGES which updates the PACKAGES file appropriately
 
-Rscript -e "source('update_repo.R') \
-  path <- ifelse(.Platform\$OS.type == 'windows', file.path('..', '${APPVEYOR_PROJECT_NAME:-$PKG_REPO}'), file.path('..')); \
-  for(pkg in dir(path, pattern = ifelse(.Platform\$OS.type == 'windows', '.zip', '.t*z'))) { print(paste('processing', pkg)); \
-  drat::insertPackage(file = file.path(path, pkg), \
-  repodir = '.', \
-  commit = FALSE) }"
+Rscript -e "source('update_repo.R')"
 
 git add *
 

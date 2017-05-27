@@ -67,4 +67,5 @@ for (f in files) {
   }
 
   write_PACKAGES(pkgdir, type = identifyPackageType(f), ...)
+
 }
