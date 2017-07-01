@@ -33,10 +33,11 @@ use_model <- function(...,
     data.frame(
       variable_names = variable_names,
       est = coef,
-      se = se ##,
+      se = se, 
       ##p = p,
       ##ci_lower = ci_lower,
       ##ci_upper = ci_upper
+      stringsAsFactors = FALSE
     )
 
   return(subset(return_frame, variable_names %in% coefficient_name))
