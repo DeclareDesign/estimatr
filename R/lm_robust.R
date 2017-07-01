@@ -6,6 +6,7 @@
 #'
 #' @param data A data.frame.
 #' @param weights the bare (unquoted) names of the weights variable in the supplied data.
+#' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
 #' @param alpha The significance level, 0.05 by default.
 #' @param se_type The sort of standard error sought -- "HCO", "HC1", "HC2", "HC3", or "classical". "HC2" by default
 #' @param coefficient_name a character or character vector that indicates which coefficients should be reported. Defaults to "Z".
@@ -15,9 +16,17 @@
 lm_robust_se <- function(formula,
                          data,
                          weights = NULL,
+                         subset = NULL,
                          alpha = .05,
                          se_type = "HC2",
                          coefficient_name = "Z") {
+
+  condition_call <- substitute(subset)
+  if (!is.null(condition_call)) {
+    r <- eval(condition_call, data)
+    data <- data[r,]
+  }
+
 
   design_matrix <- model.matrix.default(formula, data = data)
   variable_names <- colnames(design_matrix)
@@ -50,7 +59,8 @@ lm_robust_se <- function(formula,
     se = se,
     p = p,
     ci_lower = ci_lower,
-    ci_upper = ci_upper
+    ci_upper = ci_upper,
+    stringsAsFactors = FALSE
   )
 
     which_coefs <- return_frame$variable_names %in% coefficient_name

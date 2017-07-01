@@ -4,7 +4,7 @@
 #' @param block_variable_name The bare (unquote) name of the block variable. Use for blocked designs only.
 #' @param data A data.frame.
 #' @param weights An optional vector of weights (not yet implemented).
-#' @param subset An optional vector specifying a subset of observations to be used.
+#' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
 #' @param alpha The significance level, 0.05 by default.
 #' @param condition1 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
 #' @param condition2 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
@@ -45,8 +45,8 @@ difference_in_means <-
         "The formula should only include one variable on the right-hand side: the treatment variable."
       )
 
-    if (!is.null(subset)){
-      condition_call <- substitute(condition)
+    condition_call <- substitute(subset)
+    if (!is.null(condition_call)){
       r <- eval(condition_call, data)
       data <- data[r, ]
     }
@@ -96,7 +96,8 @@ difference_in_means <-
         p = p,
         ci_lower = ci_lower,
         ci_upper = ci_upper,
-        df = df
+        df = df, 
+        stringsAsFactors = FALSE
       )
 
       return(return_df)

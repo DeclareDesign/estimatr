@@ -20,7 +20,7 @@ difference_in_means(formula, block_variable_name = NULL, condition1 = NULL,
 
 \item{weights}{An optional vector of weights (not yet implemented).}
 
-\item{subset}{An optional vector specifying a subset of observations to be used.}
+\item{subset}{An optional bare (unquoted) expression specifying a subset of observations to be used.}
 
 \item{alpha}{The significance level, 0.05 by default.}
 }
