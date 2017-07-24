@@ -8,7 +8,7 @@ using namespace Rcpp;
 
 // lm_robust_helper
 List lm_robust_helper(const arma::vec& y, const arma::mat& X, const String type);
-RcppExport SEXP estimatr_lm_robust_helper(SEXP ySEXP, SEXP XSEXP, SEXP typeSEXP) {
+RcppExport SEXP _estimatr_lm_robust_helper(SEXP ySEXP, SEXP XSEXP, SEXP typeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -21,7 +21,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"estimatr_lm_robust_helper", (DL_FUNC) &estimatr_lm_robust_helper, 3},
+    {"_estimatr_lm_robust_helper", (DL_FUNC) &_estimatr_lm_robust_helper, 3},
     {NULL, NULL, 0}
 };
 

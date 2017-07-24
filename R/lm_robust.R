@@ -22,15 +22,14 @@ lm_robust_se <- function(formula,
                          coefficient_name = "Z") {
 
   condition_call <- substitute(subset)
+
   if (!is.null(condition_call)) {
     r <- eval(condition_call, data)
     data <- data[r,]
   }
 
-
   design_matrix <- model.matrix.default(formula, data = data)
   variable_names <- colnames(design_matrix)
-
   outcome <- data[, all.vars(formula[[2]])]
 
   if (!is.null(substitute(weights))) {
@@ -40,34 +39,43 @@ lm_robust_se <- function(formula,
   }
 
   fit <- lm_robust_helper(y = outcome, X = design_matrix, type = se_type)
+  est <- fit$beta_hat
 
-  N <- nrow(design_matrix)
-  k <- ncol(design_matrix)
-  df <- N - k
+  if(se_type == "none"){
 
-  coef <- fit$beta_hat
-  se <- sqrt(diag(fit$Vcov_hat))
+    se = NA
+    p = NA
+    ci_lower = NA
+    ci_upper = NA
 
-  p <- 2 * pt(abs(coef / se), df = df, lower.tail = FALSE)
-  ci_lower <- coef - qt(1 - alpha / 2, df = df) * se
-  ci_upper <- coef + qt(1 - alpha / 2, df = df) * se
+  } else {
+
+    N <- nrow(design_matrix)
+    k <- ncol(design_matrix)
+    df <- N - k
+    se <- sqrt(diag(fit$Vcov_hat))
+    p <- 2 * pt(abs(est / se), df = df, lower.tail = FALSE)
+    ci_lower <- est - qt(1 - alpha / 2, df = df) * se
+    ci_upper <- est + qt(1 - alpha / 2, df = df) * se
+
+  }
 
   return_frame <-
-  data.frame(
-    variable_names = variable_names,
-    est = coef,
-    se = se,
-    p = p,
-    ci_lower = ci_lower,
-    ci_upper = ci_upper,
-    stringsAsFactors = FALSE
-  )
+    data.frame(
+      variable_names = variable_names,
+      est = est,
+      se = se,
+      p = p,
+      ci_lower = ci_lower,
+      ci_upper = ci_upper,
+      stringsAsFactors = FALSE
+    )
 
-    which_coefs <- return_frame$variable_names %in% coefficient_name
+  which_ests <- return_frame$variable_names %in% coefficient_name
 
   # if ever we can figure out all the use cases in the test....
-  # which_coefs <- return_frame$variable_names %in% deparse(substitute(coefficient_name))
+  # which_ests <- return_frame$variable_names %in% deparse(substitute(coefficient_name))
 
-  return(return_frame[which_coefs, ])
+  return(return_frame[which_ests, ])
 
 }
