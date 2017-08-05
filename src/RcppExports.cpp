@@ -7,14 +7,14 @@
 using namespace Rcpp;
 
 // lm_robust_helper
-List lm_robust_helper(const arma::vec& y, const arma::mat& X, const arma::vec& cluster, const String type);
+List lm_robust_helper(const arma::vec& y, const arma::mat& X, const Rcpp::Nullable<Rcpp::NumericVector>& cluster, const String type);
 RcppExport SEXP _estimatr_lm_robust_helper(SEXP ySEXP, SEXP XSEXP, SEXP clusterSEXP, SEXP typeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::vec& >::type y(ySEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type cluster(clusterSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericVector>& >::type cluster(clusterSEXP);
     Rcpp::traits::input_parameter< const String >::type type(typeSEXP);
     rcpp_result_gen = Rcpp::wrap(lm_robust_helper(y, X, cluster, type));
     return rcpp_result_gen;

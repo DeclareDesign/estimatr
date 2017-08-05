@@ -44,8 +44,6 @@ lm_robust_se <- function(formula,
     cluster <- eval(substitute(cluster), data)
     if(!is.factor(cluster)) stop("'cluster' must be a factor")
     se_type = "BM"
-  } else {
-    cluster <- rep(1, nrow(data))
   }
 
   fit <-
