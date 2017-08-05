@@ -97,17 +97,17 @@ List lm_robust_helper(const arma::vec & y,
         // Vcov matrix
         arma::uvec cluster_ids = find(cluster == *j);
         arma::mat Xj = X.rows(cluster_ids);
-        arma::mat tXj = arma::trans(Xj);
+        arma::mat XtX_inv_tXj = XtX_inv * arma::trans(Xj);
         // (I_j - Xj %*% (X'X)^{-1} %*% Xj') ^ {-1/2} %*% Xj
         arma::mat tX = arma::sqrtmat_sympd(
           arma::inv_sympd(
-            arma::eye(Xj.n_rows, Xj.n_rows) - Xj * XtX_inv * tXj
+            arma::eye(Xj.n_rows, Xj.n_rows) - Xj * XtX_inv_tXj
           )
         ) * Xj;
 
         tutX.row(clusternum) = arma::trans(ei(cluster_ids)) * tX;
 
-        // DOF adjustment
+        // Adjusted degrees of freedom
         int cluster_size = cluster_ids.n_elem;
         arma::mat ss = arma::zeros(n, cluster_size);
 
@@ -115,16 +115,12 @@ List lm_robust_helper(const arma::vec & y,
           ss(cluster_ids[i], i) = 1;
         }
 
-        arma::mat tH = ss - X * XtX_inv * tXj;
-
-        Gs.slice(clusternum) = tH * tX * XtX_inv;
+        Gs.slice(clusternum) = (ss - X * XtX_inv_tXj) * tX * XtX_inv;
 
         clusternum++;
       }
 
       Vcov_hat = XtX_inv * arma::trans(tutX) * tutX * XtX_inv;
-
-      arma::colvec dof(k);
 
       for(int p = 0; p < k; p++){
         arma::mat G = Gs.subcube(arma::span::all, arma::span(p), arma::span::all);
