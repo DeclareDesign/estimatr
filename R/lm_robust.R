@@ -44,6 +44,8 @@ lm_robust_se <- function(formula,
     cluster <- eval(substitute(cluster), data)
     if(!is.factor(cluster)) stop("'cluster' must be a factor")
     se_type = "BM"
+  } else {
+    cluster <- rep(1, nrow(data))
   }
 
   fit <-
@@ -64,9 +66,14 @@ lm_robust_se <- function(formula,
 
   } else {
 
-    N <- nrow(design_matrix)
-    k <- ncol(design_matrix)
-    df <- N - k
+    if(se_type == "BM"){
+      df <- fit$df
+    } else {
+      N <- nrow(design_matrix)
+      k <- ncol(design_matrix)
+      df <- N - k
+    }
+
     se <- sqrt(diag(fit$Vcov_hat))
     p <- 2 * pt(abs(est / se), df = df, lower.tail = FALSE)
     ci_lower <- est - qt(1 - alpha / 2, df = df) * se

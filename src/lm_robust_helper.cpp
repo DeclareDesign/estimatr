@@ -26,6 +26,7 @@ List lm_robust_helper(const arma::vec & y,
   arma::colvec beta_hat = XtX_inv*Xt*y;
 
   arma::mat Vcov_hat;
+  arma::colvec df(X.n_cols);
 
   if(type != "none"){
 
@@ -74,11 +75,16 @@ List lm_robust_helper(const arma::vec & y,
       Vcov_hat = s2 * XtX_inv;
     } else if (type == "BM") {
 
+
+      // Code adapted from Michal Kolesar
+      // https://github.com/kolesarm/Robust-Small-Sample-Standard-Errors
+
       // Get unique cluster values
       arma::vec levels = unique(cluster);
       int J = levels.n_elem;
 
       arma::mat tutX(J, k);
+      arma::cube Gs(n, k, J);
 
       // iterator used to fill tutX
       int clusternum = 0;
@@ -88,27 +94,49 @@ List lm_robust_helper(const arma::vec & y,
           j != levels.end();
           ++j){
 
+        // Vcov matrix
         arma::uvec cluster_ids = find(cluster == *j);
         arma::mat Xj = X.rows(cluster_ids);
-
+        arma::mat tXj = arma::trans(Xj);
         // (I_j - Xj %*% (X'X)^{-1} %*% Xj') ^ {-1/2} %*% Xj
         arma::mat tX = arma::sqrtmat_sympd(
           arma::inv_sympd(
-            arma::eye(Xj.n_rows, Xj.n_rows) - Xj * XtX_inv * arma::trans(Xj)
+            arma::eye(Xj.n_rows, Xj.n_rows) - Xj * XtX_inv * tXj
           )
         ) * Xj;
 
         tutX.row(clusternum) = arma::trans(ei(cluster_ids)) * tX;
+
+        // DOF adjustment
+        int cluster_size = cluster_ids.n_elem;
+        arma::mat ss = arma::zeros(n, cluster_size);
+
+        for(int i = 0; i < cluster_size; i++){
+          ss(cluster_ids[i], i) = 1;
+        }
+
+        arma::mat tH = ss - X * XtX_inv * tXj;
+
+        Gs.slice(clusternum) = tH * tX * XtX_inv;
 
         clusternum++;
       }
 
       Vcov_hat = XtX_inv * arma::trans(tutX) * tutX * XtX_inv;
 
+      arma::colvec dof(k);
+
+      for(int p = 0; p < k; p++){
+        arma::mat G = Gs.subcube(arma::span::all, arma::span(p), arma::span::all);
+        arma::mat GG = arma::trans(G) * G;
+        df[p] = std::pow(arma::trace(GG), 2) / arma::accu(arma::pow(GG, 2));
+      }
     }
   }
 
-  return List::create(_["beta_hat"]= beta_hat, _["Vcov_hat"]= Vcov_hat);
+  return List::create(_["beta_hat"]= beta_hat,
+                      _["Vcov_hat"]= Vcov_hat,
+                      _["df"]= df);
 }
 
 
