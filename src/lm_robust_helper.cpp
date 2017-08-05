@@ -8,7 +8,10 @@
 using namespace Rcpp;
 
 // [[Rcpp::export]]
-List lm_robust_helper(const arma::vec & y, const arma::mat & X, const String type) {
+List lm_robust_helper(const arma::vec & y,
+                      const arma::mat & X,
+                      const arma::vec & cluster,
+                      const String type) {
 
   // xt
   arma::mat Xt = arma::trans(X);
@@ -36,7 +39,6 @@ List lm_robust_helper(const arma::vec & y, const arma::mat & X, const String typ
     double k = X.n_cols;
 
     arma::sp_mat D_hat(n, n);
-
 
     if(type == "HC0"){
       D_hat.diag() = ei2;
@@ -70,8 +72,43 @@ List lm_robust_helper(const arma::vec & y, const arma::mat & X, const String typ
       // http://dirk.eddelbuettel.com/code/rcpp.armadillo.html
       double s2 = std::inner_product(ei.begin(), ei.end(), ei.begin(), 0.0)/(n - k);
       Vcov_hat = s2 * XtX_inv;
+    } else if (type == "BM") {
+
+      // Get unique cluster values
+      arma::vec levels = unique(cluster);
+      int J = levels.n_elem;
+
+      arma::mat tutX(J, k);
+
+      // iterator used to fill tutX
+      int clusternum = 0;
+
+      // iterate over unique cluster values
+      for(arma::vec::const_iterator j = levels.begin();
+          j != levels.end();
+          ++j){
+
+        arma::uvec cluster_ids = find(cluster == *j);
+        arma::mat Xj = X.rows(cluster_ids);
+
+        // (I_j - Xj %*% (X'X)^{-1} %*% Xj') ^ {-1/2} %*% Xj
+        arma::mat tX = arma::sqrtmat_sympd(
+          arma::inv_sympd(
+            arma::eye(Xj.n_rows, Xj.n_rows) - Xj * XtX_inv * arma::trans(Xj)
+          )
+        ) * Xj;
+
+        tutX.row(clusternum) = arma::trans(ei(cluster_ids)) * tX;
+
+        clusternum++;
+      }
+
+      Vcov_hat = XtX_inv * arma::trans(tutX) * tutX * XtX_inv;
+
     }
   }
 
   return List::create(_["beta_hat"]= beta_hat, _["Vcov_hat"]= Vcov_hat);
 }
+
+
