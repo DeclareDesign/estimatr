@@ -8,8 +8,8 @@
 #' @param weights the bare (unquoted) names of the weights variable in the supplied data.
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
 #' @param cluster_variable_name An optional bare (unquoted) name of the factor variable that corresponds to the clusters in the data. Will return Bell-McCaffrey standard errors, overriding \code{se_type}.
-#' @param alpha The significance level, 0.05 by default.
 #' @param se_type The sort of standard error sought. Without clustering: "HCO", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "BM" (default).
+#' @param alpha The significance level, 0.05 by default.
 #' @param coefficient_name a character or character vector that indicates which coefficients should be reported. Defaults to "Z".
 #'
 #' @export
@@ -19,11 +19,17 @@ lm_robust_se <- function(formula,
                          weights = NULL,
                          subset = NULL,
                          cluster_variable_name = NULL,
+                         se_type = NULL,
                          alpha = .05,
-                         se_type = "HC2",
                          coefficient_name = "Z") {
 
   condition_call <- substitute(subset)
+
+  if (is.null(se_type)) {
+    if (is.null(cluster_variable_name)) {
+
+    }
+  }
 
   if (!is.null(condition_call)) {
     r <- eval(condition_call, data)
@@ -34,16 +40,37 @@ lm_robust_se <- function(formula,
   variable_names <- colnames(design_matrix)
   outcome <- data[, all.vars(formula[[2]])]
 
+
+  if (!is.null(substitute(cluster_variable_name))) {
+
+    # get cluster variable from subset of data
+    cluster <- as.factor(eval(substitute(cluster_variable_name), data))
+
+    # set/check se_type
+    if (is.null(se_type)) {
+      se_type <- "BM"
+    } else if (se_type != "BM") {
+      stop("Only se_type = 'BM' is allowed for clustered standard errors.")
+    }
+
+  } else {
+    cluster <- NULL
+
+    # set/check se_type
+    if (is.null(se_type)) {
+      se_type <- "HC2"
+    } else if (se_type == "BM") {
+      stop("se_type = 'BM' is only allowed for clustered standard errors.")
+    }
+
+  }
+
   if (!is.null(substitute(weights))) {
     weights <- eval(substitute(weights), data)
     outcome <- sqrt(weights) * outcome
     design_matrix <- sqrt(weights) * design_matrix
   }
 
-  if (!is.null(substitute(cluster_variable_name))) {
-    cluster <- as.factor(eval(substitute(cluster_variable_name), data))
-    se_type = "BM"
-  }
 
   fit <-
     lm_robust_helper(
