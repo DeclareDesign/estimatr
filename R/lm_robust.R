@@ -25,12 +25,6 @@ lm_robust_se <- function(formula,
 
   condition_call <- substitute(subset)
 
-  if (is.null(se_type)) {
-    if (is.null(cluster_variable_name)) {
-
-    }
-  }
-
   if (!is.null(condition_call)) {
     r <- eval(condition_call, data)
     data <- data[r,]
@@ -70,7 +64,6 @@ lm_robust_se <- function(formula,
     outcome <- sqrt(weights) * outcome
     design_matrix <- sqrt(weights) * design_matrix
   }
-
 
   fit <-
     lm_robust_helper(
