@@ -1,6 +1,7 @@
 ## BMlmSE.R implements Bell-McCaffrey standard errors
 ## This code is taken from Michal Kolesar
 ## https://github.com/kolesarm/Robust-Small-Sample-Standard-Errors
+## Only changed the name of one function, df
 
 #'  Compute the inverse square root of a symmetric matrix
 #' @param A matrix
@@ -72,7 +73,7 @@ BMlmSE <- function(model, clustervar=NULL, ell=NULL, IK=TRUE) {
 
   ## Compute DoF given G'*Omega*G without calling eigen as suggested by
   ## Winston Lin
-  df <- function(GG)
+  DoF <- function(GG)
     sum(diag(GG))^2 / sum(GG * GG)
   ## Previously:
   ## lam <- eigen(GG, only.values=TRUE)$values
@@ -145,11 +146,11 @@ BMlmSE <- function(model, clustervar=NULL, ell=NULL, IK=TRUE) {
 
   if (!is.null(ell)) {
     se <- drop(sqrt(crossprod(ell, Vhat) %*% ell))
-    dof <- df(GOG(ell))
+    dof <- DoF(GOG(ell))
     se.Stata <- drop(sqrt(crossprod(ell, Vhat.Stata) %*% ell))
   } else {
     se <- sqrt(diag(Vhat))
-    dof <- sapply(seq(K), function(k) df(GOG(diag(K)[, k])))
+    dof <- sapply(seq(K), function(k) DoF(GOG(diag(K)[, k])))
     se.Stata <- sqrt(diag(Vhat.Stata))
   }
   names(dof) <- names(se)

@@ -9,6 +9,7 @@
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
 #' @param cluster_variable_name An optional bare (unquoted) name of the factor variable that corresponds to the clusters in the data. Will return Bell-McCaffrey standard errors, overriding \code{se_type}.
 #' @param se_type The sort of standard error sought. Without clustering: "HCO", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "BM" (default).
+#' @param ci A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
 #' @param coefficient_name a character or character vector that indicates which coefficients should be reported. Defaults to "Z".
 #'
@@ -20,6 +21,7 @@ lm_robust_se <- function(formula,
                          subset = NULL,
                          cluster_variable_name = NULL,
                          se_type = NULL,
+                         ci = TRUE,
                          alpha = .05,
                          coefficient_name = "Z") {
 
@@ -75,31 +77,33 @@ lm_robust_se <- function(formula,
       y = outcome,
       X = design_matrix,
       cluster = cluster,
+      ci = ci,
       type = se_type)
 
   est <- fit$beta_hat
+  se = NA
+  p = NA
+  ci_lower = NA
+  ci_upper = NA
 
-  if(se_type == "none"){
-
-    se = NA
-    p = NA
-    ci_lower = NA
-    ci_upper = NA
-
-  } else {
-
-    if(se_type == "BM"){
-      df <- fit$df
-    } else {
-      N <- nrow(design_matrix)
-      k <- ncol(design_matrix)
-      df <- N - k
-    }
+  if(se_type != "none"){
 
     se <- sqrt(diag(fit$Vcov_hat))
-    p <- 2 * pt(abs(est / se), df = df, lower.tail = FALSE)
-    ci_lower <- est - qt(1 - alpha / 2, df = df) * se
-    ci_upper <- est + qt(1 - alpha / 2, df = df) * se
+
+    if(ci) {
+
+      if(se_type == "BM"){
+        df <- fit$df
+      } else {
+        N <- nrow(design_matrix)
+        k <- ncol(design_matrix)
+        df <- N - k
+      }
+
+      p <- 2 * pt(abs(est / se), df = df, lower.tail = FALSE)
+      ci_lower <- est - qt(1 - alpha / 2, df = df) * se
+      ci_upper <- est + qt(1 - alpha / 2, df = df) * se
+    }
 
   }
 

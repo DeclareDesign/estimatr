@@ -5,7 +5,7 @@
 \title{Ordinary Least Squares with Robust Standard Errors}
 \usage{
 lm_robust_se(formula, data, weights = NULL, subset = NULL,
-  cluster_variable_name = NULL, se_type = NULL, alpha = 0.05,
+  cluster_variable_name = NULL, se_type = NULL, ci = TRUE, alpha = 0.05,
   coefficient_name = "Z")
 }
 \arguments{
@@ -20,6 +20,8 @@ lm_robust_se(formula, data, weights = NULL, subset = NULL,
 \item{cluster_variable_name}{An optional bare (unquoted) name of the factor variable that corresponds to the clusters in the data. Will return Bell-McCaffrey standard errors, overriding \code{se_type}.}
 
 \item{se_type}{The sort of standard error sought. Without clustering: "HCO", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "BM" (default).}
+
+\item{ci}{A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.}
 
 \item{alpha}{The significance level, 0.05 by default.}
 

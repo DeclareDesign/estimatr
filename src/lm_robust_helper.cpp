@@ -11,6 +11,7 @@ using namespace Rcpp;
 List lm_robust_helper(const arma::vec & y,
                       const arma::mat & X,
                       const Rcpp::Nullable<Rcpp::NumericVector> & cluster,
+                      const bool & ci,
                       const String type) {
 
   // xt
@@ -108,25 +109,29 @@ List lm_robust_helper(const arma::vec & y,
 
         tutX.row(clusternum) = arma::trans(ei(cluster_ids)) * tX;
 
-        // Adjusted degrees of freedom
-        int cluster_size = cluster_ids.n_elem;
-        arma::mat ss = arma::zeros(n, cluster_size);
+        if(ci) {
+          // Adjusted degrees of freedom
+          int cluster_size = cluster_ids.n_elem;
+          arma::mat ss = arma::zeros(n, cluster_size);
 
-        for(int i = 0; i < cluster_size; i++){
-          ss(cluster_ids[i], i) = 1;
+          for(int i = 0; i < cluster_size; i++){
+            ss(cluster_ids[i], i) = 1;
+          }
+
+          Gs.slice(clusternum) = (ss - X * XtX_inv_tXj) * tX * XtX_inv;
         }
-
-        Gs.slice(clusternum) = (ss - X * XtX_inv_tXj) * tX * XtX_inv;
 
         clusternum++;
       }
 
       Vcov_hat = XtX_inv * arma::trans(tutX) * tutX * XtX_inv;
 
-      for(int p = 0; p < k; p++){
-        arma::mat G = Gs.subcube(arma::span::all, arma::span(p), arma::span::all);
-        arma::mat GG = arma::trans(G) * G;
-        df[p] = std::pow(arma::trace(GG), 2) / arma::accu(arma::pow(GG, 2));
+      if(ci) {
+        for(int p = 0; p < k; p++){
+          arma::mat G = Gs.subcube(arma::span::all, arma::span(p), arma::span::all);
+          arma::mat GG = arma::trans(G) * G;
+          df[p] = std::pow(arma::trace(GG), 2) / arma::accu(arma::pow(GG, 2));
+        }
       }
     }
   }

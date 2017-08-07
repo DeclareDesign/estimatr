@@ -2,23 +2,36 @@ context("lm cluster se")
 
 test_that("lm cluster se", {
 
-  df <- data.frame(Y = rnorm(100),
-                   Z = rbinom(100, 1, .5),
-                   X = rnorm(100),
-                   J = sample(1:10, 100, replace = T),
-                   W = runif(100))
+  dat <- data.frame(Y = rnorm(100),
+                    Z = rbinom(100, 1, .5),
+                    X = rnorm(100),
+                    J = sample(1:10, 100, replace = T),
+                    W = runif(100))
 
 
   ## Test functionality
-  lm_robust_se(Y ~ Z, cluster_variable_name = J, data = df)
+  lm_robust_se(Y ~ Z, cluster_variable_name = J, data = dat)
 
-  lm_robust_se(Y ~ Z + X, cluster_variable_name = J, data = df)
+  lm_robust_se(Y ~ Z + X, cluster_variable_name = J, data = dat)
 
   lm_robust_se(
     Y ~ Z + X,
     cluster_variable_name = J,
     coefficient_name = c("Z", "X"),
-    data = df
+    data = dat
+  )
+
+  expect_equivalent(
+    as.matrix(
+      lm_robust_se(
+        Y ~ X + Z,
+        cluster_variable_name = J,
+        ci = FALSE,
+        coefficient_name = c("X", "Z"),
+        data = dat
+      )[, c("p", "ci_lower", "ci_upper")]
+    ),
+    matrix(NA, nrow = 2, ncol = 3)
   )
 
   ## Test equality
@@ -27,15 +40,15 @@ test_that("lm cluster se", {
       Y ~ Z*X,
       cluster_variable_name = J,
       coefficient_name = "Z:X",
-      data = df
+      data = dat
     )
 
-  lm_interact_simple <- lm(Y ~ Z*X, data = df)
+  lm_interact_simple <- lm(Y ~ Z*X, data = dat)
 
   bm_interact <-
     BMlmSE(
       lm_interact_simple,
-      clustervar = as.factor(df$J),
+      clustervar = as.factor(dat$J),
       IK = FALSE
     )
 
@@ -53,15 +66,15 @@ test_that("lm cluster se", {
       Y ~ Z + X,
       cluster_variable_name = J,
       coefficient_name = c("(Intercept)", "Z", "X"),
-      data = df
+      data = dat
     )
 
-  lm_full_simple <- lm(Y ~ Z + X, data = df)
+  lm_full_simple <- lm(Y ~ Z + X, data = dat)
 
   bm_full <-
     BMlmSE(
       lm_full_simple,
-      clustervar = as.factor(df$J),
+      clustervar = as.factor(dat$J),
       IK = FALSE
     )
 
@@ -80,7 +93,7 @@ test_that("lm cluster se", {
       Y ~ Z,
       cluster_variable_name = J,
       weights = W,
-      data = df
+      data = dat
     ),
     'weights'
   )
@@ -90,7 +103,7 @@ test_that("lm cluster se", {
       Y ~ Z,
       cluster_variable_name = J,
       se_type = 'HC2',
-      data = df
+      data = dat
     ),
     'BM'
   )
@@ -99,7 +112,7 @@ test_that("lm cluster se", {
     lm_robust_se(
       Y ~ Z,
       se_type = 'BM',
-      data = df
+      data = dat
     ),
     'BM'
   )
