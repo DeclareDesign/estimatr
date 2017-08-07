@@ -18,7 +18,7 @@ lm_robust_se <- function(formula,
                          data,
                          weights = NULL,
                          subset = NULL,
-                         cluster = NULL,
+                         cluster_variable_name = NULL,
                          alpha = .05,
                          se_type = "HC2",
                          coefficient_name = "Z") {
@@ -41,7 +41,7 @@ lm_robust_se <- function(formula,
   }
 
   if (!is.null(substitute(cluster_variable_name))) {
-    cluster <- as.factor(eval(substitute(cluster), data))
+    cluster <- as.factor(eval(substitute(cluster_variable_name), data))
     se_type = "BM"
   }
 
