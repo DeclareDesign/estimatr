@@ -60,6 +60,11 @@ lm_robust_se <- function(formula,
   }
 
   if (!is.null(substitute(weights))) {
+
+    if (!is.null(cluster)) {
+      stop("weights not yet supported with clustered standard errors")
+    }
+
     weights <- eval(substitute(weights), data)
     outcome <- sqrt(weights) * outcome
     design_matrix <- sqrt(weights) * design_matrix
