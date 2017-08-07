@@ -7,9 +7,9 @@
 #' @param data A data.frame.
 #' @param weights the bare (unquoted) names of the weights variable in the supplied data.
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
-#' @param cluster An optional bare (unquoted) name of the factor variable that corresponds to the clusters in the data. Will return Bell-McCaffrey standard errors, overriding \code{se_type}.
+#' @param cluster_variable_name An optional bare (unquoted) name of the factor variable that corresponds to the clusters in the data. Will return Bell-McCaffrey standard errors, overriding \code{se_type}.
 #' @param alpha The significance level, 0.05 by default.
-#' @param se_type The sort of standard error sought -- "HCO", "HC1", "HC2", "HC3", or "classical". "HC2" by default.
+#' @param se_type The sort of standard error sought. Without clustering: "HCO", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "BM" (default).
 #' @param coefficient_name a character or character vector that indicates which coefficients should be reported. Defaults to "Z".
 #'
 #' @export
@@ -40,9 +40,8 @@ lm_robust_se <- function(formula,
     design_matrix <- sqrt(weights) * design_matrix
   }
 
-  if (!is.null(substitute(cluster))) {
-    cluster <- eval(substitute(cluster), data)
-    if(!is.factor(cluster)) stop("'cluster' must be a factor")
+  if (!is.null(substitute(cluster_variable_name))) {
+    cluster <- as.factor(eval(substitute(cluster), data))
     se_type = "BM"
   }
 
