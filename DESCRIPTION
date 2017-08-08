@@ -16,4 +16,5 @@ Imports:
     magrittr
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 6.0.1
-Suggests: testthat
+Suggests: testthat,
+          sandwich
