@@ -83,7 +83,7 @@ List lm_robust_helper(const arma::vec & y,
       // Get unique cluster values
       arma::vec clusters = Rcpp::as<arma::vec>(cluster);
       arma::vec levels = unique(clusters);
-      int J = levels.n_elem;
+      double J = levels.n_elem;
 
       if (type == "BM") {
 
@@ -140,6 +140,7 @@ List lm_robust_helper(const arma::vec & y,
       if (type == "stata") {
 
         arma::mat XteetX(k, k);
+        XteetX.fill(0.0);
 
         // iterate over unique cluster values
         for(arma::vec::const_iterator j = levels.begin();
@@ -147,13 +148,11 @@ List lm_robust_helper(const arma::vec & y,
             ++j){
           arma::uvec cluster_ids = find(clusters == *j);
 
-          XteetX += Xt.cols(cluster_ids) *
-            ei.elem(cluster_ids) * arma::trans(ei.elem(cluster_ids)) *
-            X.rows(cluster_ids);
+          XteetX += Xt.cols(cluster_ids) * ei.elem(cluster_ids) *
+            arma::trans(ei.elem(cluster_ids)) * X.rows(cluster_ids);
         }
 
-        Vcov_hat = (J * (n - 1)) / ((J - 1) * (n - k)) *
-          XtX_inv * XteetX * XtX_inv;
+        Vcov_hat = ((J * (n - 1)) / ((J - 1) * (n - k))) * XtX_inv * XteetX * XtX_inv;
 
         df.fill(J - 1);
 
