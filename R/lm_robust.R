@@ -8,7 +8,7 @@
 #' @param weights the bare (unquoted) names of the weights variable in the supplied data.
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
 #' @param cluster_variable_name An optional bare (unquoted) name of the factor variable that corresponds to the clusters in the data. Will return Bell-McCaffrey standard errors, overriding \code{se_type}.
-#' @param se_type The sort of standard error sought. Without clustering: "HCO", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "BM" (default).
+#' @param se_type The sort of standard error sought. Without clustering: "HCO", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "BM" (default), "stata".
 #' @param ci A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
 #' @param coefficient_name a character or character vector that indicates which coefficients should be reported. Defaults to "Z".
@@ -39,14 +39,16 @@ lm_robust_se <- function(formula,
 
   if (!is.null(substitute(cluster_variable_name))) {
 
+    cl_se_types <- c("BM", "stata")
+
     # get cluster variable from subset of data
     cluster <- as.factor(eval(substitute(cluster_variable_name), data))
 
     # set/check se_type
     if (is.null(se_type)) {
       se_type <- "BM"
-    } else if (se_type != "BM") {
-      stop("Only se_type = 'BM' is allowed for clustered standard errors.")
+    } else if (!(se_type %in% cl_se_types)) {
+      stop("Only 'BM' or 'stata' allowed for se_type with clustered standard errors.")
     }
 
   } else {
@@ -55,8 +57,8 @@ lm_robust_se <- function(formula,
     # set/check se_type
     if (is.null(se_type)) {
       se_type <- "HC2"
-    } else if (se_type == "BM") {
-      stop("se_type = 'BM' is only allowed for clustered standard errors.")
+    } else if (se_type %in% cl_se_types) {
+      stop("'BM' and 'stata' only allowed for clustered standard errors.")
     }
 
   }
@@ -92,7 +94,7 @@ lm_robust_se <- function(formula,
 
     if(ci) {
 
-      if(se_type == "BM"){
+      if(se_type %in% cl_se_types){
         df <- fit$df
       } else {
         N <- nrow(design_matrix)

@@ -74,7 +74,7 @@ List lm_robust_helper(const arma::vec & y,
       // http://dirk.eddelbuettel.com/code/rcpp.armadillo.html
       double s2 = std::inner_product(ei.begin(), ei.end(), ei.begin(), 0.0)/(n - k);
       Vcov_hat = s2 * XtX_inv;
-    } else if (type == "BM" & cluster.isNotNull()) {
+    } else if ((type == "BM" | type == "stata") & cluster.isNotNull()) {
 
 
       // Code adapted from Michal Kolesar
@@ -85,54 +85,81 @@ List lm_robust_helper(const arma::vec & y,
       arma::vec levels = unique(clusters);
       int J = levels.n_elem;
 
-      arma::mat tutX(J, k);
-      arma::cube Gs(n, k, J);
+      if (type == "BM") {
 
-      // iterator used to fill tutX
-      int clusternum = 0;
+        arma::mat tutX(J, k);
+        arma::cube Gs(n, k, J);
 
-      // iterate over unique cluster values
-      for(arma::vec::const_iterator j = levels.begin();
-          j != levels.end();
-          ++j){
+        // iterator used to fill tutX
+        int clusternum = 0;
 
-        // Vcov matrix
-        arma::uvec cluster_ids = find(clusters == *j);
-        arma::mat Xj = X.rows(cluster_ids);
-        arma::mat XtX_inv_tXj = XtX_inv * arma::trans(Xj);
-        // (I_j - Xj %*% (X'X)^{-1} %*% Xj') ^ {-1/2} %*% Xj
-        arma::mat tX = arma::sqrtmat_sympd(
-          arma::inv_sympd(
-            arma::eye(Xj.n_rows, Xj.n_rows) - Xj * XtX_inv_tXj
-          )
-        ) * Xj;
+        // iterate over unique cluster values
+        for(arma::vec::const_iterator j = levels.begin();
+            j != levels.end();
+            ++j){
 
-        tutX.row(clusternum) = arma::trans(ei(cluster_ids)) * tX;
+          // Vcov matrix
+          arma::uvec cluster_ids = find(clusters == *j);
+          arma::mat Xj = X.rows(cluster_ids);
+          arma::mat XtX_inv_tXj = XtX_inv * arma::trans(Xj);
+          // (I_j - Xj %*% (X'X)^{-1} %*% Xj') ^ {-1/2} %*% Xj
+          arma::mat tX = arma::sqrtmat_sympd(
+            arma::inv_sympd(
+              arma::eye(Xj.n_rows, Xj.n_rows) - Xj * XtX_inv_tXj
+            )
+          ) * Xj;
 
-        if(ci) {
-          // Adjusted degrees of freedom
-          int cluster_size = cluster_ids.n_elem;
-          arma::mat ss = arma::zeros(n, cluster_size);
+          tutX.row(clusternum) = arma::trans(ei(cluster_ids)) * tX;
 
-          for(int i = 0; i < cluster_size; i++){
-            ss(cluster_ids[i], i) = 1;
+          if(ci) {
+            // Adjusted degrees of freedom
+            int cluster_size = cluster_ids.n_elem;
+            arma::mat ss = arma::zeros(n, cluster_size);
+
+            for(int i = 0; i < cluster_size; i++){
+              ss(cluster_ids[i], i) = 1;
+            }
+
+            Gs.slice(clusternum) = (ss - X * XtX_inv_tXj) * tX * XtX_inv;
           }
 
-          Gs.slice(clusternum) = (ss - X * XtX_inv_tXj) * tX * XtX_inv;
+          clusternum++;
         }
 
-        clusternum++;
-      }
 
-      Vcov_hat = XtX_inv * arma::trans(tutX) * tutX * XtX_inv;
+        Vcov_hat = XtX_inv * arma::trans(tutX) * tutX * XtX_inv;
 
-      if(ci) {
-        for(int p = 0; p < k; p++){
-          arma::mat G = Gs.subcube(arma::span::all, arma::span(p), arma::span::all);
-          arma::mat GG = arma::trans(G) * G;
-          df[p] = std::pow(arma::trace(GG), 2) / arma::accu(arma::pow(GG, 2));
+        if (ci) {
+          for(int p = 0; p < k; p++){
+            arma::mat G = Gs.subcube(arma::span::all, arma::span(p), arma::span::all);
+            arma::mat GG = arma::trans(G) * G;
+            df[p] = std::pow(arma::trace(GG), 2) / arma::accu(arma::pow(GG, 2));
+          }
         }
       }
+
+      if (type == "stata") {
+
+        arma::mat XteetX(k, k);
+
+        // iterate over unique cluster values
+        for(arma::vec::const_iterator j = levels.begin();
+            j != levels.end();
+            ++j){
+          arma::uvec cluster_ids = find(clusters == *j);
+
+          XteetX += Xt.cols(cluster_ids) *
+            ei.elem(cluster_ids) * arma::trans(ei.elem(cluster_ids)) *
+            X.rows(cluster_ids);
+        }
+
+        Vcov_hat = (J * (n - 1)) / ((J - 1) * (n - k)) *
+          XtX_inv * XteetX * XtX_inv;
+
+        df.fill(J - 1);
+
+      }
+
     }
   }
 
