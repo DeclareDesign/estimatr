@@ -6,6 +6,29 @@
 
 using namespace Rcpp;
 
+// mult_diag
+arma::mat mult_diag(const arma::mat& x, const arma::vec& d);
+RcppExport SEXP _estimatr_mult_diag(SEXP xSEXP, SEXP dSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type x(xSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type d(dSEXP);
+    rcpp_result_gen = Rcpp::wrap(mult_diag(x, d));
+    return rcpp_result_gen;
+END_RCPP
+}
+// mat_sq_inv
+arma::mat mat_sq_inv(const arma::mat& X);
+RcppExport SEXP _estimatr_mat_sq_inv(SEXP XSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    rcpp_result_gen = Rcpp::wrap(mat_sq_inv(X));
+    return rcpp_result_gen;
+END_RCPP
+}
 // lm_robust_helper
 List lm_robust_helper(const arma::vec& y, const arma::mat& X, const Rcpp::Nullable<Rcpp::NumericVector>& cluster, const bool& ci, const String type);
 RcppExport SEXP _estimatr_lm_robust_helper(SEXP ySEXP, SEXP XSEXP, SEXP clusterSEXP, SEXP ciSEXP, SEXP typeSEXP) {
@@ -23,6 +46,8 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_estimatr_mult_diag", (DL_FUNC) &_estimatr_mult_diag, 2},
+    {"_estimatr_mat_sq_inv", (DL_FUNC) &_estimatr_mat_sq_inv, 1},
     {"_estimatr_lm_robust_helper", (DL_FUNC) &_estimatr_lm_robust_helper, 5},
     {NULL, NULL, 0}
 };

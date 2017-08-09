@@ -7,6 +7,28 @@
 #include <RcppArmadillo.h>
 using namespace Rcpp;
 
+// Faster than x * diagmat(d)
+// [[Rcpp::export]]
+arma::mat mult_diag(const arma::mat& x, const arma::vec& d) {
+
+  arma::mat out(x.n_rows, x.n_cols);
+  for (int j = 0; j < x.n_cols; ++j) {
+    out.col(j) = x.col(j) * d(j);
+  }
+
+  return out;
+}
+
+// (X)^{-1/2}
+// [[Rcpp::export]]
+arma::mat mat_sq_inv(const arma::mat & X) {
+  arma::vec eigvals;
+  arma::mat eigvecs;
+  arma::eig_sym(eigvals, eigvecs, X);
+  arma::vec d2 = 1.0 / arma::sqrt(eigvals);
+  return(mult_diag(eigvecs, d2) * arma::trans(eigvecs));
+}
+
 // [[Rcpp::export]]
 List lm_robust_helper(const arma::vec & y,
                       const arma::mat & X,
@@ -103,10 +125,8 @@ List lm_robust_helper(const arma::vec & y,
           int cluster_size = cluster_ids.n_elem;
           arma::mat XtX_inv_tXj = XtX_inv * Xt.cols(cluster_ids);
           // (I_j - Xj %*% (X'X)^{-1} %*% Xj') ^ {-1/2} %*% Xj
-          arma::mat minP_Xt = arma::sqrtmat_sympd(
-            arma::inv_sympd(
-              arma::eye(cluster_size, cluster_size) - X.rows(cluster_ids) * XtX_inv_tXj
-            )
+          arma::mat minP_Xt = mat_sq_inv(
+            arma::eye(cluster_size, cluster_size) - X.rows(cluster_ids) * XtX_inv_tXj
           ) * X.rows(cluster_ids);
 
           tutX.row(clusternum) = arma::trans(ei(cluster_ids)) * minP_Xt;
@@ -165,5 +185,6 @@ List lm_robust_helper(const arma::vec & y,
                       _["Vcov_hat"]= Vcov_hat,
                       _["df"]= df);
 }
+
 
 
