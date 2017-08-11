@@ -93,7 +93,6 @@ test_that("lm cluster se", {
     lm_robust_se(
       Y ~ Z + X,
       cluster_variable_name = J,
-      coefficient_name = c("(Intercept)", "Z", "X"),
       data = dat
     )
 

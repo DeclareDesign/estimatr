@@ -25,7 +25,7 @@ lm_robust_se(formula, data, weights = NULL, subset = NULL,
 
 \item{alpha}{The significance level, 0.05 by default.}
 
-\item{coefficient_name}{a character or character vector that indicates which coefficients should be reported. Defaults to "Z".}
+\item{coefficient_name}{a character or character vector that indicates which coefficients should be reported. If left unspecified, returns all coefficients.}
 }
 \description{
 Ordinary Least Squares with Robust Standard Errors

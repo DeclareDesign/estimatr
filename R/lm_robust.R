@@ -36,6 +36,21 @@ lm_robust_se <- function(formula,
   variable_names <- colnames(design_matrix)
   outcome <- data[, all.vars(formula[[2]])]
 
+  # Get coefficients to get df adjustments for and return
+  if (is.null(coefficient_name)) {
+
+    which_covs <- rep(TRUE, ncol(design_matrix))
+
+  } else {
+
+    # subset return to coefficients the user asked for
+    which_covs <- variable_names %in% coefficient_name
+
+    # if ever we can figure out all the use cases in the test....
+    # which_ests <- return_frame$variable_names %in% deparse(substitute(coefficient_name))
+
+  }
+
   # allowable se_types with clustering
   cl_se_types <- c("BM", "stata")
 
@@ -81,7 +96,8 @@ lm_robust_se <- function(formula,
       X = design_matrix,
       cluster = cluster,
       ci = ci,
-      type = se_type
+      type = se_type,
+      which_covs = which_covs
   )
 
   est <- fit$beta_hat
@@ -98,7 +114,11 @@ lm_robust_se <- function(formula,
 
       if(se_type %in% cl_se_types){
 
-        df <- fit$df
+        ## Replace -99 with NA, easy way to flag that we didn't compute
+        ## the DoF because the user didn't ask for it
+        df <- ifelse(fit$df == -99,
+                     NA,
+                     fit$df)
 
       } else {
 
@@ -127,19 +147,6 @@ lm_robust_se <- function(formula,
       stringsAsFactors = FALSE
     )
 
-  if (is.null(coefficient_name)) {
+  return(return_frame[which_covs, ])
 
-    return(return_frame)
-
-  } else {
-
-    # subset return to coefficients the user asked for
-    which_ests <- return_frame$variable_names %in% coefficient_name
-
-    # if ever we can figure out all the use cases in the test....
-    # which_ests <- return_frame$variable_names %in% deparse(substitute(coefficient_name))
-
-    return(return_frame[which_ests, ])
-
-  }
 }

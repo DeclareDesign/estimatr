@@ -43,7 +43,8 @@ List lm_robust_helper(const arma::vec & y,
                       const arma::mat & X,
                       const Rcpp::Nullable<Rcpp::NumericVector> & cluster,
                       const bool & ci,
-                      const String type) {
+                      const String type,
+                      const std::vector<bool> & which_covs) {
 
   // t(X)
   arma::mat Xt = arma::trans(X);
@@ -59,6 +60,7 @@ List lm_robust_helper(const arma::vec & y,
 
   arma::mat Vcov_hat;
   arma::colvec df(X.n_cols);
+  df.fill(-99);
 
   if(type != "none"){
 
@@ -168,9 +170,12 @@ List lm_robust_helper(const arma::vec & y,
 
         if (ci) {
           for(int p = 0; p < k; p++){
-            arma::mat G = Gs.subcube(arma::span::all, arma::span(p), arma::span::all);
-            arma::mat GG = arma::trans(G) * G;
-            df[p] = std::pow(arma::trace(GG), 2) / arma::accu(arma::pow(GG, 2));
+            // only compute for covars that we need the DoF for
+            if (which_covs[p]) {
+              arma::mat G = Gs.subcube(arma::span::all, arma::span(p), arma::span::all);
+              arma::mat GG = arma::trans(G) * G;
+              df[p] = std::pow(arma::trace(GG), 2) / arma::accu(arma::pow(GG, 2));
+            }
           }
         }
       }
