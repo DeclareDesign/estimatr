@@ -118,6 +118,9 @@ List lm_robust_helper(const arma::vec & y,
       if (type == "BM") {
 
         arma::mat tutX(J, k);
+
+        // Cube stores the n by k G_s matrix for each cluster
+        // used for the BM dof corrction
         arma::cube Gs(n, k, J);
 
         // iterator used to fill tutX
@@ -136,7 +139,8 @@ List lm_robust_helper(const arma::vec & y,
           // (I_j - Xj %*% (X'X)^{-1} %*% Xj') ^ {-1/2} %*% Xj
           // i.e. (I_j - P_ss) ^ {-1/2} %*% Xj
           arma::mat minP_Xt = mat_sqrt_inv(
-            arma::eye(cluster_size, cluster_size) - X.rows(cluster_ids) * XtX_inv_tXj
+            arma::eye(cluster_size, cluster_size) -
+              X.rows(cluster_ids) * XtX_inv_tXj
           ) * X.rows(cluster_ids);
 
           // t(ei) %*% (I - P_ss)^{-1/2} %*% Xj
@@ -145,6 +149,7 @@ List lm_robust_helper(const arma::vec & y,
           tutX.row(clusternum) = arma::trans(ei(cluster_ids)) * minP_Xt;
 
           if(ci) {
+
             // Adjusted degrees of freedom
             arma::mat ss = arma::zeros(n, cluster_size);
 
