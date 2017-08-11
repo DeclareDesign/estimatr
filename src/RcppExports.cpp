@@ -45,15 +45,3 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-
-static const R_CallMethodDef CallEntries[] = {
-    {"_estimatr_mult_diag", (DL_FUNC) &_estimatr_mult_diag, 2},
-    {"_estimatr_mat_sqrt_inv", (DL_FUNC) &_estimatr_mat_sqrt_inv, 1},
-    {"_estimatr_lm_robust_helper", (DL_FUNC) &_estimatr_lm_robust_helper, 6},
-    {NULL, NULL, 0}
-};
-
-RcppExport void R_init_estimatr(DllInfo *dll) {
-    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
-    R_useDynamicSymbols(dll, FALSE);
-}

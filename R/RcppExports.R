@@ -2,14 +2,14 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 mult_diag <- function(x, d) {
-    .Call('_estimatr_mult_diag', PACKAGE = 'estimatr', x, d)
+    .Call(`_estimatr_mult_diag`, x, d)
 }
 
 mat_sqrt_inv <- function(X) {
-    .Call('_estimatr_mat_sqrt_inv', PACKAGE = 'estimatr', X)
+    .Call(`_estimatr_mat_sqrt_inv`, X)
 }
 
 lm_robust_helper <- function(y, X, cluster, ci, type, which_covs) {
-    .Call('_estimatr_lm_robust_helper', PACKAGE = 'estimatr', y, X, cluster, ci, type, which_covs)
+    .Call(`_estimatr_lm_robust_helper`, y, X, cluster, ci, type, which_covs)
 }
 
