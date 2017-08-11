@@ -6,7 +6,7 @@
 \usage{
 lm_robust_se(formula, data, weights = NULL, subset = NULL,
   cluster_variable_name = NULL, se_type = NULL, ci = TRUE, alpha = 0.05,
-  coefficient_name = "Z")
+  coefficient_name = NULL)
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}.}

@@ -7,7 +7,13 @@
 #include <RcppArmadillo.h>
 using namespace Rcpp;
 
-// Faster than x * diagmat(d)
+//----------
+// Helper functions
+//----------
+
+// This does a matrix multiplication of a matrix X with a diagonal matrix where
+// the diagonal is D.
+// This is faster than x * arma::diagmat(d)
 // [[Rcpp::export]]
 arma::mat mult_diag(const arma::mat& x, const arma::vec& d) {
 
@@ -19,16 +25,19 @@ arma::mat mult_diag(const arma::mat& x, const arma::vec& d) {
   return out;
 }
 
-// (X)^{-1/2}
+// Get's the inverse square root of a matrix (X)^{-1/2}
+// Used in computing the BM standard errors (I - P_ss^&{-1/2}
 // [[Rcpp::export]]
-arma::mat mat_sq_inv(const arma::mat & X) {
+arma::mat mat_sqrt_inv(const arma::mat & X) {
   arma::vec eigvals;
   arma::mat eigvecs;
   arma::eig_sym(eigvals, eigvecs, X);
-  arma::vec d2 = 1.0 / arma::sqrt(eigvals);
-  return(mult_diag(eigvecs, d2) * arma::trans(eigvecs));
+  return(mult_diag(eigvecs, 1.0 / arma::sqrt(eigvals)) * arma::trans(eigvecs));
 }
 
+//----------
+// Main LM fit and SE function
+//----------
 // [[Rcpp::export]]
 List lm_robust_helper(const arma::vec & y,
                       const arma::mat & X,
@@ -36,7 +45,7 @@ List lm_robust_helper(const arma::vec & y,
                       const bool & ci,
                       const String type) {
 
-  // xt
+  // t(X)
   arma::mat Xt = arma::trans(X);
 
   //XtX <- t(X_mat) %*% X_mat
@@ -98,7 +107,6 @@ List lm_robust_helper(const arma::vec & y,
       Vcov_hat = s2 * XtX_inv;
     } else if ((type == "BM" | type == "stata") & cluster.isNotNull()) {
 
-
       // Code adapted from Michal Kolesar
       // https://github.com/kolesarm/Robust-Small-Sample-Standard-Errors
 
@@ -120,15 +128,20 @@ List lm_robust_helper(const arma::vec & y,
             j != levels.end();
             ++j){
 
-          // Vcov matrix
           arma::uvec cluster_ids = find(clusters == *j);
           int cluster_size = cluster_ids.n_elem;
+
           arma::mat XtX_inv_tXj = XtX_inv * Xt.cols(cluster_ids);
+
           // (I_j - Xj %*% (X'X)^{-1} %*% Xj') ^ {-1/2} %*% Xj
-          arma::mat minP_Xt = mat_sq_inv(
+          // i.e. (I_j - P_ss) ^ {-1/2} %*% Xj
+          arma::mat minP_Xt = mat_sqrt_inv(
             arma::eye(cluster_size, cluster_size) - X.rows(cluster_ids) * XtX_inv_tXj
           ) * X.rows(cluster_ids);
 
+          // t(ei) %*% (I - P_ss)^{-1/2} %*% Xj
+          // each row is the contribution of the cluster to the meat
+          // Below use  t(tutX) %*% tutX to sum contributions across clusters
           tutX.row(clusternum) = arma::trans(ei(cluster_ids)) * minP_Xt;
 
           if(ci) {

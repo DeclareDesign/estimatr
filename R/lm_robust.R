@@ -11,7 +11,7 @@
 #' @param se_type The sort of standard error sought. Without clustering: "HCO", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "BM" (default), "stata".
 #' @param ci A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
-#' @param coefficient_name a character or character vector that indicates which coefficients should be reported. Defaults to "Z".
+#' @param coefficient_name a character or character vector that indicates which coefficients should be reported. If left unspecified, returns all coefficients.
 #'
 #' @export
 #'
@@ -23,7 +23,7 @@ lm_robust_se <- function(formula,
                          se_type = NULL,
                          ci = TRUE,
                          alpha = .05,
-                         coefficient_name = "Z") {
+                         coefficient_name = NULL) {
 
   condition_call <- substitute(subset)
 
@@ -36,6 +36,7 @@ lm_robust_se <- function(formula,
   variable_names <- colnames(design_matrix)
   outcome <- data[, all.vars(formula[[2]])]
 
+  # allowable se_types with clustering
   cl_se_types <- c("BM", "stata")
 
   if (!is.null(substitute(cluster_variable_name))) {
@@ -71,6 +72,7 @@ lm_robust_se <- function(formula,
     weights <- eval(substitute(weights), data)
     outcome <- sqrt(weights) * outcome
     design_matrix <- sqrt(weights) * design_matrix
+
   }
 
   fit <-
@@ -79,7 +81,8 @@ lm_robust_se <- function(formula,
       X = design_matrix,
       cluster = cluster,
       ci = ci,
-      type = se_type)
+      type = se_type
+  )
 
   est <- fit$beta_hat
   se = NA
@@ -94,16 +97,21 @@ lm_robust_se <- function(formula,
     if(ci) {
 
       if(se_type %in% cl_se_types){
+
         df <- fit$df
+
       } else {
+
         N <- nrow(design_matrix)
         k <- ncol(design_matrix)
         df <- N - k
+
       }
 
       p <- 2 * pt(abs(est / se), df = df, lower.tail = FALSE)
       ci_lower <- est - qt(1 - alpha / 2, df = df) * se
       ci_upper <- est + qt(1 - alpha / 2, df = df) * se
+
     }
 
   }
@@ -119,11 +127,19 @@ lm_robust_se <- function(formula,
       stringsAsFactors = FALSE
     )
 
-  which_ests <- return_frame$variable_names %in% coefficient_name
+  if (is.null(coefficient_name)) {
 
-  # if ever we can figure out all the use cases in the test....
-  # which_ests <- return_frame$variable_names %in% deparse(substitute(coefficient_name))
+    return(return_frame)
 
-  return(return_frame[which_ests, ])
+  } else {
 
+    # subset return to coefficients the user asked for
+    which_ests <- return_frame$variable_names %in% coefficient_name
+
+    # if ever we can figure out all the use cases in the test....
+    # which_ests <- return_frame$variable_names %in% deparse(substitute(coefficient_name))
+
+    return(return_frame[which_ests, ])
+
+  }
 }

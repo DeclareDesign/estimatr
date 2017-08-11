@@ -5,8 +5,8 @@ mult_diag <- function(x, d) {
     .Call('_estimatr_mult_diag', PACKAGE = 'estimatr', x, d)
 }
 
-mat_sq_inv <- function(X) {
-    .Call('_estimatr_mat_sq_inv', PACKAGE = 'estimatr', X)
+mat_sqrt_inv <- function(X) {
+    .Call('_estimatr_mat_sqrt_inv', PACKAGE = 'estimatr', X)
 }
 
 lm_robust_helper <- function(y, X, cluster, ci, type) {
