@@ -100,27 +100,26 @@ List lm_robust_helper(const arma::vec & y,
 
           // Vcov matrix
           arma::uvec cluster_ids = find(clusters == *j);
-          arma::mat Xj = X.rows(cluster_ids);
-          arma::mat XtX_inv_tXj = XtX_inv * arma::trans(Xj);
+          int cluster_size = cluster_ids.n_elem;
+          arma::mat XtX_inv_tXj = XtX_inv * Xt.cols(cluster_ids);
           // (I_j - Xj %*% (X'X)^{-1} %*% Xj') ^ {-1/2} %*% Xj
-          arma::mat tX = arma::sqrtmat_sympd(
+          arma::mat minP_Xt = arma::sqrtmat_sympd(
             arma::inv_sympd(
-              arma::eye(Xj.n_rows, Xj.n_rows) - Xj * XtX_inv_tXj
+              arma::eye(cluster_size, cluster_size) - X.rows(cluster_ids) * XtX_inv_tXj
             )
-          ) * Xj;
+          ) * X.rows(cluster_ids);
 
-          tutX.row(clusternum) = arma::trans(ei(cluster_ids)) * tX;
+          tutX.row(clusternum) = arma::trans(ei(cluster_ids)) * minP_Xt;
 
           if(ci) {
             // Adjusted degrees of freedom
-            int cluster_size = cluster_ids.n_elem;
             arma::mat ss = arma::zeros(n, cluster_size);
 
             for(int i = 0; i < cluster_size; i++){
               ss(cluster_ids[i], i) = 1;
             }
 
-            Gs.slice(clusternum) = (ss - X * XtX_inv_tXj) * tX * XtX_inv;
+            Gs.slice(clusternum) = (ss - X * XtX_inv_tXj) * minP_Xt * XtX_inv;
           }
 
           clusternum++;

@@ -36,10 +36,9 @@ lm_robust_se <- function(formula,
   variable_names <- colnames(design_matrix)
   outcome <- data[, all.vars(formula[[2]])]
 
+  cl_se_types <- c("BM", "stata")
 
   if (!is.null(substitute(cluster_variable_name))) {
-
-    cl_se_types <- c("BM", "stata")
 
     # get cluster variable from subset of data
     cluster <- as.factor(eval(substitute(cluster_variable_name), data))

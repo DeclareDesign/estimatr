@@ -21,6 +21,15 @@ test_that("lm cluster se", {
     data = dat
   )
 
+
+  lm_robust_se(
+    Y ~ Z + X,
+    cluster_variable_name = J,
+    coefficient_name = c("Z", "X"),
+    se_type = 'stata',
+    data = dat
+  )
+
   expect_equivalent(
     as.matrix(
       lm_robust_se(
@@ -43,6 +52,15 @@ test_that("lm cluster se", {
       data = dat
     )
 
+  lm_interact_stata <-
+    lm_robust_se(
+      Y ~ Z*X,
+      cluster_variable_name = J,
+      se_type = 'stata',
+      coefficient_name = "Z:X",
+      data = dat
+    )
+
   lm_interact_simple <- lm(Y ~ Z*X, data = dat)
 
   bm_interact <-
@@ -56,10 +74,20 @@ test_that("lm cluster se", {
     lm_interact_simple$coefficients["Z:X"] +
     qt(0.975, df = bm_interact$dof["Z:X"]) * bm_interact$se["Z:X"] * c(-1, 1)
 
+  bm_interact_stata_interval <-
+    lm_interact_simple$coefficients["Z:X"] +
+    qt(0.975, df = length(unique(dat$J))- 1) * bm_interact$se.Stata["Z:X"] * c(-1, 1)
+
   expect_equivalent(
     lm_interact[c("se", "ci_lower", "ci_upper")],
     c(bm_interact$se["Z:X"], bm_interact_interval)
   )
+
+  expect_equivalent(
+    lm_interact_stata[c("se", "ci_lower", "ci_upper")],
+    c(bm_interact$se.Stata["Z:X"], bm_interact_stata_interval)
+  )
+
 
   lm_full <-
     lm_robust_se(
