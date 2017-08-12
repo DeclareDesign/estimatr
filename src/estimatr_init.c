@@ -21,6 +21,6 @@ static const R_CallMethodDef CallEntries[] = {
 
 void R_init_estimatr(DllInfo *dll)
 {
-  R_registerRoutines(dll, NULL, NULL, NULL, NULL);
-  R_useDynamicSymbols(dll, TRUE);
+  R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+  R_useDynamicSymbols(dll, FALSE);
 }
