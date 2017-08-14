@@ -7,7 +7,7 @@ Authors@R: c(person("Graeme", "Blair", email = "graeme.blair@ucla.edu", role = c
              person("Jasper", "Cooper", email = "jjc2247@columbia.edu", role = c("aut")),
              person("Alexander", "Coppock", email = "alex.coppock@yale.edu", role = c("aut")),
              person("Macartan", "Humphreys", email = "macartan@gmail.com", role = c("aut")))
-Description: More about what it does (maybe more than one line)
+Description: This package provides fast estimators for common models in social science research.
 License: All rights reserved
 Imports:
     Rcpp (>= 0.12.10),
@@ -16,4 +16,5 @@ Imports:
     magrittr
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 6.0.1
-Suggests: testthat
+Suggests: testthat,
+          sandwich

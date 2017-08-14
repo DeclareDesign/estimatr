@@ -16,3 +16,4 @@ tests/testthat/*.pdf
 # compiled files
 src/*.o
 src/*.so
+src/*.dll
