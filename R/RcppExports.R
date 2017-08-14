@@ -2,6 +2,6 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 lm_robust_helper <- function(y, X, type) {
-    .Call('estimatr_lm_robust_helper', PACKAGE = 'estimatr', y, X, type)
+    .Call('_estimatr_lm_robust_helper', PACKAGE = 'estimatr', y, X, type)
 }
 
