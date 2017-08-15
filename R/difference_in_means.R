@@ -46,27 +46,39 @@ difference_in_means <-
       )
 
     condition_call <- substitute(subset)
+
     if (!is.null(condition_call)){
       r <- eval(condition_call, data)
       data <- data[r, ]
     }
 
+
+    if (!is.null(substitute(weights))) {
+
+      weights <- eval(substitute(weights), data)
+
+    }
+
     if(is.null(substitute(block_variable_name))){
 
-    return_df <- difference_in_means_internal(formula,
-                                              condition1 = condition1,
-                                              condition2 = condition2,
-                                              data = data,
-                                              weights = weights, alpha = alpha)
+      return_df <- difference_in_means_internal(
+        formula,
+        condition1 = condition1,
+        condition2 = condition2,
+        data = data,
+        weights = weights,
+        alpha = alpha
+      )
 
-    return_df$df <- with(return_df, N - 2)
-    return_df$p <- with(return_df, 2 * pt(abs(est / se), df = df, lower.tail = FALSE))
-    return_df$ci_lower <- with(return_df, est - qt(1 - alpha / 2, df = df) * se)
-    return_df$ci_upper <- with(return_df, est + qt(1 - alpha / 2, df = df) * se)
+      return_df$df <- with(return_df, N - 2)
+      return_df$p <- with(return_df, 2 * pt(abs(est / se), df = df, lower.tail = FALSE))
+      return_df$ci_lower <- with(return_df, est - qt(1 - alpha / 2, df = df) * se)
+      return_df$ci_upper <- with(return_df, est + qt(1 - alpha / 2, df = df) * se)
 
-    return_df <- return_df[,c("est", "se", "p", "ci_lower", "ci_upper", "df")]
+      return_df <- return_df[,c("est", "se", "p", "ci_lower", "ci_upper", "df")]
 
-    return(return_df)
+      return(return_df)
+
     } else {
 
       blocks <- eval(substitute(block_variable_name), data)
@@ -77,7 +89,8 @@ difference_in_means <-
         map(~difference_in_means_internal(formula, data = .,
                                           condition1 = condition1,
                                           condition2 = condition2,
-                                          weights = weights, alpha = alpha)) %>%
+                                          weights = weights,
+                                          alpha = alpha)) %>%
         bind_rows()
 
       N_overall <- with(block_estimates, sum(N))
@@ -96,7 +109,7 @@ difference_in_means <-
         p = p,
         ci_lower = ci_lower,
         ci_upper = ci_upper,
-        df = df, 
+        df = df,
         stringsAsFactors = FALSE
       )
 
@@ -142,8 +155,6 @@ difference_in_means_internal <-
 
     Y2 <- Y[t == condition2]
     Y1 <- Y[t == condition1]
-
-    weights <- eval(substitute(weights), data)
 
     if (is.null(weights)) {
       diff <- mean(Y2) - mean(Y1)
