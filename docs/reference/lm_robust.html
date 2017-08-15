@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Ordinary Least Squares with Robust Standard Errors — lm_robust_se • estimatr</title>
+<title>Ordinary Least Squares with Robust Standard Errors — lm_robust • estimatr</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -102,8 +102,9 @@
     <p>Ordinary Least Squares with Robust Standard Errors</p>
     
 
-    <pre class="usage"><span class='fu'>lm_robust_se</span>(<span class='no'>formula</span>, <span class='no'>data</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>subset</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>,
-  <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"HC2"</span>, <span class='kw'>coefficient_name</span> <span class='kw'>=</span> <span class='st'>"Z"</span>)</pre>
+    <pre class="usage"><span class='fu'>lm_robust</span>(<span class='no'>formula</span>, <span class='no'>data</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>subset</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>cluster_variable_name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>,
+  <span class='kw'>coefficient_name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -125,16 +126,24 @@
       <td><p>An optional bare (unquoted) expression specifying a subset of observations to be used.</p></td>
     </tr>
     <tr>
+      <th>cluster_variable_name</th>
+      <td><p>An optional bare (unquoted) name of the factor variable that corresponds to the clusters in the data. Will return Bell-McCaffrey standard errors, overriding <code>se_type</code>.</p></td>
+    </tr>
+    <tr>
+      <th>se_type</th>
+      <td><p>The sort of standard error sought. Without clustering: "HCO", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "BM" (default), "stata".</p></td>
+    </tr>
+    <tr>
+      <th>ci</th>
+      <td><p>A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.</p></td>
+    </tr>
+    <tr>
       <th>alpha</th>
       <td><p>The significance level, 0.05 by default.</p></td>
     </tr>
     <tr>
-      <th>se_type</th>
-      <td><p>The sort of standard error sought -- "HCO", "HC1", "HC2", "HC3", or "classical". "HC2" by default</p></td>
-    </tr>
-    <tr>
       <th>coefficient_name</th>
-      <td><p>a character or character vector that indicates which coefficients should be reported. Defaults to "Z".</p></td>
+      <td><p>a character or character vector that indicates which coefficients should be reported. If left unspecified, returns all coefficients.</p></td>
     </tr>
     </table>
     
