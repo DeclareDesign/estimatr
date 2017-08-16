@@ -4,13 +4,16 @@
 \alias{difference_in_means}
 \title{Built-in Estimators: Difference-in-means}
 \usage{
-difference_in_means(formula, block_variable_name = NULL, condition1 = NULL,
-  condition2 = NULL, data, weights = NULL, subset = NULL, alpha = 0.05)
+difference_in_means(formula, block_variable_name = NULL,
+  cluster_variable_name = NULL, condition1 = NULL, condition2 = NULL,
+  data, weights = NULL, subset = NULL, alpha = 0.05)
 }
 \arguments{
 \item{formula}{An object of class "formula", such as Y ~ Z}
 
-\item{block_variable_name}{The bare (unquote) name of the block variable. Use for blocked designs only.}
+\item{block_variable_name}{An optional bare (unquote) name of the block variable. Use for blocked designs only.}
+
+\item{cluster_variable_name}{An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.}
 
 \item{condition1}{names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.}
 

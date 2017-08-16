@@ -56,20 +56,28 @@ difference_in_means <-
       data <- data[r, ]
     }
 
+    if (!is.null(substitute(block_variable_name))) {
+      blocks <- eval(substitute(block_variable_name), data)
+      if (is.factor(blocks)) {
+        blocks <- droplevels(blocks)
+      }
+    } else {
+      blocks <- NULL
+    }
+
     if (!is.null(substitute(weights))) {
       weights <- eval(substitute(weights), data)
     }
 
     if (!is.null(substitute(cluster_variable_name))) {
-      cluster <- as.factor(eval(substitute(cluster_variable_name), data))
+      cluster <- eval(substitute(cluster_variable_name), data)
+      if (is.factor(cluster)) {
+        cluster <- droplevels(cluster)
+      }
+
+      cluster_variable_name <- deparse(substitute(cluster_variable_name))
     } else {
       cluster <- NULL
-    }
-
-    if (!is.null(substitute(cluster_variable_name))) {
-      blocks <- eval(substitute(block_variable_name), data)
-    } else {
-      blocks <- NULL
     }
 
     if (is.null(blocks)){
@@ -84,6 +92,7 @@ difference_in_means <-
         alpha = alpha
       )
 
+      ## todo: add inflation from GG fn 20 ch 3
       return_df$df <- with(return_df, N - 2)
       return_df$p <- with(return_df, 2 * pt(abs(est / se), df = df, lower.tail = FALSE))
       return_df$ci_lower <- with(return_df, est - qt(1 - alpha / 2, df = df) * se)
@@ -95,12 +104,32 @@ difference_in_means <-
 
     } else {
 
-      # Check that clusters nest within blocks
-      if (!is.null(custer)) {
+      pair_matched = FALSE
+
+      if (!is.null(cluster)) {
+
+        # Check that clusters nest within blocks
         if (!all(tapply(blocks, cluster, function(x)
           all(x == x[1])))) {
           stop("All units within a cluster must be in the same block.")
         }
+
+        # get number of clusters per block
+        clust_per_block <- tapply(cluster, blocks, function(x) length(unique(x)))
+      } else {
+        clust_per_block <- tabulate(as.factor(blocks))
+      }
+
+      if (any(clust_per_block == 1)) {
+        stop(
+          "Some blocks have only one unit or cluster. Blocks must have multiple units or clusters."
+        )
+      } else if (all(clust_per_block == 2)) {
+        pair_matched = TRUE
+      } else if (length(unique(clust_per_block) > 1) & any(clust_per_block == 2)) {
+        stop(
+          "Some blocks have two units or clusters, while others have more units or clusters. Design must either be paired or blocks must be of size 4 or greater"
+        )
       }
 
       block_estimates <-
@@ -110,13 +139,38 @@ difference_in_means <-
                                           condition1 = condition1,
                                           condition2 = condition2,
                                           weights = weights,
-                                          cluster = cluster,
+                                          # have to pass var name to get correct subset of cluster
+                                          cluster_variable_name = cluster_variable_name,
+                                          pair_matched = pair_matched,
                                           alpha = alpha)) %>%
         bind_rows()
 
       N_overall <- with(block_estimates, sum(N))
       diff <- with(block_estimates, sum(est * N/N_overall))
-      se <- with(block_estimates, sqrt(sum(se^2 * (N/N_overall)^2)))
+      if (pair_matched) {
+
+        n_blocks <- nrow(block_estimates)
+
+        if (is.null(cluster)) {
+          se <-
+            with(
+              block_estimates,
+              sqrt( (1 / (n_blocks * (n_blocks - 1))) * sum((est - diff)^2) )
+            )
+        } else {
+          se <-
+            with(
+              block_estimates,
+              sqrt(
+                ( n_blocks / ((n_blocks - 1) * N_overall^2) ) *
+                  sum( (N * est - (N_overall * diff)/n_blocks)^2 )
+              )
+            )
+        }
+
+      } else {
+        se <- with(block_estimates, sqrt(sum(se^2 * (N/N_overall)^2)))
+      }
 
       ## we don't know if this is correct!
       df <- N_overall - 2
@@ -157,6 +211,8 @@ difference_in_means_internal <-
            data,
            weights = NULL,
            cluster = NULL,
+           cluster_variable_name = NULL,
+           pair_matched = FALSE,
            alpha = .05) {
 
     Y <- data[, all.vars(formula[[2]])]
@@ -168,16 +224,30 @@ difference_in_means_internal <-
       condition_names <- sort(unique(t))
     }
 
+    if (length(condition_names) == 1) {
+      stop("Must have units with both treatment conditions within each block.")
+    }
+
     if (is.null(condition1) & is.null(condition2)) {
       condition1 <- condition_names[1]
       condition2 <- condition_names[2]
     }
 
-    # Check that treatment status is uniform within cluster
+    if (!is.null(cluster_variable_name)) {
+      cluster <- data[, cluster_variable_name]
+      if (is.factor(cluster)) {
+        cluster <- droplevels(cluster)
+      }
+    }
+
+    # Check that treatment status is uniform within cluster, checked here
+    # so that the treatment vector t doesn't have to be built anywhere else
     if (!is.null(cluster)) {
-      if (!all(tapply(t, cluster, function(x)
-          all(x == x[1])))) {
-        stop("All units within a cluster must have the same treatment condition.")
+
+      if (!all(tapply(t, cluster, function(x) all(x == x[1])))) {
+        stop(
+          "All units within a cluster must have the same treatment condition."
+        )
       }
     }
 
@@ -190,15 +260,17 @@ difference_in_means_internal <-
 
       diff <- mean(Y2) - mean(Y1)
 
-      if (is.null(cluster)) {
+      if (pair_matched & is.null(cluster)) {
+        se <- NA
+      } else if (is.null(cluster)) {
         se <- sqrt(var(Y2) / length(Y2) + var(Y1) / length(Y1))
       } else {
         k <- length(unique(cluster))
 
         se <- sqrt(
-          (var(tapply(Y2, droplevels(cluster[t == condition2]), mean)) * N) /
+          (var(tapply(Y2, cluster[t == condition2], mean)) * N) /
             (k * length(Y2)) +
-          (var(tapply(Y1, droplevels(cluster[t == condition1]), mean)) * N) /
+          (var(tapply(Y1, cluster[t == condition1], mean)) * N) /
             (k * length(Y1))
         )
       }
