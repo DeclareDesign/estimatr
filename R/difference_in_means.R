@@ -146,18 +146,23 @@ difference_in_means <-
         bind_rows()
 
       N_overall <- with(block_estimates, sum(N))
+
+      # Blocked design, (Gerber and Green 2012, p. 73, eq. 3.10)
       diff <- with(block_estimates, sum(est * N/N_overall))
+
       if (pair_matched) {
 
         n_blocks <- nrow(block_estimates)
 
         if (is.null(cluster)) {
+          # Pair matched, cluster randomized (Gerber and Green 2012, p. 77, eq. 3.16)
           se <-
             with(
               block_estimates,
               sqrt( (1 / (n_blocks * (n_blocks - 1))) * sum((est - diff)^2) )
             )
         } else {
+          # Pair matched, unit randomized (Imai, King, Nall 2009, p. 36, eq. 6)
           se <-
             with(
               block_estimates,
@@ -169,6 +174,7 @@ difference_in_means <-
         }
 
       } else {
+        # Block randomized (Gerber and Green 2012, p. 74, footnote 17)
         se <- with(block_estimates, sqrt(sum(se^2 * (N/N_overall)^2)))
       }
 
@@ -260,11 +266,15 @@ difference_in_means_internal <-
 
       diff <- mean(Y2) - mean(Y1)
 
-      if (pair_matched & is.null(cluster)) {
+      if (pair_matched) {
+        # Pair matched designs
         se <- NA
       } else if (is.null(cluster)) {
+        # Non-pair matched designs, unit level randomization
         se <- sqrt(var(Y2) / length(Y2) + var(Y1) / length(Y1))
       } else {
+        # Non-pair matched designs, cluster randomization
+        # (Gerber and Green 2012, p. 83, eq. 3.23)
         k <- length(unique(cluster))
 
         se <- sqrt(
