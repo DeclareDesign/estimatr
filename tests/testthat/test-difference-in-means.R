@@ -48,7 +48,31 @@ test_that("DIM Weighted", {
   difference_in_means(Y ~ Z, alpha = .10, weights = weights2, data = df)
   difference_in_means(Y ~ Z, alpha = .10, data = df)
 
-  df <- data.frame(Y = rnorm(100), Z = rbinom(100, 1, .5), wt = rnorm(100))
-  difference_in_means(Y ~ Z, weights = wt, data = df)
+})
+
+
+test_that("DIM Clustered", {
+
+  df <- data.frame(weights = runif(100),
+                   weights2 = 1,
+                   J = rep(1:4, each = 25))
+
+  df$Y <- rnorm(100, mean = rep(rnorm(4, sd = sqrt(0.1)), each = 25), sd = sqrt(0.9))
+  df$Z <- as.numeric(df$J %in% 1:2)
+
+  difference_in_means(Y ~ Z, alpha = .10, data = df)
+  difference_in_means(Y ~ Z, alpha = .10, cluster_variable_name = J, data = df)
+
+})
+
+test_that("DIM Pair Matched", {
+
+  df <- data.frame(Y = rnorm(100),
+                   Z = rbinom(100, 1, .5),
+                   weights = runif(100),
+                   weights2 = 1,
+                   block = rep(1:50, each = 2))
+
+  difference_in_means(Y ~ Z, alpha = .05, block_variable_name = block, data = df)
 
 })

@@ -1,7 +1,8 @@
 #' Built-in Estimators: Difference-in-means
 #'
 #' @param formula An object of class "formula", such as Y ~ Z
-#' @param block_variable_name The bare (unquote) name of the block variable. Use for blocked designs only.
+#' @param block_variable_name An optional bare (unquote) name of the block variable. Use for blocked designs only.
+#' @param cluster_variable_name An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.
 #' @param data A data.frame.
 #' @param weights An optional vector of weights (not yet implemented).
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
@@ -34,16 +35,19 @@
 difference_in_means <-
   function(formula,
            block_variable_name = NULL,
+           cluster_variable_name = NULL,
            condition1 = NULL,
            condition2 = NULL,
            data,
            weights = NULL,
            subset = NULL,
            alpha = .05) {
-    if (length(all.vars(formula[[3]])) > 1)
+
+    if (length(all.vars(formula[[3]])) > 1) {
       stop(
         "The formula should only include one variable on the right-hand side: the treatment variable."
       )
+    }
 
     condition_call <- substitute(subset)
 
@@ -52,14 +56,23 @@ difference_in_means <-
       data <- data[r, ]
     }
 
-
     if (!is.null(substitute(weights))) {
-
       weights <- eval(substitute(weights), data)
-
     }
 
-    if(is.null(substitute(block_variable_name))){
+    if (!is.null(substitute(cluster_variable_name))) {
+      cluster <- as.factor(eval(substitute(cluster_variable_name), data))
+    } else {
+      cluster <- NULL
+    }
+
+    if (!is.null(substitute(cluster_variable_name))) {
+      blocks <- eval(substitute(block_variable_name), data)
+    } else {
+      blocks <- NULL
+    }
+
+    if (is.null(blocks)){
 
       return_df <- difference_in_means_internal(
         formula,
@@ -67,6 +80,7 @@ difference_in_means <-
         condition2 = condition2,
         data = data,
         weights = weights,
+        cluster = cluster,
         alpha = alpha
       )
 
@@ -81,7 +95,13 @@ difference_in_means <-
 
     } else {
 
-      blocks <- eval(substitute(block_variable_name), data)
+      # Check that clusters nest within blocks
+      if (!is.null(custer)) {
+        if (!all(tapply(blocks, cluster, function(x)
+          all(x == x[1])))) {
+          stop("All units within a cluster must be in the same block.")
+        }
+      }
 
       block_estimates <-
         data %>%
@@ -90,6 +110,7 @@ difference_in_means <-
                                           condition1 = condition1,
                                           condition2 = condition2,
                                           weights = weights,
+                                          cluster = cluster,
                                           alpha = alpha)) %>%
         bind_rows()
 
@@ -135,6 +156,7 @@ difference_in_means_internal <-
            condition2 = NULL,
            data,
            weights = NULL,
+           cluster = NULL,
            alpha = .05) {
 
     Y <- data[, all.vars(formula[[2]])]
@@ -151,17 +173,41 @@ difference_in_means_internal <-
       condition2 <- condition_names[2]
     }
 
+    # Check that treatment status is uniform within cluster
+    if (!is.null(cluster)) {
+      if (!all(tapply(t, cluster, function(x)
+          all(x == x[1])))) {
+        stop("All units within a cluster must have the same treatment condition.")
+      }
+    }
+
     N <- length(Y)
 
     Y2 <- Y[t == condition2]
     Y1 <- Y[t == condition1]
 
     if (is.null(weights)) {
+
       diff <- mean(Y2) - mean(Y1)
 
-      se <- sqrt(var(Y2) / length(Y2) + var(Y1) / length(Y1))
+      if (is.null(cluster)) {
+        se <- sqrt(var(Y2) / length(Y2) + var(Y1) / length(Y1))
+      } else {
+        k <- length(unique(cluster))
+
+        se <- sqrt(
+          (var(tapply(Y2, droplevels(cluster[t == condition2]), mean)) * N) /
+            (k * length(Y2)) +
+          (var(tapply(Y1, droplevels(cluster[t == condition1]), mean)) * N) /
+            (k * length(Y1))
+        )
+      }
+
 
     } else {
+
+      # TODO: weights and clusters
+      # TODO: weights and matched pair
 
       w2 <- weights[t == condition2]
       w1 <- weights[t == condition1]
