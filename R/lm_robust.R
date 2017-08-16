@@ -15,15 +15,15 @@
 #'
 #' @export
 #'
-lm_robust_se <- function(formula,
-                         data,
-                         weights = NULL,
-                         subset = NULL,
-                         cluster_variable_name = NULL,
-                         se_type = NULL,
-                         ci = TRUE,
-                         alpha = .05,
-                         coefficient_name = NULL) {
+lm_robust <- function(formula,
+                      data,
+                      weights = NULL,
+                      subset = NULL,
+                      cluster_variable_name = NULL,
+                      se_type = NULL,
+                      ci = TRUE,
+                      alpha = .05,
+                      coefficient_name = NULL) {
 
   condition_call <- substitute(subset)
 

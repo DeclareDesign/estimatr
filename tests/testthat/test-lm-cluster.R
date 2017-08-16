@@ -10,11 +10,11 @@ test_that("lm cluster se", {
 
 
   ## Test functionality
-  lm_robust_se(Y ~ Z, cluster_variable_name = J, data = dat)
+  lm_robust(Y ~ Z, cluster_variable_name = J, data = dat)
 
-  lm_robust_se(Y ~ Z + X, cluster_variable_name = J, data = dat)
+  lm_robust(Y ~ Z + X, cluster_variable_name = J, data = dat)
 
-  lm_robust_se(
+  lm_robust(
     Y ~ Z + X,
     cluster_variable_name = J,
     coefficient_name = c("Z", "X"),
@@ -22,7 +22,7 @@ test_that("lm cluster se", {
   )
 
 
-  lm_robust_se(
+  lm_robust(
     Y ~ Z + X,
     cluster_variable_name = J,
     coefficient_name = c("Z", "X"),
@@ -32,7 +32,7 @@ test_that("lm cluster se", {
 
   expect_equivalent(
     as.matrix(
-      lm_robust_se(
+      lm_robust(
         Y ~ X + Z,
         cluster_variable_name = J,
         ci = FALSE,
@@ -45,7 +45,7 @@ test_that("lm cluster se", {
 
   ## Test equality
   lm_interact <-
-    lm_robust_se(
+    lm_robust(
       Y ~ Z*X,
       cluster_variable_name = J,
       coefficient_name = "Z:X",
@@ -53,7 +53,7 @@ test_that("lm cluster se", {
     )
 
   lm_interact_stata <-
-    lm_robust_se(
+    lm_robust(
       Y ~ Z*X,
       cluster_variable_name = J,
       se_type = 'stata',
@@ -90,7 +90,7 @@ test_that("lm cluster se", {
 
 
   lm_full <-
-    lm_robust_se(
+    lm_robust(
       Y ~ Z + X,
       cluster_variable_name = J,
       data = dat
@@ -116,7 +116,7 @@ test_that("lm cluster se", {
 
   ## Test error handling
   expect_error(
-    lm_robust_se(
+    lm_robust(
       Y ~ Z,
       cluster_variable_name = J,
       weights = W,
@@ -126,7 +126,7 @@ test_that("lm cluster se", {
   )
 
   expect_error(
-    lm_robust_se(
+    lm_robust(
       Y ~ Z,
       cluster_variable_name = J,
       se_type = 'HC2',
@@ -136,7 +136,7 @@ test_that("lm cluster se", {
   )
 
   expect_error(
-    lm_robust_se(
+    lm_robust(
       Y ~ Z,
       se_type = 'BM',
       data = dat
