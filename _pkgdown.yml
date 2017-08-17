@@ -6,7 +6,7 @@ navbar:
   - text: "Packages"
     menu:
       - text: DeclareDesign
-        href: https://declaredesign.org
+        href: http://declaredesign.org
       - text: randomizr
         href: http://randomizr.declaredesign.org
       - text: fabricatr
