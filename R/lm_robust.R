@@ -32,9 +32,10 @@ lm_robust <- function(formula,
     data <- data[r,]
   }
 
-  design_matrix <- model.matrix.default(formula, data = data)
+  mf <- model.frame.default(formula, data = data)
+  design_matrix <- model.matrix.default(formula, data = mf)
   variable_names <- colnames(design_matrix)
-  outcome <- data[, all.vars(formula[[2]])]
+  outcome <- model.response(mf)
 
   # Get coefficients to get df adjustments for and return
   if (is.null(coefficient_name)) {
