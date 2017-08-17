@@ -134,7 +134,7 @@ test_that("DIM Matched Pair Cluster Randomization = Matched Pair when cluster si
   df <- data.frame(Y = rnorm(100),
                    block = rep(1:25, each = 4),
                    cluster = 1:100,
-                   Z = rep(0:1, times = 50))
+                   Z = rep(c(0,0,1,1), times = 25))
 
   expect_equal(
     difference_in_means(
