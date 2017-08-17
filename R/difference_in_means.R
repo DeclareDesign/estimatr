@@ -126,7 +126,7 @@ difference_in_means <-
         )
       } else if (all(clust_per_block == 2)) {
         pair_matched = TRUE
-      } else if (any(clust_per_block == 2) & any(cluster_per_block > 2)) {
+      } else if (any(clust_per_block == 2) & any(clust_per_block > 2)) {
         stop(
           "Some blocks have two units or clusters, while others have more units or clusters. Design must either be paired or all blocks must be of size 3 or greater."
         )
