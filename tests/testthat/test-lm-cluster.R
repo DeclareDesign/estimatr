@@ -145,3 +145,37 @@ test_that("lm cluster se", {
   )
 })
 
+test_that("lm cluster se with missingness", {
+  dat <- data.frame(Y = rnorm(100),
+                    Z = rbinom(100, 1, .5),
+                    X = rnorm(100),
+                    J = sample(1:10, 100, replace = T),
+                    W = runif(100))
+
+  dat$X[23] <- NA
+  dat$J[63] <- NA
+
+  expect_identical(
+    lm_robust(
+      Y ~ Z + X,
+      cluster_variable_name = J,
+      data = dat
+    ),
+    lm_robust(
+      Y ~ Z + X,
+      cluster_variable_name = J,
+      data = dat[-c(23, 63),]
+    )
+  )
+
+  expect_warning(
+    lm_robust(
+      Y ~ Z + X,
+      cluster_variable_name = J,
+      data = dat
+    ),
+    'missingness in the cluster'
+  )
+
+})
+

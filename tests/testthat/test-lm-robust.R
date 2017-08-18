@@ -37,7 +37,10 @@ test_that("lm robust works with missingness",{
 
   df$X[23] <- NA
 
-  lm_robust(Y ~ Z + X, data = df)
+  expect_identical(
+    lm_robust(Y ~ Z + X, data = df),
+    lm_robust(Y ~ Z + X, data = df[-23, ])
+  )
   lm_robust(Y ~ Z + X, coefficient_name = "X", data = df)
   lm_robust(Y ~ Z + X, coefficient_name = c("Z", "X"), data = df)
   lm_robust(Y ~ Z + X, coefficient_name = c("(Intercept)", "Z", "X"), data = df)
