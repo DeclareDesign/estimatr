@@ -42,12 +42,12 @@ lm_lin <- function(formula,
   }
 
   design_matrix <- model.matrix.default(full_formula, data = data)
-  treatment <- data[, all.vars(formula[[3]])]
+  treatment <- design_matrix[, all.vars(formula[[3]])]
 
   # check speed
   demeaned_interacted_covars <-
     lapply(
-      setdiff(colnames(design_matrix), all.vars(formula)),
+      setdiff(colnames(design_matrix), c(all.vars(formula), '(Intercept)')),
       function(x) {
         xbar <- design_matrix[, x] - mean(design_matrix[, x])
         matrix(
