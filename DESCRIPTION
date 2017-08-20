@@ -10,10 +10,7 @@ Authors@R: c(person("Graeme", "Blair", email = "graeme.blair@ucla.edu", role = c
 Description: This package provides fast estimators for common models in social science research.
 License: All rights reserved
 Imports:
-    Rcpp (>= 0.12.10),
-    dplyr,
-    purrr,
-    magrittr
+    Rcpp (>= 0.12.10)
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 6.0.1
 Suggests: testthat,

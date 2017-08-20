@@ -25,6 +25,10 @@ lm_robust <- function(formula,
                       alpha = .05,
                       coefficient_name = NULL) {
 
+  ## allowable se_types with clustering
+  cl_se_types <- c("BM", "stata")
+
+  ## Get subset of data
   condition_call <- substitute(subset)
 
   if (!is.null(condition_call)) {
@@ -32,32 +36,26 @@ lm_robust <- function(formula,
     data <- data[r,]
   }
 
-  design_matrix <- model.matrix.default(formula, data = data)
-  variable_names <- colnames(design_matrix)
-  outcome <- data[, all.vars(formula[[2]])]
+  mf <- model.frame.default(formula,
+                            data = data)
 
-  # Get coefficients to get df adjustments for and return
-  if (is.null(coefficient_name)) {
 
-    which_covs <- rep(TRUE, ncol(design_matrix))
-
-  } else {
-
-    # subset return to coefficients the user asked for
-    which_covs <- variable_names %in% coefficient_name
-
-    # if ever we can figure out all the use cases in the test....
-    # which_ests <- return_frame$variable_names %in% deparse(substitute(coefficient_name))
-
-  }
-
-  # allowable se_types with clustering
-  cl_se_types <- c("BM", "stata")
-
+  ## Parse cluster variable
   if (!is.null(substitute(cluster_variable_name))) {
 
     # get cluster variable from subset of data
-    cluster <- as.factor(eval(substitute(cluster_variable_name), data))
+    cluster <- as.factor(eval(substitute(cluster_variable_name), data[row.names(mf), ]))
+
+    cluster_missing <- is.na(cluster)
+
+    if (any(cluster_missing)) {
+      warning(
+        "Some observations have missingness in the cluster variable but have not in the outcome or covariates. These observations have been dropped."
+      )
+
+      mf <- mf[!cluster_missing, ]
+      cluster <- cluster[!cluster_missing]
+    }
 
     # set/check se_type
     if (is.null(se_type)) {
@@ -78,15 +76,50 @@ lm_robust <- function(formula,
 
   }
 
+  ## Parse weights variable and get design matrix
   if (!is.null(substitute(weights))) {
 
     if (!is.null(cluster)) {
       stop("weights not yet supported with clustered standard errors")
     }
 
-    weights <- eval(substitute(weights), data)
-    outcome <- sqrt(weights) * outcome
-    design_matrix <- sqrt(weights) * design_matrix
+    weights <- eval(substitute(weights), data[row.names(mf), ])
+
+    weights_missing <- is.na(weights)
+
+    if (any(weights_missing)) {
+      warning(
+        "Some observations have missingness in the weights variable but not in the outcome or covariates. These observations have been dropped."
+      )
+    }
+
+    mf <- mf[!weights_missing, ]
+    weights <- weights[!weights_missing]
+
+    outcome <- sqrt(weights) * model.response(mf)
+    design_matrix <- sqrt(weights) * model.matrix.default(formula, data = mf)
+
+  } else {
+
+    outcome <- model.response(mf)
+    design_matrix <- model.matrix.default(formula, data = mf)
+
+  }
+
+  variable_names <- colnames(design_matrix)
+
+  # Get coefficients to get df adjustments for and return
+  if (is.null(coefficient_name)) {
+
+    which_covs <- rep(TRUE, ncol(design_matrix))
+
+  } else {
+
+    # subset return to coefficients the user asked for
+    which_covs <- variable_names %in% coefficient_name
+
+    # if ever we can figure out all the use cases in the test....
+    # which_ests <- return_frame$variable_names %in% deparse(substitute(coefficient_name))
 
   }
 
