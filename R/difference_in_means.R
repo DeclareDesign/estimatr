@@ -146,18 +146,19 @@ difference_in_means <-
 
       if (!is.null(cluster)) {
 
-        # Check that clusters nest within blocks
+        ## Check that clusters nest within blocks
         if (!all(tapply(blocks, cluster, function(x)
           all(x == x[1])))) {
           stop("All units within a cluster must be in the same block.")
         }
 
-        # get number of clusters per block
+        ## get number of clusters per block
         clust_per_block <- tapply(cluster, blocks, function(x) length(unique(x)))
       } else {
         clust_per_block <- tabulate(as.factor(blocks))
       }
 
+      ## Check if design is pair matched
       if (any(clust_per_block == 1)) {
         stop(
           "Some blocks have only one unit or cluster. Blocks must have multiple units or clusters."
