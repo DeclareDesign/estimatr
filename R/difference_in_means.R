@@ -52,12 +52,28 @@ difference_in_means <-
       data <- data[r, ]
     }
 
+    ## Drop rows with missingness
+    missing_data <- !complete.cases(data[, all.vars(formula)])
+    data <- data[!missing_data, ]
+
     ## Get block variable
     if (!is.null(substitute(block_variable_name))) {
       blocks <- eval(substitute(block_variable_name), data)
       if (is.factor(blocks)) {
         blocks <- droplevels(blocks)
       }
+
+      blocks_missing <- is.na(blocks)
+
+      if (any(blocks_missing)) {
+        warning(
+          "Some observations have missingness in the block variable but not in the outcome or treatment. These observations have been dropped."
+        )
+      }
+
+      blocks <- blocks[!blocks_missing]
+      data <- data[!blocks_missing, ]
+
     } else {
       blocks <- NULL
     }
@@ -65,6 +81,18 @@ difference_in_means <-
     ## Get weights variable
     if (!is.null(substitute(weights))) {
       weights <- eval(substitute(weights), data)
+
+      weights_missing <- is.na(weights)
+
+      if (any(weights_missing)) {
+        warning(
+          "Some observations have missingness in the weights variable but not in the outcome or treatment. These observations have been dropped."
+        )
+      }
+
+      weights <- weights[!weights_missing]
+      data <- data[!weights_missing, ]
+
     }
 
     ## Get cluster variable
@@ -73,6 +101,17 @@ difference_in_means <-
       if (is.factor(cluster)) {
         cluster <- droplevels(cluster)
       }
+
+      cluster_missing <- is.na(cluster)
+
+      if (any(cluster_missing)) {
+        warning(
+          "Some observations have missingness in the cluster variable but not in the outcome or treatment. These observations have been dropped."
+        )
+      }
+
+      cluster <- cluster[!cluster_missing]
+      data <- data[!cluster_missing, ]
 
       cluster_variable_name <- deparse(substitute(cluster_variable_name))
     } else {
@@ -264,6 +303,13 @@ difference_in_means_internal <-
 
     Y2 <- Y[t == condition2]
     Y1 <- Y[t == condition1]
+
+    ## Check to make sure multiple in each group if pair matched is false
+    if (!pair_matched & (length(Y2) == 1 | length(Y1) == 1)) {
+      stop(
+        "Not a pair matched design and one treatment condition only has one value, making standard errors impossible to calculate."
+      )
+    }
 
     if (is.null(weights)) {
 
