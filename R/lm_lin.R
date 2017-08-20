@@ -26,7 +26,7 @@ lm_lin <- function(formula,
   ## check covariates is right hand sided fn
   if (attr(cov_terms, "response") != 0) {
     stop(
-      "The covariate formula should be a right hand sided equation, such as '~ x1 + x2 + x3'"
+      "The covariate formula should be a right-hand sided equation, such as '~ x1 + x2 + x3'"
     )
   }
   cov_names <- all.vars(covariates)
@@ -42,35 +42,34 @@ lm_lin <- function(formula,
   }
 
   design_matrix <- model.matrix.default(full_formula, data = data)
-  treatment <- design_matrix[, all.vars(formula[[3]])]
+  # If Z is a factor, can't use variable name, so get first column not named
+  # (Intercept); and it should be the first or second column
+  treat_col <- which(colnames(design_matrix)[1:2] != '(Intercept)')[1]
+  treatment <- design_matrix[, treat_col]
+
+  if (any(!(treatment %in% c(0, 1)))) {
+    stop(
+      "Treatment variable must be binary for the Lin estimator."
+    )
+  }
 
   # check speed
-  demeaned_interacted_covars <-
-    lapply(
-      setdiff(colnames(design_matrix), c(all.vars(formula), '(Intercept)')),
-      function(x) {
-        xbar <- design_matrix[, x] - mean(design_matrix[, x])
-        matrix(
-          c(xbar, xbar * treatment),
-          ncol = 2,
-          dimnames = list(
-            NULL,
-            c(paste0(x, '_bar'), paste0(all.vars(formula[[3]]), ':', x, '_bar'))
-          )
-        )
-      }
+  demeaned_covars <-
+    apply(
+      design_matrix[, setdiff(colnames(design_matrix), c(all.vars(formula), '(Intercept)'))],
+      2,
+      function(x) { xbar <- x - mean(x) }
     )
 
-  demeaned_interacted_mat <- do.call("cbind", demeaned_interacted_covars)
+  colnames(demeaned_covars) <- paste0(colnames(demeaned_covars), '_bar')
 
   lin_formula <-
     update(
       formula,
-      reformulate(c('.', colnames(demeaned_interacted_covars)))
+      reformulate(c('.', paste0('Z * ', colnames(demeaned_covars))))
     )
 
   return(lm_robust(formula = lin_formula,
-                   data = cbind(data, demeaned_interacted_mat),
-                   subset = subset,
+                   data = cbind(data, demeaned_covars),
                    ...))
 }
