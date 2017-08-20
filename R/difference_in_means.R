@@ -12,11 +12,6 @@
 #'
 #' @details This function implements difference-in-means estimation, with and without blocking. Standard errors are estimated as the square root of the sum of the within-group variances, divided by their respective sample sizes (Equation 3.6 in Gerber and Green 2012). If blocked, the difference in means estimate is taken in each block, then averaged together according to block size.
 #'
-#' @importFrom dplyr bind_rows
-#' @importFrom magrittr %>%
-#' @importFrom purrr map
-#'
-#'
 #' @export
 #'
 #' @examples
@@ -71,14 +66,12 @@ difference_in_means <-
 
       blocks <- eval(substitute(block_variable_name), data)
 
-      block_estimates <-
-        data %>%
-        split(blocks) %>%
-        map(~difference_in_means_internal(formula, data = .,
-                                          condition1 = condition1,
-                                          condition2 = condition2,
-                                          weights = weights, alpha = alpha)) %>%
-        bind_rows()
+      block_dfs <- split(data, blocks)
+
+      block_estimates <- lapply(block_dfs, function(x) difference_in_means_internal(
+        formula, data = x, condition1 = condition1, condition2 = condition2, weights = weights, alpha = alpha))
+
+      block_estimates <- do.call(rbind, block_estimates)
 
       N_overall <- with(block_estimates, sum(N))
       diff <- with(block_estimates, sum(est * N/N_overall))
@@ -96,7 +89,7 @@ difference_in_means <-
         p = p,
         ci_lower = ci_lower,
         ci_upper = ci_upper,
-        df = df, 
+        df = df,
         stringsAsFactors = FALSE
       )
 

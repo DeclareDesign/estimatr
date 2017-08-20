@@ -28,6 +28,7 @@ test_that("DIM Blocked", {
   df <- data.frame(Y = rnorm(100),
                    Z = rbinom(100, 1, .5),
                    block = sample(c("A", "B", "C"), 100, replace = TRUE))
+
 difference_in_means(Y ~ Z, block_variable_name = block, data = df)
 difference_in_means(Y ~ Z, condition1 = 0, condition2 = 1, block_variable_name = block, data = df)
 difference_in_means(Y ~ Z, condition1 = 1, condition2 = 0, block_variable_name = block, data = df)
