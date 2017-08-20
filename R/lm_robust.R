@@ -25,9 +25,10 @@ lm_robust <- function(formula,
                       alpha = .05,
                       coefficient_name = NULL) {
 
-  # allowable se_types with clustering
+  ## allowable se_types with clustering
   cl_se_types <- c("BM", "stata")
 
+  ## Get subset of data
   condition_call <- substitute(subset)
 
   if (!is.null(condition_call)) {
@@ -35,10 +36,11 @@ lm_robust <- function(formula,
     data <- data[r,]
   }
 
-
   mf <- model.frame.default(formula,
                             data = data)
 
+
+  ## Parse cluster variable
   if (!is.null(substitute(cluster_variable_name))) {
 
     # get cluster variable from subset of data
@@ -48,7 +50,7 @@ lm_robust <- function(formula,
 
     if (any(cluster_missing)) {
       warning(
-        "Some observations have no missingness in the outcome or covariates but do have missingness in the cluster variable. These observations have been dropped."
+        "Some observations have missingness in the cluster variable but have not in the outcome or covariates. These observations have been dropped."
       )
 
       mf <- mf[!cluster_missing, ]
@@ -74,9 +76,37 @@ lm_robust <- function(formula,
 
   }
 
-  design_matrix <- model.matrix.default(formula, data = mf)
+  ## Parse weights variable and get design matrix
+  if (!is.null(substitute(weights))) {
+
+    if (!is.null(cluster)) {
+      stop("weights not yet supported with clustered standard errors")
+    }
+
+    weights <- eval(substitute(weights), data[row.names(mf), ])
+
+    weights_missing <- is.na(weights)
+
+    if (any(weights_missing)) {
+      warning(
+        "Some observations have missingness in the weights variable but not in the outcome or covariates. These observations have been dropped."
+      )
+    }
+
+    mf <- mf[!weights_missing, ]
+    weights <- weights[!weights_missing]
+
+    outcome <- sqrt(weights) * model.response(mf)
+    design_matrix <- sqrt(weights) * model.matrix.default(formula, data = mf)
+
+  } else {
+
+    outcome <- model.response(mf)
+    design_matrix <- model.matrix.default(formula, data = mf)
+
+  }
+
   variable_names <- colnames(design_matrix)
-  outcome <- model.response(mf)
 
   # Get coefficients to get df adjustments for and return
   if (is.null(coefficient_name)) {
@@ -90,18 +120,6 @@ lm_robust <- function(formula,
 
     # if ever we can figure out all the use cases in the test....
     # which_ests <- return_frame$variable_names %in% deparse(substitute(coefficient_name))
-
-  }
-
-  if (!is.null(substitute(weights))) {
-
-    if (!is.null(cluster)) {
-      stop("weights not yet supported with clustered standard errors")
-    }
-
-    weights <- eval(substitute(weights), data)
-    outcome <- sqrt(weights) * outcome
-    design_matrix <- sqrt(weights) * design_matrix
 
   }
 

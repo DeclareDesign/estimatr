@@ -155,12 +155,18 @@ test_that("lm cluster se with missingness", {
   dat$X[23] <- NA
   dat$J[63] <- NA
 
-  expect_identical(
-    lm_robust(
+
+  expect_warning(
+    estimatr_cluster_out <- lm_robust(
       Y ~ Z + X,
       cluster_variable_name = J,
       data = dat
     ),
+    'missingness in the cluster'
+  )
+
+  expect_identical(
+    estimatr_cluster_out,
     lm_robust(
       Y ~ Z + X,
       cluster_variable_name = J,
@@ -168,14 +174,6 @@ test_that("lm cluster se with missingness", {
     )
   )
 
-  expect_warning(
-    lm_robust(
-      Y ~ Z + X,
-      cluster_variable_name = J,
-      data = dat
-    ),
-    'missing on the cluster'
-  )
 
 })
 

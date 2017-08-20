@@ -13,11 +13,6 @@
 #'
 #' @details This function implements difference-in-means estimation, with and without blocking. Standard errors are estimated as the square root of the sum of the within-group variances, divided by their respective sample sizes (Equation 3.6 in Gerber and Green 2012). If blocked, the difference in means estimate is taken in each block, then averaged together according to block size.
 #'
-#' @importFrom dplyr bind_rows
-#' @importFrom magrittr %>%
-#' @importFrom purrr map
-#'
-#'
 #' @export
 #'
 #' @examples
@@ -49,6 +44,7 @@ difference_in_means <-
       )
     }
 
+    ## Get subset of data
     condition_call <- substitute(subset)
 
     if (!is.null(condition_call)){
@@ -56,24 +52,66 @@ difference_in_means <-
       data <- data[r, ]
     }
 
+    ## Drop rows with missingness
+    missing_data <- !complete.cases(data[, all.vars(formula)])
+    data <- data[!missing_data, ]
+
+    ## Get block variable
     if (!is.null(substitute(block_variable_name))) {
       blocks <- eval(substitute(block_variable_name), data)
       if (is.factor(blocks)) {
         blocks <- droplevels(blocks)
       }
+
+      blocks_missing <- is.na(blocks)
+
+      if (any(blocks_missing)) {
+        warning(
+          "Some observations have missingness in the block variable but not in the outcome or treatment. These observations have been dropped."
+        )
+      }
+
+      blocks <- blocks[!blocks_missing]
+      data <- data[!blocks_missing, ]
+
     } else {
       blocks <- NULL
     }
 
+    ## Get weights variable
     if (!is.null(substitute(weights))) {
       weights <- eval(substitute(weights), data)
+
+      weights_missing <- is.na(weights)
+
+      if (any(weights_missing)) {
+        warning(
+          "Some observations have missingness in the weights variable but not in the outcome or treatment. These observations have been dropped."
+        )
+      }
+
+      weights <- weights[!weights_missing]
+      data <- data[!weights_missing, ]
+
     }
 
+    ## Get cluster variable
     if (!is.null(substitute(cluster_variable_name))) {
       cluster <- eval(substitute(cluster_variable_name), data)
       if (is.factor(cluster)) {
         cluster <- droplevels(cluster)
       }
+
+      cluster_missing <- is.na(cluster)
+
+      if (any(cluster_missing)) {
+        warning(
+          "Some observations have missingness in the cluster variable but not in the outcome or treatment. These observations have been dropped."
+        )
+      }
+
+      cluster <- cluster[!cluster_missing]
+      data <- data[!cluster_missing, ]
 
       cluster_variable_name <- deparse(substitute(cluster_variable_name))
     } else {
@@ -108,18 +146,19 @@ difference_in_means <-
 
       if (!is.null(cluster)) {
 
-        # Check that clusters nest within blocks
+        ## Check that clusters nest within blocks
         if (!all(tapply(blocks, cluster, function(x)
           all(x == x[1])))) {
           stop("All units within a cluster must be in the same block.")
         }
 
-        # get number of clusters per block
+        ## get number of clusters per block
         clust_per_block <- tapply(cluster, blocks, function(x) length(unique(x)))
       } else {
         clust_per_block <- tabulate(as.factor(blocks))
       }
 
+      ## Check if design is pair matched
       if (any(clust_per_block == 1)) {
         stop(
           "Some blocks have only one unit or cluster. Blocks must have multiple units or clusters."
@@ -132,18 +171,22 @@ difference_in_means <-
         )
       }
 
-      block_estimates <-
-        data %>%
-        split(blocks) %>%
-        map(~difference_in_means_internal(formula, data = .,
-                                          condition1 = condition1,
-                                          condition2 = condition2,
-                                          weights = weights,
-                                          # have to pass var name to get correct subset of cluster
-                                          cluster_variable_name = cluster_variable_name,
-                                          pair_matched = pair_matched,
-                                          alpha = alpha)) %>%
-        bind_rows()
+      block_dfs <- split(data, blocks)
+
+      block_estimates <- lapply(block_dfs, function(x) {
+        difference_in_means_internal(
+          formula,
+          data = x,
+          condition1 = condition1,
+          condition2 = condition2,
+          cluster_variable_name = cluster_variable_name,
+          pair_matched = pair_matched,
+          weights = weights,
+          alpha = alpha
+        )
+      })
+
+      block_estimates <- do.call(rbind, block_estimates)
 
       N_overall <- with(block_estimates, sum(N))
 
@@ -261,6 +304,13 @@ difference_in_means_internal <-
 
     Y2 <- Y[t == condition2]
     Y1 <- Y[t == condition1]
+
+    ## Check to make sure multiple in each group if pair matched is false
+    if (!pair_matched & (length(Y2) == 1 | length(Y1) == 1)) {
+      stop(
+        "Not a pair matched design and one treatment condition only has one value, making standard errors impossible to calculate."
+      )
+    }
 
     if (is.null(weights)) {
 

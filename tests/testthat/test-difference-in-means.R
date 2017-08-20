@@ -153,3 +153,81 @@ test_that("DIM Matched Pair Cluster Randomization = Matched Pair when cluster si
   )
 
 })
+
+test_that("DIM works with missingness", {
+  df <- data.frame(Y = rnorm(100),
+                   block = rep(1:2, each = 50),
+                   cluster = 1:100,
+                   Z = rep(c(0,0,1,1), times = 25))
+
+  ## Missingness on treatment
+  df$Z[23] <- NA
+
+  expect_error(
+    estimatr_dim_out <- difference_in_means(
+      Y ~ Z,
+      alpha = .05,
+      block_variable_name = block,
+      data = df
+    ),
+    NA
+  )
+
+  expect_equal(
+    estimatr_dim_out,
+    difference_in_means(
+      Y ~ Z,
+      alpha = .05,
+      block_variable_name = block,
+      data = df[-23, ]
+    )
+  )
+
+  ## Missingness on block
+  df$block[35] <- NA
+
+  expect_warning(
+    estimatr_missblock_dim <- difference_in_means(
+      Y ~ Z,
+      alpha = .05,
+      block_variable_name = block,
+      data = df
+    ),
+    'missingness in the block'
+  )
+
+  expect_equal(
+    estimatr_missblock_dim,
+    difference_in_means(
+      Y ~ Z,
+      alpha = .05,
+      block_variable_name = block,
+      data = df[-c(23, 35), ]
+    )
+  )
+
+  ## Missingness on cluster
+  df$cluster[1] <- NA
+
+  expect_warning(
+    estimatr_missclust_dim <- difference_in_means(
+      Y ~ Z,
+      alpha = .05,
+      cluster_variable_name = cluster,
+      data = df
+    ),
+    'missingness in the cluster'
+  )
+
+  expect_equal(
+    estimatr_missclust_dim,
+    difference_in_means(
+      Y ~ Z,
+      alpha = .05,
+      cluster_variable_name = cluster,
+      data = df[-c(1, 23), ]
+    )
+  )
+
+
+})
