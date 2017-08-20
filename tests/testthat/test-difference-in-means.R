@@ -160,6 +160,7 @@ test_that("DIM works with missingness", {
                    cluster = 1:100,
                    Z = rep(c(0,0,1,1), times = 25))
 
+  ## Missingness on treatment
   df$Z[23] <- NA
 
   expect_error(
@@ -182,7 +183,7 @@ test_that("DIM works with missingness", {
     )
   )
 
-
+  ## Missingness on block
   df$block[35] <- NA
 
   expect_warning(
@@ -205,6 +206,7 @@ test_that("DIM works with missingness", {
     )
   )
 
+  ## Missingness on cluster
   df$cluster[1] <- NA
 
   expect_warning(
@@ -216,7 +218,6 @@ test_that("DIM works with missingness", {
     ),
     'missingness in the cluster'
   )
-
 
   expect_equal(
     estimatr_missclust_dim,
