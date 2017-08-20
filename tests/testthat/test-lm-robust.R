@@ -49,6 +49,21 @@ test_that("lm robust works with missingness",{
   lm_robust(Y ~ Z + X, coefficient_name = c("(Intercept)", "Z", "X"), data = df)
   lm_robust(Y ~ Z*X, coefficient_name = "Z:X", data = df)
 
+  ## Outcome missingness
+  df$Y[35] <- NA
+
+  estimatr_missout_out <- lm_robust(Y ~ Z + X, data = df)
+
+  lm_missout_out <- lm(Y ~ Z + X, data = df)
+  lm_missout_hc2 <- cbind(
+    lm_missout_out$coefficients,
+    sqrt(diag(sandwich::vcovHC(lm_missout_out, type = "HC2")))
+  )
+
+  expect_equivalent(
+    as.matrix(estimatr_missout_out[, c("est", "se")]),
+    lm_missout_hc2
+  )
 })
 
 
