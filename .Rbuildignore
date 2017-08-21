@@ -1,5 +1,4 @@
 ^\.travis\.yml$
-LICENSE
 README.md
 ^.*\.Rproj$
 ^\.Rproj\.user$
