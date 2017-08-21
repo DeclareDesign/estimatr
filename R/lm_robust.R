@@ -7,7 +7,7 @@
 #' @param data A data.frame.
 #' @param weights the bare (unquoted) names of the weights variable in the supplied data.
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
-#' @param cluster_variable_name An optional bare (unquoted) name of the factor variable that corresponds to the clusters in the data. Will return Bell-McCaffrey standard errors, overriding \code{se_type}.
+#' @param cluster_variable_name An optional bare (unquoted) name of the variable that corresponds to the clusters in the data.
 #' @param se_type The sort of standard error sought. Without clustering: "HCO", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "BM" (default), "stata".
 #' @param ci A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.

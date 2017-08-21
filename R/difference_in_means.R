@@ -1,7 +1,8 @@
 #' Built-in Estimators: Difference-in-means
 #'
 #' @param formula An object of class "formula", such as Y ~ Z
-#' @param block_variable_name The bare (unquote) name of the block variable. Use for blocked designs only.
+#' @param block_variable_name An optional bare (unquote) name of the block variable. Use for blocked designs only.
+#' @param cluster_variable_name An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.
 #' @param data A data.frame.
 #' @param weights An optional vector of weights (not yet implemented).
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
@@ -29,53 +30,196 @@
 difference_in_means <-
   function(formula,
            block_variable_name = NULL,
+           cluster_variable_name = NULL,
            condition1 = NULL,
            condition2 = NULL,
            data,
            weights = NULL,
            subset = NULL,
            alpha = .05) {
-    if (length(all.vars(formula[[3]])) > 1)
+
+    if (length(all.vars(formula[[3]])) > 1) {
       stop(
         "The formula should only include one variable on the right-hand side: the treatment variable."
       )
+    }
 
+    ## Get subset of data
     condition_call <- substitute(subset)
+
     if (!is.null(condition_call)){
       r <- eval(condition_call, data)
       data <- data[r, ]
     }
 
-    if(is.null(substitute(block_variable_name))){
+    ## Drop rows with missingness
+    missing_data <- !complete.cases(data[, all.vars(formula)])
+    data <- data[!missing_data, ]
 
-    return_df <- difference_in_means_internal(formula,
-                                              condition1 = condition1,
-                                              condition2 = condition2,
-                                              data = data,
-                                              weights = weights, alpha = alpha)
+    ## Get block variable
+    if (!is.null(substitute(block_variable_name))) {
+      blocks <- eval(substitute(block_variable_name), data)
+      if (is.factor(blocks)) {
+        blocks <- droplevels(blocks)
+      }
 
-    return_df$df <- with(return_df, N - 2)
-    return_df$p <- with(return_df, 2 * pt(abs(est / se), df = df, lower.tail = FALSE))
-    return_df$ci_lower <- with(return_df, est - qt(1 - alpha / 2, df = df) * se)
-    return_df$ci_upper <- with(return_df, est + qt(1 - alpha / 2, df = df) * se)
+      blocks_missing <- is.na(blocks)
 
-    return_df <- return_df[,c("est", "se", "p", "ci_lower", "ci_upper", "df")]
+      if (any(blocks_missing)) {
+        warning(
+          "Some observations have missingness in the block variable but not in the outcome or treatment. These observations have been dropped."
+        )
+      }
 
-    return(return_df)
+      blocks <- blocks[!blocks_missing]
+      data <- data[!blocks_missing, ]
+
+    } else {
+      blocks <- NULL
+    }
+
+    ## Get weights variable
+    if (!is.null(substitute(weights))) {
+      weights <- eval(substitute(weights), data)
+
+      weights_missing <- is.na(weights)
+
+      if (any(weights_missing)) {
+        warning(
+          "Some observations have missingness in the weights variable but not in the outcome or treatment. These observations have been dropped."
+        )
+      }
+
+      weights <- weights[!weights_missing]
+      data <- data[!weights_missing, ]
+
+    }
+
+    ## Get cluster variable
+    if (!is.null(substitute(cluster_variable_name))) {
+      cluster <- eval(substitute(cluster_variable_name), data)
+      if (is.factor(cluster)) {
+        cluster <- droplevels(cluster)
+      }
+
+      cluster_missing <- is.na(cluster)
+
+      if (any(cluster_missing)) {
+        warning(
+          "Some observations have missingness in the cluster variable but not in the outcome or treatment. These observations have been dropped."
+        )
+      }
+
+      cluster <- cluster[!cluster_missing]
+      data <- data[!cluster_missing, ]
+
+      cluster_variable_name <- deparse(substitute(cluster_variable_name))
+    } else {
+      cluster <- NULL
+    }
+
+    if (is.null(blocks)){
+
+      return_df <- difference_in_means_internal(
+        formula,
+        condition1 = condition1,
+        condition2 = condition2,
+        data = data,
+        weights = weights,
+        cluster = cluster,
+        alpha = alpha
+      )
+
+      ## todo: add inflation from GG fn 20 ch 3
+      return_df$df <- with(return_df, N - 2)
+      return_df$p <- with(return_df, 2 * pt(abs(est / se), df = df, lower.tail = FALSE))
+      return_df$ci_lower <- with(return_df, est - qt(1 - alpha / 2, df = df) * se)
+      return_df$ci_upper <- with(return_df, est + qt(1 - alpha / 2, df = df) * se)
+
+      return_df <- return_df[,c("est", "se", "p", "ci_lower", "ci_upper", "df")]
+
+      return(return_df)
+
     } else {
 
-      blocks <- eval(substitute(block_variable_name), data)
+      pair_matched = FALSE
+
+      if (!is.null(cluster)) {
+
+        ## Check that clusters nest within blocks
+        if (!all(tapply(blocks, cluster, function(x)
+          all(x == x[1])))) {
+          stop("All units within a cluster must be in the same block.")
+        }
+
+        ## get number of clusters per block
+        clust_per_block <- tapply(cluster, blocks, function(x) length(unique(x)))
+      } else {
+        clust_per_block <- tabulate(as.factor(blocks))
+      }
+
+      ## Check if design is pair matched
+      if (any(clust_per_block == 1)) {
+        stop(
+          "Some blocks have only one unit or cluster. Blocks must have multiple units or clusters."
+        )
+      } else if (all(clust_per_block == 2)) {
+        pair_matched = TRUE
+      } else if (any(clust_per_block == 2) & any(clust_per_block > 2)) {
+        stop(
+          "Some blocks have two units or clusters, while others have more units or clusters. Design must either be paired or all blocks must be of size 3 or greater."
+        )
+      }
 
       block_dfs <- split(data, blocks)
 
-      block_estimates <- lapply(block_dfs, function(x) difference_in_means_internal(
-        formula, data = x, condition1 = condition1, condition2 = condition2, weights = weights, alpha = alpha))
+      block_estimates <- lapply(block_dfs, function(x) {
+        difference_in_means_internal(
+          formula,
+          data = x,
+          condition1 = condition1,
+          condition2 = condition2,
+          cluster_variable_name = cluster_variable_name,
+          pair_matched = pair_matched,
+          weights = weights,
+          alpha = alpha
+        )
+      })
 
       block_estimates <- do.call(rbind, block_estimates)
 
       N_overall <- with(block_estimates, sum(N))
+
+      # Blocked design, (Gerber and Green 2012, p. 73, eq. 3.10)
       diff <- with(block_estimates, sum(est * N/N_overall))
-      se <- with(block_estimates, sqrt(sum(se^2 * (N/N_overall)^2)))
+
+      if (pair_matched) {
+
+        n_blocks <- nrow(block_estimates)
+
+        if (is.null(cluster)) {
+          # Pair matched, cluster randomized (Gerber and Green 2012, p. 77, eq. 3.16)
+          se <-
+            with(
+              block_estimates,
+              sqrt( (1 / (n_blocks * (n_blocks - 1))) * sum((est - diff)^2) )
+            )
+        } else {
+          # Pair matched, unit randomized (Imai, King, Nall 2009, p. 36, eq. 6)
+          se <-
+            with(
+              block_estimates,
+              sqrt(
+                ( n_blocks / ((n_blocks - 1) * N_overall^2) ) *
+                  sum( (N * est - (N_overall * diff)/n_blocks)^2 )
+              )
+            )
+        }
+
+      } else {
+        # Block randomized (Gerber and Green 2012, p. 74, footnote 17)
+        se <- with(block_estimates, sqrt(sum(se^2 * (N/N_overall)^2)))
+      }
 
       ## we don't know if this is correct!
       df <- N_overall - 2
@@ -115,6 +259,9 @@ difference_in_means_internal <-
            condition2 = NULL,
            data,
            weights = NULL,
+           cluster = NULL,
+           cluster_variable_name = NULL,
+           pair_matched = FALSE,
            alpha = .05) {
 
     Y <- data[, all.vars(formula[[2]])]
@@ -126,9 +273,31 @@ difference_in_means_internal <-
       condition_names <- sort(unique(t))
     }
 
+    if (length(condition_names) == 1) {
+      stop("Must have units with both treatment conditions within each block.")
+    }
+
     if (is.null(condition1) & is.null(condition2)) {
       condition1 <- condition_names[1]
       condition2 <- condition_names[2]
+    }
+
+    if (!is.null(cluster_variable_name)) {
+      cluster <- data[, cluster_variable_name]
+      if (is.factor(cluster)) {
+        cluster <- droplevels(cluster)
+      }
+    }
+
+    # Check that treatment status is uniform within cluster, checked here
+    # so that the treatment vector t doesn't have to be built anywhere else
+    if (!is.null(cluster)) {
+
+      if (!all(tapply(t, cluster, function(x) all(x == x[1])))) {
+        stop(
+          "All units within a cluster must have the same treatment condition."
+        )
+      }
     }
 
     N <- length(Y)
@@ -136,14 +305,41 @@ difference_in_means_internal <-
     Y2 <- Y[t == condition2]
     Y1 <- Y[t == condition1]
 
-    weights <- eval(substitute(weights), data)
+    ## Check to make sure multiple in each group if pair matched is false
+    if (!pair_matched & (length(Y2) == 1 | length(Y1) == 1)) {
+      stop(
+        "Not a pair matched design and one treatment condition only has one value, making standard errors impossible to calculate."
+      )
+    }
 
     if (is.null(weights)) {
+
       diff <- mean(Y2) - mean(Y1)
 
-      se <- sqrt(var(Y2) / length(Y2) + var(Y1) / length(Y1))
+      if (pair_matched) {
+        # Pair matched designs
+        se <- NA
+      } else if (is.null(cluster)) {
+        # Non-pair matched designs, unit level randomization
+        se <- sqrt(var(Y2) / length(Y2) + var(Y1) / length(Y1))
+      } else {
+        # Non-pair matched designs, cluster randomization
+        # (Gerber and Green 2012, p. 83, eq. 3.23)
+        k <- length(unique(cluster))
+
+        se <- sqrt(
+          (var(tapply(Y2, cluster[t == condition2], mean)) * N) /
+            (k * length(Y2)) +
+          (var(tapply(Y1, cluster[t == condition1], mean)) * N) /
+            (k * length(Y1))
+        )
+      }
+
 
     } else {
+
+      # TODO: weights and clusters
+      # TODO: weights and matched pair
 
       w2 <- weights[t == condition2]
       w1 <- weights[t == condition1]
