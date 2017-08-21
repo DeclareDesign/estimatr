@@ -8,9 +8,8 @@ Authors@R: c(person("Graeme", "Blair", email = "graeme.blair@ucla.edu", role = c
              person("Alexander", "Coppock", email = "alex.coppock@yale.edu", role = c("aut")),
              person("Macartan", "Humphreys", email = "macartan@gmail.com", role = c("aut")))
 Description: This package provides fast estimators for common models in social science research.
-License: All rights reserved
-Imports:
-    Rcpp (>= 0.12.10)
+License: MIT + file LICENSE
+Imports: Rcpp (>= 0.12.10)
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 6.0.1
 Suggests: testthat,
