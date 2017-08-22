@@ -482,20 +482,20 @@ test_that("DIM unbiased", {
   true_seSATE <- sqrt( (var(dat$Y0) + var(dat$Y1) + 2 * cov(dat$Y0, dat$Y1)) / (10 - 1))
   declaration <- declare_ra(N = nrow(dat))
   treatment_perms <- obtain_permutation_matrix(declaration)
-  ests <- matrix(NA,
-                 nrow = ncol(treatment_perms),
-                 ncol = 2)
 
-  for (i in 1:nrow(ests)) {
-    dat$Z <- treatment_perms[, i]
-    dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
-    dim <- difference_in_means(Y ~ Z, data = dat)
-    ests[i, ] <- c(dim$est, dim$se)
-  }
+  ests <- apply(treatment_perms,
+                2,
+                function(x) {
+                  dat$Z <- x
+                  dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
+                  dim <- difference_in_means(Y ~ Z, data = dat)
+                  dim$est
+                }
+  )
 
   expect_equivalent(
     trueSATE,
-    mean(ests[, 1])
+    mean(ests)
   )
 
   ## cluster randomized design, 5 blocks of 2
@@ -503,16 +503,18 @@ test_that("DIM unbiased", {
   declaration <- declare_ra(N = nrow(dat),
                             clust_var = dat$cluster)
   treatment_perms <- obtain_permutation_matrix(declaration)
-  ests <- numeric(ncol(treatment_perms))
 
-  for (i in 1:length(ests)) {
-    dat$Z <- treatment_perms[, i]
-    dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
-    dim <- difference_in_means(Y ~ Z,
-                               cluster_variable_name = cluster,
-                               data = dat)
-    ests[i] <- dim$est
-  }
+  ests <- apply(treatment_perms,
+                2,
+                function(x) {
+                  dat$Z <- x
+                  dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
+                  dim <- difference_in_means(Y ~ Z,
+                                             cluster_variable_name = cluster,
+                                             data = dat)
+                  dim$est
+                }
+  )
 
   expect_equivalent(
     trueSATE,
@@ -525,16 +527,18 @@ test_that("DIM unbiased", {
                             block_var = dat$blocks,
                             block_m = rep(1, 5))
   treatment_perms <- obtain_permutation_matrix(declaration)
-  ests <- numeric(ncol(treatment_perms))
 
-  for (i in 1:length(ests)) {
-    dat$Z <- treatment_perms[, i]
-    dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
-    dim <- difference_in_means(Y ~ Z,
-                               block_variable_name = blocks,
-                               data = dat)
-    ests[i] <- dim$est
-  }
+  ests <- apply(treatment_perms,
+                2,
+                function(x) {
+                  dat$Z <- x
+                  dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
+                  dim <- difference_in_means(Y ~ Z,
+                                             block_variable_name = blocks,
+                                             data = dat)
+                  dim$est
+                }
+  )
 
   expect_equivalent(
     trueSATE,
@@ -547,40 +551,44 @@ test_that("DIM unbiased", {
                             block_var = dat$blocks,
                             block_m = c(3, 3))
   treatment_perms <- obtain_permutation_matrix(declaration)
-  ests <- numeric(ncol(treatment_perms))
 
-  for (i in 1:length(ests)) {
-    dat$Z <- treatment_perms[, i]
-    dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
-    dim <- difference_in_means(Y ~ Z,
-                               block_variable_name = blocks,
-                               data = dat)
-    ests[i] <- dim$est
-  }
+  ests <- apply(treatment_perms,
+                2,
+                function(x) {
+                  dat$Z <- x
+                  dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
+                  dim <- difference_in_means(Y ~ Z,
+                                             block_variable_name = blocks,
+                                             data = dat)
+                  dim$est
+                }
+  )
 
   expect_equivalent(
     trueSATE,
     mean(ests)
   )
 
-  ## cluster matched pair, 2 blocks of 5
+  ## cluster matched pair, different sized blocks
   dat$blocks <- rep(1:3, times = c(4, 4, 2))
   dat$clusters <- c(1, 1, 2, 2, 3, 3, 4, 4, 5, 6)
   declaration <- declare_ra(N = nrow(dat),
                             block_var = dat$blocks,
                             clust_var = dat$clusters)
   treatment_perms <- obtain_permutation_matrix(declaration)
-  ests <- numeric(ncol(treatment_perms))
 
-  for (i in 1:length(ests)) {
-    dat$Z <- treatment_perms[, i]
-    dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
-    dim <- difference_in_means(Y ~ Z,
-                               block_variable_name = blocks,
-                               cluster_variable_name = clusters,
-                               data = dat)
-    ests[i] <- dim$est
-  }
+  ests <- apply(treatment_perms,
+                2,
+                function(x) {
+                  dat$Z <- x
+                  dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
+                  dim <- difference_in_means(Y ~ Z,
+                                             block_variable_name = blocks,
+                                             cluster_variable_name = clusters,
+                                             data = dat)
+                  dim$est
+                }
+  )
 
   expect_equivalent(
     trueSATE,
