@@ -45,6 +45,7 @@ lm_lin <- function(formula,
   # If Z is a factor, can't use variable name, so get first column not named
   # (Intercept); and it should be the first or second column
   treat_col <- which(colnames(design_matrix)[1:2] != '(Intercept)')[1]
+  treat_name <- colnames(design_matrix)[treat_col]
   treatment <- design_matrix[, treat_col]
 
   if (any(!(treatment %in% c(0, 1)))) {
@@ -56,7 +57,7 @@ lm_lin <- function(formula,
   # check speed
   demeaned_covars <-
     apply(
-      design_matrix[, setdiff(colnames(design_matrix), c(all.vars(formula), '(Intercept)'))],
+      design_matrix[, setdiff(colnames(design_matrix), c(treat_name, '(Intercept)'))],
       2,
       function(x) { xbar <- x - mean(x) }
     )
@@ -66,10 +67,14 @@ lm_lin <- function(formula,
   lin_formula <-
     update(
       formula,
-      reformulate(c('.', paste0('Z * ', colnames(demeaned_covars))))
+      reformulate(paste0(treat_name, ' + ',
+                         paste0(treat_name, '*', colnames(demeaned_covars))))
     )
 
+  new_data <- data
+  new_data[, treat_name] <- treatment
+
   return(lm_robust(formula = lin_formula,
-                   data = cbind(data, demeaned_covars),
+                   data = cbind(new_data, demeaned_covars),
                    ...))
 }

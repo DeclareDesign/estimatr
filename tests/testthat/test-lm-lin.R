@@ -15,11 +15,12 @@ test_that("Test LM Lin",{
 
   expect_error(
     lm_lin(Y ~ Z + X1,
-           covariates = ~ X2
+           covariates = ~ X2,
            data = df),
     'right-hand side'
   )
 
+  df2 <- df
   df2$Z <- rnorm(100)
   expect_error(
     lm_lin(Y ~ Z,
@@ -58,6 +59,28 @@ test_that("Test LM Lin",{
     lm_robust(Y ~ Z + Z*X1_bar + Z*X2_bar,
               data = df,
               cluster_variable_name = cluster)
+  )
+
+  # Works with factors
+  df <- data.frame(Y = rnorm(100),
+                   treat = as.factor(rbinom(100, 1, .5)),
+                   X1 = rnorm(100),
+                   X2 = as.factor(rbinom(100, 1, .5)),
+                   cluster = sample(1:10, size = 100, replace = T))
+
+
+  df$X1_bar <- df$X1 - mean(df$X1)
+  df$X2_bar <- as.numeric(df$X2==1) - mean(df$X2 == 1)
+
+  ## names will differ because not X2 not factor
+  expect_equivalent(
+    lm_lin(Y ~ treat,
+           covariates = ~ X1 + X2,
+           data = df,
+           cluster_variable_name = cluster)[, -1],
+    lm_robust(Y ~ treat + treat*X1_bar + treat*X2_bar,
+              data = df,
+              cluster_variable_name = cluster)[, -1]
   )
 
 })
