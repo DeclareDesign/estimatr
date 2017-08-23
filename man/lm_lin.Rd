@@ -2,7 +2,7 @@
 % Please edit documentation in R/lm_lin.R
 \name{lm_lin}
 \alias{lm_lin}
-\title{A Wrapper for Lin 2013 Covariate Adjustment for OLS with Robust Standard Errors}
+\title{A wrapper for \code{lm_robust} that applies the Lin 2013 covariate adjustment}
 \usage{
 lm_lin(formula, data, covariates, subset = NULL, ...)
 }
@@ -16,5 +16,5 @@ lm_lin(formula, data, covariates, subset = NULL, ...)
 \item{...}{All other arguments that are passed through to \code{\link{lm_robust}}}
 }
 \description{
-A Wrapper for Lin 2013 Covariate Adjustment for OLS with Robust Standard Errors
+A wrapper for \code{lm_robust} that applies the Lin 2013 covariate adjustment
 }

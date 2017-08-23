@@ -1,5 +1,5 @@
 
-#' A Wrapper for Lin 2013 Covariate Adjustment for OLS with Robust Standard Errors
+#' A wrapper for \code{lm_robust} that applies the Lin 2013 covariate adjustment
 #'
 #' @param formula An object of class "formula", such as Y ~ Z. Should only have the outcome and the treatment.
 #'
@@ -15,7 +15,7 @@ lm_lin <- function(formula,
                    subset = NULL,
                    ...) {
 
-  ## Check formulae
+  ## Check formula
   if (length(all.vars(formula[[3]])) > 1) {
     stop(
       "The formula should only include one variable on the right-hand side: the treatment variable."
@@ -31,6 +31,7 @@ lm_lin <- function(formula,
   }
   cov_names <- all.vars(covariates)
 
+  # Get all variables for the design matrix
   full_formula <- update(formula, reformulate(c('.', cov_names), "."))
 
   ## Get design matrix
@@ -42,6 +43,7 @@ lm_lin <- function(formula,
   }
 
   design_matrix <- model.matrix.default(full_formula, data = data)
+
   # If Z is a factor, can't use variable name, so get first column not named
   # (Intercept); and it should be the first or second column
   treat_col <- which(colnames(design_matrix)[1:2] != '(Intercept)')[1]
@@ -54,16 +56,21 @@ lm_lin <- function(formula,
     )
   }
 
-  # check speed
+  # center all covariates
   demeaned_covars <-
-    apply(
-      design_matrix[, setdiff(colnames(design_matrix), c(treat_name, '(Intercept)'))],
-      2,
-      function(x) { xbar <- x - mean(x) }
+    scale(
+      design_matrix[
+        ,
+        setdiff(colnames(design_matrix), c(treat_name, '(Intercept)'))
+      ],
+      center = TRUE,
+      scale = FALSE
     )
 
+  # Change name of centered covariates to end in bar
   colnames(demeaned_covars) <- paste0(colnames(demeaned_covars), '_bar')
 
+  # Update formula to include interaction of treatment with centered covariates
   lin_formula <-
     update(
       formula,
