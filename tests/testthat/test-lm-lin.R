@@ -51,6 +51,7 @@ test_that("Test LM Lin",{
     lm(Y ~ Z + Z*X1_bar + Z*X2_bar, data = df)$coefficients
   )
 
+  ## Test cluster passes through
   expect_identical(
     lm_lin(Y ~ Z,
            covariates = ~ X1 + X2,
@@ -59,6 +60,19 @@ test_that("Test LM Lin",{
     lm_robust(Y ~ Z + Z*X1_bar + Z*X2_bar,
               data = df,
               cluster_variable_name = cluster)
+  )
+
+  ## Test that it works with subset
+  expect_identical(
+    lm_lin(Y ~ Z,
+           covariates = ~ X1 + X2,
+           data = df,
+           cluster_variable_name = cluster,
+           subset = Y > 0),
+    lm_robust(Y ~ Z + Z*X1_bar + Z*X2_bar,
+              data = df,
+              cluster_variable_name = cluster,
+              subset = Y > 0)
   )
 
   # Works with factors
