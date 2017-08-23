@@ -36,6 +36,14 @@ test_that("Test LM Lin",{
     'right-hand sided equation'
   )
 
+  # works with one covar
+  expect_error(
+    lm_lin(Y ~ Z,
+           covariates = ~ X1,
+           data = df),
+    NA
+  )
+
   df$X1_bar <- df$X1 - mean(df$X1)
   df$X2_bar <- df$X2 - mean(df$X2)
 

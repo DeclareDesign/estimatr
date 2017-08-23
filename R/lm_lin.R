@@ -61,7 +61,8 @@ lm_lin <- function(formula,
     scale(
       design_matrix[
         ,
-        setdiff(colnames(design_matrix), c(treat_name, '(Intercept)'))
+        setdiff(colnames(design_matrix), c(treat_name, '(Intercept)')),
+        drop = F
       ],
       center = TRUE,
       scale = FALSE
