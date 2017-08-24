@@ -78,7 +78,7 @@
   <a href="http://discuss.declaredesign.org">Discussion Board</a>
 </li>
 <li>
-  <a href="https://declaredesign.org">DeclareDesign home</a>
+  <a href="http://declaredesign.org">DeclareDesign home</a>
 </li>
       </ul>
       
@@ -102,8 +102,9 @@
     <p>Built-in Estimators: Difference-in-means</p>
     
 
-    <pre class="usage"><span class='fu'>difference_in_means</span>(<span class='no'>formula</span>, <span class='kw'>block_variable_name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>data</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>subset</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>)</pre>
+    <pre class="usage"><span class='fu'>difference_in_means</span>(<span class='no'>formula</span>, <span class='kw'>block_variable_name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>cluster_variable_name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='no'>data</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>subset</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -114,7 +115,11 @@
     </tr>
     <tr>
       <th>block_variable_name</th>
-      <td><p>The bare (unquote) name of the block variable. Use for blocked designs only.</p></td>
+      <td><p>An optional bare (unquote) name of the block variable. Use for blocked designs only.</p></td>
+    </tr>
+    <tr>
+      <th>cluster_variable_name</th>
+      <td><p>An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.</p></td>
     </tr>
     <tr>
       <th>condition1</th>
