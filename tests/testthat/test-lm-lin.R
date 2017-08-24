@@ -105,4 +105,13 @@ test_that("Test LM Lin",{
               cluster_variable_name = cluster)[, -1]
   )
 
+
+  # Works with missing data in treatment
+  df$treat[23] <- NA
+  expect_error(
+    lm_lin(Y ~ treat,
+           covariates = ~ X1 + X2,
+           data = df),
+    NA
+  )
 })

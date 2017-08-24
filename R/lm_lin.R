@@ -79,7 +79,7 @@ lm_lin <- function(formula,
                          paste0(treat_name, '*', colnames(demeaned_covars))))
     )
 
-  new_data <- data
+  new_data <- data[row.names(design_matrix), ]
   new_data[, treat_name] <- treatment
 
   return(lm_robust(formula = lin_formula,
