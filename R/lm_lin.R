@@ -1,5 +1,5 @@
 
-#' A wrapper for \code{lm_robust} that applies the Lin 2013 covariate adjustment
+#' Linear regression with the Lin (2013) covariate adjustment
 #'
 #' @param formula An object of class "formula", such as Y ~ Z. Should only have the outcome and the treatment.
 #'
