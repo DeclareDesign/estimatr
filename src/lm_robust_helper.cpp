@@ -59,8 +59,8 @@ List lm_robust_helper(const arma::vec & y,
   arma::colvec beta_hat = XtX_inv*Xt*y;
 
   arma::mat Vcov_hat;
-  arma::colvec df(X.n_cols);
-  df.fill(-99);
+  arma::colvec dof(X.n_cols);
+  dof.fill(-99);
 
   if(type != "none"){
 
@@ -174,7 +174,7 @@ List lm_robust_helper(const arma::vec & y,
             if (which_covs[p]) {
               arma::mat G = Gs.subcube(arma::span::all, arma::span(p), arma::span::all);
               arma::mat GG = arma::trans(G) * G;
-              df[p] = std::pow(arma::trace(GG), 2) / arma::accu(arma::pow(GG, 2));
+              dof[p] = std::pow(arma::trace(GG), 2) / arma::accu(arma::pow(GG, 2));
             }
           }
         }
@@ -197,7 +197,7 @@ List lm_robust_helper(const arma::vec & y,
 
         Vcov_hat = ((J * (n - 1)) / ((J - 1) * (n - k))) * XtX_inv * XteetX * XtX_inv;
 
-        df.fill(J - 1);
+        dof.fill(J - 1);
 
       }
 
@@ -206,7 +206,7 @@ List lm_robust_helper(const arma::vec & y,
 
   return List::create(_["beta_hat"]= beta_hat,
                       _["Vcov_hat"]= Vcov_hat,
-                      _["df"]= df);
+                      _["dof"]= dof);
 }
 
 

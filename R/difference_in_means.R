@@ -120,7 +120,7 @@ difference_in_means <-
 
     if (is.null(blocks)){
 
-      return_df <- difference_in_means_internal(
+      return_frame <- difference_in_means_internal(
         formula,
         condition1 = condition1,
         condition2 = condition2,
@@ -131,14 +131,14 @@ difference_in_means <-
       )
 
       ## todo: add inflation from GG fn 20 ch 3
-      return_df$df <- with(return_df, N - 2)
-      return_df$p <- with(return_df, 2 * pt(abs(est / se), df = df, lower.tail = FALSE))
-      return_df$ci_lower <- with(return_df, est - qt(1 - alpha / 2, df = df) * se)
-      return_df$ci_upper <- with(return_df, est + qt(1 - alpha / 2, df = df) * se)
-
-      return_df <- return_df[,c("est", "se", "p", "ci_lower", "ci_upper", "df")]
-
-      return(return_df)
+      return_frame$df <- with(return_frame,
+                              N - 2)
+      return_frame$p <- with(return_frame,
+                             2 * pt(abs(est / se), df = df, lower.tail = FALSE))
+      return_frame$ci_lower <- with(return_frame,
+                                    est - qt(1 - alpha / 2, df = df) * se)
+      return_frame$ci_upper <- with(return_frame,
+                                    est + qt(1 - alpha / 2, df = df) * se)
 
     } else {
 
@@ -153,7 +153,9 @@ difference_in_means <-
         }
 
         ## get number of clusters per block
-        clust_per_block <- tapply(cluster, blocks, function(x) length(unique(x)))
+        clust_per_block <- tapply(cluster,
+                                  blocks,
+                                  function(x) length(unique(x)))
       } else {
         clust_per_block <- tabulate(as.factor(blocks))
       }
@@ -190,7 +192,7 @@ difference_in_means <-
 
       N_overall <- with(block_estimates, sum(N))
 
-      # Blocked design, (Gerber and Green 2012, p. 73, eq. 3.10)
+      # Blocked design, (Gerber Green 2012, p73, eq3.10)
       diff <- with(block_estimates, sum(est * N/N_overall))
 
       if (pair_matched) {
@@ -198,14 +200,14 @@ difference_in_means <-
         n_blocks <- nrow(block_estimates)
 
         if (is.null(cluster)) {
-          # Pair matched, cluster randomized (Gerber and Green 2012, p. 77, eq. 3.16)
+          # Pair matched, cluster randomized (Gerber Green 2012, p77, eq3.16)
           se <-
             with(
               block_estimates,
               sqrt( (1 / (n_blocks * (n_blocks - 1))) * sum((est - diff)^2) )
             )
         } else {
-          # Pair matched, unit randomized (Imai, King, Nall 2009, p. 36, eq. 6)
+          # Pair matched, unit randomized (Imai, King, Nall 2009, p36, eq6)
           se <-
             with(
               block_estimates,
@@ -227,7 +229,7 @@ difference_in_means <-
       ci_lower <- diff - qt(1 - alpha / 2, df = df) * se
       ci_upper <- diff + qt(1 - alpha / 2, df = df) * se
 
-      return_df <- data.frame(
+      return_frame <- data.frame(
         est = diff,
         se = se,
         p = p,
@@ -237,8 +239,19 @@ difference_in_means <-
         stringsAsFactors = FALSE
       )
 
-      return(return_df)
     }
+
+    return_frame$coefficient_name <- all.vars(formula[[3]])
+
+    rownames(return_frame) <- NULL
+
+    return(
+      return_frame[
+        ,
+        c("coefficient_name", "est", "se", "p", "ci_lower", "ci_upper", "df")
+      ]
+    )
+
   }
 
 
@@ -351,12 +364,12 @@ difference_in_means_internal <-
       se <- sqrt(weighted_var_internal(w2, Y2, mean2) + weighted_var_internal(w1, Y1, mean1))
     }
 
-    return_df <- data.frame(
+    return_frame <- data.frame(
       est = diff,
       se = se,
       N = N
     )
 
-    return(return_df)
+    return(return_frame)
 
   }

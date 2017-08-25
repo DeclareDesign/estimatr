@@ -480,8 +480,8 @@ test_that("DIM unbiased", {
   ## Complete Randomization
   # True se(SATE_hat)
   true_seSATE <- sqrt( (var(dat$Y0) + var(dat$Y1) + 2 * cov(dat$Y0, dat$Y1)) / (10 - 1))
-  declaration <- declare_ra(N = nrow(dat))
-  treatment_perms <- obtain_permutation_matrix(declaration)
+  declaration <- randomizr::declare_ra(N = nrow(dat))
+  treatment_perms <- randomizr::obtain_permutation_matrix(declaration)
 
   ests <- apply(treatment_perms,
                 2,
@@ -500,9 +500,9 @@ test_that("DIM unbiased", {
 
   ## cluster randomized design, 5 blocks of 2
   dat$cluster <- rep(1:5, each = 2)
-  declaration <- declare_ra(N = nrow(dat),
+  declaration <- randomizr::declare_ra(N = nrow(dat),
                             clust_var = dat$cluster)
-  treatment_perms <- obtain_permutation_matrix(declaration)
+  treatment_perms <- randomizr::obtain_permutation_matrix(declaration)
 
   ests <- apply(treatment_perms,
                 2,
@@ -523,10 +523,10 @@ test_that("DIM unbiased", {
 
   ## Matched pair design, 5 blocks of 2
   dat$blocks <- rep(1:5, each = 2)
-  declaration <- declare_ra(N = nrow(dat),
+  declaration <- randomizr::declare_ra(N = nrow(dat),
                             block_var = dat$blocks,
                             block_m = rep(1, 5))
-  treatment_perms <- obtain_permutation_matrix(declaration)
+  treatment_perms <- randomizr::obtain_permutation_matrix(declaration)
 
   ests <- apply(treatment_perms,
                 2,
@@ -547,10 +547,10 @@ test_that("DIM unbiased", {
 
   ## block randomized design, 2 blocks of 5
   dat$blocks <- rep(1:2, each = 5)
-  declaration <- declare_ra(N = nrow(dat),
+  declaration <- randomizr::declare_ra(N = nrow(dat),
                             block_var = dat$blocks,
                             block_m = c(3, 3))
-  treatment_perms <- obtain_permutation_matrix(declaration)
+  treatment_perms <- randomizr::obtain_permutation_matrix(declaration)
 
   ests <- apply(treatment_perms,
                 2,
@@ -572,10 +572,10 @@ test_that("DIM unbiased", {
   ## cluster matched pair, different sized blocks
   dat$blocks <- rep(1:3, times = c(4, 4, 2))
   dat$clusters <- c(1, 1, 2, 2, 3, 3, 4, 4, 5, 6)
-  declaration <- declare_ra(N = nrow(dat),
+  declaration <- randomizr::declare_ra(N = nrow(dat),
                             block_var = dat$blocks,
                             clust_var = dat$clusters)
-  treatment_perms <- obtain_permutation_matrix(declaration)
+  treatment_perms <- randomizr::obtain_permutation_matrix(declaration)
 
   ests <- apply(treatment_perms,
                 2,
