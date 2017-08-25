@@ -73,11 +73,10 @@ lm_lin <- function(formula,
 
   # Update formula to include interaction of treatment with centered covariates
   lin_formula <-
-    update(
-      formula,
-      reformulate(paste0(treat_name, ' + ',
-                         paste0(treat_name, '*', colnames(demeaned_covars))))
-    )
+    reformulate(c(paste0('`', treat_name, '`'),
+                  paste0('`', treat_name, '`*`', colnames(demeaned_covars), '`')),
+                response = all.vars(formula)[[1]],
+                intercept = attr(terms(formula), "intercept"))
 
   new_data <- data[row.names(design_matrix), ]
   new_data[, treat_name] <- treatment
