@@ -14,6 +14,13 @@ lm_robust(Y ~ Z + X, coefficient_name = c("Z", "X"), data = df)
 lm_robust(Y ~ Z + X, coefficient_name = c("(Intercept)", "Z", "X"), data = df)
 lm_robust(Y ~ Z*X, coefficient_name = "Z:X", data = df)
 
+lm_robust(Y ~ Z + X, data = df, subset = W > 0.5)
+# Works with subset
+expect_identical(
+  lm_robust(Y ~ Z + X, data = df, subset = W > 0.5),
+  lm_robust(Y ~ Z + X, data = df[df$W > 0.5, ])
+)
+
 # we gotta figure out no quoting....
 expect_error(lm_robust(Y ~ Z + X, coefficient_name = X, data = df))
 expect_error(lm_robust(Y ~ Z + X, coefficient_name = c(Z, X), data = df))

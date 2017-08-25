@@ -12,8 +12,13 @@
 lm_lin <- function(formula,
                    data,
                    covariates,
+                   weights = NULL,
                    subset = NULL,
-                   ...) {
+                   cluster_variable_name = NULL,
+                   se_type = NULL,
+                   ci = TRUE,
+                   alpha = .05,
+                   coefficient_name = NULL) {
 
   ## Check formula
   if (length(all.vars(formula[[3]])) > 1) {
@@ -34,19 +39,21 @@ lm_lin <- function(formula,
   # Get all variables for the design matrix
   full_formula <- update(formula, reformulate(c('.', cov_names), "."))
 
-  ## Get design matrix
-  condition_call <- substitute(subset)
+  model_data <-
+    clean_model_data(formula = full_formula,
+                     data = data,
+                     condition_call = substitute(subset),
+                     cluster_variable_name = substitute(cluster_variable_name),
+                     weights = substitute(weights))
 
-  if (!is.null(condition_call)) {
-    r <- eval(condition_call, data)
-    data <- data[r,]
-  }
+  outcome <- model_data$outcome
+  design_matrix <- model_data$design_matrix
+  weights <- model_data$weights
+  cluster <- model_data$cluster
 
-  design_matrix <- model.matrix.default(full_formula, data = data)
-
-  # If Z is a factor, can't use variable name, so get first column not named
-  # (Intercept); and it should be the first or second column
-  treat_col <- which(colnames(design_matrix)[1:2] != '(Intercept)')[1]
+  # If Z is a factor, can't use variable name
+  # So get first column non intercept column
+  treat_col <- which(attr(design_matrix, "assign") == 1)
   treat_name <- colnames(design_matrix)[treat_col]
   treatment <- design_matrix[, treat_col]
 
@@ -71,17 +78,23 @@ lm_lin <- function(formula,
   # Change name of centered covariates to end in bar
   colnames(demeaned_covars) <- paste0(colnames(demeaned_covars), '_bar')
 
-  # Update formula to include interaction of treatment with centered covariates
-  lin_formula <-
-    reformulate(c(paste0('`', treat_name, '`'),
-                  paste0('`', treat_name, '`*`', colnames(demeaned_covars), '`')),
-                response = all.vars(formula)[[1]],
-                intercept = attr(terms(formula), "intercept"))
+  # Interacted
+  interacted_covars <- treatment * demeaned_covars
+  colnames(interacted_covars) <- paste0(treat_name, ':', colnames(demeaned_covars))
 
-  new_data <- data[row.names(design_matrix), ]
-  new_data[, treat_name] <- treatment
+  # Interact with treatment
+  X <- cbind(design_matrix[, attr(design_matrix, "assign") <= 1, drop = F],
+             demeaned_covars,
+             interacted_covars)
 
-  return(lm_robust(formula = lin_formula,
-                   data = cbind(new_data, demeaned_covars),
-                   ...))
+  return_frame <- lm_fit(y = outcome,
+                         design_matrix = X,
+                         weights = weights,
+                         cluster = cluster,
+                         ci = ci,
+                         se_type = se_type,
+                         alpha = alpha,
+                         coefficient_name = coefficient_name)
+
+  return(return_frame)
 }

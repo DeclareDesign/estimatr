@@ -7,7 +7,7 @@ test_that("Test LM Lin",{
                    X1 = rnorm(100),
                    X2 = rbinom(100, 1, .5),
                    cluster = sample(1:10, size = 100, replace = T))
-
+  lm_lin_out <- lm_lin(Y ~ Z, data = df, covariates = ~ X1 + X2)
   expect_error(
     lm_lin_out <- lm_lin(Y ~ Z, data = df, covariates = ~ X1 + X2),
     NA
@@ -62,6 +62,9 @@ test_that("Test LM Lin",{
 
   ## Works with missing data in treatment
   df$Z[23] <- NA
+  df$X1_bar <- df$X1 - mean(df$X1[-23])
+  df$X2_bar <- df$X2 - mean(df$X2[-23])
+
   expect_identical(
     lm_lin(Y ~ Z,
            covariates = ~ X1 + X2,
@@ -91,6 +94,10 @@ test_that("Test LM Lin",{
   )
 
   ## Test that it works with subset
+  keep <- setdiff(which(df$Y > 0), 23)
+  df$X1_bar <- df$X1 - mean(df$X1[keep])
+  df$X2_bar <- df$X2 - mean(df$X2[keep])
+
   expect_identical(
     lm_lin(Y ~ Z,
            covariates = ~ X1 + X2,
@@ -110,19 +117,17 @@ test_that("Test LM Lin",{
                    X2 = as.factor(rbinom(100, 1, .5)),
                    cluster = sample(1:10, size = 100, replace = T))
 
-
   df$X1_bar <- df$X1 - mean(df$X1)
-  df$X2_bar <- as.numeric(df$X2==1) - mean(df$X2 == 1)
+  df$X21_bar <- as.numeric(df$X2==1) - mean(df$X2 == 1)
 
-  ## names will differ because not X2 not factor
   expect_equivalent(
     lm_lin(Y ~ treat,
            covariates = ~ X1 + X2,
            data = df,
-           cluster_variable_name = cluster)[, -1],
-    lm_robust(Y ~ treat + treat*X1_bar + treat*X2_bar,
+           cluster_variable_name = cluster),
+    lm_robust(Y ~ treat + treat*X1_bar + treat*X21_bar,
               data = df,
-              cluster_variable_name = cluster)[, -1]
+              cluster_variable_name = cluster)
   )
 
   ## Works with a factor with spaces in the name (often the case for clusters)
@@ -144,5 +149,29 @@ test_that("Test LM Lin",{
               cluster_variable_name = cluster)[, -1]
   )
 
-  ## needs to work on missingness on cluster by dropping BEFORE doing demeaning!!!
+  ## Works with missingness on cluster
+  df$cluster[40] <- NA
+  df$X1_bar <- df$X1 - mean(df$X1[-40])
+  df$X2_bar <-
+    as.numeric(df$X2=="This is a level") - mean(df$X2[-40] == "This is a level")
+
+  expect_warning(
+    lin_out <- lm_lin(Y ~ treat,
+                      covariates = ~ X1 + X2,
+                      data = df,
+                      cluster_variable_name = cluster)[, -1],
+    'missingness in the cluster'
+  )
+
+  expect_warning(
+    rob_out <- lm_robust(Y ~ treat + treat*X1_bar + treat*X2_bar,
+                         data = df,
+                         cluster_variable_name = cluster)[, -1],
+    'missingness in the cluster'
+  )
+
+  expect_equivalent(
+    lin_out,
+    rob_out
+  )
 })
