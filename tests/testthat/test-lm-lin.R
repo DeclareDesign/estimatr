@@ -143,6 +143,6 @@ test_that("Test LM Lin",{
               data = df,
               cluster_variable_name = cluster)[, -1]
   )
+
   ## needs to work on missingness on cluster by dropping BEFORE doing demeaning!!!
-  ## get it to work with factors on RHS, get it to work with 0
 })

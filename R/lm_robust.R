@@ -134,10 +134,11 @@ lm_robust <- function(formula,
   )
 
   est <- fit$beta_hat
-  se = NA
-  p = NA
-  ci_lower = NA
-  ci_upper = NA
+  se <- NA
+  p <- NA
+  ci_lower <- NA
+  ci_upper <- NA
+  dof <- NA
 
   if(se_type != "none"){
 
@@ -149,21 +150,21 @@ lm_robust <- function(formula,
 
         ## Replace -99 with NA, easy way to flag that we didn't compute
         ## the DoF because the user didn't ask for it
-        df <- ifelse(fit$df == -99,
-                     NA,
-                     fit$df)
+        dof <- ifelse(fit$dof == -99,
+                      NA,
+                      fit$dof)
 
       } else {
 
         N <- nrow(design_matrix)
         k <- ncol(design_matrix)
-        df <- N - k
+        dof <- N - k
 
       }
 
-      p <- 2 * pt(abs(est / se), df = df, lower.tail = FALSE)
-      ci_lower <- est - qt(1 - alpha / 2, df = df) * se
-      ci_upper <- est + qt(1 - alpha / 2, df = df) * se
+      p <- 2 * pt(abs(est / se), df = dof, lower.tail = FALSE)
+      ci_lower <- est - qt(1 - alpha / 2, df = dof) * se
+      ci_upper <- est + qt(1 - alpha / 2, df = dof) * se
 
     }
 
@@ -171,14 +172,17 @@ lm_robust <- function(formula,
 
   return_frame <-
     data.frame(
-      variable_names = variable_names,
+      coefficient_name = variable_names,
       est = est,
       se = se,
       p = p,
       ci_lower = ci_lower,
       ci_upper = ci_upper,
+      df = dof,
       stringsAsFactors = FALSE
     )
+
+  rownames(return_frame) <- NULL
 
   return(return_frame[which_covs, ])
 
