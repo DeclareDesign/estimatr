@@ -3,7 +3,6 @@
 export(difference_in_means)
 export(lm_lin)
 export(lm_robust)
-export(use_model)
 importFrom(Rcpp,evalCpp)
 importFrom(stats,complete.cases)
 importFrom(stats,lm)

@@ -2,9 +2,11 @@
 % Please edit documentation in R/lm_lin.R
 \name{lm_lin}
 \alias{lm_lin}
-\title{A wrapper for \code{lm_robust} that applies the Lin 2013 covariate adjustment}
+\title{Linear regression with the Lin (2013) covariate adjustment}
 \usage{
-lm_lin(formula, data, covariates, subset = NULL, ...)
+lm_lin(formula, data, covariates, weights = NULL, subset = NULL,
+  cluster_variable_name = NULL, se_type = NULL, ci = TRUE, alpha = 0.05,
+  coefficient_name = NULL)
 }
 \arguments{
 \item{formula}{An object of class "formula", such as Y ~ Z. Should only have the outcome and the treatment.}
@@ -16,5 +18,5 @@ lm_lin(formula, data, covariates, subset = NULL, ...)
 \item{...}{All other arguments that are passed through to \code{\link{lm_robust}}}
 }
 \description{
-A wrapper for \code{lm_robust} that applies the Lin 2013 covariate adjustment
+Linear regression with the Lin (2013) covariate adjustment
 }
