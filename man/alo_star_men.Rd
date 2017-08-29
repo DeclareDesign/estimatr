@@ -21,7 +21,7 @@ alo_star_men
 \description{
 A dataset containing the data to replicate:
 Lin, Winston. 2013. "Agnostic notes on regression adjustments to experimental
-data: Reexamining Freedman’s critique." The Annals of Applied Statistics.
+data: Reexamining Freedman's critique." The Annals of Applied Statistics.
 Stat. 7(1): 295-318. doi:10.1214/12-AOAS583.
 https://projecteuclid.org/euclid.aoas/1365527200.
 }
