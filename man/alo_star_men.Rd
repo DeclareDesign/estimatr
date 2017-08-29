@@ -30,9 +30,9 @@ This data was originally taken from the following paper, subset to men who
 showed up to college, were in one of the arms with the support condition,
 and had GPA data for their first year in college.
 
-Angrist, Joshua, Daniel Lang, and Philip Oreopoulos. 2009. “Incentives and
-Services for College Achievement: Evidence from a Randomized Trial.” American
-Economic Journal: Applied Economics 1(1): 136–63.
+Angrist, Joshua, Daniel Lang, and Philip Oreopoulos. 2009. "Incentives and
+Services for College Achievement: Evidence from a Randomized Trial." American
+Economic Journal: Applied Economics 1(1): 136-63.
 https://www.aeaweb.org/articles?id=10.1257/app.1.1.136
 }
 \keyword{datasets}
