@@ -1,11 +1,13 @@
 // [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::plugins(cpp11)]]
 
 // These functions implement
 // Using Heteroscedasticity Consistent Standard Errors in the Linear Regression Model
 // J. Scott Long and Laurie H. Ervin
-
+#define ARMA_64BIT_WORD 1
 #include <RcppArmadillo.h>
 using namespace Rcpp;
+
 
 //----------
 // Helper functions
@@ -18,7 +20,7 @@ using namespace Rcpp;
 arma::mat mult_diag(const arma::mat& x, const arma::vec& d) {
 
   arma::mat out(x.n_rows, x.n_cols);
-  for (int j = 0; j < x.n_cols; ++j) {
+  for (unsigned j = 0; j < x.n_cols; ++j) {
     out.col(j) = x.col(j) * d(j);
   }
 
@@ -107,7 +109,7 @@ List lm_robust_helper(const arma::vec & y,
       // http://dirk.eddelbuettel.com/code/rcpp.armadillo.html
       double s2 = std::inner_product(ei.begin(), ei.end(), ei.begin(), 0.0)/(n - k);
       Vcov_hat = s2 * XtX_inv;
-    } else if ((type == "BM" | type == "stata") & cluster.isNotNull()) {
+    } else if (( (type == "BM") | (type == "stata") ) & cluster.isNotNull()) {
 
       // Code adapted from Michal Kolesar
       // https://github.com/kolesarm/Robust-Small-Sample-Standard-Errors
