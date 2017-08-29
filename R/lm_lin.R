@@ -5,6 +5,7 @@
 #'
 #' @param data A data.frame.
 #' @param covariates A one-sided formula with all of the covariates on the right hand side, such as ~ x1 + x2 + x3.
+#' @param weights the bare (unquoted) names of the weights variable in the supplied data.
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
 #' @param cluster_variable_name An optional bare (unquoted) name of the variable that corresponds to the clusters in the data.
 #' @param se_type The sort of standard error sought. Without clustering: "HC0", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "BM" (default), "stata".

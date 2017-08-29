@@ -15,6 +15,8 @@ lm_lin(formula, data, covariates, weights = NULL, subset = NULL,
 
 \item{covariates}{A one-sided formula with all of the covariates on the right hand side, such as ~ x1 + x2 + x3.}
 
+\item{weights}{the bare (unquoted) names of the weights variable in the supplied data.}
+
 \item{subset}{An optional bare (unquoted) expression specifying a subset of observations to be used.}
 
 \item{cluster_variable_name}{An optional bare (unquoted) name of the variable that corresponds to the clusters in the data.}
