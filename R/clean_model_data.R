@@ -1,5 +1,4 @@
-#' Internal method to process data
-
+# Internal method to process data
 clean_model_data <- function(formula,
                              data,
                              weights,
@@ -11,7 +10,7 @@ clean_model_data <- function(formula,
     data <- data[r,]
   }
 
-  mf <- model.frame(formula, data = data)
+  mf <- model.frame.default(formula, data = data)
 
   mf_rows_to_drop <- list(cluster = integer(0),
                           weights = integer(0))

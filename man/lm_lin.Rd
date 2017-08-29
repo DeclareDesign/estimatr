@@ -15,7 +15,17 @@ lm_lin(formula, data, covariates, weights = NULL, subset = NULL,
 
 \item{covariates}{A one-sided formula with all of the covariates on the right hand side, such as ~ x1 + x2 + x3.}
 
-\item{...}{All other arguments that are passed through to \code{\link{lm_robust}}}
+\item{subset}{An optional bare (unquoted) expression specifying a subset of observations to be used.}
+
+\item{cluster_variable_name}{An optional bare (unquoted) name of the variable that corresponds to the clusters in the data.}
+
+\item{se_type}{The sort of standard error sought. Without clustering: "HC0", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "BM" (default), "stata".}
+
+\item{ci}{A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.}
+
+\item{alpha}{The significance level, 0.05 by default.}
+
+\item{coefficient_name}{a character or character vector that indicates which coefficients should be reported. If left unspecified, returns all coefficients.}
 }
 \description{
 Linear regression with the Lin (2013) covariate adjustment

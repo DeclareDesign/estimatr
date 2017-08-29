@@ -5,7 +5,12 @@
 #'
 #' @param data A data.frame.
 #' @param covariates A one-sided formula with all of the covariates on the right hand side, such as ~ x1 + x2 + x3.
-#' @param ... All other arguments that are passed through to \code{\link{lm_robust}}
+#' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
+#' @param cluster_variable_name An optional bare (unquoted) name of the variable that corresponds to the clusters in the data.
+#' @param se_type The sort of standard error sought. Without clustering: "HC0", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "BM" (default), "stata".
+#' @param ci A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.
+#' @param alpha The significance level, 0.05 by default.
+#' @param coefficient_name a character or character vector that indicates which coefficients should be reported. If left unspecified, returns all coefficients.
 #'
 #' @export
 #'

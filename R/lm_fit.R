@@ -1,5 +1,4 @@
-#' Internal method that creates linear fits
-#' @export
+# Internal method that creates linear fits
 lm_fit <- function(y,
                    design_matrix,
                    weights,
