@@ -123,3 +123,16 @@ test_that("lm robust works with weights",{
   )
 
 })
+
+test_that("lm robust works with large data", {
+  N <- 75000
+  df <- data.frame(Y = rbinom(N, 1, .5),
+                   X1 = rnorm(N),
+                   X2 = rnorm(N),
+                   X3 = rnorm(N))
+  expect_error(
+    lm_robust(Y ~ X1 + X2 + X3, data = df, se_type = 'none'),
+    NA
+  )
+
+})
