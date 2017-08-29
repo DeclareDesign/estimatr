@@ -1,4 +1,16 @@
-# Internal method that creates linear fits
+#' Internal method that creates linear fits
+#'
+#' @param y numeric outcome vector
+#' @param design_matrix numeric design matrix
+#' @param weights numeric weights vector
+#' @param cluster numeric cluster vector
+#' @param ci boolean that when T returns confidence intervals and p-values
+#' @param se_type character denoting which kind of SEs to return
+#' @param alpha numeric denoting the test size for confidence intervals
+#' @param coefficient_name character vector of coefficients to return
+#'
+#' @export
+#'
 lm_fit <- function(y,
                    design_matrix,
                    weights,
