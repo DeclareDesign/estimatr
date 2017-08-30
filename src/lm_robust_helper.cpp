@@ -150,13 +150,9 @@ List lm_robust_helper(const arma::vec & y,
 
           arma::mat I_min_H = D - Xoriginal.rows(cluster_ids) * XtX_inv * Xt.cols(cluster_ids);
 
-          Rcpp::Rcout << "here" << std::endl;
-
-
           arma::mat A = D * arma::sqrtmat_sympd(arma::pinv(
-            D * (I_min_H) * D * arma::trans(I_min_H) * D
+            D * (I_min_H) * D * D
           )) * D * X.rows(cluster_ids) ;
-
 
           // t(ei) %*% (I - P_ss)^{-1/2} %*% Xj
           // each ro  w is the contribution of the cluster to the meat
@@ -166,8 +162,11 @@ List lm_robust_helper(const arma::vec & y,
           clusternum++;
         }
 
+        Rcpp::Rcout << tutX << std::endl;
 
         Vcov_hat = XtX_inv * arma::trans(tutX) * tutX * XtX_inv;
+
+        Rcpp::Rcout << arma::trans(tutX) * tutX << std::endl;
 
         if (ci) {
           for(int p = 0; p < k; p++){
