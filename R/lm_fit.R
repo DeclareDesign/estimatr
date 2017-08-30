@@ -21,7 +21,7 @@ lm_fit <- function(y,
                    coefficient_name) {
 
   ## allowable se_types with clustering
-  cl_se_types <- c("BM", "stata")
+  cl_se_types <- c("BM", "stata", "CR2")
 
   ## Parse cluster variable
   if (!is.null(cluster)) {
@@ -61,8 +61,11 @@ lm_fit <- function(y,
   }
 
   if (!is.null(weights)) {
+    design_matrix_unweighted <- design_matrix
     design_matrix <- sqrt(weights) * design_matrix
     y <- sqrt(weights) * y
+  } else {
+    design_matrix_unweighted <- NULL
   }
 
 
@@ -70,6 +73,7 @@ lm_fit <- function(y,
     lm_robust_helper(
       y = y,
       X = design_matrix,
+      Xunweighted = design_matrix_unweighted,
       cluster = cluster,
       ci = ci,
       type = se_type,

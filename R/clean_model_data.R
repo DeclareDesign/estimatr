@@ -34,9 +34,9 @@ clean_model_data <- function(formula,
 
   if (!is.null(weights)) {
 
-    if (!is.null(cluster)) {
-      stop("weights not yet supported with clustered standard errors")
-    }
+    #if (!is.null(cluster)) {
+    #  stop("weights not yet supported with clustered standard errors")
+    #}
 
     weights <- eval(weights, data[row.names(mf), ])
 

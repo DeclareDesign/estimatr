@@ -30,18 +30,19 @@ BEGIN_RCPP
 END_RCPP
 }
 // lm_robust_helper
-List lm_robust_helper(const arma::vec& y, const arma::mat& X, const Rcpp::Nullable<Rcpp::NumericVector>& cluster, const bool& ci, const String type, const std::vector<bool>& which_covs);
-RcppExport SEXP _estimatr_lm_robust_helper(SEXP ySEXP, SEXP XSEXP, SEXP clusterSEXP, SEXP ciSEXP, SEXP typeSEXP, SEXP which_covsSEXP) {
+List lm_robust_helper(const arma::vec& y, const arma::mat& X, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Rcpp::Nullable<Rcpp::NumericVector>& cluster, const bool& ci, const String type, const std::vector<bool>& which_covs);
+RcppExport SEXP _estimatr_lm_robust_helper(SEXP ySEXP, SEXP XSEXP, SEXP XunweightedSEXP, SEXP clusterSEXP, SEXP ciSEXP, SEXP typeSEXP, SEXP which_covsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::vec& >::type y(ySEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericMatrix>& >::type Xunweighted(XunweightedSEXP);
     Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericVector>& >::type cluster(clusterSEXP);
     Rcpp::traits::input_parameter< const bool& >::type ci(ciSEXP);
     Rcpp::traits::input_parameter< const String >::type type(typeSEXP);
     Rcpp::traits::input_parameter< const std::vector<bool>& >::type which_covs(which_covsSEXP);
-    rcpp_result_gen = Rcpp::wrap(lm_robust_helper(y, X, cluster, ci, type, which_covs));
+    rcpp_result_gen = Rcpp::wrap(lm_robust_helper(y, X, Xunweighted, cluster, ci, type, which_covs));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -49,7 +50,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_estimatr_mult_diag", (DL_FUNC) &_estimatr_mult_diag, 2},
     {"_estimatr_mat_sqrt_inv", (DL_FUNC) &_estimatr_mat_sqrt_inv, 1},
-    {"_estimatr_lm_robust_helper", (DL_FUNC) &_estimatr_lm_robust_helper, 6},
+    {"_estimatr_lm_robust_helper", (DL_FUNC) &_estimatr_lm_robust_helper, 7},
     {NULL, NULL, 0}
 };
 

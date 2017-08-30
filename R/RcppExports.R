@@ -9,7 +9,7 @@ mat_sqrt_inv <- function(X) {
     .Call(`_estimatr_mat_sqrt_inv`, X)
 }
 
-lm_robust_helper <- function(y, X, cluster, ci, type, which_covs) {
-    .Call(`_estimatr_lm_robust_helper`, y, X, cluster, ci, type, which_covs)
+lm_robust_helper <- function(y, X, Xunweighted, cluster, ci, type, which_covs) {
+    .Call(`_estimatr_lm_robust_helper`, y, X, Xunweighted, cluster, ci, type, which_covs)
 }
 
