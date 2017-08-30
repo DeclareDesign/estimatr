@@ -6,6 +6,23 @@
 \usage{
 lm_fit(y, design_matrix, weights, cluster, ci, se_type, alpha, coefficient_name)
 }
+\arguments{
+\item{y}{numeric outcome vector}
+
+\item{design_matrix}{numeric design matrix}
+
+\item{weights}{numeric weights vector}
+
+\item{cluster}{numeric cluster vector}
+
+\item{ci}{boolean that when T returns confidence intervals and p-values}
+
+\item{se_type}{character denoting which kind of SEs to return}
+
+\item{alpha}{numeric denoting the test size for confidence intervals}
+
+\item{coefficient_name}{character vector of coefficients to return}
+}
 \description{
 Internal method that creates linear fits
 }
