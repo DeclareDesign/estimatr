@@ -62,9 +62,12 @@ lm_fit <- function(y,
 
   if (!is.null(weights)) {
     design_matrix_unweighted <- design_matrix
+    weight_mean <- mean(weights)
+    weights <- weights / weight_mean
     design_matrix <- sqrt(weights) * design_matrix
     y <- sqrt(weights) * y
   } else {
+    weight_mean <- 1
     design_matrix_unweighted <- NULL
   }
 
@@ -74,6 +77,8 @@ lm_fit <- function(y,
       y = y,
       X = design_matrix,
       Xunweighted = design_matrix_unweighted,
+      weight = weights,
+      weight_mean = weight_mean,
       cluster = cluster,
       ci = ci,
       type = se_type,
