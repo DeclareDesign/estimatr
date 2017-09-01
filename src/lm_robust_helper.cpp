@@ -84,7 +84,7 @@ List lm_robust_helper(const arma::vec & y,
 
     Rcpp::Rcout << X * sqrt(weight_mean) << std::endl;
     // residuals
-    arma::colvec ei = y * sqrt(weight_mean) - X * sqrt(weight_mean) * beta_hat;
+    arma::colvec ei = y - X * beta_hat;
     Rcpp::Rcout << ei << std::endl;
 
     // hat values
@@ -148,7 +148,8 @@ List lm_robust_helper(const arma::vec & y,
         // used for the BM dof corrction
         arma::cube Gs(n, k, J);
 
-
+        ei = y / sqrt(weights) - (X.each_col() / sqrt(weights)) * beta_hat;
+        Rcpp::Rcout << ei << std::endl;
         // iterator used to fill tutX
         int clusternum = 0;
 
@@ -188,18 +189,17 @@ List lm_robust_helper(const arma::vec & y,
           // t(ei) %*% (I - P_ss)^{-1/2} %*% Xj
           // each ro  w is the contribution of the cluster to the meat
           // Below use  t(tutX) %*% tutX to sum contributions across clusters
-          Rcpp::Rcout << ei(cluster_ids) << std::endl;
 
-          tutX.row(clusternum) = arma::trans(ei(cluster_ids)) * A;
+          tutX.row(clusternum) = arma::trans(ei(cluster_ids))  * A;
 
           clusternum++;
         }
 
         Rcpp::Rcout << tutX << std::endl;
         Rcpp::Rcout << weight_mean << std::endl;
-        Vcov_hat = XtX_inv * ((arma::trans(tutX) * tutX) * pow(weight_mean, 2)) * XtX_inv;
+        Vcov_hat = XtX_inv * (arma::trans(tutX) * tutX) * XtX_inv;
 
-        Rcpp::Rcout <<  ((arma::trans(tutX) * tutX) * pow(weight_mean, 2))<< std::endl;
+        Rcpp::Rcout <<  (arma::trans(tutX) * tutX)<< std::endl;
 
         if (ci) {
           for(int p = 0; p < k; p++){
