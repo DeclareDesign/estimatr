@@ -77,9 +77,15 @@ List lm_robust_helper(const arma::vec & y,
 
   if(type != "none"){
 
+    Rcpp::Rcout << y << std::endl;
+
+    Rcpp::Rcout << y * sqrt(weight_mean)<< std::endl;
+    Rcpp::Rcout << X << std::endl;
+
+    Rcpp::Rcout << X * sqrt(weight_mean) << std::endl;
     // residuals
-    arma::colvec ei = y - X*beta_hat;
-    Rcpp::Rcout << X * beta_hat << std::endl;
+    arma::colvec ei = y * sqrt(weight_mean) - X * sqrt(weight_mean) * beta_hat;
+    Rcpp::Rcout << ei << std::endl;
 
     // hat values
     arma::colvec ei2 = arma::pow(ei, 2);
