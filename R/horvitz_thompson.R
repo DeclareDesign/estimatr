@@ -1,34 +1,24 @@
-#' Built-in Estimators: Difference-in-means
+#' Horvitz-Thompson estimator of treatment effects
 #'
 #' @param formula An object of class "formula", such as Y ~ Z
+#' @param inclusion_probabilities A bare (unquoted) name of the variable with the inclusion probabilities (or probabilities of being in condition 2)
 #' @param block_variable_name An optional bare (unquoted) name of the block variable. Use for blocked designs only.
 #' @param cluster_variable_name An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.
 #' @param data A data.frame.
-#' @param weights An optional bare (unquoted) name of the weights variable.
+#' @param weights An optional vector of weights (not yet implemented).
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
 #' @param alpha The significance level, 0.05 by default.
 #' @param condition1 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
 #' @param condition2 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
 #'
 #'
-#' @details This function implements difference-in-means estimation, with and without blocking. Standard errors are estimated as the square root of the sum of the within-group variances, divided by their respective sample sizes (Equation 3.6 in Gerber and Green 2012). If blocked, the difference in means estimate is taken in each block, then averaged together according to block size.
+#' @details This function implements the Horvitz-Thompson estimator for treatment effects.
 #'
 #' @export
 #'
-#' @examples
-#'
-#'  df <- data.frame(Y = rnorm(100),
-#'                   Z = sample(1:3, 100, replace = TRUE),
-#'                   block = sample(c("A", "B", "C"), 100, replace = TRUE))
-#'
-#'  difference_in_means(Y ~ Z, data = df)
-#'  difference_in_means(Y ~ Z, condition1 = 3, condition2 = 2, data = df)
-#'
-#'  difference_in_means(Y ~ Z, block_variable_name = block, data = df)
-#'  difference_in_means(Y ~ Z, block_variable_name = block, condition1 = 3, condition2 = 2, data = df)
-#'
-difference_in_means <-
+horvitz_thompson <-
   function(formula,
+           inclusion_probabilities,
            block_variable_name = NULL,
            cluster_variable_name = NULL,
            condition1 = NULL,
@@ -56,6 +46,23 @@ difference_in_means <-
     missing_data <- !complete.cases(data[, all.vars(formula)])
     data <- data[!missing_data, ]
 
+    ## Get inclusion probabilities
+    inclusion_probabilities <- eval(substitute(inclusion_probabilities), data)
+
+    if (any(inclusion_probabilities < 0 | inclusion_probabilities > 1)) {
+      stop(
+        "Some inclusion probabilities are outside of [0, 1]."
+      )
+    }
+
+    incl_prob_missing <- find_warn_missing(inclusion_probabilities,
+                                           "inclusion probabilities")
+
+
+    inclusion_probabilities <- inclusion_probabilities[!incl_prob_missing]
+    data <- data[!incl_prob_missing, ]
+
+
     ## Get block variable
     if (!is.null(substitute(block_variable_name))) {
       blocks <- eval(substitute(block_variable_name), data)
@@ -63,13 +70,7 @@ difference_in_means <-
         blocks <- droplevels(blocks)
       }
 
-      blocks_missing <- is.na(blocks)
-
-      if (any(blocks_missing)) {
-        warning(
-          "Some observations have missingness in the block variable but not in the outcome or treatment. These observations have been dropped."
-        )
-      }
+      blocks_missing <- find_warn_missing(blocks, "blocking")
 
       blocks <- blocks[!blocks_missing]
       data <- data[!blocks_missing, ]
@@ -82,13 +83,7 @@ difference_in_means <-
     if (!is.null(substitute(weights))) {
       weights <- eval(substitute(weights), data)
 
-      weights_missing <- is.na(weights)
-
-      if (any(weights_missing)) {
-        warning(
-          "Some observations have missingness in the weights variable but not in the outcome or treatment. These observations have been dropped."
-        )
-      }
+      weights_missing <- find_warn_missing(weights, "weights")
 
       weights <- weights[!weights_missing]
       data <- data[!weights_missing, ]
@@ -102,13 +97,7 @@ difference_in_means <-
         cluster <- droplevels(cluster)
       }
 
-      cluster_missing <- is.na(cluster)
-
-      if (any(cluster_missing)) {
-        warning(
-          "Some observations have missingness in the cluster variable but not in the outcome or treatment. These observations have been dropped."
-        )
-      }
+      cluster_missing <- find_warn_missing(cluster, "cluster")
 
       cluster <- cluster[!cluster_missing]
       data <- data[!cluster_missing, ]
@@ -120,8 +109,9 @@ difference_in_means <-
 
     if (is.null(blocks)){
 
-      return_frame <- difference_in_means_internal(
+      return_frame <- horvitz_thompson_internal(
         formula,
+        inclusion_probabilities = inclusion_probabilities,
         condition1 = condition1,
         condition2 = condition2,
         data = data,
@@ -195,9 +185,9 @@ difference_in_means <-
       # Blocked design, (Gerber Green 2012, p73, eq3.10)
       diff <- with(block_estimates, sum(est * N/N_overall))
 
-      n_blocks <- nrow(block_estimates)
-
       if (pair_matched) {
+
+        n_blocks <- nrow(block_estimates)
 
         if (is.null(cluster)) {
           # Pair matched, cluster randomized (Gerber Green 2012, p77, eq3.16)
@@ -224,7 +214,7 @@ difference_in_means <-
       }
 
       ## we don't know if this is correct!
-      df <- n_blocks - 2
+      df <- N_overall - 2
       p <- 2 * pt(abs(diff / se), df = df, lower.tail = FALSE)
       ci_lower <- diff - qt(1 - alpha / 2, df = df) * se
       ci_upper <- diff + qt(1 - alpha / 2, df = df) * se
@@ -254,20 +244,26 @@ difference_in_means <-
 
   }
 
+var_ht_total_no_cov <-
+  function(y, ps) {
+    sum((1 - ps) * ps * y^2)
+  }
+
+var_ht_total_cov <-
+  function(y, Ps) {
+    tot_var = 0
+    for(i in 1:length(y)) {
+      for(j in 1:length(h)) {
+        tot_var <- tot_var + (Ps[i, j] - Ps[i, i] * Ps[j, j]) * y[i] * y[j]
+      }
+    }
+    return(tot_var)
+  }
 
 
-weighted_var_internal <- function(w, x, xWbar){
-  wbar <- mean(w)
-  n <- length(w)
-  return(n / ((n - 1) * sum(w) ^ 2) * (sum((w * x - wbar * xWbar) ^ 2) -
-                                         2 * xWbar * sum((w - wbar) * (w * x - wbar * xWbar)) + xWbar ^ 2 * sum((w -
-                                                                                                                   wbar) ^ 2)))
-}
-
-
-
-difference_in_means_internal <-
+horvitz_thompson_internal <-
   function(formula,
+           inclusion_probabilities,
            condition1 = NULL,
            condition2 = NULL,
            data,
@@ -315,53 +311,44 @@ difference_in_means_internal <-
 
     N <- length(Y)
 
-    Y2 <- Y[t == condition2]
-    Y1 <- Y[t == condition1]
+    ps2 <- inclusion_probabilities[t == condition2]
+    ps1 <- 1 - inclusion_probabilities[t == condition1]
 
-    ## Check to make sure multiple in each group if pair matched is false
-    if (!pair_matched & (length(Y2) == 1 | length(Y1) == 1)) {
-      stop(
-        "Not a pair matched design and one treatment condition only has one value, making standard errors impossible to calculate."
-      )
-    }
+    Y2 <- Y[t == condition2] / ps2
+    Y1 <- Y[t == condition1] / ps1
 
     if (is.null(weights)) {
 
-      diff <- mean(Y2) - mean(Y1)
+      diff <- (sum(Y2) - sum(Y1)) / N
 
       if (pair_matched) {
-        # Pair matched designs
         se <- NA
       } else if (is.null(cluster)) {
-        # Non-pair matched designs, unit level randomization
-        se <- sqrt(var(Y2) / length(Y2) + var(Y1) / length(Y1))
+        se <-
+          sqrt(
+            (var_ht_total(Y2, diag(ps2)) +
+              var_ht_total(Y1, diag(ps1))) / (N^2)
+          )
       } else {
         # Non-pair matched designs, cluster randomization
         # (Gerber and Green 2012, p. 83, eq. 3.23)
         k <- length(unique(cluster))
 
-        se <- sqrt(
-          (var(tapply(Y2, cluster[t == condition2], mean)) * N) /
-            (k * length(Y2)) +
-          (var(tapply(Y1, cluster[t == condition1], mean)) * N) /
-            (k * length(Y1))
+        se <- sqrt( (k^2 / N^2) *
+
+          (var(tapply(Y2, cluster[t == condition2], sum))) /
+            (length(Y2)) +
+            (var(tapply(Y1, cluster[t == condition1], sum))) /
+            (length(Y1))
         )
+        print((mean(tapply(Y2, cluster[t == condition2], sum)) -
+                 mean(tapply(Y1, cluster[t == condition1], sum))) * (k / N))
+
       }
 
 
     } else {
-
-      # TODO: weights and clusters
-      # TODO: weights and matched pair
-
-      w2 <- weights[t == condition2]
-      w1 <- weights[t == condition1]
-
-      mean2 <- weighted.mean(Y2, w2)
-      mean1 <- weighted.mean(Y1, w1)
-      diff <-  mean2 - mean1
-
-      se <- sqrt(weighted_var_internal(w2, Y2, mean2) + weighted_var_internal(w1, Y1, mean1))
+      stop("Other weights not supported right now.")
     }
 
     return_frame <- data.frame(

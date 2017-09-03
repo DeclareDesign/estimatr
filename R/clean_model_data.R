@@ -1,3 +1,20 @@
+# Internal method to check for missingness on auxiliary variables and warn
+find_warn_missing <- function(x, data, type) {
+  x_missing <- is.na(x)
+
+  if (any(x_missing)) {
+    warning(
+      sprintf(
+        "Some observations have missingness in the %s variable but not in variables in the formula. These observations have been dropped.",
+        type
+      )
+    )
+  }
+
+  return(x_missing)
+}
+
+
 # Internal method to process data
 clean_model_data <- function(formula,
                              data,
