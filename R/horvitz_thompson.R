@@ -120,7 +120,6 @@ horvitz_thompson <-
         alpha = alpha
       )
 
-      ## todo: add inflation from GG fn 20 ch 3
       return_frame$df <- with(return_frame,
                               N - 2)
       return_frame$p <- with(return_frame,
@@ -131,8 +130,6 @@ horvitz_thompson <-
                                     est + qt(1 - alpha / 2, df = df) * se)
 
     } else {
-
-      pair_matched = FALSE
 
       if (!is.null(cluster)) {
 
@@ -156,23 +153,25 @@ horvitz_thompson <-
           "Some blocks have only one unit or cluster. Blocks must have multiple units or clusters."
         )
       } else if (all(clust_per_block == 2)) {
-        pair_matched = TRUE
+        stop(
+          "Cannot compute variance for Horvitz-Thompson estimator with one treated and control unit per block."
+        )
       } else if (any(clust_per_block == 2) & any(clust_per_block > 2)) {
         stop(
-          "Some blocks have two units or clusters, while others have more units or clusters. Design must either be paired or all blocks must be of size 3 or greater."
+          "Some blocks have two units or clusters. All blocks must be of size 3 or greater."
         )
       }
 
       block_dfs <- split(data, blocks)
 
       block_estimates <- lapply(block_dfs, function(x) {
-        difference_in_means_internal(
+        horvitz_thompson_internal(
           formula,
+          inclusion_probabilities = inclusion_probabilities,
           data = x,
           condition1 = condition1,
           condition2 = condition2,
           cluster_variable_name = cluster_variable_name,
-          pair_matched = pair_matched,
           weights = weights,
           alpha = alpha
         )
@@ -182,39 +181,12 @@ horvitz_thompson <-
 
       N_overall <- with(block_estimates, sum(N))
 
-      # Blocked design, (Gerber Green 2012, p73, eq3.10)
-      diff <- with(block_estimates, sum(est * N/N_overall))
+      n_blocks <- nrow(block_estimates)
 
-      if (pair_matched) {
-
-        n_blocks <- nrow(block_estimates)
-
-        if (is.null(cluster)) {
-          # Pair matched, cluster randomized (Gerber Green 2012, p77, eq3.16)
-          se <-
-            with(
-              block_estimates,
-              sqrt( (1 / (n_blocks * (n_blocks - 1))) * sum((est - diff)^2) )
-            )
-        } else {
-          # Pair matched, unit randomized (Imai, King, Nall 2009, p36, eq6)
-          se <-
-            with(
-              block_estimates,
-              sqrt(
-                ( n_blocks / ((n_blocks - 1) * N_overall^2) ) *
-                  sum( (N * est - (N_overall * diff)/n_blocks)^2 )
-              )
-            )
-        }
-
-      } else {
-        # Block randomized (Gerber and Green 2012, p. 74, footnote 17)
-        se <- with(block_estimates, sqrt(sum(se^2 * (N/N_overall)^2)))
-      }
+      se <- with(block_estimates, sqrt(sum(se^2 * (N/N_overall)^2)))
 
       ## we don't know if this is correct!
-      df <- N_overall - 2
+      df <- n_blocks - 2
       p <- 2 * pt(abs(diff / se), df = df, lower.tail = FALSE)
       ci_lower <- diff - qt(1 - alpha / 2, df = df) * se
       ci_upper <- diff + qt(1 - alpha / 2, df = df) * se
@@ -321,18 +293,16 @@ horvitz_thompson_internal <-
 
       diff <- (sum(Y2) - sum(Y1)) / N
 
-      if (pair_matched) {
-        se <- NA
-      } else if (is.null(cluster)) {
+      if (is.null(cluster)) {
         se <-
           sqrt(
             (var_ht_total(Y2, diag(ps2)) +
               var_ht_total(Y1, diag(ps1))) / (N^2)
           )
       } else {
-        # Non-pair matched designs, cluster randomization
-        # (Gerber and Green 2012, p. 83, eq. 3.23)
         k <- length(unique(cluster))
+
+
 
         se <- sqrt( (k^2 / N^2) *
 
@@ -341,14 +311,12 @@ horvitz_thompson_internal <-
             (var(tapply(Y1, cluster[t == condition1], sum))) /
             (length(Y1))
         )
-        print((mean(tapply(Y2, cluster[t == condition2], sum)) -
-                 mean(tapply(Y1, cluster[t == condition1], sum))) * (k / N))
 
       }
 
 
     } else {
-      stop("Other weights not supported right now.")
+      stop("Non-inclusion probability weights not supported right now.")
     }
 
     return_frame <- data.frame(
