@@ -183,6 +183,8 @@ horvitz_thompson <-
 
       n_blocks <- nrow(block_estimates)
 
+      diff <- with(block_estimates, sum(est * N/N_overall))
+
       se <- with(block_estimates, sqrt(sum(se^2 * (N/N_overall)^2)))
 
       ## we don't know if this is correct!
@@ -219,17 +221,6 @@ horvitz_thompson <-
 var_ht_total_no_cov <-
   function(y, ps) {
     sum((1 - ps) * ps * y^2)
-  }
-
-var_ht_total_cov <-
-  function(y, Ps) {
-    tot_var = 0
-    for(i in 1:length(y)) {
-      for(j in 1:length(h)) {
-        tot_var <- tot_var + (Ps[i, j] - Ps[i, i] * Ps[j, j]) * y[i] * y[j]
-      }
-    }
-    return(tot_var)
   }
 
 
@@ -296,27 +287,23 @@ horvitz_thompson_internal <-
       if (is.null(cluster)) {
         se <-
           sqrt(
-            (var_ht_total(Y2, diag(ps2)) +
-              var_ht_total(Y1, diag(ps1))) / (N^2)
+            (var_ht_total_no_cov(Y2, diag(ps2)) / length(Y2)^2 +
+              var_ht_total_no_cov(Y1, diag(ps1)) / length(Y1)^2)
           )
       } else {
         k <- length(unique(cluster))
 
-
-
-        se <- sqrt( (k^2 / N^2) *
-
-          (var(tapply(Y2, cluster[t == condition2], sum))) /
-            (length(Y2)) +
-            (var(tapply(Y1, cluster[t == condition1], sum))) /
-            (length(Y1))
-        )
+        se <-
+          sqrt(
+            ht_var_total_clusters(Y2, ps2, cluster[t == condition2]) / (length(Y2)^2) +
+              ht_var_total_clusters(Y1, ps1, cluster[t == condition1]) / (length(Y1)^2)
+          )
 
       }
 
 
     } else {
-      stop("Non-inclusion probability weights not supported right now.")
+      stop("Other weights not supported for now.")
     }
 
     return_frame <- data.frame(

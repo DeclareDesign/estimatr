@@ -6,6 +6,19 @@
 
 using namespace Rcpp;
 
+// ht_var_total_clusters
+double ht_var_total_clusters(const arma::vec& y, const arma::vec& ps, const arma::vec& cluster);
+RcppExport SEXP _estimatr_ht_var_total_clusters(SEXP ySEXP, SEXP psSEXP, SEXP clusterSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type ps(psSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type cluster(clusterSEXP);
+    rcpp_result_gen = Rcpp::wrap(ht_var_total_clusters(y, ps, cluster));
+    return rcpp_result_gen;
+END_RCPP
+}
 // mult_diag
 arma::mat mult_diag(const arma::mat& x, const arma::vec& d);
 RcppExport SEXP _estimatr_mult_diag(SEXP xSEXP, SEXP dSEXP) {
@@ -47,6 +60,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_estimatr_ht_var_total_clusters", (DL_FUNC) &_estimatr_ht_var_total_clusters, 3},
     {"_estimatr_mult_diag", (DL_FUNC) &_estimatr_mult_diag, 2},
     {"_estimatr_mat_sqrt_inv", (DL_FUNC) &_estimatr_mat_sqrt_inv, 1},
     {"_estimatr_lm_robust_helper", (DL_FUNC) &_estimatr_lm_robust_helper, 6},
