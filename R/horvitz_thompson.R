@@ -102,7 +102,11 @@ horvitz_thompson <-
       cluster <- cluster[!cluster_missing]
       data <- data[!cluster_missing, ]
 
-      cluster_variable_name <- deparse(substitute(cluster_variable_name))
+      # check inclusion ps constant within cluster
+      if(any(!tapply(inclusion_probabilities, cluster, function(x) all(x == x[1])))) {
+        stop("Inclusion probabilities must be constant within cluster.")
+      }
+
     } else {
       cluster <- NULL
     }
