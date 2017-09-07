@@ -1,7 +1,7 @@
 #' Horvitz-Thompson estimator of treatment effects
 #'
 #' @param formula An object of class "formula", such as Y ~ Z
-#' @param inclusion_probabilities A bare (unquoted) name of the variable with the inclusion probabilities (or probabilities of being in condition 2)
+#' @param inclusion_pr_variable_name A bare (unquoted) name of the variable with the inclusion probabilities (or probabilities of being in condition 2)
 #' @param block_variable_name An optional bare (unquoted) name of the block variable. Use for blocked designs only.
 #' @param cluster_variable_name An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.
 #' @param data A data.frame.
@@ -18,7 +18,7 @@
 #'
 horvitz_thompson <-
   function(formula,
-           inclusion_probabilities,
+           inclusion_pr_variable_name,
            block_variable_name = NULL,
            cluster_variable_name = NULL,
            condition1 = NULL,
@@ -47,7 +47,7 @@ horvitz_thompson <-
     data <- data[!missing_data, ]
 
     ## Get inclusion probabilities
-    inclusion_probabilities <- eval(substitute(inclusion_probabilities), data)
+    inclusion_probabilities <- eval(substitute(inclusion_pr_variable_name), data)
 
     if (any(inclusion_probabilities < 0 | inclusion_probabilities > 1)) {
       stop(
@@ -62,6 +62,7 @@ horvitz_thompson <-
     inclusion_probabilities <- inclusion_probabilities[!incl_prob_missing]
     data <- data[!incl_prob_missing, ]
 
+    inclusion_probabilities_name <- deparse(substitute(inclusion_pr_variable_name))
 
     ## Get block variable
     if (!is.null(substitute(block_variable_name))) {
@@ -92,10 +93,7 @@ horvitz_thompson <-
 
     ## Get cluster variable
     if (!is.null(substitute(cluster_variable_name))) {
-      cluster <- eval(substitute(cluster_variable_name), data)
-      if (is.factor(cluster)) {
-        cluster <- droplevels(cluster)
-      }
+      cluster <- droplevels(as.factor(eval(substitute(cluster_variable_name), data)))
 
       cluster_missing <- find_warn_missing(cluster, "cluster")
 
@@ -103,9 +101,12 @@ horvitz_thompson <-
       data <- data[!cluster_missing, ]
 
       # check inclusion ps constant within cluster
+
       if(any(!tapply(inclusion_probabilities, cluster, function(x) all(x == x[1])))) {
         stop("Inclusion probabilities must be constant within cluster.")
       }
+
+      cluster_variable_name <- deparse(substitute(cluster_variable_name))
 
     } else {
       cluster <- NULL
@@ -171,10 +172,10 @@ horvitz_thompson <-
       block_estimates <- lapply(block_dfs, function(x) {
         horvitz_thompson_internal(
           formula,
-          inclusion_probabilities = inclusion_probabilities,
           data = x,
           condition1 = condition1,
           condition2 = condition2,
+          inclusion_probabilities_name = inclusion_probabilities_name,
           cluster_variable_name = cluster_variable_name,
           weights = weights,
           alpha = alpha
@@ -230,7 +231,8 @@ var_ht_total_no_cov <-
 
 horvitz_thompson_internal <-
   function(formula,
-           inclusion_probabilities,
+           inclusion_probabilities = NULL,
+           inclusion_probabilities_name = NULL,
            condition1 = NULL,
            condition2 = NULL,
            data,
@@ -259,10 +261,11 @@ horvitz_thompson_internal <-
     }
 
     if (!is.null(cluster_variable_name)) {
-      cluster <- data[, cluster_variable_name]
-      if (is.factor(cluster)) {
-        cluster <- droplevels(cluster)
-      }
+      cluster <- droplevels(as.factor(data[, cluster_variable_name]))
+    }
+
+    if (!is.null(inclusion_probabilities_name)) {
+      inclusion_probabilities <- data[, inclusion_probabilities_name]
     }
 
     # Check that treatment status is uniform within cluster, checked here
