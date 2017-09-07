@@ -294,8 +294,8 @@ horvitz_thompson_internal <-
       if (is.null(cluster)) {
         se <-
           sqrt(
-            (var_ht_total_no_cov(Y2, diag(ps2)) / length(Y2)^2 +
-              var_ht_total_no_cov(Y1, diag(ps1)) / length(Y1)^2)
+            (var_ht_total_no_cov(Y2, ps2) / length(Y2)^2 +
+              var_ht_total_no_cov(Y1, ps1) / length(Y1)^2)
           )
       } else {
         k <- length(unique(cluster))
