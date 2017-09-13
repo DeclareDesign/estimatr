@@ -224,7 +224,7 @@ difference_in_means <-
       }
 
       ## we don't know if this is correct!
-      df <- N_overall - n_blocks
+      df <- n_blocks - 1 # this suggested for cluster pair matched by IKN
       p <- 2 * pt(abs(diff / se), df = df, lower.tail = FALSE)
       ci_lower <- diff - qt(1 - alpha / 2, df = df) * se
       ci_upper <- diff + qt(1 - alpha / 2, df = df) * se
