@@ -23,6 +23,7 @@ horvitz_thompson <-
            cluster_variable_name = NULL,
            condition1 = NULL,
            condition2 = NULL,
+           constant_effects = FALSE,
            data,
            weights = NULL,
            subset = NULL,
@@ -122,6 +123,7 @@ horvitz_thompson <-
         data = data,
         weights = weights,
         cluster = cluster,
+        constant_effects = constant_effects,
         alpha = alpha
       )
 
@@ -240,6 +242,7 @@ horvitz_thompson_internal <-
            cluster = NULL,
            cluster_variable_name = NULL,
            pair_matched = FALSE,
+           constant_effects = FALSE,
            alpha = .05) {
 
     Y <- data[, all.vars(formula[[2]])]
@@ -292,12 +295,26 @@ horvitz_thompson_internal <-
       diff <- (sum(Y2) - sum(Y1)) / N
 
       if (is.null(cluster)) {
-        se <-
-          sqrt(
-            (var_ht_total_no_cov(Y2, ps2) / length(Y2)^2 +
-              var_ht_total_no_cov(Y1, ps1) / length(Y1)^2)
-          )
+
+        if(constant_effects) {
+          se <-
+            sqrt(
+              (var_ht_total_no_cov(c(Y1 + diff/(1-ps1), Y2), c(1 - ps1, ps2)) +
+                 var_ht_total_no_cov(c(Y1, Y2 - diff/(1-ps2)), c(ps1, 1 - ps2)))
+              / N^2
+            )
+        } else {
+          se <-
+            sqrt(
+              (var_ht_total_no_cov(Y2, ps2) / length(Y2)^2 +
+                 var_ht_total_no_cov(Y1, ps1) / length(Y1)^2)
+            )
+        }
+
       } else {
+
+        if(constant_effects)
+          stop("constant effects not currently supported")
         k <- length(unique(cluster))
 
         se <-

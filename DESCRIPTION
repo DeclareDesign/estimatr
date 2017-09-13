@@ -14,6 +14,10 @@ Imports: Rcpp (>= 0.12.10)
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 6.0.1
 LazyData: true
-Suggests: testthat,
-          sandwich,
-          randomizr
+Suggests: 
+    testthat,
+    sandwich,
+    randomizr,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
