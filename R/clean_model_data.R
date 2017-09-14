@@ -11,14 +11,12 @@ clean_model_data <- function(formula,
   }
 
   mf <- model.frame.default(formula, data = data)
-
   mf_rows_to_drop <- list(cluster = integer(0),
                           weights = integer(0))
   ## Parse cluster variable
   if (!is.null(cluster_variable_name)) {
     # get cluster variable from subset of data
-    cluster <- as.factor(eval(cluster_variable_name,
-                              data[row.names(mf), ]))
+    cluster <- eval(cluster_variable_name, data[row.names(mf), ])
 
     mf_rows_to_drop$cluster <- which(is.na(cluster))
 

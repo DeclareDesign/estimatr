@@ -1,7 +1,7 @@
 #' Internal method that creates linear fits
 #'
 #' @param y numeric outcome vector
-#' @param design_matrix numeric design matrix
+#' @param X numeric design matrix
 #' @param weights numeric weights vector
 #' @param cluster numeric cluster vector
 #' @param ci boolean that when T returns confidence intervals and p-values
@@ -11,14 +11,14 @@
 #'
 #' @export
 #'
-lm_fit <- function(y,
-                   design_matrix,
-                   weights,
-                   cluster,
-                   ci,
-                   se_type,
-                   alpha,
-                   coefficient_name) {
+lm_robust_fit <- function(y,
+                          X,
+                          weights,
+                          cluster,
+                          ci,
+                          se_type,
+                          alpha,
+                          coefficient_name) {
 
   ## allowable se_types with clustering
   cl_se_types <- c("BM", "stata")
@@ -46,12 +46,12 @@ lm_fit <- function(y,
 
   }
 
-  variable_names <- colnames(design_matrix)
+  variable_names <- colnames(X)
 
   # Get coefficients to get df adjustments for and return
   if (is.null(coefficient_name)) {
 
-    which_covs <- rep(TRUE, ncol(design_matrix))
+    which_covs <- rep(TRUE, ncol(X))
 
   } else {
 
@@ -63,15 +63,14 @@ lm_fit <- function(y,
   }
 
   if (!is.null(weights)) {
-    design_matrix <- sqrt(weights) * design_matrix
+    X <- sqrt(weights) * X
     y <- sqrt(weights) * y
   }
-
 
   fit <-
     lm_robust_helper(
       y = y,
-      X = design_matrix,
+      X = X,
       cluster = cluster,
       ci = ci,
       type = se_type,
@@ -101,8 +100,8 @@ lm_fit <- function(y,
 
       } else {
 
-        N <- nrow(design_matrix)
-        k <- ncol(design_matrix)
+        N <- nrow(X)
+        k <- ncol(X)
         dof <- N - k
 
       }

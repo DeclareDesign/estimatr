@@ -93,14 +93,17 @@ lm_lin <- function(formula,
              demeaned_covars,
              interacted_covars)
 
-  return_frame <- lm_fit(y = outcome,
-                         design_matrix = X,
-                         weights = weights,
-                         cluster = cluster,
-                         ci = ci,
-                         se_type = se_type,
-                         alpha = alpha,
-                         coefficient_name = coefficient_name)
+  return_frame <-
+    lm_robust_fit(
+      y = outcome,
+      X = X,
+      weights = weights,
+      cluster = cluster,
+      ci = ci,
+      se_type = se_type,
+      alpha = alpha,
+      coefficient_name = coefficient_name
+    )
 
   return(return_frame)
 }

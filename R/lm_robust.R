@@ -26,20 +26,25 @@ lm_robust <- function(formula,
                       coefficient_name = NULL) {
 
   model_data <-
-    clean_model_data(formula = formula,
-                     data = data,
-                     condition_call = substitute(subset),
-                     cluster_variable_name = substitute(cluster_variable_name),
-                     weights = substitute(weights))
+    clean_model_data(
+      formula = formula,
+      data = data,
+      condition_call = substitute(subset),
+      cluster_variable_name = substitute(cluster_variable_name),
+      weights = substitute(weights)
+    )
 
-  return_frame <- lm_fit(y = model_data$outcome,
-                         design_matrix = model_data$design_matrix,
-                         weights = model_data$weights,
-                         cluster = model_data$cluster,
-                         ci = ci,
-                         se_type = se_type,
-                         alpha = alpha,
-                         coefficient_name = coefficient_name)
+  return_frame <-
+    lm_robust_fit(
+      y = model_data$outcome,
+      X = model_data$design_matrix,
+      weights = model_data$weights,
+      cluster = model_data$cluster,
+      ci = ci,
+      se_type = se_type,
+      alpha = alpha,
+      coefficient_name = coefficient_name
+    )
 
   return(return_frame)
 
