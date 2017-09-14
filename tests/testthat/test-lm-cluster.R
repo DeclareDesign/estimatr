@@ -177,3 +177,25 @@ test_that("lm cluster se with missingness", {
 
 })
 
+test_that("lm works with quoted or unquoted vars and withor without factor clusters", {
+  dat <- data.frame(Y = rnorm(100),
+                    Z = rbinom(100, 1, .5),
+                    X = rnorm(100),
+                    J = sample(1:10, 100, replace = T),
+                    W = runif(100))
+  expect_identical(
+    lm_robust(Y~Z, data = dat, weights = W),
+    lm_robust(Y~Z, data = dat, weights = 'W')
+  )
+
+  expect_identical(
+    lm_robust(Y~Z, data = dat, cluster_variable_name = J),
+    lm_robust(Y~Z, data = dat, cluster_variable_name = 'J')
+  )
+
+  dat$J_fac <- as.factor(dat$J)
+  expect_identical(
+    lm_robust(Y~Z, data = dat, cluster_variable_name = J_fac),
+    lm_robust(Y~Z, data = dat, cluster_variable_name = J)
+  )
+})

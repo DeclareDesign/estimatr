@@ -58,7 +58,7 @@ difference_in_means <-
 
     ## Get block variable
     if (!is.null(substitute(block_variable_name))) {
-      blocks <- eval(substitute(block_variable_name), data)
+      blocks <- data[, deparse_var(substitute(block_variable_name))]
       if (is.factor(blocks)) {
         blocks <- droplevels(blocks)
       }
@@ -80,7 +80,7 @@ difference_in_means <-
 
     ## Get weights variable
     if (!is.null(substitute(weights))) {
-      weights <- eval(substitute(weights), data)
+      weights <- data[, deparse_var(substitute(weights))]
 
       weights_missing <- is.na(weights)
 
@@ -97,7 +97,8 @@ difference_in_means <-
 
     ## Get cluster variable
     if (!is.null(substitute(cluster_variable_name))) {
-      cluster <- eval(substitute(cluster_variable_name), data)
+      cluster_variable_name <- deparse_var(substitute(cluster_variable_name))
+      cluster <- data[, cluster_variable_name]
       if (is.factor(cluster)) {
         cluster <- droplevels(cluster)
       }
@@ -112,8 +113,6 @@ difference_in_means <-
 
       cluster <- cluster[!cluster_missing]
       data <- data[!cluster_missing, ]
-
-      cluster_variable_name <- deparse(substitute(cluster_variable_name))
     } else {
       cluster <- NULL
     }

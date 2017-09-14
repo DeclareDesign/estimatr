@@ -362,6 +362,7 @@ test_that("DIM Matched Pair Cluster Randomization", {
   )
 
 
+
 })
 
 test_that("DIM Matched Pair Cluster Randomization = Matched Pair when cluster size is 1", {
@@ -463,6 +464,48 @@ test_that("DIM works with missingness", {
     )
   )
 
+
+})
+
+
+test_that("DIM works with character args", {
+  df <- data.frame(Y = rnorm(100),
+                   block = rep(1:25, each = 4),
+                   cluster = 1:100,
+                   Z = rep(c(0,0,1,1), times = 25))
+
+  expect_identical(
+    difference_in_means(
+      Y ~ Z,
+      alpha = .05,
+      block_variable_name = block,
+      cluster_variable_name = cluster,
+      data = df
+    ),
+    difference_in_means(
+      Y ~ Z,
+      alpha = .05,
+      block_variable_name = "block",
+      cluster_variable_name = "cluster",
+      data = df
+    )
+  )
+
+
+  expect_identical(
+    difference_in_means(
+      Y ~ Z,
+      alpha = .05,
+      weights = cluster,
+      data = df
+    ),
+    difference_in_means(
+      Y ~ Z,
+      alpha = .05,
+      weights = "cluster",
+      data = df
+    )
+  )
 
 })
 

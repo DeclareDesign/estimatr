@@ -38,7 +38,7 @@ clean_model_data <- function(formula,
       stop("weights not yet supported with clustered standard errors")
     }
 
-    weights <- data[row.names(mf), deparse_var(substitute(weights))]
+    weights <- data[row.names(mf), deparse_var(weights)]
 
     mf_rows_to_drop$weights <- which(is.na(weights))
 
