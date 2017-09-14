@@ -46,11 +46,13 @@ lm_lin <- function(formula,
   full_formula <- update(formula, reformulate(c('.', cov_names), "."))
 
   model_data <-
-    clean_model_data(formula = full_formula,
-                     data = data,
-                     condition_call = substitute(subset),
-                     cluster_variable_name = substitute(cluster_variable_name),
-                     weights = substitute(weights))
+    clean_model_data(
+      formula = full_formula,
+      data = data,
+      condition_call = substitute(subset),
+      cluster_variable_name = substitute(cluster_variable_name),
+      weights = substitute(weights)
+    )
 
   outcome <- model_data$outcome
   design_matrix <- model_data$design_matrix
