@@ -4,30 +4,36 @@
 \alias{horvitz_thompson}
 \title{Horvitz-Thompson estimator of treatment effects}
 \usage{
-horvitz_thompson(formula, inclusion_probabilities, block_variable_name = NULL,
-  cluster_variable_name = NULL, condition1 = NULL, condition2 = NULL,
-  data, weights = NULL, subset = NULL, alpha = 0.05)
+horvitz_thompson(formula, condition_pr_variable_name = NULL,
+  condition_pr_matrix = NULL, declaration = NULL,
+  block_variable_name = NULL, cluster_variable_name = NULL,
+  constant_effects = FALSE, data, subset = NULL, alpha = 0.05,
+  condition1 = NULL, condition2 = NULL)
 }
 \arguments{
 \item{formula}{An object of class "formula", such as Y ~ Z}
 
-\item{inclusion_probabilities}{A bare (unquoted) name of the variable with the inclusion probabilities (or probabilities of being in condition 2)}
+\item{condition_pr_variable_name}{A bare (unquoted) name of the variable with the condition 2 (treatment) probabilities}
+
+\item{condition_pr_matrix}{A 2n * 2n matrix of marginal and joint probabilities of all units in condition1 and condition2; see details}
+
+\item{declaration}{An object of class "ra_declaration", from the randomizr package}
 
 \item{block_variable_name}{An optional bare (unquoted) name of the block variable. Use for blocked designs only.}
 
 \item{cluster_variable_name}{An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.}
 
-\item{condition1}{names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.}
-
-\item{condition2}{names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.}
+\item{constant_effects}{should constant effects be assumed to estimate the covariance between potential outcomes, default = FALSE.}
 
 \item{data}{A data.frame.}
-
-\item{weights}{An optional vector of weights (not yet implemented).}
 
 \item{subset}{An optional bare (unquoted) expression specifying a subset of observations to be used.}
 
 \item{alpha}{The significance level, 0.05 by default.}
+
+\item{condition1}{names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.}
+
+\item{condition2}{names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.}
 }
 \description{
 Horvitz-Thompson estimator of treatment effects

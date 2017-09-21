@@ -1,16 +1,17 @@
 #' Horvitz-Thompson estimator of treatment effects
 #'
 #' @param formula An object of class "formula", such as Y ~ Z
-#' @param inclusion_pr_variable_name A bare (unquoted) name of the variable with the inclusion probabilities (or probabilities of being in condition 2)
+#' @param declaration An object of class "ra_declaration", from the randomizr package
+#' @param condition_pr_variable_name A bare (unquoted) name of the variable with the condition 2 (treatment) probabilities
+#' @param condition_pr_matrix A 2n * 2n matrix of marginal and joint probabilities of all units in condition1 and condition2; see details
 #' @param block_variable_name An optional bare (unquoted) name of the block variable. Use for blocked designs only.
 #' @param cluster_variable_name An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.
 #' @param data A data.frame.
-#' @param weights An optional vector of weights (not yet implemented).
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
 #' @param alpha The significance level, 0.05 by default.
 #' @param condition1 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
 #' @param condition2 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
-#'
+#' @param constant_effects should constant effects be assumed to estimate the covariance between potential outcomes, default = FALSE.
 #'
 #' @details This function implements the Horvitz-Thompson estimator for treatment effects.
 #'
@@ -18,16 +19,17 @@
 #'
 horvitz_thompson <-
   function(formula,
-           inclusion_pr_variable_name,
+           condition_pr_variable_name = NULL,
+           condition_pr_matrix = NULL,
+           declaration = NULL,
            block_variable_name = NULL,
            cluster_variable_name = NULL,
-           condition1 = NULL,
-           condition2 = NULL,
            constant_effects = FALSE,
            data,
-           weights = NULL,
            subset = NULL,
-           alpha = .05) {
+           alpha = .05,
+           condition1 = NULL,
+           condition2 = NULL) {
 
     if (length(all.vars(formula[[3]])) > 1) {
       stop(
@@ -40,84 +42,90 @@ horvitz_thompson <-
 
     if (!is.null(condition_call)){
       r <- eval(condition_call, data)
+      print(r)
       data <- data[r, ]
     }
 
     ## Drop rows with missingness
     missing_data <- !complete.cases(data[, all.vars(formula)])
     data <- data[!missing_data, ]
+    ## todo: deal with declarations and missingness
+    ## todo: warn about colliding arguments
+    if (!is.null(declaration)) {
+      declare_out <- read_declaration(declaration, 'horvitz_thompson')
+      print(str(declare_out))
+      condition_probabilities <- declare_out$condition_probabilities
+      condition_probability_matrix <- declare_out$condition_probability_matrix
+      clusters <- declare_out$clusters
+      blocks <- declare_out$blocks
+    } else {
 
-    ## Get inclusion probabilities
-    inclusion_probabilities <- eval(substitute(inclusion_pr_variable_name), data)
+      ## Get condition probabilities
+      if (!is.null(condition_pr_variable_name)) {
+        condition_probabilities <- eval(substitute(condition_pr_variable_name), data)
 
-    if (any(inclusion_probabilities < 0 | inclusion_probabilities > 1)) {
-      stop(
-        "Some inclusion probabilities are outside of [0, 1]."
-      )
-    }
+        if (any(condition_probabilities < 0 | condition_probabilities > 1)) {
+          stop(
+            "Some condition probabilities are outside of [0, 1]."
+          )
+        }
 
-    incl_prob_missing <- find_warn_missing(inclusion_probabilities,
-                                           "inclusion probabilities")
+        cond_prob_missing <- find_warn_missing(condition_probabilities,
+                                               "condition probabilities")
 
 
-    inclusion_probabilities <- inclusion_probabilities[!incl_prob_missing]
-    data <- data[!incl_prob_missing, ]
+        condition_probabilities <- condition_probabilities[!cond_prob_missing]
+        data <- data[!cond_prob_missing, ]
 
-    inclusion_probabilities_name <- deparse(substitute(inclusion_pr_variable_name))
-
-    ## Get block variable
-    if (!is.null(substitute(block_variable_name))) {
-      blocks <- eval(substitute(block_variable_name), data)
-      if (is.factor(blocks)) {
-        blocks <- droplevels(blocks)
+        condition_probabilities_name <- deparse(substitute(condition_pr_variable_name))
+      } else {
+        condition_probabilities <- NULL
       }
 
-      blocks_missing <- find_warn_missing(blocks, "blocking")
+      ## Get block variable
+      if (!is.null(substitute(block_variable_name))) {
+        blocks <- eval(substitute(block_variable_name), data)
+        if (is.factor(blocks)) {
+          blocks <- droplevels(blocks)
+        }
 
-      blocks <- blocks[!blocks_missing]
-      data <- data[!blocks_missing, ]
+        blocks_missing <- find_warn_missing(blocks, "blocking")
 
-    } else {
-      blocks <- NULL
-    }
+        blocks <- blocks[!blocks_missing]
+        data <- data[!blocks_missing, ]
 
-    ## Get weights variable
-    if (!is.null(substitute(weights))) {
-      weights <- eval(substitute(weights), data)
-
-      weights_missing <- find_warn_missing(weights, "weights")
-
-      weights <- weights[!weights_missing]
-      data <- data[!weights_missing, ]
-
-    }
-
-    ## Get cluster variable
-    if (!is.null(substitute(cluster_variable_name))) {
-      cluster <- droplevels(as.factor(eval(substitute(cluster_variable_name), data)))
-
-      cluster_missing <- find_warn_missing(cluster, "cluster")
-
-      cluster <- cluster[!cluster_missing]
-      data <- data[!cluster_missing, ]
-
-      # check inclusion ps constant within cluster
-
-      if(any(!tapply(inclusion_probabilities, cluster, function(x) all(x == x[1])))) {
-        stop("Inclusion probabilities must be constant within cluster.")
+      } else {
+        blocks <- NULL
       }
 
-      cluster_variable_name <- deparse(substitute(cluster_variable_name))
+      ## Get cluster variable
+      if (!is.null(substitute(cluster_variable_name))) {
+        cluster <- droplevels(as.factor(eval(substitute(cluster_variable_name), data)))
 
-    } else {
-      cluster <- NULL
+        cluster_missing <- find_warn_missing(cluster, "cluster")
+
+        cluster <- cluster[!cluster_missing]
+        data <- data[!cluster_missing, ]
+
+        # check condition ps constant within cluster
+
+        if(any(!tapply(condition_probabilities, cluster, function(x) all(x == x[1])))) {
+          stop("condition probabilities must be constant within cluster.")
+        }
+
+        cluster_variable_name <- deparse(substitute(cluster_variable_name))
+
+      } else {
+        cluster <- NULL
+      }
     }
+
 
     if (is.null(blocks)){
-
       return_frame <- horvitz_thompson_internal(
         formula,
-        inclusion_probabilities = inclusion_probabilities,
+        condition_probabilities = condition_probabilities,
+        condition_probability_matrix = condition_probability_matrix,
         condition1 = condition1,
         condition2 = condition2,
         data = data,
@@ -177,7 +185,7 @@ horvitz_thompson <-
           data = x,
           condition1 = condition1,
           condition2 = condition2,
-          inclusion_probabilities_name = inclusion_probabilities_name,
+          condition_probabilities_name = condition_probabilities_name,
           cluster_variable_name = cluster_variable_name,
           weights = weights,
           alpha = alpha
@@ -233,8 +241,9 @@ var_ht_total_no_cov <-
 
 horvitz_thompson_internal <-
   function(formula,
-           inclusion_probabilities = NULL,
-           inclusion_probabilities_name = NULL,
+           condition_probabilities = NULL,
+           condition_probabilities_name = NULL,
+           condition_probability_matrix = NULL,
            condition1 = NULL,
            condition2 = NULL,
            data,
@@ -247,7 +256,6 @@ horvitz_thompson_internal <-
 
     Y <- data[, all.vars(formula[[2]])]
     t <- data[, all.vars(formula[[3]])]
-
     if (is.factor(t)) {
       condition_names <- levels(t)
     } else{
@@ -267,8 +275,8 @@ horvitz_thompson_internal <-
       cluster <- droplevels(as.factor(data[, cluster_variable_name]))
     }
 
-    if (!is.null(inclusion_probabilities_name)) {
-      inclusion_probabilities <- data[, inclusion_probabilities_name]
+    if (!is.null(condition_probabilities_name)) {
+      condition_probabilities <- data[, condition_probabilities_name]
     }
 
     # Check that treatment status is uniform within cluster, checked here
@@ -283,24 +291,25 @@ horvitz_thompson_internal <-
     }
 
     N <- length(Y)
-
-    ps2 <- inclusion_probabilities[t == condition2]
-    ps1 <- 1 - inclusion_probabilities[t == condition1]
+    print(condition_probabilities)
+    print(t)
+    ps2 <- condition_probabilities[t == condition2]
+    ps1 <- 1 - condition_probabilities[t == condition1]
 
     Y2 <- Y[t == condition2] / ps2
     Y1 <- Y[t == condition1] / ps1
 
-    if (is.null(weights)) {
+    diff <- (sum(Y2) - sum(Y1)) / N
+    print(diff)
+    if (is.null(cluster)) {
 
-      diff <- (sum(Y2) - sum(Y1)) / N
-
-      if (is.null(cluster)) {
-
-        if(constant_effects) {
+      if (is.null(condition_probability_matrix)) {
+        # SRS
+        if (constant_effects) {
           se <-
             sqrt(
-              (var_ht_total_no_cov(c(Y1 + diff/(1-ps1), Y2), c(1 - ps1, ps2)) +
-                 var_ht_total_no_cov(c(Y1, Y2 - diff/(1-ps2)), c(ps1, 1 - ps2)))
+              (var_ht_total_no_cov(c((Y[t==condition1] + diff)/(1-ps1), Y2), c(1 - ps1, ps2)) +
+                 var_ht_total_no_cov(c(Y1, (Y[t==condition1] - diff)/(1-ps2)), c(ps1, 1 - ps2)))
               / N^2
             )
         } else {
@@ -310,24 +319,64 @@ horvitz_thompson_internal <-
                  var_ht_total_no_cov(Y1, ps1) / length(Y1)^2)
             )
         }
-
       } else {
+        # CRS
+        if (constant_effects) {
+          # rescaled potential outcomes
+          y0 <- ifelse(t==condition1,
+                           Y / (1-condition_probabilities),
+                           (Y - diff) / (1 - condition_probabilities))
+          y1 <- ifelse(t==condition2,
+                         Y / condition_probabilities,
+                         (Y + diff) / condition_probabilities)
+          se <-
+            sqrt(
+              (
+                ht_var_total2(
+                  y1,
+                  condition_probability_matrix[(N+1):(2*N), (N+1):(2*N)]
+                ) +
+                  ht_var_total2(
+                    y0,
+                    condition_probability_matrix[1:N, 1:N]
+                  ) -
+                  2 * ht_covar_total(
+                    y0 = y0,
+                    y1 = y1,
+                    pj = condition_probability_matrix[1:N, (N+1):(2*N)],
+                    p00 = condition_probability_matrix[1:N, 1:N],
+                    p11 = condition_probability_matrix[(N+1):(2*N), (N+1):(2*N)]
+                  )
+              ) / N^2
+            )
+        } else {
+          se <-
+            sqrt(
+              ht_var_total2(
+                Y2,
+                condition_probability_matrix[(N+1):(2*N), (N+1):(2*N)]
+               ) / length(Y2)^2 +
+              ht_var_total2(
+                Y1,
+                condition_probability_matrix[1:N, 1:N]
+               ) / length(Y1)^2
+            )
 
-        if(constant_effects)
-          stop("constant effects not currently supported")
-        k <- length(unique(cluster))
-
-        se <-
-          sqrt(
-            ht_var_total_clusters(Y2, ps2, cluster[t == condition2]) / (length(Y2)^2) +
-              ht_var_total_clusters(Y1, ps1, cluster[t == condition1]) / (length(Y1)^2)
-          )
-
+        }
       }
 
-
     } else {
-      stop("Other weights not supported for now.")
+
+      if(constant_effects)
+        stop("constant effects not currently supported")
+      k <- length(unique(cluster))
+
+      se <-
+        sqrt(
+          ht_var_total_clusters(Y2, ps2, cluster[t == condition2]) / (length(Y2)^2) +
+            ht_var_total_clusters(Y1, ps1, cluster[t == condition1]) / (length(Y1)^2)
+        )
+
     }
 
     return_frame <- data.frame(
