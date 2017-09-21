@@ -39,7 +39,6 @@ read_declaration <-
           condition_probability_matrix <- NULL
         } else {
           condition_probabilities <- declaration$probabilities_matrix[, 2]
-
           n <- length(condition_probabilities)
           ## todo: only get one of the off-diagonals if symmetric, which it should be
           mat_11 <- mat_00 <- mat_01 <- mat_10 <- matrix(nrow = n, ncol = n)
@@ -48,15 +47,15 @@ read_declaration <-
           ## todo: speed by putting in C++ or using the tirangles, or find a matrix way to do it
           for(i in 1:n) {
             for(j in 1:n) {
-              mat_11[i,j] <- probs[i] * ((n*probs[j])-1)/(n-1)
-              mat_00[i,j] <- (1-probs[i]) * ((n*(1-probs[j]))-1)/(n-1)
-              mat_01[i,j] <- (1-probs[i]) * ((n*probs[j]))/(n-1)
-              mat_10[i,j] <- probs[i] * ((n*(1-probs[j])))/(n-1)
+              mat_11[i,j] <- condition_probabilities[i] * ((n*condition_probabilities[j])-1)/(n-1)
+              mat_00[i,j] <- (1-condition_probabilities[i]) * ((n*(1-condition_probabilities[j]))-1)/(n-1)
+              mat_01[i,j] <- (1-condition_probabilities[i]) * ((n*condition_probabilities[j]))/(n-1)
+              mat_10[i,j] <- condition_probabilities[i] * ((n*(1-condition_probabilities[j])))/(n-1)
             }
           }
 
-          diag(mat_11) <- probs
-          diag(mat_00) <- (1-probs)
+          diag(mat_11) <- condition_probabilities
+          diag(mat_00) <- (1-condition_probabilities)
           diag(mat_01) <- 0
           diag(mat_10) <- 0
           condition_probability_matrix <- cbind(rbind(mat_00, mat_01),
@@ -65,7 +64,6 @@ read_declaration <-
       }
     }
 
-    print(condition_probabilities)
     return(
       list(
         blocks = blocks,

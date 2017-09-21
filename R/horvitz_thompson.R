@@ -42,7 +42,6 @@ horvitz_thompson <-
 
     if (!is.null(condition_call)){
       r <- eval(condition_call, data)
-      print(r)
       data <- data[r, ]
     }
 
@@ -53,7 +52,6 @@ horvitz_thompson <-
     ## todo: warn about colliding arguments
     if (!is.null(declaration)) {
       declare_out <- read_declaration(declaration, 'horvitz_thompson')
-      print(str(declare_out))
       condition_probabilities <- declare_out$condition_probabilities
       condition_probability_matrix <- declare_out$condition_probability_matrix
       clusters <- declare_out$clusters
@@ -291,8 +289,7 @@ horvitz_thompson_internal <-
     }
 
     N <- length(Y)
-    print(condition_probabilities)
-    print(t)
+
     ps2 <- condition_probabilities[t == condition2]
     ps1 <- 1 - condition_probabilities[t == condition1]
 
@@ -300,7 +297,6 @@ horvitz_thompson_internal <-
     Y1 <- Y[t == condition1] / ps1
 
     diff <- (sum(Y2) - sum(Y1)) / N
-    print(diff)
     if (is.null(cluster)) {
 
       if (is.null(condition_probability_matrix)) {
@@ -309,7 +305,7 @@ horvitz_thompson_internal <-
           se <-
             sqrt(
               (var_ht_total_no_cov(c((Y[t==condition1] + diff)/(1-ps1), Y2), c(1 - ps1, ps2)) +
-                 var_ht_total_no_cov(c(Y1, (Y[t==condition1] - diff)/(1-ps2)), c(ps1, 1 - ps2)))
+                 var_ht_total_no_cov(c(Y1, (Y[t==condition2] - diff)/(1-ps2)), c(ps1, 1 - ps2)))
               / N^2
             )
         } else {

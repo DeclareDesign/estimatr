@@ -78,7 +78,6 @@ double ht_covar_total(const arma::vec & y0,
 
   for (unsigned i = 0; i < y0.n_elem; ++i) {
     for (unsigned j = 0; j < y0.n_elem; ++j) {
-      Rcpp::Rcout << i << std::endl << j << std::endl;
       if (i != j) {
         cov_total +=
           ht_var(
