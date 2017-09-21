@@ -5,7 +5,7 @@ find_warn_missing <- function(x, type) {
   if (any(x_missing)) {
     warning(
       sprintf(
-        "Some observations have missingness in the %s variable but not in variables in the formula. These observations have been dropped.",
+        "Some observations have missingness in the %s variable. These observations have been dropped.",
         type
       )
     )

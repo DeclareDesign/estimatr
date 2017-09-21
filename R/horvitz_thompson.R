@@ -52,10 +52,17 @@ horvitz_thompson <-
       clusters <- declare_out$clusters
       blocks <- declare_out$blocks
 
-      if (length(blocks) != nrow(data)) {
-        stop("the variables in your declaration are of different length than your data")
+      if (!is.null(blocks)) {
+        if (length(blocks) != nrow(data)) {
+          stop("the block variable in your declaration is of different length than your data")
+        }
       }
 
+      if (!is.null(clusters)) {
+        if (length(clusters) != nrow(data)) {
+          stop("the cluster variable in your declaration is of different length than your data")
+        }
+      }
     }
 
     ## Get subset of data
@@ -69,19 +76,36 @@ horvitz_thompson <-
     missing_data <- !complete.cases(data[, all.vars(formula)])
 
     if (!is.null(declaration)) {
-      ## todo: if this subsetting is slow, could check to see if any(subset) is needed first
-      condition_probabilities <- condition_probabilities[r]
-      condition_pr_matrix <- condition_pr_matrix[rep(r, 2), rep(r, 2)]
-      clusters <- clusters[r]
-      blocks <- blocks[r]
 
-      blocks_missing <- find_warn_missing(blocks[!missing_data], "blocking")
-      clusters_missing <- find_warn_missing(clusters[!missing_data], "cluster")
+      if (!is.null(condition_call)) {
+        condition_probabilities <- condition_probabilities[r]
+        condition_pr_matrix <- condition_pr_matrix[rep(r, 2), rep(r, 2)]
+        clusters <- clusters[r]
+        blocks <- blocks[r]
+      }
 
-      blocks <- blocks[!missing_data][!blocks_missing & !clusters_missing]
-      clusters <- clusters[!missing_data][!blocks_missing & !clusters_missing]
+      any_missing <- missing_data
+      if (!is.null(blocks)) {
+        blocks_missing <- find_warn_missing(blocks, "blocking")
+      }
 
-      data <- data[!missing_data, , drop = F][!blocks_missing & !clusters_missing, drop = F]
+      if (!is.null(clusters)) {
+        clusters_missing <- find_warn_missing(clusters, "cluster")
+      }
+
+      if (!is.null(clusters) & is.null(blocks)) {
+        any_missing <- any_missing | cluster_missing
+        clusters <- clusters[!any_missing]
+      } else if (is.null(clusters) & !is.null(blocks)) {
+        any_missing <- any_missing | blocks_missing
+        blocks <- blocks[!any_missing]
+      } else if (!is.null(clusters) & !is.null(clusters)) {
+        any_missing <- any_missing | blocks_missing | cluster_missing
+        blocks <- blocks[!any_missing]
+        clusters <- clusters[!any_missing]
+      }
+
+      data <- data[!any_missing, ]
 
     } else {
 
@@ -121,41 +145,40 @@ horvitz_thompson <-
 
       ## Get cluster variable
       if (!is.null(substitute(cluster_variable_name))) {
-        cluster <- droplevels(as.factor(eval(substitute(cluster_variable_name), data)))
+        clusters <- droplevels(as.factor(eval(substitute(cluster_variable_name), data)))
 
-        cluster_missing <- find_warn_missing(cluster, "cluster")
+        clusters_missing <- find_warn_missing(clusters, "cluster")
 
         cluster_variable_name <- deparse(substitute(cluster_variable_name))
 
       } else {
-        cluster <- NULL
+        clusters <- NULL
       }
 
       ## remove missingness
-      if (is.null(cluster) & is.null(blocks)) {
+      if (is.null(clusters) & is.null(blocks)) {
         any_missing <- cond_prob_missing
-      } else if (!is.null(cluster) & is.null(blocks)) {
+      } else if (!is.null(clusters) & is.null(blocks)) {
         any_missing <- cond_prob_missing | cluster_missing
-        cluster <- cluster[!any_missing]
-      } else if (is.null(cluster) & !is.null(blocks)) {
+        clusters <- clusters[!any_missing]
+      } else if (is.null(clusters) & !is.null(blocks)) {
         any_missing <- cond_prob_missing | blocks_missing
         blocks <- blocks[!any_missing]
       } else {
         any_missing <- cond_prob_missing | blocks_missing | cluster_missing
         blocks <- blocks[!any_missing]
-        cluster <- cluster[!any_missing]
+        clusters <- clusters[!any_missing]
       }
 
       condition_probabilities <- condition_probabilities[!any_missing]
       data <- data[!any_missing, ]
 
-      if (!is.null(cluster)) {
+      if (!is.null(clusters) & is.null(declaration)) {
         # check condition ps constant within cluster
-        if(any(!tapply(condition_probabilities, cluster, function(x) all(x == x[1])))) {
+        if(any(!tapply(condition_probabilities, clusters, function(x) all(x == x[1])))) {
           stop("condition probabilities must be constant within cluster.")
         }
       }
-
     }
 
     #-----
@@ -171,7 +194,7 @@ horvitz_thompson <-
         condition2 = condition2,
         data = data,
         weights = weights,
-        cluster = cluster,
+        clusters = clusters,
         constant_effects = constant_effects,
         alpha = alpha
       )
@@ -187,16 +210,16 @@ horvitz_thompson <-
 
     } else {
 
-      if (!is.null(cluster)) {
+      if (!is.null(clusters)) {
 
         ## Check that clusters nest within blocks
-        if (!all(tapply(blocks, cluster, function(x)
+        if (!all(tapply(blocks, clusters, function(x)
           all(x == x[1])))) {
           stop("All units within a cluster must be in the same block.")
         }
 
         ## get number of clusters per block
-        clust_per_block <- tapply(cluster,
+        clust_per_block <- tapply(clusters,
                                   blocks,
                                   function(x) length(unique(x)))
       } else {
@@ -293,12 +316,14 @@ horvitz_thompson_internal <-
            condition2 = NULL,
            data,
            weights = NULL,
-           cluster = NULL,
+           clusters = NULL,
            cluster_variable_name = NULL,
            pair_matched = FALSE,
            constant_effects = FALSE,
            alpha = .05) {
 
+    print(str(data))
+    print(all.vars(formula))
     Y <- data[, all.vars(formula[[2]])]
     t <- data[, all.vars(formula[[3]])]
     if (is.factor(t)) {
@@ -317,7 +342,7 @@ horvitz_thompson_internal <-
     }
 
     if (!is.null(cluster_variable_name)) {
-      cluster <- droplevels(as.factor(data[, cluster_variable_name]))
+      clusters <- droplevels(as.factor(data[, cluster_variable_name]))
     }
 
     if (!is.null(condition_probabilities_name)) {
@@ -326,9 +351,9 @@ horvitz_thompson_internal <-
 
     # Check that treatment status is uniform within cluster, checked here
     # so that the treatment vector t doesn't have to be built anywhere else
-    if (!is.null(cluster)) {
+    if (!is.null(clusters)) {
 
-      if (!all(tapply(t, cluster, function(x) all(x == x[1])))) {
+      if (!all(tapply(t, clusters, function(x) all(x == x[1])))) {
         stop(
           "All units within a cluster must have the same treatment condition."
         )
@@ -344,7 +369,7 @@ horvitz_thompson_internal <-
     Y1 <- Y[t == condition1] / ps1
 
     diff <- (sum(Y2) - sum(Y1)) / N
-    if (is.null(cluster)) {
+    if (is.null(clusters)) {
 
       if (is.null(condition_pr_matrix)) {
         # SRS
@@ -412,12 +437,12 @@ horvitz_thompson_internal <-
 
       if(constant_effects)
         stop("constant effects not currently supported")
-      k <- length(unique(cluster))
+      k <- length(unique(clusters))
 
       se <-
         sqrt(
-          ht_var_total_clusters(Y2, ps2, cluster[t == condition2]) / (length(Y2)^2) +
-            ht_var_total_clusters(Y1, ps1, cluster[t == condition1]) / (length(Y1)^2)
+          ht_var_total_clusters(Y2, ps2, clusters[t == condition2]) / (length(Y2)^2) +
+            ht_var_total_clusters(Y1, ps1, clusters[t == condition1]) / (length(Y1)^2)
         )
 
     }
