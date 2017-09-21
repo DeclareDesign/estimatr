@@ -31,10 +31,31 @@ horvitz_thompson <-
            condition1 = NULL,
            condition2 = NULL) {
 
+    #-----
+    # Check arguments
+    #-----
     if (length(all.vars(formula[[3]])) > 1) {
       stop(
         "The formula should only include one variable on the right-hand side: the treatment variable."
       )
+    }
+
+    #-----
+    # Parse arguments, clean data
+    #-----
+    ## todo: deal with declarations and missingness
+    ## todo: warn about colliding arguments
+    if (!is.null(declaration)) {
+      declare_out <- read_declaration(declaration, 'horvitz_thompson')
+      condition_probabilities <- declare_out$condition_probabilities
+      condition_pr_matrix <- declare_out$condition_pr_matrix
+      clusters <- declare_out$clusters
+      blocks <- declare_out$blocks
+
+      if (length(blocks) != nrow(data)) {
+        stop("the variables in your declaration are of different length than your data")
+      }
+
     }
 
     ## Get subset of data
@@ -45,21 +66,30 @@ horvitz_thompson <-
       data <- data[r, ]
     }
 
-    ## Drop rows with missingness
     missing_data <- !complete.cases(data[, all.vars(formula)])
-    data <- data[!missing_data, ]
-    ## todo: deal with declarations and missingness
-    ## todo: warn about colliding arguments
+
     if (!is.null(declaration)) {
-      declare_out <- read_declaration(declaration, 'horvitz_thompson')
-      condition_probabilities <- declare_out$condition_probabilities
-      condition_probability_matrix <- declare_out$condition_probability_matrix
-      clusters <- declare_out$clusters
-      blocks <- declare_out$blocks
+      ## todo: if this subsetting is slow, could check to see if any(subset) is needed first
+      condition_probabilities <- condition_probabilities[r]
+      condition_pr_matrix <- condition_pr_matrix[rep(r, 2), rep(r, 2)]
+      clusters <- clusters[r]
+      blocks <- blocks[r]
+
+      blocks_missing <- find_warn_missing(blocks[!missing_data], "blocking")
+      clusters_missing <- find_warn_missing(clusters[!missing_data], "cluster")
+
+      blocks <- blocks[!missing_data][!blocks_missing & !clusters_missing]
+      clusters <- clusters[!missing_data][!blocks_missing & !clusters_missing]
+
+      data <- data[!missing_data, , drop = F][!blocks_missing & !clusters_missing, drop = F]
+
     } else {
 
+      ## Drop rows with missingness
+      data <- data[!missing_data, ]
+
       ## Get condition probabilities
-      if (!is.null(condition_pr_variable_name)) {
+      if (!is.null(substitute(condition_pr_variable_name))) {
         condition_probabilities <- eval(substitute(condition_pr_variable_name), data)
 
         if (any(condition_probabilities < 0 | condition_probabilities > 1)) {
@@ -70,10 +100,6 @@ horvitz_thompson <-
 
         cond_prob_missing <- find_warn_missing(condition_probabilities,
                                                "condition probabilities")
-
-
-        condition_probabilities <- condition_probabilities[!cond_prob_missing]
-        data <- data[!cond_prob_missing, ]
 
         condition_probabilities_name <- deparse(substitute(condition_pr_variable_name))
       } else {
@@ -89,9 +115,6 @@ horvitz_thompson <-
 
         blocks_missing <- find_warn_missing(blocks, "blocking")
 
-        blocks <- blocks[!blocks_missing]
-        data <- data[!blocks_missing, ]
-
       } else {
         blocks <- NULL
       }
@@ -102,28 +125,48 @@ horvitz_thompson <-
 
         cluster_missing <- find_warn_missing(cluster, "cluster")
 
-        cluster <- cluster[!cluster_missing]
-        data <- data[!cluster_missing, ]
-
-        # check condition ps constant within cluster
-
-        if(any(!tapply(condition_probabilities, cluster, function(x) all(x == x[1])))) {
-          stop("condition probabilities must be constant within cluster.")
-        }
-
         cluster_variable_name <- deparse(substitute(cluster_variable_name))
 
       } else {
         cluster <- NULL
       }
+
+      ## remove missingness
+      if (is.null(cluster) & is.null(blocks)) {
+        any_missing <- cond_prob_missing
+      } else if (!is.null(cluster) & is.null(blocks)) {
+        any_missing <- cond_prob_missing | cluster_missing
+        cluster <- cluster[!any_missing]
+      } else if (is.null(cluster) & !is.null(blocks)) {
+        any_missing <- cond_prob_missing | blocks_missing
+        blocks <- blocks[!any_missing]
+      } else {
+        any_missing <- cond_prob_missing | blocks_missing | cluster_missing
+        blocks <- blocks[!any_missing]
+        cluster <- cluster[!any_missing]
+      }
+
+      condition_probabilities <- condition_probabilities[!any_missing]
+      data <- data[!any_missing, ]
+
+      if (!is.null(cluster)) {
+        # check condition ps constant within cluster
+        if(any(!tapply(condition_probabilities, cluster, function(x) all(x == x[1])))) {
+          stop("condition probabilities must be constant within cluster.")
+        }
+      }
+
     }
 
+    #-----
+    # Estimation
+    #-----
 
     if (is.null(blocks)){
       return_frame <- horvitz_thompson_internal(
         formula,
         condition_probabilities = condition_probabilities,
-        condition_probability_matrix = condition_probability_matrix,
+        condition_pr_matrix = condition_pr_matrix,
         condition1 = condition1,
         condition2 = condition2,
         data = data,
@@ -218,6 +261,10 @@ horvitz_thompson <-
 
     }
 
+    #-----
+    # Build and return output
+    #-----
+
     return_frame$coefficient_name <- all.vars(formula[[3]])
 
     rownames(return_frame) <- NULL
@@ -241,7 +288,7 @@ horvitz_thompson_internal <-
   function(formula,
            condition_probabilities = NULL,
            condition_probabilities_name = NULL,
-           condition_probability_matrix = NULL,
+           condition_pr_matrix = NULL,
            condition1 = NULL,
            condition2 = NULL,
            data,
@@ -299,7 +346,7 @@ horvitz_thompson_internal <-
     diff <- (sum(Y2) - sum(Y1)) / N
     if (is.null(cluster)) {
 
-      if (is.null(condition_probability_matrix)) {
+      if (is.null(condition_pr_matrix)) {
         # SRS
         if (constant_effects) {
           se <-
@@ -330,18 +377,18 @@ horvitz_thompson_internal <-
               (
                 ht_var_total2(
                   y1,
-                  condition_probability_matrix[(N+1):(2*N), (N+1):(2*N)]
+                  condition_pr_matrix[(N+1):(2*N), (N+1):(2*N)]
                 ) +
                   ht_var_total2(
                     y0,
-                    condition_probability_matrix[1:N, 1:N]
+                    condition_pr_matrix[1:N, 1:N]
                   ) -
                   2 * ht_covar_total(
                     y0 = y0,
                     y1 = y1,
-                    pj = condition_probability_matrix[1:N, (N+1):(2*N)],
-                    p00 = condition_probability_matrix[1:N, 1:N],
-                    p11 = condition_probability_matrix[(N+1):(2*N), (N+1):(2*N)]
+                    pj = condition_pr_matrix[1:N, (N+1):(2*N)],
+                    p00 = condition_pr_matrix[1:N, 1:N],
+                    p11 = condition_pr_matrix[(N+1):(2*N), (N+1):(2*N)]
                   )
               ) / N^2
             )
@@ -350,11 +397,11 @@ horvitz_thompson_internal <-
             sqrt(
               ht_var_total2(
                 Y2,
-                condition_probability_matrix[(N+1):(2*N), (N+1):(2*N)]
+                condition_pr_matrix[(N+1):(2*N), (N+1):(2*N)]
                ) / length(Y2)^2 +
               ht_var_total2(
                 Y1,
-                condition_probability_matrix[1:N, 1:N]
+                condition_pr_matrix[1:N, 1:N]
                ) / length(Y1)^2
             )
 

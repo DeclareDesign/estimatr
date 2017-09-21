@@ -1,5 +1,5 @@
 # Internal method to check for missingness on auxiliary variables and warn
-find_warn_missing <- function(x, data, type) {
+find_warn_missing <- function(x, type) {
   x_missing <- is.na(x)
 
   if (any(x_missing)) {

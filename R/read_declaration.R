@@ -36,7 +36,7 @@ read_declaration <-
       if (is.null(blocks) & is.null(cluster)) {
         if (declaration$ra_type == 'simple') {
           condition_probabilities <- declaration$probabilities_matrix[, 2]
-          condition_probability_matrix <- NULL
+          condition_pr_matrix <- NULL
         } else {
           condition_probabilities <- declaration$probabilities_matrix[, 2]
           n <- length(condition_probabilities)
@@ -58,8 +58,8 @@ read_declaration <-
           diag(mat_00) <- (1-condition_probabilities)
           diag(mat_01) <- 0
           diag(mat_10) <- 0
-          condition_probability_matrix <- cbind(rbind(mat_00, mat_01),
-                                                rbind(mat_10, mat_11))
+          condition_pr_matrix <- cbind(rbind(mat_00, mat_01),
+                                       rbind(mat_10, mat_11))
         }
       }
     }
@@ -70,7 +70,7 @@ read_declaration <-
         cluster = cluster,
         weights = weights,
         condition_probabilities = condition_probabilities,
-        condition_probability_matrix = condition_probability_matrix
+        condition_pr_matrix = condition_pr_matrix
       )
     )
   }
