@@ -380,6 +380,13 @@ difference_in_means_internal <-
       diff <-  mean2 - mean1
 
       se <- sqrt(weighted_var_internal(w2, Y2, mean2) + weighted_var_internal(w1, Y1, mean1))
+
+      # todo: check welch approximation with weights
+      df <- se^4 /
+        (
+          (var(Y2) / length(Y2))^2 / (length(Y2) - 1) +
+            (var(Y1) / length(Y1))^2 / (length(Y1) - 1)
+        )
     }
 
     return_frame <- data.frame(
