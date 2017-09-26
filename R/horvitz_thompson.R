@@ -24,6 +24,7 @@ horvitz_thompson <-
            declaration = NULL,
            block_variable_name = NULL,
            cluster_variable_name = NULL,
+           estimator = 'ht',
            constant_effects = FALSE,
            data,
            subset = NULL,
@@ -94,13 +95,13 @@ horvitz_thompson <-
       }
 
       if (!is.null(clusters) & is.null(blocks)) {
-        any_missing <- any_missing | cluster_missing
+        any_missing <- any_missing | clusters_missing
         clusters <- clusters[!any_missing]
       } else if (is.null(clusters) & !is.null(blocks)) {
         any_missing <- any_missing | blocks_missing
         blocks <- blocks[!any_missing]
       } else if (!is.null(clusters) & !is.null(clusters)) {
-        any_missing <- any_missing | blocks_missing | cluster_missing
+        any_missing <- any_missing | blocks_missing | clusters_missing
         blocks <- blocks[!any_missing]
         clusters <- clusters[!any_missing]
       }
@@ -159,13 +160,13 @@ horvitz_thompson <-
       if (is.null(clusters) & is.null(blocks)) {
         any_missing <- cond_prob_missing
       } else if (!is.null(clusters) & is.null(blocks)) {
-        any_missing <- cond_prob_missing | cluster_missing
+        any_missing <- cond_prob_missing | clusters_missing
         clusters <- clusters[!any_missing]
       } else if (is.null(clusters) & !is.null(blocks)) {
         any_missing <- cond_prob_missing | blocks_missing
         blocks <- blocks[!any_missing]
       } else {
-        any_missing <- cond_prob_missing | blocks_missing | cluster_missing
+        any_missing <- cond_prob_missing | blocks_missing | clusters_missing
         blocks <- blocks[!any_missing]
         clusters <- clusters[!any_missing]
       }
@@ -195,6 +196,7 @@ horvitz_thompson <-
         data = data,
         weights = weights,
         clusters = clusters,
+        estimator = estimator,
         constant_effects = constant_effects,
         alpha = alpha
       )
@@ -319,11 +321,10 @@ horvitz_thompson_internal <-
            clusters = NULL,
            cluster_variable_name = NULL,
            pair_matched = FALSE,
+           estimator = 'ht',
            constant_effects = FALSE,
            alpha = .05) {
 
-    print(str(data))
-    print(all.vars(formula))
     Y <- data[, all.vars(formula[[2]])]
     t <- data[, all.vars(formula[[3]])]
     if (is.factor(t)) {
@@ -368,9 +369,31 @@ horvitz_thompson_internal <-
     Y2 <- Y[t == condition2] / ps2
     Y1 <- Y[t == condition1] / ps1
 
-    diff <- (sum(Y2) - sum(Y1)) / N
-    if (is.null(clusters)) {
 
+
+    if (estimator == 'ma') {
+
+      k <- length(unique(clusters))
+      c_2 <- clusters[t==condition2]
+      c_1 <- clusters[t==condition1]
+      k_2 <- length(unique(c_2))
+      k_1 <- length(unique(c_1))
+
+      totals_2 <- tapply(Y[t == condition2], c_2, sum)
+      totals_1 <- tapply(Y[t == condition1], c_1, sum)
+
+      diff <- (mean(totals_2) - mean(totals_1)) * k / N
+
+      se <-
+        sqrt(
+          k^2 / N^2 * (
+            mean((totals_2 - mean(totals_2))^2) / (k_2 - 1) +
+            mean((totals_1 - mean(totals_1))^2) / (k_1 - 1)
+          )
+        )
+
+    } else {
+      diff <- (sum(Y2) - sum(Y1)) / N
       if (is.null(condition_pr_matrix)) {
         # SRS
         if (constant_effects) {
@@ -432,20 +455,17 @@ horvitz_thompson_internal <-
 
         }
       }
-
-    } else {
-
-      if(constant_effects)
-        stop("constant effects not currently supported")
-      k <- length(unique(clusters))
-
-      se <-
-        sqrt(
-          ht_var_total_clusters(Y2, ps2, clusters[t == condition2]) / (length(Y2)^2) +
-            ht_var_total_clusters(Y1, ps1, clusters[t == condition1]) / (length(Y1)^2)
-        )
-
     }
+#
+#     } else {
+#
+#       if(constant_effects)
+#         stop("constant effects not currently supported")
+#       k <- length(unique(clusters))
+#
+#
+#
+#     }
 
     return_frame <- data.frame(
       est = diff,

@@ -95,6 +95,40 @@ double ht_covar_total(const arma::vec & y0,
 }
 
 // [[Rcpp::export]]
+arma::mat gen_pr_mat_complete(const arma::vec & prs) {
+
+  double n = prs.n_elem;
+  arma::mat mat_11(n, n);
+  arma::mat mat_00(n, n);
+  arma::mat mat_01(n, n);
+  arma::mat mat_10(n, n);
+
+  for (unsigned i = 0; i < n; ++i) {
+    for (unsigned j = 0; j < n; ++j) {
+      if (i == j) {
+        mat_11(i, j) = prs[i];
+        mat_00(i, j) = 1 - prs[i];
+        mat_01(i, j) = 0;
+        mat_10(i, j) = 0;
+      } else {
+        mat_11(i, j) = prs[i] * ((n*prs[j])-1)/(n-1);
+        mat_00(i, j) = (1-prs[i]) * ((n*(1-prs[j]))-1)/(n-1);
+        mat_01(i, j) = (1-prs[i]) * ((n*prs[j]))/(n-1);
+        mat_10(i, j) = prs[i] * ((n*(1-prs[j])))/(n-1);
+      }
+    }
+  }
+
+   arma::mat pr_mat = arma::join_rows(
+    arma::join_cols(mat_00, mat_01),
+    arma::join_cols(mat_10, mat_11)
+  );
+
+  return pr_mat;
+}
+
+// old
+// [[Rcpp::export]]
 double ht_var_total_clusters(const arma::vec & y,
                              const arma::vec & ps,
                              const arma::vec & cluster) {

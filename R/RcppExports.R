@@ -17,6 +17,10 @@ ht_covar_total <- function(y0, y1, p00, p11, pj) {
     .Call(`_estimatr_ht_covar_total`, y0, y1, p00, p11, pj)
 }
 
+gen_pr_mat_complete <- function(prs) {
+    .Call(`_estimatr_gen_pr_mat_complete`, prs)
+}
+
 ht_var_total_clusters <- function(y, ps, cluster) {
     .Call(`_estimatr_ht_var_total_clusters`, y, ps, cluster)
 }
