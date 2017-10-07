@@ -31,11 +31,11 @@ clean_model_data <- function(formula,
 
   mf_rows_to_drop <- list(cluster = integer(0),
                           weights = integer(0))
+
   ## Parse cluster variable
   if (!is.null(cluster_variable_name)) {
     # get cluster variable from subset of data
-    cluster <- as.factor(eval(cluster_variable_name,
-                              data[row.names(mf), ]))
+    cluster <- data[row.names(mf), deparse_var(cluster_variable_name)]
 
     mf_rows_to_drop$cluster <- which(is.na(cluster))
 
@@ -55,7 +55,7 @@ clean_model_data <- function(formula,
       stop("weights not yet supported with clustered standard errors")
     }
 
-    weights <- eval(weights, data[row.names(mf), ])
+    weights <- data[row.names(mf), deparse_var(weights)]
 
     mf_rows_to_drop$weights <- which(is.na(weights))
 

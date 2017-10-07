@@ -95,7 +95,7 @@ double ht_covar_total(const arma::vec & y0,
 }
 
 // [[Rcpp::export]]
-arma::mat gen_pr_mat_complete(const arma::vec & prs) {
+arma::mat gen_pr_matrix_complete(const arma::vec & prs) {
 
   double n = prs.n_elem;
   arma::mat mat_11(n, n);

@@ -60,14 +60,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// gen_pr_mat_complete
-arma::mat gen_pr_mat_complete(const arma::vec& prs);
-RcppExport SEXP _estimatr_gen_pr_mat_complete(SEXP prsSEXP) {
+// gen_pr_matrix_complete
+arma::mat gen_pr_matrix_complete(const arma::vec& prs);
+RcppExport SEXP _estimatr_gen_pr_matrix_complete(SEXP prsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::vec& >::type prs(prsSEXP);
-    rcpp_result_gen = Rcpp::wrap(gen_pr_mat_complete(prs));
+    rcpp_result_gen = Rcpp::wrap(gen_pr_matrix_complete(prs));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -129,7 +129,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_estimatr_ht_var_total", (DL_FUNC) &_estimatr_ht_var_total, 2},
     {"_estimatr_ht_var_total2", (DL_FUNC) &_estimatr_ht_var_total2, 2},
     {"_estimatr_ht_covar_total", (DL_FUNC) &_estimatr_ht_covar_total, 5},
-    {"_estimatr_gen_pr_mat_complete", (DL_FUNC) &_estimatr_gen_pr_mat_complete, 1},
+    {"_estimatr_gen_pr_matrix_complete", (DL_FUNC) &_estimatr_gen_pr_matrix_complete, 1},
     {"_estimatr_ht_var_total_clusters", (DL_FUNC) &_estimatr_ht_var_total_clusters, 3},
     {"_estimatr_mult_diag", (DL_FUNC) &_estimatr_mult_diag, 2},
     {"_estimatr_mat_sqrt_inv", (DL_FUNC) &_estimatr_mat_sqrt_inv, 1},

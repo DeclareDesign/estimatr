@@ -42,7 +42,7 @@ read_declaration <-
 
       } else if (declaration$ra_type == 'complete') {
         condition_pr_matrix <-
-          gen_pr_mat_complete(declaration$probabilities_matrix[, 2])
+          gen_pr_matrix_complete(declaration$probabilities_matrix[, 2])
 
        } else if (declaration$ra_type == 'clustered') {
 
@@ -141,33 +141,4 @@ read_declaration <-
         condition_pr_matrix = condition_pr_matrix
       )
     )
-  }
-
-#' @export
-get_pr_matrix_complete <-
-  function(condition_probabilities) {
-    n <- length(condition_probabilities)
-    ## todo: only get one of the off-diagonals if symmetric, which it should be
-    mat_11 <- mat_00 <- mat_01 <- mat_10 <- matrix(nrow = n, ncol = n)
-
-    ## todo: check if all prs are the same, as they should be
-    ## todo: speed by putting in C++ or using the tirangles, or find a matrix way to do it
-    for(i in 1:n) {
-      for(j in 1:n) {
-        mat_11[i,j] <- condition_probabilities[i] * ((n*condition_probabilities[j])-1)/(n-1)
-        mat_00[i,j] <- (1-condition_probabilities[i]) * ((n*(1-condition_probabilities[j]))-1)/(n-1)
-        mat_01[i,j] <- (1-condition_probabilities[i]) * ((n*condition_probabilities[j]))/(n-1)
-        mat_10[i,j] <- condition_probabilities[i] * ((n*(1-condition_probabilities[j])))/(n-1)
-      }
-    }
-
-    diag(mat_11) <- condition_probabilities
-    diag(mat_00) <- (1-condition_probabilities)
-    diag(mat_01) <- 0
-    diag(mat_10) <- 0
-
-    condition_pr_matrix <- cbind(rbind(mat_00, mat_01),
-                                 rbind(mat_10, mat_11))
-
-    return(condition_pr_matrix)
   }

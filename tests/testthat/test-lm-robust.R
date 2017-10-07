@@ -122,6 +122,11 @@ test_that("lm robust works with weights",{
     lmo_miss_hc2
   )
 
+  ## Check proper error with SE_tpye
+  expect_error(
+    lm_robust(Y ~ Z * X, data = df, se_type = 'stata', ci = F),
+    'se_type'
+  )
 })
 
 test_that("lm robust works with large data", {

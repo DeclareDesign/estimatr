@@ -58,7 +58,7 @@ difference_in_means <-
 
     ## Get block variable
     if (!is.null(substitute(block_variable_name))) {
-      blocks <- eval(substitute(block_variable_name), data)
+      blocks <- data[, deparse_var(substitute(block_variable_name))]
       if (is.factor(blocks)) {
         blocks <- droplevels(blocks)
       }
@@ -80,7 +80,7 @@ difference_in_means <-
 
     ## Get weights variable
     if (!is.null(substitute(weights))) {
-      weights <- eval(substitute(weights), data)
+      weights <- data[, deparse_var(substitute(weights))]
 
       weights_missing <- is.na(weights)
 
@@ -97,7 +97,8 @@ difference_in_means <-
 
     ## Get cluster variable
     if (!is.null(substitute(cluster_variable_name))) {
-      cluster <- eval(substitute(cluster_variable_name), data)
+      cluster_variable_name <- deparse_var(substitute(cluster_variable_name))
+      cluster <- data[, cluster_variable_name]
       if (is.factor(cluster)) {
         cluster <- droplevels(cluster)
       }
@@ -112,8 +113,6 @@ difference_in_means <-
 
       cluster <- cluster[!cluster_missing]
       data <- data[!cluster_missing, ]
-
-      cluster_variable_name <- deparse(substitute(cluster_variable_name))
     } else {
       cluster <- NULL
     }
@@ -131,8 +130,11 @@ difference_in_means <-
       )
 
       ## todo: add inflation from GG fn 20 ch 3
-      return_frame$df <- with(return_frame,
-                              N - 2)
+      if (is.na(return_frame$df)) {
+        return_frame$df <- with(return_frame,
+                                N - 2)
+      }
+
       return_frame$p <- with(return_frame,
                              2 * pt(abs(est / se), df = df, lower.tail = FALSE))
       return_frame$ci_lower <- with(return_frame,
@@ -195,7 +197,7 @@ difference_in_means <-
       # Blocked design, (Gerber Green 2012, p73, eq3.10)
       diff <- with(block_estimates, sum(est * N/N_overall))
 
-      n_blocks <- nrow(block_estimates)
+      df <- NA
 
       if (pair_matched) {
 
@@ -216,6 +218,9 @@ difference_in_means <-
                   sum( (N * est - (N_overall * diff)/n_blocks)^2 )
               )
             )
+
+          # from  (Imai, King, Nall 2009, p37)
+          df <- n_blocks - 1
         }
 
       } else {
@@ -223,8 +228,11 @@ difference_in_means <-
         se <- with(block_estimates, sqrt(sum(se^2 * (N/N_overall)^2)))
       }
 
-      ## we don't know if this is correct!
-      df <- n_blocks - 1 # this suggested for cluster pair matched by IKN
+      if(is.na(df)) {
+        ## we don't know if this is correct!
+        df <- N_overall - 2
+      }
+
       p <- 2 * pt(abs(diff / se), df = df, lower.tail = FALSE)
       ci_lower <- diff - qt(1 - alpha / 2, df = df) * se
       ci_upper <- diff + qt(1 - alpha / 2, df = df) * se
@@ -325,6 +333,8 @@ difference_in_means_internal <-
       )
     }
 
+    df <- NA
+
     if (is.null(weights)) {
 
       diff <- mean(Y2) - mean(Y1)
@@ -335,6 +345,13 @@ difference_in_means_internal <-
       } else if (is.null(cluster)) {
         # Non-pair matched designs, unit level randomization
         se <- sqrt(var(Y2) / length(Y2) + var(Y1) / length(Y1))
+
+        df <- se^4 /
+          (
+            (var(Y2) / length(Y2))^2 / (length(Y2) - 1) +
+            (var(Y1) / length(Y1))^2 / (length(Y1) - 1)
+          )
+
       } else {
         # Non-pair matched designs, cluster randomization
         # (Gerber and Green 2012, p. 83, eq. 3.23)
@@ -362,12 +379,20 @@ difference_in_means_internal <-
       diff <-  mean2 - mean1
 
       se <- sqrt(weighted_var_internal(w2, Y2, mean2) + weighted_var_internal(w1, Y1, mean1))
+
+      # todo: check welch approximation with weights
+      df <- se^4 /
+        (
+          (var(Y2) / length(Y2))^2 / (length(Y2) - 1) +
+            (var(Y1) / length(Y1))^2 / (length(Y1) - 1)
+        )
     }
 
     return_frame <- data.frame(
       est = diff,
       se = se,
-      N = N
+      N = N,
+      df = df
     )
 
     return(return_frame)

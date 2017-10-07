@@ -5,23 +5,23 @@
 \title{Horvitz-Thompson estimator of treatment effects}
 \usage{
 horvitz_thompson(formula, condition_pr_variable_name = NULL,
-  condition_pr_matrix = NULL, declaration = NULL,
-  block_variable_name = NULL, cluster_variable_name = NULL,
+  condition_pr_matrix = NULL, block_variable_name = NULL,
+  cluster_variable_name = NULL, declaration = NULL,
   constant_effects = FALSE, data, subset = NULL, alpha = 0.05,
   condition1 = NULL, condition2 = NULL)
 }
 \arguments{
 \item{formula}{An object of class "formula", such as Y ~ Z}
 
-\item{condition_pr_variable_name}{A bare (unquoted) name of the variable with the condition 2 (treatment) probabilities}
+\item{condition_pr_variable_name}{A bare (unquoted) name of the variable with the condition 2 (treatment) probabilities.}
 
-\item{condition_pr_matrix}{A 2n * 2n matrix of marginal and joint probabilities of all units in condition1 and condition2; see details}
-
-\item{declaration}{An object of class "ra_declaration", from the randomizr package}
+\item{condition_pr_matrix}{A 2n * 2n matrix of marginal and joint probabilities of all units in condition1 and condition2; see details.}
 
 \item{block_variable_name}{An optional bare (unquoted) name of the block variable. Use for blocked designs only.}
 
 \item{cluster_variable_name}{An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.}
+
+\item{declaration}{An object of class "ra_declaration", from the randomizr package. Can substitute for manually specifying clusters, blocks, and condition probabilities.}
 
 \item{constant_effects}{should constant effects be assumed to estimate the covariance between potential outcomes, default = FALSE.}
 
