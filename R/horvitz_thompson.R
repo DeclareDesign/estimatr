@@ -1,11 +1,11 @@
 #' Horvitz-Thompson estimator of treatment effects
 #'
 #' @param formula An object of class "formula", such as Y ~ Z
-#' @param declaration An object of class "ra_declaration", from the randomizr package
-#' @param condition_pr_variable_name A bare (unquoted) name of the variable with the condition 2 (treatment) probabilities
-#' @param condition_pr_matrix A 2n * 2n matrix of marginal and joint probabilities of all units in condition1 and condition2; see details
+#' @param condition_pr_variable_name A bare (unquoted) name of the variable with the condition 2 (treatment) probabilities.
+#' @param condition_pr_matrix A 2n * 2n matrix of marginal and joint probabilities of all units in condition1 and condition2; see details.
 #' @param block_variable_name An optional bare (unquoted) name of the block variable. Use for blocked designs only.
 #' @param cluster_variable_name An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.
+#' @param declaration An object of class "ra_declaration", from the randomizr package. Can substitute for manually specifying clusters, blocks, and condition probabilities.
 #' @param data A data.frame.
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
 #' @param alpha The significance level, 0.05 by default.
@@ -21,10 +21,10 @@ horvitz_thompson <-
   function(formula,
            condition_pr_variable_name = NULL,
            condition_pr_matrix = NULL,
-           declaration = NULL,
            block_variable_name = NULL,
            cluster_variable_name = NULL,
-           estimator = 'ht',
+           declaration = NULL,
+           #estimator = 'ht',
            constant_effects = FALSE,
            data,
            subset = NULL,
@@ -196,7 +196,7 @@ horvitz_thompson <-
         data = data,
         weights = weights,
         clusters = clusters,
-        estimator = estimator,
+        #estimator = estimator,
         constant_effects = constant_effects,
         alpha = alpha
       )
@@ -211,6 +211,10 @@ horvitz_thompson <-
                                     est + qt(1 - alpha / 2, df = df) * se)
 
     } else {
+
+      if (!is.null(condition_pr_matrix)) {
+        stop("Blocks currently only supported for simple random assignment of units or clusters within blocks.")
+      }
 
       if (!is.null(clusters)) {
 
@@ -252,6 +256,7 @@ horvitz_thompson <-
           condition1 = condition1,
           condition2 = condition2,
           condition_probabilities_name = condition_probabilities_name,
+          condition_pr_matrix = condition_pr_matrix,
           cluster_variable_name = cluster_variable_name,
           weights = weights,
           alpha = alpha
@@ -321,7 +326,7 @@ horvitz_thompson_internal <-
            clusters = NULL,
            cluster_variable_name = NULL,
            pair_matched = FALSE,
-           estimator = 'ht',
+           #estimator = 'ht',
            constant_effects = FALSE,
            alpha = .05) {
 
@@ -369,103 +374,117 @@ horvitz_thompson_internal <-
     Y2 <- Y[t == condition2] / ps2
     Y1 <- Y[t == condition1] / ps1
 
+    # Trying out estimator from Middleton & Aronow 2015 page 51
+    # if (estimator == 'ma') {
+    #
+    #   k <- length(unique(clusters))
+    #   c_2 <- clusters[t==condition2]
+    #   c_1 <- clusters[t==condition1]
+    #   k_2 <- length(unique(c_2))
+    #   k_1 <- length(unique(c_1))
+    #
+    #   totals_2 <- tapply(Y[t == condition2], c_2, sum)
+    #   totals_1 <- tapply(Y[t == condition1], c_1, sum)
+    #
+    #   diff <- (mean(totals_2) - mean(totals_1)) * k / N
+    #
+    #   se <-
+    #     sqrt(
+    #       k^2 / N^2 * (
+    #         mean((totals_2 - mean(totals_2))^2) / (k_2 - 1) +
+    #         mean((totals_1 - mean(totals_1))^2) / (k_1 - 1)
+    #       )
+    #     )
+    #
+    # } else {
 
+    diff <- (sum(Y2) - sum(Y1)) / N
 
-    if (estimator == 'ma') {
-
-      k <- length(unique(clusters))
-      c_2 <- clusters[t==condition2]
-      c_1 <- clusters[t==condition1]
-      k_2 <- length(unique(c_2))
-      k_1 <- length(unique(c_1))
-
-      totals_2 <- tapply(Y[t == condition2], c_2, sum)
-      totals_1 <- tapply(Y[t == condition1], c_1, sum)
-
-      diff <- (mean(totals_2) - mean(totals_1)) * k / N
-
-      se <-
-        sqrt(
-          k^2 / N^2 * (
-            mean((totals_2 - mean(totals_2))^2) / (k_2 - 1) +
-            mean((totals_1 - mean(totals_1))^2) / (k_1 - 1)
+    if (is.null(condition_pr_matrix)) {
+      # Simple random assignment
+      # joint inclusion probabilities = product of marginals
+      if (constant_effects) {
+        se <-
+          sqrt(
+            (var_ht_total_no_cov(
+              c(
+                # Weighted Y1 potential outcomes (assuming constant effects)
+                (Y[t==condition1] + diff) / (1-ps1),
+                Y2
+              ),
+              c(
+                1 - ps1,
+                ps2
+              )
+            ) +
+               var_ht_total_no_cov(
+                 c(
+                   Y1,
+                   # Weighted Y2 potential outcomes (assuming constant effects)
+                   (Y[t==condition2] - diff)/(1-ps2)
+                 ),
+                 c(
+                   ps1,
+                   1 - ps2
+                   )
+                 )
+            )
+            / N^2
           )
-        )
-
-    } else {
-      diff <- (sum(Y2) - sum(Y1)) / N
-      if (is.null(condition_pr_matrix)) {
-        # SRS
-        if (constant_effects) {
-          se <-
-            sqrt(
-              (var_ht_total_no_cov(c((Y[t==condition1] + diff)/(1-ps1), Y2), c(1 - ps1, ps2)) +
-                 var_ht_total_no_cov(c(Y1, (Y[t==condition2] - diff)/(1-ps2)), c(ps1, 1 - ps2)))
-              / N^2
-            )
-        } else {
-          se <-
-            sqrt(
-              (var_ht_total_no_cov(Y2, ps2) / length(Y2)^2 +
-                 var_ht_total_no_cov(Y1, ps1) / length(Y1)^2)
-            )
-        }
       } else {
-        # CRS
-        if (constant_effects) {
-          # rescaled potential outcomes
-          y0 <- ifelse(t==condition1,
-                           Y / (1-condition_probabilities),
-                           (Y - diff) / (1 - condition_probabilities))
-          y1 <- ifelse(t==condition2,
-                         Y / condition_probabilities,
-                         (Y + diff) / condition_probabilities)
-          se <-
-            sqrt(
-              (
-                ht_var_total2(
-                  y1,
-                  condition_pr_matrix[(N+1):(2*N), (N+1):(2*N)]
-                ) +
-                  ht_var_total2(
-                    y0,
-                    condition_pr_matrix[1:N, 1:N]
-                  ) -
-                  2 * ht_covar_total(
-                    y0 = y0,
-                    y1 = y1,
-                    pj = condition_pr_matrix[1:N, (N+1):(2*N)],
-                    p00 = condition_pr_matrix[1:N, 1:N],
-                    p11 = condition_pr_matrix[(N+1):(2*N), (N+1):(2*N)]
-                  )
-              ) / N^2
-            )
-        } else {
-          se <-
-            sqrt(
-              ht_var_total2(
-                Y2,
-                condition_pr_matrix[(N+1):(2*N), (N+1):(2*N)]
-               ) / length(Y2)^2 +
-              ht_var_total2(
-                Y1,
-                condition_pr_matrix[1:N, 1:N]
-               ) / length(Y1)^2
-            )
-
-        }
+        se <-
+          sqrt(
+            var_ht_total_no_cov(Y2, ps2) / length(Y2)^2 +
+            var_ht_total_no_cov(Y1, ps1) / length(Y1)^2
+          )
       }
+    } else {
+      # Complete random assignment
+      if (constant_effects) {
+        # rescaled potential outcomes
+        y0 <- ifelse(t==condition1,
+                         Y / (1-condition_probabilities),
+                         (Y - diff) / (1 - condition_probabilities))
+        y1 <- ifelse(t==condition2,
+                       Y / condition_probabilities,
+                       (Y + diff) / condition_probabilities)
+        se <-
+          sqrt(
+            (
+              ht_var_total2(
+                y1,
+                condition_pr_matrix[(N+1):(2*N), (N+1):(2*N)]
+              ) +
+                ht_var_total2(
+                  y0,
+                  condition_pr_matrix[1:N, 1:N]
+                ) -
+                2 * ht_covar_total(
+                  y0 = y0,
+                  y1 = y1,
+                  pj = condition_pr_matrix[1:N, (N+1):(2*N)],
+                  p00 = condition_pr_matrix[1:N, 1:N],
+                  p11 = condition_pr_matrix[(N+1):(2*N), (N+1):(2*N)]
+                )
+            ) / N^2
+          )
+      } else {
+        # No constant effects assumption
+        se <-
+          sqrt(
+            ht_var_total2(
+              Y2,
+              condition_pr_matrix[(N+1):(2*N), (N+1):(2*N)]
+             ) / length(Y2)^2 +
+            ht_var_total2(
+              Y1,
+              condition_pr_matrix[1:N, 1:N]
+             ) / length(Y1)^2
+          )
+
+      }
+      #}
     }
-#
-#     } else {
-#
-#       if(constant_effects)
-#         stop("constant effects not currently supported")
-#       k <- length(unique(clusters))
-#
-#
-#
-#     }
 
     return_frame <- data.frame(
       est = diff,
