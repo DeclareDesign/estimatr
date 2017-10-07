@@ -198,6 +198,7 @@ difference_in_means <-
       diff <- with(block_estimates, sum(est * N/N_overall))
 
       df <- NA
+      n_blocks <- nrow(block_estimates)
 
       if (pair_matched) {
 

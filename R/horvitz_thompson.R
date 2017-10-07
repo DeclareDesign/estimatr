@@ -194,7 +194,6 @@ horvitz_thompson <-
         condition1 = condition1,
         condition2 = condition2,
         data = data,
-        weights = weights,
         clusters = clusters,
         #estimator = estimator,
         constant_effects = constant_effects,
@@ -258,7 +257,6 @@ horvitz_thompson <-
           condition_probabilities_name = condition_probabilities_name,
           condition_pr_matrix = condition_pr_matrix,
           cluster_variable_name = cluster_variable_name,
-          weights = weights,
           alpha = alpha
         )
       })
@@ -322,7 +320,6 @@ horvitz_thompson_internal <-
            condition1 = NULL,
            condition2 = NULL,
            data,
-           weights = NULL,
            clusters = NULL,
            cluster_variable_name = NULL,
            pair_matched = FALSE,

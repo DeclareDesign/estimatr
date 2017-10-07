@@ -4,12 +4,21 @@ copy_upper_to_lower_triangle <- function(mat) {
 }
 
 ## todo: figure out which assignment is the "treatment" in Z, or the binary variable
+#' Learns experimental design from randomization declaration
+#'
+#' @param declaration An object of class 'ra_declaration' that contains the experimental design
+#' @param estimator The estimator that needs to learn the experimental design
+#'
 #' @export
 read_declaration <-
   function(
     declaration,
     estimator
   ) {
+
+    if (class(declaration) != 'ra_declaration') {
+      stop("declaration must be an object of class 'ra_declaration'")
+    }
 
     if (declaration$cleaned_arguments$num_arms > 2) {
       stop("The 'declaration' argument can only be used with a binary treatment variable.")
