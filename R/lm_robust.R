@@ -1,5 +1,5 @@
 
-
+# todo: add return doc
 #' Ordinary Least Squares with Robust Standard Errors
 #'
 #' @param formula an object of class formula, as in \code{\link{lm}}.

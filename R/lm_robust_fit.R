@@ -79,7 +79,7 @@ lm_robust_fit <- function(y,
       which_covs = which_covs
     )
 
-  est <- fit$beta_hat
+  est <- as.vector(fit$beta_hat)
   se <- NA
   p <- NA
   ci_lower <- NA
@@ -107,6 +107,8 @@ lm_robust_fit <- function(y,
         dof <- N - k
 
       }
+
+      dof <- as.vector(dof)
 
       p <- 2 * pt(abs(est / se), df = dof, lower.tail = FALSE)
       ci_lower <- est - qt(1 - alpha / 2, df = dof) * se
