@@ -126,7 +126,8 @@ lm_robust_fit <- function(y,
       p = p,
       ci_lower = ci_lower,
       ci_upper = ci_upper,
-      df = dof
+      df = dof,
+      which_covs = coefficient_name
     )
 
   if (return_vcov) {

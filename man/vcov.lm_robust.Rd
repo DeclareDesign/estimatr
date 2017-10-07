@@ -2,7 +2,7 @@
 % Please edit documentation in R/vcov.R
 \name{vcov.lm_robust}
 \alias{vcov.lm_robust}
-\title{Return variance covariance matrix of lm_robust object}
+\title{Return estimated variance covariance matrix of lm_robust}
 \usage{
 \method{vcov}{lm_robust}(obj, ...)
 }
@@ -10,5 +10,5 @@
 \item{obj}{An object of class 'lm_robust'}
 }
 \description{
-Return variance covariance matrix of lm_robust object
+Return estimated variance covariance matrix of lm_robust
 }

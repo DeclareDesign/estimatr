@@ -8,16 +8,6 @@ vcov.lm_robust <-
     return(vcov_simple(obj))
   }
 
-#' Return estimated variance covariance matrix of lm_lin
-#'
-#' @param obj An object of class 'lm_lin'
-#'
-#' @export
-vcov.lm_lin <-
-  function(obj, ...) {
-    return(vcov_simple(obj))
-  }
-
 #' Return estimated variance covariance matrix of difference_in_means
 #'
 #' @param obj An object of class 'difference_in_means'
@@ -45,6 +35,7 @@ vcov_simple <-
     if (is.null(obj$vcov)) {
       stop("Object cannot return vcov. Try setting return_vcov = TRUE.")
     } else {
+      # todo: should we only keep the which_covs?
       return(obj$vcov)
     }
   }
