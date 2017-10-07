@@ -44,7 +44,7 @@ test_that("DIM same as t.test", {
   dat <- data.frame(Y = rnorm(100), Z = rbinom(100, 1, .5), X = rnorm(100))
 
   expect_equal(
-    unlist(difference_in_means(Y ~ Z, data = dat)[, c('p', 'ci_lower', 'ci_upper', 'df')],
+    unlist(difference_in_means(Y ~ Z, data = dat)[c('p', 'ci_lower', 'ci_upper', 'df')],
            F,
            F),
     unlist(with(dat, t.test(Y[Z==1], Y[Z==0]))[c('p.value', 'conf.int', 'parameter')],

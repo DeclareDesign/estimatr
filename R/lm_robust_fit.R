@@ -130,7 +130,7 @@ lm_robust_fit <- function(y,
       which_covs = coefficient_name
     )
 
-  if (return_vcov) {
+  if (return_vcov & se_type != 'none') {
     return_list$vcov <- fit$Vcov_hat
     dimnames(return_list$vcov) <- list(return_list$coefficient_name,
                                        return_list$coefficient_name)

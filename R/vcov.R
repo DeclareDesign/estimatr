@@ -4,7 +4,7 @@
 #'
 #' @export
 vcov.lm_robust <-
-  function(obj, ...) {
+  function(obj) {
     return(vcov_simple(obj))
   }
 
@@ -14,7 +14,7 @@ vcov.lm_robust <-
 #'
 #' @export
 vcov.difference_in_means <-
-  function(obj, ...) {
+  function(obj) {
     stop("vcov not supported for difference_in_means")
   }
 
@@ -24,7 +24,7 @@ vcov.difference_in_means <-
 #'
 #' @export
 vcov.difference_in_means <-
-  function(obj, ...) {
+  function(obj) {
     stop("vcov not supported for horvitz_thompson")
   }
 

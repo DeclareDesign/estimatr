@@ -55,7 +55,7 @@ test_that("Test LM Lin",{
   )
 
   expect_equivalent(
-    lm_lin_out[, c('est')],
+    lm_lin_out$est,
     lm(Y ~ Z + Z*X1_bar + Z*X2_bar, data = df)$coefficients
   )
 
@@ -140,13 +140,17 @@ test_that("Test LM Lin",{
 
   ## Names will differ
   expect_equivalent(
-    lm_lin(Y ~ treat,
-           covariates = ~ X1 + X2,
-           data = df,
-           cluster_variable_name = cluster)[, -1],
-    lm_robust(Y ~ treat + treat*X1_bar + treat*X2_bar,
-              data = df,
-              cluster_variable_name = cluster)[, -1]
+    tidy(
+      lm_lin(Y ~ treat,
+             covariates = ~ X1 + X2,
+             data = df,
+             cluster_variable_name = cluster)
+    )[, -1],
+    tidy(
+      lm_robust(Y ~ treat + treat*X1_bar + treat*X2_bar,
+                data = df,
+                cluster_variable_name = cluster)
+    )[, -1]
   )
 
   ## Works with missingness on cluster
@@ -159,19 +163,20 @@ test_that("Test LM Lin",{
     lin_out <- lm_lin(Y ~ treat,
                       covariates = ~ X1 + X2,
                       data = df,
-                      cluster_variable_name = cluster)[, -1],
+                      cluster_variable_name = cluster),
     'missingness in the cluster'
   )
 
   expect_warning(
     rob_out <- lm_robust(Y ~ treat + treat*X1_bar + treat*X2_bar,
                          data = df,
-                         cluster_variable_name = cluster)[, -1],
+                         cluster_variable_name = cluster),
     'missingness in the cluster'
   )
 
+  # drop coefficient name because names will differ
   expect_equivalent(
-    lin_out,
-    rob_out
+    lin_out[-which(names(lin_out) == 'coefficient_name')],
+    rob_out[-which(names(rob_out) == 'coefficient_name')]
   )
 })

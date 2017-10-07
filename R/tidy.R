@@ -56,7 +56,12 @@ tidy.default <- function(obj, ...) {
 #' @export
 tidy.lm_robust <- function(obj, ...) {
   return_frame <- tidy_data_frame(obj)
-  return(return_frame[return_frame$coefficient_name %in% obj$which_covs, ])
+  if (!is.null(obj$which_covs)) {
+    return(return_frame[return_frame$coefficient_name %in% obj$which_covs, ])
+  } else {
+    return(return_frame)
+  }
+
 }
 
 #' Tidying difference_in_means output to a data.frame
@@ -72,7 +77,6 @@ tidy.difference_in_means <- function(obj, ...) {
   return_frame <- tidy_data_frame(obj)
   return(return_frame)
 }
-
 
 #' Tidying horvitz_thompson output to a data.frame
 #'
@@ -100,5 +104,5 @@ tidy_data_frame <- function(obj) {
       "df"
     )
 
-  as.data.frame(obj[return_cols])
+  return_frame <- as.data.frame(obj[return_cols])
 }

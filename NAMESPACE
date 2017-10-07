@@ -3,6 +3,7 @@
 S3method(tidy,"NULL")
 S3method(tidy,default)
 S3method(tidy,difference_in_means)
+S3method(tidy,horvitz_thompson)
 S3method(tidy,lm_robust)
 S3method(vcov,difference_in_means)
 S3method(vcov,lm_robust)

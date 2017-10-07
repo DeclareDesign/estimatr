@@ -16,10 +16,12 @@ test_that("lm_lin recreates Lin 2013 Table 2", {
   # unadjusted, Lin est = -0.036, se = 0.158
   expect_equivalent(
     round(
-      lm_robust(GPA_year1 ~ sfsp,
+      tidy(
+        lm_robust(GPA_year1 ~ sfsp,
                           data = alo_star_men,
                           se_type = 'HC0',
-                          coefficient_name = 'sfsp')[, c('est', 'se')],
+                          coefficient_name = 'sfsp')
+      )[, c('est', 'se')],
       3
     ),
     c(-0.036, 0.158)
@@ -29,10 +31,12 @@ test_that("lm_lin recreates Lin 2013 Table 2", {
   # usual adjusted for HS gpa, Lin est = -0.083, se = 0.146
   expect_equivalent(
     unlist(round(
-      lm_robust(GPA_year1 ~ sfsp + gpa0,
-                          data = alo_star_men,
-                          se_type = 'HC0',
-                          coefficient_name = 'sfsp')[, c('est', 'se')],
+      tidy(
+        lm_robust(GPA_year1 ~ sfsp + gpa0,
+                            data = alo_star_men,
+                            se_type = 'HC0',
+                            coefficient_name = 'sfsp')
+      )[, c('est', 'se')],
       3
     )),
     c(-0.083, 0.146)
@@ -41,11 +45,13 @@ test_that("lm_lin recreates Lin 2013 Table 2", {
   # interaction adjusted, Lin est = -0.081, se = 0.146
   expect_equivalent(
     unlist(round(
-      lm_lin(GPA_year1 ~ sfsp,
-                       covariates = ~ gpa0,
-                       data = alo_star_men,
-                       se_type = 'HC0',
-                       coefficient_name = 'sfsp')[, c('est', 'se')],
+      tidy(
+        lm_lin(GPA_year1 ~ sfsp,
+                         covariates = ~ gpa0,
+                         data = alo_star_men,
+                         se_type = 'HC0',
+                         coefficient_name = 'sfsp')
+      )[, c('est', 'se')],
       3
     )),
     c(-0.081, 0.146)
