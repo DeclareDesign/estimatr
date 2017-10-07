@@ -6,7 +6,7 @@
 \usage{
 lm_lin(formula, data, covariates, weights = NULL, subset = NULL,
   cluster_variable_name = NULL, se_type = NULL, ci = TRUE, alpha = 0.05,
-  coefficient_name = NULL)
+  coefficient_name = NULL, return_vcov = TRUE)
 }
 \arguments{
 \item{formula}{An object of class "formula", such as Y ~ Z. Should only have the outcome and the treatment.}
@@ -28,6 +28,8 @@ lm_lin(formula, data, covariates, weights = NULL, subset = NULL,
 \item{alpha}{The significance level, 0.05 by default.}
 
 \item{coefficient_name}{a character or character vector that indicates which coefficients should be reported. If left unspecified, returns all coefficients.}
+
+\item{return_vcov}{a boolean for whether to return the vcov matrix for later usage, TRUE by default.}
 }
 \description{
 Linear regression with the Lin (2013) covariate adjustment

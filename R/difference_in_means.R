@@ -142,6 +142,8 @@ difference_in_means <-
       return_frame$ci_upper <- with(return_frame,
                                     est + qt(1 - alpha / 2, df = df) * se)
 
+      return_list <- as.list(return_frame)
+
     } else {
 
       pair_matched = FALSE
@@ -238,28 +240,24 @@ difference_in_means <-
       ci_lower <- diff - qt(1 - alpha / 2, df = df) * se
       ci_upper <- diff + qt(1 - alpha / 2, df = df) * se
 
-      return_frame <- data.frame(
-        est = diff,
-        se = se,
-        p = p,
-        ci_lower = ci_lower,
-        ci_upper = ci_upper,
-        df = df,
-        stringsAsFactors = FALSE
-      )
+      return_list <-
+        list(
+          est = diff,
+          se = se,
+          p = p,
+          ci_lower = ci_lower,
+          ci_upper = ci_upper,
+          df = df,
+          stringsAsFactors = FALSE
+        )
 
     }
 
-    return_frame$coefficient_name <- all.vars(formula[[3]])
+    return_list$coefficient_name <- all.vars(formula[[3]])
 
-    rownames(return_frame) <- NULL
+    attr(return_list, "class") <- "difference_in_means"
 
-    return(
-      return_frame[
-        ,
-        c("coefficient_name", "est", "se", "p", "ci_lower", "ci_upper", "df")
-      ]
-    )
+    return(return_list)
 
   }
 
@@ -389,12 +387,13 @@ difference_in_means_internal <-
         )
     }
 
-    return_frame <- data.frame(
-      est = diff,
-      se = se,
-      N = N,
-      df = df
-    )
+    return_frame <-
+      data.frame(
+        est = diff,
+        se = se,
+        N = N,
+        df = df
+      )
 
     return(return_frame)
 

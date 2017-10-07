@@ -8,6 +8,7 @@
 #' @param se_type character denoting which kind of SEs to return
 #' @param alpha numeric denoting the test size for confidence intervals
 #' @param coefficient_name character vector of coefficients to return
+#' @param return_vcov a boolean for whether to return the vcov matrix for later usage
 #'
 #' @export
 #'
@@ -18,7 +19,8 @@ lm_robust_fit <- function(y,
                           ci,
                           se_type,
                           alpha,
-                          coefficient_name) {
+                          coefficient_name,
+                          return_vcov) {
 
   ## allowable se_types with clustering
   cl_se_types <- c("BM", "stata")
@@ -114,20 +116,25 @@ lm_robust_fit <- function(y,
 
   }
 
-  return_frame <-
-    data.frame(
+  return_list <-
+    list(
       coefficient_name = variable_names,
       est = est,
       se = se,
       p = p,
       ci_lower = ci_lower,
       ci_upper = ci_upper,
-      df = dof,
-      stringsAsFactors = FALSE
+      df = dof
     )
 
-  rownames(return_frame) <- NULL
+  if (return_vcov) {
+    return_list$vcov <- fit$Vcov_hat
+    dimnames(return_list$vcov) <- list(return_list$coefficient_name,
+                                       return_list$coefficient_name)
+  }
 
-  return(return_frame[which_covs, ])
+  attr(return_list, "class") <- "lm_robust"
+
+  return(return_list)
 
 }

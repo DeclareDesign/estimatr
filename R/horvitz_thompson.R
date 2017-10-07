@@ -187,26 +187,27 @@ horvitz_thompson <-
     #-----
 
     if (is.null(blocks)){
-      return_frame <- horvitz_thompson_internal(
-        formula,
-        condition_probabilities = condition_probabilities,
-        condition_pr_matrix = condition_pr_matrix,
-        condition1 = condition1,
-        condition2 = condition2,
-        data = data,
-        clusters = clusters,
-        #estimator = estimator,
-        constant_effects = constant_effects,
-        alpha = alpha
-      )
+      return_list <-
+        horvitz_thompson_internal(
+          formula,
+          condition_probabilities = condition_probabilities,
+          condition_pr_matrix = condition_pr_matrix,
+          condition1 = condition1,
+          condition2 = condition2,
+          data = data,
+          clusters = clusters,
+          #estimator = estimator,
+          constant_effects = constant_effects,
+          alpha = alpha
+        )
 
-      return_frame$df <- with(return_frame,
+      return_list$df <- with(return_list,
                               N - 2)
-      return_frame$p <- with(return_frame,
+      return_list$p <- with(return_list,
                              2 * pt(abs(est / se), df = df, lower.tail = FALSE))
-      return_frame$ci_lower <- with(return_frame,
+      return_list$ci_lower <- with(return_list,
                                     est - qt(1 - alpha / 2, df = df) * se)
-      return_frame$ci_upper <- with(return_frame,
+      return_list$ci_upper <- with(return_list,
                                     est + qt(1 - alpha / 2, df = df) * se)
 
     } else {
@@ -277,15 +278,15 @@ horvitz_thompson <-
       ci_lower <- diff - qt(1 - alpha / 2, df = df) * se
       ci_upper <- diff + qt(1 - alpha / 2, df = df) * se
 
-      return_frame <- data.frame(
-        est = diff,
-        se = se,
-        p = p,
-        ci_lower = ci_lower,
-        ci_upper = ci_upper,
-        df = df,
-        stringsAsFactors = FALSE
-      )
+      return_list <-
+        list(
+          est = diff,
+          se = se,
+          p = p,
+          ci_lower = ci_lower,
+          ci_upper = ci_upper,
+          df = df
+        )
 
     }
 
@@ -293,17 +294,11 @@ horvitz_thompson <-
     # Build and return output
     #-----
 
-    return_frame$coefficient_name <- all.vars(formula[[3]])
+    return_list$coefficient_name <- all.vars(formula[[3]])
 
-    rownames(return_frame) <- NULL
+    attr(return_list, "class") <- "horvitz_thompson"
 
-    return(
-      return_frame[
-        ,
-        c("coefficient_name", "est", "se", "p", "ci_lower", "ci_upper", "df")
-      ]
-    )
-
+    return(return_list)
   }
 
 var_ht_total_no_cov <-
@@ -483,12 +478,13 @@ horvitz_thompson_internal <-
       #}
     }
 
-    return_frame <- data.frame(
-      est = diff,
-      se = se,
-      N = N
-    )
+    return_list <-
+      list(
+        est = diff,
+        se = se,
+        N = N
+      )
 
-    return(return_frame)
+    return(return_list)
 
   }

@@ -6,7 +6,7 @@
 \usage{
 lm_robust(formula, data, weights = NULL, subset = NULL,
   cluster_variable_name = NULL, se_type = NULL, ci = TRUE, alpha = 0.05,
-  coefficient_name = NULL)
+  coefficient_name = NULL, return_vcov = TRUE)
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}.}
@@ -26,6 +26,8 @@ lm_robust(formula, data, weights = NULL, subset = NULL,
 \item{alpha}{The significance level, 0.05 by default.}
 
 \item{coefficient_name}{a character or character vector that indicates which coefficients should be reported. If left unspecified, returns all coefficients.}
+
+\item{return_vcov}{a boolean for whether to return the vcov matrix for later usage, TRUE by default.}
 }
 \description{
 Ordinary Least Squares with Robust Standard Errors
