@@ -83,7 +83,7 @@ tidy.difference_in_means <- function(obj, ...) {
 #' errors, confidence intervals, p-values, degrees of freedom
 #'
 #' @export
-tidy.difference_in_means <- function(obj, ...) {
+tidy.horvitz_thompson <- function(obj, ...) {
   return_frame <- tidy_data_frame(obj)
   return(return_frame)
 }
