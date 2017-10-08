@@ -5,9 +5,9 @@
 \alias{vcov.difference_in_means}
 \title{Return estimated variance covariance matrix of difference_in_means}
 \usage{
-\method{vcov}{difference_in_means}(obj, ...)
+\method{vcov}{difference_in_means}(obj)
 
-\method{vcov}{difference_in_means}(obj, ...)
+\method{vcov}{difference_in_means}(obj)
 }
 \arguments{
 \item{obj}{An object of class 'difference_in_means'}
