@@ -4,10 +4,10 @@
 \alias{tidy.NULL}
 \title{tidy on a NULL input}
 \usage{
-\method{tidy}{NULL}(obj, ...)
+\method{tidy}{NULL}(object, ...)
 }
 \arguments{
-\item{obj}{A value NULL}
+\item{object}{A value NULL}
 
 \item{...}{extra arguments (not used)}
 }

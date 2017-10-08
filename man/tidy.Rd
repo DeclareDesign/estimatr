@@ -4,10 +4,10 @@
 \alias{tidy}
 \title{Tidy the result of a estimator into a data.frame}
 \usage{
-tidy(obj, ...)
+tidy(object, ...)
 }
 \arguments{
-\item{obj}{An object to be converted into a tidy data.frame}
+\item{object}{An object to be converted into a tidy data.frame}
 
 \item{...}{extra arguments}
 }

@@ -4,10 +4,10 @@
 \alias{tidy.default}
 \title{Default tidying method}
 \usage{
-\method{tidy}{default}(obj, ...)
+\method{tidy}{default}(object, ...)
 }
 \arguments{
-\item{obj}{an object to be tidied}
+\item{object}{an object to be tidied}
 
 \item{...}{extra arguments (not used)}
 }

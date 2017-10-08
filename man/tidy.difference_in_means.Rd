@@ -4,10 +4,10 @@
 \alias{tidy.difference_in_means}
 \title{Tidying difference_in_means output to a data.frame}
 \usage{
-\method{tidy}{difference_in_means}(obj, ...)
+\method{tidy}{difference_in_means}(object, ...)
 }
 \arguments{
-\item{obj}{a horvitz_thompson object to be tidied}
+\item{object}{a horvitz_thompson object to be tidied}
 
 \item{...}{extra arguments (not used)}
 }

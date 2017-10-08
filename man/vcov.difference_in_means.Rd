@@ -5,16 +5,16 @@
 \alias{vcov.difference_in_means}
 \title{Return estimated variance covariance matrix of difference_in_means}
 \usage{
-\method{vcov}{difference_in_means}(obj)
+\method{vcov}{difference_in_means}(object, ...)
 
-\method{vcov}{difference_in_means}(obj)
+\method{vcov}{difference_in_means}(object, ...)
 }
 \arguments{
-\item{obj}{An object of class 'difference_in_means'}
+\item{object}{An object of class 'difference_in_means'}
 
 \item{...}{extra arguments, unused}
 
-\item{obj}{An object of class 'horvitz_thompson'}
+\item{object}{An object of class 'horvitz_thompson'}
 
 \item{...}{extra arguments, unused}
 }

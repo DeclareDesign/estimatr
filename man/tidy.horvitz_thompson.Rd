@@ -4,10 +4,10 @@
 \alias{tidy.horvitz_thompson}
 \title{Tidying horvitz_thompson output to a data.frame}
 \usage{
-\method{tidy}{horvitz_thompson}(obj, ...)
+\method{tidy}{horvitz_thompson}(object, ...)
 }
 \arguments{
-\item{obj}{a horvitz_thompson object to be tidied}
+\item{object}{a horvitz_thompson object to be tidied}
 
 \item{...}{extra arguments (not used)}
 }

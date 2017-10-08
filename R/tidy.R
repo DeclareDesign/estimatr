@@ -3,13 +3,13 @@
 
 #' Tidy the result of a estimator into a data.frame
 #'
-#' @param obj An object to be converted into a tidy data.frame
+#' @param object An object to be converted into a tidy data.frame
 #' @param ... extra arguments
 #'
 #' @return a data.frame
 #'
 #' @export
-tidy <- function(obj, ...) UseMethod("tidy")
+tidy <- function(object, ...) UseMethod("tidy")
 
 
 #' tidy on a NULL input
@@ -17,13 +17,13 @@ tidy <- function(obj, ...) UseMethod("tidy")
 #' tidy on a NULL input returns an empty data frame, which means it can be
 #' combined with other data frames (treated as "empty")
 #'
-#' @param obj A value NULL
+#' @param object A value NULL
 #' @param ... extra arguments (not used)
 #'
 #' @return An empty data.frame
 #'
 #' @export
-tidy.NULL <- function(obj, ...) {
+tidy.NULL <- function(object, ...) {
   data.frame()
 }
 
@@ -33,20 +33,20 @@ tidy.NULL <- function(obj, ...) {
 #' In order to be consistent with the broom package, the default tidy
 #' method just tries to cast the object as a data frame
 #'
-#' @param obj an object to be tidied
+#' @param object an object to be tidied
 #' @param ... extra arguments (not used)
 #'
 #' @export
-tidy.default <- function(obj, ...) {
+tidy.default <- function(object, ...) {
   warning(paste("No method for tidying an S3 object of class",
-                 class(obj),
+                 class(object),
                  ", using as.data.frame"))
-  as.data.frame(obj)
+  as.data.frame(object)
 }
 
 #' Tidying lm_robust output to a data.frame
 #'
-#' @param obj a lm_robust object to be tidied
+#' @param object a lm_robust object to be tidied
 #' @param ... extra arguments (not used)
 #'
 #' @return A data.frame with with coefficient names, estimates, standard
@@ -54,10 +54,10 @@ tidy.default <- function(obj, ...) {
 #' specified by which_covs
 #'
 #' @export
-tidy.lm_robust <- function(obj, ...) {
-  return_frame <- tidy_data_frame(obj)
-  if (!is.null(obj$which_covs)) {
-    return(return_frame[return_frame$coefficient_name %in% obj$which_covs, ])
+tidy.lm_robust <- function(object, ...) {
+  return_frame <- tidy_data_frame(object)
+  if (!is.null(object$which_covs)) {
+    return(return_frame[return_frame$coefficient_name %in% object$which_covs, ])
   } else {
     return(return_frame)
   }
@@ -66,34 +66,34 @@ tidy.lm_robust <- function(obj, ...) {
 
 #' Tidying difference_in_means output to a data.frame
 #'
-#' @param obj a horvitz_thompson object to be tidied
+#' @param object a horvitz_thompson object to be tidied
 #' @param ... extra arguments (not used)
 #'
 #' @return A data.frame with with coefficient names, estimates, standard
 #' errors, confidence intervals, p-values, degrees of freedom
 #'
 #' @export
-tidy.difference_in_means <- function(obj, ...) {
-  return_frame <- tidy_data_frame(obj)
+tidy.difference_in_means <- function(object, ...) {
+  return_frame <- tidy_data_frame(object)
   return(return_frame)
 }
 
 #' Tidying horvitz_thompson output to a data.frame
 #'
-#' @param obj a horvitz_thompson object to be tidied
+#' @param object a horvitz_thompson object to be tidied
 #' @param ... extra arguments (not used)
 #'
 #' @return A data.frame with with coefficient names, estimates, standard
 #' errors, confidence intervals, p-values, degrees of freedom
 #'
 #' @export
-tidy.horvitz_thompson <- function(obj, ...) {
-  return_frame <- tidy_data_frame(obj)
+tidy.horvitz_thompson <- function(object, ...) {
+  return_frame <- tidy_data_frame(object)
   return(return_frame)
 }
 
 
-tidy_data_frame <- function(obj) {
+tidy_data_frame <- function(object) {
   return_cols <-
     c("coefficient_name",
       "est",
@@ -104,5 +104,5 @@ tidy_data_frame <- function(obj) {
       "df"
     )
 
-  return_frame <- as.data.frame(obj[return_cols])
+  return_frame <- as.data.frame(object[return_cols])
 }

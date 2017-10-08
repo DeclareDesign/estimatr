@@ -4,10 +4,10 @@
 \alias{tidy.lm_robust}
 \title{Tidying lm_robust output to a data.frame}
 \usage{
-\method{tidy}{lm_robust}(obj, ...)
+\method{tidy}{lm_robust}(object, ...)
 }
 \arguments{
-\item{obj}{a lm_robust object to be tidied}
+\item{object}{a lm_robust object to be tidied}
 
 \item{...}{extra arguments (not used)}
 }
