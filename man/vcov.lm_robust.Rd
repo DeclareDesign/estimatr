@@ -4,10 +4,12 @@
 \alias{vcov.lm_robust}
 \title{Return estimated variance covariance matrix of lm_robust}
 \usage{
-\method{vcov}{lm_robust}(obj)
+\method{vcov}{lm_robust}(obj, ...)
 }
 \arguments{
 \item{obj}{An object of class 'lm_robust'}
+
+\item{...}{extra arguments, unused}
 }
 \description{
 Return estimated variance covariance matrix of lm_robust

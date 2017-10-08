@@ -12,7 +12,11 @@
 \arguments{
 \item{obj}{An object of class 'difference_in_means'}
 
+\item{...}{extra arguments, unused}
+
 \item{obj}{An object of class 'horvitz_thompson'}
+
+\item{...}{extra arguments, unused}
 }
 \description{
 Return estimated variance covariance matrix of difference_in_means
