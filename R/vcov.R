@@ -26,7 +26,7 @@ vcov.difference_in_means <-
 #' @param ... extra arguments, unused
 #'
 #' @export
-vcov.difference_in_means <-
+vcov.horvitz_thompson <-
   function(object, ...) {
     stop("vcov not supported for horvitz_thompson")
   }
