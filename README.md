@@ -12,7 +12,7 @@ To install the latest development release of **estimatr**, please ensure that yo
 
 ```
 install.packages("estimatr", dependencies = TRUE,
-  repos = c("http://install.declaredesign.org", "https://cloud.r-project.org"))
+  repos = c("http://R.declaredesign.org", "https://cloud.r-project.org"))
 ```
 
 This project is generously supported by a grant from the [Laura and John Arnold Foundation](http://www.arnoldfoundation.org) and seed funding from [EGAP](http://egap.org).
