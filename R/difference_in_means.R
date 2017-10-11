@@ -1,10 +1,10 @@
 #' Built-in Estimators: Difference-in-means
 #'
 #' @param formula An object of class "formula", such as Y ~ Z
-#' @param block_variable_name An optional bare (unquote) name of the block variable. Use for blocked designs only.
+#' @param block_variable_name An optional bare (unquoted) name of the block variable. Use for blocked designs only.
 #' @param cluster_variable_name An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.
 #' @param data A data.frame.
-#' @param weights An optional vector of weights (not yet implemented).
+#' @param weights An optional bare (unquoted) name of the weights variable.
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
 #' @param alpha The significance level, 0.05 by default.
 #' @param condition1 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
@@ -142,6 +142,8 @@ difference_in_means <-
       return_frame$ci_upper <- with(return_frame,
                                     est + qt(1 - alpha / 2, df = df) * se)
 
+      return_list <- as.list(return_frame)
+
     } else {
 
       pair_matched = FALSE
@@ -198,10 +200,9 @@ difference_in_means <-
       diff <- with(block_estimates, sum(est * N/N_overall))
 
       df <- NA
+      n_blocks <- nrow(block_estimates)
 
       if (pair_matched) {
-
-        n_blocks <- nrow(block_estimates)
 
         if (is.null(cluster)) {
           # Pair matched, cluster randomized (Gerber Green 2012, p77, eq3.16)
@@ -234,32 +235,29 @@ difference_in_means <-
         ## we don't know if this is correct!
         df <- N_overall - 2
       }
+
       p <- 2 * pt(abs(diff / se), df = df, lower.tail = FALSE)
       ci_lower <- diff - qt(1 - alpha / 2, df = df) * se
       ci_upper <- diff + qt(1 - alpha / 2, df = df) * se
 
-      return_frame <- data.frame(
-        est = diff,
-        se = se,
-        p = p,
-        ci_lower = ci_lower,
-        ci_upper = ci_upper,
-        df = df,
-        stringsAsFactors = FALSE
-      )
+      return_list <-
+        list(
+          est = diff,
+          se = se,
+          p = p,
+          ci_lower = ci_lower,
+          ci_upper = ci_upper,
+          df = df,
+          stringsAsFactors = FALSE
+        )
 
     }
 
-    return_frame$coefficient_name <- all.vars(formula[[3]])
+    return_list$coefficient_name <- all.vars(formula[[3]])
 
-    rownames(return_frame) <- NULL
+    attr(return_list, "class") <- "difference_in_means"
 
-    return(
-      return_frame[
-        ,
-        c("coefficient_name", "est", "se", "p", "ci_lower", "ci_upper", "df")
-      ]
-    )
+    return(return_list)
 
   }
 
@@ -389,12 +387,13 @@ difference_in_means_internal <-
         )
     }
 
-    return_frame <- data.frame(
-      est = diff,
-      se = se,
-      N = N,
-      df = df
-    )
+    return_frame <-
+      data.frame(
+        est = diff,
+        se = se,
+        N = N,
+        df = df
+      )
 
     return(return_frame)
 

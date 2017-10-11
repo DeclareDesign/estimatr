@@ -12,6 +12,7 @@
 #' @param ci A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
 #' @param coefficient_name a character or character vector that indicates which coefficients should be reported. If left unspecified, returns all coefficients.
+#' @param return_vcov a boolean for whether to return the vcov matrix for later usage, TRUE by default.
 #'
 #' @export
 #'
@@ -24,7 +25,8 @@ lm_lin <- function(formula,
                    se_type = NULL,
                    ci = TRUE,
                    alpha = .05,
-                   coefficient_name = NULL) {
+                   coefficient_name = NULL,
+                   return_vcov = TRUE) {
 
   ## Check formula
   if (length(all.vars(formula[[3]])) > 1) {
@@ -95,7 +97,7 @@ lm_lin <- function(formula,
              demeaned_covars,
              interacted_covars)
 
-  return_frame <-
+  return_list <-
     lm_robust_fit(
       y = outcome,
       X = X,
@@ -104,8 +106,9 @@ lm_lin <- function(formula,
       ci = ci,
       se_type = se_type,
       alpha = alpha,
-      coefficient_name = coefficient_name
+      coefficient_name = coefficient_name,
+      return_vcov = return_vcov
     )
 
-  return(return_frame)
+  return(return_list)
 }

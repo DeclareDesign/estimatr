@@ -31,16 +31,16 @@ test_that("lm cluster se", {
   )
 
   expect_equivalent(
-    as.matrix(
+    unlist(
       lm_robust(
         Y ~ X + Z,
         cluster_variable_name = J,
         ci = FALSE,
         coefficient_name = c("X", "Z"),
         data = dat
-      )[, c("p", "ci_lower", "ci_upper")]
+      )[c("p", "ci_lower", "ci_upper")]
     ),
-    matrix(NA, nrow = 2, ncol = 3)
+    rep(NA, 3)
   )
 
   ## Test equality
@@ -79,12 +79,12 @@ test_that("lm cluster se", {
     qt(0.975, df = length(unique(dat$J))- 1) * bm_interact$se.Stata["Z:X"] * c(-1, 1)
 
   expect_equivalent(
-    lm_interact[c("se", "ci_lower", "ci_upper")],
+    tidy(lm_interact)[c("se", "ci_lower", "ci_upper")],
     c(bm_interact$se["Z:X"], bm_interact_interval)
   )
 
   expect_equivalent(
-    lm_interact_stata[c("se", "ci_lower", "ci_upper")],
+    tidy(lm_interact_stata)[c("se", "ci_lower", "ci_upper")],
     c(bm_interact$se.Stata["Z:X"], bm_interact_stata_interval)
   )
 
@@ -110,7 +110,7 @@ test_that("lm cluster se", {
   bm_full_upper <- lm_full_simple$coefficients + bm_full_moe
 
   expect_equivalent(
-    as.matrix( lm_full[, c("se", "ci_lower", "ci_upper")] ),
+    as.matrix( tidy(lm_full)[, c("se", "ci_lower", "ci_upper")] ),
     cbind(bm_full$se, bm_full_lower, bm_full_upper)
   )
 

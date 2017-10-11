@@ -17,3 +17,4 @@ tests/testthat/*.pdf
 src/*.o
 src/*.so
 src/*.dll
+inst/doc
