@@ -233,7 +233,7 @@ difference_in_means <-
 
       if(is.na(df)) {
         ## we don't know if this is correct!
-        df <- N_overall - 2
+        df <- N_overall - n_blocks
       }
 
       p <- 2 * pt(abs(diff / se), df = df, lower.tail = FALSE)
@@ -266,9 +266,14 @@ difference_in_means <-
 weighted_var_internal <- function(w, x, xWbar){
   wbar <- mean(w)
   n <- length(w)
-  return(n / ((n - 1) * sum(w) ^ 2) * (sum((w * x - wbar * xWbar) ^ 2) -
-                                         2 * xWbar * sum((w - wbar) * (w * x - wbar * xWbar)) + xWbar ^ 2 * sum((w -
-                                                                                                                   wbar) ^ 2)))
+  return(
+    n / ((n - 1) * sum(w) ^ 2) *
+      (
+        sum((w * x - wbar * xWbar) ^ 2)
+        - 2 * xWbar * sum((w - wbar) * (w * x - wbar * xWbar))
+        + xWbar ^ 2 * sum((w - wbar) ^ 2)
+      )
+  )
 }
 
 
@@ -341,27 +346,30 @@ difference_in_means_internal <-
       if (pair_matched) {
         # Pair matched designs
         se <- NA
-      } else if (is.null(cluster)) {
+      } else {
+
+        if (is.null(cluster)) {
         # Non-pair matched designs, unit level randomization
         se <- sqrt(var(Y2) / length(Y2) + var(Y1) / length(Y1))
+
+        } else {
+          # Non-pair matched designs, cluster randomization
+          # (Gerber and Green 2012, p. 83, eq. 3.23)
+          k <- length(unique(cluster))
+
+          se <- sqrt(
+            (var(tapply(Y2, cluster[t == condition2], mean)) * N) /
+              (k * length(Y2)) +
+            (var(tapply(Y1, cluster[t == condition1], mean)) * N) /
+              (k * length(Y1))
+          )
+        }
 
         df <- se^4 /
           (
             (var(Y2) / length(Y2))^2 / (length(Y2) - 1) +
-            (var(Y1) / length(Y1))^2 / (length(Y1) - 1)
+              (var(Y1) / length(Y1))^2 / (length(Y1) - 1)
           )
-
-      } else {
-        # Non-pair matched designs, cluster randomization
-        # (Gerber and Green 2012, p. 83, eq. 3.23)
-        k <- length(unique(cluster))
-
-        se <- sqrt(
-          (var(tapply(Y2, cluster[t == condition2], mean)) * N) /
-            (k * length(Y2)) +
-          (var(tapply(Y1, cluster[t == condition1], mean)) * N) /
-            (k * length(Y1))
-        )
       }
 
 
@@ -377,13 +385,16 @@ difference_in_means_internal <-
       mean1 <- weighted.mean(Y1, w1)
       diff <-  mean2 - mean1
 
-      se <- sqrt(weighted_var_internal(w2, Y2, mean2) + weighted_var_internal(w1, Y1, mean1))
+      var2 <- weighted_var_internal(w2, Y2, mean2)
+      var1 <- weighted_var_internal(w1, Y1, mean1)
+
+      se <- sqrt(var2 + var1)
 
       # todo: check welch approximation with weights
       df <- se^4 /
         (
-          (var(Y2) / length(Y2))^2 / (length(Y2) - 1) +
-            (var(Y1) / length(Y1))^2 / (length(Y1) - 1)
+          (var2^2 / (length(Y2)-1)) +
+          (var1^2 / (length(Y1)-1))
         )
     }
 
