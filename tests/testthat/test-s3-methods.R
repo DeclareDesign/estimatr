@@ -1,14 +1,16 @@
 context('Test S3 methods')
 
-test_that('tidy works', {
+test_that('tidy, summary, and print work', {
   n <- 10
-  dat <- data.frame(x = rbinom(n, size = 1, prob = 0.5),
+  dat <- data.frame(x = rep(0:1, times = 5),
                     p = 0.5,
                     z = rnorm(n),
                     y = rnorm(n))
 
+  ## lm_robust
+  lmo <- lm_robust(y ~ x, data = dat, se_type = 'classical')
   expect_is(
-    tidy(lm_robust(y ~ x, data = dat, se_type = 'classical')),
+    tidy(lmo),
     'data.frame'
   )
 
@@ -17,19 +19,66 @@ test_that('tidy works', {
     1
   )
 
+  expect_equivalent(
+    tidy(lmo),
+    summary(lmo)
+  )
+
+  expect_equivalent(
+    tidy(lmo),
+    print(lmo)
+  )
+
+
+  ## lm_lin
+  lmlo <- lm_lin(y ~ x, ~ z, data = dat)
   expect_is(
-    tidy(lm_lin(y ~ x, ~ z, data = dat)),
+    tidy(lmlo),
     'data.frame'
   )
 
+  expect_equivalent(
+    tidy(lmlo),
+    summary(lmlo)
+  )
+
+  expect_equivalent(
+    tidy(lmlo),
+    print(lmlo)
+  )
+
+  ## horvitz_thompson
+  ht <- horvitz_thompson(y ~ x, condition_pr_variable_name = p, data = dat)
   expect_is(
-    tidy(horvitz_thompson(y ~ x, condition_pr_variable_name = p, data = dat)),
+    tidy(ht),
     "data.frame"
   )
 
+  expect_equivalent(
+    tidy(ht),
+    summary(ht)
+  )
+
+  expect_equivalent(
+    tidy(ht),
+    print(ht)
+  )
+
+  ## difference_in_means
+  dim <- difference_in_means(y ~ x, data = dat)
   expect_is(
-    tidy(difference_in_means(y ~ x, data = dat)),
+    tidy(dim),
     "data.frame"
+  )
+
+  expect_equivalent(
+    tidy(dim),
+    summary(dim)
+  )
+
+  expect_equivalent(
+    tidy(dim),
+    print(dim)
   )
 
 })
@@ -37,7 +86,7 @@ test_that('tidy works', {
 
 test_that('vcov works', {
   n <- 10
-  dat <- data.frame(x = rbinom(n, size = 1, prob = 0.5),
+  dat <- data.frame(x = rep(0:1, times = 5),
                     p = 0.5,
                     z = rnorm(n),
                     y = rnorm(n))
@@ -69,7 +118,7 @@ test_that('vcov works', {
 
 test_that('coef and confint work', {
   n <- 10
-  dat <- data.frame(x = rbinom(n, size = 1, prob = 0.5),
+  dat <- data.frame(x = rep(0:1, times = 5),
                     p = 0.5,
                     z = rnorm(n),
                     y = rnorm(n))
@@ -88,7 +137,7 @@ test_that('coef and confint work', {
   expect_equivalent(
     confint(lmo, parm = 'x', level = 0.15),
     with(lm_robust(y ~ x, data = dat, coefficient_name = 'x', alpha = 0.15),
-         cbind(ci_lower, ci_upper))
+         cbind(ci_lower[2], ci_upper[2]))
   )
 
   lmlo <- lm_lin(y ~ x, ~ z, data = dat, se_type = 'HC3')

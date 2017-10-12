@@ -2,15 +2,15 @@
 % Please edit documentation in R/coef.R
 \name{coef.difference_in_means}
 \alias{coef.difference_in_means}
-\title{Extract estimate from 'difference_in_means'}
+\title{Extract estimate from \link{\code{difference_in_means}}}
 \usage{
 \method{coef}{difference_in_means}(obj, ...)
 }
 \arguments{
-\item{obj}{an object of class 'difference_in_means'}
+\item{obj}{an object of class \link{\code{difference_in_means}}}
 
 \item{...}{other arguments, unused}
 }
 \description{
-Extract estimate from 'difference_in_means'
+Extract estimate from \link{\code{difference_in_means}}
 }

@@ -1,9 +1,9 @@
-#' Confidence intervals for lm_robust objects
+#' Confidence intervals for  \link{\code{lm_robust}} objects
 #'
 #' @param obj an object of class 'lm_robust'
 #' @param parm a specification of which parameters are to be given confidence
 #' intervals, either a vector of numbers or a vector of names. Defaults to
-#' 'coefficient_name' passed to lm_robust. Returns all if missing.
+#' 'coefficient_name' passed to  \link{\code{lm_robust}}. Returns all if missing.
 #' @param level the significance level, defaults to 'alpha' specified in \link{\code{lm_robust}}
 #'
 #' @export
@@ -26,7 +26,7 @@ confint.lm_robust <-
 
   }
 
-#' Confidence intervals for 'difference_in_means' objects
+#' Confidence intervals for \link{\code{difference_in_means}}objects
 #'
 #' @param obj an object of class 'difference_in_means'
 #' @param level the significance level, defaults to 'alpha' specified in \link{\code{difference_in_means}}
@@ -44,10 +44,10 @@ confint.difference_in_means <-
 
   }
 
-#' Confidence intervals for 'horvitz_thompson' objects
+#' Confidence intervals for \link{\code{horvitz_thompson}}objects
 #'
 #' @param obj an object of class 'horvitz_thompson'
-#' @param level the significance level, defaults to 'alpha' specified in \link{\code{horvtiz_thompson}}
+#' @param level the significance level, defaults to 'alpha' specified in \link{\code{horvitz_thompson}}
 #'
 #' @export
 confint.horvitz_thompson <-

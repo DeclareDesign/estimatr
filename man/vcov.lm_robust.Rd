@@ -2,15 +2,15 @@
 % Please edit documentation in R/vcov.R
 \name{vcov.lm_robust}
 \alias{vcov.lm_robust}
-\title{Return estimated variance covariance matrix of lm_robust}
+\title{Return estimated variance covariance matrix of \link{\code{lm_robust}}}
 \usage{
 \method{vcov}{lm_robust}(object, ...)
 }
 \arguments{
-\item{object}{An object of class 'lm_robust'}
+\item{object}{An object of class \link{\code{lm_robust}}}
 
 \item{...}{extra arguments, unused}
 }
 \description{
-Return estimated variance covariance matrix of lm_robust
+Return estimated variance covariance matrix of \link{\code{lm_robust}}
 }

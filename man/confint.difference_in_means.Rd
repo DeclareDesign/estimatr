@@ -2,7 +2,7 @@
 % Please edit documentation in R/confint.R
 \name{confint.difference_in_means}
 \alias{confint.difference_in_means}
-\title{Confidence intervals for 'difference_in_means' objects}
+\title{Confidence intervals for \link{\code{difference_in_means}}objects}
 \usage{
 \method{confint}{difference_in_means}(obj, level = NULL)
 }
@@ -12,5 +12,5 @@
 \item{level}{the significance level, defaults to 'alpha' specified in \link{\code{difference_in_means}}}
 }
 \description{
-Confidence intervals for 'difference_in_means' objects
+Confidence intervals for \link{\code{difference_in_means}}objects
 }

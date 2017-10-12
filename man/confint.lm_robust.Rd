@@ -2,7 +2,7 @@
 % Please edit documentation in R/confint.R
 \name{confint.lm_robust}
 \alias{confint.lm_robust}
-\title{Confidence intervals for lm_robust objects}
+\title{Confidence intervals for  \link{\code{lm_robust}} objects}
 \usage{
 \method{confint}{lm_robust}(obj, parm = NULL, level = NULL)
 }
@@ -11,10 +11,10 @@
 
 \item{parm}{a specification of which parameters are to be given confidence
 intervals, either a vector of numbers or a vector of names. Defaults to
-'coefficient_name' passed to lm_robust. Returns all if missing.}
+'coefficient_name' passed to  \link{\code{lm_robust}}. Returns all if missing.}
 
 \item{level}{the significance level, defaults to 'alpha' specified in \link{\code{lm_robust}}}
 }
 \description{
-Confidence intervals for lm_robust objects
+Confidence intervals for  \link{\code{lm_robust}} objects
 }

@@ -2,15 +2,15 @@
 % Please edit documentation in R/confint.R
 \name{confint.horvitz_thompson}
 \alias{confint.horvitz_thompson}
-\title{Confidence intervals for 'horvitz_thompson' objects}
+\title{Confidence intervals for \link{\code{horvitz_thompson}}objects}
 \usage{
 \method{confint}{horvitz_thompson}(obj, level = NULL)
 }
 \arguments{
 \item{obj}{an object of class 'horvitz_thompson'}
 
-\item{level}{the significance level, defaults to 'alpha' specified in \link{\code{horvtiz_thompson}}}
+\item{level}{the significance level, defaults to 'alpha' specified in \link{\code{horvitz_thompson}}}
 }
 \description{
-Confidence intervals for 'horvitz_thompson' objects
+Confidence intervals for \link{\code{horvitz_thompson}}objects
 }

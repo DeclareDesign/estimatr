@@ -285,8 +285,7 @@ horvitz_thompson <-
           p = p,
           ci_lower = ci_lower,
           ci_upper = ci_upper,
-          df = df,
-          alpha = alpha
+          df = df
         )
 
     }
@@ -294,6 +293,8 @@ horvitz_thompson <-
     #-----
     # Build and return output
     #-----
+
+    return_list$alpha <- alpha
 
     return_list$coefficient_name <- all.vars(formula[[3]])
 
