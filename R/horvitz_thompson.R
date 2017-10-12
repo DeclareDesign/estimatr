@@ -285,7 +285,8 @@ horvitz_thompson <-
           p = p,
           ci_lower = ci_lower,
           ci_upper = ci_upper,
-          df = df
+          df = df,
+          alpha = alpha
         )
 
     }

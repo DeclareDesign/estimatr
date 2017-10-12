@@ -127,6 +127,7 @@ lm_robust_fit <- function(y,
       ci_lower = ci_lower,
       ci_upper = ci_upper,
       df = dof,
+      alpha = alpha,
       which_covs = coefficient_name
     )
 

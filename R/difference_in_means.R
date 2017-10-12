@@ -248,7 +248,7 @@ difference_in_means <-
           ci_lower = ci_lower,
           ci_upper = ci_upper,
           df = df,
-          stringsAsFactors = FALSE
+          alpha = alpha
         )
 
     }
