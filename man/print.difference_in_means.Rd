@@ -2,15 +2,15 @@
 % Please edit documentation in R/print.R
 \name{print.difference_in_means}
 \alias{print.difference_in_means}
-\title{Printing \link{\code{difference_in_means}} objects}
+\title{Printing \code{\link{difference_in_means}} objects}
 \usage{
-\method{print}{difference_in_means}(obj, ...)
+\method{print}{difference_in_means}(x, ...)
 }
 \arguments{
-\item{obj}{an object of class \link{\code{difference_in_means}}}
+\item{x}{an object of class \code{\link{difference_in_means}}}
 
-\item{...}{arguments passed to \link{\code{tidy.difference_in_means}}, unused}
+\item{...}{arguments passed to \code{\link{tidy.difference_in_means}}, unused}
 }
 \description{
-Printing \link{\code{difference_in_means}} objects
+Printing \code{\link{difference_in_means}} objects
 }

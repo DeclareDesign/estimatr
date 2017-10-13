@@ -2,15 +2,15 @@
 % Please edit documentation in R/vcov.R
 \name{vcov.difference_in_means}
 \alias{vcov.difference_in_means}
-\title{Return estimated variance covariance matrix of \link{\code{difference_in_means}}}
+\title{Return estimated variance covariance matrix of \code{\link{difference_in_means}}}
 \usage{
 \method{vcov}{difference_in_means}(object, ...)
 }
 \arguments{
-\item{object}{An object of class \link{\code{difference_in_means}}}
+\item{object}{An object of class \code{\link{difference_in_means}}}
 
 \item{...}{extra arguments, unused}
 }
 \description{
-Return estimated variance covariance matrix of \link{\code{difference_in_means}}
+Return estimated variance covariance matrix of \code{\link{difference_in_means}}
 }

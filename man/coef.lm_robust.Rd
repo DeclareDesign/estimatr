@@ -2,19 +2,19 @@
 % Please edit documentation in R/coef.R
 \name{coef.lm_robust}
 \alias{coef.lm_robust}
-\title{Extract coefficients from \link{\code{lm_robust}} object}
+\title{Extract coefficients from \code{\link{lm_robust}} object}
 \usage{
-\method{coef}{lm_robust}(obj, parm = NULL, ...)
+\method{coef}{lm_robust}(object, parm = NULL, ...)
 }
 \arguments{
-\item{obj}{an object of class 'lm_robust'}
+\item{object}{an object of class 'lm_robust'}
 
 \item{parm}{a specification of which parameters are to be given confidence
 intervals, either a vector of numbers or a vector of names. Defaults to
-'coefficient_name' passed to  \link{\code{lm_robust}}. Returns all if missing.}
+'coefficient_name' passed to  \code{\link{lm_robust}}. Returns all if missing.}
 
 \item{...}{other arguments, unused}
 }
 \description{
-Extract coefficients from \link{\code{lm_robust}} object
+Extract coefficients from \code{\link{lm_robust}} object
 }

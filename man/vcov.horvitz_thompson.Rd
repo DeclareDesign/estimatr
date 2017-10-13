@@ -2,15 +2,15 @@
 % Please edit documentation in R/vcov.R
 \name{vcov.horvitz_thompson}
 \alias{vcov.horvitz_thompson}
-\title{Return estimated variance covariance matrix of \link{\code{horvitz_thompson}}}
+\title{Return estimated variance covariance matrix of \code{\link{horvitz_thompson}}}
 \usage{
 \method{vcov}{horvitz_thompson}(object, ...)
 }
 \arguments{
-\item{object}{An object of class \link{\code{horvitz_thompson}}}
+\item{object}{An object of class \code{\link{horvitz_thompson}}}
 
 \item{...}{extra arguments, unused}
 }
 \description{
-Return estimated variance covariance matrix of \link{\code{horvitz_thompson}}
+Return estimated variance covariance matrix of \code{\link{horvitz_thompson}}
 }

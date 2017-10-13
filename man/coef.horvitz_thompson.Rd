@@ -2,15 +2,15 @@
 % Please edit documentation in R/coef.R
 \name{coef.horvitz_thompson}
 \alias{coef.horvitz_thompson}
-\title{Extract estimate from 'horvitz_thompson'}
+\title{Extract estimate from \code{\link{horvitz_thompson}}}
 \usage{
-\method{coef}{horvitz_thompson}(obj, ...)
+\method{coef}{horvitz_thompson}(object, ...)
 }
 \arguments{
-\item{obj}{an object of class 'horvitz_thompson'}
+\item{object}{an object of class \code{\link{horvitz_thompson}}}
 
 \item{...}{other arguments, unused}
 }
 \description{
-Extract estimate from 'horvitz_thompson'
+Extract estimate from \code{\link{horvitz_thompson}}
 }

@@ -2,15 +2,15 @@
 % Please edit documentation in R/summary.R
 \name{summary.lm_robust}
 \alias{summary.lm_robust}
-\title{Summarizing 'lm_robust' objects}
+\title{Summarizing \code{\link{lm_robust}} objects}
 \usage{
-\method{summary}{lm_robust}(obj, ...)
+\method{summary}{lm_robust}(object, ...)
 }
 \arguments{
-\item{obj}{an object of class 'lm_robust'}
+\item{object}{an object of class \code{\link{lm_robust}}}
 
-\item{...}{arguments passed to \link{\code{tidy.lm_robust}}, unused}
+\item{...}{arguments passed to \code{\link{tidy.lm_robust}}, unused}
 }
 \description{
-Summarizing 'lm_robust' objects
+Summarizing \code{\link{lm_robust}} objects
 }

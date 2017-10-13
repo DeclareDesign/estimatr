@@ -2,15 +2,20 @@
 % Please edit documentation in R/confint.R
 \name{confint.difference_in_means}
 \alias{confint.difference_in_means}
-\title{Confidence intervals for \link{\code{difference_in_means}}objects}
+\title{Confidence intervals for \code{\link{difference_in_means}}objects}
 \usage{
-\method{confint}{difference_in_means}(obj, level = NULL)
+\method{confint}{difference_in_means}(object, parm = NULL, level = NULL,
+  ...)
 }
 \arguments{
-\item{obj}{an object of class 'difference_in_means'}
+\item{object}{an object of class \code{\link{difference_in_means}}}
 
-\item{level}{the significance level, defaults to 'alpha' specified in \link{\code{difference_in_means}}}
+\item{parm}{unused}
+
+\item{level}{the significance level, defaults to 'alpha' specified in \code{\link{difference_in_means}}}
+
+\item{...}{other arguments, unused}
 }
 \description{
-Confidence intervals for \link{\code{difference_in_means}}objects
+Confidence intervals for \code{\link{difference_in_means}}objects
 }

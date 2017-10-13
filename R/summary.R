@@ -1,49 +1,49 @@
-#' Summarizing 'lm_robust' objects
+#' Summarizing \code{\link{lm_robust}} objects
 #'
-#' @param obj an object of class 'lm_robust'
-#' @param ... arguments passed to \link{\code{tidy.lm_robust}}, unused
+#' @param object an object of class \code{\link{lm_robust}}
+#' @param ... arguments passed to \code{\link{tidy.lm_robust}}, unused
 #'
 #' @export
 summary.lm_robust <-
   function(
-    obj,
+    object,
     ...
   ) {
 
-    tidy(obj, ...)
+    tidy(object, ...)
 
   }
 
 
-#' Summarizing 'difference_in_means' objects
+#' Summarizing \code{\link{difference_in_means}} objects
 #'
-#' @param obj an object of class 'difference_in_means'
-#' @param ... arguments passed to \link{\code{tidy.difference_in_means}}, unused
+#' @param object an object of class \code{\link{difference_in_means}}
+#' @param ... arguments passed to \code{\link{tidy.difference_in_means}}, unused
 #'
 #' @export
 summary.difference_in_means <-
   function(
-    obj,
+    object,
     ...
   ) {
 
-    tidy(obj, ...)
+    tidy(object, ...)
 
   }
 
 
-#' Summarizing 'horvitz_thompson' objects
+#' Summarizing \code{\link{horvitz_thompson}} objects
 #'
-#' @param obj an object of class 'horvitz_thompson'
-#' @param ... arguments passed to \link{\code{tidy.horvitz_thompson}}, unused
+#' @param object an object of class \code{\link{horvitz_thompson}}
+#' @param ... arguments passed to \code{\link{tidy.horvitz_thompson}}, unused
 #'
 #' @export
 summary.horvitz_thompson <-
   function(
-    obj,
+    object,
     ...
   ) {
 
-    tidy(obj, ...)
+    tidy(object, ...)
 
   }

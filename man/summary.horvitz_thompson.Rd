@@ -2,15 +2,15 @@
 % Please edit documentation in R/summary.R
 \name{summary.horvitz_thompson}
 \alias{summary.horvitz_thompson}
-\title{Summarizing 'horvitz_thompson' objects}
+\title{Summarizing \code{\link{horvitz_thompson}} objects}
 \usage{
-\method{summary}{horvitz_thompson}(obj, ...)
+\method{summary}{horvitz_thompson}(object, ...)
 }
 \arguments{
-\item{obj}{an object of class 'horvitz_thompson'}
+\item{object}{an object of class \code{\link{horvitz_thompson}}}
 
-\item{...}{arguments passed to \link{\code{tidy.horvitz_thompson}}, unused}
+\item{...}{arguments passed to \code{\link{tidy.horvitz_thompson}}, unused}
 }
 \description{
-Summarizing 'horvitz_thompson' objects
+Summarizing \code{\link{horvitz_thompson}} objects
 }

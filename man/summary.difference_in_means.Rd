@@ -2,15 +2,15 @@
 % Please edit documentation in R/summary.R
 \name{summary.difference_in_means}
 \alias{summary.difference_in_means}
-\title{Summarizing 'difference_in_means' objects}
+\title{Summarizing \code{\link{difference_in_means}} objects}
 \usage{
-\method{summary}{difference_in_means}(obj, ...)
+\method{summary}{difference_in_means}(object, ...)
 }
 \arguments{
-\item{obj}{an object of class 'difference_in_means'}
+\item{object}{an object of class \code{\link{difference_in_means}}}
 
-\item{...}{arguments passed to \link{\code{tidy.difference_in_means}}, unused}
+\item{...}{arguments passed to \code{\link{tidy.difference_in_means}}, unused}
 }
 \description{
-Summarizing 'difference_in_means' objects
+Summarizing \code{\link{difference_in_means}} objects
 }

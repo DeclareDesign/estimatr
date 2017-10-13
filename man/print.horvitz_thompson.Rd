@@ -2,15 +2,15 @@
 % Please edit documentation in R/print.R
 \name{print.horvitz_thompson}
 \alias{print.horvitz_thompson}
-\title{Printing \link{\code{horvitz_thompson}} objects}
+\title{Printing \code{\link{horvitz_thompson}} objects}
 \usage{
-\method{print}{horvitz_thompson}(obj, ...)
+\method{print}{horvitz_thompson}(x, ...)
 }
 \arguments{
-\item{obj}{an object of class \link{\code{horvitz_thompson}}}
+\item{x}{an object of class \code{\link{horvitz_thompson}}}
 
-\item{...}{arguments passed to \link{\code{tidy.horvitz_thompson}}, unused}
+\item{...}{arguments passed to \code{\link{tidy.horvitz_thompson}}, unused}
 }
 \description{
-Printing \link{\code{horvitz_thompson}} objects
+Printing \code{\link{horvitz_thompson}} objects
 }

@@ -2,15 +2,15 @@
 % Please edit documentation in R/print.R
 \name{print.lm_robust}
 \alias{print.lm_robust}
-\title{Printing \link{\code{lm_robust}} objects}
+\title{Printing \code{\link{lm_robust}} objects}
 \usage{
-\method{print}{lm_robust}(obj, ...)
+\method{print}{lm_robust}(x, ...)
 }
 \arguments{
-\item{obj}{an object of class \link{\code{lm_robust}}}
+\item{x}{an object of class \code{\link{lm_robust}}}
 
-\item{...}{arguments passed to \link{\code{tidy.lm_robust}}, unused}
+\item{...}{arguments passed to \code{\link{tidy.lm_robust}}, unused}
 }
 \description{
-Printing \link{\code{lm_robust}} objects
+Printing \code{\link{lm_robust}} objects
 }

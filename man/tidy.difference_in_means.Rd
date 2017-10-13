@@ -2,12 +2,12 @@
 % Please edit documentation in R/tidy.R
 \name{tidy.difference_in_means}
 \alias{tidy.difference_in_means}
-\title{Tidying \link{\code{difference_in_means}} output to a data.frame}
+\title{Tidying \code{\link{difference_in_means}} output to a data.frame}
 \usage{
 \method{tidy}{difference_in_means}(object, ...)
 }
 \arguments{
-\item{object}{a \link{\code{difference_in_means}} object to be tidied}
+\item{object}{a \code{\link{difference_in_means}} object to be tidied}
 
 \item{...}{extra arguments (not used)}
 }
@@ -16,5 +16,5 @@ A data.frame with with coefficient names, estimates, standard
 errors, confidence intervals, p-values, degrees of freedom
 }
 \description{
-Tidying \link{\code{difference_in_means}} output to a data.frame
+Tidying \code{\link{difference_in_means}} output to a data.frame
 }

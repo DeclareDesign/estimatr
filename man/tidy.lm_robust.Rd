@@ -2,12 +2,12 @@
 % Please edit documentation in R/tidy.R
 \name{tidy.lm_robust}
 \alias{tidy.lm_robust}
-\title{Tidying \link{\code{lm_robust}} output to a data.frame}
+\title{Tidying \code{\link{lm_robust}} output to a data.frame}
 \usage{
 \method{tidy}{lm_robust}(object, ...)
 }
 \arguments{
-\item{object}{a \link{\code{lm_robust}} object to be tidied}
+\item{object}{a \code{\link{lm_robust}} object to be tidied}
 
 \item{...}{extra arguments (not used)}
 }
@@ -17,5 +17,5 @@ errors, confidence intervals, p-values, degrees of freedom for the covariates
 specified by which_covs
 }
 \description{
-Tidying \link{\code{lm_robust}} output to a data.frame
+Tidying \code{\link{lm_robust}} output to a data.frame
 }
