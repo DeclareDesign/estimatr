@@ -21,11 +21,6 @@ test_that('tidy, summary, and print work', {
 
   expect_equivalent(
     tidy(lmo),
-    summary(lmo)
-  )
-
-  expect_equivalent(
-    tidy(lmo),
     print(lmo)
   )
 
@@ -35,11 +30,6 @@ test_that('tidy, summary, and print work', {
   expect_is(
     tidy(lmlo),
     'data.frame'
-  )
-
-  expect_equivalent(
-    tidy(lmlo),
-    summary(lmlo)
   )
 
   expect_equivalent(
@@ -56,11 +46,6 @@ test_that('tidy, summary, and print work', {
 
   expect_equivalent(
     tidy(ht),
-    summary(ht)
-  )
-
-  expect_equivalent(
-    tidy(ht),
     print(ht)
   )
 
@@ -69,11 +54,6 @@ test_that('tidy, summary, and print work', {
   expect_is(
     tidy(dim),
     "data.frame"
-  )
-
-  expect_equivalent(
-    tidy(dim),
-    summary(dim)
   )
 
   expect_equivalent(
