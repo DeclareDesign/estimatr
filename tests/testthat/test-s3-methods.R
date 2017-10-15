@@ -9,6 +9,9 @@ test_that('tidy, summary, and print work', {
 
   ## lm_robust
   lmo <- lm_robust(y ~ x, data = dat, se_type = 'classical')
+
+  summary(lmo)$coefficients
+
   expect_is(
     tidy(lmo),
     'data.frame'
@@ -55,6 +58,8 @@ test_that('tidy, summary, and print work', {
     tidy(dim),
     "data.frame"
   )
+
+  summary(dim)$coefficients
 
   expect_equivalent(
     tidy(dim),
