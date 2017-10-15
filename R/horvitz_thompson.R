@@ -294,6 +294,8 @@ horvitz_thompson <-
     # Build and return output
     #-----
 
+    return_list$alpha <- alpha
+
     return_list$coefficient_name <- all.vars(formula[[3]])
 
     attr(return_list, "class") <- "horvitz_thompson"

@@ -44,9 +44,9 @@ tidy.default <- function(object, ...) {
   as.data.frame(object)
 }
 
-#' Tidying lm_robust output to a data.frame
+#' Tidying \code{\link{lm_robust}} output to a data.frame
 #'
-#' @param object a lm_robust object to be tidied
+#' @param object a \code{\link{lm_robust}} object to be tidied
 #' @param ... extra arguments (not used)
 #'
 #' @return A data.frame with with coefficient names, estimates, standard
@@ -64,9 +64,9 @@ tidy.lm_robust <- function(object, ...) {
 
 }
 
-#' Tidying difference_in_means output to a data.frame
+#' Tidying \code{\link{difference_in_means}} output to a data.frame
 #'
-#' @param object a horvitz_thompson object to be tidied
+#' @param object a \code{\link{difference_in_means}} object to be tidied
 #' @param ... extra arguments (not used)
 #'
 #' @return A data.frame with with coefficient names, estimates, standard
@@ -78,9 +78,9 @@ tidy.difference_in_means <- function(object, ...) {
   return(return_frame)
 }
 
-#' Tidying horvitz_thompson output to a data.frame
+#' Tidying \code{\link{horvitz_thompson}} output to a data.frame
 #'
-#' @param object a horvitz_thompson object to be tidied
+#' @param object a \code{\link{horvitz_thompson}} object to be tidied
 #' @param ... extra arguments (not used)
 #'
 #' @return A data.frame with with coefficient names, estimates, standard
@@ -93,7 +93,7 @@ tidy.horvitz_thompson <- function(object, ...) {
 }
 
 
-tidy_data_frame <- function(object) {
+tidy_data_frame <- function(object, digits = NULL) {
   return_cols <-
     c("coefficient_name",
       "est",

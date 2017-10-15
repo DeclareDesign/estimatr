@@ -2,12 +2,12 @@
 % Please edit documentation in R/tidy.R
 \name{tidy.horvitz_thompson}
 \alias{tidy.horvitz_thompson}
-\title{Tidying horvitz_thompson output to a data.frame}
+\title{Tidying \code{\link{horvitz_thompson}} output to a data.frame}
 \usage{
 \method{tidy}{horvitz_thompson}(object, ...)
 }
 \arguments{
-\item{object}{a horvitz_thompson object to be tidied}
+\item{object}{a \code{\link{horvitz_thompson}} object to be tidied}
 
 \item{...}{extra arguments (not used)}
 }
@@ -16,5 +16,5 @@ A data.frame with with coefficient names, estimates, standard
 errors, confidence intervals, p-values, degrees of freedom
 }
 \description{
-Tidying horvitz_thompson output to a data.frame
+Tidying \code{\link{horvitz_thompson}} output to a data.frame
 }
