@@ -35,7 +35,11 @@ clean_model_data <- function(formula,
   ## Parse cluster variable
   if (!is.null(cluster_variable_name)) {
     # get cluster variable from subset of data
-    cluster <- data[row.names(mf), deparse_var(cluster_variable_name)]
+    if (class(data[, deparse_var(cluster_variable_name)]) %in% c('numeric', 'integer', 'factor')) {
+      cluster <- data[row.names(mf), deparse_var(cluster_variable_name)]
+    } else {
+      cluster <- as.factor(data[row.names(mf), deparse_var(cluster_variable_name)])
+    }
 
     mf_rows_to_drop$cluster <- which(is.na(cluster))
 

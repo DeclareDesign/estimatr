@@ -183,10 +183,23 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
                     X = rnorm(100),
                     J = sample(1:10, 100, replace = T),
                     W = runif(100))
+
   expect_identical(
     lm_robust(Y~Z, data = dat, weights = W),
     lm_robust(Y~Z, data = dat, weights = 'W')
   )
+
+  # works with char
+  dat$J <- as.character(dat$J)
+
+  expect_identical(
+    lm_robust(Y~Z, data = dat, cluster_variable_name = J),
+    lm_robust(Y~Z, data = dat, cluster_variable_name = 'J')
+  )
+
+
+  # works with num
+  dat$J <- as.numeric(dat$J)
 
   expect_identical(
     lm_robust(Y~Z, data = dat, cluster_variable_name = J),
