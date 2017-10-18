@@ -34,11 +34,23 @@ clean_model_data <- function(formula,
 
   ## Parse cluster variable
   if (!is.null(cluster_variable_name)) {
+    cluster <- eval(cluster_variable_name, data)
     # get cluster variable from subset of data
-    if (class(data[, deparse_var(cluster_variable_name)]) %in% c('numeric', 'integer', 'factor')) {
-      cluster <- data[row.names(mf), deparse_var(cluster_variable_name)]
+    if (class(cluster) %in% c('numeric', 'integer', 'factor')) {
+      # If the model frame removed observations, remove those from cluster
+      # Note: we cannot simply add the cluster variable to the formula above
+      # because then we cannot warn when there is only missingness on the
+      # cluster variable and not the actual data
+      if (length(cluster) != nrow(mf)) {
+        cluster <- cluster[row.names(data) %in% row.names(mf)]
+      }
     } else {
-      cluster <- as.factor(data[row.names(mf), deparse_var(cluster_variable_name)])
+      # else cast character as factor because c++ is strongly typed
+      if (length(cluster) != nrow(mf)) {
+        cluster <- as.factor(cluster[row.names(data) %in% row.names(mf)])
+      } else {
+        cluster <- as.factor(cluster)
+      }
     }
 
     mf_rows_to_drop$cluster <- which(is.na(cluster))
