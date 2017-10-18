@@ -10,7 +10,12 @@ summary.lm_robust <-
     ...
   ) {
 
-    tidy(object, ...)
+    # This is ugly SO THAT summary(fit)$coefficients returns something like lm does.
+    tidy_out <- tidy(object, ...)
+    colnames(tidy_out)[2:4] <- c("Estimate", "Std. Error", "Pr(>|t|)")
+    tidy_mat <- as.matrix(tidy_out[,-1])
+    rownames(tidy_mat) <- tidy_out$coefficient_name
+    return(list(coefficients = tidy_mat))
 
   }
 
@@ -27,7 +32,12 @@ summary.difference_in_means <-
     ...
   ) {
 
-    tidy(object, ...)
+    # This is ugly SO THAT summary(fit)$coefficients returns something like lm does.
+    tidy_out <- tidy(object, ...)
+    colnames(tidy_out)[2:4] <- c("Estimate", "Std. Error", "Pr(>|t|)")
+    tidy_mat <- as.matrix(tidy_out[,-1])
+    rownames(tidy_mat) <- tidy_out$coefficient_name
+    return(list(coefficients = tidy_mat))
 
   }
 
@@ -44,6 +54,11 @@ summary.horvitz_thompson <-
     ...
   ) {
 
-    tidy(object, ...)
+    # This is ugly SO THAT summary(fit)$coefficients returns something like lm does.
+    tidy_out <- tidy(object, ...)
+    colnames(tidy_out)[2:4] <- c("Estimate", "Std. Error", "Pr(>|t|)")
+    tidy_mat <- as.matrix(tidy_out[,-1])
+    rownames(tidy_mat) <- tidy_out$coefficient_name
+    return(list(coefficients = tidy_mat))
 
   }

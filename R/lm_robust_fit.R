@@ -80,7 +80,7 @@ lm_robust_fit <- function(y,
     lm_robust_helper(
       y = y,
       X = X,
-      Xunweighted = X,
+      Xunweighted = Xunweighted,
       weight = weights,
       weight_mean = weight_mean,
       cluster = cluster,
