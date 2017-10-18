@@ -1,5 +1,5 @@
 
-
+# todo: add return doc
 #' Ordinary Least Squares with Robust Standard Errors
 #'
 #' @param formula an object of class formula, as in \code{\link{lm}}.
@@ -12,6 +12,7 @@
 #' @param ci A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
 #' @param coefficient_name a character or character vector that indicates which coefficients should be reported. If left unspecified, returns all coefficients.
+#' @param return_vcov a boolean for whether to return the vcov matrix for later usage, TRUE by default.
 #'
 #' @export
 #'
@@ -23,24 +24,31 @@ lm_robust <- function(formula,
                       se_type = NULL,
                       ci = TRUE,
                       alpha = .05,
-                      coefficient_name = NULL) {
+                      coefficient_name = NULL,
+                      return_vcov = TRUE) {
 
   model_data <-
-    clean_model_data(formula = formula,
-                     data = data,
-                     condition_call = substitute(subset),
-                     cluster_variable_name = substitute(cluster_variable_name),
-                     weights = substitute(weights))
+    clean_model_data(
+      formula = formula,
+      data = data,
+      condition_call = substitute(subset),
+      cluster_variable_name = substitute(cluster_variable_name),
+      weights = substitute(weights)
+    )
 
-  return_frame <- lm_fit(y = model_data$outcome,
-                         design_matrix = model_data$design_matrix,
-                         weights = model_data$weights,
-                         cluster = model_data$cluster,
-                         ci = ci,
-                         se_type = se_type,
-                         alpha = alpha,
-                         coefficient_name = coefficient_name)
+  return_list <-
+    lm_robust_fit(
+      y = model_data$outcome,
+      X = model_data$design_matrix,
+      weights = model_data$weights,
+      cluster = model_data$cluster,
+      ci = ci,
+      se_type = se_type,
+      alpha = alpha,
+      coefficient_name = coefficient_name,
+      return_vcov = return_vcov
+    )
 
-  return(return_frame)
+  return(return_list)
 
 }

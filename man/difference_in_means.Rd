@@ -11,7 +11,7 @@ difference_in_means(formula, block_variable_name = NULL,
 \arguments{
 \item{formula}{An object of class "formula", such as Y ~ Z}
 
-\item{block_variable_name}{An optional bare (unquote) name of the block variable. Use for blocked designs only.}
+\item{block_variable_name}{An optional bare (unquoted) name of the block variable. Use for blocked designs only.}
 
 \item{cluster_variable_name}{An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.}
 
@@ -21,7 +21,7 @@ difference_in_means(formula, block_variable_name = NULL,
 
 \item{data}{A data.frame.}
 
-\item{weights}{An optional vector of weights (not yet implemented).}
+\item{weights}{An optional bare (unquoted) name of the weights variable.}
 
 \item{subset}{An optional bare (unquoted) expression specifying a subset of observations to be used.}
 

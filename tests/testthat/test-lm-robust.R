@@ -68,7 +68,7 @@ test_that("lm robust works with missingness",{
   )
 
   expect_equivalent(
-    as.matrix(estimatr_missout_out[, c("est", "se")]),
+    as.matrix(tidy(estimatr_missout_out)[, c("est", "se")]),
     lm_missout_hc2
   )
 })
@@ -95,7 +95,7 @@ test_that("lm robust works with weights",{
                    sqrt(diag(sandwich::vcovHC(lm_out, type = 'HC2'))))
 
   expect_equivalent(
-    as.matrix(estimatr_out[, c('est', 'se')]),
+    as.matrix(tidy(estimatr_out)[, c('est', 'se')]),
     lmo_hc2
   )
 
@@ -118,10 +118,15 @@ test_that("lm robust works with weights",{
                         sqrt(diag(sandwich::vcovHC(lm_miss_out, type = 'HC2'))))
 
   expect_equivalent(
-    as.matrix(estimatr_miss_out[, c('est', 'se')]),
+    as.matrix(tidy(estimatr_miss_out)[, c('est', 'se')]),
     lmo_miss_hc2
   )
 
+  ## Check proper error with SE_tpye
+  expect_error(
+    lm_robust(Y ~ Z * X, data = df, se_type = 'stata', ci = F),
+    'se_type'
+  )
 })
 
 test_that("lm robust works with large data", {

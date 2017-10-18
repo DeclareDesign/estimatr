@@ -196,10 +196,10 @@ List lm_robust_helper(const arma::vec & y,
         }
 
         Rcpp::Rcout << tutX << std::endl;
-        Rcpp::Rcout << weight_mean << std::endl;
+        //Rcpp::Rcout << weight_mean << std::endl;
         Vcov_hat = XtX_inv * (arma::trans(tutX) * tutX) * XtX_inv;
 
-        Rcpp::Rcout <<  (arma::trans(tutX) * tutX)<< std::endl;
+        //Rcpp::Rcout <<  (arma::trans(tutX) * tutX)<< std::endl;
 
         if (ci) {
           for(int p = 0; p < k; p++){

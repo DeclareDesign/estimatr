@@ -1,27 +1,30 @@
 #' Internal method that creates linear fits
 #'
 #' @param y numeric outcome vector
-#' @param design_matrix numeric design matrix
+#' @param X numeric design matrix
 #' @param weights numeric weights vector
 #' @param cluster numeric cluster vector
 #' @param ci boolean that when T returns confidence intervals and p-values
 #' @param se_type character denoting which kind of SEs to return
 #' @param alpha numeric denoting the test size for confidence intervals
 #' @param coefficient_name character vector of coefficients to return
+#' @param return_vcov a boolean for whether to return the vcov matrix for later usage
 #'
 #' @export
 #'
-lm_fit <- function(y,
-                   design_matrix,
-                   weights,
-                   cluster,
-                   ci,
-                   se_type,
-                   alpha,
-                   coefficient_name) {
+lm_robust_fit <- function(y,
+                          X,
+                          weights,
+                          cluster,
+                          ci,
+                          se_type,
+                          alpha,
+                          coefficient_name,
+                          return_vcov) {
 
   ## allowable se_types with clustering
   cl_se_types <- c("BM", "stata", "CR2")
+  rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical")
 
   ## Parse cluster variable
   if (!is.null(cluster)) {
@@ -29,8 +32,8 @@ lm_fit <- function(y,
     # set/check se_type
     if (is.null(se_type)) {
       se_type <- "BM"
-    } else if (!(se_type %in% cl_se_types)) {
-      stop("Only 'BM' or 'stata' allowed for se_type with clustered standard errors.")
+    } else if (!(se_type %in% c(cl_se_types, "none"))) {
+      stop("Incorrect se_type. Only 'BM' or 'stata' allowed for se_type with clustered standard errors. Also can choose 'none'.")
     }
 
   } else {
@@ -39,17 +42,19 @@ lm_fit <- function(y,
     if (is.null(se_type)) {
       se_type <- "HC2"
     } else if (se_type %in% cl_se_types) {
-      stop("'BM' and 'stata' only allowed for clustered standard errors.")
+      stop("Incorrect se_type. 'BM' and 'stata' only allowed for clustered standard errors.")
+    } else if (!(se_type %in% c(rob_se_types, "none"))) {
+      stop('Incorrect se_type. "HC0", "HC1", "HC2", "HC3", "classical" are the se_type options without clustering. Also can choose "none".')
     }
 
   }
 
-  variable_names <- colnames(design_matrix)
+  variable_names <- colnames(X)
 
   # Get coefficients to get df adjustments for and return
   if (is.null(coefficient_name)) {
 
-    which_covs <- rep(TRUE, ncol(design_matrix))
+    which_covs <- rep(TRUE, ncol(X))
 
   } else {
 
@@ -61,22 +66,21 @@ lm_fit <- function(y,
   }
 
   if (!is.null(weights)) {
-    design_matrix_unweighted <- design_matrix
+    Xunweighted <- X
     weight_mean <- mean(weights)
     weights <- weights / weight_mean
-    design_matrix <- sqrt(weights) * design_matrix
+    X <- sqrt(weights) * X
     y <- sqrt(weights) * y
   } else {
     weight_mean <- 1
-    design_matrix_unweighted <- NULL
+    X_unweighted <- NULL
   }
-
 
   fit <-
     lm_robust_helper(
       y = y,
-      X = design_matrix,
-      Xunweighted = design_matrix_unweighted,
+      X = X,
+      Xunweighted = X,
       weight = weights,
       weight_mean = weight_mean,
       cluster = cluster,
@@ -85,7 +89,7 @@ lm_fit <- function(y,
       which_covs = which_covs
     )
 
-  est <- fit$beta_hat
+  est <- as.vector(fit$beta_hat)
   se <- NA
   p <- NA
   ci_lower <- NA
@@ -108,11 +112,13 @@ lm_fit <- function(y,
 
       } else {
 
-        N <- nrow(design_matrix)
-        k <- ncol(design_matrix)
+        N <- nrow(X)
+        k <- ncol(X)
         dof <- N - k
 
       }
+
+      dof <- as.vector(dof)
 
       p <- 2 * pt(abs(est / se), df = dof, lower.tail = FALSE)
       ci_lower <- est - qt(1 - alpha / 2, df = dof) * se
@@ -122,8 +128,8 @@ lm_fit <- function(y,
 
   }
 
-  return_frame <-
-    data.frame(
+  return_list <-
+    list(
       coefficient_name = variable_names,
       est = est,
       se = se,
@@ -131,11 +137,18 @@ lm_fit <- function(y,
       ci_lower = ci_lower,
       ci_upper = ci_upper,
       df = dof,
-      stringsAsFactors = FALSE
+      alpha = alpha,
+      which_covs = coefficient_name
     )
 
-  rownames(return_frame) <- NULL
+  if (return_vcov & se_type != 'none') {
+    return_list$vcov <- fit$Vcov_hat
+    dimnames(return_list$vcov) <- list(return_list$coefficient_name,
+                                       return_list$coefficient_name)
+  }
 
-  return(return_frame[which_covs, ])
+  attr(return_list, "class") <- "lm_robust"
+
+  return(return_list)
 
 }

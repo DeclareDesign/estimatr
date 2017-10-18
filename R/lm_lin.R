@@ -12,6 +12,7 @@
 #' @param ci A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
 #' @param coefficient_name a character or character vector that indicates which coefficients should be reported. If left unspecified, returns all coefficients.
+#' @param return_vcov a boolean for whether to return the vcov matrix for later usage, TRUE by default.
 #'
 #' @export
 #'
@@ -24,7 +25,8 @@ lm_lin <- function(formula,
                    se_type = NULL,
                    ci = TRUE,
                    alpha = .05,
-                   coefficient_name = NULL) {
+                   coefficient_name = NULL,
+                   return_vcov = TRUE) {
 
   ## Check formula
   if (length(all.vars(formula[[3]])) > 1) {
@@ -46,11 +48,13 @@ lm_lin <- function(formula,
   full_formula <- update(formula, reformulate(c('.', cov_names), "."))
 
   model_data <-
-    clean_model_data(formula = full_formula,
-                     data = data,
-                     condition_call = substitute(subset),
-                     cluster_variable_name = substitute(cluster_variable_name),
-                     weights = substitute(weights))
+    clean_model_data(
+      formula = full_formula,
+      data = data,
+      condition_call = substitute(subset),
+      cluster_variable_name = substitute(cluster_variable_name),
+      weights = substitute(weights)
+    )
 
   outcome <- model_data$outcome
   design_matrix <- model_data$design_matrix
@@ -93,14 +97,18 @@ lm_lin <- function(formula,
              demeaned_covars,
              interacted_covars)
 
-  return_frame <- lm_fit(y = outcome,
-                         design_matrix = X,
-                         weights = weights,
-                         cluster = cluster,
-                         ci = ci,
-                         se_type = se_type,
-                         alpha = alpha,
-                         coefficient_name = coefficient_name)
+  return_list <-
+    lm_robust_fit(
+      y = outcome,
+      X = X,
+      weights = weights,
+      cluster = cluster,
+      ci = ci,
+      se_type = se_type,
+      alpha = alpha,
+      coefficient_name = coefficient_name,
+      return_vcov = return_vcov
+    )
 
-  return(return_frame)
+  return(return_list)
 }
