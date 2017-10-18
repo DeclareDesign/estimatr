@@ -10,7 +10,7 @@ print.lm_robust <-
     ...
   ) {
 
-    tidy(x, ...)
+    print(tidy(x, ...))
 
   }
 
@@ -27,7 +27,7 @@ print.difference_in_means <-
     ...
   ) {
 
-    tidy(x, ...)
+    print(tidy(x, ...))
 
   }
 
@@ -44,6 +44,6 @@ print.horvitz_thompson <-
     ...
   ) {
 
-    tidy(x, ...)
+    print(tidy(x, ...))
 
   }
