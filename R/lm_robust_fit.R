@@ -65,15 +65,18 @@ lm_robust_fit <- function(y,
     # which_ests <- return_frame$variable_names %in% deparse(substitute(coefficient_name))
   }
 
-  if (!is.null(weights)) {
+  if (!is.null(weights) | se_type == 'CR2') {
     Xunweighted <- X
+    if (is.null(weights)) {
+      weights <- rep(1, nrow(X))
+    }
     weight_mean <- mean(weights)
     weights <- weights / weight_mean
     X <- sqrt(weights) * X
     y <- sqrt(weights) * y
   } else {
     weight_mean <- 1
-    X_unweighted <- NULL
+    Xunweighted <- NULL
   }
 
   fit <-

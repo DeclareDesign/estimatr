@@ -56,6 +56,7 @@ List lm_robust_helper(const arma::vec & y,
   if(Xunweighted.isNotNull()) {
     Rcpp::Rcout << "weights" << std::endl;
     weights = Rcpp::as<arma::vec>(weight);
+    Rcpp::Rcout << weights << std::endl;
     Xoriginal = Rcpp::as<arma::mat>(Xunweighted);
   }
 
@@ -77,12 +78,16 @@ List lm_robust_helper(const arma::vec & y,
 
   if(type != "none"){
 
-    Rcpp::Rcout << y << std::endl;
+   // Rcpp::Rcout << y << std::endl;
 
-    Rcpp::Rcout << y * sqrt(weight_mean)<< std::endl;
+    //Rcpp::Rcout << y * sqrt(weight_mean)<< std::endl;
+    Rcpp::Rcout << "Different Xs:" << std::endl;
+    Rcpp::Rcout << "Weighted but no mean" << std::endl;
     Rcpp::Rcout << X << std::endl;
-
+    Rcpp::Rcout << "Weighted w mean" << std::endl;
     Rcpp::Rcout << X * sqrt(weight_mean) << std::endl;
+    Rcpp::Rcout << "Unweighted" << std::endl;
+    Rcpp::Rcout << Xoriginal << std::endl;
     // residuals
     arma::colvec ei = y - X * beta_hat;
     Rcpp::Rcout << ei << std::endl;
@@ -203,6 +208,7 @@ List lm_robust_helper(const arma::vec & y,
 
         if (ci) {
           for(int p = 0; p < k; p++){
+            Rcpp::Rcout << p << std::endl;
             // only compute for covars that we need the DoF for
             if (which_covs[p]) {
               arma::mat G = Gs.subcube(arma::span::all, arma::span(p), arma::span::all);

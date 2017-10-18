@@ -217,3 +217,47 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
   # works with being cast in the call
   lm_robust(Y~Z, data = dat, cluster_variable_name = as.factor(J))
 })
+
+
+
+test_that("CR2 works", {
+  dat <- data.frame(Y = rnorm(100),
+                    Z = rbinom(100, 1, .5),
+                    X = rnorm(100),
+                    J = sample(1:10, 100, replace = T),
+                    W = runif(100))
+
+  ## BM and CR2 the same with no weights
+  expect_equivalent(
+    lm_robust(Y~Z, data = dat, cluster_variable_name = J, se_type = 'CR2')$se,
+    lm_robust(Y~Z, data = dat, cluster_variable_name = J, se_type = 'BM')$se
+  )
+
+  # works with char
+  dat$J <- as.character(dat$J)
+
+  expect_identical(
+    lm_robust(Y~Z, data = dat, cluster_variable_name = J),
+    lm_robust(Y~Z, data = dat, cluster_variable_name = 'J')
+  )
+
+
+  # works with num
+  dat$J <- as.numeric(dat$J)
+
+  expect_identical(
+    lm_robust(Y~Z, data = dat, cluster_variable_name = J),
+    lm_robust(Y~Z, data = dat, cluster_variable_name = 'J')
+  )
+
+
+  # works with factor
+  dat$J_fac <- as.factor(dat$J)
+  expect_identical(
+    lm_robust(Y~Z, data = dat, cluster_variable_name = J_fac),
+    lm_robust(Y~Z, data = dat, cluster_variable_name = J)
+  )
+
+  # works with being cast in the call
+  lm_robust(Y~Z, data = dat, cluster_variable_name = as.factor(J))
+})
