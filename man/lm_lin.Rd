@@ -4,9 +4,9 @@
 \alias{lm_lin}
 \title{Linear regression with the Lin (2013) covariate adjustment}
 \usage{
-lm_lin(formula, data, covariates, weights = NULL, subset = NULL,
-  cluster_variable_name = NULL, se_type = NULL, ci = TRUE, alpha = 0.05,
-  coefficient_name = NULL, return_vcov = TRUE)
+lm_lin(formula, data, covariates, weights, subset, cluster_variable_name,
+  se_type = NULL, ci = TRUE, alpha = 0.05, coefficient_name = NULL,
+  return_vcov = TRUE)
 }
 \arguments{
 \item{formula}{An object of class "formula", such as Y ~ Z. Should only have the outcome and the treatment.}

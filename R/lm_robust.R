@@ -18,23 +18,24 @@
 #'
 lm_robust <- function(formula,
                       data,
-                      weights = NULL,
-                      subset = NULL,
-                      cluster_variable_name = NULL,
+                      weights,
+                      subset,
+                      cluster_variable_name,
                       se_type = NULL,
                       ci = TRUE,
                       alpha = .05,
                       coefficient_name = NULL,
                       return_vcov = TRUE) {
 
-  model_data <-
+  model_data <- eval.parent(substitute(
     clean_model_data(
       formula = formula,
       data = data,
-      condition_call = substitute(subset),
-      cluster_variable_name = substitute(cluster_variable_name),
-      weights = substitute(weights)
+      subset = subset,
+      cluster = cluster_variable_name,
+      weights = weights
     )
+  ))
 
   return_list <-
     lm_robust_fit(
