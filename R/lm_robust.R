@@ -27,13 +27,15 @@ lm_robust <- function(formula,
                       coefficient_name = NULL,
                       return_vcov = TRUE) {
 
-  model_data <- eval.parent(substitute(
+  where <- parent.frame()
+  model_data <- eval(substitute(
     clean_model_data(
       formula = formula,
       data = data,
       subset = subset,
       cluster = cluster_variable_name,
-      weights = weights
+      weights = weights,
+      where = where
     )
   ))
 
