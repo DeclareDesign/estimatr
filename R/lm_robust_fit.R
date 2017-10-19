@@ -23,7 +23,7 @@ lm_robust_fit <- function(y,
                           return_vcov) {
 
   ## allowable se_types with clustering
-  cl_se_types <- c("BM", "stata", "CR2")
+  cl_se_types <- c("CR2", "stata")
   rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical")
 
   ## Parse cluster variable
@@ -31,9 +31,9 @@ lm_robust_fit <- function(y,
 
     # set/check se_type
     if (is.null(se_type)) {
-      se_type <- "BM"
+      se_type <- "CR2"
     } else if (!(se_type %in% c(cl_se_types, "none"))) {
-      stop("Incorrect se_type. Only 'BM' or 'stata' allowed for se_type with clustered standard errors. Also can choose 'none'.")
+      stop("Incorrect se_type. Only 'CR2' or 'stata' allowed for se_type with clustered standard errors. Also can choose 'none'.")
     }
 
   } else {
@@ -42,7 +42,7 @@ lm_robust_fit <- function(y,
     if (is.null(se_type)) {
       se_type <- "HC2"
     } else if (se_type %in% cl_se_types) {
-      stop("Incorrect se_type. 'BM' and 'stata' only allowed for clustered standard errors.")
+      stop("Incorrect se_type. 'CR2' and 'stata' only allowed for clustered standard errors.")
     } else if (!(se_type %in% c(rob_se_types, "none"))) {
       stop('Incorrect se_type. "HC0", "HC1", "HC2", "HC3", "classical" are the se_type options without clustering. Also can choose "none".')
     }

@@ -132,7 +132,7 @@ List lm_robust_helper(const arma::vec & y,
       // http://dirk.eddelbuettel.com/code/rcpp.armadillo.html
       double s2 = std::inner_product(ei.begin(), ei.end(), ei.begin(), 0.0)/(n - k);
       Vcov_hat = s2 * XtX_inv;
-    } else if (( (type == "BM") | (type == "stata") | (type == "CR2") ) & cluster.isNotNull()) {
+    } else if (( (type == "stata") | (type == "CR2") ) & cluster.isNotNull()) {
 
       // Code adapted from Michal Kolesar
       // https://github.com/kolesarm/Robust-Small-Sample-Standard-Errors
@@ -236,70 +236,6 @@ List lm_robust_helper(const arma::vec & y,
               P_array.diag() += P_diags.row(p);
 
               dof[p] = std::pow(arma::trace(P_array), 2) / arma::accu(arma::pow(P_array, 2));
-            }
-          }
-        }
-      }
-
-      if (type == "BM") {
-
-        arma::mat tutX(J, k);
-
-        // Cube stores the n by k G_s matrix for each cluster
-        // used for the BM dof corrction
-        arma::cube Gs(n, k, J);
-
-        // iterator used to fill tutX
-        int clusternum = 0;
-
-        // iterate over unique cluster values
-        for(arma::vec::const_iterator j = levels.begin();
-            j != levels.end();
-            ++j){
-
-          arma::uvec cluster_ids = find(clusters == *j);
-          int cluster_size = cluster_ids.n_elem;
-
-          arma::mat XtX_inv_tXj = XtX_inv * Xt.cols(cluster_ids);
-
-          // (I_j - Xj %*% (X'X)^{-1} %*% Xj') ^ {-1/2} %*% Xj
-          // i.e. (I_j - P_ss) ^ {-1/2} %*% Xj
-          arma::mat minP_Xt = mat_sqrt_inv(
-            arma::eye(cluster_size, cluster_size) -
-              X.rows(cluster_ids) * XtX_inv_tXj,
-              false
-          ) * X.rows(cluster_ids);
-
-          // t(ei) %*% (I - P_ss)^{-1/2} %*% Xj
-          // each row is the contribution of the cluster to the meat
-          // Below use  t(tutX) %*% tutX to sum contributions across clusters
-          tutX.row(clusternum) = arma::trans(ei(cluster_ids)) * minP_Xt;
-
-          if(ci) {
-
-            // Adjusted degrees of freedom
-            arma::mat ss = arma::zeros(n, cluster_size);
-
-            for(int i = 0; i < cluster_size; i++){
-              ss(cluster_ids[i], i) = 1;
-            }
-
-            Gs.slice(clusternum) = (ss - X * XtX_inv_tXj) * minP_Xt * XtX_inv;
-          }
-
-          clusternum++;
-        }
-
-
-        Vcov_hat = XtX_inv * arma::trans(tutX) * tutX * XtX_inv;
-
-        if (ci) {
-          for(int p = 0; p < k; p++){
-            // only compute for covars that we need the DoF for
-            if (which_covs[p]) {
-              arma::mat G = Gs.subcube(arma::span::all, arma::span(p), arma::span::all);
-              arma::mat GG = arma::trans(G) * G;
-              dof[p] = std::pow(arma::trace(GG), 2) / arma::accu(arma::pow(GG, 2));
             }
           }
         }

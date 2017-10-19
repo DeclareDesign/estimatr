@@ -22,10 +22,6 @@ clean_model_data <- function(formula,
                              weights,
                              cluster) {
 
-  #if(!missing(weights) && !missing(cluster) ){
-  #  stop("weights not yet supported with clustered standard errors")
-  #}
-
   mf <- match.call()
   mf <- mf[c(1, match(names(formals(clean_model_data)), names(mf),0L))] #drop formals left missing
   mf[[1]] <- quote(stats::model.frame)

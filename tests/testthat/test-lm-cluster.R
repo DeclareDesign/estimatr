@@ -119,29 +119,19 @@ test_that("lm cluster se", {
     lm_robust(
       Y ~ Z,
       cluster_variable_name = J,
-      weights = W,
-      data = dat
-    ),
-    'weights'
-  )
-
-  expect_error(
-    lm_robust(
-      Y ~ Z,
-      cluster_variable_name = J,
       se_type = 'HC2',
       data = dat
     ),
-    'BM'
+    'CR2'
   )
 
   expect_error(
     lm_robust(
       Y ~ Z,
-      se_type = 'BM',
+      se_type = 'CR2',
       data = dat
     ),
-    'BM'
+    'CR2'
   )
 })
 
@@ -216,20 +206,4 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
 
   # works with being cast in the call
   lm_robust(Y~Z, data = dat, cluster_variable_name = as.factor(J))
-})
-
-
-
-test_that("CR2 works", {
-  dat <- data.frame(Y = rnorm(100),
-                    Z = rbinom(100, 1, .5),
-                    X = rnorm(100),
-                    J = sample(1:10, 100, replace = T),
-                    W = runif(100))
-
-  ## BM and CR2 the same with no weights
-  expect_equivalent(
-    lm_robust(Y~Z, data = dat, cluster_variable_name = J, se_type = 'CR2')$se,
-    lm_robust(Y~Z, data = dat, cluster_variable_name = J, se_type = 'BM')$se
-  )
 })
