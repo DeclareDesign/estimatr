@@ -232,32 +232,4 @@ test_that("CR2 works", {
     lm_robust(Y~Z, data = dat, cluster_variable_name = J, se_type = 'CR2')$se,
     lm_robust(Y~Z, data = dat, cluster_variable_name = J, se_type = 'BM')$se
   )
-
-  # works with char
-  dat$J <- as.character(dat$J)
-
-  expect_identical(
-    lm_robust(Y~Z, data = dat, cluster_variable_name = J),
-    lm_robust(Y~Z, data = dat, cluster_variable_name = 'J')
-  )
-
-
-  # works with num
-  dat$J <- as.numeric(dat$J)
-
-  expect_identical(
-    lm_robust(Y~Z, data = dat, cluster_variable_name = J),
-    lm_robust(Y~Z, data = dat, cluster_variable_name = 'J')
-  )
-
-
-  # works with factor
-  dat$J_fac <- as.factor(dat$J)
-  expect_identical(
-    lm_robust(Y~Z, data = dat, cluster_variable_name = J_fac),
-    lm_robust(Y~Z, data = dat, cluster_variable_name = J)
-  )
-
-  # works with being cast in the call
-  lm_robust(Y~Z, data = dat, cluster_variable_name = as.factor(J))
 })

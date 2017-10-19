@@ -168,23 +168,24 @@ List lm_robust_helper(const arma::vec & y,
           arma::mat D = arma::eye(cluster_size, cluster_size);
           arma::mat H = Xoriginal.rows(cluster_ids) * XtX_inv * Xt.cols(cluster_ids);
           arma::mat I_min_H = D - H;
-         // uwTwu <- Map(function(uw, th) uw %*% th %*% t(uw),
+
+          // Code from clubSandwich
+          // uwTwu <- Map(function(uw, th) uw %*% th %*% t(uw),
           //             uw = UW_list, th = Theta_list)
-           // MUWTWUM <- M_U %*% Reduce("+", uwTwu) %*% M_U
+          // MUWTWUM <- M_U %*% Reduce("+", uwTwu) %*% M_U
 
           //(thet - h %*% thet - thet %*% t(h) + u %*% MUWTWUM %*% t(u))
 
-          // todo: drop D altogether
-          arma::mat A = D * arma::sqrtmat_sympd(arma::pinv(
+          // A' W R in clubSand notation
+          arma::mat At_WX = arma::sqrtmat_sympd(arma::pinv(
             I_min_H - arma::trans(H) + Xoriginal.rows(cluster_ids) * MUWTWUM * arma::trans(Xoriginal.rows(cluster_ids))
-          )) * D * arma::trans(Xt.cols(cluster_ids)) ;
+          )) * arma::trans(Xt.cols(cluster_ids)) ;
 
           //arma::mat A = D * arma::sqrtmat_sympd(arma::pinv(
           //  D * (I_min_H) * D * D
           //)) * D * X.rows(cluster_ids) ;
 
-
-          arma::mat ME = (XtX_inv / weight_mean) * arma::trans(A);
+          arma::mat ME = (XtX_inv / weight_mean) * arma::trans(At_WX);
 
           P_diags.col(clusternum) = arma::sum(arma::pow(ME, 2), 1);
 
@@ -198,8 +199,7 @@ List lm_robust_helper(const arma::vec & y,
           // each ro  w is the contribution of the cluster to the meat
           // Below use  t(tutX) %*% tutX to sum contributions across clusters
 
-          // in club sand this is e'A'WR because A here is actually A' W R
-          tutX.row(clusternum) = arma::trans(ei(cluster_ids))  * A;
+          tutX.row(clusternum) = arma::trans(ei(cluster_ids))  * At_WX;
 
           clusternum++;
         }
@@ -211,6 +211,7 @@ List lm_robust_helper(const arma::vec & y,
             // only compute for covars that we need the DoF for
             if (which_covs[p]) {
 
+              // cast subcube as mat
               arma::mat H1 = H1s.subcube(arma::span(p), arma::span::all, arma::span::all);
               arma::mat H2 = H2s.subcube(arma::span(p), arma::span::all, arma::span::all);
               arma::mat H3 = H3s.subcube(arma::span(p), arma::span::all, arma::span::all);
