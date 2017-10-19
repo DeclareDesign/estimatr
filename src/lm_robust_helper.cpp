@@ -64,13 +64,6 @@ List lm_robust_helper(const arma::vec & y,
                       const String type,
                       const std::vector<bool> & which_covs) {
 
-  arma::mat Xoriginal(X.n_rows, X.n_cols);
-  arma::vec weights;
-  if(Xunweighted.isNotNull()) {
-    weights = Rcpp::as<arma::vec>(weight);
-    Xoriginal = Rcpp::as<arma::mat>(Xunweighted);
-  }
-
   // t(X)
   arma::mat Xt = arma::trans(X);
 
@@ -146,12 +139,27 @@ List lm_robust_helper(const arma::vec & y,
 
       if (type == "CR2") {
 
-        // Instead of having X and Xt be weighted by sqrt(W), this has them weighted by W
-        Xt = Xt.each_row() % arma::sqrt(arma::trans(weights));
-        X = X.each_col() % arma::sqrt(weights);
+        arma::mat Xoriginal(X.n_rows, X.n_cols);
+        arma::vec weights;
+        bool weighted;
+        if(Xunweighted.isNotNull()) {
+          weights = Rcpp::as<arma::vec>(weight);
+          Xoriginal = Rcpp::as<arma::mat>(Xunweighted);
+          weighted = true;
+        } else {
+          Xoriginal = X;
+          weighted = false;
+        }
+
+        if (weighted) {
+          // Instead of having X and Xt be weighted by sqrt(W), this has them weighted by W
+          Xt = Xt.each_row() % arma::sqrt(arma::trans(weights));
+          X = X.each_col() % arma::sqrt(weights);
+          // Unweighted residuals
+          ei = y / sqrt(weights) - Xoriginal * beta_hat;
+        }
 
         arma::mat tutX(J, k);
-
 
         // used for the dof corrction
         arma::cube H1s(k, k, J);
@@ -160,9 +168,6 @@ List lm_robust_helper(const arma::vec & y,
         arma::mat P_diags(k, J);
 
         arma::mat M_U_ct = arma::trans(arma::chol(XtX_inv));
-
-        // Unweighted residuals
-        ei = y / sqrt(weights) - Xoriginal * beta_hat;
 
         int clusternum = 0;
 
@@ -176,7 +181,6 @@ List lm_robust_helper(const arma::vec & y,
 
           arma::uvec cluster_ids = find(clusters == *j);
           int cluster_size = cluster_ids.n_elem;
-          arma::mat P(cluster_size, k);
 
           arma::mat D = arma::eye(cluster_size, cluster_size);
           arma::mat H = Xoriginal.rows(cluster_ids) * XtX_inv * Xt.cols(cluster_ids);
@@ -196,7 +200,13 @@ List lm_robust_helper(const arma::vec & y,
           ) * X.rows(cluster_ids) ;
 
           if (ci) {
-            arma::mat ME = (XtX_inv / weight_mean) * arma::trans(At_WX);
+
+            arma::mat ME(k, cluster_size);
+            if (weighted) {
+              ME = (XtX_inv / weight_mean) * arma::trans(At_WX);
+            } else {
+              ME = XtX_inv * arma::trans(At_WX);
+            }
 
             P_diags.col(clusternum) = arma::sum(arma::pow(ME, 2), 1);
 
