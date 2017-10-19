@@ -18,87 +18,63 @@ find_warn_missing <- function(x, type) {
 # Internal method to process data
 clean_model_data <- function(formula,
                              data,
+                             subset,
                              weights,
-                             condition_call,
-                             cluster_variable_name) {
+                             cluster) {
 
-  if (!is.null(condition_call)) {
-    r <- eval(condition_call, data)
-    data <- data[r,]
-  }
+  #if(!missing(weights) && !missing(cluster) ){
+  #  stop("weights not yet supported with clustered standard errors")
+  #}
 
-  mf <- model.frame.default(formula, data = data)
+  mf <- match.call()
+  mf <- mf[c(1, match(names(formals(clean_model_data)), names(mf),0L))] #drop formals left missing
+  mf[[1]] <- quote(stats::model.frame)
+  mf[["na.action"]] <- quote(estimatr:::na.omit_detailed.data.frame) #TODO fix :::via roxygen
 
-  mf_rows_to_drop <- list(cluster = integer(0),
-                          weights = integer(0))
+  # Weights and clusters may be quoted...
+  # TODO helper function
+  if(hasName(mf, "weights") && is.character(mf[['weights']]))
+    mf[["weights"]] <- as.symbol(mf[["weights"]])
 
-  ## Parse cluster variable
-  if (!is.null(cluster_variable_name)) {
-    cluster <- eval(cluster_variable_name, data)
-    # get cluster variable from subset of data
-    if (class(cluster) %in% c('numeric', 'integer', 'factor')) {
-      # If the model frame removed observations, remove those from cluster
-      # Note: we cannot simply add the cluster variable to the formula above
-      # because then we cannot warn when there is only missingness on the
-      # cluster variable and not the actual data
-      if (length(cluster) != nrow(mf)) {
-        cluster <- cluster[row.names(data) %in% row.names(mf)]
-      }
-    } else {
-      # else cast character as factor because c++ is strongly typed
-      if (length(cluster) != nrow(mf)) {
-        cluster <- as.factor(cluster[row.names(data) %in% row.names(mf)])
-      } else {
-        cluster <- as.factor(cluster)
-      }
-    }
+  # Clusters...
+  if(hasName(mf, "cluster") && is.character(mf[['cluster']]))
+    mf[["cluster"]] <- as.symbol(mf[["cluster"]])
 
-    mf_rows_to_drop$cluster <- which(is.na(cluster))
+  mf <- eval.parent(mf)
 
-    if (length(mf_rows_to_drop$cluster) != 0) {
+  local({
+    na.action <- attr(mf, "na.action")
+    why_omit  <- attr(na.action, "why_omit")
+
+    # Todo generalize to all extra components
+    if(hasName(why_omit, "(cluster)")){
       warning(
-        "Some observations have missingness in the cluster variable but have not in the outcome or covariates. These observations have been dropped."
+        "Some observations have missingness in the cluster variable but not in the outcome or covariates. These observations have been dropped."
       )
     }
 
-  } else {
-    cluster <- NULL
-  }
-
-  if (!is.null(weights)) {
-
-    #if (!is.null(cluster)) {
-    #  stop("weights not yet supported with clustered standard errors")
-    #}
-
-    weights <- data[row.names(mf), deparse_var(weights)]
-
-    mf_rows_to_drop$weights <- which(is.na(weights))
-
-    if (length(mf_rows_to_drop$weights) != 0) {
+    if(hasName(why_omit, "(weights)")){
       warning(
         "Some observations have missingness in the weights variable but not in the outcome or covariates. These observations have been dropped."
       )
     }
+  })
 
-  } else {
-    weights <- NULL
+
+  ret <- list(
+    outcome=model.response(mf),
+    design_matrix=model.matrix.default(formula, data = mf)
+  )
+
+  if(!missing(weights)){
+    ret[["weights"]] <- model.extract(mf, "weights")
   }
 
-  all_rows_to_drop <- unlist(mf_rows_to_drop, F, F)
-
-  if (length(all_rows_to_drop) != 0) {
-    mf <- mf[-all_rows_to_drop, ]
-    cluster <- cluster[-all_rows_to_drop]
-    weights <- weights[-all_rows_to_drop]
+  if(!missing(cluster)){
+    ret[["cluster"]] <- model.extract(mf, "cluster")
+    if(is.character(ret[["cluster"]]))
+      ret[["cluster"]] <- as.factor(ret[["cluster"]])
   }
 
-  outcome <- model.response(mf)
-  design_matrix <- model.matrix.default(formula, data = mf)
-
-  return(list(outcome=outcome,
-              design_matrix=design_matrix,
-              cluster=cluster,
-              weights=weights))
-
+  return(ret)
 }

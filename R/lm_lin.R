@@ -19,9 +19,9 @@
 lm_lin <- function(formula,
                    data,
                    covariates,
-                   weights = NULL,
-                   subset = NULL,
-                   cluster_variable_name = NULL,
+                   weights,
+                   subset,
+                   cluster_variable_name,
                    se_type = NULL,
                    ci = TRUE,
                    alpha = .05,
@@ -47,14 +47,15 @@ lm_lin <- function(formula,
   # Get all variables for the design matrix
   full_formula <- update(formula, reformulate(c('.', cov_names), "."))
 
-  model_data <-
+  model_data <- eval.parent(substitute(
     clean_model_data(
       formula = full_formula,
       data = data,
-      condition_call = substitute(subset),
-      cluster_variable_name = substitute(cluster_variable_name),
-      weights = substitute(weights)
+      subset = subset,
+      cluster = cluster_variable_name,
+      weights = weights
     )
+  ))
 
   outcome <- model_data$outcome
   design_matrix <- model_data$design_matrix
