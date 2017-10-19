@@ -4,9 +4,9 @@
 \alias{lm_robust}
 \title{Ordinary Least Squares with Robust Standard Errors}
 \usage{
-lm_robust(formula, data, weights = NULL, subset = NULL,
-  cluster_variable_name = NULL, se_type = NULL, ci = TRUE, alpha = 0.05,
-  coefficient_name = NULL, return_vcov = TRUE)
+lm_robust(formula, data, weights, subset, cluster_variable_name,
+  se_type = NULL, ci = TRUE, alpha = 0.05, coefficient_name = NULL,
+  return_vcov = TRUE)
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}.}
