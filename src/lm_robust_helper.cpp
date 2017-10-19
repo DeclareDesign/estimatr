@@ -30,12 +30,25 @@ arma::mat mult_diag(const arma::mat& x, const arma::vec& d) {
 // Get's the inverse square root of a matrix (X)^{-1/2}
 // Used in computing the BM standard errors (I - P_ss^&{-1/2}
 // [[Rcpp::export]]
-arma::mat mat_sqrt_inv(const arma::mat & X) {
+arma::mat mat_sqrt_inv(const arma::mat & X, const bool & tol) {
   arma::vec eigvals;
   arma::mat eigvecs;
   arma::eig_sym(eigvals, eigvecs, X);
-  return(mult_diag(eigvecs, 1.0 / arma::sqrt(eigvals)) * arma::trans(eigvecs));
+  for (unsigned i = 0; i < eigvals.n_elem; ++i) {
+    if (tol) {
+      if (eigvals(i) > std::pow(10.0, -12.0)) {
+        eigvals(i) = 1.0 / std::sqrt(eigvals(i));
+      } else {
+        eigvals(i) = 0;
+      }
+    } else {
+      eigvals(i) = 1.0 / std::sqrt(eigvals(i));
+    }
+  }
+  return(mult_diag(eigvecs, eigvals) * arma::trans(eigvecs));
 }
+
+
 
 //----------
 // Main LM fit and SE function
@@ -177,9 +190,10 @@ List lm_robust_helper(const arma::vec & y,
           //(thet - h %*% thet - thet %*% t(h) + u %*% MUWTWUM %*% t(u))
 
           // A' W R in clubSand notation
-          arma::mat At_WX = arma::sqrtmat_sympd(arma::pinv(
-            I_min_H - arma::trans(H) + Xoriginal.rows(cluster_ids) * MUWTWUM * arma::trans(Xoriginal.rows(cluster_ids))
-          )) * arma::trans(Xt.cols(cluster_ids)) ;
+          arma::mat At_WX = mat_sqrt_inv(
+            I_min_H - arma::trans(H) + Xoriginal.rows(cluster_ids) * MUWTWUM * arma::trans(Xoriginal.rows(cluster_ids)),
+            true
+          ) * arma::trans(Xt.cols(cluster_ids)) ;
 
           //arma::mat A = D * arma::sqrtmat_sympd(arma::pinv(
           //  D * (I_min_H) * D * D
@@ -252,7 +266,8 @@ List lm_robust_helper(const arma::vec & y,
           // i.e. (I_j - P_ss) ^ {-1/2} %*% Xj
           arma::mat minP_Xt = mat_sqrt_inv(
             arma::eye(cluster_size, cluster_size) -
-              X.rows(cluster_ids) * XtX_inv_tXj
+              X.rows(cluster_ids) * XtX_inv_tXj,
+              false
           ) * X.rows(cluster_ids);
 
           // t(ei) %*% (I - P_ss)^{-1/2} %*% Xj

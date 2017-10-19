@@ -97,13 +97,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // mat_sqrt_inv
-arma::mat mat_sqrt_inv(const arma::mat& X);
-RcppExport SEXP _estimatr_mat_sqrt_inv(SEXP XSEXP) {
+arma::mat mat_sqrt_inv(const arma::mat& X, const bool& tol);
+RcppExport SEXP _estimatr_mat_sqrt_inv(SEXP XSEXP, SEXP tolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
-    rcpp_result_gen = Rcpp::wrap(mat_sqrt_inv(X));
+    Rcpp::traits::input_parameter< const bool& >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(mat_sqrt_inv(X, tol));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -135,7 +136,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_estimatr_gen_pr_matrix_complete", (DL_FUNC) &_estimatr_gen_pr_matrix_complete, 1},
     {"_estimatr_ht_var_total_clusters", (DL_FUNC) &_estimatr_ht_var_total_clusters, 3},
     {"_estimatr_mult_diag", (DL_FUNC) &_estimatr_mult_diag, 2},
-    {"_estimatr_mat_sqrt_inv", (DL_FUNC) &_estimatr_mat_sqrt_inv, 1},
+    {"_estimatr_mat_sqrt_inv", (DL_FUNC) &_estimatr_mat_sqrt_inv, 2},
     {"_estimatr_lm_robust_helper", (DL_FUNC) &_estimatr_lm_robust_helper, 9},
     {NULL, NULL, 0}
 };
