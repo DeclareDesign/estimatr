@@ -16,6 +16,8 @@ find_warn_missing <- function(x, type) {
 
 
 # Internal method to process data
+#' @export
+# Temporarily exported until NSE gets straightened out
 clean_model_data <- function(formula,
                              data,
                              subset,

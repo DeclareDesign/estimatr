@@ -29,14 +29,18 @@ na.omit_detailed.data.frame <- function (object, ...)
   n <- length(object)
   omit <- logical(nrow(object))
   vars <- colnames(object)
+  row_names <- attr(object, "row.names")
   why_omit <- list()
+
   for (j in vars) {
     x <- object[[j]]
     if (!is.atomic(x))
       next
     x <- is.na(x)
     d <- dim(x)
-    if(length(d) == 2L && d[2L] > 1){
+
+    # special case for nested df and matrices
+    if(length(d) == 2L && d[2L] > 1L){
       for(ii in d[2L]:2L){
         x[,ii-1L] <- x[,ii] | x[,ii-1L]
 
@@ -45,13 +49,15 @@ na.omit_detailed.data.frame <- function (object, ...)
     }
 
     why_omit[[j]] <- which(x & !omit)
+    #TODO omit/!omit can be factored out of loop, and why_omit can be rebuilt using set logic
+
     omit <- omit | x
 
   }
   object <- object[!omit, , drop = FALSE]
 
   if (any(omit > 0L)) {
-    temp <- setNames(seq(omit)[omit], attr(object, "row.names")[omit])
+    temp <- setNames(which(omit), row_names[omit])
     attr(temp, "class") <- c("omit", "detailed")
     attr(temp, "why_omit") <- Filter(length, why_omit)
     attr(object, "na.action") <- temp
@@ -68,5 +74,7 @@ na.omit_detailed.data.frame <- function (object, ...)
 ## expr      min       lq     mean   median       uq        max neval
 ## stock 6.114132 6.184318 7.744881 6.232744 6.961491 101.823530   100
 ## hack1 5.360638 5.480531 6.525075 5.694078 7.752104   9.323943   100
+
+
 
 
