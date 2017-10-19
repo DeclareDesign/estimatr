@@ -29,8 +29,8 @@ mult_diag <- function(x, d) {
     .Call(`_estimatr_mult_diag`, x, d)
 }
 
-mat_sqrt_inv <- function(X) {
-    .Call(`_estimatr_mat_sqrt_inv`, X)
+mat_sqrt_inv <- function(X, tol) {
+    .Call(`_estimatr_mat_sqrt_inv`, X, tol)
 }
 
 lm_robust_helper <- function(y, X, Xunweighted, weight, weight_mean, cluster, ci, type, which_covs) {
