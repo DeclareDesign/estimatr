@@ -47,13 +47,15 @@ lm_lin <- function(formula,
   # Get all variables for the design matrix
   full_formula <- update(formula, reformulate(c('.', cov_names), "."))
 
-  model_data <- eval.parent(substitute(
+  where <- parent.frame()
+  model_data <- eval(substitute(
     clean_model_data(
       formula = full_formula,
       data = data,
       subset = subset,
       cluster = cluster_variable_name,
-      weights = weights
+      weights = weights,
+      where = where
     )
   ))
 
