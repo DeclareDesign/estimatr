@@ -55,7 +55,7 @@ arma::mat mat_sqrt_inv(const arma::mat & X, const bool & tol) {
 //----------
 // [[Rcpp::export]]
 List lm_robust_helper(const arma::vec & y,
-                      const arma::mat & X,
+                      arma::mat & X,
                       const Rcpp::Nullable<Rcpp::NumericMatrix> & Xunweighted,
                       const Rcpp::Nullable<Rcpp::NumericVector> & weight,
                       const double & weight_mean,
@@ -146,24 +146,24 @@ List lm_robust_helper(const arma::vec & y,
 
       if (type == "CR2") {
 
-        // if weights
+        // Instead of having X and Xt be weighted by sqrt(W), this has them weighted by W
         Xt = Xt.each_row() % arma::sqrt(arma::trans(weights));
+        X = X.each_col() % arma::sqrt(weights);
 
         arma::mat tutX(J, k);
 
-        arma::mat WU = arma::sqrt(weights) % X.each_col();
-        arma::mat M_U_ct = arma::trans(arma::chol(XtX_inv));
 
-        // Cube stores the n by k G_s matrix for each cluster
-        // used for the BM dof corrction
+        // used for the dof corrction
         arma::cube H1s(k, k, J);
         arma::cube H2s(k, k, J);
         arma::cube H3s(k, k, J);
         arma::mat P_diags(k, J);
 
-        ei = y / sqrt(weights) - (X.each_col() / sqrt(weights)) * beta_hat;
+        arma::mat M_U_ct = arma::trans(arma::chol(XtX_inv));
 
-        // iterator used to fill tutX
+        // Unweighted residuals
+        ei = y / sqrt(weights) - Xoriginal * beta_hat;
+
         int clusternum = 0;
 
         arma::mat MUWTWUM = XtX_inv * Xt * arma::trans(Xt) * XtX_inv;
@@ -176,9 +176,7 @@ List lm_robust_helper(const arma::vec & y,
 
           arma::uvec cluster_ids = find(clusters == *j);
           int cluster_size = cluster_ids.n_elem;
-          arma::mat P(cluster_ids.n_elem, k);
-        //    H_jj <- Map(function(u, uw) u %*% M_U %*% uw,
-        //u = U_list, uw = UW_list)
+          arma::mat P(cluster_size, k);
 
           arma::mat D = arma::eye(cluster_size, cluster_size);
           arma::mat H = Xoriginal.rows(cluster_ids) * XtX_inv * Xt.cols(cluster_ids);
@@ -195,27 +193,25 @@ List lm_robust_helper(const arma::vec & y,
           arma::mat At_WX = mat_sqrt_inv(
             I_min_H - arma::trans(H) + Xoriginal.rows(cluster_ids) * MUWTWUM * arma::trans(Xoriginal.rows(cluster_ids)),
             true
-          ) * arma::trans(Xt.cols(cluster_ids)) ;
+          ) * X.rows(cluster_ids) ;
 
-          //arma::mat A = D * arma::sqrtmat_sympd(arma::pinv(
-          //  D * (I_min_H) * D * D
-          //)) * D * X.rows(cluster_ids) ;
+          if (ci) {
+            arma::mat ME = (XtX_inv / weight_mean) * arma::trans(At_WX);
 
-          arma::mat ME = (XtX_inv / weight_mean) * arma::trans(At_WX);
+            P_diags.col(clusternum) = arma::sum(arma::pow(ME, 2), 1);
 
-          P_diags.col(clusternum) = arma::sum(arma::pow(ME, 2), 1);
+            arma::mat MEU = ME * Xoriginal.rows(cluster_ids);
 
-          arma::mat MEU = ME * Xoriginal.rows(cluster_ids);
-
-          H1s.slice(clusternum) = MEU * M_U_ct;
-          H2s.slice(clusternum) = ME * WU.rows(cluster_ids) * M_U_ct;
-          H3s.slice(clusternum) = MEU * Omega_ct;
+            H1s.slice(clusternum) = MEU * M_U_ct;
+            H2s.slice(clusternum) = ME * X.rows(cluster_ids) * M_U_ct;
+            H3s.slice(clusternum) = MEU * Omega_ct;
+          }
 
           // t(ei) %*% (I - P_ss)^{-1/2} %*% Xj
           // each ro  w is the contribution of the cluster to the meat
           // Below use  t(tutX) %*% tutX to sum contributions across clusters
 
-          tutX.row(clusternum) = arma::trans(ei(cluster_ids))  * At_WX;
+          tutX.row(clusternum) = arma::trans(ei(cluster_ids)) * At_WX;
 
           clusternum++;
         }

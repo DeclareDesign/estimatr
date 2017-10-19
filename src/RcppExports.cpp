@@ -109,13 +109,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // lm_robust_helper
-List lm_robust_helper(const arma::vec& y, const arma::mat& X, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Rcpp::Nullable<Rcpp::NumericVector>& weight, const double& weight_mean, const Rcpp::Nullable<Rcpp::NumericVector>& cluster, const bool& ci, const String type, const std::vector<bool>& which_covs);
+List lm_robust_helper(const arma::vec& y, arma::mat& X, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Rcpp::Nullable<Rcpp::NumericVector>& weight, const double& weight_mean, const Rcpp::Nullable<Rcpp::NumericVector>& cluster, const bool& ci, const String type, const std::vector<bool>& which_covs);
 RcppExport SEXP _estimatr_lm_robust_helper(SEXP ySEXP, SEXP XSEXP, SEXP XunweightedSEXP, SEXP weightSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP ciSEXP, SEXP typeSEXP, SEXP which_covsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::vec& >::type y(ySEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type X(XSEXP);
     Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericMatrix>& >::type Xunweighted(XunweightedSEXP);
     Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericVector>& >::type weight(weightSEXP);
     Rcpp::traits::input_parameter< const double& >::type weight_mean(weight_meanSEXP);
