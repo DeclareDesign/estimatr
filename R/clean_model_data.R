@@ -23,10 +23,6 @@ clean_model_data <- function(formula,
                              cluster,
                              where) {
 
-  if(!missing(weights) && !missing(cluster) ){
-    stop("weights not yet supported with clustered standard errors")
-  }
-
   mf <- match.call()
   mf <- mf[c(1, match(names(formals(sys.function())), names(mf),0L))] #drop formals left missing
   mf[[1]] <- quote(stats::model.frame)
@@ -41,7 +37,6 @@ clean_model_data <- function(formula,
   # Clusters...
   if(hasName(mf, "cluster") && is.character(mf[['cluster']]))
     mf[["cluster"]] <- as.symbol(mf[["cluster"]])
-
 
   mf <- eval(mf, where)
 

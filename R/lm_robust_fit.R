@@ -23,16 +23,17 @@ lm_robust_fit <- function(y,
                           return_vcov) {
 
   ## allowable se_types with clustering
-  cl_se_types <- c("BM", "stata")
+  cl_se_types <- c("CR2", "stata")
   rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical")
+
   ## Parse cluster variable
   if (!is.null(cluster)) {
 
     # set/check se_type
     if (is.null(se_type)) {
-      se_type <- "BM"
+      se_type <- "CR2"
     } else if (!(se_type %in% c(cl_se_types, "none"))) {
-      stop("Incorrect se_type. Only 'BM' or 'stata' allowed for se_type with clustered standard errors. Also can choose 'none'.")
+      stop("Incorrect se_type. Only 'CR2' or 'stata' allowed for se_type with clustered standard errors. Also can choose 'none'.")
     }
 
   } else {
@@ -41,7 +42,7 @@ lm_robust_fit <- function(y,
     if (is.null(se_type)) {
       se_type <- "HC2"
     } else if (se_type %in% cl_se_types) {
-      stop("Incorrect se_type. 'BM' and 'stata' only allowed for clustered standard errors.")
+      stop("Incorrect se_type. 'CR2' and 'stata' only allowed for clustered standard errors.")
     } else if (!(se_type %in% c(rob_se_types, "none"))) {
       stop('Incorrect se_type. "HC0", "HC1", "HC2", "HC3", "classical" are the se_type options without clustering. Also can choose "none".')
     }
@@ -65,14 +66,23 @@ lm_robust_fit <- function(y,
   }
 
   if (!is.null(weights)) {
-    X <- sqrt(weights) * X
-    y <- sqrt(weights) * y
+    Xunweighted <- X
+    weight_mean <- mean(weights)
+    weights <- sqrt(weights / weight_mean)
+    X <- weights * X
+    y <- weights * y
+  } else {
+    weight_mean <- 1
+    Xunweighted <- NULL
   }
 
   fit <-
     lm_robust_helper(
       y = y,
       X = X,
+      Xunweighted = Xunweighted,
+      weight = weights,
+      weight_mean = weight_mean,
       cluster = cluster,
       ci = ci,
       type = se_type,
