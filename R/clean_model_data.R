@@ -16,21 +16,21 @@ find_warn_missing <- function(x, type) {
 
 
 # Internal method to process data
-#' @export
-# Temporarily exported until NSE gets straightened out
 clean_model_data <- function(formula,
                              data,
                              subset,
                              weights,
-                             cluster) {
+                             cluster,
+                             where) {
 
   if(!missing(weights) && !missing(cluster) ){
     stop("weights not yet supported with clustered standard errors")
   }
 
   mf <- match.call()
-  mf <- mf[c(1, match(names(formals(clean_model_data)), names(mf),0L))] #drop formals left missing
+  mf <- mf[c(1, match(names(formals(sys.function())), names(mf),0L))] #drop formals left missing
   mf[[1]] <- quote(stats::model.frame)
+  mf[["where"]] <- NULL # drop the where argument
   mf[["na.action"]] <- quote(estimatr:::na.omit_detailed.data.frame) #TODO fix :::via roxygen
 
   # Weights and clusters may be quoted...
@@ -43,7 +43,7 @@ clean_model_data <- function(formula,
     mf[["cluster"]] <- as.symbol(mf[["cluster"]])
 
 
-  mf <- eval.parent(mf)
+  mf <- eval(mf, where)
 
   local({
     na.action <- attr(mf, "na.action")
