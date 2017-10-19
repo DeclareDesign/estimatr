@@ -74,11 +74,8 @@ List lm_robust_helper(const arma::vec & y,
   // t(X)
   arma::mat Xt = arma::trans(X);
 
-  //XtX <- t(X_mat) %*% X_mat
-  arma::mat XtX = Xt*X;
-
   // xtx inverse
-  arma::mat XtX_inv = arma::inv(XtX);
+  arma::mat XtX_inv = arma::inv(Xt * X);
 
   // beta_hat <- solve(XtX) %*% t(X_mat) %*% Y
   arma::colvec beta_hat = XtX_inv*Xt*y;
@@ -92,47 +89,52 @@ List lm_robust_helper(const arma::vec & y,
     // residuals
     arma::colvec ei = y - X * beta_hat;
 
-    // hat values
-    arma::colvec ei2 = arma::pow(ei, 2);
-
     double n = X.n_rows;
     double k = X.n_cols;
 
-    arma::sp_mat D_hat(n, n);
+    if (type == "classical") {
 
-    if(type == "HC0"){
-      D_hat.diag() = ei2;
-      Vcov_hat = XtX_inv * Xt * D_hat * X * XtX_inv;
-
-    } else if (type == "HC1") {
-      D_hat.diag() = ei2;
-      Vcov_hat = n/(n-k) * XtX_inv * Xt * D_hat * X * XtX_inv;
-    } else if (type == "HC2") {
-      int n = X.n_rows;
-      arma::colvec hii(n);
-
-      for(int i = 0; i < n; i++){
-        arma::rowvec Xi = X.row(i);
-        hii[i] = arma::as_scalar(Xi * XtX_inv * arma::trans(Xi));
-      }
-      D_hat.diag() = ei2 /(1 - hii);
-      Vcov_hat = XtX_inv * Xt * D_hat * X * XtX_inv;
-    } else if (type == "HC3") {
-      int n = X.n_rows;
-      arma::colvec hii(n);
-
-      for(int i = 0; i < n; i++){
-        arma::rowvec Xi = X.row(i);
-        hii[i] = arma::as_scalar(Xi * XtX_inv * arma::trans(Xi));
-      }
-      D_hat.diag() = ei2 /pow(1 - hii, 2);
-      Vcov_hat = XtX_inv * Xt * D_hat * X * XtX_inv;
-    } else if (type == "classical") {
       // the next line due to Dirk Eddelbuettel
       // http://dirk.eddelbuettel.com/code/rcpp.armadillo.html
       double s2 = std::inner_product(ei.begin(), ei.end(), ei.begin(), 0.0)/(n - k);
       Vcov_hat = s2 * XtX_inv;
-    } else if (( (type == "stata") | (type == "CR2") ) & cluster.isNotNull()) {
+
+    } else if ( (type == "HC0") | (type == "HC1") | (type == "HC2") | (type == "HC3") ) {
+
+      // hat values
+      arma::colvec ei2 = arma::pow(ei, 2);
+      arma::sp_mat D_hat(n, n);
+
+      if(type == "HC0"){
+        D_hat.diag() = ei2;
+        Vcov_hat = XtX_inv * Xt * D_hat * X * XtX_inv;
+
+      } else if (type == "HC1") {
+        D_hat.diag() = ei2;
+        Vcov_hat = n/(n-k) * XtX_inv * Xt * D_hat * X * XtX_inv;
+      } else if (type == "HC2") {
+        int n = X.n_rows;
+        arma::colvec hii(n);
+
+        for(int i = 0; i < n; i++){
+          arma::rowvec Xi = X.row(i);
+          hii[i] = arma::as_scalar(Xi * XtX_inv * arma::trans(Xi));
+        }
+        D_hat.diag() = ei2 /(1 - hii);
+        Vcov_hat = XtX_inv * Xt * D_hat * X * XtX_inv;
+      } else if (type == "HC3") {
+        int n = X.n_rows;
+        arma::colvec hii(n);
+
+        for(int i = 0; i < n; i++){
+          arma::rowvec Xi = X.row(i);
+          hii[i] = arma::as_scalar(Xi * XtX_inv * arma::trans(Xi));
+        }
+        D_hat.diag() = ei2 /pow(1 - hii, 2);
+        Vcov_hat = XtX_inv * Xt * D_hat * X * XtX_inv;
+      }
+
+    } else if ( (type == "stata") | (type == "CR2") ) {
 
       // Code adapted from Michal Kolesar
       // https://github.com/kolesarm/Robust-Small-Sample-Standard-Errors
@@ -239,9 +241,7 @@ List lm_robust_helper(const arma::vec & y,
             }
           }
         }
-      }
-
-      if (type == "stata") {
+      } else if (type == "stata") {
 
         arma::mat XteetX(k, k);
         XteetX.fill(0.0);
