@@ -54,9 +54,7 @@ List lm_robust_helper(const arma::vec & y,
   arma::mat Xoriginal(X.n_rows, X.n_cols);
   arma::vec weights;
   if(Xunweighted.isNotNull()) {
-    Rcpp::Rcout << "weights" << std::endl;
     weights = Rcpp::as<arma::vec>(weight);
-    Rcpp::Rcout << weights << std::endl;
     Xoriginal = Rcpp::as<arma::mat>(Xunweighted);
   }
 
@@ -78,19 +76,8 @@ List lm_robust_helper(const arma::vec & y,
 
   if(type != "none"){
 
-   // Rcpp::Rcout << y << std::endl;
-
-    //Rcpp::Rcout << y * sqrt(weight_mean)<< std::endl;
-    Rcpp::Rcout << "Different Xs:" << std::endl;
-    Rcpp::Rcout << "Weighted but no mean" << std::endl;
-    Rcpp::Rcout << X << std::endl;
-    Rcpp::Rcout << "Weighted w mean" << std::endl;
-    Rcpp::Rcout << X * sqrt(weight_mean) << std::endl;
-    Rcpp::Rcout << "Unweighted" << std::endl;
-    Rcpp::Rcout << Xoriginal << std::endl;
     // residuals
     arma::colvec ei = y - X * beta_hat;
-    Rcpp::Rcout << ei << std::endl;
 
     // hat values
     arma::colvec ei2 = arma::pow(ei, 2);
@@ -149,17 +136,23 @@ List lm_robust_helper(const arma::vec & y,
 
         arma::mat tutX(J, k);
 
+        arma::mat WU = arma::sqrt(weights) % X.each_col();
+        arma::mat M_U_ct = arma::trans(arma::chol(XtX_inv));
+
         // Cube stores the n by k G_s matrix for each cluster
         // used for the BM dof corrction
-        arma::cube Gs(n, k, J);
+        arma::cube H1s(k, k, J);
+        arma::cube H2s(k, k, J);
+        arma::cube H3s(k, k, J);
+        arma::mat P_diags(k, J);
 
         ei = y / sqrt(weights) - (X.each_col() / sqrt(weights)) * beta_hat;
-        Rcpp::Rcout << ei << std::endl;
+
         // iterator used to fill tutX
         int clusternum = 0;
 
-        Rcpp::Rcout << XtX_inv << std::endl;
         arma::mat MUWTWUM = XtX_inv * Xt * arma::trans(Xt) * XtX_inv;
+        arma::mat Omega_ct = arma::trans(arma::chol(MUWTWUM));
 
         // iterate over unique cluster values
         for(arma::vec::const_iterator j = levels.begin();
@@ -168,6 +161,7 @@ List lm_robust_helper(const arma::vec & y,
 
           arma::uvec cluster_ids = find(clusters == *j);
           int cluster_size = cluster_ids.n_elem;
+          arma::mat P(cluster_ids.n_elem, k);
         //    H_jj <- Map(function(u, uw) u %*% M_U %*% uw,
         //u = U_list, uw = UW_list)
 
@@ -180,6 +174,7 @@ List lm_robust_helper(const arma::vec & y,
 
           //(thet - h %*% thet - thet %*% t(h) + u %*% MUWTWUM %*% t(u))
 
+          // todo: drop D altogether
           arma::mat A = D * arma::sqrtmat_sympd(arma::pinv(
             I_min_H - arma::trans(H) + Xoriginal.rows(cluster_ids) * MUWTWUM * arma::trans(Xoriginal.rows(cluster_ids))
           )) * D * arma::trans(Xt.cols(cluster_ids)) ;
@@ -188,32 +183,44 @@ List lm_robust_helper(const arma::vec & y,
           //  D * (I_min_H) * D * D
           //)) * D * X.rows(cluster_ids) ;
 
-          Rcpp::Rcout << A << std::endl;
 
+          arma::mat ME = (XtX_inv / weight_mean) * arma::trans(A);
+
+          P_diags.col(clusternum) = arma::sum(arma::pow(ME, 2), 1);
+
+          arma::mat MEU = ME * Xoriginal.rows(cluster_ids);
+
+          H1s.slice(clusternum) = MEU * M_U_ct;
+          H2s.slice(clusternum) = ME * WU.rows(cluster_ids) * M_U_ct;
+          H3s.slice(clusternum) = MEU * Omega_ct;
 
           // t(ei) %*% (I - P_ss)^{-1/2} %*% Xj
           // each ro  w is the contribution of the cluster to the meat
           // Below use  t(tutX) %*% tutX to sum contributions across clusters
 
+          // in club sand this is e'A'WR because A here is actually A' W R
           tutX.row(clusternum) = arma::trans(ei(cluster_ids))  * A;
 
           clusternum++;
         }
 
-        Rcpp::Rcout << tutX << std::endl;
-        //Rcpp::Rcout << weight_mean << std::endl;
         Vcov_hat = XtX_inv * (arma::trans(tutX) * tutX) * XtX_inv;
-
-        //Rcpp::Rcout <<  (arma::trans(tutX) * tutX)<< std::endl;
 
         if (ci) {
           for(int p = 0; p < k; p++){
-            Rcpp::Rcout << p << std::endl;
             // only compute for covars that we need the DoF for
             if (which_covs[p]) {
-              arma::mat G = Gs.subcube(arma::span::all, arma::span(p), arma::span::all);
-              arma::mat GG = arma::trans(G) * G;
-              dof[p] = std::pow(arma::trace(GG), 2) / arma::accu(arma::pow(GG, 2));
+
+              arma::mat H1 = H1s.subcube(arma::span(p), arma::span::all, arma::span::all);
+              arma::mat H2 = H2s.subcube(arma::span(p), arma::span::all, arma::span::all);
+              arma::mat H3 = H3s.subcube(arma::span(p), arma::span::all, arma::span::all);
+
+              arma::mat uf = arma::trans(H1) * H2;
+
+              arma::mat P_array = arma::trans(H3)*H3 - uf - arma::trans(uf);
+              P_array.diag() += P_diags.row(p);
+
+              dof[p] = std::pow(arma::trace(P_array), 2) / arma::accu(arma::pow(P_array, 2));
             }
           }
         }
