@@ -68,9 +68,9 @@ lm_robust_fit <- function(y,
   if (!is.null(weights)) {
     Xunweighted <- X
     weight_mean <- mean(weights)
-    weights <- weights / weight_mean
-    X <- sqrt(weights) * X
-    y <- sqrt(weights) * y
+    weights <- sqrt(weights / weight_mean)
+    X <- weights * X
+    y <- weights * y
   } else {
     weight_mean <- 1
     Xunweighted <- NULL

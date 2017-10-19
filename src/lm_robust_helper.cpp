@@ -153,10 +153,10 @@ List lm_robust_helper(const arma::vec & y,
 
         if (weighted) {
           // Instead of having X and Xt be weighted by sqrt(W), this has them weighted by W
-          Xt = Xt.each_row() % arma::sqrt(arma::trans(weights));
-          X = X.each_col() % arma::sqrt(weights);
+          Xt = Xt.each_row() % arma::trans(weights);
+          X = X.each_col() % weights;
           // Unweighted residuals
-          ei = y / sqrt(weights) - Xoriginal * beta_hat;
+          ei = y / weights - Xoriginal * beta_hat;
         }
 
         arma::mat tutX(J, k);
@@ -167,12 +167,12 @@ List lm_robust_helper(const arma::vec & y,
         arma::cube H3s(k, k, J);
         arma::mat P_diags(k, J);
 
-        arma::mat M_U_ct = arma::trans(arma::chol(XtX_inv));
+        arma::mat M_U_ct = arma::chol(XtX_inv, "lower");
 
         int clusternum = 0;
 
         arma::mat MUWTWUM = XtX_inv * Xt * arma::trans(Xt) * XtX_inv;
-        arma::mat Omega_ct = arma::trans(arma::chol(MUWTWUM));
+        arma::mat Omega_ct = arma::chol(MUWTWUM, "lower");
 
         // iterate over unique cluster values
         for(arma::vec::const_iterator j = levels.begin();
