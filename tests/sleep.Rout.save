@@ -19,7 +19,10 @@ Type 'q()' to quit R.
 
 > library(estimatr)
 > lm_robust(extra~group, sleep)
-Error in clean_model_data(formula = extra ~ group, data = sleep, subset = ,  : 
-  could not find function "clean_model_data"
-Calls: lm_robust -> eval.parent -> eval -> eval
-Execution halted
+  coefficient_name  est        se          p   ci_lower ci_upper df
+1      (Intercept) 0.75 0.5657345 0.20151554 -0.4385641 1.938564 18
+2           group2 1.58 0.8490910 0.07918671 -0.2038740 3.363874 18
+> 
+> proc.time()
+   user  system elapsed 
+   0.46    0.04    0.76 
