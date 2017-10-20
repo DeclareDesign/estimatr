@@ -19,7 +19,7 @@ lm_robust(formula, data, weights, subset, cluster_variable_name,
 
 \item{cluster_variable_name}{An optional bare (unquoted) name of the variable that corresponds to the clusters in the data.}
 
-\item{se_type}{The sort of standard error sought. Without clustering: "HC0", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "BM" (default), "stata".}
+\item{se_type}{The sort of standard error sought. Without clustering: "HC0", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "CR2" (default), "stata".}
 
 \item{ci}{A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.}
 

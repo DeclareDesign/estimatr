@@ -4,7 +4,7 @@ author: "Luke Sonnet"
 bibliography: estimatr.bib
 link-citations: true
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output: pdf_document
 vignette: >
   %\VignetteIndexEntry{Estimatr - Fast estimators for social scientists}
   %\VignetteEngine{knitr::rmarkdown}
@@ -12,8 +12,8 @@ vignette: >
 ---
 
 \newcommand{\X}{\mathbf{X}}
-\newcommand{\P}{\mathbf{P}}
-\newcommand{\G}{\mathbf{G}}
+\newcommand{\Pb}{\mathbf{P}}
+\newcommand{\Gb}{\mathbf{G}}
 \newcommand{\XtXinv}{(\X^{\top}\X)^{-1}}
 \newcommand{\x}{\mathbf{x}}
 \newcommand{\y}{\mathbf{y}}
@@ -84,7 +84,7 @@ where $N$ is the number of observations and $K$ is the number of elements in $\b
 
 * $S$ is the number of clusters
 * $\X_s$ is the rows of $\X$ that belong to cluster $s$
-* $\P_{ss} = \X_s \XtXinv \X^\top_s$
+* $\Pb_{ss} = \X_s \XtXinv \X^\top_s$
 * $N_s$ is the number of units in cluster $s$
 * $I_n$ is an identity matrix of size $n\times n$
 * $\e_s$ is the elements of the residual matrix $\e$ in cluster $s$, or $\e_s = \y_s - \X_s \hat{\beta}$
@@ -94,7 +94,7 @@ where $N$ is the number of observations and $K$ is the number of elements in $\b
 Analogy to HC2 for cluster-robust variance estimation. For the original reference, see [@bellmccaffrey2002]. For papers that have also mention it, see $\V_{\mathrm{LZ2}}$ on p. 709 of [@imbenskolesar2016] and the CR2 estimator shown in equations (4) and (5) in [@pustejovskytipton2016]. Note that we will be implementing the estimator proposed in [@pustejovskytipton2016] soon; more can be found on their GitHub page for an accompanying R package [clubSandwich](https://github.com/jepusto/clubSandwich).
 
 \[
-\hat{\V}[\hat{\beta}]_{BM} =  \XtXinv \sum^S_{s=1} \left[\X^\top_s (I_{N_s} - \P_{ss})^{-\frac{1}{2}} \e_s\e^\top_s (I_{N_s} - \P_{ss})^{-\frac{1}{2}} \X_s \right] \XtXinv
+\hat{\V}[\hat{\beta}]_{BM} =  \XtXinv \sum^S_{s=1} \left[\X^\top_s (I_{N_s} - \Pb_{ss})^{-\frac{1}{2}} \e_s\e^\top_s (I_{N_s} - \Pb_{ss})^{-\frac{1}{2}} \X_s \right] \XtXinv
 \]
 
 **stata**
@@ -126,12 +126,12 @@ df_{stata} = S - 1
 
 When there is clustering and `se_type = "BM"`, we match Bell and McCaffrey's degrees of freedom adjustment (this is described in detail on p. 709 of [@imbenskolesar2016] as well as equation (11) in [@pustejovskytipton2016]). Where $z_{K,k}$ is a vector of length $K$ where the $k$th element is 1 and all other elements are 0. The $k$ signifies for which coefficient we are getting the degrees of freedom.
 
-Also, $\P = \X\XtXinv\X^\top$ and $(I - \P)_s$ is the $N_s$ columns that correspond to cluster $s$.
+Also, $\Pb = \X\XtXinv\X^\top$ and $(I - \Pb)_s$ is the $N_s$ columns that correspond to cluster $s$.
 
-We define $\G$ as an $N\times S$ matrix with each column as
+We define $\Gb$ as an $N\times S$ matrix with each column as
 
 \[
-\G_s = (I-\P)_s (I_{N_s} - \P_{ss})^{-\frac{1}{2}} \X_s \XtXinv z_{K, k}
+\Gb_s = (I-\Pb)_s (I_{N_s} - \Pb_{ss})^{-\frac{1}{2}} \X_s \XtXinv z_{K, k}
 \]
 
 Then the degrees of freedom for coefficient $k$ is
@@ -139,7 +139,7 @@ Then the degrees of freedom for coefficient $k$ is
 \[
 df_{k, BM} = \frac{\left(\sum^S_{s=1} \lambda_i\right)^2}{\sum^S_{s=1} \lambda^2_i}
 \]
-where $\lambda_i$ are the eigenvalues of $\G^\top\G$.
+where $\lambda_i$ are the eigenvalues of $\Gb^\top\Gb$.
 
 Then, if $\hat{\V}_k$ is the $k$th diagonal element of $\hat{\V}$, we build confidence intervals using the user specified $\alpha$ as:
 

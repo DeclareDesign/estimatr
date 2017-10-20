@@ -119,29 +119,19 @@ test_that("lm cluster se", {
     lm_robust(
       Y ~ Z,
       cluster_variable_name = J,
-      weights = W,
-      data = dat
-    ),
-    'weights'
-  )
-
-  expect_error(
-    lm_robust(
-      Y ~ Z,
-      cluster_variable_name = J,
       se_type = 'HC2',
       data = dat
     ),
-    'BM'
+    'CR2'
   )
 
   expect_error(
     lm_robust(
       Y ~ Z,
-      se_type = 'BM',
+      se_type = 'CR2',
       data = dat
     ),
-    'BM'
+    'CR2'
   )
 })
 
