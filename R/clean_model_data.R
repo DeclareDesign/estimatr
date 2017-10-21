@@ -21,6 +21,7 @@ clean_model_data <- function(formula,
                              subset,
                              weights,
                              cluster,
+                             block,
                              where) {
 
   mf <- match.call()
@@ -38,6 +39,10 @@ clean_model_data <- function(formula,
   if(hasName(mf, "cluster") && is.character(mf[['cluster']]))
     mf[["cluster"]] <- as.symbol(mf[["cluster"]])
 
+  # Blocks...
+  if(hasName(mf, "block") && is.character(mf[['block']]))
+    mf[["block"]] <- as.symbol(mf[["block"]])
+
   mf <- eval(mf, where)
 
   local({
@@ -48,6 +53,12 @@ clean_model_data <- function(formula,
     if(hasName(why_omit, "(cluster)")){
       warning(
         "Some observations have missingness in the cluster variable but not in the outcome or covariates. These observations have been dropped."
+      )
+    }
+
+    if(hasName(why_omit, "(block)")){
+      warning(
+        "Some observations have missingness in the block variable but not in the outcome or covariates. These observations have been dropped."
       )
     }
 
@@ -72,6 +83,10 @@ clean_model_data <- function(formula,
     ret[["cluster"]] <- model.extract(mf, "cluster")
     if(is.character(ret[["cluster"]]))
       ret[["cluster"]] <- as.factor(ret[["cluster"]])
+  }
+
+  if(!missing(block)){
+    ret[["block"]] <- model.extract(mf, "block")
   }
 
   return(ret)
