@@ -57,11 +57,13 @@ difference_in_means <-
       )
     ))
 
-    data <- data.frame(y = model_data$outcome,
-                       t = model_data$design_matrix[, ncol(model_data$design_matrix)])
-    data$cluster <- model_data$cluster
-    data$weights <- model_data$weights
-    data$block <- model_data$block
+    data <- as.data.frame(cbind(
+      y = model_data$outcome,
+      t = model_data$design_matrix[, ncol(model_data$design_matrix)],
+      cluster = model_data$cluster,
+      weights = model_data$weights,
+      block = model_data$block
+    ))
 
     rm(model_data)
 
