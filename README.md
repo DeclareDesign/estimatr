@@ -11,6 +11,10 @@ Technical papers and textbooks demand complex estimation strategies that are oft
 To install the latest development release of **estimatr**, please ensure that you are running version 3.3 or later of R and run the following code:
 
 ```
+# Development branch
+devtools::install_github("DeclareDesign/estimator")
+
+# Last release
 install.packages("estimatr", dependencies = TRUE,
   repos = c("http://R.declaredesign.org", "https://cloud.r-project.org"))
 ```
