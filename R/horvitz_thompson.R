@@ -24,7 +24,7 @@ horvitz_thompson <-
            block_variable_name = NULL,
            cluster_variable_name = NULL,
            declaration = NULL,
-           #estimator = 'ht',
+           estimator = 'ht',
            constant_effects = FALSE,
            data,
            subset = NULL,
@@ -198,7 +198,7 @@ horvitz_thompson <-
           condition2 = condition2,
           data = data,
           clusters = clusters,
-          #estimator = estimator,
+          estimator = estimator,
           constant_effects = constant_effects,
           alpha = alpha
         )
@@ -322,7 +322,7 @@ horvitz_thompson_internal <-
            clusters = NULL,
            cluster_variable_name = NULL,
            pair_matched = FALSE,
-           #estimator = 'ht',
+           estimator = 'ht',
            constant_effects = FALSE,
            alpha = .05) {
 
@@ -362,6 +362,8 @@ horvitz_thompson_internal <-
       }
     }
 
+    print(table(condition_pr_matrix))
+
     N <- length(Y)
 
     ps2 <- condition_probabilities[t == condition2]
@@ -371,28 +373,28 @@ horvitz_thompson_internal <-
     Y1 <- Y[t == condition1] / ps1
 
     # Trying out estimator from Middleton & Aronow 2015 page 51
-    # if (estimator == 'ma') {
-    #
-    #   k <- length(unique(clusters))
-    #   c_2 <- clusters[t==condition2]
-    #   c_1 <- clusters[t==condition1]
-    #   k_2 <- length(unique(c_2))
-    #   k_1 <- length(unique(c_1))
-    #
-    #   totals_2 <- tapply(Y[t == condition2], c_2, sum)
-    #   totals_1 <- tapply(Y[t == condition1], c_1, sum)
-    #
-    #   diff <- (mean(totals_2) - mean(totals_1)) * k / N
-    #
-    #   se <-
-    #     sqrt(
-    #       k^2 / N^2 * (
-    #         mean((totals_2 - mean(totals_2))^2) / (k_2 - 1) +
-    #         mean((totals_1 - mean(totals_1))^2) / (k_1 - 1)
-    #       )
-    #     )
-    #
-    # } else {
+    if (estimator == 'ma') {
+
+      k <- length(unique(clusters))
+      c_2 <- clusters[t==condition2]
+      c_1 <- clusters[t==condition1]
+      k_2 <- length(unique(c_2))
+      k_1 <- length(unique(c_1))
+
+      totals_2 <- tapply(Y[t == condition2], c_2, sum)
+      totals_1 <- tapply(Y[t == condition1], c_1, sum)
+
+      diff <- (mean(totals_2) - mean(totals_1)) * k / N
+
+      se <-
+        sqrt(
+          k^2 / N^2 * (
+            mean((totals_2 - mean(totals_2))^2) / (k_2 - 1) +
+            mean((totals_1 - mean(totals_1))^2) / (k_1 - 1)
+          )
+        )
+
+    } else {
 
     diff <- (sum(Y2) - sum(Y1)) / N
 
@@ -479,7 +481,7 @@ horvitz_thompson_internal <-
           )
 
       }
-      #}
+      }
     }
 
     return_list <-

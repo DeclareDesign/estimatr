@@ -21,7 +21,6 @@ clean_model_data <- function(formula,
                              subset,
                              weights,
                              cluster,
-                             block,
                              where) {
 
   mf <- match.call()
@@ -32,15 +31,15 @@ clean_model_data <- function(formula,
 
   # Weights and clusters may be quoted...
   # TODO helper function
-  if(hasName(mf, "weights") && is.character(mf[['weights']]))
+  if(!is.null(mf$weights) && is.character(mf[['weights']]))
     mf[["weights"]] <- as.symbol(mf[["weights"]])
 
   # Clusters...
-  if(hasName(mf, "cluster") && is.character(mf[['cluster']]))
+  if(!is.null(mf$cluster) && is.character(mf[['cluster']]))
     mf[["cluster"]] <- as.symbol(mf[["cluster"]])
 
   # Blocks...
-  if(hasName(mf, "block") && is.character(mf[['block']]))
+  if(!is.null(mf$block) && is.character(mf[['block']]))
     mf[["block"]] <- as.symbol(mf[["block"]])
 
   mf <- eval(mf, where)
@@ -50,19 +49,19 @@ clean_model_data <- function(formula,
     why_omit  <- attr(na.action, "why_omit")
 
     # Todo generalize to all extra components
-    if(hasName(why_omit, "(cluster)")){
+    if(!is.null(why_omit$`(cluster)`)){
       warning(
         "Some observations have missingness in the cluster variable but not in the outcome or covariates. These observations have been dropped."
       )
     }
 
-    if(hasName(why_omit, "(block)")){
+    if(!is.null(why_omit$`(block)`)){
       warning(
         "Some observations have missingness in the block variable but not in the outcome or covariates. These observations have been dropped."
       )
     }
 
-    if(hasName(why_omit, "(weights)")){
+    if(!is.null(why_omit$`(weights)`)){
       warning(
         "Some observations have missingness in the weights variable but not in the outcome or covariates. These observations have been dropped."
       )
@@ -83,10 +82,6 @@ clean_model_data <- function(formula,
     ret[["cluster"]] <- model.extract(mf, "cluster")
     if(is.character(ret[["cluster"]]))
       ret[["cluster"]] <- as.factor(ret[["cluster"]])
-  }
-
-  if(!missing(block)){
-    ret[["block"]] <- model.extract(mf, "block")
   }
 
   return(ret)
