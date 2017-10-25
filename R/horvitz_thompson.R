@@ -47,9 +47,8 @@ horvitz_thompson <-
     ## todo: deal with declarations and missingness
     ## todo: warn about colliding arguments
     if (!is.null(declaration)) {
-      declare_out <- read_declaration(declaration, 'horvitz_thompson')
-      condition_probabilities <- declare_out$condition_probabilities
-      condition_pr_matrix <- declare_out$condition_pr_matrix
+      declare_out <- read_declaration(declaration,
+                                      'horvitz_thompson')
       clusters <- declare_out$clusters
       blocks <- declare_out$blocks
 
@@ -64,6 +63,9 @@ horvitz_thompson <-
           stop("the cluster variable in your declaration is of different length than your data")
         }
       }
+
+      condition_probabilities <- declare_out$condition_probabilities
+      condition_pr_matrix <- declare_out$condition_pr_matrix
     }
 
     ## Get subset of data

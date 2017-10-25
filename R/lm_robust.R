@@ -34,6 +34,7 @@ lm_robust <- function(formula,
       data = data,
       subset = subset,
       cluster = cluster_variable_name,
+      block = NULL,
       weights = weights,
       where = where
     )
