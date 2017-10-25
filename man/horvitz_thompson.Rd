@@ -6,7 +6,7 @@
 \usage{
 horvitz_thompson(formula, condition_pr_variable_name = NULL,
   condition_pr_matrix = NULL, block_variable_name = NULL,
-  cluster_variable_name = NULL, declaration = NULL,
+  cluster_variable_name = NULL, declaration = NULL, estimator = "ht",
   constant_effects = FALSE, data, subset = NULL, alpha = 0.05,
   condition1 = NULL, condition2 = NULL)
 }
