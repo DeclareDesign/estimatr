@@ -68,6 +68,37 @@ double ht_var_total2(const arma::vec & y,
 }
 
 // [[Rcpp::export]]
+double ht_covar_partial(const arma::vec & y1,
+                        const arma::vec & y0,
+                        const arma::mat & p10,
+                        const arma::vec & p1,
+                        const arma::vec & p0) {
+  double cov_total = 0.0;
+
+  for (unsigned i = 0; i < y1.n_elem; ++i) {
+    for(unsigned j = 0; j < y0.n_elem; ++j) {
+      cov_total += y1(i) * y0(j) * (p10(i, j) - p1(i) * p0(j)) / p10(i, j);
+    }
+  }
+
+  return cov_total;
+}
+
+// [[Rcpp::export]]
+double ht_var_partial(const arma::vec & y,
+                      const arma::mat & p) {
+  double var_total = 0.0;
+
+  for (unsigned i = 0; i < y.n_elem; ++i) {
+    for(unsigned j = 0; j < y.n_elem; ++j) {
+      var_total += y(i) * y(j) * (p(i, j) - p(i,i) * p(j,j)) / p(i, j);
+    }
+  }
+
+  return var_total;
+}
+
+// [[Rcpp::export]]
 double ht_covar_total(const arma::vec & y0,
                       const arma::vec & y1,
                       const arma::mat & p00,
@@ -95,6 +126,14 @@ double ht_covar_total(const arma::vec & y0,
 }
 
 // [[Rcpp::export]]
+double joint_incl_pr(const double & pi,
+                     const double & pj,
+                     const double & nleft,
+                     const double & ntotal) {
+  return (2.0 * nleft * pi * pj) / (2.0 * ntotal - pi - pj);
+}
+
+// [[Rcpp::export]]
 arma::mat gen_pr_matrix_complete(const arma::vec & prs) {
 
   double n = prs.n_elem;
@@ -111,10 +150,10 @@ arma::mat gen_pr_matrix_complete(const arma::vec & prs) {
         mat_01(i, j) = 0;
         mat_10(i, j) = 0;
       } else {
-        mat_11(i, j) = prs[i] * ((n*prs[j])-1)/(n-1);
-        mat_00(i, j) = (1-prs[i]) * ((n*(1-prs[j]))-1)/(n-1);
-        mat_01(i, j) = (1-prs[i]) * ((n*prs[j]))/(n-1);
-        mat_10(i, j) = prs[i] * ((n*(1-prs[j])))/(n-1);
+        mat_11(i, j) = joint_incl_pr(prs[i], prs[j], n-1, n);
+        mat_00(i, j) = joint_incl_pr(1-prs[i], 1-prs[j], n-1, n);
+        mat_01(i, j) = joint_incl_pr(1-prs[i], prs[j], n, n);
+        mat_10(i, j) = joint_incl_pr(prs[i], 1-prs[j], n, n);
       }
     }
   }

@@ -373,7 +373,7 @@ horvitz_thompson_internal <-
     Y1 <- Y[t == condition1] / ps1
 
     # Trying out estimator from Middleton & Aronow 2015 page 51
-    if (estimator == 'ma') {
+    if (!is.null(clusters) & estimator == 'ma') {
 
       k <- length(unique(clusters))
       c_2 <- clusters[t==condition2]
@@ -402,33 +402,29 @@ horvitz_thompson_internal <-
       # Simple random assignment
       # joint inclusion probabilities = product of marginals
       if (constant_effects) {
+        # TODO i
+        # rescaled potential outcomes
+        y0 <- ifelse(t==condition1,
+                     Y / (1-condition_probabilities),
+                     (Y - diff) / (1-condition_probabilities))
+        y1 <- ifelse(t==condition2,
+                     Y / condition_probabilities,
+                     (Y + diff) / condition_probabilities)
+
+        # print(var_ht_total_no_cov(y1, condition_probabilities) +
+        #       var_ht_total_no_cov(y0, 1 - condition_probabilities))
+        #
+        # print(-2*sum(c(Y[t == condition2], Y[t == condition1] + diff) * c(Y[t == condition2] - diff, Y[t == condition1])))
+
         se <-
           sqrt(
-            (var_ht_total_no_cov(
-              c(
-                # Weighted Y1 potential outcomes (assuming constant effects)
-                (Y[t==condition1] + diff) / (1-ps1),
-                Y2
-              ),
-              c(
-                1 - ps1,
-                ps2
-              )
-            ) +
-               var_ht_total_no_cov(
-                 c(
-                   Y1,
-                   # Weighted Y2 potential outcomes (assuming constant effects)
-                   (Y[t==condition2] - diff)/(1-ps2)
-                 ),
-                 c(
-                   ps1,
-                   1 - ps2
-                   )
-                 )
+            (
+              var_ht_total_no_cov(y1, condition_probabilities) +
+              var_ht_total_no_cov(y0, 1 - condition_probabilities) +
+              2 * sum(c(Y[t == condition2], Y[t == condition1] + diff) * c(Y[t == condition2] - diff, Y[t == condition1]))
+
             )
-            / N^2
-          )
+          ) / N
       } else {
         se <-
           sqrt(
@@ -441,45 +437,38 @@ horvitz_thompson_internal <-
       if (constant_effects) {
         # rescaled potential outcomes
         y0 <- ifelse(t==condition1,
-                         Y / (1-condition_probabilities),
-                         (Y - diff) / (1 - condition_probabilities))
+                     Y / (1-condition_probabilities),
+                     (Y - diff) / (1-condition_probabilities))
         y1 <- ifelse(t==condition2,
-                       Y / condition_probabilities,
-                       (Y + diff) / condition_probabilities)
+                     Y / condition_probabilities,
+                     (Y + diff) / condition_probabilities)
         se <-
           sqrt(
-            (
-              ht_var_total2(
-                y1,
-                condition_pr_matrix[(N+1):(2*N), (N+1):(2*N)]
-              ) +
-                ht_var_total2(
-                  y0,
-                  condition_pr_matrix[1:N, 1:N]
-                ) -
-                2 * ht_covar_total(
-                  y0 = y0,
-                  y1 = y1,
-                  pj = condition_pr_matrix[1:N, (N+1):(2*N)],
-                  p00 = condition_pr_matrix[1:N, 1:N],
-                  p11 = condition_pr_matrix[(N+1):(2*N), (N+1):(2*N)]
-                )
-            ) / N^2
-          )
+            ht_var_total(
+              c(-y0, y1),
+              condition_pr_matrix
+            )
+          ) / N
       } else {
         # No constant effects assumption
         se <-
           sqrt(
-            ht_var_total2(
+            ht_var_partial(
               Y2,
-              condition_pr_matrix[(N+1):(2*N), (N+1):(2*N)]
-             ) / length(Y2)^2 +
-            ht_var_total2(
+              condition_pr_matrix[(N + which(t == condition2)), (N + which(t == condition2))]
+            ) +
+            ht_var_partial(
               Y1,
-              condition_pr_matrix[1:N, 1:N]
-             ) / length(Y1)^2
-          )
-
+              condition_pr_matrix[which(t == condition1), which(t == condition1)]
+            ) -
+            2 * ht_covar_partial(Y2,
+                                 Y1,
+                                 condition_pr_matrix[(N + which(t == condition2)), which(t == condition1)],
+                                 ps2,
+                                 ps1) +
+            sum(Y[t == condition2]^2/ps2) +
+            sum(Y[t == condition1]^2/ps1)
+          ) / N
       }
       }
     }
