@@ -25,7 +25,7 @@ horvitz_thompson <-
            cluster_variable_name = NULL,
            declaration = NULL,
            estimator = 'ht',
-           constant_effects = FALSE,
+           se_type = c('youngs', 'constant'),
            data,
            subset = NULL,
            alpha = .05,
@@ -40,6 +40,8 @@ horvitz_thompson <-
         "The formula should only include one variable on the right-hand side: the treatment variable."
       )
     }
+
+    se_type <- match.arg(se_type)
 
     #-----
     # Parse arguments, clean data
@@ -121,6 +123,10 @@ horvitz_thompson <-
       data$blocks <- model_data$block
 
       rm(model_data)
+
+      if (is.null(data$condition_probabilities)) {
+        data$condition_probabilities <- diag(condition_pr_matrix)[(length(data$y)+1):(2*length(data$y))]
+      }
     }
 
     if (!is.null(data$clusters)) {
@@ -133,7 +139,6 @@ horvitz_thompson <-
     #-----
     # Estimation
     #-----
-
     if (is.null(data$blocks)){
       return_list <-
         horvitz_thompson_internal(
@@ -142,7 +147,7 @@ horvitz_thompson <-
           condition2 = condition2,
           data = data,
           estimator = estimator,
-          constant_effects = constant_effects,
+          se_type = se_type,
           alpha = alpha
         )
 
@@ -196,13 +201,11 @@ horvitz_thompson <-
 
       block_estimates <- lapply(block_dfs, function(x) {
         horvitz_thompson_internal(
-          formula,
           data = x,
           condition1 = condition1,
           condition2 = condition2,
-          condition_probabilities_name = condition_probabilities_name,
           condition_pr_matrix = condition_pr_matrix,
-          cluster_variable_name = cluster_variable_name,
+          se_type = se_type,
           alpha = alpha
         )
       })
@@ -261,7 +264,7 @@ horvitz_thompson_internal <-
            data,
            pair_matched = FALSE,
            estimator = 'ht',
-           constant_effects = FALSE,
+           se_type,
            alpha = .05) {
 
     if (is.factor(data$t)) {
@@ -332,7 +335,7 @@ horvitz_thompson_internal <-
     if (is.null(condition_pr_matrix)) {
       # Simple random assignment
       # joint inclusion probabilities = product of marginals
-      if (constant_effects) {
+      if (se_type ==  'constant') {
         # TODO i
         # rescaled potential outcomes
         y0 <- ifelse(data$t==condition1,
@@ -364,7 +367,7 @@ horvitz_thompson_internal <-
       }
     } else {
       # Complete random assignment
-      if (constant_effects) {
+      if (se_type ==  'constant') {
         # rescaled potential outcomes
         y0 <- ifelse(data$t==condition1,
                      data$y / (1-data$condition_probabilities),
