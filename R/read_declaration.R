@@ -24,33 +24,25 @@ read_declaration <-
       stop("The 'declaration' argument can only be used with a binary treatment variable.")
     }
 
-    if (is.null(declaration$block_var)) {
-      blocks <- NULL
-    } else {
-      blocks <- declaration$block_var
+    ret <- list()
+
+    if (!is.null(declaration$block_var)) {
+      ret[["blocks"]] <- declaration$block_var
     }
 
     if (is.null(declaration$clust_var)) {
-      clusters <- NULL
-    } else {
-      clusters <- declaration$clust_var
+      ret[["clusters"]] <- declaration$clust_var
     }
 
     ## take IPW as weights
     if (length(unique(declaration$probabilities_matrix[, 1])) == 1) {
-      weights <- NULL
-    } else {
-      weights <- 1 / declaration$probabilities_matrix[, 2] ## todo: complement for control units
+      ret[["weights"]] <- 1 / declaration$probabilities_matrix[, 2] ## todo: complement for control units
     }
 
     if (estimator == 'horvitz_thompson') {
-      condition_probabilities <- declaration$probabilities_matrix[, 2]
-      if (declaration$ra_type == 'simple') {
-
-        condition_pr_matrix <- NULL
-
-      } else if (declaration$ra_type == 'complete') {
-        condition_pr_matrix <-
+      ret[["condition_probabilities"]] <- declaration$probabilities_matrix[, 2]
+      if (declaration$ra_type == 'complete') {
+        ret[["condition_pr_matrix"]] <-
           gen_pr_matrix_complete(declaration$probabilities_matrix[, 2])
 
        } else if (declaration$ra_type == 'clustered') {
@@ -137,17 +129,20 @@ read_declaration <-
            }
          }
 
-         condition_pr_matrix <- rbind(cbind(mat_00, mat_01),
+         ret[["condition_pr_matrix"]] <- rbind(cbind(mat_00, mat_01),
                                       cbind(mat_10, mat_11))
       }
     }
-    return(
-      list(
-        blocks = blocks,
-        clusters = clusters,
-        weights = weights,
-        condition_probabilities = condition_probabilities,
-        condition_pr_matrix = condition_pr_matrix
-      )
-    )
+
+    return(ret)
+
   }
+
+#' Wrapper to just return condition_pr_matrix to speed up horvitz_thompson
+#'
+#' @param declaration An object of class 'ra_declaration' that contains the experimental design
+#'
+#' @export
+get_condition_pr_matrix <- function(declaration) {
+  read_declaration(declaration, 'horvitz_thompson')
+}

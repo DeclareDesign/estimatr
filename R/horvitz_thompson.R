@@ -2,16 +2,16 @@
 #'
 #' @param formula An object of class "formula", such as Y ~ Z
 #' @param condition_pr_variable_name A bare (unquoted) name of the variable with the condition 2 (treatment) probabilities.
-#' @param condition_pr_matrix A 2n * 2n matrix of marginal and joint probabilities of all units in condition1 and condition2; see details.
 #' @param block_variable_name An optional bare (unquoted) name of the block variable. Use for blocked designs only.
 #' @param cluster_variable_name An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.
-#' @param declaration An object of class "ra_declaration", from the randomizr package. Can substitute for manually specifying clusters, blocks, and condition probabilities.
+#' @param condition_pr_matrix A 2n * 2n matrix of marginal and joint probabilities of all units in condition1 and condition2
+#' @param declaration An object of class "ra_declaration", from the randomizr package that is an alternative way of specifying the design. Cannot be used along with any of \code{condition_pr_variable_name}, \code{block_variable_name}, \code{cluster_variable_name}, or \code{condition_pr_matrix}.
 #' @param data A data.frame.
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
 #' @param alpha The significance level, 0.05 by default.
 #' @param condition1 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
 #' @param condition2 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
-#' @param constant_effects should constant effects be assumed to estimate the covariance between potential outcomes, default = FALSE.
+#' @param se_type can be one of \code{c("youngs", "constant")} and correspond's to estimating the standard errors using Young's inequality (default, conservative), or the constant effects assumption.
 #'
 #' @details This function implements the Horvitz-Thompson estimator for treatment effects.
 #'
@@ -20,17 +20,17 @@
 horvitz_thompson <-
   function(formula,
            condition_pr_variable_name = NULL,
-           condition_pr_matrix = NULL,
            block_variable_name = NULL,
            cluster_variable_name = NULL,
+           condition_pr_matrix = NULL,
            declaration = NULL,
-           estimator = 'ht',
            se_type = c('youngs', 'constant'),
            data,
            subset = NULL,
            alpha = .05,
            condition1 = NULL,
-           condition2 = NULL) {
+           condition2 = NULL,
+           estimator = 'ht') {
 
     #-----
     # Check arguments
