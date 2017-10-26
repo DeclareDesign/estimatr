@@ -91,7 +91,10 @@ double ht_var_partial(const arma::vec & y,
 
   for (unsigned i = 0; i < y.n_elem; ++i) {
     for(unsigned j = 0; j < y.n_elem; ++j) {
-      var_total += y(i) * y(j) * (p(i, j) - p(i,i) * p(j,j)) / p(i, j);
+      if(i != j) {
+        var_total += y(i) * y(j) * (p(i, j) - p(i,i) * p(j,j)) / p(i, j);
+
+      }
     }
   }
 

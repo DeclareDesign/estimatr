@@ -248,6 +248,22 @@ df_{MPCR} = J - 1
 
 ## `horvitz_thompson()`
 
-TODO
+Right now the Horvitz-Thompson estimator only works for designs where there is neither cluster randomization nor blocking, but should work for any design of arbitrary complexity beyond that (complete random sampling, simple random sampling, and any scheme with complex marginal or joint treatment probabilities, such as an exeriment on a network).
+
+Some definitions I will use here:
+* $\pi_i(z)$ is the marginal probability of being in condition $z \in \{0, 1\}$ for unit i
+* $\pi_{ij}(z_i, z_j)$ is the joint probability of unit $i$ being in condition $z_i$ and unit $j$ being in condition $z_j$
+
+## Estimates
+\[
+\hat{\tau} = \frac{1}{N} \sum^N_{i=1} z_i \frac{y_i}{\pi_i(1)} - (1 - z_i) \frac{y_i}{\pi_i(0)} 
+\]
+]
+
+## Variance
+
+Currently we provide variance estimates that rely on two separate assumption.
+* `"youngs"` which implements a conservative variance estimate using Young's inequality, described in equation 35 on page 147 of [@aronowmiddleton2013] and in [@aronowsamii2017] on pages 11-15.
+* `"constant" which assumes constant treatment effects for which the only reference in the case with general joint inclusion probabilities can be found, possibly with an error, in an older version of [@aronowsammi2017] from March 2012 chich can be found [here](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.394.5477&rep=rep1&type=pdf).
 
 # References

@@ -383,9 +383,11 @@ horvitz_thompson_internal <-
             )
           ) / N
       } else {
-        # No constant effects assumption
+        # Young's inequality, no joint probabilities are 0
         se <-
           sqrt(
+            sum(Y2^2) +
+            sum(Y1^2) +
             ht_var_partial(
               Y2,
               condition_pr_matrix[(N + t2), (N + t2)]
@@ -398,9 +400,7 @@ horvitz_thompson_internal <-
                                  Y1,
                                  condition_pr_matrix[(N + t2), t1],
                                  ps2,
-                                 ps1) +
-            sum(data$y[t2]^2/ps2) +
-            sum(data$y[t1]^2/ps1)
+                                 ps1)
           ) / N
       }
       }

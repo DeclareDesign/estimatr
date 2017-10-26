@@ -80,7 +80,6 @@ clean_model_data <- function(formula,
     }
   })
 
-
   ret <- list(
     outcome=model.response(mf),
     design_matrix=model.matrix.default(formula, data = mf)
