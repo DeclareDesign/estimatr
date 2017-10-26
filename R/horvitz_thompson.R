@@ -44,41 +44,38 @@ horvitz_thompson <-
     #-----
     # Parse arguments, clean data
     #-----
-    ## todo: deal with declarations and missingness
-    ## todo: warn about colliding arguments
+
+    ## Clean data
+    where <- parent.frame()
+    model_data <- eval(substitute(
+      clean_model_data(
+        formula = formula,
+        data = data,
+        subset = subset,
+        cluster = cluster_variable_name,
+        condition_pr = condition_pr_variable_name,
+        block = block_variable_name,
+        where = where
+      )
+    ))
+
     if (!is.null(declaration)) {
+
+      ## TODO deal with declarations and missingness
+      ## TODO warn about colliding arguments
       declare_out <- read_declaration(declaration,
                                       'horvitz_thompson')
+
+      ## Check that returned model data is same length, error if different
+      if (length(declare_out$condition_probabilities) != length(model_data$outcome)) {
+        stop("Data in declaration is of different length than data passed to horvitz_thompson. The declaration and the non-missing rows of data must be the same length.")
+      }
+
       clusters <- declare_out$clusters
       blocks <- declare_out$blocks
 
-      if (!is.null(blocks)) {
-        if (length(blocks) != nrow(data)) {
-          stop("the block variable in your declaration is of different length than your data")
-        }
-      }
-
-      if (!is.null(clusters)) {
-        if (length(clusters) != nrow(data)) {
-          stop("the cluster variable in your declaration is of different length than your data")
-        }
-      }
-
       condition_probabilities <- declare_out$condition_probabilities
       condition_pr_matrix <- declare_out$condition_pr_matrix
-    }
-
-    ## Get subset of data
-    condition_call <- substitute(subset)
-
-    if (!is.null(condition_call)){
-      r <- eval(condition_call, data)
-      data <- data[r, ]
-    }
-
-    missing_data <- !complete.cases(data[, all.vars(formula)])
-
-    if (!is.null(declaration)) {
 
       if (!is.null(condition_call)) {
         condition_probabilities <- condition_probabilities[r]
@@ -118,12 +115,6 @@ horvitz_thompson <-
       ## Get condition probabilities
       if (!is.null(substitute(condition_pr_variable_name))) {
         condition_probabilities <- eval(substitute(condition_pr_variable_name), data)
-
-        if (any(condition_probabilities < 0 | condition_probabilities > 1)) {
-          stop(
-            "Some condition probabilities are outside of [0, 1]."
-          )
-        }
 
         cond_prob_missing <- find_warn_missing(condition_probabilities,
                                                "condition probabilities")
@@ -362,7 +353,7 @@ horvitz_thompson_internal <-
       }
     }
 
-    print(table(condition_pr_matrix))
+    # print(table(condition_pr_matrix))
 
     N <- length(Y)
 
