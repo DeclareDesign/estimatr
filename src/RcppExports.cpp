@@ -45,6 +45,33 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ht_covar_partial
+double ht_covar_partial(const arma::vec& y1, const arma::vec& y0, const arma::mat& p10, const arma::vec& p1, const arma::vec& p0);
+RcppExport SEXP _estimatr_ht_covar_partial(SEXP y1SEXP, SEXP y0SEXP, SEXP p10SEXP, SEXP p1SEXP, SEXP p0SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type y1(y1SEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type y0(y0SEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type p10(p10SEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type p1(p1SEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type p0(p0SEXP);
+    rcpp_result_gen = Rcpp::wrap(ht_covar_partial(y1, y0, p10, p1, p0));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ht_var_partial
+double ht_var_partial(const arma::vec& y, const arma::mat& p);
+RcppExport SEXP _estimatr_ht_var_partial(SEXP ySEXP, SEXP pSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type p(pSEXP);
+    rcpp_result_gen = Rcpp::wrap(ht_var_partial(y, p));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ht_covar_total
 double ht_covar_total(const arma::vec& y0, const arma::vec& y1, const arma::mat& p00, const arma::mat& p11, const arma::mat& pj);
 RcppExport SEXP _estimatr_ht_covar_total(SEXP y0SEXP, SEXP y1SEXP, SEXP p00SEXP, SEXP p11SEXP, SEXP pjSEXP) {
@@ -57,6 +84,20 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::mat& >::type p11(p11SEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type pj(pjSEXP);
     rcpp_result_gen = Rcpp::wrap(ht_covar_total(y0, y1, p00, p11, pj));
+    return rcpp_result_gen;
+END_RCPP
+}
+// joint_incl_pr
+double joint_incl_pr(const double& pi, const double& pj, const double& nleft, const double& ntotal);
+RcppExport SEXP _estimatr_joint_incl_pr(SEXP piSEXP, SEXP pjSEXP, SEXP nleftSEXP, SEXP ntotalSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const double& >::type pi(piSEXP);
+    Rcpp::traits::input_parameter< const double& >::type pj(pjSEXP);
+    Rcpp::traits::input_parameter< const double& >::type nleft(nleftSEXP);
+    Rcpp::traits::input_parameter< const double& >::type ntotal(ntotalSEXP);
+    rcpp_result_gen = Rcpp::wrap(joint_incl_pr(pi, pj, nleft, ntotal));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -132,7 +173,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_estimatr_ht_var", (DL_FUNC) &_estimatr_ht_var, 5},
     {"_estimatr_ht_var_total", (DL_FUNC) &_estimatr_ht_var_total, 2},
     {"_estimatr_ht_var_total2", (DL_FUNC) &_estimatr_ht_var_total2, 2},
+    {"_estimatr_ht_covar_partial", (DL_FUNC) &_estimatr_ht_covar_partial, 5},
+    {"_estimatr_ht_var_partial", (DL_FUNC) &_estimatr_ht_var_partial, 2},
     {"_estimatr_ht_covar_total", (DL_FUNC) &_estimatr_ht_covar_total, 5},
+    {"_estimatr_joint_incl_pr", (DL_FUNC) &_estimatr_joint_incl_pr, 4},
     {"_estimatr_gen_pr_matrix_complete", (DL_FUNC) &_estimatr_gen_pr_matrix_complete, 1},
     {"_estimatr_ht_var_total_clusters", (DL_FUNC) &_estimatr_ht_var_total_clusters, 3},
     {"_estimatr_mult_diag", (DL_FUNC) &_estimatr_mult_diag, 2},

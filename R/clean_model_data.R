@@ -20,6 +20,8 @@ clean_model_data <- function(formula,
                              data,
                              subset,
                              weights,
+                             block,
+                             condition_pr,
                              cluster,
                              where) {
 
@@ -42,6 +44,10 @@ clean_model_data <- function(formula,
   if(!is.null(mf$block) && is.character(mf[['block']]))
     mf[["block"]] <- as.symbol(mf[["block"]])
 
+  # Condition_prs...
+  if(!is.null(mf$condition_pr) && is.character(mf[['condition_pr']]))
+    mf[["condition_pr"]] <- as.symbol(mf[["condition_pr"]])
+
   mf <- eval(mf, where)
 
   local({
@@ -52,6 +58,12 @@ clean_model_data <- function(formula,
     if(!is.null(why_omit$`(cluster)`)){
       warning(
         "Some observations have missingness in the cluster variable but not in the outcome or covariates. These observations have been dropped."
+      )
+    }
+
+    if(!is.null(why_omit$`(condition_pr)`)){
+      warning(
+        "Some observations have missingness in the condition_pr variable but not in the outcome or covariates. These observations have been dropped."
       )
     }
 
@@ -82,6 +94,14 @@ clean_model_data <- function(formula,
     ret[["cluster"]] <- model.extract(mf, "cluster")
     if(is.character(ret[["cluster"]]))
       ret[["cluster"]] <- as.factor(ret[["cluster"]])
+  }
+
+  if(!missing(block)){
+    ret[["block"]] <- model.extract(mf, "block")
+  }
+
+  if(!missing(condition_pr)){
+    ret[["condition_pr"]] <- model.extract(mf, "condition_pr")
   }
 
   return(ret)
