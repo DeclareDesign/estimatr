@@ -68,7 +68,6 @@ difference_in_means <-
     if (is.null(data$block)){
 
       return_frame <- difference_in_means_internal(
-        formula,
         condition1 = condition1,
         condition2 = condition2,
         data = data,
@@ -127,7 +126,6 @@ difference_in_means <-
 
       block_estimates <- lapply(block_dfs, function(x) {
         difference_in_means_internal(
-          formula,
           data = x,
           condition1 = condition1,
           condition2 = condition2,
@@ -224,8 +222,7 @@ weighted_var_internal <- function(w, x, xWbar){
 
 
 difference_in_means_internal <-
-  function(formula,
-           condition1 = NULL,
+  function(condition1 = NULL,
            condition2 = NULL,
            data,
            pair_matched = FALSE,
