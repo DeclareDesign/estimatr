@@ -12,7 +12,7 @@ test_that("Horvitz thompson matches d-i-m under certain conditions", {
   dat$y <- ifelse(dat$z, dat$y1, dat$y0)
 
   horvitz_thompson(y ~ z,
-                   ps,
+                   condition_pr_variable_name = ps,
                    data = dat)
   difference_in_means(y ~ z,
                       data = dat)

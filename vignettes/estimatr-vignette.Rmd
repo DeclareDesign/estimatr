@@ -251,19 +251,49 @@ df_{MPCR} = J - 1
 Right now the Horvitz-Thompson estimator only works for designs where there is neither cluster randomization nor blocking, but should work for any design of arbitrary complexity beyond that (complete random sampling, simple random sampling, and any scheme with complex marginal or joint treatment probabilities, such as an exeriment on a network).
 
 Some definitions I will use here:
-* $\pi_i(z)$ is the marginal probability of being in condition $z \in \{0, 1\}$ for unit i
-* $\pi_{ij}(z_i, z_j)$ is the joint probability of unit $i$ being in condition $z_i$ and unit $j$ being in condition $z_j$
+
+* $\pi_{zi}$ is the marginal probability of being in condition $z \in \{0, 1\}$ for unit i
+* $\pi_{ziwj}$ is the joint probability of unit $i$ being in condition $z$ and unit $j$ being in condition $w \in \{0, 1\}$
+* $\epsilon_{ziwj}$ is the indicator function $\mathbb{1}\left(\pi_{ziwj} = 0\right)$
 
 ## Estimates
 \[
-\hat{\tau} = \frac{1}{N} \sum^N_{i=1} z_i \frac{y_i}{\pi_i(1)} - (1 - z_i) \frac{y_i}{\pi_i(0)} 
+\hat{\tau} = \frac{1}{N} \sum^N_{i=1} z_i \frac{y_i}{\pi_{1i}} - (1 - z_i) \frac{y_i}{\pi_{0i}} 
 \]
-]
 
 ## Variance
 
-Currently we provide variance estimates that rely on two separate assumption.
+Currently we provide variance estimates that rely on two separate assumptions:
+
 * `"youngs"` which implements a conservative variance estimate using Young's inequality, described in equation 35 on page 147 of [@aronowmiddleton2013] and in [@aronowsamii2017] on pages 11-15.
-* `"constant" which assumes constant treatment effects for which the only reference in the case with general joint inclusion probabilities can be found, possibly with an error, in an older version of [@aronowsammi2017] from March 2012 chich can be found [here](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.394.5477&rep=rep1&type=pdf).
+* `"constant"` which assumes constant treatment effects for which the only reference in the case with general joint inclusion probabilities can be found, possibly with an error, in an older version of [@aronowsamii2017] from March 2012 chich can be found [here](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.394.5477&rep=rep1&type=pdf).
+
+**Young's inequality**
+\begin{align*}
+  \hat{\V}_{Y}[\hat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[& z_i \left(\frac{y_i}{\pi_{1i}}\right)^2 + (1 - z_i) \left(\frac{y_i}{\pi_{0i}}\right)^2 + \sum_{j \neq i} \bigg(\frac{z_i z_j}{\pi_{1i1j} + \epsilon_{1i1j}}(\pi_{1i1j} - \pi_{1i}\pi_{1j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{1j}} \\
+  & + \frac{(1-z_i) (1-z_j)}{\pi_{0i0j} + \epsilon_{0i0j}}(\pi_{0i0j} - \pi_{0i}\pi_{0j})\frac{y_i}{\pi_{0i}}\frac{y_j}{\pi_{0j}} - 2 \frac{z_i (1-z_j)}{\pi_{1i0j} + \epsilon_{1i0j}}(\pi_{1i0j} - \pi_{1i}\pi_{0j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{0j}} \\
+  & + \sum_{\forall j \colon \pi_{1i1j} = 0} \left( z_i \frac{y^2_i}{2\pi_{1i}} + z_j \frac{y^2_j}{\pi_{1j}}\right) + \sum_{\forall j \colon \pi_{0i0j} = 0} \left( (1-z_i) \frac{y^2_i}{2\pi_{0i}} + (1-z_j) \frac{y^2_j}{\pi_{0j}}\right)
+  \Bigg]
+\end{align*}
+
+There are some simplifications of the above for simpler designs that follow algebraically from the above. For example, if there are no two units for which the joint probability of being in either condition is 0, which is the case for most experiments that are not matched-pair experiments, then we get:
+
+\begin{align*}
+  \hat{\V}_{Y}[\hat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[& z_i \left(\frac{y_i}{\pi_{1i}}\right)^2 + (1 - z_i) \left(\frac{y_i}{\pi_{0i}}\right)^2 + \sum_{j \neq i} \bigg(\frac{z_i z_j}{\pi_{1i1j}}(\pi_{1i1j} - \pi_{1i}\pi_{1j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{1j}} \\
+  & + \frac{(1-z_i) (1-z_j)}{\pi_{0i0j}}(\pi_{0i0j} - \pi_{0i}\pi_{0j})\frac{y_i}{\pi_{0i}}\frac{y_j}{\pi_{0j}} - 2 \frac{z_i (1-z_j)}{\pi_{1i0j}}(\pi_{1i0j} - \pi_{1i}\pi_{0j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{0j}}
+  \Bigg]
+\end{align*}
+
+If we further simplify to the case where there is simple random assignment, and there is absolutely no dependence among units (i.e. $\pi_{ziwj} = \pi_{zi}\pi_{wj} \;\;\forall\;\;z,w,i,j$), we get:
+
+\begin{align*}
+  \hat{\V}_{Y}[\hat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[& z_i \left(\frac{y_i}{\pi_{1i}}\right)^2 + (1 - z_i) \left(\frac{y_i}{\pi_{0i}}\right)^2\Bigg]
+\end{align*}
+
+**Constant effects**
+
+Alternatively, one can assume constant treatment effects and, under that assumption, estimate the variance that is consistent under that assumption but less conservative.
+
+
 
 # References
