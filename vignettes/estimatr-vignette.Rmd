@@ -264,12 +264,21 @@ Some definitions I will use here:
 \hat{\tau} = \frac{1}{N} \sum^N_{i=1} z_i \frac{y_i}{\pi_{1i}} - (1 - z_i) \frac{y_i}{\pi_{0i}} 
 \]
 
+**Blocked**
+
+\[
+\hat{\tau} = \sum^J_{j=1} \frac{N_j}{N} \hat{\tau_j}
+\]
+where $J$ is the number of blocks, $N_j$ is the size of those blocks, and $\hat{\tau_j}$ is the Horvitz-Thompson estimate in block $j$.
+
 ## Variance
 
 Currently we provide variance estimates that rely on two separate assumptions:
 
 * `"youngs"` which implements a conservative variance estimate using Young's inequality, described in equation 35 on page 147 of [@aronowmiddleton2013] and in [@aronowsamii2017] on pages 11-15.
 * `"constant"` which assumes constant treatment effects for which the only reference in the case with general joint inclusion probabilities can be found, possibly with an error, in an older version of [@aronowsamii2017] from March 2012 chich can be found [here](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.394.5477&rep=rep1&type=pdf).
+
+For complicated designs, including clustered designs, the following variance estimator's are sufficient as they incorporate the design through the marginal and joint condition probabilities. However, there is also an estimator proposed in equation 35 on page 147 of [@aronowmiddleton2013] using collapsed cluster totals.
 
 **Young's inequality**
 \begin{align*}
@@ -291,6 +300,14 @@ If we further simplify to the case where there is simple random assignment, and 
 
 \begin{align*}
   \hat{\V}_{Y}[\hat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[& z_i \left(\frac{y_i}{\pi_{1i}}\right)^2 + (1 - z_i) \left(\frac{y_i}{\pi_{0i}}\right)^2\Bigg]
+\end{align*}
+
+For clustered designs, you can also use the following estimator where $M$ is the total number of clusters, $y_k$ is the total of the outcomes $y_i$ for all $i$ units in cluster $k$, $\pi_zk$ is the marginal probability of cluster $k$ being in condition $z \in \{0, 1\}$, and $z_k$ and $\pi_{zkwl}$ are defined analogously.
+\begin{align*}
+  \hat{\V}_{Y}[\hat{\tau}] = \frac{1}{N^2} \sum^M_{k=1} \Bigg[& z_k \left(\frac{y_k}{\pi_{1k}}\right)^2 + (1 - z_k) \left(\frac{y_k}{\pi_{0k}}\right)^2 + \sum_{l \neq k} \bigg(\frac{z_k z_l}{\pi_{1k1l} + \epsilon_{1k1l}}(\pi_{1k1l} - \pi_{1k}\pi_{1l})\frac{y_k}{\pi_{1k}}\frac{y_l}{\pi_{1l}} \\
+  & + \frac{(1-z_k) (1-z_l)}{\pi_{0k0l} + \epsilon_{0k0l}}(\pi_{0k0l} - \pi_{0k}\pi_{0l})\frac{y_k}{\pi_{0k}}\frac{y_l}{\pi_{0l}} - 2 \frac{z_k (1-z_l)}{\pi_{1k0l} + \epsilon_{1k0l}}(\pi_{1k0l} - \pi_{1k}\pi_{0l})\frac{y_k}{\pi_{1k}}\frac{y_l}{\pi_{0l}} \\
+  & + \sum_{\forall l \colon \pi_{1k1l} = 0} \left( z_k \frac{y^2_k}{2\pi_{1k}} + z_l \frac{y^2_l}{\pi_{1l}}\right) + \sum_{\forall l \colon \pi_{0k0l} = 0} \left( (1-z_k) \frac{y^2_k}{2\pi_{0k}} + (1-z_l) \frac{y^2_l}{\pi_{0l}}\right)
+  \Bigg]
 \end{align*}
 
 **Constant effects**

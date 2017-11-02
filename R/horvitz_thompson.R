@@ -162,20 +162,16 @@ horvitz_thompson <-
 
     } else {
 
-      if (!is.null(condition_pr_matrix)) {
-        stop("Blocks currently only supported for simple random assignment of units or clusters within blocks.")
-      }
-
-      if (!is.null(data$blocks)) {
+      if (!is.null(data$clusters)) {
 
         ## Check that clusters nest within blocks
-        if (!all(tapply(data$blocks, data$blocks, function(x)
+        if (!all(tapply(data$blocks, data$clusters, function(x)
           all(x == x[1])))) {
           stop("All units within a cluster must be in the same block.")
         }
 
         ## get number of clusters per block
-        clust_per_block <- tapply(data$blocks,
+        clust_per_block <- tapply(data$clusters,
                                   data$blocks,
                                   function(x) length(unique(x)))
       } else {
@@ -197,6 +193,10 @@ horvitz_thompson <-
         )
       }
 
+      N <- nrow(data)
+
+      data$index <- 1:N
+
       block_dfs <- split(data, data$blocks)
 
       block_estimates <- lapply(block_dfs, function(x) {
@@ -204,7 +204,8 @@ horvitz_thompson <-
           data = x,
           condition1 = condition1,
           condition2 = condition2,
-          condition_pr_matrix = condition_pr_matrix,
+          condition_pr_matrix = condition_pr_matrix[c(x$index, N + x$index), c(x$index, N + x$index)],
+          estimator = estimator,
           se_type = se_type,
           alpha = alpha
         )
@@ -216,9 +217,9 @@ horvitz_thompson <-
 
       n_blocks <- nrow(block_estimates)
 
-      diff <- with(block_estimates, sum(est * N/N_overall))
+      diff <- with(block_estimates, sum(est) * N/N_overall)
 
-      se <- with(block_estimates, sqrt(sum(se^2 * (N/N_overall)^2)))
+      se <- with(block_estimates, sqrt(sum(se^2) * (N/N_overall)^2))
 
       ## we don't know if this is correct!
       df <- n_blocks - 2
