@@ -77,7 +77,11 @@ double ht_covar_partial(const arma::vec & y1,
 
   for (unsigned i = 0; i < y1.n_elem; ++i) {
     for(unsigned j = 0; j < y0.n_elem; ++j) {
-      cov_total += y1(i) * y0(j) * (p10(i, j) - p1(i) * p0(j)) / p10(i, j);
+      if(p10(i, j) == 0) {
+        cov_total += y1(i) * y0(j) * (p10(i, j) - p1(i) * p0(j));
+      } else {
+        cov_total += y1(i) * y0(j) * (p10(i, j) - p1(i) * p0(j)) / p10(i, j);
+      }
     }
   }
 
@@ -92,7 +96,12 @@ double ht_var_partial(const arma::vec & y,
   for (unsigned i = 0; i < y.n_elem; ++i) {
     for(unsigned j = 0; j < y.n_elem; ++j) {
       if(i != j) {
-        var_total += y(i) * y(j) * (p(i, j) - p(i,i) * p(j,j)) / p(i, j);
+        if (p(i, j) == 0) {
+          var_total += y(i) * y(j) * (p(i, j) - p(i,i) * p(j,j)) +
+            std::pow(y(i), 2) * p(i, i) / 2.0 + std::pow(y(j), 2) * p(j, j) / 2.0;
+        } else {
+          var_total += y(i) * y(j) * (p(i, j) - p(i,i) * p(j,j)) / p(i, j);
+        }
 
       }
     }

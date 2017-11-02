@@ -284,9 +284,9 @@ horvitz_thompson_internal <-
 
     # Check that treatment status is uniform within cluster, checked here
     # so that the treatment vector t doesn't have to be built anywhere else
-    if (!is.null(data$blocks)) {
+    if (!is.null(data$clusters)) {
 
-      if (!all(tapply(data$t, data$blocks, function(x) all(x == x[1])))) {
+      if (!all(tapply(data$t, data$clusters, function(x) all(x == x[1])))) {
         stop(
           "All units within a cluster must have the same treatment condition."
         )
@@ -307,11 +307,12 @@ horvitz_thompson_internal <-
     Y1 <- data$y[t1] / ps1
 
     # Trying out estimator from Middleton & Aronow 2015 page 51
-    if (!is.null(data$blocks) & estimator == 'ma') {
+    if (!is.null(data$clusters) & estimator == 'ma') {
 
-      k <- length(unique(data$blocks))
-      c_2 <- data$blocks[t2]
-      c_1 <- data$blocks[t1]
+      print('ma')
+      k <- length(unique(data$clusters))
+      c_2 <- data$clusters[t2]
+      c_1 <- data$clusters[t1]
       k_2 <- length(unique(c_2))
       k_1 <- length(unique(c_1))
 
@@ -330,67 +331,37 @@ horvitz_thompson_internal <-
 
     } else {
 
-    diff <- (sum(Y2) - sum(Y1)) / N
+      diff <- (sum(Y2) - sum(Y1)) / N
 
-    if (is.null(condition_pr_matrix)) {
-      # Simple random assignment
-      # joint inclusion probabilities = product of marginals
-      if (se_type ==  'constant') {
-        # TODO i
-        # rescaled potential outcomes
-        y0 <- ifelse(data$t==condition1,
-                     data$y / (1-data$condition_probabilities),
-                     (data$y - diff) / (1-data$condition_probabilities))
-        y1 <- ifelse(data$t==condition2,
-                     data$y / data$condition_probabilities,
-                     (data$y + diff) / data$condition_probabilities)
+      if (!is.null(data$clusters) & estimator == 'am') {
 
-        # print(var_ht_total_no_cov(y1, data$condition_probabilities) +
-        #       var_ht_total_no_cov(y0, 1 - data$condition_probabilities))
-        #
-        # print(-2*sum(c(data$y[t2], data$y[t1] + diff) * c(data$y[t2] - diff, data$y[t1])))
+        # print('am')
 
-        se <-
-          sqrt(
-            (
-              var_ht_total_no_cov(y1, data$condition_probabilities) +
-              var_ht_total_no_cov(y0, 1 - data$condition_probabilities) +
-              2 * sum(c(data$y[t2], data$y[t1] + diff) * c(data$y[t2] - diff, data$y[t1]))
+        k <- length(unique(data$clusters))
 
-            )
-          ) / N
-      } else {
-        se <-
-          sqrt(
-            sum(Y2^2) + sum(Y1^2)
-          ) / N
-      }
-    } else {
-      # Complete random assignment
-      if (se_type ==  'constant') {
-        # rescaled potential outcomes
-        y0 <- ifelse(data$t==condition1,
-                     data$y / (1-data$condition_probabilities),
-                     (data$y - diff) / (1-data$condition_probabilities))
-        y1 <- ifelse(data$t==condition2,
-                     data$y / data$condition_probabilities,
-                     (data$y + diff) / data$condition_probabilities)
-        se <-
-          sqrt(
-            ht_var_total(
-              c(-y0, y1),
-              condition_pr_matrix
-            )
-          ) / N
-      } else {
-        # Young's inequality, no joint probabilities are 0
+        y2_totals <- tapply(data$y[t2], data$clusters[t2], sum)
+        y1_totals <- tapply(data$y[t1], data$clusters[t1], sum)
+
+        to_drop <- which(duplicated(data$clusters))
+        t2 <- which(data$t[-to_drop] == condition2)
+        t1 <- which(data$t[-to_drop] == condition1)
+
+        # reorder totals because tapply will sort on cluster
+        y2_totals <- y2_totals[as.character(data$clusters[-to_drop][t2])]
+        y1_totals <- y1_totals[as.character(data$clusters[-to_drop][t1])]
+
+        condition_pr_matrix <- condition_pr_matrix[-c(to_drop, N + to_drop), -c(to_drop, N + to_drop)]
+
+        Y2 <- y2_totals / diag(condition_pr_matrix)[k + t2]# for now rescale, with joint pr need squared top alone
+        Y1 <- y1_totals / diag(condition_pr_matrix)[t1]
+
         se <-
           sqrt(
             sum(Y2^2) +
             sum(Y1^2) +
             ht_var_partial(
               Y2,
-              condition_pr_matrix[(N + t2), (N + t2)]
+              condition_pr_matrix[(k + t2), (k + t2)]
             ) +
             ht_var_partial(
               Y1,
@@ -398,11 +369,83 @@ horvitz_thompson_internal <-
             ) -
             2 * ht_covar_partial(Y2,
                                  Y1,
-                                 condition_pr_matrix[(N + t2), t1],
+                                 condition_pr_matrix[(k + t2), t1],
                                  ps2,
                                  ps1)
           ) / N
-      }
+
+      } else if (is.null(condition_pr_matrix)) {
+        # Simple random assignment
+        # joint inclusion probabilities = product of marginals
+        if (se_type ==  'constant') {
+          # rescaled potential outcomes
+          y0 <- ifelse(data$t==condition1,
+                       data$y / (1-data$condition_probabilities),
+                       (data$y - diff) / (1-data$condition_probabilities))
+          y1 <- ifelse(data$t==condition2,
+                       data$y / data$condition_probabilities,
+                       (data$y + diff) / data$condition_probabilities)
+
+          # print(var_ht_total_no_cov(y1, data$condition_probabilities) +
+          #       var_ht_total_no_cov(y0, 1 - data$condition_probabilities))
+          #
+          # print(-2*sum(c(data$y[t2], data$y[t1] + diff) * c(data$y[t2] - diff, data$y[t1])))
+
+          se <-
+            sqrt(
+              (
+                var_ht_total_no_cov(y1, data$condition_probabilities) +
+                var_ht_total_no_cov(y0, 1 - data$condition_probabilities) +
+                # TODO why is it +2 instead of - (looking at old samii/aronow)
+                2 * sum(c(data$y[t2], data$y[t1] + diff) * c(data$y[t2] - diff, data$y[t1]))
+
+              )
+            ) / N
+        } else {
+          se <-
+            sqrt(
+              sum(Y2^2) + sum(Y1^2)
+            ) / N
+        }
+      } else {
+        # Complete random assignment
+        if (se_type ==  'constant') {
+          # rescaled potential outcomes
+          y0 <- ifelse(data$t==condition1,
+                       data$y / (1-data$condition_probabilities),
+                       (data$y - diff) / (1-data$condition_probabilities))
+          y1 <- ifelse(data$t==condition2,
+                       data$y / data$condition_probabilities,
+                       (data$y + diff) / data$condition_probabilities)
+          se <-
+            sqrt(
+              ht_var_total(
+                c(-y0, y1),
+                condition_pr_matrix
+              )
+            ) / N
+        } else {
+          print('full youngs')
+          # Young's inequality
+          se <-
+            sqrt(
+              sum(Y2^2) +
+              sum(Y1^2) +
+              ht_var_partial(
+                Y2,
+                condition_pr_matrix[(N + t2), (N + t2)]
+              ) +
+              ht_var_partial(
+                Y1,
+                condition_pr_matrix[t1, t1]
+              ) -
+              2 * ht_covar_partial(Y2,
+                                   Y1,
+                                   condition_pr_matrix[(N + t2), t1],
+                                   ps2,
+                                   ps1)
+            ) / N
+        }
       }
     }
 
