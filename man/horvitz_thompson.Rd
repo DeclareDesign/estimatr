@@ -4,13 +4,15 @@
 \alias{horvitz_thompson}
 \title{Horvitz-Thompson estimator of treatment effects}
 \usage{
-horvitz_thompson(formula, condition_pr_variable_name, block_variable_name,
+horvitz_thompson(formula, data, condition_pr_variable_name, block_variable_name,
   cluster_variable_name, condition_pr_matrix = NULL, declaration = NULL,
-  se_type = c("youngs", "constant"), data, subset = NULL, alpha = 0.05,
+  se_type = c("youngs", "constant"), subset = NULL, alpha = 0.05,
   condition1 = NULL, condition2 = NULL, estimator = "ht")
 }
 \arguments{
 \item{formula}{An object of class "formula", such as Y ~ Z}
+
+\item{data}{A data.frame.}
 
 \item{condition_pr_variable_name}{A bare (unquoted) name of the variable with the condition 2 (treatment) probabilities.}
 
@@ -23,8 +25,6 @@ horvitz_thompson(formula, condition_pr_variable_name, block_variable_name,
 \item{declaration}{An object of class "ra_declaration", from the randomizr package that is an alternative way of specifying the design. Cannot be used along with any of \code{condition_pr_variable_name}, \code{block_variable_name}, \code{cluster_variable_name}, or \code{condition_pr_matrix}.}
 
 \item{se_type}{can be one of \code{c("youngs", "constant")} and correspond's to estimating the standard errors using Young's inequality (default, conservative), or the constant effects assumption.}
-
-\item{data}{A data.frame.}
 
 \item{subset}{An optional bare (unquoted) expression specifying a subset of observations to be used.}
 

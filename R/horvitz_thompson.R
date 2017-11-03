@@ -119,7 +119,7 @@ horvitz_thompson <-
       if (declaration$ra_type == "simple") {
         condition_pr_matrix <- NULL
       } else {
-        condition_pr_matrix <- get_condition_pr_matrix(declaration)
+        condition_pr_matrix <- declaration_to_condition_pr_mat(declaration)
       }
 
     }
