@@ -317,7 +317,7 @@ Alternatively, one can assume constant treatment effects and, under that assumpt
 * $y_{zi}$ is the potential outcome for condition $z$ for unit $i$. This is either observed if $z_i = z$ or estimated using the constant effects assumption if $z_i \neq z$, where $z_i$ is the condition for unit $i$. To be precise $y_{1i} = z_i y_{i} + (1 - z_i) (y_{i} + \hat{\tau})$ and  $y_{0i} = z_i (y_{i} - \hat{\tau}) + (1 - z_i) y_{i}$, where $\hat{\tau}$ is the estimated treatment effect.
 
 \begin{align*}
-    \hat{\V}_{C}[\hat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[& (1 - \pi_{0i}) \pi_{0i} \left(\frac{y_{0i}}{\pi_{0i}}\right)^2 + (1 - \pi_{1i}) \pi_{1i} \left(\frac{y_{1i}}{\pi_{1i}}\right)^2 \\
+    \hat{\V}_{C}[\hat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[& (1 - \pi_{0i}) \pi_{0i} \left(\frac{y_{0i}}{\pi_{0i}}\right)^2 + (1 - \pi_{1i}) \pi_{1i} \left(\frac{y_{1i}}{\pi_{1i}}\right)^2 - 2 y_{1i} y_{0i} \\
     & + \sum_{j \neq i} \Big( (\pi_{0i0j} - \pi_{0i} \pi_{0j}) \frac{y_{0i}}{\pi_{0i}} \frac{y_{0j}}{\pi_{0j}} + (\pi_{1i1j} - \pi_{1i} \pi_{1j}) \frac{y_{1i}}{\pi_{1i}} \frac{y_{1j}}{\pi_{1j}} \\
     &- 2 (\pi_{1i0j} - \pi_{1i} \pi_{0j}) \frac{y_{1i}}{\pi_{1i}} \frac{y_{0j}}{\pi_{0j}}
   \Big)\Bigg]

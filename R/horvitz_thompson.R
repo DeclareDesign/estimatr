@@ -61,25 +61,25 @@ horvitz_thompson <-
       }
 
       # Add clusters, blocks, and treatment probabilities to data so they can be cleaned with clean_model_data
-      if (!is.null(declaration$clust_var) && is.null(data$`.CLUSTERS`)) {
-        data$`.CLUSTERS` <- declaration$clust_var
-        cluster_variable_name <- '.CLUSTERS'
+      if (!is.null(declaration$clust_var) && is.null(data$`.clusters_ddinternal`)) {
+        data$`.clusters_ddinternal` <- declaration$clust_var
+        cluster_variable_name <- '.clusters_ddinternal'
       } else {
-        stop("estimatr stores clusters from declarations in a variable called .CLUSTERS in your data. Please remove it from the data and try again.")
+        stop("estimatr stores clusters from declarations in a variable called .clusters_ddinternal in your data. Please remove it and try again.")
       }
 
-      if (!is.null(declaration$block_var) && is.null(data$`.BLOCKS`)) {
-        data$`.BLOCKS` <- declaration$block_var
-        block_variable_name <- '.BLOCKS'
+      if (!is.null(declaration$block_var) && is.null(data$`.blocks_ddinternal`)) {
+        data$`.blocks_ddinternal` <- declaration$block_var
+        block_variable_name <- '.blocks_ddinternal'
       } else {
-        stop("estimatr stores blocks from declarations in a variable called .BLOCKS in your data. Please remove it from the data and try again.")
+        stop("estimatr stores blocks from declarations in a variable called .blocks_ddinternal in your data. Please remove it and try again.")
       }
 
-      if (is.null(data$`.TREATMENT_PROB`)) {
-        data$`.TREATMENT_PROB` <- declaration$probabilities_matrix[, 2]
-        condition_pr_variable_name <- '.TREATMENT_PROB'
+      if (is.null(data$`.treatment_prob_ddinternal`)) {
+        data$`.treatment_prob_ddinternal` <- declaration$probabilities_matrix[, 2]
+        condition_pr_variable_name <- '.treatment_prob_ddinternal'
       } else {
-        stop("estimatr stores treatment probabilities from declarations in a variable called .TREATMENT_PROB in your data. Please remove/rename it from data and try again.")
+        stop("estimatr stores treatment probabilities from declarations in a variable called .treatment_prob_ddinternal in your data. Please remove/rename it and try again.")
       }
 
     }
