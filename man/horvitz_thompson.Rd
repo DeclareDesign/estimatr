@@ -4,11 +4,10 @@
 \alias{horvitz_thompson}
 \title{Horvitz-Thompson estimator of treatment effects}
 \usage{
-horvitz_thompson(formula, condition_pr_variable_name = NULL,
-  block_variable_name = NULL, cluster_variable_name = NULL,
-  condition_pr_matrix = NULL, declaration = NULL, se_type = c("youngs",
-  "constant"), data, subset = NULL, alpha = 0.05, condition1 = NULL,
-  condition2 = NULL, estimator = "ht")
+horvitz_thompson(formula, condition_pr_variable_name, block_variable_name,
+  cluster_variable_name, condition_pr_matrix = NULL, declaration = NULL,
+  se_type = c("youngs", "constant"), data, subset = NULL, alpha = 0.05,
+  condition1 = NULL, condition2 = NULL, estimator = "ht")
 }
 \arguments{
 \item{formula}{An object of class "formula", such as Y ~ Z}

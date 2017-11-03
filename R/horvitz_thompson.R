@@ -19,19 +19,20 @@
 #'
 horvitz_thompson <-
   function(formula,
-           condition_pr_variable_name = NULL,
-           block_variable_name = NULL,
-           cluster_variable_name = NULL,
+           data,
+           condition_pr_variable_name,
+           block_variable_name,
+           cluster_variable_name,
            condition_pr_matrix = NULL,
            declaration = NULL,
            se_type = c('youngs', 'constant'),
-           data,
            subset = NULL,
            alpha = .05,
            condition1 = NULL,
            condition2 = NULL,
            estimator = 'ht') {
 
+    # TODO use cleanmodeldata
     #-----
     # Check arguments
     #-----
@@ -46,13 +47,41 @@ horvitz_thompson <-
     #-----
     # Parse arguments, clean data
     #-----
-    ## User can either use declaration or the arguments, not both!
+    # User can either use declaration or the arguments, not both!
     if (!is.null(declaration) &
-        (!is.null(cluster_variable_name) |
-         !is.null(condition_pr_variable_name) |
-         !is.null(block_variable_name) |
+        (!missing(cluster_variable_name) |
+         !missing(condition_pr_variable_name) |
+         !missing(block_variable_name) |
          !is.null(condition_pr_matrix))) {
       stop("Cannot use declaration with any of cluster_variable_name, condition_pr_variable_name, block_variable_name, condition_pr_matrix.")
+
+      # Declaration can only be used if it is the same length as the data being passed
+      if (nrow(declaration$probabilities_matrix) != nrow(data)) {
+        stop("Cannot use declaration if declaration 'N' is different than the rows in data.")
+      }
+
+      # Add clusters, blocks, and treatment probabilities to data so they can be cleaned with clean_model_data
+      if (!is.null(declaration$clust_var) && is.null(data$`.CLUSTERS`)) {
+        data$`.CLUSTERS` <- declaration$clust_var
+        cluster_variable_name <- '.CLUSTERS'
+      } else {
+        stop("estimatr stores clusters from declarations in a variable called .CLUSTERS in your data. Please remove it from the data and try again.")
+      }
+
+      if (!is.null(declaration$block_var) && is.null(data$`.BLOCKS`)) {
+        data$`.BLOCKS` <- declaration$block_var
+        block_variable_name <- '.BLOCKS'
+      } else {
+        stop("estimatr stores blocks from declarations in a variable called .BLOCKS in your data. Please remove it from the data and try again.")
+      }
+
+      if (is.null(data$`.TREATMENT_PROB`)) {
+        data$`.TREATMENT_PROB` <- declaration$probabilities_matrix[, 2]
+        condition_pr_variable_name <- '.TREATMENT_PROB'
+      } else {
+        stop("estimatr stores treatment probabilities from declarations in a variable called .TREATMENT_PROB in your data. Please remove/rename it from data and try again.")
+      }
+
     }
 
     ## Clean data
@@ -79,56 +108,34 @@ horvitz_thompson <-
 
     if (!is.null(declaration)) {
 
-      ## TODO deal with declarations and missingness
-      ## TODO warn about colliding arguments
-      declare_out <- read_declaration(declaration,
-                                      'horvitz_thompson')
-
-      ## Check that returned model data is same length, error if different
-      if (length(declare_out$condition_probabilities) != length(data$y)) {
-        stop(sprintf("After cleaning the data, it has %d rows while the declaration has %d. The declaration should be th same length as the cleaned data.", length(data$y), length(declare_out$condition_probabilities)))
+      # Use output from clean_model_data to rebuild declaration
+      if (nrow(declaration$probabilities_matrix) != nrow(model_data)) {
+        declaration$probabilities_matrix <- cbind(1 - model_data$condition_pr,
+                                                  model_data$condition_pr)
       }
-      data$clusters <- declare_out$clusters
-      data$blocks <- declare_out$blocks
-      data$condition_probabilities <- declare_out$condition_probabilities
 
-      condition_pr_matrix <- declare_out$condition_pr_matrix
-      rm(declare_out)
-
-      # if (!is.null(blocks)) {
-      #   blocks_missing <- find_warn_missing(blocks, "blocking")
-      # }
-      #
-      # if (!is.null(clusters)) {
-      #   clusters_missing <- find_warn_missing(clusters, "cluster")
-      # }
-      #
-      # if (!is.null(clusters) & is.null(blocks)) {
-      #   any_missing <- any_missing | clusters_missing
-      #   clusters <- clusters[!any_missing]
-      # } else if (is.null(clusters) & !is.null(blocks)) {
-      #   any_missing <- any_missing | blocks_missing
-      #   blocks <- blocks[!any_missing]
-      # } else if (!is.null(clusters) & !is.null(clusters)) {
-      #   any_missing <- any_missing | blocks_missing | clusters_missing
-      #   blocks <- blocks[!any_missing]
-      #   clusters <- clusters[!any_missing]
-      # }
-      #
-      # data <- data[!any_missing, ]
-
-    } else {
-      data$clusters <- model_data$cluster
-      data$condition_probabilities <- model_data$condition_pr
-      data$blocks <- model_data$block
-
-      rm(model_data)
-
-      if (is.null(data$condition_probabilities)) {
-        data$condition_probabilities <- diag(condition_pr_matrix)[(length(data$y)+1):(2*length(data$y))]
+      # If simple, just use condition probabilities shortcut!
+      # TODO get working with blocking
+      if (declaration$ra_type == "simple") {
+        condition_pr_matrix <- NULL
+      } else {
+        condition_pr_matrix <- get_condition_pr_matrix(declaration)
       }
+
     }
 
+    data$clusters <- model_data$cluster
+    data$blocks <- model_data$block
+
+    if (!is.null(model_data$condition_probabilities)) {
+      data$condition_probabilities <- model_data$condition_pr
+    } else {
+      data$condition_probabilities <- diag(condition_pr_matrix)[(length(data$y)+1):(2*length(data$y))]
+    }
+
+    rm(model_data)
+
+    # Check some features of the design
     if (!is.null(data$clusters)) {
       # check condition ps constant within cluster
       if(any(!tapply(data$condition_probabilities, data$clusters, function(x) all(x == x[1])))) {
@@ -139,6 +146,7 @@ horvitz_thompson <-
     #-----
     # Estimation
     #-----
+
     if (is.null(data$blocks)){
       return_list <-
         horvitz_thompson_internal(

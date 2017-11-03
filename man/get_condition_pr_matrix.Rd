@@ -2,13 +2,19 @@
 % Please edit documentation in R/read_declaration.R
 \name{get_condition_pr_matrix}
 \alias{get_condition_pr_matrix}
-\title{Wrapper to just return condition_pr_matrix to speed up horvitz_thompson}
+\title{Learns experimental design from randomization declaration}
 \usage{
 get_condition_pr_matrix(declaration)
 }
 \arguments{
 \item{declaration}{An object of class 'ra_declaration' that contains the experimental design}
+
+\item{estimator}{The estimator that needs to learn the experimental design
+
+Wrapper to just return condition_pr_matrix to speed up horvitz_thompson}
+
+\item{declaration}{An object of class 'ra_declaration' that contains the experimental design}
 }
 \description{
-Wrapper to just return condition_pr_matrix to speed up horvitz_thompson
+Learns experimental design from randomization declaration
 }
