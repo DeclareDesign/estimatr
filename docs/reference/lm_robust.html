@@ -23,7 +23,8 @@
 <link href="../pkgdown.css" rel="stylesheet">
 <script src="../jquery.sticky-kit.min.js"></script>
 <script src="../pkgdown.js"></script>
-
+  
+  
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
 
@@ -102,9 +103,9 @@
     <p>Ordinary Least Squares with Robust Standard Errors</p>
     
 
-    <pre class="usage"><span class='fu'>lm_robust</span>(<span class='no'>formula</span>, <span class='no'>data</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>subset</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cluster_variable_name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>,
-  <span class='kw'>coefficient_name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+    <pre class="usage"><span class='fu'>lm_robust</span>(<span class='no'>formula</span>, <span class='no'>data</span>, <span class='no'>weights</span>, <span class='no'>subset</span>, <span class='no'>cluster_variable_name</span>,
+  <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>coefficient_name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>return_vcov</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -131,7 +132,7 @@
     </tr>
     <tr>
       <th>se_type</th>
-      <td><p>The sort of standard error sought. Without clustering: "HCO", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "BM" (default), "stata".</p></td>
+      <td><p>The sort of standard error sought. Without clustering: "HC0", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "CR2" (default), "stata".</p></td>
     </tr>
     <tr>
       <th>ci</th>
@@ -144,6 +145,10 @@
     <tr>
       <th>coefficient_name</th>
       <td><p>a character or character vector that indicates which coefficients should be reported. If left unspecified, returns all coefficients.</p></td>
+    </tr>
+    <tr>
+      <th>return_vcov</th>
+      <td><p>a boolean for whether to return the vcov matrix for later usage, TRUE by default.</p></td>
     </tr>
     </table>
     

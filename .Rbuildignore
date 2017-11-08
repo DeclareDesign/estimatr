@@ -10,3 +10,4 @@ deploy.sh
 _pkgdown.yml
 update_repo.R
 ^data-raw$
+^_pkgdown\.yml$
