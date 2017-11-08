@@ -105,4 +105,38 @@ test_that("Horvitz-Thompson works with clustered data", {
 })
 
 # test missingness works as expected
+# test blocks in the data
+# test auxiliary funtions (get condition pr)
+
 # errors when arguments are passed that shouldn't be together
+test_that("Horvitz-Thompson properly checks arguments", {
+
+  n <- 8
+  dat <- data.frame(y = rnorm(n),
+                    ps = 0.4,
+                    z = sample(rep(0:1, each = n/2)),
+                    x = runif(n))
+  decl <- randomizr::declare_ra(N = n, prob = 0.4, simple = F)
+
+  expect_error(
+    horvitz_thompson(y ~ z, data = dat, condition_pr_variable_name = ps, declaration = decl),
+    "Cannot use declaration with any of"
+  )
+
+  expect_error(
+    horvitz_thompson(y ~ z, data = dat, condition_pr_matrix = declaration_to_condition_pr_mat(decl), declaration = decl),
+    "Cannot use declaration with any of"
+  )
+
+  expect_error(
+    horvitz_thompson(y ~ z + x, data = dat, declaration = decl),
+    "formula"
+  )
+
+  expect_error(
+    horvitz_thompson(y ~ z, data = dat, declaration = randomizr::declare_ra(N = n+1, prob = 0.4)),
+    "N|declaration"
+  )
+
+})
+
