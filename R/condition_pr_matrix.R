@@ -43,102 +43,13 @@ declaration_to_condition_pr_mat <- function(declaration) {
 
   } else if (declaration$ra_type == 'clustered') {
 
-    n <- nrow(declaration$probabilities_matrix)
-    cluster_lists <- split(seq_len(n), declaration$clust_var)
-    n_clust <- length(cluster_lists)
-
-    unique_first_in_cl <- !duplicated(declaration$clust_var)
-    cluster_marginal_probs <-
-      declaration$probabilities_matrix[unique_first_in_cl, 2]
-
-    # Complete random sampling
-    if (is.null(simple) || !simple) {
-
-      ## todo: make work with odd number of clusters
-      ## Conditional probabilities
-      # p(j==0|i==0)
-      pr_j0_given_i0 <-
-        (
-          (n_clust * (1-cluster_marginal_probs)) # total 0s
-          - 1 # remove i == 0
-        ) /
-        (n_clust - 1) # remaining units
-
-      # p(j==0|i==1)
-      pr_j0_given_i1 <-
-        (
-          (n_clust * (1-cluster_marginal_probs)) # total 0s
-        ) /
-        (n_clust - 1) # remaining units
-
-      # p(j==1|i==0)
-      pr_j1_given_i0 <-
-        (
-          n_clust * cluster_marginal_probs # total 1s
-        ) /
-        (n_clust - 1) # remaining units
-
-
-      # p(j==1|i==1)
-      pr_j1_given_i1 <-
-        (
-          (n_clust * cluster_marginal_probs) # total 1s
-          - 1 # remove i == 1
-        ) /
-        (n_clust - 1) # remaining units
-
-    } else if (simple) { # cluster, simple randomized
-      pr_j0_given_i0 <- pr_j0_given_i1 <-
-        1 - cluster_marginal_probs
-
-      pr_j1_given_i0 <- pr_j1_given_i1 <-
-        cluster_marginal_probs
-    }
-
-
-    # container mats
-    mat_00 <- mat_01 <- mat_10 <- mat_11 <-
-      matrix(NA, nrow = n, ncol = n)
-
-    for (i in seq_along(cluster_lists)) {
-      for (j in seq_along(cluster_lists)) {
-        if (i == j) {
-          mat_11[cluster_lists[[i]], cluster_lists[[j]]] <-
-            cluster_marginal_probs[i]
-
-          mat_00[cluster_lists[[i]], cluster_lists[[j]]] <-
-            1 - cluster_marginal_probs[i]
-
-          mat_01[cluster_lists[[i]], cluster_lists[[j]]] <-
-            0
-
-          mat_10[cluster_lists[[i]], cluster_lists[[j]]] <-
-            0
-
-        } else {
-          mat_11[cluster_lists[[i]], cluster_lists[[j]]] <-
-            cluster_marginal_probs[i] *
-            pr_j1_given_i1[j]
-
-          mat_00[cluster_lists[[i]], cluster_lists[[j]]] <-
-            (1 - cluster_marginal_probs[i]) *
-            pr_j0_given_i0[j]
-
-          mat_01[cluster_lists[[i]], cluster_lists[[j]]] <-
-            (1 - cluster_marginal_probs[i]) *
-            pr_j1_given_i0[j]
-
-          mat_10[cluster_lists[[i]], cluster_lists[[j]]] <-
-            cluster_marginal_probs[i] *
-            pr_j0_given_i1[j]
-
-        }
-      }
-    }
-
+    #print(simple)
     condition_pr_matrix <-
-      rbind(cbind(mat_00, mat_01),
-            cbind(mat_10, mat_11))
+      gen_pr_matrix_cluster(
+        clusters = declaration$clust_var,
+        treat_probs = declaration$probabilities_matrix[, 2],
+        simple = simple
+      )
 
   } else if (declaration$ra_type == 'blocked') {
     stop('blocked designs cannot be read from declare_ra for now.')
@@ -148,6 +59,108 @@ declaration_to_condition_pr_mat <- function(declaration) {
 
 }
 
+#' @export
+gen_pr_matrix_cluster <- function(clusters, treat_probs, simple) {
+
+  n <- length(clusters)
+  cluster_lists <- split(seq_len(n), clusters)
+  n_clust <- length(cluster_lists)
+
+  unique_first_in_cl <- !duplicated(clusters)
+  cluster_marginal_probs <-
+    treat_probs[unique_first_in_cl]
+
+  # Complete random sampling
+  if (is.null(simple) || !simple) {
+
+    ## todo: make work with odd number of clusters
+    ## Conditional probabilities
+    # p(j==0|i==0)
+    pr_j0_given_i0 <-
+      (
+        (n_clust * (1-cluster_marginal_probs)) # total 0s
+        - 1 # remove i == 0
+      ) /
+      (n_clust - 1) # remaining units
+
+    # p(j==0|i==1)
+    pr_j0_given_i1 <-
+      (
+        (n_clust * (1-cluster_marginal_probs)) # total 0s
+      ) /
+      (n_clust - 1) # remaining units
+
+    # p(j==1|i==0)
+    pr_j1_given_i0 <-
+      (
+        n_clust * cluster_marginal_probs # total 1s
+      ) /
+      (n_clust - 1) # remaining units
+
+
+    # p(j==1|i==1)
+    pr_j1_given_i1 <-
+      (
+        (n_clust * cluster_marginal_probs) # total 1s
+        - 1 # remove i == 1
+      ) /
+      (n_clust - 1) # remaining units
+
+  } else if (simple) { # cluster, simple randomized
+    pr_j0_given_i0 <- pr_j0_given_i1 <-
+      1 - cluster_marginal_probs
+
+    pr_j1_given_i0 <- pr_j1_given_i1 <-
+      cluster_marginal_probs
+  }
+
+
+  # container mats
+  mat_00 <- mat_01 <- mat_10 <- mat_11 <-
+    matrix(NA, nrow = n, ncol = n)
+
+  for (i in seq_along(cluster_lists)) {
+    for (j in seq_along(cluster_lists)) {
+      if (i == j) {
+        mat_11[cluster_lists[[i]], cluster_lists[[j]]] <-
+          cluster_marginal_probs[i]
+
+        mat_00[cluster_lists[[i]], cluster_lists[[j]]] <-
+          1 - cluster_marginal_probs[i]
+
+        mat_01[cluster_lists[[i]], cluster_lists[[j]]] <-
+          0
+
+        mat_10[cluster_lists[[i]], cluster_lists[[j]]] <-
+          0
+
+      } else {
+        mat_11[cluster_lists[[i]], cluster_lists[[j]]] <-
+          cluster_marginal_probs[i] *
+          pr_j1_given_i1[j]
+
+        mat_00[cluster_lists[[i]], cluster_lists[[j]]] <-
+          (1 - cluster_marginal_probs[i]) *
+          pr_j0_given_i0[j]
+
+        mat_01[cluster_lists[[i]], cluster_lists[[j]]] <-
+          (1 - cluster_marginal_probs[i]) *
+          pr_j1_given_i0[j]
+
+        mat_10[cluster_lists[[i]], cluster_lists[[j]]] <-
+          cluster_marginal_probs[i] *
+          pr_j0_given_i1[j]
+
+      }
+    }
+  }
+
+  condition_pr_matrix <-
+    rbind(cbind(mat_00, mat_01),
+          cbind(mat_10, mat_11))
+
+  return(condition_pr_matrix)
+}
 
 #' Build condition probaability matrix for Horvitz-Thompson estimation from treatment permutations
 #'

@@ -193,6 +193,19 @@ horvitz_thompson <-
 
     if (!is.null(model_data$condition_pr)) {
       data$condition_probabilities <- model_data$condition_pr
+
+      # if clusters and no pr_matrix, have to build pr_matrix
+      # TODO see if doing cluster-wise is faster
+      if (is.null(condition_pr_matrix) & !is.null(data$clusters)) {
+        message("Assuming simple random assignment")
+        condition_pr_matrix <-
+          gen_pr_matrix_cluster(
+            clusters = data$clusters,
+            treat_probs = data$condition_probabilities,
+            simple = T
+          )
+      }
+
     } else {
       data$condition_probabilities <- diag(condition_pr_matrix)[(length(data$y)+1):(2*length(data$y))]
     }
@@ -407,9 +420,11 @@ horvitz_thompson_internal <-
 
     diff <- (sum(Y2) - sum(Y1)) / N
 
-    if (!is.null(data$clusters) & collapsed) {
+    if (collapsed) {
 
-      # print('am')
+      if (is.null(data$clusters)) {
+        stop("The collapsed estimator only works if you either pass a declaration with clusters or explicitly specify the clusters.")
+      }
 
       k <- length(unique(data$clusters))
 
@@ -435,15 +450,15 @@ horvitz_thompson_internal <-
           sum(Y1^2) +
           ht_var_partial(
             Y2,
-            condition_pr_matrix[(k + t2), (k + t2)]
+            condition_pr_matrix[(k + t2), (k + t2), drop = F]
           ) +
           ht_var_partial(
             Y1,
-            condition_pr_matrix[t1, t1]
+            condition_pr_matrix[t1, t1, drop = F]
           ) -
           2 * ht_covar_partial(Y2,
                                Y1,
-                               condition_pr_matrix[(k + t2), t1],
+                               condition_pr_matrix[(k + t2), t1, drop = F],
                                ps2,
                                ps1)
         ) / N
@@ -507,15 +522,15 @@ horvitz_thompson_internal <-
             sum(Y1^2) +
             ht_var_partial(
               Y2,
-              condition_pr_matrix[(N + t2), (N + t2)]
+              condition_pr_matrix[(N + t2), (N + t2), drop = F]
             ) +
             ht_var_partial(
               Y1,
-              condition_pr_matrix[t1, t1]
+              condition_pr_matrix[t1, t1, drop = F]
             ) -
             2 * ht_covar_partial(Y2,
                                  Y1,
-                                 condition_pr_matrix[(N + t2), t1],
+                                 condition_pr_matrix[(N + t2), t1, drop = F],
                                  ps2,
                                  ps1)
           ) / N
