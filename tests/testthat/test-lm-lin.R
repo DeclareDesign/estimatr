@@ -87,10 +87,10 @@ test_that("Test LM Lin",{
     lm_lin(Y ~ Z,
            covariates = ~ X1 + X2,
            data = df,
-           cluster_variable_name = cluster),
+           clusters = cluster),
     lm_robust(Y ~ Z + Z*X1_bar + Z*X2_bar,
               data = df,
-              cluster_variable_name = cluster)
+              clusters = cluster)
   )
 
   ## Test that it works with subset
@@ -102,11 +102,11 @@ test_that("Test LM Lin",{
     lm_lin(Y ~ Z,
            covariates = ~ X1 + X2,
            data = df,
-           cluster_variable_name = cluster,
+           clusters = cluster,
            subset = Y > 0),
     lm_robust(Y ~ Z + Z*X1_bar + Z*X2_bar,
               data = df,
-              cluster_variable_name = cluster,
+              clusters = cluster,
               subset = Y > 0)
   )
 
@@ -124,10 +124,10 @@ test_that("Test LM Lin",{
     lm_lin(Y ~ treat,
            covariates = ~ X1 + X2,
            data = df,
-           cluster_variable_name = cluster),
+           clusters = cluster),
     lm_robust(Y ~ treat + treat*X1_bar + treat*X21_bar,
               data = df,
-              cluster_variable_name = cluster)
+              clusters = cluster)
   )
 
   ## Works with a factor with spaces in the name (often the case for clusters)
@@ -144,12 +144,12 @@ test_that("Test LM Lin",{
       lm_lin(Y ~ treat,
              covariates = ~ X1 + X2,
              data = df,
-             cluster_variable_name = cluster)
+             clusters = cluster)
     )[, -1],
     tidy(
       lm_robust(Y ~ treat + treat*X1_bar + treat*X2_bar,
                 data = df,
-                cluster_variable_name = cluster)
+                clusters = cluster)
     )[, -1]
   )
 
@@ -163,14 +163,14 @@ test_that("Test LM Lin",{
     lin_out <- lm_lin(Y ~ treat,
                       covariates = ~ X1 + X2,
                       data = df,
-                      cluster_variable_name = cluster),
+                      clusters = cluster),
     'missingness in the cluster'
   )
 
   expect_warning(
     rob_out <- lm_robust(Y ~ treat + treat*X1_bar + treat*X2_bar,
                          data = df,
-                         cluster_variable_name = cluster),
+                         clusters = cluster),
     'missingness in the cluster'
   )
 

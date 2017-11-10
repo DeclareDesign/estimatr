@@ -4,25 +4,25 @@
 \alias{horvitz_thompson}
 \title{Horvitz-Thompson estimator of treatment effects}
 \usage{
-horvitz_thompson(formula, data, condition_pr_variable_name, block_variable_name,
-  cluster_variable_name, condition_pr_matrix = NULL, declaration = NULL,
-  subset, se_type = c("youngs", "constant"), collapsed = FALSE,
-  alpha = 0.05, condition1 = NULL, condition2 = NULL)
+horvitz_thompson(formula, data, condition_prs, blocks, clusters,
+  condition_pr_mat = NULL, declaration = NULL, subset,
+  se_type = c("youngs", "constant"), collapsed = FALSE, alpha = 0.05,
+  condition1 = NULL, condition2 = NULL)
 }
 \arguments{
 \item{formula}{An object of class "formula", such as Y ~ Z}
 
 \item{data}{A data.frame.}
 
-\item{condition_pr_variable_name}{An optional bare (unquoted) name of the variable with the condition 2 (treatment) probabilities.}
+\item{condition_prs}{An optional bare (unquoted) name of the variable with the condition 2 (treatment) probabilities.}
 
-\item{block_variable_name}{An optional bare (unquoted) name of the block variable. Use for blocked designs only.}
+\item{blocks}{An optional bare (unquoted) name of the block variable. Use for blocked designs only.}
 
-\item{cluster_variable_name}{An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.}
+\item{clusters}{An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.}
 
-\item{condition_pr_matrix}{An optional 2n * 2n matrix of marginal and joint probabilities of all units in condition1 and condition2, can be used in place of \code{condition_pr_variable_name}. See details.}
+\item{condition_pr_mat}{An optional 2n * 2n matrix of marginal and joint probabilities of all units in condition1 and condition2, can be used in place of \code{condition_prs}. See details.}
 
-\item{declaration}{An object of class "ra_declaration", from the randomizr package that is an alternative way of specifying the design. Cannot be used along with any of \code{condition_pr_variable_name}, \code{block_variable_name}, \code{cluster_variable_name}, or \code{condition_pr_matrix}. See details.}
+\item{declaration}{An object of class "ra_declaration", from the randomizr package that is an alternative way of specifying the design. Cannot be used along with any of \code{condition_prs}, \code{blocks}, \code{clusters}, or \code{condition_pr_mat}. See details.}
 
 \item{subset}{An optional bare (unquoted) expression specifying a subset of observations to be used.}
 
@@ -54,10 +54,10 @@ dat <- data.frame(y = rnorm(n))
 dat$p <- 0.5
 dat$z <- rbinom(n, size = 1, prob = dat$p)
 
-# If you only pass condition_pr_variable_name, we assume simple random sampling
-horvitz_thompson(y ~ z, data = dat, condition_pr_variable_name = p)
+# If you only pass condition_prs, we assume simple random sampling
+horvitz_thompson(y ~ z, data = dat, condition_prs = p)
 # Assume constant effects instead
-horvitz_thompson(y ~ z, data = dat, condition_pr_variable_name = p, se_type = "constant")
+horvitz_thompson(y ~ z, data = dat, condition_prs = p, se_type = "constant")
 
 # Also can use randomizr to pass a declaration
 srs_declaration <- randomizr::declare_ra(N = nrow(dat), prob = 0.5, simple = T)
@@ -73,7 +73,7 @@ crs_declaration <- randomizr::declare_ra(N = nrow(dat), prob = 0.5, simple = F)
 horvitz_thompson(y ~ z, data = dat, declaration = crs_declaration)
 # Can precompute condition_pr_mat and pass it (faster for multiple runs with same condition probability matrix)
 crs_pr_mat <- declaration_to_condition_pr_mat(crs_declaration)
-horvitz_thompson(y ~ z, data = dat, condition_pr_matrix = crs_pr_mat)
+horvitz_thompson(y ~ z, data = dat, condition_pr_mat = crs_pr_mat)
 
 #----------
 # More complicated assignment
@@ -88,7 +88,7 @@ possible_treats <- cbind(
 arb_pr_mat <- permutations_to_condition_pr_mat(possible_treats)
 # Simulating a column to be realized treatment
 dat$z <- possible_treats[, sample(ncol(possible_treats), size = 1)]
-horvitz_thompson(y ~ z, data = dat, condition_pr_matrix = arb_pr_mat)
+horvitz_thompson(y ~ z, data = dat, condition_pr_mat = arb_pr_mat)
 
 # Clustered treatment, complete random assigment
 # Simulating data
@@ -97,7 +97,7 @@ clust_crs_decl <- randomizr::declare_ra(N = nrow(dat), clust_var = dat$cl, prob 
 dat$z <- randomizr::conduct_ra(clust_crs_decl)
 # Regular SE using Young's inequality
 horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl)
-# SE using collapsed cluster totals
+# SE using collapsed cluster totals and Young's inequality
 horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, collapsed = T)
 
 }

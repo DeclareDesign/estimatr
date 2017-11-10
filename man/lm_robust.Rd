@@ -4,9 +4,8 @@
 \alias{lm_robust}
 \title{Ordinary Least Squares with Robust Standard Errors}
 \usage{
-lm_robust(formula, data, weights, subset, cluster_variable_name,
-  se_type = NULL, ci = TRUE, alpha = 0.05, coefficient_name = NULL,
-  return_vcov = TRUE)
+lm_robust(formula, data, weights, subset, clusters, se_type = NULL,
+  ci = TRUE, alpha = 0.05, coefficient_name = NULL, return_vcov = TRUE)
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}.}
@@ -17,7 +16,7 @@ lm_robust(formula, data, weights, subset, cluster_variable_name,
 
 \item{subset}{An optional bare (unquoted) expression specifying a subset of observations to be used.}
 
-\item{cluster_variable_name}{An optional bare (unquoted) name of the variable that corresponds to the clusters in the data.}
+\item{clusters}{An optional bare (unquoted) name of the variable that corresponds to the clusters in the data.}
 
 \item{se_type}{The sort of standard error sought. Without clustering: "HC0", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "CR2" (default), "stata".}
 

@@ -13,7 +13,7 @@ test_that("Horvitz-Thompson matches d-i-m under certain conditions", {
 
   expect_equal(
     horvitz_thompson(y ~ z,
-                     condition_pr_variable_name = ps,
+                     condition_prs = ps,
                      data = dat)$est,
     difference_in_means(y ~ z,
                         data = dat)$est
@@ -35,7 +35,7 @@ test_that("Horvitz-Thompson works with clustered data", {
   ht_crs_decl <- horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl)
   # Also can just pass probability matrix
   clust_crs_mat <- declaration_to_condition_pr_mat(clust_crs_decl)
-  ht_crs_mat <- horvitz_thompson(y ~ z, data = dat, condition_pr_matrix = clust_crs_mat)
+  ht_crs_mat <- horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_crs_mat)
 
   expect_identical(
     ht_crs_decl,
@@ -45,19 +45,19 @@ test_that("Horvitz-Thompson works with clustered data", {
   # Also should be same with collapsed totals
   expect_identical(
     horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, collapsed = T),
-    horvitz_thompson(y ~ z, data = dat, cluster_variable_name = cl, condition_pr_matrix = clust_crs_mat, collapsed = T)
+    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_pr_mat = clust_crs_mat, collapsed = T)
   )
 
   # Have to specify clusters for collapsed estimator if you don't pass declaration
   expect_error(
-    horvitz_thompson(y ~ z, data = dat, condition_pr_matrix = clust_crs_mat, collapsed = T),
+    horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_crs_mat, collapsed = T),
     "collapsed estimator only works"
   )
 
   # And constant effects
   expect_identical(
     horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, se_type = 'constant'),
-    horvitz_thompson(y ~ z, data = dat, condition_pr_matrix = clust_crs_mat, se_type = 'constant')
+    horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_crs_mat, se_type = 'constant')
   )
 
   ## Simple random sample, clustered
@@ -74,7 +74,7 @@ test_that("Horvitz-Thompson works with clustered data", {
 
   expect_identical(
     ht_srs_decl,
-    horvitz_thompson(y ~ z, data = dat, condition_pr_matrix = clust_srs_mat)
+    horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_srs_mat)
   )
 
   # should work with just a column if SRS!
@@ -82,7 +82,7 @@ test_that("Horvitz-Thompson works with clustered data", {
   clust_srs_mat
   expect_identical(
     ht_srs_decl,
-    horvitz_thompson(y ~ z, data = dat, cluster_variable_name = cl, condition_pr_variable_name = ps)
+    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = ps)
   )
 
   # Also should be same with collapsed totals
@@ -90,13 +90,13 @@ test_that("Horvitz-Thompson works with clustered data", {
   ht_cl_srs_collapsed <- horvitz_thompson(y ~ z, data = dat, declaration = clust_srs_decl, collapsed = T)
   expect_identical(
     ht_cl_srs_collapsed,
-    horvitz_thompson(y ~ z, data = dat, cluster_variable_name = cl, condition_pr_matrix = clust_srs_mat, collapsed = T)
+    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_pr_mat = clust_srs_mat, collapsed = T)
   )
 
   # condition var name approach
   expect_identical(
     ht_cl_srs_collapsed,
-    horvitz_thompson(y ~ z, data = dat, cluster_variable_name = cl, condition_pr_variable_name = ps, collapsed = T)
+    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = ps, collapsed = T)
   )
 
   # And constant effects
@@ -104,13 +104,13 @@ test_that("Horvitz-Thompson works with clustered data", {
   ht_cl_srs_const <- horvitz_thompson(y ~ z, data = dat, declaration = clust_srs_decl, se_type = 'constant')
   expect_identical(
     ht_cl_srs_const,
-    horvitz_thompson(y ~ z, data = dat, condition_pr_matrix = clust_srs_mat, se_type = 'constant')
+    horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_srs_mat, se_type = 'constant')
   )
 
   # condition var name approach
   expect_identical(
     ht_cl_srs_const,
-    horvitz_thompson(y ~ z, data = dat, cluster_variable_name = cl, condition_pr_variable_name = ps, se_type = 'constant')
+    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = ps, se_type = 'constant')
   )
 
 })
@@ -130,12 +130,12 @@ test_that("Horvitz-Thompson properly checks arguments", {
   decl <- randomizr::declare_ra(N = n, prob = 0.4, simple = F)
 
   expect_error(
-    horvitz_thompson(y ~ z, data = dat, condition_pr_variable_name = ps, declaration = decl),
+    horvitz_thompson(y ~ z, data = dat, condition_prs = ps, declaration = decl),
     "Cannot use declaration with any of"
   )
 
   expect_error(
-    horvitz_thompson(y ~ z, data = dat, condition_pr_matrix = declaration_to_condition_pr_mat(decl), declaration = decl),
+    horvitz_thompson(y ~ z, data = dat, condition_pr_mat = declaration_to_condition_pr_mat(decl), declaration = decl),
     "Cannot use declaration with any of"
   )
 

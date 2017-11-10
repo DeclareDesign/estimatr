@@ -41,7 +41,7 @@ test_that('tidy, summary, and print work', {
   )
 
   ## horvitz_thompson
-  ht <- horvitz_thompson(y ~ x, condition_pr_variable_name = p, data = dat)
+  ht <- horvitz_thompson(y ~ x, condition_prs = p, data = dat)
   expect_is(
     tidy(ht),
     "data.frame"
@@ -88,7 +88,7 @@ test_that('vcov works', {
   )
 
   expect_error(
-    vcov(horvitz_thompson(y ~ x, condition_pr_variable_name = p, data = dat)),
+    vcov(horvitz_thompson(y ~ x, condition_prs = p, data = dat)),
     "supported|horvitz_thompson"
   )
 
@@ -137,7 +137,7 @@ test_that('coef and confint work', {
     cbind(dim$ci_lower, dim$ci_upper)
   )
 
-  ht <- horvitz_thompson(y ~ x, condition_pr_variable_name = p, data = dat)
+  ht <- horvitz_thompson(y ~ x, condition_prs = p, data = dat)
   expect_equivalent(
     confint(ht),
     cbind(ht$ci_lower, ht$ci_upper)
