@@ -175,14 +175,14 @@ The rest of the estimation proceeds just as in [`lm_robust()`](#lm_robust).
 There are six kinds of experimental designs for which our `difference_in_means()` estimator can estimate treatment effects, provide estiamtes of uncertainty, construct confidence intervals, and 
 provide p-values. We list them here along with how the software learns the design:
 
-* Simple (both `cluster_variable_name` and `block_variable_name` are unused)
-* Clustered (`cluster_variable_name` is specified while `block_variable_name` is not)
-* Blocked (`block_variable_name` is specified while `cluster_variable_name` is not)
+* Simple (both `clusters` and `blocks` are unused)
+* Clustered (`clusters` is specified while `blocks` is not)
+* Blocked (`blocks` is specified while `clusters` is not)
 * Blocked and clustered (both are specified)
 
 There are two subsets of blocked designs that we also consider:
 
-* Matched-pairs (only `block_variable_name` is specified and all blocks are size two)
+* Matched-pairs (only `blocks` is specified and all blocks are size two)
 * Matched-pair clustered design (both names are specified and each block only has two clusters)
 
 In addition, weights can be specified.

@@ -4,9 +4,8 @@
 \alias{lm_lin}
 \title{Linear regression with the Lin (2013) covariate adjustment}
 \usage{
-lm_lin(formula, data, covariates, weights, subset, cluster_variable_name,
-  se_type = NULL, ci = TRUE, alpha = 0.05, coefficient_name = NULL,
-  return_vcov = TRUE)
+lm_lin(formula, data, covariates, weights, subset, clusters, se_type = NULL,
+  ci = TRUE, alpha = 0.05, coefficient_name = NULL, return_vcov = TRUE)
 }
 \arguments{
 \item{formula}{An object of class "formula", such as Y ~ Z. Should only have the outcome and the treatment.}
@@ -19,7 +18,7 @@ lm_lin(formula, data, covariates, weights, subset, cluster_variable_name,
 
 \item{subset}{An optional bare (unquoted) expression specifying a subset of observations to be used.}
 
-\item{cluster_variable_name}{An optional bare (unquoted) name of the variable that corresponds to the clusters in the data.}
+\item{clusters}{An optional bare (unquoted) name of the variable that corresponds to the clusters in the data.}
 
 \item{se_type}{The sort of standard error sought. Without clustering: "HC0", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "BM" (default), "stata".}
 

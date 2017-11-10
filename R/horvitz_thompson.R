@@ -2,11 +2,11 @@
 #'
 #' @param formula An object of class "formula", such as Y ~ Z
 #' @param data A data.frame.
-#' @param condition_pr_variable_name An optional bare (unquoted) name of the variable with the condition 2 (treatment) probabilities.
-#' @param block_variable_name An optional bare (unquoted) name of the block variable. Use for blocked designs only.
-#' @param cluster_variable_name An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.
-#' @param condition_pr_matrix An optional 2n * 2n matrix of marginal and joint probabilities of all units in condition1 and condition2, can be used in place of \code{condition_pr_variable_name}. See details.
-#' @param declaration An object of class "ra_declaration", from the randomizr package that is an alternative way of specifying the design. Cannot be used along with any of \code{condition_pr_variable_name}, \code{block_variable_name}, \code{cluster_variable_name}, or \code{condition_pr_matrix}. See details.
+#' @param condition_prs An optional bare (unquoted) name of the variable with the condition 2 (treatment) probabilities.
+#' @param blocks An optional bare (unquoted) name of the block variable. Use for blocked designs only.
+#' @param clusters An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.
+#' @param condition_pr_mat An optional 2n * 2n matrix of marginal and joint probabilities of all units in condition1 and condition2, can be used in place of \code{condition_prs}. See details.
+#' @param declaration An object of class "ra_declaration", from the randomizr package that is an alternative way of specifying the design. Cannot be used along with any of \code{condition_prs}, \code{blocks}, \code{clusters}, or \code{condition_pr_mat}. See details.
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
 #' @param se_type can be one of \code{c("youngs", "constant")} and correspond's to estimating the standard errors using Young's inequality (default, conservative), or the constant effects assumption.
 #' @param collapsed A boolean used to collapse clusters to their cluster totals for variance estimation, FALSE by default.
@@ -30,10 +30,10 @@
 #' dat$p <- 0.5
 #' dat$z <- rbinom(n, size = 1, prob = dat$p)
 #'
-#' # If you only pass condition_pr_variable_name, we assume simple random sampling
-#' horvitz_thompson(y ~ z, data = dat, condition_pr_variable_name = p)
+#' # If you only pass condition_prs, we assume simple random sampling
+#' horvitz_thompson(y ~ z, data = dat, condition_prs = p)
 #' # Assume constant effects instead
-#' horvitz_thompson(y ~ z, data = dat, condition_pr_variable_name = p, se_type = "constant")
+#' horvitz_thompson(y ~ z, data = dat, condition_prs = p, se_type = "constant")
 #'
 #' # Also can use randomizr to pass a declaration
 #' srs_declaration <- randomizr::declare_ra(N = nrow(dat), prob = 0.5, simple = T)
@@ -49,7 +49,7 @@
 #' horvitz_thompson(y ~ z, data = dat, declaration = crs_declaration)
 #' # Can precompute condition_pr_mat and pass it (faster for multiple runs with same condition probability matrix)
 #' crs_pr_mat <- declaration_to_condition_pr_mat(crs_declaration)
-#' horvitz_thompson(y ~ z, data = dat, condition_pr_matrix = crs_pr_mat)
+#' horvitz_thompson(y ~ z, data = dat, condition_pr_mat = crs_pr_mat)
 #'
 #' #----------
 #' # More complicated assignment
@@ -64,7 +64,7 @@
 #' arb_pr_mat <- permutations_to_condition_pr_mat(possible_treats)
 #' # Simulating a column to be realized treatment
 #' dat$z <- possible_treats[, sample(ncol(possible_treats), size = 1)]
-#' horvitz_thompson(y ~ z, data = dat, condition_pr_matrix = arb_pr_mat)
+#' horvitz_thompson(y ~ z, data = dat, condition_pr_mat = arb_pr_mat)
 #'
 #' # Clustered treatment, complete random assigment
 #' # Simulating data
@@ -79,10 +79,10 @@
 horvitz_thompson <-
   function(formula,
            data,
-           condition_pr_variable_name,
-           block_variable_name,
-           cluster_variable_name,
-           condition_pr_matrix = NULL,
+           condition_prs,
+           blocks,
+           clusters,
+           condition_pr_mat = NULL,
            declaration = NULL,
            subset,
            se_type = c('youngs', 'constant'),
@@ -108,11 +108,11 @@ horvitz_thompson <-
     # User can either use declaration or the arguments, not both!
     if (!is.null(declaration)) {
 
-      if (!missing(cluster_variable_name) |
-          !missing(condition_pr_variable_name) |
-          !missing(block_variable_name) |
-          !is.null(condition_pr_matrix)) {
-        stop("Cannot use declaration with any of cluster_variable_name, condition_pr_variable_name, block_variable_name, condition_pr_matrix.")
+      if (!missing(clusters) |
+          !missing(condition_prs) |
+          !missing(blocks) |
+          !is.null(condition_pr_mat)) {
+        stop("Cannot use declaration with any of clusters, condition_prs, blocks, condition_pr_mat.")
       }
 
       # Declaration can only be used if it is the same length as the data being passed
@@ -124,7 +124,7 @@ horvitz_thompson <-
       if (!is.null(declaration$clust_var)) {
         if (is.null(data$`.clusters_ddinternal`)) {
           data$`.clusters_ddinternal` <- declaration$clust_var
-          cluster_variable_name <- '.clusters_ddinternal'
+          clusters <- '.clusters_ddinternal'
         } else {
           stop("estimatr stores clusters from declarations in a variable called .clusters_ddinternal in your data. Please remove it and try again.")
         }
@@ -133,7 +133,7 @@ horvitz_thompson <-
       if (!is.null(declaration$block_var)) {
         if (is.null(data$`.blocks_ddinternal`)) {
           data$`.blocks_ddinternal` <- declaration$block_var
-          block_variable_name <- '.blocks_ddinternal'
+          blocks <- '.blocks_ddinternal'
         } else {
           stop("estimatr stores blocks from declarations in a variable called .blocks_ddinternal in your data. Please remove it and try again.")
         }
@@ -141,7 +141,7 @@ horvitz_thompson <-
 
       if (is.null(data$`.treatment_prob_ddinternal`)) {
         data$`.treatment_prob_ddinternal` <- declaration$probabilities_matrix[, 2]
-        condition_pr_variable_name <- '.treatment_prob_ddinternal'
+        condition_prs <- '.treatment_prob_ddinternal'
       } else {
         stop("estimatr stores treatment probabilities from declarations in a variable called .treatment_prob_ddinternal in your data. Please remove/rename it and try again.")
       }
@@ -155,16 +155,16 @@ horvitz_thompson <-
         formula = formula,
         data = data,
         subset = subset,
-        cluster = cluster_variable_name,
-        condition_pr = condition_pr_variable_name,
-        block = block_variable_name,
+        cluster = clusters,
+        condition_pr = condition_prs,
+        block = blocks,
         where = where
       )
     ))
 
-    ## condition_pr_matrix, if supplied, must be same length
-    if (!is.null(condition_pr_matrix) && (2*length(model_data$outcome) != nrow(condition_pr_matrix))) {
-      stop(sprintf("After cleaning the data, it has %d rows while condition_pr_matrix has %d. condition_pr_matrix should have twice the rows.", length(model_data$outcome), nrow(condition_pr_matrix)))
+    ## condition_pr_mat, if supplied, must be same length
+    if (!is.null(condition_pr_mat) && (2*length(model_data$outcome) != nrow(condition_pr_mat))) {
+      stop(sprintf("After cleaning the data, it has %d rows while condition_pr_mat has %d. condition_pr_mat should have twice the rows.", length(model_data$outcome), nrow(condition_pr_mat)))
     }
 
     data <- data.frame(y = model_data$outcome,
@@ -181,9 +181,9 @@ horvitz_thompson <-
       # If simple, just use condition probabilities shortcut!
       # TODO get working with blocking
       if (declaration$ra_type == "simple") {
-        condition_pr_matrix <- NULL
+        condition_pr_mat <- NULL
       } else {
-        condition_pr_matrix <- declaration_to_condition_pr_mat(declaration)
+        condition_pr_mat <- declaration_to_condition_pr_mat(declaration)
       }
 
     }
@@ -196,9 +196,9 @@ horvitz_thompson <-
 
       # if clusters and no pr_matrix, have to build pr_matrix
       # TODO see if doing cluster-wise is faster
-      if (is.null(condition_pr_matrix) & !is.null(data$clusters)) {
+      if (is.null(condition_pr_mat) & !is.null(data$clusters)) {
         message("Assuming simple random assignment")
-        condition_pr_matrix <-
+        condition_pr_mat <-
           gen_pr_matrix_cluster(
             clusters = data$clusters,
             treat_probs = data$condition_probabilities,
@@ -207,7 +207,7 @@ horvitz_thompson <-
       }
 
     } else {
-      data$condition_probabilities <- diag(condition_pr_matrix)[(length(data$y)+1):(2*length(data$y))]
+      data$condition_probabilities <- diag(condition_pr_mat)[(length(data$y)+1):(2*length(data$y))]
     }
 
     rm(model_data)
@@ -227,7 +227,7 @@ horvitz_thompson <-
     if (is.null(data$blocks)){
       return_list <-
         horvitz_thompson_internal(
-          condition_pr_matrix = condition_pr_matrix,
+          condition_pr_mat = condition_pr_mat,
           condition1 = condition1,
           condition2 = condition2,
           data = data,
@@ -289,7 +289,7 @@ horvitz_thompson <-
           data = x,
           condition1 = condition1,
           condition2 = condition2,
-          condition_pr_matrix = condition_pr_matrix[c(x$index, N + x$index), c(x$index, N + x$index)],
+          condition_pr_mat = condition_pr_mat[c(x$index, N + x$index), c(x$index, N + x$index)],
           collapsed = collapsed,
           se_type = se_type,
           alpha = alpha
@@ -344,7 +344,7 @@ var_ht_total_no_cov <-
 
 
 horvitz_thompson_internal <-
-  function(condition_pr_matrix = NULL,
+  function(condition_pr_mat = NULL,
            condition1 = NULL,
            condition2 = NULL,
            data,
@@ -379,7 +379,7 @@ horvitz_thompson_internal <-
       }
     }
 
-    # print(table(condition_pr_matrix))
+    # print(table(condition_pr_mat))
 
     N <- length(data$y)
 
@@ -439,10 +439,10 @@ horvitz_thompson_internal <-
       y2_totals <- y2_totals[as.character(data$clusters[-to_drop][t2])]
       y1_totals <- y1_totals[as.character(data$clusters[-to_drop][t1])]
 
-      condition_pr_matrix <- condition_pr_matrix[-c(to_drop, N + to_drop), -c(to_drop, N + to_drop)]
+      condition_pr_mat <- condition_pr_mat[-c(to_drop, N + to_drop), -c(to_drop, N + to_drop)]
 
-      Y2 <- y2_totals / diag(condition_pr_matrix)[k + t2]# for now rescale, with joint pr need squared top alone
-      Y1 <- y1_totals / diag(condition_pr_matrix)[t1]
+      Y2 <- y2_totals / diag(condition_pr_mat)[k + t2]# for now rescale, with joint pr need squared top alone
+      Y1 <- y1_totals / diag(condition_pr_mat)[t1]
 
       se <-
         sqrt(
@@ -450,20 +450,20 @@ horvitz_thompson_internal <-
           sum(Y1^2) +
           ht_var_partial(
             Y2,
-            condition_pr_matrix[(k + t2), (k + t2), drop = F]
+            condition_pr_mat[(k + t2), (k + t2), drop = F]
           ) +
           ht_var_partial(
             Y1,
-            condition_pr_matrix[t1, t1, drop = F]
+            condition_pr_mat[t1, t1, drop = F]
           ) -
           2 * ht_covar_partial(Y2,
                                Y1,
-                               condition_pr_matrix[(k + t2), t1, drop = F],
+                               condition_pr_mat[(k + t2), t1, drop = F],
                                ps2,
                                ps1)
         ) / N
 
-    } else if (is.null(condition_pr_matrix)) {
+    } else if (is.null(condition_pr_mat)) {
       # Simple random assignment
       # joint inclusion probabilities = product of marginals
       if (se_type ==  'constant') {
@@ -510,7 +510,7 @@ horvitz_thompson_internal <-
           sqrt(
             ht_var_total(
               c(-y0, y1),
-              condition_pr_matrix
+              condition_pr_mat
             )
           ) / N
       } else {
@@ -522,15 +522,15 @@ horvitz_thompson_internal <-
             sum(Y1^2) +
             ht_var_partial(
               Y2,
-              condition_pr_matrix[(N + t2), (N + t2), drop = F]
+              condition_pr_mat[(N + t2), (N + t2), drop = F]
             ) +
             ht_var_partial(
               Y1,
-              condition_pr_matrix[t1, t1, drop = F]
+              condition_pr_mat[t1, t1, drop = F]
             ) -
             2 * ht_covar_partial(Y2,
                                  Y1,
-                                 condition_pr_matrix[(N + t2), t1, drop = F],
+                                 condition_pr_mat[(N + t2), t1, drop = F],
                                  ps2,
                                  ps1)
           ) / N
