@@ -21,22 +21,33 @@ vignette: >
 \newcommand{\e}{\mathbf{e}}
 \newcommand{\V}{\mathbb{V}}
 
-`estimatr` is a package in r dedicated to providing fast estimators for social scientists. Many extant estimators in base r or popular packages are slow, have default settings that lead to statistically inappropriate estimates, or are unable to provide certain specifications.
+`estimatr` is a package in r dedicated to providing fast estimators for social scientists. Many extant estimators in base r or popular packages are slow, have default settings that lead to statistically inappropriate estimates, and simply do not provide tools for certain cutting-edge estimators.
 
-This vignette will demonstrate the various estimators available in this package and provide justifications and citations for the default settings. The estimators currently available are:
+The current estimators we provide are:
 
-* [`lm_robust()`](#lm_robust) - for fitting linear models with heteroskedasticity/cluster robust standard errors
-* [`lm_lin()`](#lm_lin) - a wrapper for `lm_robust()` to simplify interacting centered pre-treatment covariates with a treatment variable
-* [`difference_in_means()`](#difference_in_means) - for estimating differences in means with appropriate standard errors for simple, cluster randomized, block randomized, matched-pair designs and more
-* [`horvitz_thompson()`](#horvitz_thompson) - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs
-
-# Hypothetical experiment
-
-TODO
+* [`lm_robust()`](#lm_robust) - for fitting linear models with heteroskedasticity/cluster robust standard errors [`(technical notes)`](#lm_robust-technical-notes)
+* [`lm_lin()`](#lm_lin) - a wrapper for `lm_robust()` to simplify interacting centered pre-treatment covariates with a treatment variable [`(technical notes)`](#lm_lin-technical-notes)
+* [`difference_in_means()`](#difference_in_means) - for estimating differences in means with appropriate standard errors for simple, cluster randomized, block randomized, matched-pair designs and more [`(technical notes)`](#difference_in_means-technical-notes)
+* [`horvitz_thompson()`](#horvitz_thompson) - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs [`(technical notes)`](#horvitz_thompson-technical-notes)
 
 # Estimators
 
+```{r}
+library(estimatr)
+```
+
 ## `lm_robust()`
+
+The `estimatr` package provides a function to quickly fit linear models with the most common variance estimators and degrees of freedom corrections used in social science. You can easily return heteroskedastic standard errors, clustered standard errors, and classical standard errors.
+
+```{r}
+## Load sample dataset of educational programs and gpas
+data("alo_star_men")
+```
+
+# Technical Appendix
+
+## `lm_robust()` technical notes
 
 All of the following works with weights except for the clustered standard errors (todo: finish weights with clustered SEs and write up weights in below.)
 
@@ -90,6 +101,8 @@ where $N$ is the number of observations and $K$ is the number of elements in $\b
 * $\e_s$ is the elements of the residual matrix $\e$ in cluster $s$, or $\e_s = \y_s - \X_s \hat{\beta}$
 
 **BM (default, also known as CR2 or Bell-McCaffrey)**
+
+TODO update with CR2 estimator
 
 Analogy to HC2 for cluster-robust variance estimation. For the original reference, see [@bellmccaffrey2002]. For papers that have also mention it, see $\V_{\mathrm{LZ2}}$ on p. 709 of [@imbenskolesar2016] and the CR2 estimator shown in equations (4) and (5) in [@pustejovskytipton2016]. Note that we will be implementing the estimator proposed in [@pustejovskytipton2016] soon; more can be found on their GitHub page for an accompanying R package [clubSandwich](https://github.com/jepusto/clubSandwich).
 
@@ -149,7 +162,7 @@ Then, if $\hat{\V}_k$ is the $k$th diagonal element of $\hat{\V}$, we build conf
 
 The associated p-values for a two-sided null hypothesis test where the null is that the coefficient is 0 uses a t-distribution with the aforementioned significance level $\alpha$ and degrees of freedom $df$.
 
-## `lm_lin()`
+## `lm_lin()` technical notes
 
 The `lm_lin()` estimator is a data pre-processor for `lm_robust()` that implements the regression method for covariate adjustment suggested by [@lin2013]. In response to the critique by [@freedman2008] that using regression to adjust for pre-treatment covariates could bias estimates of treatment effects, [@lin2013] demonstrates the small magnitude of this bias while also presenting an estimator to reduce said bias.
 
@@ -157,7 +170,7 @@ This estimator takes the outcome and treatment variable as the main formula (`fo
 
 The rest of the estimation proceeds just as in [`lm_robust()`](#lm_robust).
 
-## `difference_in_means()`
+## `difference_in_means()` technical notes
 
 There are six kinds of experimental designs for which our `difference_in_means()` estimator can estimate treatment effects, provide estiamtes of uncertainty, construct confidence intervals, and 
 provide p-values. We list them here along with how the software learns the design:
@@ -246,7 +259,7 @@ Following advice of [@imaietal2009] on page 37, we use the following conservativ
 df_{MPCR} = J - 1
 \]
 
-## `horvitz_thompson()`
+## `horvitz_thompson()` technical notes
 
 Right now the Horvitz-Thompson estimator only works for designs where there is neither cluster randomization nor blocking, but should work for any design of arbitrary complexity beyond that (complete random sampling, simple random sampling, and any scheme with complex marginal or joint treatment probabilities, such as an exeriment on a network).
 
