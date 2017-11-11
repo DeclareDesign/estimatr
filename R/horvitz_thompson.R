@@ -188,6 +188,8 @@ horvitz_thompson <-
 
     }
 
+    print(condition_pr_mat)
+
     data$clusters <- model_data$cluster
     data$blocks <- model_data$block
 
@@ -419,6 +421,7 @@ horvitz_thompson_internal <-
     # } else {
 
     diff <- (sum(Y2) - sum(Y1)) / N
+    se <- NA
 
     if (collapsed) {
 
@@ -516,9 +519,8 @@ horvitz_thompson_internal <-
       } else {
         # print('full youngs')
         # Young's inequality
-        se <-
-          sqrt(
-            sum(Y2^2) +
+        varN2 <-
+          sum(Y2^2) +
             sum(Y1^2) +
             ht_var_partial(
               Y2,
@@ -533,7 +535,12 @@ horvitz_thompson_internal <-
                                  condition_pr_mat[(N + t2), t1, drop = F],
                                  ps2,
                                  ps1)
-          ) / N
+
+        if (varN2 < 0) {
+          warning("Variance below 0, consider using constant effects assumption or a different estimator.")
+        } else {
+          se <- sqrt(varN2) / N
+        }
       }
     }
     # }

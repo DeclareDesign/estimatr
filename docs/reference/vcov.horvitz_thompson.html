@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Ordinary Least Squares with Robust Standard Errors — lm_robust • estimatr</title>
+<title>Return estimated variance covariance matrix of <code><a href='horvitz_thompson.html'>horvitz_thompson</a></code> — vcov.horvitz_thompson • estimatr</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -96,59 +96,26 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Ordinary Least Squares with Robust Standard Errors</h1>
+    <h1>Return estimated variance covariance matrix of <code><a href='horvitz_thompson.html'>horvitz_thompson</a></code></h1>
     </div>
 
     
-    <p>Ordinary Least Squares with Robust Standard Errors</p>
+    <p>Return estimated variance covariance matrix of <code><a href='horvitz_thompson.html'>horvitz_thompson</a></code></p>
     
 
-    <pre class="usage"><span class='fu'>lm_robust</span>(<span class='no'>formula</span>, <span class='no'>data</span>, <span class='no'>weights</span>, <span class='no'>subset</span>, <span class='no'>cluster_variable_name</span>,
-  <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>coefficient_name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>return_vcov</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+    <pre class="usage"><span class='co'># S3 method for horvitz_thompson</span>
+<span class='fu'>vcov</span>(<span class='no'>object</span>, <span class='no'>...</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>formula</th>
-      <td><p>an object of class formula, as in <code>lm</code>.</p></td>
+      <th>object</th>
+      <td><p>An object of class <code><a href='horvitz_thompson.html'>horvitz_thompson</a></code></p></td>
     </tr>
     <tr>
-      <th>data</th>
-      <td><p>A data.frame.</p></td>
-    </tr>
-    <tr>
-      <th>weights</th>
-      <td><p>the bare (unquoted) names of the weights variable in the supplied data.</p></td>
-    </tr>
-    <tr>
-      <th>subset</th>
-      <td><p>An optional bare (unquoted) expression specifying a subset of observations to be used.</p></td>
-    </tr>
-    <tr>
-      <th>cluster_variable_name</th>
-      <td><p>An optional bare (unquoted) name of the variable that corresponds to the clusters in the data.</p></td>
-    </tr>
-    <tr>
-      <th>se_type</th>
-      <td><p>The sort of standard error sought. Without clustering: "HC0", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "CR2" (default), "stata".</p></td>
-    </tr>
-    <tr>
-      <th>ci</th>
-      <td><p>A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.</p></td>
-    </tr>
-    <tr>
-      <th>alpha</th>
-      <td><p>The significance level, 0.05 by default.</p></td>
-    </tr>
-    <tr>
-      <th>coefficient_name</th>
-      <td><p>a character or character vector that indicates which coefficients should be reported. If left unspecified, returns all coefficients.</p></td>
-    </tr>
-    <tr>
-      <th>return_vcov</th>
-      <td><p>a boolean for whether to return the vcov matrix for later usage, TRUE by default.</p></td>
+      <th>...</th>
+      <td><p>extra arguments, unused</p></td>
     </tr>
     </table>
     
