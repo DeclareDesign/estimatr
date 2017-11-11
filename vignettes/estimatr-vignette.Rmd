@@ -96,6 +96,26 @@ difference_in_means(y ~ z, data = dat)
 difference_in_means(y_clust ~ z_clust, data = dat, clusters = clust)
 ```
 
+## `horvitz_thompson()`
+
+Horvitz-Thompson estimators are useful when estimating treatment effects without bias when there is a clustered design with unequal size clusters or when the treatment assignment process is arbitrarily complex. Horvitz-Thompson estimators require information about the treatment (and control) probabilities for each unit, and the joint treatment and control probabilities of every pair of units. For simpler designs, passing your randomization scheme using `randomizr::declare_ra()` is the easiest path forward.
+
+```{r}
+# Complete random assignment declaration
+crs_decl <- randomizr::declare_ra(N = nrow(dat), prob = 0.5, simple = F)
+horvitz_thompson(y ~ z, data = dat, declaration = crs_decl)
+
+# Clustered random assignment declaration
+crs_clust_decl <- randomizr::declare_ra(
+  N = nrow(dat), 
+  clust_var = dat$clust, 
+  prob = 0.5, 
+  simple = F
+)
+horvitz_thompson(y_clust ~ z_clust, data = dat, declaration = crs_clust_decl)
+
+```
+
 # Technical Appendix
 
 ## `lm_robust()` technical notes
