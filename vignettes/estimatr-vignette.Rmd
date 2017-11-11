@@ -131,13 +131,15 @@ You can also build the condition probability matrix (`condition_prob_mat = `) th
 We also provide helper functions to build this matrix from any given permutation of treatments (`condition.
 
 ```{r}
-permutes <- cbind(rbinom(nrow(dat), size = 1, prob = 0.5),
-                  rbinom(nrow(dat), size = 1, prob = 0.5),
-                  rbinom(nrow(dat), size = 1, prob = 0.5))
-head(permutes)
-arb_pr_mat <- estimatr::
+# Generate 500 arbitrary permutations
+permutes <- matrix(rbinom(nrow(dat)*500, size = 1, prob = 0.5), nrow = nrow(dat))
+dim(permutes)
+permutes[1:5, 1:2]
 
-horvitz_thompson(y ~ z, data = dat, condition_pr_mat = )
+# Get condition probability matrix
+arb_pr_mat <- permutations_to_condition_pr_mat(permutes)
+
+horvitz_thompson(y ~ z, data = dat, condition_pr_mat = arb_pr_mat)
 ```
 
 # Technical Appendix
