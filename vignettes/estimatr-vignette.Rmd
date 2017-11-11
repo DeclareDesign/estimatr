@@ -62,7 +62,7 @@ Usage largely limics `lm()`, although it defaults to using Eicker-Huber-White ro
 lm_robust(y ~ z + x, data = dat)
 ```
 
-It is straightforward to do cluster-robust inference, by passing the name of your cluster variable to the `clusters =` argument.
+It is straightforward to do cluster-robust inference, by passing the name of your cluster variable to the `clusters =` argument. Note that `lm_robust()` is much quicker if your cluster variable is a factor!
 
 ```{r}
 lm_robust(y_clust ~ z_clust + x, data = dat, clusters = clust)
@@ -113,7 +113,31 @@ crs_clust_decl <- randomizr::declare_ra(
   simple = F
 )
 horvitz_thompson(y_clust ~ z_clust, data = dat, declaration = crs_clust_decl)
+```
 
+There are two main variance estimators we provide, a conservative estimator using Young's inequality (`se_type = "youngs"`), described by [@aronowmiddleton2013], and an estimator that assumes constant treatment effects (`se_type = "constant"`). The default is the conservative estimator.
+
+```{r}
+horvitz_thompson(
+  y_clust ~ z_clust, 
+  data = dat, 
+  declaration = crs_clust_decl, 
+  se_type = "constant"
+)
+```
+
+You can also build the condition probability matrix (`condition_prob_mat = `) that `horvitz_thompson()` needs yourself. This matrix is an 2N by 2N matrix, where the first N rows and N columns (the upper-left corner) are the joint probability of each unit being in the control condition with every other unit being in the control condition. The upper right N by N matrix is the joint probability of each unit being in the control condition with every other unit being in the treated condition. The second N rows are the same, with the joint probability of each unit being in the treated condition first with each unit being in the control (first N columns) and then with each unit being in the treated as well (second N columns).
+
+We also provide helper functions to build this matrix from any given permutation of treatments (`condition.
+
+```{r}
+permutes <- cbind(rbinom(nrow(dat), size = 1, prob = 0.5),
+                  rbinom(nrow(dat), size = 1, prob = 0.5),
+                  rbinom(nrow(dat), size = 1, prob = 0.5))
+head(permutes)
+arb_pr_mat <- estimatr::
+
+horvitz_thompson(y ~ z, data = dat, condition_pr_mat = )
 ```
 
 # Technical Appendix
