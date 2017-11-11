@@ -290,10 +290,12 @@ difference_in_means_internal <-
           # (Gerber and Green 2012, p. 83, eq. 3.23)
           k <- length(unique(data$cluster))
 
+          # In the below we set na.rm = T because if cluster is a factor, subsetting
+          # it will keep the other levels
           se <- sqrt(
-            (var(tapply(Y2, data$cluster[data$t == condition2], mean)) * N) /
+            (var(tapply(Y2, data$cluster[data$t == condition2], mean), na.rm = T) * N) /
               (k * length(Y2)) +
-            (var(tapply(Y1, data$cluster[data$t == condition1], mean)) * N) /
+            (var(tapply(Y1, data$cluster[data$t == condition1], mean), na.rm = T) * N) /
               (k * length(Y1))
           )
         }
