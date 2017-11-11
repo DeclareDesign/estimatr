@@ -33,16 +33,67 @@ The current estimators we provide are:
 # Estimators
 
 ```{r}
+set.seed(42)
 library(estimatr)
+# Example dataset to be used throughout built using fabricatr and randomizr
+dat <- fabricatr::fabricate(
+  N = 100,                       # sample size
+  x = runif(N, 0, 1),            # pre-treatment covariate
+  y0 = rnorm(N, mean = x),       # control potential outcome
+  y1 = y0 + 0.35,                # treatment potential outcome
+  z = randomizr::complete_ra(N), # complete random assignment to treatment
+  y = ifelse(z, y1, y0),         # observed outcome
+  
+  # We will also consider clustered data
+  clust = sample(letters[1:5], size = N, replace = T),
+  z_clust = randomizr::cluster_ra(clust),
+  y_clust = ifelse(z_clust, y1, y0)
+)
+head(dat)
 ```
 
 ## `lm_robust()`
 
 The `estimatr` package provides a function to quickly fit linear models with the most common variance estimators and degrees of freedom corrections used in social science. You can easily return heteroskedastic standard errors, clustered standard errors, and classical standard errors.
 
+Usage largely limics `lm()`, although it defaults to using Eicker-Huber-White robust standard errors, specifically 'HC2' standard errors:
+
 ```{r}
-## Load sample dataset of educational programs and gpas
-data("alo_star_men")
+lm_robust(y ~ z + x, data = dat)
+```
+
+It is straightforward to do cluster-robust inference, by passing the name of your cluster variable to the `clusters =` argument.
+
+```{r}
+lm_robust(y_clust ~ z_clust + x, data = dat, clusters = clust)
+```
+
+The default variance estimator with clusters is dubbed 'CR2' because it is analogous to 'HC2' for the clustered case, and utilizes recent advances proposed by [@pustejovskytipton2016] to correct hypotheses tests for small samples and work with commonly specified fixed effects and weights.
+
+Researchers can also replicate Stata's clustered standard errors by using the `se_type =` argument:
+```{r}
+lm_robust(y_clust ~ z_clust + x, data = dat, clusters = clust, se_type = 'stata')
+```
+
+## `lm_lin()`
+
+Following the critique by [@freedman2008] that pre-treatment covariate adjustment biases estimates of average treatment effects, [@lin2013] proposed an alternative estimator that would reduce this bias and improve precision. The [@lin2013] estimator suggests centering all pre-treatment covariates and interacting them with the treatment variable. To facilitate this, we provide a wrapper that can do that process for you. 
+
+```{r}
+lm_lin(y ~ z, covariates = ~ x, data = dat)
+```
+
+Furthermore, it is just a wrapper for `lm_robust()`, so all arguments that work for `lm_robust()` work here.
+
+## `difference_in_means()`
+
+While estimating differences in means may seem straightforward, we provide a function that appropriately adjusts estimates for blocking and clustering to match the current state of knowledge in social science methodology. Usage is similar to usage in regression functions.
+
+```{r}
+# Simple version
+difference_in_means(y ~ z, data = dat)
+# Clustered version
+difference_in_means(y_clust ~ z_clust, data = dat, clusters = clust)
 ```
 
 # Technical Appendix
