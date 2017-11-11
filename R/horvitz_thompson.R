@@ -188,8 +188,6 @@ horvitz_thompson <-
 
     }
 
-    print(condition_pr_mat)
-
     data$clusters <- model_data$cluster
     data$blocks <- model_data$block
 
