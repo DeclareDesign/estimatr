@@ -188,8 +188,6 @@ horvitz_thompson <-
 
     }
 
-    print(condition_pr_mat)
-
     data$clusters <- model_data$cluster
     data$blocks <- model_data$block
 
@@ -536,10 +534,15 @@ horvitz_thompson_internal <-
                                  ps2,
                                  ps1)
 
-        if (varN2 < 0) {
-          warning("Variance below 0, consider using constant effects assumption or a different estimator.")
+        if (!is.nan(varN2)) {
+          if (varN2 < 0) {
+            warning("Variance below 0, consider using constant effects assumption or a different estimator.")
+          } else {
+            se <- sqrt(varN2) / N
+          }
+
         } else {
-          se <- sqrt(varN2) / N
+          stop("Variance is NaN. This is likely the result of a complex condition probability matrix.")
         }
       }
     }
