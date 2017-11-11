@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Estimate and Summarize a Model — use_model • estimatr</title>
+<title>tidy on a NULL input — tidy.NULL • estimatr</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -23,7 +23,8 @@
 <link href="../pkgdown.css" rel="stylesheet">
 <script src="../jquery.sticky-kit.min.js"></script>
 <script src="../pkgdown.js"></script>
-
+  
+  
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
 
@@ -95,39 +96,33 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Estimate and Summarize a Model</h1>
+    <h1>tidy on a NULL input</h1>
     </div>
 
     
-    <p>Estimate and Summarize a Model</p>
+    <p>tidy on a NULL input returns an empty data frame, which means it can be
+combined with other data frames (treated as "empty")</p>
     
 
-    <pre class="usage"><span class='fu'>use_model</span>(<span class='no'>...</span>, <span class='kw'>model</span> <span class='kw'>=</span> <span class='no'>lm</span>, <span class='no'>data</span>, <span class='no'>alpha</span>, <span class='kw'>coefficient_name</span> <span class='kw'>=</span> <span class='st'>"Z"</span>)</pre>
+    <pre class="usage"><span class='co'># S3 method for NULL</span>
+<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>object</span>, <span class='no'>...</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
+      <th>object</th>
+      <td><p>A value NULL</p></td>
+    </tr>
+    <tr>
       <th>...</th>
-      <td><p>arguments passed to model</p></td>
-    </tr>
-    <tr>
-      <th>model</th>
-      <td><p>a modeling function like <code>lm</code> or <code>glm</code>.  Must have coef() and vcov() methods.</p></td>
-    </tr>
-    <tr>
-      <th>data</th>
-      <td><p>A data.frame.</p></td>
-    </tr>
-    <tr>
-      <th>alpha</th>
-      <td><p>The significance level, 0.05 by default. (not yet implemented)</p></td>
-    </tr>
-    <tr>
-      <th>coefficient_name</th>
-      <td><p>a character or character vector that indicates which coefficients should be reported. Defaults to "Z".</p></td>
+      <td><p>extra arguments (not used)</p></td>
     </tr>
     </table>
+    
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>An empty data.frame</p>
     
 
   </div>
@@ -135,7 +130,9 @@
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-                </ul>
+      
+      <li><a href="#value">Value</a></li>
+          </ul>
 
   </div>
 </div>
