@@ -9,45 +9,40 @@ declaration_to_condition_pr_mat <- function(declaration) {
     stop("declaration must be an object of class 'ra_declaration'")
   }
 
-  if (declaration$cleaned_arguments$num_arms > 2) {
+  if (ncol(declaration$probabilities_matrix) > 2) {
     stop("The 'declaration' argument can only be used with a binary treatment variable.")
   }
+
+  p1 <- declaration$probabilities_matrix[, 1]
+  p2 <- declaration$probabilities_matrix[, 2]
 
   declaration_call <- as.list(declaration$original_call)
   simple <- eval(declaration_call$simple)
 
   if (declaration$ra_type == 'simple') {
 
-    mat_00 <- tcrossprod(declaration$probabilities_matrix[, 1])
-    diag(mat_00) <- declaration$probabilities_matrix[, 1]
-    mat_11 <- tcrossprod(declaration$probabilities_matrix[, 2])
-    diag(mat_11) <- declaration$probabilities_matrix[, 2]
-
-    joint_probs <- tcrossprod(declaration$probabilities_matrix[, 1],
-                              declaration$probabilities_matrix[, 2])
-
-    mat_01 <- joint_probs
-    mat_01 <- copy_upper_to_lower_triangle(mat_01)
-    mat_10 <- joint_probs
-    mat_10 <- copy_lower_to_upper_triangle(mat_10)
-    diag(mat_01) <- diag(mat_10) <- 0
-
-    condition_pr_matrix <-
-      rbind(cbind(mat_00, mat_01),
-            cbind(mat_10, mat_11))
+    n <- nrow(declaration$probabilities_matrix)
+    v <- c(p1, p2)
+    condition_pr_matrix <- tcrossprod(v)
+    diag(condition_pr_matrix) <- v
+    condition_pr_matrix[cbind(n+1:n, 1:n)] <- 0
+    condition_pr_matrix[cbind(1:n, n+1:n)] <- 0
 
   } else if (declaration$ra_type == 'complete') {
 
     condition_pr_matrix <-
-      gen_pr_matrix_complete(declaration$probabilities_matrix[, 2])
+      gen_pr_matrix_complete(p2)
 
   } else if (declaration$ra_type == 'clustered') {
 
-    #print(simple)
+    if (length(declaration_call) == 0) {
+      warning("Assuming cluster randomization is complete. To have declare_ra work with simple random assignment of clusters, upgrade to the newest version of randomizr on GitHub.")
+    }
+
     condition_pr_matrix <-
       gen_pr_matrix_cluster(
         clusters = declaration$clust_var,
-        treat_probs = declaration$probabilities_matrix[, 2],
+        treat_probs = p2,
         simple = simple
       )
 
@@ -59,6 +54,12 @@ declaration_to_condition_pr_mat <- function(declaration) {
 
 }
 
+#' Generate condition probability matrix given clusters and probabilities
+#'
+#' @param clusters A vector of clusters
+#' @param treat_probs A vector of treatment (condition) probabilities
+#' @param simple A boolean for whether the assignment is a random sample assignment (TRUE, default) or complete random assignment (FALSE)
+#'
 #' @export
 gen_pr_matrix_cluster <- function(clusters, treat_probs, simple) {
 
@@ -185,7 +186,8 @@ permutations_to_condition_pr_mat <- function(permutations) {
 
 }
 
-## Helper functions
+# Helper functions based on Stack Overflow answer by user Ujjwal
+# https://stackoverflow.com/questions/26377199/convert-a-matrix-in-r-into-a-upper-triangular-lower-triangular-matrix-with-those
 copy_upper_to_lower_triangle <- function(mat) {
   mat[lower.tri(mat, diag = F)] <- t(mat)[lower.tri(mat)]
   return(mat)

@@ -60,7 +60,7 @@ horvitz_thompson(y ~ z, data = dat, condition_prs = p)
 horvitz_thompson(y ~ z, data = dat, condition_prs = p, se_type = "constant")
 
 # Also can use randomizr to pass a declaration
-srs_declaration <- randomizr::declare_ra(N = nrow(dat), prob = 0.5, simple = T)
+srs_declaration <- randomizr::declare_ra(N = nrow(dat), prob = 0.5, simple = TRUE)
 horvitz_thompson(y ~ z, data = dat, declaration = srs_declaration)
 
 #----------
@@ -69,9 +69,10 @@ horvitz_thompson(y ~ z, data = dat, declaration = srs_declaration)
 
 dat$z <- sample(rep(0:1, each = n/2))
 # Can use a declaration
-crs_declaration <- randomizr::declare_ra(N = nrow(dat), prob = 0.5, simple = F)
+crs_declaration <- randomizr::declare_ra(N = nrow(dat), prob = 0.5, simple = FALSE)
 horvitz_thompson(y ~ z, data = dat, declaration = crs_declaration)
-# Can precompute condition_pr_mat and pass it (faster for multiple runs with same condition probability matrix)
+# Can precompute condition_pr_mat and pass it
+# (faster for multiple runs with same condition probability matrix)
 crs_pr_mat <- declaration_to_condition_pr_mat(crs_declaration)
 horvitz_thompson(y ~ z, data = dat, condition_pr_mat = crs_pr_mat)
 
@@ -98,6 +99,6 @@ dat$z <- randomizr::conduct_ra(clust_crs_decl)
 # Regular SE using Young's inequality
 horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl)
 # SE using collapsed cluster totals and Young's inequality
-horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, collapsed = T)
+horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, collapsed = TRUE)
 
 }

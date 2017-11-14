@@ -23,8 +23,7 @@
 <link href="../pkgdown.css" rel="stylesheet">
 <script src="../jquery.sticky-kit.min.js"></script>
 <script src="../pkgdown.js"></script>
-  
-  
+
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
 
@@ -159,20 +158,12 @@
                   <span class='kw'>Z</span> <span class='kw'>=</span> <span class='fu'>sample</span>(<span class='fl'>1</span>:<span class='fl'>3</span>, <span class='fl'>100</span>, <span class='kw'>replace</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>),
                   <span class='kw'>block</span> <span class='kw'>=</span> <span class='fu'>sample</span>(<span class='fu'>c</span>(<span class='st'>"A"</span>, <span class='st'>"B"</span>, <span class='st'>"C"</span>), <span class='fl'>100</span>, <span class='kw'>replace</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>))
 
- <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name          est           se            p      ci_lower
-#&gt; 1                Z 0.1224874721 0.2674281763 0.6485811709 -0.4123727644
-#&gt;       ci_upper          df
-#&gt; 1 0.6573477086 60.41607609</div><div class='input'> <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name          est           se            p      ci_lower
-#&gt; 1                Z 0.2770965566 0.2432305921 0.2588673272 -0.2088470169
-#&gt;       ci_upper          df
-#&gt; 1 0.7630401301 63.76421495</div><div class='input'>
- <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>block_variable_name</span> <span class='kw'>=</span> <span class='no'>block</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name           est           se            p     ci_lower
-#&gt; 1                Z 0.02735372352 0.2960366265 0.9265709693 -0.560197033
-#&gt;       ci_upper df
-#&gt; 1 0.6149044801 97</div><div class='input'> <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>block_variable_name</span> <span class='kw'>=</span> <span class='no'>block</span>, <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name          est           se            p      ci_lower
-#&gt; 1                Z 0.2107775019 0.2830092347 0.4582099063 -0.3509174881
-#&gt;       ci_upper df
-#&gt; 1 0.7724724918 97</div><div class='input'>
+ <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p   ci_lower  ci_upper       df
+#&gt; 1                Z 0.1224875 0.2674282 0.6485812 -0.4123728 0.6573477 60.41608</div><div class='input'> <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p  ci_lower  ci_upper       df
+#&gt; 1                Z 0.2770966 0.2432306 0.2588673 -0.208847 0.7630401 63.76421</div><div class='input'>
+ <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>block_variable_name</span> <span class='kw'>=</span> <span class='no'>block</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name        est        se        p  ci_lower  ci_upper df
+#&gt; 1                Z 0.02735372 0.2960366 0.926571 -0.560197 0.6149045 97</div><div class='input'> <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>block_variable_name</span> <span class='kw'>=</span> <span class='no'>block</span>, <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p   ci_lower  ci_upper df
+#&gt; 1                Z 0.2107775 0.2830092 0.4582099 -0.3509175 0.7724725 97</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
