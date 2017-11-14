@@ -21,14 +21,22 @@ vignette: >
 \newcommand{\e}{\mathbf{e}}
 \newcommand{\V}{\mathbb{V}}
 
+```{r, echo = FALSE}
+set.seed(42)
+knitr::opts_chunk$set(
+  collapse = TRUE, 
+  comment = "#>"
+)
+```
+
 `estimatr` is a package in r dedicated to providing fast estimators for social scientists. Many extant estimators in base r or popular packages are slow, have default settings that lead to statistically inappropriate estimates, and simply do not provide tools for certain cutting-edge estimators.
 
 The current estimators we provide are:
 
-* [`lm_robust()`](#lm_robust) - for fitting linear models with heteroskedasticity/cluster robust standard errors [`(technical notes)`](#lm_robust-technical-notes)
-* [`lm_lin()`](#lm_lin) - a wrapper for `lm_robust()` to simplify interacting centered pre-treatment covariates with a treatment variable [`(technical notes)`](#lm_lin-technical-notes)
-* [`difference_in_means()`](#difference_in_means) - for estimating differences in means with appropriate standard errors for simple, cluster randomized, block randomized, matched-pair designs and more [`(technical notes)`](#difference_in_means-technical-notes)
-* [`horvitz_thompson()`](#horvitz_thompson) - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs [`(technical notes)`](#horvitz_thompson-technical-notes)
+* [`lm_robust()`](#lm_robust) - for fitting linear models with heteroskedasticity/cluster robust standard errors
+* [`lm_lin()`](#lm_lin) - a wrapper for `lm_robust()` to simplify interacting centered pre-treatment covariates with a treatment variable
+* [`difference_in_means()`](#difference_in_means) - for estimating differences in means with appropriate standard errors for simple, cluster randomized, block randomized, matched-pair designs and more
+* [`horvitz_thompson()`](#horvitz_thompson) - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs
 
 # Estimators
 
@@ -141,6 +149,8 @@ arb_pr_mat <- permutations_to_condition_pr_mat(permutes)
 
 horvitz_thompson(y ~ z, data = dat, condition_pr_mat = arb_pr_mat)
 ```
+
+```{r hide-technical-appendix, eval = F, echo = F}
 
 # Technical Appendix
 
@@ -432,6 +442,6 @@ Alternatively, one can assume constant treatment effects and, under that assumpt
     &- 2 (\pi_{1i0j} - \pi_{1i} \pi_{0j}) \frac{y_{1i}}{\pi_{1i}} \frac{y_{0j}}{\pi_{0j}}
   \Big)\Bigg]
 \end{align*}
-
+```
 
 # References
