@@ -9,7 +9,7 @@ declaration_to_condition_pr_mat <- function(declaration) {
     stop("declaration must be an object of class 'ra_declaration'")
   }
 
-  if (declaration$cleaned_arguments$num_arms > 2) {
+  if (ncol(declaration$probabilities_matrix) > 2) {
     stop("The 'declaration' argument can only be used with a binary treatment variable.")
   }
 
@@ -35,7 +35,10 @@ declaration_to_condition_pr_mat <- function(declaration) {
 
   } else if (declaration$ra_type == 'clustered') {
 
-    #print(simple)
+    if (length(declaration_call) == 0) {
+      warning("Assuming cluster randomization is complete. To have declare_ra work with simple random assignment of clusters, upgrade to the newest version of randomizr on GitHub.")
+    }
+
     condition_pr_matrix <-
       gen_pr_matrix_cluster(
         clusters = declaration$clust_var,
