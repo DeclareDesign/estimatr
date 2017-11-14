@@ -1,14 +1,14 @@
 ---
-title: "Estimatr: fast estimators for social scientists"
+title: 'Estimatr: fast estimators for social scientists'
 author: "Luke Sonnet"
-bibliography: estimatr.bib
-link-citations: true
 date: "`r Sys.Date()`"
-output: pdf_document
-vignette: >
-  %\VignetteIndexEntry{Estimatr - Fast estimators for social scientists}
-  %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
+output:
+  html_document:
+    df_print: paged
+link-citations: yes
+bibliography: estimatr.bib
+vignette: |
+  %\VignetteIndexEntry{Estimatr - Fast estimators for social scientists} %\VignetteEngine{knitr::rmarkdown} \usepackage[utf8]{inputenc}
 ---
 
 \newcommand{\X}{\mathbf{X}}
