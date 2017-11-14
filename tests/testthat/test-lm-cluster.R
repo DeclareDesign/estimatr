@@ -10,13 +10,13 @@ test_that("lm cluster se", {
 
 
   ## Test functionality
-  lm_robust(Y ~ Z, cluster_variable_name = J, data = dat)
+  lm_robust(Y ~ Z, clusters = J, data = dat)
 
-  lm_robust(Y ~ Z + X, cluster_variable_name = J, data = dat)
+  lm_robust(Y ~ Z + X, clusters = J, data = dat)
 
   lm_robust(
     Y ~ Z + X,
-    cluster_variable_name = J,
+    clusters = J,
     coefficient_name = c("Z", "X"),
     data = dat
   )
@@ -24,7 +24,7 @@ test_that("lm cluster se", {
 
   lm_robust(
     Y ~ Z + X,
-    cluster_variable_name = J,
+    clusters = J,
     coefficient_name = c("Z", "X"),
     se_type = 'stata',
     data = dat
@@ -34,7 +34,7 @@ test_that("lm cluster se", {
     unlist(
       lm_robust(
         Y ~ X + Z,
-        cluster_variable_name = J,
+        clusters = J,
         ci = FALSE,
         coefficient_name = c("X", "Z"),
         data = dat
@@ -47,7 +47,7 @@ test_that("lm cluster se", {
   lm_interact <-
     lm_robust(
       Y ~ Z*X,
-      cluster_variable_name = J,
+      clusters = J,
       coefficient_name = "Z:X",
       data = dat
     )
@@ -55,7 +55,7 @@ test_that("lm cluster se", {
   lm_interact_stata <-
     lm_robust(
       Y ~ Z*X,
-      cluster_variable_name = J,
+      clusters = J,
       se_type = 'stata',
       coefficient_name = "Z:X",
       data = dat
@@ -92,7 +92,7 @@ test_that("lm cluster se", {
   lm_full <-
     lm_robust(
       Y ~ Z + X,
-      cluster_variable_name = J,
+      clusters = J,
       data = dat
     )
 
@@ -118,7 +118,7 @@ test_that("lm cluster se", {
   expect_error(
     lm_robust(
       Y ~ Z,
-      cluster_variable_name = J,
+      clusters = J,
       se_type = 'HC2',
       data = dat
     ),
@@ -149,7 +149,7 @@ test_that("lm cluster se with missingness", {
   expect_warning(
     estimatr_cluster_out <- lm_robust(
       Y ~ Z + X,
-      cluster_variable_name = J,
+      clusters = J,
       data = dat
     ),
     'missingness in the cluster'
@@ -159,7 +159,7 @@ test_that("lm cluster se with missingness", {
     estimatr_cluster_out,
     lm_robust(
       Y ~ Z + X,
-      cluster_variable_name = J,
+      clusters = J,
       data = dat[-c(23, 63),]
     )
   )
@@ -183,8 +183,8 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
   dat$J <- as.character(dat$J)
 
   expect_identical(
-    lm_robust(Y~Z, data = dat, cluster_variable_name = J),
-    lm_robust(Y~Z, data = dat, cluster_variable_name = 'J')
+    lm_robust(Y~Z, data = dat, clusters = J),
+    lm_robust(Y~Z, data = dat, clusters = 'J')
   )
 
 
@@ -192,18 +192,18 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
   dat$J <- as.numeric(dat$J)
 
   expect_identical(
-    lm_robust(Y~Z, data = dat, cluster_variable_name = J),
-    lm_robust(Y~Z, data = dat, cluster_variable_name = 'J')
+    lm_robust(Y~Z, data = dat, clusters = J),
+    lm_robust(Y~Z, data = dat, clusters = 'J')
   )
 
 
   # works with factor
   dat$J_fac <- as.factor(dat$J)
   expect_identical(
-    lm_robust(Y~Z, data = dat, cluster_variable_name = J_fac),
-    lm_robust(Y~Z, data = dat, cluster_variable_name = J)
+    lm_robust(Y~Z, data = dat, clusters = J_fac),
+    lm_robust(Y~Z, data = dat, clusters = J)
   )
 
   # works with being cast in the call
-  lm_robust(Y~Z, data = dat, cluster_variable_name = as.factor(J))
+  lm_robust(Y~Z, data = dat, clusters = as.factor(J))
 })

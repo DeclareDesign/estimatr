@@ -21,22 +21,33 @@ vignette: >
 \newcommand{\e}{\mathbf{e}}
 \newcommand{\V}{\mathbb{V}}
 
-`estimatr` is a package in r dedicated to providing fast estimators for social scientists. Many extant estimators in base r or popular packages are slow, have default settings that lead to statistically inappropriate estimates, or are unable to provide certain specifications.
+`estimatr` is a package in r dedicated to providing fast estimators for social scientists. Many extant estimators in base r or popular packages are slow, have default settings that lead to statistically inappropriate estimates, and simply do not provide tools for certain cutting-edge estimators.
 
-This vignette will demonstrate the various estimators available in this package and provide justifications and citations for the default settings. The estimators currently available are:
+The current estimators we provide are:
 
-* [`lm_robust()`](#lm_robust) - for fitting linear models with heteroskedasticity/cluster robust standard errors
-* [`lm_lin()`](#lm_lin) - a wrapper for `lm_robust()` to simplify interacting centered pre-treatment covariates with a treatment variable
-* [`difference_in_means()`](#difference_in_means) - for estimating differences in means with appropriate standard errors for simple, cluster randomized, block randomized, matched-pair designs and more
-* [`horvitz_thompson()`](#horvitz_thompson) - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs
-
-# Hypothetical experiment
-
-TODO
+* [`lm_robust()`](#lm_robust) - for fitting linear models with heteroskedasticity/cluster robust standard errors [`(technical notes)`](#lm_robust-technical-notes)
+* [`lm_lin()`](#lm_lin) - a wrapper for `lm_robust()` to simplify interacting centered pre-treatment covariates with a treatment variable [`(technical notes)`](#lm_lin-technical-notes)
+* [`difference_in_means()`](#difference_in_means) - for estimating differences in means with appropriate standard errors for simple, cluster randomized, block randomized, matched-pair designs and more [`(technical notes)`](#difference_in_means-technical-notes)
+* [`horvitz_thompson()`](#horvitz_thompson) - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs [`(technical notes)`](#horvitz_thompson-technical-notes)
 
 # Estimators
 
+```{r}
+library(estimatr)
+```
+
 ## `lm_robust()`
+
+The `estimatr` package provides a function to quickly fit linear models with the most common variance estimators and degrees of freedom corrections used in social science. You can easily return heteroskedastic standard errors, clustered standard errors, and classical standard errors.
+
+```{r}
+## Load sample dataset of educational programs and gpas
+data("alo_star_men")
+```
+
+# Technical Appendix
+
+## `lm_robust()` technical notes
 
 All of the following works with weights except for the clustered standard errors (todo: finish weights with clustered SEs and write up weights in below.)
 
@@ -90,6 +101,8 @@ where $N$ is the number of observations and $K$ is the number of elements in $\b
 * $\e_s$ is the elements of the residual matrix $\e$ in cluster $s$, or $\e_s = \y_s - \X_s \hat{\beta}$
 
 **BM (default, also known as CR2 or Bell-McCaffrey)**
+
+TODO update with CR2 estimator
 
 Analogy to HC2 for cluster-robust variance estimation. For the original reference, see [@bellmccaffrey2002]. For papers that have also mention it, see $\V_{\mathrm{LZ2}}$ on p. 709 of [@imbenskolesar2016] and the CR2 estimator shown in equations (4) and (5) in [@pustejovskytipton2016]. Note that we will be implementing the estimator proposed in [@pustejovskytipton2016] soon; more can be found on their GitHub page for an accompanying R package [clubSandwich](https://github.com/jepusto/clubSandwich).
 
@@ -149,7 +162,7 @@ Then, if $\hat{\V}_k$ is the $k$th diagonal element of $\hat{\V}$, we build conf
 
 The associated p-values for a two-sided null hypothesis test where the null is that the coefficient is 0 uses a t-distribution with the aforementioned significance level $\alpha$ and degrees of freedom $df$.
 
-## `lm_lin()`
+## `lm_lin()` technical notes
 
 The `lm_lin()` estimator is a data pre-processor for `lm_robust()` that implements the regression method for covariate adjustment suggested by [@lin2013]. In response to the critique by [@freedman2008] that using regression to adjust for pre-treatment covariates could bias estimates of treatment effects, [@lin2013] demonstrates the small magnitude of this bias while also presenting an estimator to reduce said bias.
 
@@ -157,19 +170,19 @@ This estimator takes the outcome and treatment variable as the main formula (`fo
 
 The rest of the estimation proceeds just as in [`lm_robust()`](#lm_robust).
 
-## `difference_in_means()`
+## `difference_in_means()` technical notes
 
 There are six kinds of experimental designs for which our `difference_in_means()` estimator can estimate treatment effects, provide estiamtes of uncertainty, construct confidence intervals, and 
 provide p-values. We list them here along with how the software learns the design:
 
-* Simple (both `cluster_variable_name` and `block_variable_name` are unused)
-* Clustered (`cluster_variable_name` is specified while `block_variable_name` is not)
-* Blocked (`block_variable_name` is specified while `cluster_variable_name` is not)
+* Simple (both `clusters` and `blocks` are unused)
+* Clustered (`clusters` is specified while `blocks` is not)
+* Blocked (`blocks` is specified while `clusters` is not)
 * Blocked and clustered (both are specified)
 
 There are two subsets of blocked designs that we also consider:
 
-* Matched-pairs (only `block_variable_name` is specified and all blocks are size two)
+* Matched-pairs (only `blocks` is specified and all blocks are size two)
 * Matched-pair clustered design (both names are specified and each block only has two clusters)
 
 In addition, weights can be specified.
@@ -246,8 +259,82 @@ Following advice of [@imaietal2009] on page 37, we use the following conservativ
 df_{MPCR} = J - 1
 \]
 
-## `horvitz_thompson()`
+## `horvitz_thompson()` technical notes
 
-TODO
+Right now the Horvitz-Thompson estimator only works for designs where there is neither cluster randomization nor blocking, but should work for any design of arbitrary complexity beyond that (complete random sampling, simple random sampling, and any scheme with complex marginal or joint treatment probabilities, such as an exeriment on a network).
+
+Some definitions I will use here:
+
+* $\pi_{zi}$ is the marginal probability of being in condition $z \in \{0, 1\}$ for unit i
+* $\pi_{ziwj}$ is the joint probability of unit $i$ being in condition $z$ and unit $j$ being in condition $w \in \{0, 1\}$
+* $\epsilon_{ziwj}$ is the indicator function $\mathbb{1}\left(\pi_{ziwj} = 0\right)$
+
+## Estimates
+
+**Simple, complete, clustered**
+
+\[
+\hat{\tau} = \frac{1}{N} \sum^N_{i=1} z_i \frac{y_i}{\pi_{1i}} - (1 - z_i) \frac{y_i}{\pi_{0i}} 
+\]
+
+**Blocked**
+
+\[
+\hat{\tau} = \sum^J_{j=1} \frac{N_j}{N} \hat{\tau_j}
+\]
+where $J$ is the number of blocks, $N_j$ is the size of those blocks, and $\hat{\tau_j}$ is the Horvitz-Thompson estimate in block $j$.
+
+## Variance
+
+Currently we provide variance estimates that rely on two separate assumptions:
+
+* `"youngs"` which implements a conservative variance estimate using Young's inequality, described in equation 35 on page 147 of [@aronowmiddleton2013] and in [@aronowsamii2017] on pages 11-15.
+* `"constant"` which assumes constant treatment effects for which the only reference in the case with general joint inclusion probabilities can be found, possibly with an error, in an older version of [@aronowsamii2017] from March 2012 chich can be found [here](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.394.5477&rep=rep1&type=pdf).
+
+For complicated designs, including clustered designs, the following variance estimator's are sufficient as they incorporate the design through the marginal and joint condition probabilities. However, there is also an estimator proposed in equation 35 on page 147 of [@aronowmiddleton2013] using collapsed cluster totals.
+
+**Young's inequality**
+\begin{align*}
+  \hat{\V}_{Y}[\hat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[& z_i \left(\frac{y_i}{\pi_{1i}}\right)^2 + (1 - z_i) \left(\frac{y_i}{\pi_{0i}}\right)^2 + \sum_{j \neq i} \bigg(\frac{z_i z_j}{\pi_{1i1j} + \epsilon_{1i1j}}(\pi_{1i1j} - \pi_{1i}\pi_{1j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{1j}} \\
+  & + \frac{(1-z_i) (1-z_j)}{\pi_{0i0j} + \epsilon_{0i0j}}(\pi_{0i0j} - \pi_{0i}\pi_{0j})\frac{y_i}{\pi_{0i}}\frac{y_j}{\pi_{0j}} - 2 \frac{z_i (1-z_j)}{\pi_{1i0j} + \epsilon_{1i0j}}(\pi_{1i0j} - \pi_{1i}\pi_{0j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{0j}} \\
+  & + \sum_{\forall j \colon \pi_{1i1j} = 0} \left( z_i \frac{y^2_i}{2\pi_{1i}} + z_j \frac{y^2_j}{\pi_{1j}}\right) + \sum_{\forall j \colon \pi_{0i0j} = 0} \left( (1-z_i) \frac{y^2_i}{2\pi_{0i}} + (1-z_j) \frac{y^2_j}{\pi_{0j}}\right)
+  \Bigg]
+\end{align*}
+
+There are some simplifications of the above for simpler designs that follow algebraically from the above. For example, if there are no two units for which the joint probability of being in either condition is 0, which is the case for most experiments that are not matched-pair experiments, then we get:
+
+\begin{align*}
+  \hat{\V}_{Y}[\hat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[& z_i \left(\frac{y_i}{\pi_{1i}}\right)^2 + (1 - z_i) \left(\frac{y_i}{\pi_{0i}}\right)^2 + \sum_{j \neq i} \bigg(\frac{z_i z_j}{\pi_{1i1j}}(\pi_{1i1j} - \pi_{1i}\pi_{1j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{1j}} \\
+  & + \frac{(1-z_i) (1-z_j)}{\pi_{0i0j}}(\pi_{0i0j} - \pi_{0i}\pi_{0j})\frac{y_i}{\pi_{0i}}\frac{y_j}{\pi_{0j}} - 2 \frac{z_i (1-z_j)}{\pi_{1i0j}}(\pi_{1i0j} - \pi_{1i}\pi_{0j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{0j}}
+  \Bigg]
+\end{align*}
+
+If we further simplify to the case where there is simple random assignment, and there is absolutely no dependence among units (i.e. $\pi_{ziwj} = \pi_{zi}\pi_{wj} \;\;\forall\;\;z,w,i,j$), we get:
+
+\begin{align*}
+  \hat{\V}_{Y}[\hat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[& z_i \left(\frac{y_i}{\pi_{1i}}\right)^2 + (1 - z_i) \left(\frac{y_i}{\pi_{0i}}\right)^2\Bigg]
+\end{align*}
+
+For clustered designs, you can also use the following estimator where $M$ is the total number of clusters, $y_k$ is the total of the outcomes $y_i$ for all $i$ units in cluster $k$, $\pi_zk$ is the marginal probability of cluster $k$ being in condition $z \in \{0, 1\}$, and $z_k$ and $\pi_{zkwl}$ are defined analogously.
+\begin{align*}
+  \hat{\V}_{Y}[\hat{\tau}] = \frac{1}{N^2} \sum^M_{k=1} \Bigg[& z_k \left(\frac{y_k}{\pi_{1k}}\right)^2 + (1 - z_k) \left(\frac{y_k}{\pi_{0k}}\right)^2 + \sum_{l \neq k} \bigg(\frac{z_k z_l}{\pi_{1k1l} + \epsilon_{1k1l}}(\pi_{1k1l} - \pi_{1k}\pi_{1l})\frac{y_k}{\pi_{1k}}\frac{y_l}{\pi_{1l}} \\
+  & + \frac{(1-z_k) (1-z_l)}{\pi_{0k0l} + \epsilon_{0k0l}}(\pi_{0k0l} - \pi_{0k}\pi_{0l})\frac{y_k}{\pi_{0k}}\frac{y_l}{\pi_{0l}} - 2 \frac{z_k (1-z_l)}{\pi_{1k0l} + \epsilon_{1k0l}}(\pi_{1k0l} - \pi_{1k}\pi_{0l})\frac{y_k}{\pi_{1k}}\frac{y_l}{\pi_{0l}} \\
+  & + \sum_{\forall l \colon \pi_{1k1l} = 0} \left( z_k \frac{y^2_k}{2\pi_{1k}} + z_l \frac{y^2_l}{\pi_{1l}}\right) + \sum_{\forall l \colon \pi_{0k0l} = 0} \left( (1-z_k) \frac{y^2_k}{2\pi_{0k}} + (1-z_l) \frac{y^2_l}{\pi_{0l}}\right)
+  \Bigg]
+\end{align*}
+
+**Constant effects**
+
+Alternatively, one can assume constant treatment effects and, under that assumption, estimate the variance that is consistent under that assumption but less conservative.
+
+* $y_{zi}$ is the potential outcome for condition $z$ for unit $i$. This is either observed if $z_i = z$ or estimated using the constant effects assumption if $z_i \neq z$, where $z_i$ is the condition for unit $i$. To be precise $y_{1i} = z_i y_{i} + (1 - z_i) (y_{i} + \hat{\tau})$ and  $y_{0i} = z_i (y_{i} - \hat{\tau}) + (1 - z_i) y_{i}$, where $\hat{\tau}$ is the estimated treatment effect.
+
+\begin{align*}
+    \hat{\V}_{C}[\hat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[& (1 - \pi_{0i}) \pi_{0i} \left(\frac{y_{0i}}{\pi_{0i}}\right)^2 + (1 - \pi_{1i}) \pi_{1i} \left(\frac{y_{1i}}{\pi_{1i}}\right)^2 - 2 y_{1i} y_{0i} \\
+    & + \sum_{j \neq i} \Big( (\pi_{0i0j} - \pi_{0i} \pi_{0j}) \frac{y_{0i}}{\pi_{0i}} \frac{y_{0j}}{\pi_{0j}} + (\pi_{1i1j} - \pi_{1i} \pi_{1j}) \frac{y_{1i}}{\pi_{1i}} \frac{y_{1j}}{\pi_{1j}} \\
+    &- 2 (\pi_{1i0j} - \pi_{1i} \pi_{0j}) \frac{y_{1i}}{\pi_{1i}} \frac{y_{0j}}{\pi_{0j}}
+  \Big)\Bigg]
+\end{align*}
+
 
 # References

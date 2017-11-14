@@ -1,8 +1,8 @@
 #' Built-in Estimators: Difference-in-means
 #'
 #' @param formula An object of class "formula", such as Y ~ Z
-#' @param block_variable_name An optional bare (unquoted) name of the block variable. Use for blocked designs only.
-#' @param cluster_variable_name An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.
+#' @param blocks An optional bare (unquoted) name of the block variable. Use for blocked designs only.
+#' @param clusters An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.
 #' @param data A data.frame.
 #' @param weights An optional bare (unquoted) name of the weights variable.
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
@@ -24,13 +24,13 @@
 #'  difference_in_means(Y ~ Z, data = df)
 #'  difference_in_means(Y ~ Z, condition1 = 3, condition2 = 2, data = df)
 #'
-#'  difference_in_means(Y ~ Z, block_variable_name = block, data = df)
-#'  difference_in_means(Y ~ Z, block_variable_name = block, condition1 = 3, condition2 = 2, data = df)
+#'  difference_in_means(Y ~ Z, blocks = block, data = df)
+#'  difference_in_means(Y ~ Z, blocks = block, condition1 = 3, condition2 = 2, data = df)
 #'
 difference_in_means <-
   function(formula,
-           block_variable_name = NULL,
-           cluster_variable_name = NULL,
+           blocks = NULL,
+           clusters = NULL,
            condition1 = NULL,
            condition2 = NULL,
            data,
@@ -50,8 +50,8 @@ difference_in_means <-
         formula = formula,
         data = data,
         subset = subset,
-        cluster = cluster_variable_name,
-        block = block_variable_name,
+        cluster = clusters,
+        block = blocks,
         weights = weights,
         where = where
       )
@@ -68,7 +68,6 @@ difference_in_means <-
     if (is.null(data$block)){
 
       return_frame <- difference_in_means_internal(
-        formula,
         condition1 = condition1,
         condition2 = condition2,
         data = data,
@@ -127,7 +126,6 @@ difference_in_means <-
 
       block_estimates <- lapply(block_dfs, function(x) {
         difference_in_means_internal(
-          formula,
           data = x,
           condition1 = condition1,
           condition2 = condition2,
@@ -224,8 +222,7 @@ weighted_var_internal <- function(w, x, xWbar){
 
 
 difference_in_means_internal <-
-  function(formula,
-           condition1 = NULL,
+  function(condition1 = NULL,
            condition2 = NULL,
            data,
            pair_matched = FALSE,
@@ -293,10 +290,12 @@ difference_in_means_internal <-
           # (Gerber and Green 2012, p. 83, eq. 3.23)
           k <- length(unique(data$cluster))
 
+          # In the below we set na.rm = T because if cluster is a factor, subsetting
+          # it will keep the other levels
           se <- sqrt(
-            (var(tapply(Y2, data$cluster[data$t == condition2], mean)) * N) /
+            (var(tapply(Y2, data$cluster[data$t == condition2], mean), na.rm = T) * N) /
               (k * length(Y2)) +
-            (var(tapply(Y1, data$cluster[data$t == condition1], mean)) * N) /
+            (var(tapply(Y1, data$cluster[data$t == condition1], mean), na.rm = T) * N) /
               (k * length(Y1))
           )
         }

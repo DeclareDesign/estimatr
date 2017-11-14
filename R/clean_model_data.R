@@ -80,7 +80,6 @@ clean_model_data <- function(formula,
     }
   })
 
-
   ret <- list(
     outcome=model.response(mf),
     design_matrix=model.matrix.default(formula, data = mf)
@@ -102,6 +101,12 @@ clean_model_data <- function(formula,
 
   if(!missing(condition_pr)){
     ret[["condition_pr"]] <- model.extract(mf, "condition_pr")
+
+    if (any(ret[["condition_pr"]] < 0 | ret[["condition_pr"]] > 1)) {
+      stop(
+        "Some condition probabilities are outside of [0, 1]."
+      )
+    }
   }
 
   return(ret)

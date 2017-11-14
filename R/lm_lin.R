@@ -7,7 +7,7 @@
 #' @param covariates A one-sided formula with all of the covariates on the right hand side, such as ~ x1 + x2 + x3.
 #' @param weights the bare (unquoted) names of the weights variable in the supplied data.
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
-#' @param cluster_variable_name An optional bare (unquoted) name of the variable that corresponds to the clusters in the data.
+#' @param clusters An optional bare (unquoted) name of the variable that corresponds to the clusters in the data.
 #' @param se_type The sort of standard error sought. Without clustering: "HC0", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "BM" (default), "stata".
 #' @param ci A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
@@ -21,7 +21,7 @@ lm_lin <- function(formula,
                    covariates,
                    weights,
                    subset,
-                   cluster_variable_name,
+                   clusters,
                    se_type = NULL,
                    ci = TRUE,
                    alpha = .05,
@@ -53,7 +53,7 @@ lm_lin <- function(formula,
       formula = full_formula,
       data = data,
       subset = subset,
-      cluster = cluster_variable_name,
+      cluster = clusters,
       weights = weights,
       where = where
     )
