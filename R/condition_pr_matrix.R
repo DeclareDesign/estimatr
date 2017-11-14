@@ -51,6 +51,12 @@ declaration_to_condition_pr_mat <- function(declaration) {
 
 }
 
+#' Generate condition probability matrix given clusters and probabilities
+#'
+#' @param clusters A vector of clusters
+#' @param treat_probs A vector of treatment (condition) probabilities
+#' @param simple A boolean for whether the assignment is a random sample assignment (TRUE, default) or complete random assignment (FALSE)
+#'
 #' @export
 gen_pr_matrix_cluster <- function(clusters, treat_probs, simple) {
 
