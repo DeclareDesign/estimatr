@@ -1,14 +1,14 @@
 ---
-title: "Estimatr: fast estimators for social scientists"
+title: 'Estimatr: fast estimators for social scientists'
 author: "Luke Sonnet"
-bibliography: estimatr.bib
-link-citations: true
 date: "`r Sys.Date()`"
-output: pdf_document
-vignette: >
-  %\VignetteIndexEntry{Estimatr - Fast estimators for social scientists}
-  %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
+output:
+  html_document:
+    df_print: paged
+link-citations: yes
+bibliography: estimatr.bib
+vignette: |
+  %\VignetteIndexEntry{Estimatr - Fast estimators for social scientists} %\VignetteEngine{knitr::rmarkdown} \usepackage[utf8]{inputenc}
 ---
 
 \newcommand{\X}{\mathbf{X}}
@@ -21,29 +21,136 @@ vignette: >
 \newcommand{\e}{\mathbf{e}}
 \newcommand{\V}{\mathbb{V}}
 
+```{r, echo = FALSE}
+set.seed(42)
+knitr::opts_chunk$set(
+  collapse = TRUE, 
+  comment = "#>"
+)
+```
+
 `estimatr` is a package in r dedicated to providing fast estimators for social scientists. Many extant estimators in base r or popular packages are slow, have default settings that lead to statistically inappropriate estimates, and simply do not provide tools for certain cutting-edge estimators.
 
 The current estimators we provide are:
 
-* [`lm_robust()`](#lm_robust) - for fitting linear models with heteroskedasticity/cluster robust standard errors [`(technical notes)`](#lm_robust-technical-notes)
-* [`lm_lin()`](#lm_lin) - a wrapper for `lm_robust()` to simplify interacting centered pre-treatment covariates with a treatment variable [`(technical notes)`](#lm_lin-technical-notes)
-* [`difference_in_means()`](#difference_in_means) - for estimating differences in means with appropriate standard errors for simple, cluster randomized, block randomized, matched-pair designs and more [`(technical notes)`](#difference_in_means-technical-notes)
-* [`horvitz_thompson()`](#horvitz_thompson) - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs [`(technical notes)`](#horvitz_thompson-technical-notes)
+* [`lm_robust()`](#lm_robust) - for fitting linear models with heteroskedasticity/cluster robust standard errors
+* [`lm_lin()`](#lm_lin) - a wrapper for `lm_robust()` to simplify interacting centered pre-treatment covariates with a treatment variable
+* [`difference_in_means()`](#difference_in_means) - for estimating differences in means with appropriate standard errors for simple, cluster randomized, block randomized, matched-pair designs and more
+* [`horvitz_thompson()`](#horvitz_thompson) - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs
 
 # Estimators
 
 ```{r}
+set.seed(42)
 library(estimatr)
+# Example dataset to be used throughout built using fabricatr and randomizr
+dat <- fabricatr::fabricate(
+  N = 100,                       # sample size
+  x = runif(N, 0, 1),            # pre-treatment covariate
+  y0 = rnorm(N, mean = x),       # control potential outcome
+  y1 = y0 + 0.35,                # treatment potential outcome
+  z = randomizr::complete_ra(N), # complete random assignment to treatment
+  y = ifelse(z, y1, y0),         # observed outcome
+  
+  # We will also consider clustered data
+  clust = sample(letters[1:5], size = N, replace = T),
+  z_clust = randomizr::cluster_ra(clust),
+  y_clust = ifelse(z_clust, y1, y0)
+)
+head(dat)
 ```
 
 ## `lm_robust()`
 
 The `estimatr` package provides a function to quickly fit linear models with the most common variance estimators and degrees of freedom corrections used in social science. You can easily return heteroskedastic standard errors, clustered standard errors, and classical standard errors.
 
+Usage largely limics `lm()`, although it defaults to using Eicker-Huber-White robust standard errors, specifically 'HC2' standard errors:
+
 ```{r}
-## Load sample dataset of educational programs and gpas
-data("alo_star_men")
+lm_robust(y ~ z + x, data = dat)
 ```
+
+It is straightforward to do cluster-robust inference, by passing the name of your cluster variable to the `clusters =` argument. Note that `lm_robust()` is much quicker if your cluster variable is a factor!
+
+```{r}
+lm_robust(y_clust ~ z_clust + x, data = dat, clusters = clust)
+```
+
+The default variance estimator with clusters is dubbed 'CR2' because it is analogous to 'HC2' for the clustered case, and utilizes recent advances proposed by [@pustejovskytipton2016] to correct hypotheses tests for small samples and work with commonly specified fixed effects and weights.
+
+Researchers can also replicate Stata's clustered standard errors by using the `se_type =` argument:
+```{r}
+lm_robust(y_clust ~ z_clust + x, data = dat, clusters = clust, se_type = 'stata')
+```
+
+## `lm_lin()`
+
+Following the critique by [@freedman2008] that pre-treatment covariate adjustment biases estimates of average treatment effects, [@lin2013] proposed an alternative estimator that would reduce this bias and improve precision. The [@lin2013] estimator suggests centering all pre-treatment covariates and interacting them with the treatment variable. To facilitate this, we provide a wrapper that can do that process for you. 
+
+```{r}
+lm_lin(y ~ z, covariates = ~ x, data = dat)
+```
+
+Furthermore, it is just a wrapper for `lm_robust()`, so all arguments that work for `lm_robust()` work here.
+
+## `difference_in_means()`
+
+While estimating differences in means may seem straightforward, we provide a function that appropriately adjusts estimates for blocking and clustering to match the current state of knowledge in social science methodology. Usage is similar to usage in regression functions.
+
+```{r}
+# Simple version
+difference_in_means(y ~ z, data = dat)
+# Clustered version
+difference_in_means(y_clust ~ z_clust, data = dat, clusters = clust)
+```
+
+## `horvitz_thompson()`
+
+Horvitz-Thompson estimators are useful when estimating treatment effects without bias when there is a clustered design with unequal size clusters or when the treatment assignment process is arbitrarily complex. Horvitz-Thompson estimators require information about the treatment (and control) probabilities for each unit, and the joint treatment and control probabilities of every pair of units. For simpler designs, passing your randomization scheme using `randomizr::declare_ra()` is the easiest path forward.
+
+```{r}
+# Complete random assignment declaration
+crs_decl <- randomizr::declare_ra(N = nrow(dat), prob = 0.5, simple = FALSE)
+horvitz_thompson(y ~ z, data = dat, declaration = crs_decl)
+
+# Clustered random assignment declaration
+crs_clust_decl <- randomizr::declare_ra(
+  N = nrow(dat), 
+  clust_var = dat$clust, 
+  prob = 0.5, 
+  simple = FALSE
+)
+horvitz_thompson(y_clust ~ z_clust, data = dat, declaration = crs_clust_decl)
+```
+
+There are two main variance estimators we provide, a conservative estimator using Young's inequality (`se_type = "youngs"`), described by [@aronowmiddleton2013], and an estimator that assumes constant treatment effects (`se_type = "constant"`). The default is the conservative estimator.
+
+```{r}
+horvitz_thompson(
+  y_clust ~ z_clust, 
+  data = dat, 
+  declaration = crs_clust_decl, 
+  se_type = "constant"
+)
+```
+
+You can also build the condition probability matrix (`condition_prob_mat = `) that `horvitz_thompson()` needs yourself. This matrix is an 2N by 2N matrix, where the first N rows and N columns (the upper-left corner) are the joint probability of each unit being in the control condition with every other unit being in the control condition. The upper right N by N matrix is the joint probability of each unit being in the control condition with every other unit being in the treated condition. The second N rows are the same, with the joint probability of each unit being in the treated condition first with each unit being in the control (first N columns) and then with each unit being in the treated as well (second N columns).
+
+We also provide helper functions to build this matrix from any given permutation of treatments (`condition.
+
+```{r}
+# Generate 500 arbitrary permutations
+permutes <- matrix(rbinom(nrow(dat)*500, size = 1, prob = 0.5), nrow = nrow(dat))
+dim(permutes)
+permutes[1:5, 1:2]
+
+# Get condition probability matrix
+arb_pr_mat <- permutations_to_condition_pr_mat(permutes)
+
+horvitz_thompson(y ~ z, data = dat, condition_pr_mat = arb_pr_mat)
+```
+
+```{r hide-technical-appendix, eval = F, echo = F}
 
 # Technical Appendix
 
@@ -335,6 +442,6 @@ Alternatively, one can assume constant treatment effects and, under that assumpt
     &- 2 (\pi_{1i0j} - \pi_{1i} \pi_{0j}) \frac{y_{1i}}{\pi_{1i}} \frac{y_{0j}}{\pi_{0j}}
   \Big)\Bigg]
 \end{align*}
-
+```
 
 # References
