@@ -2,6 +2,7 @@
 // Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #include <RcppArmadillo.h>
+#include <RcppEigen.h>
 #include <Rcpp.h>
 
 using namespace Rcpp;
@@ -168,6 +169,32 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// lm_ei_test
+List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& X, const Eigen::Map<Eigen::VectorXd>& y, const bool& chol, const bool& trychol);
+RcppExport SEXP _estimatr_lm_ei_test(SEXP XSEXP, SEXP ySEXP, SEXP cholSEXP, SEXP trycholSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd>& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd>& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const bool& >::type chol(cholSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type trychol(trycholSEXP);
+    rcpp_result_gen = Rcpp::wrap(lm_ei_test(X, y, chol, trychol));
+    return rcpp_result_gen;
+END_RCPP
+}
+// lm_old
+List lm_old(arma::mat& X, const arma::vec& y);
+RcppExport SEXP _estimatr_lm_old(SEXP XSEXP, SEXP ySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type y(ySEXP);
+    rcpp_result_gen = Rcpp::wrap(lm_old(X, y));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_estimatr_ht_var", (DL_FUNC) &_estimatr_ht_var, 5},
@@ -182,6 +209,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_estimatr_mult_diag", (DL_FUNC) &_estimatr_mult_diag, 2},
     {"_estimatr_mat_sqrt_inv", (DL_FUNC) &_estimatr_mat_sqrt_inv, 2},
     {"_estimatr_lm_robust_helper", (DL_FUNC) &_estimatr_lm_robust_helper, 9},
+    {"_estimatr_lm_ei_test", (DL_FUNC) &_estimatr_lm_ei_test, 4},
+    {"_estimatr_lm_old", (DL_FUNC) &_estimatr_lm_old, 2},
     {NULL, NULL, 0}
 };
 

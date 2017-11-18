@@ -49,3 +49,13 @@ lm_robust_helper <- function(y, X, Xunweighted, weight, weight_mean, cluster, ci
     .Call(`_estimatr_lm_robust_helper`, y, X, Xunweighted, weight, weight_mean, cluster, ci, type, which_covs)
 }
 
+#' @export
+lm_ei_test <- function(X, y, chol, trychol) {
+    .Call(`_estimatr_lm_ei_test`, X, y, chol, trychol)
+}
+
+#' @export
+lm_old <- function(X, y) {
+    .Call(`_estimatr_lm_old`, X, y)
+}
+
