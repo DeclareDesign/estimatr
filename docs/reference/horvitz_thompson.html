@@ -84,7 +84,12 @@
       </ul>
       
       <ul class="nav navbar-nav navbar-right">
-        
+        <li>
+  <a href="https://github.com/DeclareDesign/estimatr">
+    <span class="fa fa-github fa-lg"></span>
+     
+  </a>
+</li>
       </ul>
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
@@ -477,7 +482,7 @@
 <span class='no'>clust_crs_decl</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>randomizr</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/declare_ra'>declare_ra</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>), <span class='kw'>clust_var</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>cl</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.5</span>)
 <span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>randomizr</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/conduct_ra'>conduct_ra</a></span>(<span class='no'>clust_crs_decl</span>)
 <span class='co'># Regular SE using Young's inequality</span>
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>clust_crs_decl</span>)</div><div class='output co'>#&gt; <span class='warning'>Warning: Assuming cluster randomization is complete. To have declare_ra work with simple random assignment of clusters, upgrade to the newest version of randomizr on GitHub.</span></div><div class='output co'>#&gt;              y t clusters condition_probabilities
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>clust_crs_decl</span>)</div><div class='output co'>#&gt;              y t clusters condition_probabilities
 #&gt; 1  -0.42938009 0        1                     0.5
 #&gt; 2   1.36046133 0        1                     0.5
 #&gt; 3  -0.07085743 0        2                     0.5
@@ -553,7 +558,7 @@
 #&gt; [19,] 0.1666667 0.1666667 0.1666667 0.5000000 0.5000000 0.5000000
 #&gt; [20,] 0.1666667 0.1666667 0.1666667 0.5000000 0.5000000 0.5000000</div><div class='output co'>#&gt;   coefficient_name        est        se         p  ci_lower ci_upper df
 #&gt; 1                z -0.8231346 0.8539677 0.3633268 -2.792388 1.146118  8</div><div class='input'><span class='co'># SE using collapsed cluster totals and Young's inequality</span>
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>clust_crs_decl</span>, <span class='kw'>collapsed</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; <span class='warning'>Warning: Assuming cluster randomization is complete. To have declare_ra work with simple random assignment of clusters, upgrade to the newest version of randomizr on GitHub.</span></div><div class='output co'>#&gt;              y t clusters condition_probabilities
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>clust_crs_decl</span>, <span class='kw'>collapsed</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt;              y t clusters condition_probabilities
 #&gt; 1  -0.42938009 0        1                     0.5
 #&gt; 2   1.36046133 0        1                     0.5
 #&gt; 3  -0.07085743 0        2                     0.5
@@ -581,8 +586,9 @@
 </div>
 
       <footer>
-      <div class="copyright">
-  <p>Developed by Graeme Blair, Jasper Cooper, Alexander Coppock, Macartan Humphreys.</p>
+      <div class="copyright" style="flex:3;">
+  <p>Developed by Graeme Blair, Jasper Cooper, Alexander Coppock, Macartan Humphreys, Luke Sonnet.</p>
+  <p>Code is licensed under <a href="https://opensource.org/licenses/mit-license.php">MIT</a> license.</p>
 </div>
 
 <div class="pkgdown">

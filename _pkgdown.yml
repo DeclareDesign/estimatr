@@ -1,3 +1,6 @@
+template:
+  path: "docs/templates"
+
 navbar:
   type: default
   left:

@@ -1,0 +1,60 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, echo = FALSE}
+set.seed(42)
+knitr::opts_chunk$set(
+  collapse = TRUE, 
+  comment = "#>",
+  fig.path = "README-"  
+)
+sample_dat <- fabricatr::fabricate(
+  N = 100,
+  y = rnorm(N),
+  cluster = sample(letters[1:10], size = N, replace = T),
+  z = randomizr::cluster_ra(cluster)
+)
+```
+
+# estimatr: Fast estimators for social scientists
+
+Technical papers and textbooks demand complex estimation strategies that are often difficult to implement, even for scientists who are expert coders. The result is slow code copied and pasted from the internet, where the result is taken on faith.
+
+**estimatr** provides a small set of commonly-used estimators (methods for estimating quantities of interest like treatment effects or regression parameters), written in `C++` for speed, and implemented in `R` with simple, accessible syntax. We include two functions that implement means estimators, `difference_in_means` and `horvitz_thompson`. In addition, we include two functions for linear regression estimators, `lm_robust` and `lm_lin`. In each case, scientists can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs.
+
+Fast estimators also enable fast simulation of research designs to learn about their properties (see [DeclareDesign](http://declaredesign.org)). 
+
+*This software is in not yet ready for general release. Please contact the authors before using in experiments or published work. Specifications, names, and arguments of functions are subject to change.*
+
+### Installing estimatr
+
+If you would like to use the current development release of **estimatr**, please ensure that you are running version 3.3 or later of R and run the following code:
+
+```{r, eval = F}
+install.packages("estimatr", dependencies = TRUE,
+  repos = c("http://R.declaredesign.org", "https://cloud.r-project.org"))
+```
+
+### Easy to use
+
+Once the package is installed, getting appropriate estimates and standard errors is now both fast and easy. You can see examples with all of the estimators we provide in the [getting started](articles/estimatr-vignette.html) vignette.
+
+```{r, eval = F}
+library(estimatr)
+
+# robust standard errors
+lm_robust(y ~ z, data = sample_dat)
+
+# cluster robust standard errors
+lm_robust(y ~ z, data = sample_dat, clusters = my_cluster_var)
+
+# blocked designs
+difference_in_means(y ~ z, data = sample_dat, blocks = my_block_var)
+```
+
+**estimatr** can do so much more. Please read our [online tutorial](estimatr-vignette.html) for more information about how to make **estimatr** work for your analysis.
+
+This project is generously supported by a grant from the [Laura and John Arnold Foundation](http://www.arnoldfoundation.org) and seed funding from [Evidence in Governance and Politics (EGAP)](http://egap.org).
