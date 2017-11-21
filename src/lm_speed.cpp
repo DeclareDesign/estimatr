@@ -21,8 +21,27 @@ Eigen::MatrixXd AtA(const Eigen::Map<Eigen::MatrixXd>& A) {
 
 //' @export
 // [[Rcpp::export]]
+Eigen::MatrixXd mult_diag(const Eigen::MatrixXd& x, const Eigen::ArrayXd& d) {
+
+  Eigen::MatrixXd out(x.rows(), x.cols());
+  for (unsigned j = 0; j < x.cols(); ++j) {
+    out.col(j) = x.col(j) * d(j);
+  }
+
+  return out;
+}
+
+//' @export
+// [[Rcpp::export]]
 List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& X,
                 const Eigen::Map<Eigen::VectorXd>& y,
+                const Rcpp::Nullable<Rcpp::NumericMatrix> & Xunweighted,
+                const Rcpp::Nullable<Rcpp::NumericVector> & weight,
+                const double & weight_mean,
+                const Rcpp::Nullable<Rcpp::NumericVector> & cluster,
+                const bool & ci,
+                const String type,
+                const std::vector<bool> & which_covs,
                 const bool& chol,
                 const bool& trychol) {
 
@@ -31,6 +50,8 @@ List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& X,
   Eigen::MatrixXd XtX_inv, R_inv, Vcov_hat;
   Eigen::VectorXd beta_hat(Eigen::VectorXd::Constant(p, ::NA_REAL));
   Eigen::VectorXd dof(p);
+
+  bool full_rank = true;
 
   if (chol) {
     const Eigen::LLT<Eigen::MatrixXd> llt(Xt*X);
@@ -44,6 +65,7 @@ List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& X,
 
         // Catch case where X is rank-deficient
         if(llt.info() == Eigen::NumericalIssue) {
+          full_rank = false;
           throw std::runtime_error("Possibly non semi-positive definite matrix!");
         } else {
           beta_hat = llt.solve(X.adjoint() * y);
@@ -100,11 +122,199 @@ List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& X,
     }
   }
 
+  if(type != "none"){
+
+    // residuals
+    Eigen::VectorXd ei = y - X * beta_hat;
+
+    if (type == "classical") {
+
+      // the next line due to Dirk Eddelbuettel
+      // http://dirk.eddelbuettel.com/code/rcpp.armadillo.html
+      double s2 = ei.dot(ei)/(n - p);
+      Vcov_hat = s2 * XtX_inv;
+
+    } else if ( (type == "HC0") | (type == "HC1") | (type == "HC2") | (type == "HC3") ) {
+
+      // hat values
+      Eigen::ArrayXd ei2 = ei.array().pow(2);
+
+      if(type == "HC0"){
+        Vcov_hat = XtX_inv * mult_diag(Xt, ei2) * X * XtX_inv;
+
+      } else if (type == "HC1") {
+        Vcov_hat = n/(n-p) * XtX_inv * mult_diag(Xt, ei2) * X * XtX_inv;
+      } else if (type == "HC2") {
+        Eigen::ArrayXd hii(n);
+
+        for(int i = 0; i < n; i++){
+          Eigen::VectorXd Xi = X.row(i);
+          hii(i) = 1.0 - (Xi.transpose() * XtX_inv * Xi);
+        }
+        Vcov_hat = XtX_inv * mult_diag(Xt, ei2 / hii) * X * XtX_inv;
+      } else if (type == "HC3") {
+        Eigen::ArrayXd hii(n);
+
+        for(int i = 0; i < n; i++){
+          Eigen::VectorXd Xi = X.row(i);
+          hii(i) = std::pow(1.0 - Xi.transpose() * XtX_inv * Xi, 2);
+        }
+        Vcov_hat = XtX_inv * mult_diag(Xt, ei2 / hii) * X * XtX_inv;
+      }
+
+//    } //else if ( (type == "stata") | (type == "CR2") ) {
+//
+//       // Code adapted from Michal Kolesar
+//       // https://github.com/kolesarm/Robust-Small-Sample-Standard-Errors
+//
+//       // Get unique cluster values
+//       arma::vec clusters = Rcpp::as<arma::vec>(cluster);
+//       arma::vec levels = unique(clusters);
+//       double J = levels.n_elem;
+//
+//       //Rcpp::Rcout << 'here' << std::endl;
+//
+//       if (type == "CR2") {
+//
+//         arma::mat Xoriginal(X.n_rows, X.n_cols);
+//         arma::vec weights;
+//         bool weighted;
+//         if(Xunweighted.isNotNull()) {
+//           weights = Rcpp::as<arma::vec>(weight);
+//           Xoriginal = Rcpp::as<arma::mat>(Xunweighted);
+//           weighted = true;
+//         } else {
+//           Xoriginal = X;
+//           weighted = false;
+//         }
+//
+//         if (weighted) {
+//           // Instead of having X and Xt be weighted by sqrt(W), this has them weighted by W
+//           Xt = Xt.each_row() % arma::trans(weights);
+//           X = X.each_col() % weights;
+//           // Unweighted residuals
+//           ei = y / weights - Xoriginal * beta_hat;
+//         }
+//
+//         arma::mat tutX(J, k);
+//
+//         // used for the dof corrction
+//         arma::cube H1s(k, k, J);
+//         arma::cube H2s(k, k, J);
+//         arma::cube H3s(k, k, J);
+//         arma::mat P_diags(k, J);
+//
+//         arma::mat M_U_ct = arma::chol(XtX_inv, "lower");
+//
+//         int clusternum = 0;
+//
+//         arma::mat MUWTWUM = XtX_inv * Xt * arma::trans(Xt) * XtX_inv;
+//         arma::mat Omega_ct = arma::chol(MUWTWUM, "lower");
+//
+//         // iterate over unique cluster values
+//         for(arma::vec::const_iterator j = levels.begin();
+//             j != levels.end();
+//             ++j){
+//
+//           arma::uvec cluster_ids = find(clusters == *j);
+//           int cluster_size = cluster_ids.n_elem;
+//
+//           arma::mat D = arma::eye(cluster_size, cluster_size);
+//           arma::mat H = Xoriginal.rows(cluster_ids) * XtX_inv * Xt.cols(cluster_ids);
+//           arma::mat I_min_H = D - H;
+//
+//           // Code from clubSandwich
+//           // uwTwu <- Map(function(uw, th) uw %*% th %*% t(uw),
+//           //             uw = UW_list, th = Theta_list)
+//           // MUWTWUM <- M_U %*% Reduce("+", uwTwu) %*% M_U
+//
+//           //(thet - h %*% thet - thet %*% t(h) + u %*% MUWTWUM %*% t(u))
+//
+//           // A' W R in clubSand notation
+//           arma::mat At_WX = mat_sqrt_inv(
+//             I_min_H - arma::trans(H) + Xoriginal.rows(cluster_ids) * MUWTWUM * arma::trans(Xoriginal.rows(cluster_ids)),
+//             true
+//           ) * X.rows(cluster_ids) ;
+//
+//           if (ci) {
+//
+//             arma::mat ME(k, cluster_size);
+//             if (weighted) {
+//               ME = (XtX_inv / weight_mean) * arma::trans(At_WX);
+//             } else {
+//               ME = XtX_inv * arma::trans(At_WX);
+//             }
+//
+//             P_diags.col(clusternum) = arma::sum(arma::pow(ME, 2), 1);
+//
+//             arma::mat MEU = ME * Xoriginal.rows(cluster_ids);
+//
+//             H1s.slice(clusternum) = MEU * M_U_ct;
+//             H2s.slice(clusternum) = ME * X.rows(cluster_ids) * M_U_ct;
+//             H3s.slice(clusternum) = MEU * Omega_ct;
+//           }
+//
+//           // t(ei) %*% (I - P_ss)^{-1/2} %*% Xj
+//           // each ro  w is the contribution of the cluster to the meat
+//           // Below use  t(tutX) %*% tutX to sum contributions across clusters
+//
+//           tutX.row(clusternum) = arma::trans(ei(cluster_ids)) * At_WX;
+//
+//           clusternum++;
+//         }
+//
+//         Vcov_hat = XtX_inv * (arma::trans(tutX) * tutX) * XtX_inv;
+//
+//         if (ci) {
+//           for(int p = 0; p < k; p++){
+//             // only compute for covars that we need the DoF for
+//             if (which_covs[p]) {
+//
+//               // cast subcube as mat
+//               arma::mat H1 = H1s.subcube(arma::span(p), arma::span::all, arma::span::all);
+//               arma::mat H2 = H2s.subcube(arma::span(p), arma::span::all, arma::span::all);
+//               arma::mat H3 = H3s.subcube(arma::span(p), arma::span::all, arma::span::all);
+//
+//               arma::mat uf = arma::trans(H1) * H2;
+//
+//               arma::mat P_array = arma::trans(H3)*H3 - uf - arma::trans(uf);
+//               P_array.diag() += P_diags.row(p);
+//
+//               dof[p] = std::pow(arma::trace(P_array), 2) / arma::accu(arma::pow(P_array, 2));
+//             }
+//           }
+//         }
+//       } else if (type == "stata") {
+//
+//         arma::mat XteetX(k, k);
+//         XteetX.fill(0.0);
+//
+//         // iterate over unique cluster values
+//         for(arma::vec::const_iterator j = levels.begin();
+//             j != levels.end();
+//             ++j){
+//           arma::uvec cluster_ids = find(clusters == *j);
+//
+//           XteetX += Xt.cols(cluster_ids) * ei.elem(cluster_ids) *
+//             arma::trans(ei.elem(cluster_ids)) * X.rows(cluster_ids);
+//         }
+//
+//         Vcov_hat = ((J * (n - 1)) / ((J - 1) * (n - k))) * XtX_inv * XteetX * XtX_inv;
+//
+//         dof.fill(J - 1);
+//
+//       }
+//
+    }
+  }
+
   return List::create(_["beta_hat"]= beta_hat,
                       _["Vcov_hat"]= Vcov_hat,
                       _["XtX_inv"]= XtX_inv,
                       _["dof"]= dof);
 }
+
+
 
 //' @export
 // [[Rcpp::export]]

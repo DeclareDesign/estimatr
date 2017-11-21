@@ -37,8 +37,8 @@ ht_var_total_clusters <- function(y, ps, cluster) {
     .Call(`_estimatr_ht_var_total_clusters`, y, ps, cluster)
 }
 
-mult_diag <- function(x, d) {
-    .Call(`_estimatr_mult_diag`, x, d)
+mult_diag2 <- function(x, d) {
+    .Call(`_estimatr_mult_diag2`, x, d)
 }
 
 mat_sqrt_inv <- function(X, tol) {
@@ -50,8 +50,13 @@ lm_robust_helper <- function(y, X, Xunweighted, weight, weight_mean, cluster, ci
 }
 
 #' @export
-lm_ei_test <- function(X, y, chol, trychol) {
-    .Call(`_estimatr_lm_ei_test`, X, y, chol, trychol)
+mult_diag <- function(x, d) {
+    .Call(`_estimatr_mult_diag`, x, d)
+}
+
+#' @export
+lm_ei_test <- function(X, y, Xunweighted, weight, weight_mean, cluster, ci, type, which_covs, chol, trychol) {
+    .Call(`_estimatr_lm_ei_test`, X, y, Xunweighted, weight, weight_mean, cluster, ci, type, which_covs, chol, trychol)
 }
 
 #' @export

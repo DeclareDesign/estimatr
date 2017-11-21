@@ -17,7 +17,7 @@ using namespace Rcpp;
 // the diagonal is D.
 // This is faster than x * arma::diagmat(d)
 // [[Rcpp::export]]
-arma::mat mult_diag(const arma::mat& x, const arma::vec& d) {
+arma::mat mult_diag2(const arma::mat& x, const arma::vec& d) {
 
   arma::mat out(x.n_rows, x.n_cols);
   for (unsigned j = 0; j < x.n_cols; ++j) {
@@ -45,7 +45,7 @@ arma::mat mat_sqrt_inv(const arma::mat & X, const bool & tol) {
       eigvals(i) = 1.0 / std::sqrt(eigvals(i));
     }
   }
-  return(mult_diag(eigvecs, eigvals) * arma::trans(eigvecs));
+  return(mult_diag2(eigvecs, eigvals) * arma::trans(eigvecs));
 }
 
 
@@ -136,6 +136,8 @@ List lm_robust_helper(const arma::vec & y,
       arma::vec clusters = Rcpp::as<arma::vec>(cluster);
       arma::vec levels = unique(clusters);
       double J = levels.n_elem;
+
+      Rcpp::Rcout << 'here' << std::endl;
 
       if (type == "CR2") {
 
