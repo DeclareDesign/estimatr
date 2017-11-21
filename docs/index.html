@@ -87,9 +87,9 @@
 <p>To install the latest development release of <strong>estimatr</strong>, please ensure that you are running version 3.3 or later of R and run the following code:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">install.packages</span>(<span class="st">"estimatr"</span>, <span class="dt">dependencies =</span> <span class="ot">TRUE</span>,
   <span class="dt">repos =</span> <span class="kw">c</span>(<span class="st">"http://R.declaredesign.org"</span>, <span class="st">"https://cloud.r-project.org"</span>))</code></pre></div>
-<div id="getting-started" class="section level3">
+<div id="easy-to-use" class="section level3">
 <h3 class="hasAnchor">
-<a href="#getting-started" class="anchor"></a>Getting started</h3>
+<a href="#easy-to-use" class="anchor"></a>Easy to use</h3>
 <p>Once the package is installed, getting appropriate estimates and standard errors is now both fast and easy. You can see examples with all of the estimators we provide in the <a href="articles/estimatr-vignette.html">getting started</a> vignette.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(estimatr)
 
@@ -97,7 +97,10 @@
 <span class="kw"><a href="reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>z, <span class="dt">data =</span> sample_dat)
 
 <span class="co"># cluster robust standard errors</span>
-<span class="kw"><a href="reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>z, <span class="dt">data =</span> sample_dat, <span class="dt">clusters =</span> cluster)</code></pre></div>
+<span class="kw"><a href="reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>z, <span class="dt">data =</span> sample_dat, <span class="dt">clusters =</span> my_cluster_var)
+
+<span class="co"># blocked designs</span>
+<span class="kw"><a href="reference/difference_in_means.html">difference_in_means</a></span>(y <span class="op">~</span><span class="st"> </span>z, <span class="dt">data =</span> sample_dat, <span class="dt">blocks =</span> my_block_var)</code></pre></div>
 <p>This project is generously supported by a grant from the <a href="http://www.arnoldfoundation.org">Laura and John Arnold Foundation</a> and seed funding from <a href="http://egap.org">Evidence in Governance and Politics (EGAP)</a>.</p>
 </div>
 </div>

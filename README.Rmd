@@ -40,7 +40,7 @@ install.packages("estimatr", dependencies = TRUE,
   repos = c("http://R.declaredesign.org", "https://cloud.r-project.org"))
 ```
 
-### Getting started
+### Easy to use
 
 Once the package is installed, getting appropriate estimates and standard errors is now both fast and easy. You can see examples with all of the estimators we provide in the [getting started](articles/estimatr-vignette.html) vignette.
 
@@ -51,7 +51,10 @@ library(estimatr)
 lm_robust(y ~ z, data = sample_dat)
 
 # cluster robust standard errors
-lm_robust(y ~ z, data = sample_dat, clusters = cluster)
+lm_robust(y ~ z, data = sample_dat, clusters = my_cluster_var)
+
+# blocked designs
+difference_in_means(y ~ z, data = sample_dat, blocks = my_block_var)
 ```
 
 This project is generously supported by a grant from the [Laura and John Arnold Foundation](http://www.arnoldfoundation.org) and seed funding from [Evidence in Governance and Politics (EGAP)](http://egap.org).
