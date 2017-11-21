@@ -1,8 +1,10 @@
 navbar:
   type: default
   left:
+  - text: "Getting Started"
+    href: articles/estimatr-vignette.html
   - text: Reference
-    href: reference/
+    href: reference/index.html
   - text: "Packages"
     menu:
       - text: DeclareDesign
@@ -13,7 +15,6 @@ navbar:
         href: http://fabricatr.declaredesign.org
       - text: estimatr
         href: http://estimatr.declaredesign.org
+    href: articles/DeclareDesign.html
   - text: "Discussion Board"
     href: http://discuss.declaredesign.org
-  - text: "DeclareDesign home"
-    href: http://declaredesign.org

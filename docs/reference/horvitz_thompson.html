@@ -23,7 +23,8 @@
 <link href="../pkgdown.css" rel="stylesheet">
 <script src="../jquery.sticky-kit.min.js"></script>
 <script src="../pkgdown.js"></script>
-
+  
+  
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
 
@@ -51,7 +52,10 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../reference/">Reference</a>
+  <a href="../articles/estimatr-vignette.html">Getting Started</a>
+</li>
+<li>
+  <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -77,9 +81,6 @@
 <li>
   <a href="http://discuss.declaredesign.org">Discussion Board</a>
 </li>
-<li>
-  <a href="http://declaredesign.org">DeclareDesign home</a>
-</li>
       </ul>
       
       <ul class="nav navbar-nav navbar-right">
@@ -102,10 +103,9 @@
     <p>Horvitz-Thompson estimator of treatment effects</p>
     
 
-    <pre class="usage"><span class='fu'>horvitz_thompson</span>(<span class='no'>formula</span>, <span class='kw'>condition_pr_variable_name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>condition_pr_matrix</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>block_variable_name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cluster_variable_name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>estimator</span> <span class='kw'>=</span> <span class='st'>"ht"</span>,
-  <span class='kw'>constant_effects</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='no'>data</span>, <span class='kw'>subset</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>,
+    <pre class="usage"><span class='fu'>horvitz_thompson</span>(<span class='no'>formula</span>, <span class='no'>data</span>, <span class='no'>condition_prs</span>, <span class='no'>blocks</span>, <span class='no'>clusters</span>,
+  <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>subset</span>,
+  <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"youngs"</span>, <span class='st'>"constant"</span>), <span class='kw'>collapsed</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>,
   <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
@@ -116,36 +116,40 @@
       <td><p>An object of class "formula", such as Y ~ Z</p></td>
     </tr>
     <tr>
-      <th>condition_pr_variable_name</th>
-      <td><p>A bare (unquoted) name of the variable with the condition 2 (treatment) probabilities.</p></td>
-    </tr>
-    <tr>
-      <th>condition_pr_matrix</th>
-      <td><p>A 2n * 2n matrix of marginal and joint probabilities of all units in condition1 and condition2; see details.</p></td>
-    </tr>
-    <tr>
-      <th>block_variable_name</th>
-      <td><p>An optional bare (unquoted) name of the block variable. Use for blocked designs only.</p></td>
-    </tr>
-    <tr>
-      <th>cluster_variable_name</th>
-      <td><p>An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.</p></td>
-    </tr>
-    <tr>
-      <th>declaration</th>
-      <td><p>An object of class "ra_declaration", from the randomizr package. Can substitute for manually specifying clusters, blocks, and condition probabilities.</p></td>
-    </tr>
-    <tr>
-      <th>constant_effects</th>
-      <td><p>should constant effects be assumed to estimate the covariance between potential outcomes, default = FALSE.</p></td>
-    </tr>
-    <tr>
       <th>data</th>
       <td><p>A data.frame.</p></td>
     </tr>
     <tr>
+      <th>condition_prs</th>
+      <td><p>An optional bare (unquoted) name of the variable with the condition 2 (treatment) probabilities.</p></td>
+    </tr>
+    <tr>
+      <th>blocks</th>
+      <td><p>An optional bare (unquoted) name of the block variable. Use for blocked designs only.</p></td>
+    </tr>
+    <tr>
+      <th>clusters</th>
+      <td><p>An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.</p></td>
+    </tr>
+    <tr>
+      <th>condition_pr_mat</th>
+      <td><p>An optional 2n * 2n matrix of marginal and joint probabilities of all units in condition1 and condition2, can be used in place of <code>condition_prs</code>. See details.</p></td>
+    </tr>
+    <tr>
+      <th>declaration</th>
+      <td><p>An object of class "ra_declaration", from the randomizr package that is an alternative way of specifying the design. Cannot be used along with any of <code>condition_prs</code>, <code>blocks</code>, <code>clusters</code>, or <code>condition_pr_mat</code>. See details.</p></td>
+    </tr>
+    <tr>
       <th>subset</th>
       <td><p>An optional bare (unquoted) expression specifying a subset of observations to be used.</p></td>
+    </tr>
+    <tr>
+      <th>se_type</th>
+      <td><p>can be one of <code>c("youngs", "constant")</code> and correspond's to estimating the standard errors using Young's inequality (default, conservative), or the constant effects assumption.</p></td>
+    </tr>
+    <tr>
+      <th>collapsed</th>
+      <td><p>A boolean used to collapse clusters to their cluster totals for variance estimation, FALSE by default.</p></td>
     </tr>
     <tr>
       <th>alpha</th>
@@ -166,6 +170,402 @@
     <p>This function implements the Horvitz-Thompson estimator for treatment effects.</p>
     
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'>
+<span class='co'># Simulate data</span>
+<span class='no'>n</span> <span class='kw'>&lt;-</span> <span class='fl'>10</span>
+<span class='no'>dat</span> <span class='kw'>&lt;-</span> <span class='fu'>data.frame</span>(<span class='kw'>y</span> <span class='kw'>=</span> <span class='fu'>rnorm</span>(<span class='no'>n</span>))
+
+<span class='co'>#----------</span>
+<span class='co'># Simple random assignment</span>
+<span class='co'>#----------</span>
+<span class='no'>dat</span>$<span class='no'>p</span> <span class='kw'>&lt;-</span> <span class='fl'>0.5</span>
+<span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='fu'>rbinom</span>(<span class='no'>n</span>, <span class='kw'>size</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>p</span>)
+
+<span class='co'># If you only pass condition_prs, we assume simple random sampling</span>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_prs</span> <span class='kw'>=</span> <span class='no'>p</span>)</div><div class='output co'>#&gt;              y t condition_probabilities
+#&gt; 1  -0.42938009 0                     0.5
+#&gt; 2   1.36046133 0                     0.5
+#&gt; 3  -0.07085743 0                     0.5
+#&gt; 4  -0.27215368 0                     0.5
+#&gt; 5  -2.44668003 1                     0.5
+#&gt; 6   0.06548664 0                     0.5
+#&gt; 7  -1.09850890 0                     0.5
+#&gt; 8  -0.63317818 1                     0.5
+#&gt; 9  -2.06365445 1                     0.5
+#&gt; 10  2.64893203 1                     0.5</div><div class='output co'>#&gt;   coefficient_name        est       se         p  ci_lower ci_upper df
+#&gt; 1                z -0.4099257 0.916253 0.6664566 -2.522809 1.702958  8</div><div class='input'><span class='co'># Assume constant effects instead</span>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_prs</span> <span class='kw'>=</span> <span class='no'>p</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"constant"</span>)</div><div class='output co'>#&gt;              y t condition_probabilities
+#&gt; 1  -0.42938009 0                     0.5
+#&gt; 2   1.36046133 0                     0.5
+#&gt; 3  -0.07085743 0                     0.5
+#&gt; 4  -0.27215368 0                     0.5
+#&gt; 5  -2.44668003 1                     0.5
+#&gt; 6   0.06548664 0                     0.5
+#&gt; 7  -1.09850890 0                     0.5
+#&gt; 8  -0.63317818 1                     0.5
+#&gt; 9  -2.06365445 1                     0.5
+#&gt; 10  2.64893203 1                     0.5</div><div class='output co'>#&gt;   coefficient_name        est        se         p  ci_lower ci_upper df
+#&gt; 1                z -0.4099257 0.9070368 0.6633143 -2.501556 1.681705  8</div><div class='input'>
+<span class='co'># Also can use randomizr to pass a declaration</span>
+<span class='no'>srs_declaration</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>randomizr</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/declare_ra'>declare_ra</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>), <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.5</span>, <span class='kw'>simple</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>srs_declaration</span>)</div><div class='output co'>#&gt;              y t condition_probabilities
+#&gt; 1  -0.42938009 0                     0.5
+#&gt; 2   1.36046133 0                     0.5
+#&gt; 3  -0.07085743 0                     0.5
+#&gt; 4  -0.27215368 0                     0.5
+#&gt; 5  -2.44668003 1                     0.5
+#&gt; 6   0.06548664 0                     0.5
+#&gt; 7  -1.09850890 0                     0.5
+#&gt; 8  -0.63317818 1                     0.5
+#&gt; 9  -2.06365445 1                     0.5
+#&gt; 10  2.64893203 1                     0.5</div><div class='output co'>#&gt;   coefficient_name        est       se         p  ci_lower ci_upper df
+#&gt; 1                z -0.4099257 0.916253 0.6664566 -2.522809 1.702958  8</div><div class='input'>
+<span class='co'>#----------</span>
+<span class='co'># Complete random assignemtn</span>
+<span class='co'>#----------</span>
+
+<span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='fu'>sample</span>(<span class='fu'>rep</span>(<span class='fl'>0</span>:<span class='fl'>1</span>, <span class='kw'>each</span> <span class='kw'>=</span> <span class='no'>n</span>/<span class='fl'>2</span>))
+<span class='co'># Can use a declaration</span>
+<span class='no'>crs_declaration</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>randomizr</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/declare_ra'>declare_ra</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>), <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.5</span>, <span class='kw'>simple</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>crs_declaration</span>)</div><div class='output co'>#&gt;              y t condition_probabilities
+#&gt; 1  -0.42938009 1                     0.5
+#&gt; 2   1.36046133 0                     0.5
+#&gt; 3  -0.07085743 1                     0.5
+#&gt; 4  -0.27215368 1                     0.5
+#&gt; 5  -2.44668003 0                     0.5
+#&gt; 6   0.06548664 1                     0.5
+#&gt; 7  -1.09850890 0                     0.5
+#&gt; 8  -0.63317818 1                     0.5
+#&gt; 9  -2.06365445 0                     0.5
+#&gt; 10  2.64893203 0                     0.5
+#&gt; [1] "full youngs"
+#&gt;            [,1]      [,2]      [,3]      [,4]      [,5]      [,6]      [,7]
+#&gt;  [1,] 0.5000000 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt;  [2,] 0.2368421 0.5000000 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt;  [3,] 0.2368421 0.2368421 0.5000000 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt;  [4,] 0.2368421 0.2368421 0.2368421 0.5000000 0.2368421 0.2368421 0.2368421
+#&gt;  [5,] 0.2368421 0.2368421 0.2368421 0.2368421 0.5000000 0.2368421 0.2368421
+#&gt;  [6,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.5000000 0.2368421
+#&gt;  [7,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.5000000
+#&gt;  [8,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt;  [9,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [10,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [11,] 0.0000000 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt; [12,] 0.2631579 0.0000000 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt; [13,] 0.2631579 0.2631579 0.0000000 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt; [14,] 0.2631579 0.2631579 0.2631579 0.0000000 0.2631579 0.2631579 0.2631579
+#&gt; [15,] 0.2631579 0.2631579 0.2631579 0.2631579 0.0000000 0.2631579 0.2631579
+#&gt; [16,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.0000000 0.2631579
+#&gt; [17,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.0000000
+#&gt; [18,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt; [19,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt; [20,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;            [,8]      [,9]     [,10]     [,11]     [,12]     [,13]     [,14]
+#&gt;  [1,] 0.2368421 0.2368421 0.2368421 0.0000000 0.2631579 0.2631579 0.2631579
+#&gt;  [2,] 0.2368421 0.2368421 0.2368421 0.2631579 0.0000000 0.2631579 0.2631579
+#&gt;  [3,] 0.2368421 0.2368421 0.2368421 0.2631579 0.2631579 0.0000000 0.2631579
+#&gt;  [4,] 0.2368421 0.2368421 0.2368421 0.2631579 0.2631579 0.2631579 0.0000000
+#&gt;  [5,] 0.2368421 0.2368421 0.2368421 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [6,] 0.2368421 0.2368421 0.2368421 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [7,] 0.2368421 0.2368421 0.2368421 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [8,] 0.5000000 0.2368421 0.2368421 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [9,] 0.2368421 0.5000000 0.2368421 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt; [10,] 0.2368421 0.2368421 0.5000000 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt; [11,] 0.2631579 0.2631579 0.2631579 0.5000000 0.2368421 0.2368421 0.2368421
+#&gt; [12,] 0.2631579 0.2631579 0.2631579 0.2368421 0.5000000 0.2368421 0.2368421
+#&gt; [13,] 0.2631579 0.2631579 0.2631579 0.2368421 0.2368421 0.5000000 0.2368421
+#&gt; [14,] 0.2631579 0.2631579 0.2631579 0.2368421 0.2368421 0.2368421 0.5000000
+#&gt; [15,] 0.2631579 0.2631579 0.2631579 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [16,] 0.2631579 0.2631579 0.2631579 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [17,] 0.2631579 0.2631579 0.2631579 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [18,] 0.0000000 0.2631579 0.2631579 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [19,] 0.2631579 0.0000000 0.2631579 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [20,] 0.2631579 0.2631579 0.0000000 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt;           [,15]     [,16]     [,17]     [,18]     [,19]     [,20]
+#&gt;  [1,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [2,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [3,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [4,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [5,] 0.0000000 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [6,] 0.2631579 0.0000000 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [7,] 0.2631579 0.2631579 0.0000000 0.2631579 0.2631579 0.2631579
+#&gt;  [8,] 0.2631579 0.2631579 0.2631579 0.0000000 0.2631579 0.2631579
+#&gt;  [9,] 0.2631579 0.2631579 0.2631579 0.2631579 0.0000000 0.2631579
+#&gt; [10,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.0000000
+#&gt; [11,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [12,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [13,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [14,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [15,] 0.5000000 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [16,] 0.2368421 0.5000000 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [17,] 0.2368421 0.2368421 0.5000000 0.2368421 0.2368421 0.2368421
+#&gt; [18,] 0.2368421 0.2368421 0.2368421 0.5000000 0.2368421 0.2368421
+#&gt; [19,] 0.2368421 0.2368421 0.2368421 0.2368421 0.5000000 0.2368421
+#&gt; [20,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.5000000</div><div class='output co'>#&gt;   coefficient_name        est       se         p  ci_lower ci_upper df
+#&gt; 1                z 0.05187346 0.931617 0.9569614 -2.096439 2.200186  8</div><div class='input'><span class='co'># Can precompute condition_pr_mat and pass it</span>
+<span class='co'># (faster for multiple runs with same condition probability matrix)</span>
+<span class='no'>crs_pr_mat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='declaration_to_condition_pr_mat.html'>declaration_to_condition_pr_mat</a></span>(<span class='no'>crs_declaration</span>)
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>crs_pr_mat</span>)</div><div class='output co'>#&gt;              y t condition_probabilities
+#&gt; 1  -0.42938009 1                     0.5
+#&gt; 2   1.36046133 0                     0.5
+#&gt; 3  -0.07085743 1                     0.5
+#&gt; 4  -0.27215368 1                     0.5
+#&gt; 5  -2.44668003 0                     0.5
+#&gt; 6   0.06548664 1                     0.5
+#&gt; 7  -1.09850890 0                     0.5
+#&gt; 8  -0.63317818 1                     0.5
+#&gt; 9  -2.06365445 0                     0.5
+#&gt; 10  2.64893203 0                     0.5
+#&gt; [1] "full youngs"
+#&gt;            [,1]      [,2]      [,3]      [,4]      [,5]      [,6]      [,7]
+#&gt;  [1,] 0.5000000 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt;  [2,] 0.2368421 0.5000000 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt;  [3,] 0.2368421 0.2368421 0.5000000 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt;  [4,] 0.2368421 0.2368421 0.2368421 0.5000000 0.2368421 0.2368421 0.2368421
+#&gt;  [5,] 0.2368421 0.2368421 0.2368421 0.2368421 0.5000000 0.2368421 0.2368421
+#&gt;  [6,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.5000000 0.2368421
+#&gt;  [7,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.5000000
+#&gt;  [8,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt;  [9,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [10,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [11,] 0.0000000 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt; [12,] 0.2631579 0.0000000 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt; [13,] 0.2631579 0.2631579 0.0000000 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt; [14,] 0.2631579 0.2631579 0.2631579 0.0000000 0.2631579 0.2631579 0.2631579
+#&gt; [15,] 0.2631579 0.2631579 0.2631579 0.2631579 0.0000000 0.2631579 0.2631579
+#&gt; [16,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.0000000 0.2631579
+#&gt; [17,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.0000000
+#&gt; [18,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt; [19,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt; [20,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;            [,8]      [,9]     [,10]     [,11]     [,12]     [,13]     [,14]
+#&gt;  [1,] 0.2368421 0.2368421 0.2368421 0.0000000 0.2631579 0.2631579 0.2631579
+#&gt;  [2,] 0.2368421 0.2368421 0.2368421 0.2631579 0.0000000 0.2631579 0.2631579
+#&gt;  [3,] 0.2368421 0.2368421 0.2368421 0.2631579 0.2631579 0.0000000 0.2631579
+#&gt;  [4,] 0.2368421 0.2368421 0.2368421 0.2631579 0.2631579 0.2631579 0.0000000
+#&gt;  [5,] 0.2368421 0.2368421 0.2368421 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [6,] 0.2368421 0.2368421 0.2368421 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [7,] 0.2368421 0.2368421 0.2368421 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [8,] 0.5000000 0.2368421 0.2368421 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [9,] 0.2368421 0.5000000 0.2368421 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt; [10,] 0.2368421 0.2368421 0.5000000 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt; [11,] 0.2631579 0.2631579 0.2631579 0.5000000 0.2368421 0.2368421 0.2368421
+#&gt; [12,] 0.2631579 0.2631579 0.2631579 0.2368421 0.5000000 0.2368421 0.2368421
+#&gt; [13,] 0.2631579 0.2631579 0.2631579 0.2368421 0.2368421 0.5000000 0.2368421
+#&gt; [14,] 0.2631579 0.2631579 0.2631579 0.2368421 0.2368421 0.2368421 0.5000000
+#&gt; [15,] 0.2631579 0.2631579 0.2631579 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [16,] 0.2631579 0.2631579 0.2631579 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [17,] 0.2631579 0.2631579 0.2631579 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [18,] 0.0000000 0.2631579 0.2631579 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [19,] 0.2631579 0.0000000 0.2631579 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [20,] 0.2631579 0.2631579 0.0000000 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt;           [,15]     [,16]     [,17]     [,18]     [,19]     [,20]
+#&gt;  [1,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [2,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [3,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [4,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [5,] 0.0000000 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [6,] 0.2631579 0.0000000 0.2631579 0.2631579 0.2631579 0.2631579
+#&gt;  [7,] 0.2631579 0.2631579 0.0000000 0.2631579 0.2631579 0.2631579
+#&gt;  [8,] 0.2631579 0.2631579 0.2631579 0.0000000 0.2631579 0.2631579
+#&gt;  [9,] 0.2631579 0.2631579 0.2631579 0.2631579 0.0000000 0.2631579
+#&gt; [10,] 0.2631579 0.2631579 0.2631579 0.2631579 0.2631579 0.0000000
+#&gt; [11,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [12,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [13,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [14,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [15,] 0.5000000 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [16,] 0.2368421 0.5000000 0.2368421 0.2368421 0.2368421 0.2368421
+#&gt; [17,] 0.2368421 0.2368421 0.5000000 0.2368421 0.2368421 0.2368421
+#&gt; [18,] 0.2368421 0.2368421 0.2368421 0.5000000 0.2368421 0.2368421
+#&gt; [19,] 0.2368421 0.2368421 0.2368421 0.2368421 0.5000000 0.2368421
+#&gt; [20,] 0.2368421 0.2368421 0.2368421 0.2368421 0.2368421 0.5000000</div><div class='output co'>#&gt;   coefficient_name        est       se         p  ci_lower ci_upper df
+#&gt; 1                z 0.05187346 0.931617 0.9569614 -2.096439 2.200186  8</div><div class='input'>
+<span class='co'>#----------</span>
+<span class='co'># More complicated assignment</span>
+<span class='co'>#----------</span>
+
+<span class='co'># arbitrary permutation matrix</span>
+<span class='no'>possible_treats</span> <span class='kw'>&lt;-</span> <span class='fu'>cbind</span>(
+  <span class='fu'>c</span>(<span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>),
+  <span class='fu'>c</span>(<span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>),
+  <span class='fu'>c</span>(<span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>)
+)
+<span class='no'>arb_pr_mat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='permutations_to_condition_pr_mat.html'>permutations_to_condition_pr_mat</a></span>(<span class='no'>possible_treats</span>)
+<span class='co'># Simulating a column to be realized treatment</span>
+<span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='no'>possible_treats</span>[, <span class='fu'>sample</span>(<span class='fu'>ncol</span>(<span class='no'>possible_treats</span>), <span class='kw'>size</span> <span class='kw'>=</span> <span class='fl'>1</span>)]
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>arb_pr_mat</span>)</div><div class='output co'>#&gt;              y t condition_probabilities
+#&gt; 1  -0.42938009 0               0.3333333
+#&gt; 2   1.36046133 1               0.3333333
+#&gt; 3  -0.07085743 1               0.3333333
+#&gt; 4  -0.27215368 0               0.3333333
+#&gt; 5  -2.44668003 1               0.3333333
+#&gt; 6   0.06548664 1               0.3333333
+#&gt; 7  -1.09850890 0               0.6666667
+#&gt; 8  -0.63317818 1               0.3333333
+#&gt; 9  -2.06365445 0               0.6666667
+#&gt; 10  2.64893203 1               0.6666667
+#&gt; [1] "full youngs"
+#&gt;            0_1       0_2       0_3       0_4       0_5       0_6       0_7
+#&gt; 0_1  0.6666667 0.3333333 0.3333333 0.6666667 0.3333333 0.3333333 0.3333333
+#&gt; 0_2  0.3333333 0.6666667 0.3333333 0.3333333 0.3333333 0.3333333 0.0000000
+#&gt; 0_3  0.3333333 0.3333333 0.6666667 0.3333333 0.6666667 0.6666667 0.3333333
+#&gt; 0_4  0.6666667 0.3333333 0.3333333 0.6666667 0.3333333 0.3333333 0.3333333
+#&gt; 0_5  0.3333333 0.3333333 0.6666667 0.3333333 0.6666667 0.6666667 0.3333333
+#&gt; 0_6  0.3333333 0.3333333 0.6666667 0.3333333 0.6666667 0.6666667 0.3333333
+#&gt; 0_7  0.3333333 0.0000000 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333
+#&gt; 0_8  0.3333333 0.6666667 0.3333333 0.3333333 0.3333333 0.3333333 0.0000000
+#&gt; 0_9  0.3333333 0.3333333 0.0000000 0.3333333 0.0000000 0.0000000 0.0000000
+#&gt; 0_10 0.0000000 0.3333333 0.3333333 0.0000000 0.3333333 0.3333333 0.0000000
+#&gt; 1_1  0.0000000 0.3333333 0.3333333 0.0000000 0.3333333 0.3333333 0.0000000
+#&gt; 1_2  0.3333333 0.0000000 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333
+#&gt; 1_3  0.3333333 0.3333333 0.0000000 0.3333333 0.0000000 0.0000000 0.0000000
+#&gt; 1_4  0.0000000 0.3333333 0.3333333 0.0000000 0.3333333 0.3333333 0.0000000
+#&gt; 1_5  0.3333333 0.3333333 0.0000000 0.3333333 0.0000000 0.0000000 0.0000000
+#&gt; 1_6  0.3333333 0.3333333 0.0000000 0.3333333 0.0000000 0.0000000 0.0000000
+#&gt; 1_7  0.3333333 0.6666667 0.3333333 0.3333333 0.3333333 0.3333333 0.0000000
+#&gt; 1_8  0.3333333 0.0000000 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333
+#&gt; 1_9  0.3333333 0.3333333 0.6666667 0.3333333 0.6666667 0.6666667 0.3333333
+#&gt; 1_10 0.6666667 0.3333333 0.3333333 0.6666667 0.3333333 0.3333333 0.3333333
+#&gt;            0_8       0_9      0_10       1_1       1_2       1_3       1_4
+#&gt; 0_1  0.3333333 0.3333333 0.0000000 0.0000000 0.3333333 0.3333333 0.0000000
+#&gt; 0_2  0.6666667 0.3333333 0.3333333 0.3333333 0.0000000 0.3333333 0.3333333
+#&gt; 0_3  0.3333333 0.0000000 0.3333333 0.3333333 0.3333333 0.0000000 0.3333333
+#&gt; 0_4  0.3333333 0.3333333 0.0000000 0.0000000 0.3333333 0.3333333 0.0000000
+#&gt; 0_5  0.3333333 0.0000000 0.3333333 0.3333333 0.3333333 0.0000000 0.3333333
+#&gt; 0_6  0.3333333 0.0000000 0.3333333 0.3333333 0.3333333 0.0000000 0.3333333
+#&gt; 0_7  0.0000000 0.0000000 0.0000000 0.0000000 0.3333333 0.0000000 0.0000000
+#&gt; 0_8  0.6666667 0.3333333 0.3333333 0.3333333 0.0000000 0.3333333 0.3333333
+#&gt; 0_9  0.3333333 0.3333333 0.0000000 0.0000000 0.0000000 0.3333333 0.0000000
+#&gt; 0_10 0.3333333 0.0000000 0.3333333 0.3333333 0.0000000 0.0000000 0.3333333
+#&gt; 1_1  0.3333333 0.0000000 0.3333333 0.3333333 0.0000000 0.0000000 0.3333333
+#&gt; 1_2  0.0000000 0.0000000 0.0000000 0.0000000 0.3333333 0.0000000 0.0000000
+#&gt; 1_3  0.3333333 0.3333333 0.0000000 0.0000000 0.0000000 0.3333333 0.0000000
+#&gt; 1_4  0.3333333 0.0000000 0.3333333 0.3333333 0.0000000 0.0000000 0.3333333
+#&gt; 1_5  0.3333333 0.3333333 0.0000000 0.0000000 0.0000000 0.3333333 0.0000000
+#&gt; 1_6  0.3333333 0.3333333 0.0000000 0.0000000 0.0000000 0.3333333 0.0000000
+#&gt; 1_7  0.6666667 0.3333333 0.3333333 0.3333333 0.0000000 0.3333333 0.3333333
+#&gt; 1_8  0.0000000 0.0000000 0.0000000 0.0000000 0.3333333 0.0000000 0.0000000
+#&gt; 1_9  0.3333333 0.0000000 0.3333333 0.3333333 0.3333333 0.0000000 0.3333333
+#&gt; 1_10 0.3333333 0.3333333 0.0000000 0.0000000 0.3333333 0.3333333 0.0000000
+#&gt;            1_5       1_6       1_7       1_8       1_9      1_10
+#&gt; 0_1  0.3333333 0.3333333 0.3333333 0.3333333 0.3333333 0.6666667
+#&gt; 0_2  0.3333333 0.3333333 0.6666667 0.0000000 0.3333333 0.3333333
+#&gt; 0_3  0.0000000 0.0000000 0.3333333 0.3333333 0.6666667 0.3333333
+#&gt; 0_4  0.3333333 0.3333333 0.3333333 0.3333333 0.3333333 0.6666667
+#&gt; 0_5  0.0000000 0.0000000 0.3333333 0.3333333 0.6666667 0.3333333
+#&gt; 0_6  0.0000000 0.0000000 0.3333333 0.3333333 0.6666667 0.3333333
+#&gt; 0_7  0.0000000 0.0000000 0.0000000 0.3333333 0.3333333 0.3333333
+#&gt; 0_8  0.3333333 0.3333333 0.6666667 0.0000000 0.3333333 0.3333333
+#&gt; 0_9  0.3333333 0.3333333 0.3333333 0.0000000 0.0000000 0.3333333
+#&gt; 0_10 0.0000000 0.0000000 0.3333333 0.0000000 0.3333333 0.0000000
+#&gt; 1_1  0.0000000 0.0000000 0.3333333 0.0000000 0.3333333 0.0000000
+#&gt; 1_2  0.0000000 0.0000000 0.0000000 0.3333333 0.3333333 0.3333333
+#&gt; 1_3  0.3333333 0.3333333 0.3333333 0.0000000 0.0000000 0.3333333
+#&gt; 1_4  0.0000000 0.0000000 0.3333333 0.0000000 0.3333333 0.0000000
+#&gt; 1_5  0.3333333 0.3333333 0.3333333 0.0000000 0.0000000 0.3333333
+#&gt; 1_6  0.3333333 0.3333333 0.3333333 0.0000000 0.0000000 0.3333333
+#&gt; 1_7  0.3333333 0.3333333 0.6666667 0.0000000 0.3333333 0.3333333
+#&gt; 1_8  0.0000000 0.0000000 0.0000000 0.3333333 0.3333333 0.3333333
+#&gt; 1_9  0.0000000 0.0000000 0.3333333 0.3333333 0.6666667 0.3333333
+#&gt; 1_10 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333 0.6666667</div><div class='output co'>#&gt;   coefficient_name       est       se         p  ci_lower ci_upper df
+#&gt; 1                z 0.9337886 1.303373 0.4941001 -2.071794 3.939371  8</div><div class='input'>
+<span class='co'># Clustered treatment, complete random assigment</span>
+<span class='co'># Simulating data</span>
+<span class='no'>dat</span>$<span class='no'>cl</span> <span class='kw'>&lt;-</span> <span class='fu'>rep</span>(<span class='fl'>1</span>:<span class='fl'>4</span>, <span class='kw'>times</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='fl'>2</span>, <span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>3</span>))
+<span class='no'>clust_crs_decl</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>randomizr</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/declare_ra'>declare_ra</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>), <span class='kw'>clust_var</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>cl</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.5</span>)
+<span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>randomizr</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/conduct_ra'>conduct_ra</a></span>(<span class='no'>clust_crs_decl</span>)
+<span class='co'># Regular SE using Young's inequality</span>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>clust_crs_decl</span>)</div><div class='output co'>#&gt; <span class='warning'>Warning: Assuming cluster randomization is complete. To have declare_ra work with simple random assignment of clusters, upgrade to the newest version of randomizr on GitHub.</span></div><div class='output co'>#&gt;              y t clusters condition_probabilities
+#&gt; 1  -0.42938009 0        1                     0.5
+#&gt; 2   1.36046133 0        1                     0.5
+#&gt; 3  -0.07085743 0        2                     0.5
+#&gt; 4  -0.27215368 0        2                     0.5
+#&gt; 5  -2.44668003 1        3                     0.5
+#&gt; 6   0.06548664 1        3                     0.5
+#&gt; 7  -1.09850890 1        3                     0.5
+#&gt; 8  -0.63317818 1        4                     0.5
+#&gt; 9  -2.06365445 1        4                     0.5
+#&gt; 10  2.64893203 1        4                     0.5
+#&gt; [1] "full youngs"
+#&gt;            [,1]      [,2]      [,3]      [,4]      [,5]      [,6]      [,7]
+#&gt;  [1,] 0.5000000 0.5000000 0.1666667 0.1666667 0.1666667 0.1666667 0.1666667
+#&gt;  [2,] 0.5000000 0.5000000 0.1666667 0.1666667 0.1666667 0.1666667 0.1666667
+#&gt;  [3,] 0.1666667 0.1666667 0.5000000 0.5000000 0.1666667 0.1666667 0.1666667
+#&gt;  [4,] 0.1666667 0.1666667 0.5000000 0.5000000 0.1666667 0.1666667 0.1666667
+#&gt;  [5,] 0.1666667 0.1666667 0.1666667 0.1666667 0.5000000 0.5000000 0.5000000
+#&gt;  [6,] 0.1666667 0.1666667 0.1666667 0.1666667 0.5000000 0.5000000 0.5000000
+#&gt;  [7,] 0.1666667 0.1666667 0.1666667 0.1666667 0.5000000 0.5000000 0.5000000
+#&gt;  [8,] 0.1666667 0.1666667 0.1666667 0.1666667 0.1666667 0.1666667 0.1666667
+#&gt;  [9,] 0.1666667 0.1666667 0.1666667 0.1666667 0.1666667 0.1666667 0.1666667
+#&gt; [10,] 0.1666667 0.1666667 0.1666667 0.1666667 0.1666667 0.1666667 0.1666667
+#&gt; [11,] 0.0000000 0.0000000 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333
+#&gt; [12,] 0.0000000 0.0000000 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333
+#&gt; [13,] 0.3333333 0.3333333 0.0000000 0.0000000 0.3333333 0.3333333 0.3333333
+#&gt; [14,] 0.3333333 0.3333333 0.0000000 0.0000000 0.3333333 0.3333333 0.3333333
+#&gt; [15,] 0.3333333 0.3333333 0.3333333 0.3333333 0.0000000 0.0000000 0.0000000
+#&gt; [16,] 0.3333333 0.3333333 0.3333333 0.3333333 0.0000000 0.0000000 0.0000000
+#&gt; [17,] 0.3333333 0.3333333 0.3333333 0.3333333 0.0000000 0.0000000 0.0000000
+#&gt; [18,] 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333
+#&gt; [19,] 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333
+#&gt; [20,] 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333
+#&gt;            [,8]      [,9]     [,10]     [,11]     [,12]     [,13]     [,14]
+#&gt;  [1,] 0.1666667 0.1666667 0.1666667 0.0000000 0.0000000 0.3333333 0.3333333
+#&gt;  [2,] 0.1666667 0.1666667 0.1666667 0.0000000 0.0000000 0.3333333 0.3333333
+#&gt;  [3,] 0.1666667 0.1666667 0.1666667 0.3333333 0.3333333 0.0000000 0.0000000
+#&gt;  [4,] 0.1666667 0.1666667 0.1666667 0.3333333 0.3333333 0.0000000 0.0000000
+#&gt;  [5,] 0.1666667 0.1666667 0.1666667 0.3333333 0.3333333 0.3333333 0.3333333
+#&gt;  [6,] 0.1666667 0.1666667 0.1666667 0.3333333 0.3333333 0.3333333 0.3333333
+#&gt;  [7,] 0.1666667 0.1666667 0.1666667 0.3333333 0.3333333 0.3333333 0.3333333
+#&gt;  [8,] 0.5000000 0.5000000 0.5000000 0.3333333 0.3333333 0.3333333 0.3333333
+#&gt;  [9,] 0.5000000 0.5000000 0.5000000 0.3333333 0.3333333 0.3333333 0.3333333
+#&gt; [10,] 0.5000000 0.5000000 0.5000000 0.3333333 0.3333333 0.3333333 0.3333333
+#&gt; [11,] 0.3333333 0.3333333 0.3333333 0.5000000 0.5000000 0.1666667 0.1666667
+#&gt; [12,] 0.3333333 0.3333333 0.3333333 0.5000000 0.5000000 0.1666667 0.1666667
+#&gt; [13,] 0.3333333 0.3333333 0.3333333 0.1666667 0.1666667 0.5000000 0.5000000
+#&gt; [14,] 0.3333333 0.3333333 0.3333333 0.1666667 0.1666667 0.5000000 0.5000000
+#&gt; [15,] 0.3333333 0.3333333 0.3333333 0.1666667 0.1666667 0.1666667 0.1666667
+#&gt; [16,] 0.3333333 0.3333333 0.3333333 0.1666667 0.1666667 0.1666667 0.1666667
+#&gt; [17,] 0.3333333 0.3333333 0.3333333 0.1666667 0.1666667 0.1666667 0.1666667
+#&gt; [18,] 0.0000000 0.0000000 0.0000000 0.1666667 0.1666667 0.1666667 0.1666667
+#&gt; [19,] 0.0000000 0.0000000 0.0000000 0.1666667 0.1666667 0.1666667 0.1666667
+#&gt; [20,] 0.0000000 0.0000000 0.0000000 0.1666667 0.1666667 0.1666667 0.1666667
+#&gt;           [,15]     [,16]     [,17]     [,18]     [,19]     [,20]
+#&gt;  [1,] 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333
+#&gt;  [2,] 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333
+#&gt;  [3,] 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333
+#&gt;  [4,] 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333 0.3333333
+#&gt;  [5,] 0.0000000 0.0000000 0.0000000 0.3333333 0.3333333 0.3333333
+#&gt;  [6,] 0.0000000 0.0000000 0.0000000 0.3333333 0.3333333 0.3333333
+#&gt;  [7,] 0.0000000 0.0000000 0.0000000 0.3333333 0.3333333 0.3333333
+#&gt;  [8,] 0.3333333 0.3333333 0.3333333 0.0000000 0.0000000 0.0000000
+#&gt;  [9,] 0.3333333 0.3333333 0.3333333 0.0000000 0.0000000 0.0000000
+#&gt; [10,] 0.3333333 0.3333333 0.3333333 0.0000000 0.0000000 0.0000000
+#&gt; [11,] 0.1666667 0.1666667 0.1666667 0.1666667 0.1666667 0.1666667
+#&gt; [12,] 0.1666667 0.1666667 0.1666667 0.1666667 0.1666667 0.1666667
+#&gt; [13,] 0.1666667 0.1666667 0.1666667 0.1666667 0.1666667 0.1666667
+#&gt; [14,] 0.1666667 0.1666667 0.1666667 0.1666667 0.1666667 0.1666667
+#&gt; [15,] 0.5000000 0.5000000 0.5000000 0.1666667 0.1666667 0.1666667
+#&gt; [16,] 0.5000000 0.5000000 0.5000000 0.1666667 0.1666667 0.1666667
+#&gt; [17,] 0.5000000 0.5000000 0.5000000 0.1666667 0.1666667 0.1666667
+#&gt; [18,] 0.1666667 0.1666667 0.1666667 0.5000000 0.5000000 0.5000000
+#&gt; [19,] 0.1666667 0.1666667 0.1666667 0.5000000 0.5000000 0.5000000
+#&gt; [20,] 0.1666667 0.1666667 0.1666667 0.5000000 0.5000000 0.5000000</div><div class='output co'>#&gt;   coefficient_name        est        se         p  ci_lower ci_upper df
+#&gt; 1                z -0.8231346 0.8539677 0.3633268 -2.792388 1.146118  8</div><div class='input'><span class='co'># SE using collapsed cluster totals and Young's inequality</span>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>clust_crs_decl</span>, <span class='kw'>collapsed</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; <span class='warning'>Warning: Assuming cluster randomization is complete. To have declare_ra work with simple random assignment of clusters, upgrade to the newest version of randomizr on GitHub.</span></div><div class='output co'>#&gt;              y t clusters condition_probabilities
+#&gt; 1  -0.42938009 0        1                     0.5
+#&gt; 2   1.36046133 0        1                     0.5
+#&gt; 3  -0.07085743 0        2                     0.5
+#&gt; 4  -0.27215368 0        2                     0.5
+#&gt; 5  -2.44668003 1        3                     0.5
+#&gt; 6   0.06548664 1        3                     0.5
+#&gt; 7  -1.09850890 1        3                     0.5
+#&gt; 8  -0.63317818 1        4                     0.5
+#&gt; 9  -2.06365445 1        4                     0.5
+#&gt; 10  2.64893203 1        4                     0.5</div><div class='output co'>#&gt;   coefficient_name        est        se         p  ci_lower  ci_upper df
+#&gt; 1                z -0.8231346 0.7559133 0.3078984 -2.566274 0.9200045  8</div><div class='input'>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
@@ -173,7 +573,9 @@
       <li><a href="#arguments">Arguments</a></li>
       
       <li><a href="#details">Details</a></li>
-          </ul>
+      
+      <li><a href="#examples">Examples</a></li>
+    </ul>
 
   </div>
 </div>

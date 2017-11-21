@@ -23,7 +23,8 @@
 <link href="../pkgdown.css" rel="stylesheet">
 <script src="../jquery.sticky-kit.min.js"></script>
 <script src="../pkgdown.js"></script>
-
+  
+  
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
 
@@ -51,7 +52,10 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../reference/">Reference</a>
+  <a href="../articles/estimatr-vignette.html">Getting Started</a>
+</li>
+<li>
+  <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -77,9 +81,6 @@
 <li>
   <a href="http://discuss.declaredesign.org">Discussion Board</a>
 </li>
-<li>
-  <a href="http://declaredesign.org">DeclareDesign home</a>
-</li>
       </ul>
       
       <ul class="nav navbar-nav navbar-right">
@@ -102,9 +103,9 @@
     <p>Built-in Estimators: Difference-in-means</p>
     
 
-    <pre class="usage"><span class='fu'>difference_in_means</span>(<span class='no'>formula</span>, <span class='kw'>block_variable_name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cluster_variable_name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>data</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>subset</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>)</pre>
+    <pre class="usage"><span class='fu'>difference_in_means</span>(<span class='no'>formula</span>, <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>data</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>subset</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -114,11 +115,11 @@
       <td><p>An object of class "formula", such as Y ~ Z</p></td>
     </tr>
     <tr>
-      <th>block_variable_name</th>
+      <th>blocks</th>
       <td><p>An optional bare (unquoted) name of the block variable. Use for blocked designs only.</p></td>
     </tr>
     <tr>
-      <th>cluster_variable_name</th>
+      <th>clusters</th>
       <td><p>An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.</p></td>
     </tr>
     <tr>
@@ -161,8 +162,8 @@
  <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p   ci_lower  ci_upper       df
 #&gt; 1                Z 0.1224875 0.2674282 0.6485812 -0.4123728 0.6573477 60.41608</div><div class='input'> <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p  ci_lower  ci_upper       df
 #&gt; 1                Z 0.2770966 0.2432306 0.2588673 -0.208847 0.7630401 63.76421</div><div class='input'>
- <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>block_variable_name</span> <span class='kw'>=</span> <span class='no'>block</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name        est        se        p  ci_lower  ci_upper df
-#&gt; 1                Z 0.02735372 0.2960366 0.926571 -0.560197 0.6149045 97</div><div class='input'> <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>block_variable_name</span> <span class='kw'>=</span> <span class='no'>block</span>, <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p   ci_lower  ci_upper df
+ <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>block</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name        est        se        p  ci_lower  ci_upper df
+#&gt; 1                Z 0.02735372 0.2960366 0.926571 -0.560197 0.6149045 97</div><div class='input'> <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>block</span>, <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p   ci_lower  ci_upper df
 #&gt; 1                Z 0.2107775 0.2830092 0.4582099 -0.3509175 0.7724725 97</div><div class='input'>
 </div></pre>
   </div>

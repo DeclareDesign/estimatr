@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Return estimated variance covariance matrix of <code><a href='difference_in_means.html'>difference_in_means</a></code> — vcov.difference_in_means • estimatr</title>
+<title>Generate condition probability matrix given clusters and probabilities — gen_pr_matrix_cluster • estimatr</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -96,26 +96,29 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Return estimated variance covariance matrix of <code><a href='difference_in_means.html'>difference_in_means</a></code></h1>
+    <h1>Generate condition probability matrix given clusters and probabilities</h1>
     </div>
 
     
-    <p>Return estimated variance covariance matrix of <code><a href='difference_in_means.html'>difference_in_means</a></code></p>
+    <p>Generate condition probability matrix given clusters and probabilities</p>
     
 
-    <pre class="usage"><span class='co'># S3 method for difference_in_means</span>
-<span class='fu'>vcov</span>(<span class='no'>object</span>, <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>gen_pr_matrix_cluster</span>(<span class='no'>clusters</span>, <span class='no'>treat_probs</span>, <span class='no'>simple</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>object</th>
-      <td><p>An object of class <code><a href='difference_in_means.html'>difference_in_means</a></code></p></td>
+      <th>clusters</th>
+      <td><p>A vector of clusters</p></td>
     </tr>
     <tr>
-      <th>...</th>
-      <td><p>extra arguments, unused</p></td>
+      <th>treat_probs</th>
+      <td><p>A vector of treatment (condition) probabilities</p></td>
+    </tr>
+    <tr>
+      <th>simple</th>
+      <td><p>A boolean for whether the assignment is a random sample assignment (TRUE, default) or complete random assignment (FALSE)</p></td>
     </tr>
     </table>
     

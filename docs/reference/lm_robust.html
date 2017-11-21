@@ -23,7 +23,8 @@
 <link href="../pkgdown.css" rel="stylesheet">
 <script src="../jquery.sticky-kit.min.js"></script>
 <script src="../pkgdown.js"></script>
-
+  
+  
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
 
@@ -51,7 +52,10 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../reference/">Reference</a>
+  <a href="../articles/estimatr-vignette.html">Getting Started</a>
+</li>
+<li>
+  <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -77,9 +81,6 @@
 <li>
   <a href="http://discuss.declaredesign.org">Discussion Board</a>
 </li>
-<li>
-  <a href="http://declaredesign.org">DeclareDesign home</a>
-</li>
       </ul>
       
       <ul class="nav navbar-nav navbar-right">
@@ -102,9 +103,8 @@
     <p>Ordinary Least Squares with Robust Standard Errors</p>
     
 
-    <pre class="usage"><span class='fu'>lm_robust</span>(<span class='no'>formula</span>, <span class='no'>data</span>, <span class='no'>weights</span>, <span class='no'>subset</span>, <span class='no'>cluster_variable_name</span>,
-  <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>coefficient_name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>return_vcov</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+    <pre class="usage"><span class='fu'>lm_robust</span>(<span class='no'>formula</span>, <span class='no'>data</span>, <span class='no'>weights</span>, <span class='no'>subset</span>, <span class='no'>clusters</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>coefficient_name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>return_vcov</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -126,7 +126,7 @@
       <td><p>An optional bare (unquoted) expression specifying a subset of observations to be used.</p></td>
     </tr>
     <tr>
-      <th>cluster_variable_name</th>
+      <th>clusters</th>
       <td><p>An optional bare (unquoted) name of the variable that corresponds to the clusters in the data.</p></td>
     </tr>
     <tr>

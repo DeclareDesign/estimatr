@@ -1,7 +1,5 @@
 ---
-output:
-  md_document:
-    variant: markdown_github
+output: github_document
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -44,9 +42,9 @@ install.packages("estimatr", dependencies = TRUE,
 
 ### Getting started
 
-Once the package is installed, getting appropriate estimates and standard errors is now both fast and easy.
+Once the package is installed, getting appropriate estimates and standard errors is now both fast and easy. You can see examples with all of the estimators we provide in the [getting started](articles/estimatr-vignette.html) vignette.
 
-```{r}
+```{r, eval = F}
 library(estimatr)
 
 # robust standard errors
