@@ -55,8 +55,18 @@ mult_diag <- function(x, d) {
 }
 
 #' @export
-lm_ei_test <- function(X, y, Xunweighted, weight, weight_mean, cluster, ci, type, which_covs, chol, trychol) {
-    .Call(`_estimatr_lm_ei_test`, X, y, Xunweighted, weight, weight_mean, cluster, ci, type, which_covs, chol, trychol)
+extract_vec <- function(full, ind) {
+    .Call(`_estimatr_extract_vec`, full, ind)
+}
+
+#' @export
+extract_mat_rows <- function(full, ind) {
+    .Call(`_estimatr_extract_mat_rows`, full, ind)
+}
+
+#' @export
+lm_ei_test <- function(X, y, Xunweighted, weight, weight_mean, cluster, cluster_levels, ci, type, which_covs, chol, trychol) {
+    .Call(`_estimatr_lm_ei_test`, X, y, Xunweighted, weight, weight_mean, cluster, cluster_levels, ci, type, which_covs, chol, trychol)
 }
 
 #' @export

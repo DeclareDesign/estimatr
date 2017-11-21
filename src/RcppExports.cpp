@@ -181,9 +181,33 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// extract_vec
+Eigen::VectorXd extract_vec(const Eigen::VectorXd& full, const Eigen::VectorXi& ind);
+RcppExport SEXP _estimatr_extract_vec(SEXP fullSEXP, SEXP indSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type full(fullSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXi& >::type ind(indSEXP);
+    rcpp_result_gen = Rcpp::wrap(extract_vec(full, ind));
+    return rcpp_result_gen;
+END_RCPP
+}
+// extract_mat_rows
+Eigen::MatrixXd extract_mat_rows(const Eigen::MatrixXd& full, const Eigen::VectorXi& ind);
+RcppExport SEXP _estimatr_extract_mat_rows(SEXP fullSEXP, SEXP indSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type full(fullSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXi& >::type ind(indSEXP);
+    rcpp_result_gen = Rcpp::wrap(extract_mat_rows(full, ind));
+    return rcpp_result_gen;
+END_RCPP
+}
 // lm_ei_test
-List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& X, const Eigen::Map<Eigen::VectorXd>& y, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Rcpp::Nullable<Rcpp::NumericVector>& weight, const double& weight_mean, const Rcpp::Nullable<Rcpp::NumericVector>& cluster, const bool& ci, const String type, const std::vector<bool>& which_covs, const bool& chol, const bool& trychol);
-RcppExport SEXP _estimatr_lm_ei_test(SEXP XSEXP, SEXP ySEXP, SEXP XunweightedSEXP, SEXP weightSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP ciSEXP, SEXP typeSEXP, SEXP which_covsSEXP, SEXP cholSEXP, SEXP trycholSEXP) {
+List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& X, const Eigen::Map<Eigen::VectorXd>& y, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Rcpp::Nullable<Rcpp::NumericVector>& weight, const double& weight_mean, const Rcpp::Nullable<Rcpp::NumericVector>& cluster, const Rcpp::Nullable<Rcpp::NumericVector>& cluster_levels, const bool& ci, const String type, const std::vector<bool>& which_covs, const bool& chol, const bool& trychol);
+RcppExport SEXP _estimatr_lm_ei_test(SEXP XSEXP, SEXP ySEXP, SEXP XunweightedSEXP, SEXP weightSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP cluster_levelsSEXP, SEXP ciSEXP, SEXP typeSEXP, SEXP which_covsSEXP, SEXP cholSEXP, SEXP trycholSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -193,12 +217,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericVector>& >::type weight(weightSEXP);
     Rcpp::traits::input_parameter< const double& >::type weight_mean(weight_meanSEXP);
     Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericVector>& >::type cluster(clusterSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericVector>& >::type cluster_levels(cluster_levelsSEXP);
     Rcpp::traits::input_parameter< const bool& >::type ci(ciSEXP);
     Rcpp::traits::input_parameter< const String >::type type(typeSEXP);
     Rcpp::traits::input_parameter< const std::vector<bool>& >::type which_covs(which_covsSEXP);
     Rcpp::traits::input_parameter< const bool& >::type chol(cholSEXP);
     Rcpp::traits::input_parameter< const bool& >::type trychol(trycholSEXP);
-    rcpp_result_gen = Rcpp::wrap(lm_ei_test(X, y, Xunweighted, weight, weight_mean, cluster, ci, type, which_covs, chol, trychol));
+    rcpp_result_gen = Rcpp::wrap(lm_ei_test(X, y, Xunweighted, weight, weight_mean, cluster, cluster_levels, ci, type, which_covs, chol, trychol));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -229,7 +254,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_estimatr_mat_sqrt_inv", (DL_FUNC) &_estimatr_mat_sqrt_inv, 2},
     {"_estimatr_lm_robust_helper", (DL_FUNC) &_estimatr_lm_robust_helper, 9},
     {"_estimatr_mult_diag", (DL_FUNC) &_estimatr_mult_diag, 2},
-    {"_estimatr_lm_ei_test", (DL_FUNC) &_estimatr_lm_ei_test, 11},
+    {"_estimatr_extract_vec", (DL_FUNC) &_estimatr_extract_vec, 2},
+    {"_estimatr_extract_mat_rows", (DL_FUNC) &_estimatr_extract_mat_rows, 2},
+    {"_estimatr_lm_ei_test", (DL_FUNC) &_estimatr_lm_ei_test, 12},
     {"_estimatr_lm_old", (DL_FUNC) &_estimatr_lm_old, 2},
     {NULL, NULL, 0}
 };

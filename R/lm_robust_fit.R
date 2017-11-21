@@ -77,16 +77,19 @@ lm_robust_fit <- function(y,
   }
 
   fit <-
-    lm_robust_helper(
+    lm_ei_test(
       y = y,
       X = X,
       Xunweighted = Xunweighted,
       weight = weights,
       weight_mean = weight_mean,
       cluster = cluster,
+      cluster_levels = unique(cluster),
       ci = ci,
       type = se_type,
-      which_covs = which_covs
+      which_covs = which_covs,
+      F,
+      F
     )
 
   est <- as.vector(fit$beta_hat)

@@ -33,12 +33,58 @@ Eigen::MatrixXd mult_diag(const Eigen::MatrixXd& x, const Eigen::ArrayXd& d) {
 
 //' @export
 // [[Rcpp::export]]
+Eigen::VectorXd extract_vec(const Eigen::VectorXd& full, const Eigen::VectorXi& ind)
+{
+  int num_indices = ind.sum();
+  Eigen::VectorXd target(num_indices);
+  int j = 0;
+  for (int i = 0; i < full.size(); i++)
+  {
+    if (ind(i) == 1) {
+      target(j) = full(i);
+      j++;
+    }
+  }
+  return target;
+}
+
+//' @export
+// [[Rcpp::export]]
+Eigen::MatrixXd extract_mat_rows(const Eigen::MatrixXd& full, const Eigen::VectorXi& ind)
+{
+  int num_indices = ind.sum();
+  Eigen::MatrixXd target(num_indices, full.cols());
+  int j = 0;
+  for (int i = 0; i < full.rows(); i++)
+  {
+    if (ind(i) == 1) {
+      target.row(j) = full.row(i);
+      j++;
+    }
+  }
+  return target;
+}
+
+// extract_mat(const Eigen::DenseBase<Eigen::Matrix>& full, const Eigen::DenseBase<T>& ind)
+// {
+//   int num_indices = ind.innerSize();
+//   target_t target(num_indices);
+//   for (int i = 0; i < num_indices; i++)
+//   {
+//     target[i] = full[ind[i]];
+//   }
+//   return target;
+// }
+
+//' @export
+// [[Rcpp::export]]
 List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& X,
                 const Eigen::Map<Eigen::VectorXd>& y,
                 const Rcpp::Nullable<Rcpp::NumericMatrix> & Xunweighted,
                 const Rcpp::Nullable<Rcpp::NumericVector> & weight,
                 const double & weight_mean,
                 const Rcpp::Nullable<Rcpp::NumericVector> & cluster,
+                const Rcpp::Nullable<Rcpp::NumericVector> & cluster_levels,
                 const bool & ci,
                 const String type,
                 const std::vector<bool> & which_covs,
@@ -162,17 +208,26 @@ List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& X,
         Vcov_hat = XtX_inv * mult_diag(Xt, ei2 / hii) * X * XtX_inv;
       }
 
-//    } //else if ( (type == "stata") | (type == "CR2") ) {
-//
-//       // Code adapted from Michal Kolesar
-//       // https://github.com/kolesarm/Robust-Small-Sample-Standard-Errors
-//
-//       // Get unique cluster values
-//       arma::vec clusters = Rcpp::as<arma::vec>(cluster);
-//       arma::vec levels = unique(clusters);
-//       double J = levels.n_elem;
-//
-//       //Rcpp::Rcout << 'here' << std::endl;
+   } else if ( (type == "stata") | (type == "CR2") ) {
+
+      // Code adapted from Michal Kolesar
+      // https://github.com/kolesarm/Robust-Small-Sample-Standard-Errors
+
+      // Get unique cluster values
+      Eigen::Map<Eigen::ArrayXd> clusters = Rcpp::as<Eigen::Map<Eigen::ArrayXd> >(cluster);
+     Eigen::Map<Eigen::ArrayXd> levels = Rcpp::as<Eigen::Map<Eigen::ArrayXd> >(cluster_levels);
+     // auto last = std::unique(clusters.begin(), clusters.end());
+     // v now holds {1 2 3 4 5 6 7 x x x x x x}, where 'x' is indeterminate
+    //  clusters.erase(last, v.end());
+      // Eigen::Map<Eigen::ArrayXd> levels = unique(clusters);
+      // std::vector<int> v{1,2,3,1,2,3,3,4,5,4,5,6,7};
+      // std::sort(v.begin(), v.end()); // 1 1 2 2 3 3 3 4 4 5 5 6 7
+      // auto last = std::unique(v.begin(), v.end());
+      // // v now holds {1 2 3 4 5 6 7 x x x x x x}, where 'x' is indeterminate
+      // v.erase(last, v.end());
+      double J = levels.size();
+
+      //Rcpp::Rcout << 'here' << std::endl;
 //
 //       if (type == "CR2") {
 //
@@ -284,27 +339,28 @@ List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& X,
 //             }
 //           }
 //         }
-//       } else if (type == "stata") {
-//
-//         arma::mat XteetX(k, k);
-//         XteetX.fill(0.0);
-//
-//         // iterate over unique cluster values
-//         for(arma::vec::const_iterator j = levels.begin();
-//             j != levels.end();
-//             ++j){
-//           arma::uvec cluster_ids = find(clusters == *j);
-//
-//           XteetX += Xt.cols(cluster_ids) * ei.elem(cluster_ids) *
-//             arma::trans(ei.elem(cluster_ids)) * X.rows(cluster_ids);
-//         }
-//
-//         Vcov_hat = ((J * (n - 1)) / ((J - 1) * (n - k))) * XtX_inv * XteetX * XtX_inv;
-//
-//         dof.fill(J - 1);
-//
-//       }
-//
+//      } else if (type == "stata") {
+
+        Eigen::MatrixXd XteetX(p, p);
+        XteetX.fill(0.0);
+
+        // iterate over unique cluster values
+        for(unsigned i = 0;
+            i < J;
+            ++i){
+          Eigen::VectorXi cluster_ids = (clusters == levels[i]).cast<int>();
+
+          Eigen::VectorXd ei_clus = extract_vec(ei, cluster_ids);
+          Eigen::MatrixXd X_clus = extract_mat_rows(X, cluster_ids);
+
+          XteetX += X_clus.transpose()  * ei_clus * ei_clus.transpose() * X_clus;
+        }
+
+        Vcov_hat = ((J * (n - 1)) / ((J - 1) * (n - p))) * (XtX_inv * XteetX * XtX_inv);
+        dof.fill(J - 1);
+
+     // }
+
     }
   }
 
