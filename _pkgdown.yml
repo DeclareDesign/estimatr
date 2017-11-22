@@ -1,3 +1,6 @@
+template:
+  path: "docs/templates"
+
 navbar:
   type: default
   left:
@@ -15,6 +18,7 @@ navbar:
         href: http://fabricatr.declaredesign.org
       - text: estimatr
         href: http://estimatr.declaredesign.org
-    href: articles/DeclareDesign.html
   - text: "Discussion Board"
     href: http://discuss.declaredesign.org
+  - text: "DeclareDesign home"
+    href: http://declaredesign.org

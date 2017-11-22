@@ -58,8 +58,18 @@
 <li>
   <a href="http://discuss.declaredesign.org">Discussion Board</a>
 </li>
+<li>
+  <a href="http://declaredesign.org">DeclareDesign home</a>
+</li>
       </ul>
-<ul class="nav navbar-nav navbar-right"></ul>
+<ul class="nav navbar-nav navbar-right">
+<li>
+  <a href="https://github.com/DeclareDesign/estimatr">
+    <span class="fa fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
 <!--/.nav-collapse -->
   </div>
@@ -74,13 +84,12 @@
       <h1>estimatr: fast estimators for social scientists</h1>
                         <h4 class="author">Luke Sonnet</h4>
             
-            <h4 class="date">2017-11-22</h4>
           </div>
 
     
     
 <div class="contents">
-<p><code>estimatr</code> is a package in R dedicated to providing fast estimators for social scientists. Many extant estimators in base r or popular packages are slow, have default settings that lead to statistically inappropriate estimates, and simply do not provide tools for certain cutting-edge estimators.</p>
+<p><strong>estimatr</strong> is a package in R dedicated to providing fast estimators for social scientists. Estimators are statistical methods for estimating quantities of interest like treatment effects or regression parameters. Many of the estimators included with the R programming language or popular R packages are slow and have default settings that lead to statistically inappropriate estimates. Certain estimators that reflect cutting-edge advances in statistics are not yet implemented in R packages for convenient use. <strong>estimatr</strong> is designed to solve these problems.</p>
 <div id="estimators" class="section level1">
 <h1 class="hasAnchor">
 <a href="#estimators" class="anchor"></a>Estimators</h1>
@@ -108,18 +117,18 @@ dat &lt;-<span class="st"> </span>fabricatr<span class="op">::</span><span class
   <span class="dt">y =</span> <span class="kw">ifelse</span>(z, y1, y0),         <span class="co"># observed outcome</span>
   
   <span class="co"># We will also consider clustered data</span>
-  <span class="dt">clust =</span> <span class="kw">sample</span>(letters[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>], <span class="dt">size =</span> N, <span class="dt">replace =</span> T),
+  <span class="dt">clust =</span> <span class="kw">sample</span>(letters[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>], <span class="dt">size =</span> N, <span class="dt">replace =</span> T),
   <span class="dt">z_clust =</span> randomizr<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/randomizr/topics/cluster_ra">cluster_ra</a></span>(clust),
   <span class="dt">y_clust =</span> <span class="kw">ifelse</span>(z_clust, y1, y0)
 )
 <span class="kw">head</span>(dat)
 <span class="co">#&gt;    ID         x        y0        y1 z         y clust z_clust   y_clust</span>
-<span class="co">#&gt; 1 001 0.9148060 1.2367313 1.5867313 0 1.2367313     f       1 1.5867313</span>
-<span class="co">#&gt; 2 002 0.9370754 0.1532365 0.5032365 0 0.1532365     g       1 0.5032365</span>
-<span class="co">#&gt; 3 003 0.2861395 1.8618671 2.2118671 0 1.8618671     e       0 1.8618671</span>
-<span class="co">#&gt; 4 004 0.8304476 1.4733469 1.8233469 1 1.8233469     i       0 1.4733469</span>
-<span class="co">#&gt; 5 005 0.6417455 0.7315062 1.0815062 1 1.0815062     b       1 1.0815062</span>
-<span class="co">#&gt; 6 006 0.5190959 0.7956467 1.1456467 0 0.7956467     j       0 0.7956467</span></code></pre></div>
+<span class="co">#&gt; 1 001 0.9148060 1.2367313 1.5867313 0 1.2367313     c       0 1.2367313</span>
+<span class="co">#&gt; 2 002 0.9370754 0.1532365 0.5032365 0 0.1532365     d       0 0.1532365</span>
+<span class="co">#&gt; 3 003 0.2861395 1.8618671 2.2118671 0 1.8618671     c       0 1.8618671</span>
+<span class="co">#&gt; 4 004 0.8304476 1.4733469 1.8233469 1 1.8233469     e       1 1.8233469</span>
+<span class="co">#&gt; 5 005 0.6417455 0.7315062 1.0815062 1 1.0815062     a       1 1.0815062</span>
+<span class="co">#&gt; 6 006 0.5190959 0.7956467 1.1456467 0 0.7956467     e       1 1.1456467</span></code></pre></div>
 <div id="lm_robust" class="section level2">
 <h2 class="hasAnchor">
 <a href="#lm_robust" class="anchor"></a><code>lm_robust</code>
@@ -137,25 +146,25 @@ dat &lt;-<span class="st"> </span>fabricatr<span class="op">::</span><span class
 <span class="co">#&gt; 3 97</span></code></pre></div>
 <p>It is straightforward to do cluster-robust inference, by passing the name of your cluster variable to the <code>clusters =</code> argument. Note that <code><a href="../reference/lm_robust.html">lm_robust()</a></code> is much quicker if your cluster variable is a factor!</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(y_clust <span class="op">~</span><span class="st"> </span>z_clust <span class="op">+</span><span class="st"> </span>x, <span class="dt">data =</span> dat, <span class="dt">clusters =</span> clust)
-<span class="co">#&gt;   coefficient_name         est        se            p   ci_lower  ci_upper</span>
-<span class="co">#&gt; 1      (Intercept) -0.10443616 0.1406425 0.4881662311 -0.4560941 0.2472218</span>
-<span class="co">#&gt; 2          z_clust  0.06755627 0.1550000 0.6763110101 -0.3003530 0.4354655</span>
-<span class="co">#&gt; 3                x  1.43635038 0.1926899 0.0001248076  0.9831465 1.8895542</span>
+<span class="co">#&gt;   coefficient_name        est        se           p   ci_lower  ci_upper</span>
+<span class="co">#&gt; 1      (Intercept) -0.2297421 0.2860212 0.479501447 -1.1296813 0.6701971</span>
+<span class="co">#&gt; 2          z_clust  0.3237405 0.2543280 0.314436218 -0.6284545 1.2759355</span>
+<span class="co">#&gt; 3                x  1.4218920 0.2677729 0.009225833  0.6267612 2.2170227</span>
 <span class="co">#&gt;         df</span>
-<span class="co">#&gt; 1 5.512240</span>
-<span class="co">#&gt; 2 6.871637</span>
-<span class="co">#&gt; 3 7.190465</span></code></pre></div>
+<span class="co">#&gt; 1 3.061812</span>
+<span class="co">#&gt; 2 2.349468</span>
+<span class="co">#&gt; 3 3.427113</span></code></pre></div>
 <p>The default variance estimator with clusters is dubbed ‘CR2’ because it is analogous to ‘HC2’ for the clustered case, and utilizes recent advances proposed by <span class="citation">(Pustejovsky and Tipton <a href="#ref-pustejovskytipton2016">2016</a>)</span> to correct hypotheses tests for small samples and work with commonly specified fixed effects and weights.</p>
 <p>Researchers can also replicate Stata’s clustered standard errors by using the <code>se_type =</code> argument:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(y_clust <span class="op">~</span><span class="st"> </span>z_clust <span class="op">+</span><span class="st"> </span>x, <span class="dt">data =</span> dat, <span class="dt">clusters =</span> clust, <span class="dt">se_type =</span> <span class="st">'stata'</span>)
-<span class="co">#&gt;   coefficient_name         est        se            p   ci_lower  ci_upper</span>
-<span class="co">#&gt; 1      (Intercept) -0.10443616 0.1351897 4.596142e-01 -0.4102565 0.2013842</span>
-<span class="co">#&gt; 2          z_clust  0.06755627 0.1431047 6.481087e-01 -0.2561690 0.3912816</span>
-<span class="co">#&gt; 3                x  1.43635038 0.1962724 4.476879e-05  0.9923513 1.8803494</span>
+<span class="co">#&gt;   coefficient_name        est        se           p   ci_lower  ci_upper</span>
+<span class="co">#&gt; 1      (Intercept) -0.2297421 0.2397300 0.392162607 -0.8953393 0.4358551</span>
+<span class="co">#&gt; 2          z_clust  0.3237405 0.2104863 0.198857368 -0.2606632 0.9081442</span>
+<span class="co">#&gt; 3                x  1.4218920 0.2628410 0.005655571  0.6921284 2.1516555</span>
 <span class="co">#&gt;   df</span>
-<span class="co">#&gt; 1  9</span>
-<span class="co">#&gt; 2  9</span>
-<span class="co">#&gt; 3  9</span></code></pre></div>
+<span class="co">#&gt; 1  4</span>
+<span class="co">#&gt; 2  4</span>
+<span class="co">#&gt; 3  4</span></code></pre></div>
 </div>
 <div id="lm_lin" class="section level2">
 <h2 class="hasAnchor">
@@ -188,10 +197,10 @@ dat &lt;-<span class="st"> </span>fabricatr<span class="op">::</span><span class
 <span class="co">#&gt; 1 89.70705</span>
 <span class="co"># Clustered version</span>
 <span class="kw"><a href="../reference/difference_in_means.html">difference_in_means</a></span>(y_clust <span class="op">~</span><span class="st"> </span>z_clust, <span class="dt">data =</span> dat, <span class="dt">clusters =</span> clust)
-<span class="co">#&gt;   coefficient_name        est        se         p   ci_lower  ci_upper</span>
-<span class="co">#&gt; 1          z_clust 0.06869618 0.1711762 0.6898764 -0.2750245 0.4124168</span>
+<span class="co">#&gt;   coefficient_name        est        se        p   ci_lower  ci_upper</span>
+<span class="co">#&gt; 1          z_clust 0.03016236 0.1842871 0.870711 -0.3408371 0.4011618</span>
 <span class="co">#&gt;         df</span>
-<span class="co">#&gt; 1 50.57568</span></code></pre></div>
+<span class="co">#&gt; 1 45.77674</span></code></pre></div>
 </div>
 <div id="horvitz_thompson" class="section level2">
 <h2 class="hasAnchor">
@@ -201,8 +210,6 @@ dat &lt;-<span class="st"> </span>fabricatr<span class="op">::</span><span class
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Complete random assignment declaration</span>
 crs_decl &lt;-<span class="st"> </span>randomizr<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">declare_ra</a></span>(<span class="dt">N =</span> <span class="kw">nrow</span>(dat), <span class="dt">prob =</span> <span class="fl">0.5</span>, <span class="dt">simple =</span> <span class="ot">FALSE</span>)
 <span class="kw"><a href="../reference/horvitz_thompson.html">horvitz_thompson</a></span>(y <span class="op">~</span><span class="st"> </span>z, <span class="dt">data =</span> dat, <span class="dt">declaration =</span> crs_decl)
-<span class="co">#&gt;   coefficient_name       est        se         p   ci_lower  ci_upper df</span>
-<span class="co">#&gt; 1                z 0.1571095 0.2241485 0.4850157 -0.2877058 0.6019248 98</span>
 
 <span class="co"># Clustered random assignment declaration</span>
 crs_clust_decl &lt;-<span class="st"> </span>randomizr<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">declare_ra</a></span>(
@@ -214,38 +221,25 @@ crs_clust_decl &lt;-<span class="st"> </span>randomizr<span class="op">::</span>
 <span class="kw"><a href="../reference/horvitz_thompson.html">horvitz_thompson</a></span>(y_clust <span class="op">~</span><span class="st"> </span>z_clust, <span class="dt">data =</span> dat, <span class="dt">declaration =</span> crs_clust_decl)
 <span class="co">#&gt; Warning in horvitz_thompson_internal(condition_pr_mat = condition_pr_mat, :</span>
 <span class="co">#&gt; Variance below 0, consider using constant effects assumption or a different</span>
-<span class="co">#&gt; estimator.</span>
-<span class="co">#&gt;   coefficient_name       est se  p ci_lower ci_upper df</span>
-<span class="co">#&gt; 1          z_clust 0.1506133 NA NA       NA       NA 98</span></code></pre></div>
+<span class="co">#&gt; estimator.</span></code></pre></div>
 <p>There are two main variance estimators we provide, a conservative estimator using Young’s inequality (<code>se_type = "youngs"</code>), described by <span class="citation">(Aronow and Middleton <a href="#ref-aronowmiddleton2013">2013</a>)</span>, and an estimator that assumes constant treatment effects (<code>se_type = "constant"</code>). The default is the conservative estimator.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/horvitz_thompson.html">horvitz_thompson</a></span>(
   y_clust <span class="op">~</span><span class="st"> </span>z_clust, 
   <span class="dt">data =</span> dat, 
   <span class="dt">declaration =</span> crs_clust_decl, 
   <span class="dt">se_type =</span> <span class="st">"constant"</span>
-)
-<span class="co">#&gt;   coefficient_name       est        se         p   ci_lower  ci_upper df</span>
-<span class="co">#&gt; 1          z_clust 0.1506133 0.2329737 0.5194784 -0.3117154 0.6129421 98</span></code></pre></div>
+)</code></pre></div>
 <p>You can also build the condition probability matrix (<code>condition_prob_mat =</code>) that <code><a href="../reference/horvitz_thompson.html">horvitz_thompson()</a></code> needs yourself. This matrix is an 2N by 2N matrix, where the first N rows and N columns (the upper-left corner) are the joint probability of each unit being in the control condition with every other unit being in the control condition. The upper right N by N matrix is the joint probability of each unit being in the control condition with every other unit being in the treated condition. The second N rows are the same, with the joint probability of each unit being in the treated condition first with each unit being in the control (first N columns) and then with each unit being in the treated as well (second N columns).</p>
 <p>We also provide helper functions to build this matrix from any given permutation of treatments (`condition.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Generate 500 arbitrary permutations</span>
 permutes &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">rbinom</span>(<span class="kw">nrow</span>(dat)<span class="op">*</span><span class="dv">500</span>, <span class="dt">size =</span> <span class="dv">1</span>, <span class="dt">prob =</span> <span class="fl">0.5</span>), <span class="dt">nrow =</span> <span class="kw">nrow</span>(dat))
 <span class="kw">dim</span>(permutes)
-<span class="co">#&gt; [1] 100 500</span>
 permutes[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="op">:</span><span class="dv">2</span>]
-<span class="co">#&gt;      [,1] [,2]</span>
-<span class="co">#&gt; [1,]    0    1</span>
-<span class="co">#&gt; [2,]    0    0</span>
-<span class="co">#&gt; [3,]    1    1</span>
-<span class="co">#&gt; [4,]    0    1</span>
-<span class="co">#&gt; [5,]    0    0</span>
 
 <span class="co"># Get condition probability matrix</span>
 arb_pr_mat &lt;-<span class="st"> </span><span class="kw"><a href="../reference/permutations_to_condition_pr_mat.html">permutations_to_condition_pr_mat</a></span>(permutes)
 
-<span class="kw"><a href="../reference/horvitz_thompson.html">horvitz_thompson</a></span>(y <span class="op">~</span><span class="st"> </span>z, <span class="dt">data =</span> dat, <span class="dt">condition_pr_mat =</span> arb_pr_mat)
-<span class="co">#&gt;   coefficient_name       est        se         p   ci_lower  ci_upper df</span>
-<span class="co">#&gt; 1                z 0.1689788 0.2249693 0.4543807 -0.2774654 0.6154229 98</span></code></pre></div>
+<span class="kw"><a href="../reference/horvitz_thompson.html">horvitz_thompson</a></span>(y <span class="op">~</span><span class="st"> </span>z, <span class="dt">data =</span> dat, <span class="dt">condition_pr_mat =</span> arb_pr_mat)</code></pre></div>
 </div>
 </div>
 <div id="references" class="section level1 unnumbered">
@@ -290,8 +284,9 @@ arb_pr_mat &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 </div>
 
 
-      <footer><div class="copyright">
-  <p>Developed by Graeme Blair, Jasper Cooper, Alexander Coppock, Macartan Humphreys.</p>
+      <footer><div class="copyright" style="flex:3;">
+  <p>Developed by Graeme Blair, Jasper Cooper, Alexander Coppock, Macartan Humphreys, Luke Sonnet.</p>
+  <p>Code is licensed under <a href="https://opensource.org/licenses/mit-license.php">MIT</a> license.</p>
 </div>
 
 <div class="pkgdown">

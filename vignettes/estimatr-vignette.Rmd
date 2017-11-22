@@ -1,7 +1,6 @@
 ---
 title: 'estimatr: fast estimators for social scientists'
 author: "Luke Sonnet"
-date: "`r Sys.Date()`"
 output:
   html_document:
     df_print: paged
@@ -29,7 +28,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-`estimatr` is a package in R dedicated to providing fast estimators for social scientists. Many extant estimators in base r or popular packages are slow, have default settings that lead to statistically inappropriate estimates, and simply do not provide tools for certain cutting-edge estimators.
+**estimatr** is a package in R dedicated to providing fast estimators for social scientists. Estimators are statistical methods for estimating quantities of interest like treatment effects or regression parameters. Many of the estimators included with the R programming language or popular R packages are slow and have default settings that lead to statistically inappropriate estimates. Certain estimators that reflect cutting-edge advances in statistics are not yet implemented in R packages for convenient use. **estimatr** is designed to solve these problems.
 
 # Estimators
 
@@ -110,7 +109,7 @@ difference_in_means(y_clust ~ z_clust, data = dat, clusters = clust)
 
 Horvitz-Thompson estimators are useful when estimating treatment effects without bias when there is a clustered design with unequal size clusters or when the treatment assignment process is arbitrarily complex. Horvitz-Thompson estimators require information about the treatment (and control) probabilities for each unit, and the joint treatment and control probabilities of every pair of units. For simpler designs, passing your randomization scheme using `randomizr::declare_ra()` is the easiest path forward.
 
-```{r}
+```{r, results="hide"}
 # Complete random assignment declaration
 crs_decl <- randomizr::declare_ra(N = nrow(dat), prob = 0.5, simple = FALSE)
 horvitz_thompson(y ~ z, data = dat, declaration = crs_decl)
@@ -127,7 +126,7 @@ horvitz_thompson(y_clust ~ z_clust, data = dat, declaration = crs_clust_decl)
 
 There are two main variance estimators we provide, a conservative estimator using Young's inequality (`se_type = "youngs"`), described by [@aronowmiddleton2013], and an estimator that assumes constant treatment effects (`se_type = "constant"`). The default is the conservative estimator.
 
-```{r}
+```{r, results="hide"}
 horvitz_thompson(
   y_clust ~ z_clust, 
   data = dat, 
@@ -140,7 +139,7 @@ You can also build the condition probability matrix (`condition_prob_mat = `) th
 
 We also provide helper functions to build this matrix from any given permutation of treatments (`condition.
 
-```{r}
+```{r, results="hide"}
 # Generate 500 arbitrary permutations
 permutes <- matrix(rbinom(nrow(dat)*500, size = 1, prob = 0.5), nrow = nrow(dat))
 dim(permutes)
