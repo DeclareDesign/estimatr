@@ -55,7 +55,7 @@ dat <- fabricatr::fabricate(
   y = ifelse(z, y1, y0),         # observed outcome
   
   # We will also consider clustered data
-  clust = sample(letters[1:5], size = N, replace = T),
+  clust = sample(rep(letters[1:20], each = 5)),
   z_clust = randomizr::cluster_ra(clust),
   y_clust = ifelse(z_clust, y1, y0)
 )

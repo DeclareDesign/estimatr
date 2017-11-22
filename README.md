@@ -37,4 +37,21 @@ lm_robust(y ~ z, data = sample_dat, clusters = my_cluster_var)
 difference_in_means(y ~ z, data = sample_dat, blocks = my_block_var)
 ```
 
+### Fast to use
+
+Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using `lm()` and the `sandwich` package to get HC2 standard errors.
+
+``` r
+# estimatr
+lm_robust(y ~ x1 + x2 + x3 + x4, data = dat)
+
+# usual specification (lm + sandwich)
+lm_out <- lm(y ~ x1 + x2 + x3 + x4, data = dat)
+lmtest::coeftest(lm_out, vcov = sandwich::vcovHC(lm_out, type = 'HC2'))
+```
+
+![](vignettes/lm_speed.png)
+
+![](vignettes/lm_speed_covars.png)
+
 This project is generously supported by a grant from the [Laura and John Arnold Foundation](http://www.arnoldfoundation.org) and seed funding from [Evidence in Governance and Politics (EGAP)](http://egap.org).

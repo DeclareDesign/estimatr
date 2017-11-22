@@ -101,6 +101,23 @@
 
 <span class="co"># blocked designs</span>
 <span class="kw"><a href="reference/difference_in_means.html">difference_in_means</a></span>(y <span class="op">~</span><span class="st"> </span>z, <span class="dt">data =</span> sample_dat, <span class="dt">blocks =</span> my_block_var)</code></pre></div>
+</div>
+<div id="fast-to-use" class="section level3">
+<h3 class="hasAnchor">
+<a href="#fast-to-use" class="anchor"></a>Fast to use</h3>
+<p>Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using <code>lm()</code> and the <code>sandwich</code> package to get HC2 standard errors.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># estimatr</span>
+<span class="kw"><a href="reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>x1 <span class="op">+</span><span class="st"> </span>x2 <span class="op">+</span><span class="st"> </span>x3 <span class="op">+</span><span class="st"> </span>x4, <span class="dt">data =</span> dat)
+
+<span class="co"># usual specification (lm + sandwich)</span>
+lm_out &lt;-<span class="st"> </span><span class="kw">lm</span>(y <span class="op">~</span><span class="st"> </span>x1 <span class="op">+</span><span class="st"> </span>x2 <span class="op">+</span><span class="st"> </span>x3 <span class="op">+</span><span class="st"> </span>x4, <span class="dt">data =</span> dat)
+lmtest<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/lmtest/topics/coeftest">coeftest</a></span>(lm_out, <span class="dt">vcov =</span> sandwich<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/sandwich/topics/vcovHC">vcovHC</a></span>(lm_out, <span class="dt">type =</span> <span class="st">'HC2'</span>))</code></pre></div>
+<div class="figure">
+<img src="articles/lm_speed.png">
+</div>
+<div class="figure">
+<img src="articles/lm_speed_covars.png">
+</div>
 <p>This project is generously supported by a grant from the <a href="http://www.arnoldfoundation.org">Laura and John Arnold Foundation</a> and seed funding from <a href="http://egap.org">Evidence in Governance and Politics (EGAP)</a>.</p>
 </div>
 </div>

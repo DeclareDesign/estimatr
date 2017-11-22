@@ -226,7 +226,6 @@ horvitz_thompson <-
     #-----
 
     if (is.null(data$blocks)){
-      print(data)
       return_list <-
         horvitz_thompson_internal(
           condition_pr_mat = condition_pr_mat,
@@ -517,8 +516,8 @@ horvitz_thompson_internal <-
             )
           ) / N
       } else {
-        print('full youngs')
-        print(condition_pr_mat)
+        #print('full youngs')
+        #print(condition_pr_mat)
         # Young's inequality
         varN2 <-
           sum(Y2^2) +
