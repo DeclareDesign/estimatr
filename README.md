@@ -1,3 +1,4 @@
+
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 estimatr: Fast estimators for social scientists
 ===============================================
@@ -19,30 +20,38 @@ install.packages("estimatr", dependencies = TRUE,
   repos = c("http://R.declaredesign.org", "https://cloud.r-project.org"))
 ```
 
-### Getting started
+### Easy to use
 
-Once the package is installed, getting appropriate estimates and standard errors is now both fast and easy.
+Once the package is installed, getting appropriate estimates and standard errors is now both fast and easy. You can see examples with all of the estimators we provide in the [getting started](articles/estimatr-vignette.html) vignette.
 
 ``` r
 library(estimatr)
 
 # robust standard errors
 lm_robust(y ~ z, data = sample_dat)
-#>   coefficient_name        est        se          p    ci_lower  ci_upper
-#> 1      (Intercept) -0.1795533 0.1474162 0.22614742 -0.47209587 0.1129893
-#> 2                z  0.4241362 0.2048999 0.04108575  0.01751898 0.8307533
-#>   df
-#> 1 98
-#> 2 98
 
 # cluster robust standard errors
-lm_robust(y ~ z, data = sample_dat, clusters = cluster)
-#>   coefficient_name        est        se         p   ci_lower  ci_upper
-#> 1      (Intercept) -0.1795533 0.1997409 0.4280886 -0.7766062 0.4174996
-#> 2                z  0.4241362 0.2359202 0.1182231 -0.1417193 0.9899916
-#>         df
-#> 1 3.380396
-#> 2 6.543209
+lm_robust(y ~ z, data = sample_dat, clusters = my_cluster_var)
+
+# blocked designs
+difference_in_means(y ~ z, data = sample_dat, blocks = my_block_var)
 ```
+
+### Fast to use
+
+Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using `lm()` and the `sandwich` package to get HC2 standard errors.
+
+``` r
+# estimatr
+lm_robust(y ~ x1 + x2 + x3 + x4, data = dat)
+
+# usual specification (lm + sandwich)
+lm_out <- lm(y ~ x1 + x2 + x3 + x4, data = dat)
+lmtest::coeftest(lm_out, vcov = sandwich::vcovHC(lm_out, type = 'HC2'))
+```
+
+![](vignettes/lm_speed.png)
+
+![](vignettes/lm_speed_covars.png)
 
 This project is generously supported by a grant from the [Laura and John Arnold Foundation](http://www.arnoldfoundation.org) and seed funding from [Evidence in Governance and Politics (EGAP)](http://egap.org).

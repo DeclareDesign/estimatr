@@ -1,8 +1,13 @@
+template:
+  path: "docs/templates"
+
 navbar:
   type: default
   left:
+  - text: "Getting Started"
+    href: articles/estimatr-vignette.html
   - text: Reference
-    href: reference/
+    href: reference/index.html
   - text: "Packages"
     menu:
       - text: DeclareDesign

@@ -1,11 +1,15 @@
 ^\.travis\.yml$
+README.Rmd
 README.md
+index.Rmd
+index.md
 ^.*\.Rproj$
 ^\.Rproj\.user$
 appveyor.yml
 ^appveyor\.yml$
 CONDUCT.md
 ^docs$
+^docs/templates/.*$
 deploy.sh
 _pkgdown.yml
 update_repo.R
