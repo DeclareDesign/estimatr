@@ -40,7 +40,7 @@ install.packages("estimatr", dependencies = TRUE,
 
 ### Easy to use
 
-Once the package is installed, getting appropriate estimates and standard errors is now both fast and easy. You can see examples with all of the estimators we provide in the [getting started](articles/estimatr-vignette.html) vignette.
+Once the package is installed, getting appropriate estimates and standard errors is now both fast and easy.
 
 ```{r, eval = F}
 library(estimatr)
@@ -55,7 +55,7 @@ lm_robust(y ~ z, data = sample_dat, clusters = my_cluster_var)
 difference_in_means(y ~ z, data = sample_dat, blocks = my_block_var)
 ```
 
-**estimatr** can do so much more. Please read our [online tutorial](articles/estimatr-vignette.html) for more information about how to make **estimatr** work for your analysis.
+The [Getting Started](articles/estimatr-vignette.html) guide describes each estimator provided by **estimatr** and how it can be used in your analysis.
 
 ### Fast to use
 
