@@ -20,6 +20,9 @@
 #'
 #' @examples
 #'
+#' # Set seed
+#' set.seed(42)
+#'
 #' # Simulate data
 #' n <- 10
 #' dat <- data.frame(y = rnorm(n))

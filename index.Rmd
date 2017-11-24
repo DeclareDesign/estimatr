@@ -11,6 +11,7 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.path = "README-"  
 )
+options(digits = 2)
 sample_dat <- fabricatr::fabricate(
   N = 100,
   y = rnorm(N),
