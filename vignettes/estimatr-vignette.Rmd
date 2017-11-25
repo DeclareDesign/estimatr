@@ -106,6 +106,7 @@ knitr::kable(summary(lm_robust(y_clust ~ z_clust + x,
                        clusters = clust,
                        se_type = "stata"))$coefficients)
 ```
+
 ## `lm_lin`
 
 Following the critique by [@freedman2008] that pre-treatment covariate adjustment biases estimates of average treatment effects, [@lin2013] proposed an alternative estimator that would reduce this bias and improve precision. The [@lin2013] estimator suggests centering all pre-treatment covariates and interacting them with the treatment variable. To facilitate this, we provide a wrapper that can do that process for you. 
