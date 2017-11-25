@@ -28,7 +28,7 @@ Technical papers and textbooks demand complex estimation strategies that are oft
 
 Fast estimators also enable fast simulation of research designs to learn about their properties (see [DeclareDesign](http://declaredesign.org)). 
 
-*This software is in not yet ready for general release. Please contact the authors before using in experiments or published work. Specifications, names, and arguments of functions are subject to change.*
+*This software is not yet ready for general release. Please contact the authors before using in experiments or published work. Specifications, names, and arguments of functions are subject to change.*
 
 ### Installing estimatr
 
