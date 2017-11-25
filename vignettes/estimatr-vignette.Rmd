@@ -1,5 +1,5 @@
 ---
-title: 'estimatr: fast estimators for social scientists'
+title: 'Getting started using estimatr'
 author: "Luke Sonnet"
 output:
   html_document:
@@ -77,7 +77,7 @@ Usage largely mimics `lm()`, although it defaults to using Eicker-Huber-White ro
 lm_robust(y ~ z + x, data = dat)
 ```
 ```{r echo=FALSE}
-# knitr::kable(lm_robust(y ~ z + x, data = dat))
+knitr::kable(summary(lm_robust(y ~ z + x, data = dat))$coefficients)
 ```
 
 It is straightforward to do cluster-robust inference, by passing the name of your cluster variable to the `clusters =` argument. Note that `lm_robust()` is much quicker if your cluster variable is a factor!
@@ -88,7 +88,7 @@ lm_robust(y_clust ~ z_clust + x,
           clusters = clust)
 ```
 ```{r echo=FALSE}
-#knitr::kable(lm_robust(y_clust ~ z_clust + x, data = dat, clusters = clust))
+knitr::kable(summary(lm_robust(y_clust ~ z_clust + x, data = dat, clusters = clust))$coefficients)
 ```
 
 The default variance estimator with clusters is dubbed 'CR2' because it is analogous to 'HC2' for the clustered case, and utilizes recent advances proposed by [@pustejovskytipton2016] to correct hypotheses tests for small samples and work with commonly specified fixed effects and weights.
@@ -101,10 +101,10 @@ lm_robust(y_clust ~ z_clust + x,
           se_type = 'stata')
 ```
 ```{r echo=FALSE}
-#knitr::kable(lm_robust(y_clust ~ z_clust + x,
-#                       data = dat,
-#                       ckusters = clust,
-#                       se_type = "stata"))
+knitr::kable(summary(lm_robust(y_clust ~ z_clust + x,
+                       data = dat,
+                       clusters = clust,
+                       se_type = "stata"))$coefficients)
 ```
 ## `lm_lin`
 
@@ -116,7 +116,7 @@ lm_lin(y ~ z,
        data = dat)
 ```
 ```{r echo=FALSE}
-# knitr::kable(lm_lin(y ~ z, covariates = ~ x, data = dat))
+knitr::kable(summary(lm_lin(y ~ z, covariates = ~ x, data = dat))$coefficients)
 ```
 
 Furthermore, it is just a wrapper for `lm_robust()`, so all arguments that work for `lm_robust()` work here.
@@ -129,14 +129,18 @@ While estimating differences in means may seem straightforward, we provide a fun
 # Simple version
 difference_in_means(y ~ z, 
                     data = dat)
+```
+```{r echo=FALSE}
+knitr::kable(summary(difference_in_means(y ~ z, data = dat))$coefficients)
+```
+```{r echo=TRUE, results="hide"}
 # Clustered version
 difference_in_means(y_clust ~ z_clust, 
                     data = dat, 
                     clusters = clust)
 ```
 ```{r echo=FALSE}
-#knitr::kable(difference_in_means(y ~ z, data = dat))
-#knitr::kable(difference_in_means(y_clust ~ z_clust, data = dat, clusters = clust))
+knitr::kable(summary(difference_in_means(y_clust ~ z_clust, data = dat, clusters = clust))$coefficients)
 ```
 
 ## `horvitz_thompson`
@@ -164,9 +168,9 @@ horvitz_thompson(y_clust ~ z_clust,
                  declaration = crs_clust_decl)
 ```
 ```{r echo=FALSE}
-#knitr::kable(horvitz_thompson(y_clust ~ z_clust, 
-#                 data = dat, 
-#                 declaration = crs_clust_decl))
+knitr::kable(summary(horvitz_thompson(y_clust ~ z_clust, 
+                 data = dat, 
+                 declaration = crs_clust_decl))$coefficients)
 ```
 
 There are two main variance estimators we provide, a conservative estimator using Young's inequality (`se_type = "youngs"`), described by [@aronowmiddleton2013], and an estimator that assumes constant treatment effects (`se_type = "constant"`). The default is the conservative estimator.
@@ -180,12 +184,11 @@ horvitz_thompson(
 )
 ```
 ```{r echo=FALSE}
-#kable(horvitz_thompson(
-#  y_clust ~ z_clust,
-#  data = dat,
-#  declaration = crs_clust_decl,
-#  se_type = "constant"
-#)
+knitr::kable(summary(horvitz_thompson(
+  y_clust ~ z_clust,
+  data = dat,
+  declaration = crs_clust_decl,
+  se_type = "constant"))$coefficients)
 ```
 
 You can also build the condition probability matrix (`condition_prob_mat = `) that `horvitz_thompson()` needs yourself. This matrix is an 2N by 2N matrix, where the first N rows and N columns (the upper-left corner) are the joint probability of each unit being in the control condition with every other unit being in the control condition. The upper right N by N matrix is the joint probability of each unit being in the control condition with every other unit being in the treated condition. The second N rows are the same, with the joint probability of each unit being in the treated condition first with each unit being in the control (first N columns) and then with each unit being in the treated as well (second N columns).
@@ -209,9 +212,9 @@ horvitz_thompson(y ~ z,
                  condition_pr_mat = arb_pr_mat)
 ```
 ```{r echo=FALSE}
-#knitr::kable(horvitz_thompson(y ~ z, 
-#                 data = dat, 
-#                 condition_pr_mat = arb_pr_mat))
+knitr::kable(summary(horvitz_thompson(y ~ z, 
+                 data = dat, 
+                 condition_pr_mat = arb_pr_mat))$coefficients)
 ```
 
 ```{r hide-technical-appendix, eval = F, echo = F}

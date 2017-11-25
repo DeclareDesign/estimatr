@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>estimatr: fast estimators for social scientists • estimatr</title>
+<title>Getting started using estimatr • estimatr</title>
 <!-- jquery --><script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script><!-- Font Awesome icons --><link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
 <!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
@@ -81,7 +81,7 @@
       </header><div class="row">
   <div class="col-md-9">
     <div class="page-header toc-ignore">
-      <h1>estimatr: fast estimators for social scientists</h1>
+      <h1>Getting started using estimatr</h1>
                         <h4 class="author">Luke Sonnet</h4>
             
           </div>
@@ -211,25 +211,199 @@ dat &lt;-<span class="st"> </span>fabricatr<span class="op">::</span><span class
 <p>The <code>estimatr</code> package provides a function to quickly fit linear models with the most common variance estimators and degrees of freedom corrections used in social science. You can easily return heteroskedastic standard errors, clustered standard errors, and classical standard errors.</p>
 <p>Usage largely mimics <code>lm()</code>, although it defaults to using Eicker-Huber-White robust standard errors, specifically ‘HC2’ standard errors:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>z <span class="op">+</span><span class="st"> </span>x, <span class="dt">data =</span> dat)</code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th></th>
+<th align="right">Estimate</th>
+<th align="right">Std. Error</th>
+<th align="right">Pr(&gt;|t|)</th>
+<th align="right">ci_lower</th>
+<th align="right">ci_upper</th>
+<th align="right">df</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>(Intercept)</td>
+<td align="right">-0.19</td>
+<td align="right">0.21</td>
+<td align="right">0.37</td>
+<td align="right">-0.60</td>
+<td align="right">0.22</td>
+<td align="right">97</td>
+</tr>
+<tr class="even">
+<td>z</td>
+<td align="right">0.23</td>
+<td align="right">0.19</td>
+<td align="right">0.21</td>
+<td align="right">-0.14</td>
+<td align="right">0.60</td>
+<td align="right">97</td>
+</tr>
+<tr class="odd">
+<td>x</td>
+<td align="right">1.42</td>
+<td align="right">0.29</td>
+<td align="right">0.00</td>
+<td align="right">0.85</td>
+<td align="right">1.99</td>
+<td align="right">97</td>
+</tr>
+</tbody>
+</table>
 <p>It is straightforward to do cluster-robust inference, by passing the name of your cluster variable to the <code>clusters =</code> argument. Note that <code><a href="../reference/lm_robust.html">lm_robust()</a></code> is much quicker if your cluster variable is a factor!</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(y_clust <span class="op">~</span><span class="st"> </span>z_clust <span class="op">+</span><span class="st"> </span>x, 
           <span class="dt">data =</span> dat, 
           <span class="dt">clusters =</span> clust)</code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th></th>
+<th align="right">Estimate</th>
+<th align="right">Std. Error</th>
+<th align="right">Pr(&gt;|t|)</th>
+<th align="right">ci_lower</th>
+<th align="right">ci_upper</th>
+<th align="right">df</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>(Intercept)</td>
+<td align="right">-0.48</td>
+<td align="right">0.22</td>
+<td align="right">0.05</td>
+<td align="right">-0.97</td>
+<td align="right">0.0</td>
+<td align="right">12</td>
+</tr>
+<tr class="even">
+<td>z_clust</td>
+<td align="right">0.81</td>
+<td align="right">0.17</td>
+<td align="right">0.00</td>
+<td align="right">0.45</td>
+<td align="right">1.2</td>
+<td align="right">18</td>
+</tr>
+<tr class="odd">
+<td>x</td>
+<td align="right">1.43</td>
+<td align="right">0.34</td>
+<td align="right">0.00</td>
+<td align="right">0.72</td>
+<td align="right">2.1</td>
+<td align="right">17</td>
+</tr>
+</tbody>
+</table>
 <p>The default variance estimator with clusters is dubbed ‘CR2’ because it is analogous to ‘HC2’ for the clustered case, and utilizes recent advances proposed by <span class="citation">(Pustejovsky and Tipton <a href="#ref-pustejovskytipton2016">2016</a>)</span> to correct hypotheses tests for small samples and work with commonly specified fixed effects and weights.</p>
 <p>Researchers can also replicate Stata’s clustered standard errors by using the <code>se_type =</code> argument:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(y_clust <span class="op">~</span><span class="st"> </span>z_clust <span class="op">+</span><span class="st"> </span>x, 
           <span class="dt">data =</span> dat, 
           <span class="dt">clusters =</span> clust, 
           <span class="dt">se_type =</span> <span class="st">'stata'</span>)</code></pre></div>
-</div>
-<div id="lm_lin" class="section level2">
-<h2 class="hasAnchor">
-<a href="#lm_lin" class="anchor"></a><code>lm_lin</code>
-</h2>
+<table class="table">
+<thead><tr class="header">
+<th></th>
+<th align="right">Estimate</th>
+<th align="right">Std. Error</th>
+<th align="right">Pr(&gt;|t|)</th>
+<th align="right">ci_lower</th>
+<th align="right">ci_upper</th>
+<th align="right">df</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>(Intercept)</td>
+<td align="right">-0.48</td>
+<td align="right">0.22</td>
+<td align="right">0.04</td>
+<td align="right">-0.95</td>
+<td align="right">-0.02</td>
+<td align="right">19</td>
+</tr>
+<tr class="even">
+<td>z_clust</td>
+<td align="right">0.81</td>
+<td align="right">0.17</td>
+<td align="right">0.00</td>
+<td align="right">0.46</td>
+<td align="right">1.16</td>
+<td align="right">19</td>
+</tr>
+<tr class="odd">
+<td>x</td>
+<td align="right">1.43</td>
+<td align="right">0.33</td>
+<td align="right">0.00</td>
+<td align="right">0.73</td>
+<td align="right">2.13</td>
+<td align="right">19</td>
+</tr>
+<tr class="even">
+<td>## <code>lm_lin</code>
+</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+</tbody>
+</table>
 <p>Following the critique by <span class="citation">(Freedman <a href="#ref-freedman2008">2008</a>)</span> that pre-treatment covariate adjustment biases estimates of average treatment effects, <span class="citation">(Lin and others <a href="#ref-lin2013">2013</a>)</span> proposed an alternative estimator that would reduce this bias and improve precision. The <span class="citation">(Lin and others <a href="#ref-lin2013">2013</a>)</span> estimator suggests centering all pre-treatment covariates and interacting them with the treatment variable. To facilitate this, we provide a wrapper that can do that process for you.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/lm_lin.html">lm_lin</a></span>(y <span class="op">~</span><span class="st"> </span>z, 
        <span class="dt">covariates =</span> <span class="op">~</span><span class="st"> </span>x, 
        <span class="dt">data =</span> dat)</code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th></th>
+<th align="right">Estimate</th>
+<th align="right">Std. Error</th>
+<th align="right">Pr(&gt;|t|)</th>
+<th align="right">ci_lower</th>
+<th align="right">ci_upper</th>
+<th align="right">df</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>(Intercept)</td>
+<td align="right">0.55</td>
+<td align="right">0.15</td>
+<td align="right">0.00</td>
+<td align="right">0.25</td>
+<td align="right">0.84</td>
+<td align="right">96</td>
+</tr>
+<tr class="even">
+<td>z</td>
+<td align="right">0.24</td>
+<td align="right">0.19</td>
+<td align="right">0.21</td>
+<td align="right">-0.13</td>
+<td align="right">0.61</td>
+<td align="right">96</td>
+</tr>
+<tr class="odd">
+<td>x_bar</td>
+<td align="right">1.72</td>
+<td align="right">0.47</td>
+<td align="right">0.00</td>
+<td align="right">0.79</td>
+<td align="right">2.65</td>
+<td align="right">96</td>
+</tr>
+<tr class="even">
+<td>z:x_bar</td>
+<td align="right">-0.58</td>
+<td align="right">0.58</td>
+<td align="right">0.32</td>
+<td align="right">-1.73</td>
+<td align="right">0.57</td>
+<td align="right">96</td>
+</tr>
+</tbody>
+</table>
 <p>Furthermore, it is just a wrapper for <code><a href="../reference/lm_robust.html">lm_robust()</a></code>, so all arguments that work for <code><a href="../reference/lm_robust.html">lm_robust()</a></code> work here.</p>
 </div>
 <div id="difference_in_means" class="section level2">
@@ -239,11 +413,51 @@ dat &lt;-<span class="st"> </span>fabricatr<span class="op">::</span><span class
 <p>While estimating differences in means may seem straightforward, we provide a function that appropriately adjusts estimates for blocking and clustering to match the current state of knowledge in social science methodology. Usage is similar to usage in regression functions.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Simple version</span>
 <span class="kw"><a href="../reference/difference_in_means.html">difference_in_means</a></span>(y <span class="op">~</span><span class="st"> </span>z, 
-                    <span class="dt">data =</span> dat)
-<span class="co"># Clustered version</span>
+                    <span class="dt">data =</span> dat)</code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th></th>
+<th align="right">Estimate</th>
+<th align="right">Std. Error</th>
+<th align="right">Pr(&gt;|t|)</th>
+<th align="right">ci_lower</th>
+<th align="right">ci_upper</th>
+<th align="right">df</th>
+</tr></thead>
+<tbody><tr class="odd">
+<td>z</td>
+<td align="right">0.16</td>
+<td align="right">0.2</td>
+<td align="right">0.44</td>
+<td align="right">-0.25</td>
+<td align="right">0.56</td>
+<td align="right">90</td>
+</tr></tbody>
+</table>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Clustered version</span>
 <span class="kw"><a href="../reference/difference_in_means.html">difference_in_means</a></span>(y_clust <span class="op">~</span><span class="st"> </span>z_clust, 
                     <span class="dt">data =</span> dat, 
                     <span class="dt">clusters =</span> clust)</code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th></th>
+<th align="right">Estimate</th>
+<th align="right">Std. Error</th>
+<th align="right">Pr(&gt;|t|)</th>
+<th align="right">ci_lower</th>
+<th align="right">ci_upper</th>
+<th align="right">df</th>
+</tr></thead>
+<tbody><tr class="odd">
+<td>z_clust</td>
+<td align="right">0.82</td>
+<td align="right">0.17</td>
+<td align="right">0</td>
+<td align="right">0.47</td>
+<td align="right">1.2</td>
+<td align="right">54</td>
+</tr></tbody>
+</table>
 </div>
 <div id="horvitz_thompson" class="section level2">
 <h2 class="hasAnchor">
@@ -268,6 +482,26 @@ crs_clust_decl &lt;-<span class="st"> </span>randomizr<span class="op">::</span>
 <span class="kw"><a href="../reference/horvitz_thompson.html">horvitz_thompson</a></span>(y_clust <span class="op">~</span><span class="st"> </span>z_clust, 
                  <span class="dt">data =</span> dat, 
                  <span class="dt">declaration =</span> crs_clust_decl)</code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th></th>
+<th align="right">Estimate</th>
+<th align="right">Std. Error</th>
+<th align="right">Pr(&gt;|t|)</th>
+<th align="right">ci_lower</th>
+<th align="right">ci_upper</th>
+<th align="right">df</th>
+</tr></thead>
+<tbody><tr class="odd">
+<td>z_clust</td>
+<td align="right">0.82</td>
+<td align="right">0.13</td>
+<td align="right">0</td>
+<td align="right">0.55</td>
+<td align="right">1.1</td>
+<td align="right">98</td>
+</tr></tbody>
+</table>
 <p>There are two main variance estimators we provide, a conservative estimator using Young’s inequality (<code>se_type = "youngs"</code>), described by <span class="citation">(Aronow and Middleton <a href="#ref-aronowmiddleton2013">2013</a>)</span>, and an estimator that assumes constant treatment effects (<code>se_type = "constant"</code>). The default is the conservative estimator.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/horvitz_thompson.html">horvitz_thompson</a></span>(
   y_clust <span class="op">~</span><span class="st"> </span>z_clust, 
@@ -275,6 +509,26 @@ crs_clust_decl &lt;-<span class="st"> </span>randomizr<span class="op">::</span>
   <span class="dt">declaration =</span> crs_clust_decl, 
   <span class="dt">se_type =</span> <span class="st">"constant"</span>
 )</code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th></th>
+<th align="right">Estimate</th>
+<th align="right">Std. Error</th>
+<th align="right">Pr(&gt;|t|)</th>
+<th align="right">ci_lower</th>
+<th align="right">ci_upper</th>
+<th align="right">df</th>
+</tr></thead>
+<tbody><tr class="odd">
+<td>z_clust</td>
+<td align="right">0.82</td>
+<td align="right">0.17</td>
+<td align="right">0</td>
+<td align="right">0.48</td>
+<td align="right">1.1</td>
+<td align="right">98</td>
+</tr></tbody>
+</table>
 <p>You can also build the condition probability matrix (<code>condition_prob_mat =</code>) that <code><a href="../reference/horvitz_thompson.html">horvitz_thompson()</a></code> needs yourself. This matrix is an 2N by 2N matrix, where the first N rows and N columns (the upper-left corner) are the joint probability of each unit being in the control condition with every other unit being in the control condition. The upper right N by N matrix is the joint probability of each unit being in the control condition with every other unit being in the treated condition. The second N rows are the same, with the joint probability of each unit being in the treated condition first with each unit being in the control (first N columns) and then with each unit being in the treated as well (second N columns).</p>
 <p>We also provide helper functions to build this matrix from any given permutation of treatments (`condition.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Generate 500 arbitrary permutations</span>
@@ -291,6 +545,26 @@ arb_pr_mat &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <span class="kw"><a href="../reference/horvitz_thompson.html">horvitz_thompson</a></span>(y <span class="op">~</span><span class="st"> </span>z, 
                  <span class="dt">data =</span> dat, 
                  <span class="dt">condition_pr_mat =</span> arb_pr_mat)</code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th></th>
+<th align="right">Estimate</th>
+<th align="right">Std. Error</th>
+<th align="right">Pr(&gt;|t|)</th>
+<th align="right">ci_lower</th>
+<th align="right">ci_upper</th>
+<th align="right">df</th>
+</tr></thead>
+<tbody><tr class="odd">
+<td>z</td>
+<td align="right">0.16</td>
+<td align="right">0.24</td>
+<td align="right">0.52</td>
+<td align="right">-0.32</td>
+<td align="right">0.63</td>
+<td align="right">98</td>
+</tr></tbody>
+</table>
 </div>
 </div>
 <div id="references" class="section level1 unnumbered">
@@ -322,7 +596,6 @@ arb_pr_mat &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <li>
 <a href="#estimators">Estimators</a><ul class="nav nav-pills nav-stacked">
 <li><a href="#lm_robust"><code>lm_robust</code></a></li>
-      <li><a href="#lm_lin"><code>lm_lin</code></a></li>
       <li><a href="#difference_in_means"><code>difference_in_means</code></a></li>
       <li><a href="#horvitz_thompson"><code>horvitz_thompson</code></a></li>
       </ul>

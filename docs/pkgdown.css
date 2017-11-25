@@ -1,3 +1,20 @@
+/* Custom overrides */
+.nav-pills > li.active > .nav-stacked > li.active > a {
+  /* Coolors.co generated palette: 4 shades lighter of same hue */
+  background-color: #C7DAEB;
+  /* Good contrast option for background color selected. */
+  color: #1F2D3D;
+}
+
+.nav-pills > li > .nav-stacked > li > a {
+  /* Left margin for nested lists */
+  margin-left: 10px;
+}
+
+.nav-pills > li > a {
+	padding: 7px 10px;
+}
+
 /* Sticker footer */
 body > .container {
   display: flex;
