@@ -34,6 +34,9 @@
 <li>
   <a href="../reference/index.html">Reference</a>
 </li>
+<li>
+  <a href="http://discuss.declaredesign.org">Ask for Help</a>
+</li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
     Packages
@@ -54,9 +57,6 @@
       <a href="http://estimatr.declaredesign.org">estimatr</a>
     </li>
   </ul>
-</li>
-<li>
-  <a href="http://discuss.declaredesign.org">Discussion Board</a>
 </li>
 <li>
   <a href="http://declaredesign.org">DeclareDesign home</a>
@@ -339,18 +339,13 @@ dat &lt;-<span class="st"> </span>fabricatr<span class="op">::</span><span class
 <td align="right">2.13</td>
 <td align="right">19</td>
 </tr>
-<tr class="even">
-<td>## <code>lm_lin</code>
-</td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-</tr>
 </tbody>
 </table>
+</div>
+<div id="lm_lin" class="section level2">
+<h2 class="hasAnchor">
+<a href="#lm_lin" class="anchor"></a><code>lm_lin</code>
+</h2>
 <p>Following the critique by <span class="citation">(Freedman <a href="#ref-freedman2008">2008</a>)</span> that pre-treatment covariate adjustment biases estimates of average treatment effects, <span class="citation">(Lin and others <a href="#ref-lin2013">2013</a>)</span> proposed an alternative estimator that would reduce this bias and improve precision. The <span class="citation">(Lin and others <a href="#ref-lin2013">2013</a>)</span> estimator suggests centering all pre-treatment covariates and interacting them with the treatment variable. To facilitate this, we provide a wrapper that can do that process for you.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/lm_lin.html">lm_lin</a></span>(y <span class="op">~</span><span class="st"> </span>z, 
        <span class="dt">covariates =</span> <span class="op">~</span><span class="st"> </span>x, 
@@ -596,6 +591,7 @@ arb_pr_mat &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <li>
 <a href="#estimators">Estimators</a><ul class="nav nav-pills nav-stacked">
 <li><a href="#lm_robust"><code>lm_robust</code></a></li>
+      <li><a href="#lm_lin"><code>lm_lin</code></a></li>
       <li><a href="#difference_in_means"><code>difference_in_means</code></a></li>
       <li><a href="#horvitz_thompson"><code>horvitz_thompson</code></a></li>
       </ul>
@@ -609,7 +605,7 @@ arb_pr_mat &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 
 
       <footer><div class="copyright" style="flex:3;">
-  <p>Developed by Graeme Blair, Jasper Cooper, Alexander Coppock, Macartan Humphreys, Luke Sonnet.</p>
+  <p>Developed by Graeme Blair, Jasper Cooper, Alexander Coppock, Macartan Humphreys.</p>
   <p>Code is licensed under <a href="https://opensource.org/licenses/mit-license.php">MIT</a> license.</p>
 </div>
 
