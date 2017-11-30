@@ -1,7 +1,7 @@
 #' Predict method for \code{\link{lm_robust}} object
 #'
 #' @param object an object of class 'lm_robust'
-#' @param newdata the data for which a prediction is preferred
+#' @param newdata a data frame in which to look for variables with which to predict
 #' @param se.fit a boolean for whether standard errors are required, default = FALSE
 #' @param interval type of interval calculation. Can be abbreviated, default = none
 #' @param alpha numeric denoting the test size for confidence intervals
@@ -10,10 +10,39 @@
 #' @param weights variance weights for prediction. This can be a numeric vector or a bare (unquoted) name of the weights variable in the supplied newdata.
 #' @param ... other arguments, unused
 #'
-#' @details predict.lm_roust produces predicted values, obtained by evaluating the regression function in the frame newdata (which defaults to model.frame(object). If the logical se.fit is TRUE, standard errors of the predictions are calculated. Setting intervals specifies computation of confidence or prediction (tolerance) intervals at the specified level, sometimes referred to as narrow vs. wide intervals.
+#' @details predict.lm_roust produces predicted values, obtained by evaluating the regression function in the frame newdata. If the logical se.fit is TRUE, standard errors of the predictions are calculated. Setting intervals specifies computation of confidence or prediction (tolerance) intervals at the specified level, sometimes referred to as narrow vs. wide intervals.
 #'
+#' The equation used for the standard error of a prediction given a row of data x is:
+#'
+#' \eqn{\sqrt(x \Sigma x')},
+#'
+#' where \eqn{\Sigma} is the estimated variance-covariance matrix from \code{lm_robust}.
 #'
 #' The prediction intervals are for a single observation at each case in newdata with error variance(s) pred.var. The the default is to assume that future observations have the same error variance as those used for fitting, which is gotten from the fit lm_robust object. If weights is supplied, the inverse of this is used as a scale factor. If the fit was weighted, the default is to assume constant prediction variance, with a warning.
+#'
+#' @examples
+#'
+#' # Set seed
+#' set.seed(42)
+#'
+#' # Simulate data
+#' n <- 10
+#' dat <- data.frame(y = rnorm(n), x = rnorm(n))
+#'
+#' # Fit lm
+#' lm_out <- lm_robust(y ~ x, data = dat)
+#' # Get predicted fits
+#' fits <- predict(lm_out, newdata = dat)
+#' # With standard errors and confidence intervals
+#' fits <- predict(lm_out, newdata = dat, se.fit = TRUE, interval = "confidence")
+#'
+#' # Use new data as well
+#' new_dat <- data.frame(x = runif(n, 5, 8))
+#' predict(lm_out, newdata = new_dat)
+#'
+#' # You can also supply custom variance weights for prediction intervals
+#' new_dat$w <- runif(n)
+#' predict(lm_out, newdata = new_dat, weights = w, interval = "prediction")
 #'
 #' @export
 predict.lm_robust <- function(
