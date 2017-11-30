@@ -77,19 +77,23 @@ List lm_robust_helper(const arma::vec & y,
   arma::colvec dof(X.n_cols);
   dof.fill(-99);
 
+  double s2 = -99;
+
+  arma::colvec ei;
+
   if(type != "none"){
 
     // residuals
-    arma::colvec ei = y - X * beta_hat;
+    ei = y - X * beta_hat;
 
     double n = X.n_rows;
     double k = X.n_cols;
+    s2 = std::inner_product(ei.begin(), ei.end(), ei.begin(), 0.0)/(n - k);
 
     if (type == "classical") {
 
       // the next line due to Dirk Eddelbuettel
       // http://dirk.eddelbuettel.com/code/rcpp.armadillo.html
-      double s2 = std::inner_product(ei.begin(), ei.end(), ei.begin(), 0.0)/(n - k);
       Vcov_hat = s2 * XtX_inv;
 
     } else if ( (type == "HC0") | (type == "HC1") | (type == "HC2") | (type == "HC3") ) {
@@ -136,6 +140,8 @@ List lm_robust_helper(const arma::vec & y,
       arma::vec clusters = Rcpp::as<arma::vec>(cluster);
       arma::vec levels = unique(clusters);
       double J = levels.n_elem;
+
+      Rcpp::Rcout << 'here' << std::endl;
 
       if (type == "CR2") {
 
@@ -273,7 +279,10 @@ List lm_robust_helper(const arma::vec & y,
 
   return List::create(_["beta_hat"]= beta_hat,
                       _["Vcov_hat"]= Vcov_hat,
-                      _["dof"]= dof);
+                      _["dof"]= dof,
+                      _["res_var"]= s2,
+                      _["XtX_inv"]= XtX_inv,
+                      _["residuals"]= ei);
 }
 
 

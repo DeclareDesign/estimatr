@@ -109,5 +109,7 @@ clean_model_data <- function(formula,
     }
   }
 
+  ret[["terms"]] <- attr(mf, "terms")
+
   return(ret)
 }
