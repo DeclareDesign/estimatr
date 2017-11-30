@@ -10,7 +10,7 @@
 #' @param weights variance weights for prediction. This can be a numeric vector or a bare (unquoted) name of the weights variable in the supplied newdata.
 #' @param ... other arguments, unused
 #'
-#' @details predict.lm_roust produces predicted values, obtained by evaluating the regression function in the frame newdata. If the logical se.fit is TRUE, standard errors of the predictions are calculated. Setting intervals specifies computation of confidence or prediction (tolerance) intervals at the specified level, sometimes referred to as narrow vs. wide intervals.
+#' @details predict.lm_robust produces predicted values, obtained by evaluating the regression function in the frame newdata for fits from \code{lm_robust} and \code{lm_lin}. If the logical se.fit is TRUE, standard errors of the predictions are calculated. Setting intervals specifies computation of confidence or prediction (tolerance) intervals at the specified level, sometimes referred to as narrow vs. wide intervals.
 #'
 #' The equation used for the standard error of a prediction given a row of data x is:
 #'
@@ -64,6 +64,29 @@ predict.lm_robust <- function(
   if(!is.null(cl <- attr(rhs_terms, "dataClasses"))) .checkMFClasses(cl, mf)
 
   X <- model.matrix(rhs_terms, mf, contrasts.arg = object$contrasts)
+
+  # lm_lin scaling
+  if (!is.null(object$scaled_center)) {
+    demeaned_covars <-
+      scale(
+        X[
+          ,
+          names(object$scaled_center),
+          drop = F
+          ],
+        center = object$scaled_center,
+        scale = FALSE
+      )
+
+
+    # Interacted with treatment
+    treat_name <- attr(object$terms, "term.labels")[1]
+    interacted_covars <- X[, treat_name] * demeaned_covars
+
+    X <- cbind(X[, attr(X, "assign") <= 1, drop = F],
+               demeaned_covars,
+               interacted_covars)
+  }
 
   # Get predicted values
   predictor <- drop(X %*% object$est)

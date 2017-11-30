@@ -31,7 +31,7 @@
 Predict method for \code{\link{lm_robust}} object
 }
 \details{
-predict.lm_roust produces predicted values, obtained by evaluating the regression function in the frame newdata. If the logical se.fit is TRUE, standard errors of the predictions are calculated. Setting intervals specifies computation of confidence or prediction (tolerance) intervals at the specified level, sometimes referred to as narrow vs. wide intervals.
+predict.lm_robust produces predicted values, obtained by evaluating the regression function in the frame newdata for fits from \code{lm_robust} and \code{lm_lin}. If the logical se.fit is TRUE, standard errors of the predictions are calculated. Setting intervals specifies computation of confidence or prediction (tolerance) intervals at the specified level, sometimes referred to as narrow vs. wide intervals.
 
 The equation used for the standard error of a prediction given a row of data x is:
 

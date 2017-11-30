@@ -199,7 +199,7 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
 
   # works with factor
   dat$J_fac <- as.factor(dat$J)
-  expect_identical(
+  expect_equivalent(
     lm_robust(Y~Z, data = dat, clusters = J_fac),
     lm_robust(Y~Z, data = dat, clusters = J)
   )

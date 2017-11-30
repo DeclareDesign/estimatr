@@ -141,7 +141,7 @@ List lm_robust_helper(const arma::vec & y,
       arma::vec levels = unique(clusters);
       double J = levels.n_elem;
 
-      Rcpp::Rcout << 'here' << std::endl;
+      // Rcpp::Rcout << 'here' << std::endl;
 
       if (type == "CR2") {
 

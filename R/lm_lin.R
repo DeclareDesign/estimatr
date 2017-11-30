@@ -2,9 +2,8 @@
 #' Linear regression with the Lin (2013) covariate adjustment
 #'
 #' @param formula An object of class "formula", such as Y ~ Z. Should only have the outcome and the treatment.
-#'
-#' @param data A data.frame.
 #' @param covariates A one-sided formula with all of the covariates on the right hand side, such as ~ x1 + x2 + x3.
+#' @param data A data.frame.
 #' @param weights the bare (unquoted) names of the weights variable in the supplied data.
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
 #' @param clusters An optional bare (unquoted) name of the variable that corresponds to the clusters in the data.
@@ -17,8 +16,8 @@
 #' @export
 #'
 lm_lin <- function(formula,
-                   data,
                    covariates,
+                   data,
                    weights,
                    subset,
                    clusters,
@@ -65,7 +64,7 @@ lm_lin <- function(formula,
   cluster <- model_data$cluster
 
   # If Z is a factor, can't use variable name
-  # So get first column non intercept column
+  # So get first non-intercept column (always will be treatment)
   treat_col <- which(attr(design_matrix, "assign") == 1)
   treat_name <- colnames(design_matrix)[treat_col]
   treatment <- design_matrix[, treat_col]
@@ -87,6 +86,8 @@ lm_lin <- function(formula,
       center = TRUE,
       scale = FALSE
     )
+
+  original_covar_names <- colnames(demeaned_covars)
 
   # Change name of centered covariates to end in bar
   colnames(demeaned_covars) <- paste0(colnames(demeaned_covars), '_bar')
@@ -112,6 +113,12 @@ lm_lin <- function(formula,
       coefficient_name = coefficient_name,
       return_vcov = return_vcov
     )
+
+  return_list[["contrasts"]] <- attr(model_data$design_matrix, "contrasts")
+  return_list[["terms"]] <- model_data$terms
+  return_list[["weights"]] <- model_data$weights
+  return_list[["scaled_center"]] <- attr(demeaned_covars, "scaled:center")
+  names(return_list[["scaled_center"]]) <- original_covar_names
 
   return(return_list)
 }

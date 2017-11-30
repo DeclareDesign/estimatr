@@ -50,8 +50,8 @@ test_that("Test LM Lin",{
   lm_rob_out <- lm_robust(Y ~ Z + Z*X1_bar + Z*X2_bar, data = df)
 
   expect_identical(
-    lm_lin_out,
-    lm_rob_out
+    summary(lm_lin_out),
+    summary(lm_rob_out)
   )
 
   expect_equivalent(
@@ -66,31 +66,31 @@ test_that("Test LM Lin",{
   df$X2_bar <- df$X2 - mean(df$X2[-23])
 
   expect_identical(
-    lm_lin(Y ~ Z,
+    summary(lm_lin(Y ~ Z,
            covariates = ~ X1 + X2,
-           data = df),
-    lm_robust(Y ~ Z + Z*X1_bar + Z*X2_bar,
-              data = df)
+           data = df)),
+    summary(lm_robust(Y ~ Z + Z*X1_bar + Z*X2_bar,
+              data = df))
   )
 
   ## Works with no intercept
   expect_identical(
-    lm_lin(Y ~ Z + 0,
+    summary(lm_lin(Y ~ Z + 0,
            covariates = ~ X1 + X2,
-           data = df),
-    lm_robust(Y ~ Z + Z*X1_bar + Z*X2_bar + 0,
-              data = df)
+           data = df)),
+    summary(lm_robust(Y ~ Z + Z*X1_bar + Z*X2_bar + 0,
+              data = df))
   )
 
   ## Test cluster passes through
   expect_identical(
-    lm_lin(Y ~ Z,
+    summary(lm_lin(Y ~ Z,
            covariates = ~ X1 + X2,
            data = df,
-           clusters = cluster),
-    lm_robust(Y ~ Z + Z*X1_bar + Z*X2_bar,
+           clusters = cluster)),
+    summary(lm_robust(Y ~ Z + Z*X1_bar + Z*X2_bar,
               data = df,
-              clusters = cluster)
+              clusters = cluster))
   )
 
   ## Test that it works with subset
@@ -99,15 +99,15 @@ test_that("Test LM Lin",{
   df$X2_bar <- df$X2 - mean(df$X2[keep])
 
   expect_identical(
-    lm_lin(Y ~ Z,
+    summary(lm_lin(Y ~ Z,
            covariates = ~ X1 + X2,
            data = df,
            clusters = cluster,
-           subset = Y > 0),
-    lm_robust(Y ~ Z + Z*X1_bar + Z*X2_bar,
+           subset = Y > 0)),
+    summary(lm_robust(Y ~ Z + Z*X1_bar + Z*X2_bar,
               data = df,
               clusters = cluster,
-              subset = Y > 0)
+              subset = Y > 0))
   )
 
   # Works with factors
@@ -121,13 +121,13 @@ test_that("Test LM Lin",{
   df$X21_bar <- as.numeric(df$X2==1) - mean(df$X2 == 1)
 
   expect_equivalent(
-    lm_lin(Y ~ treat,
+    summary(lm_lin(Y ~ treat,
            covariates = ~ X1 + X2,
            data = df,
-           clusters = cluster),
-    lm_robust(Y ~ treat + treat*X1_bar + treat*X21_bar,
+           clusters = cluster)),
+    summary(lm_robust(Y ~ treat + treat*X1_bar + treat*X21_bar,
               data = df,
-              clusters = cluster)
+              clusters = cluster))
   )
 
   ## Works with a factor with spaces in the name (often the case for clusters)
@@ -176,7 +176,7 @@ test_that("Test LM Lin",{
 
   # drop coefficient name because names will differ
   expect_equivalent(
-    lin_out[-which(names(lin_out) == 'coefficient_name')],
-    rob_out[-which(names(rob_out) == 'coefficient_name')]
+    tidy(lin_out)[, -1],
+    tidy(rob_out)[, -1]
   )
 })
