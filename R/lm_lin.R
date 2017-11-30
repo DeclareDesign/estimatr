@@ -117,6 +117,7 @@ lm_lin <- function(formula,
   return_list[["contrasts"]] <- attr(model_data$design_matrix, "contrasts")
   return_list[["terms"]] <- model_data$terms
   return_list[["weights"]] <- model_data$weights
+  return_list[["outcome"]] <- all.vars(formula[[2]])
   return_list[["scaled_center"]] <- attr(demeaned_covars, "scaled:center")
   names(return_list[["scaled_center"]]) <- original_covar_names
 

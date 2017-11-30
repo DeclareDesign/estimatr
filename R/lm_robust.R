@@ -55,6 +55,7 @@ lm_robust <- function(formula,
   return_list[["contrasts"]] <- attr(model_data$design_matrix, "contrasts")
   return_list[["terms"]] <- model_data$terms
   return_list[["weights"]] <- model_data$weights
+  return_list[["outcome"]] <- all.vars(formula[[2]])
 
   return(return_list)
 }
