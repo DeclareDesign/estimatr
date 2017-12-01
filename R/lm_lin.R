@@ -67,7 +67,16 @@ lm_lin <- function(formula,
   # So get first non-intercept column (always will be treatment)
   treat_col <- which(attr(design_matrix, "assign") == 1)
   treat_name <- colnames(design_matrix)[treat_col]
+
+  # allow drop to 1 dim if well specified
+  # this allows * operator to "sweep" across demeaned covars later
   treatment <- design_matrix[, treat_col]
+
+  if (is.matrix(treatment)) {
+    stop(
+      "Treatment variable must have no more than two levels in the data (or the subset you are using)."
+    )
+  }
 
   if (any(!(treatment %in% c(0, 1)))) {
     stop(
