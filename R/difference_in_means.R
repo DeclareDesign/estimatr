@@ -194,9 +194,9 @@ difference_in_means <-
 
     }
 
-    return_list[["alpha"]] <- alpha
-    return_list[["coefficient_name"]] <- all.vars(formula[[3]])
-    return_list[["outcome"]] <- all.vars(formula[[2]])
+    return_list <- dim_like_return(return_list,
+                                   alpha = alpha,
+                                   formula = formula)
 
     attr(return_list, "class") <- "difference_in_means"
 

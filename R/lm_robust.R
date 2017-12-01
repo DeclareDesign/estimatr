@@ -52,10 +52,9 @@ lm_robust <- function(formula,
       return_vcov = return_vcov
     )
 
-  return_list[["contrasts"]] <- attr(model_data$design_matrix, "contrasts")
-  return_list[["terms"]] <- model_data$terms
-  return_list[["weights"]] <- model_data$weights
-  return_list[["outcome"]] <- all.vars(formula[[2]])
+  return_list <- lm_return(return_list,
+                           model_data = model_data,
+                           formula = formula)
 
   return(return_list)
 }

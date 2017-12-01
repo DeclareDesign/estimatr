@@ -154,11 +154,9 @@ lm_robust_fit <- function(y,
                                        return_list$coefficient_name)
   }
 
-  if (!is.null(weights)) {
-    return_list$weighted <- TRUE
+  return_list$weighted <- !is.null(weights)
+  if (return_list$weighted) {
     return_list$res_var <- sum(fit$residuals^2 * weight_mean) / (n - rank)
-  } else {
-    return_list$weighted <- FALSE
   }
 
   attr(return_list, "class") <- "lm_robust"

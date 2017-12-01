@@ -103,38 +103,41 @@ predict.lm_robust <- function(
 
     if (interval != "none") {
 
-      tval <- qt(alpha/2, df_resid)
+      tval <- qt(alpha/2, df_resid, lower.tail = FALSE)
 
       if (interval == "prediction") {
 
-        if (missing(weights) &&
-            object$weighted &&
-            is.null(pred.var)) {
-          warning("Assuming constant prediction variance even though model fit is weighted\\n")
-        }
-
         # Get weights
         if (missing(weights)) {
+
+          if (object$weighted && is.null(pred.var)) {
+            warning("Assuming constant prediction variance even though model fit is weighted\\n")
+          }
+
           weights <- 1
         } else {
           weights <- eval(substitute(weights), newdata)
         }
 
-        pred_var <-
-          if (is.null(pred.var)) {
-            object$res_var / weights
-          } else {
-            pred.var
-          }
 
-        hwid <- tval * sqrt(var_fit + pred_var)
+        if (is.null(pred.var)) {
+          pred.var <- object$res_var / weights
+        }
+
+        hwid <- tval * sqrt(var_fit + pred.var)
+
       } else if (interval == "confidence") {
         hwid <- tval * sqrt(var_fit)
       }
 
-      predictor <- cbind(predictor,
-                         predictor + hwid %o% c(1, -1))
-      colnames(predictor) <- c("fit", "lwr", "upr")
+      predictor <-
+        matrix(
+          c(predictor,
+            predictor - hwid,
+            predictor + hwid),
+          ncol = 3,
+          dimnames = list(NULL, c('fit', 'lwr', 'upr'))
+        )
     }
 
     ret[["fit"]] <- predictor
