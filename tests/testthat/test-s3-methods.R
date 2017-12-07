@@ -22,9 +22,11 @@ test_that('tidy, summary, and print work', {
     1
   )
 
+  capture_output(
   expect_equivalent(
     tidy(lmo),
     print(lmo)
+  )
   )
 
 
@@ -35,9 +37,12 @@ test_that('tidy, summary, and print work', {
     'data.frame'
   )
 
+
+  capture_output(
   expect_equivalent(
     tidy(lmlo),
     print(lmlo)
+  )
   )
 
   ## horvitz_thompson
@@ -47,9 +52,12 @@ test_that('tidy, summary, and print work', {
     "data.frame"
   )
 
+
+  capture_output(
   expect_equivalent(
     tidy(ht),
     print(ht)
+  )
   )
 
   ## difference_in_means
@@ -61,11 +69,12 @@ test_that('tidy, summary, and print work', {
 
   summary(dim)$coefficients
 
+  capture_output(
   expect_equivalent(
     tidy(dim),
     print(dim)
   )
-
+  )
 })
 
 
@@ -143,5 +152,149 @@ test_that('coef and confint work', {
     cbind(ht$ci_lower, ht$ci_upper)
   )
 
+})
+
+test_that('predict works', {
+  set.seed(42)
+  n <- 10
+  dat <- data.frame(x = rep(0:1, times = 5),
+                    w = runif(n),
+                    z = rnorm(n),
+                    cl = as.factor(sample(letters[1:3], size = n, replace = T)),
+                    y = rnorm(n))
+
+  lm_out <- lm(y ~ z * x + cl, data = dat)
+  lmr_out <- lm_robust(y ~ z * x + cl, data = dat, se_type = 'classical')
+
+  expect_equivalent(
+    predict(lm_out, dat),
+    predict(lmr_out, dat)
+  )
+
+  # various specifications
+  expect_equivalent(
+    predict(lm_out, dat, se.fit = T, interval = 'confidence')[c(1, 2)],
+    predict(lmr_out, dat, se.fit = T, interval = 'confidence')[c(1, 2)]
+  )
+
+  expect_equivalent(
+    predict(lm_out, dat, se.fit = T, interval = 'confidence')[c(1, 2)],
+    predict(lmr_out, dat, se.fit = T, interval = 'confidence')[c(1, 2)]
+  )
+
+  # missingness
+  n <- 11
+  new_dat <- data.frame(x = rep(0:1, times = c(5, 6)),
+                    w = runif(n),
+                    z = rnorm(n),
+                    cl = as.factor(sample(letters[1:3], size = n, replace = T)),
+                    y = rnorm(n))
+  # remove one level to make sure works with missing levels
+  new_dat <- new_dat[new_dat$cl == 'a', ]
+  new_dat[1, 'x'] <- NA
+
+  expect_equivalent(
+    predict(lm_out, new_dat),
+    predict(lmr_out, new_dat)
+  )
+
+  # various specifications
+  expect_equivalent(
+    predict(lm_out, new_dat, se.fit = T, interval = 'confidence')[c(1, 2)],
+    predict(lmr_out, new_dat, se.fit = T, interval = 'confidence')[c(1, 2)]
+  )
+
+  expect_equivalent(
+    predict(lm_out, new_dat, se.fit = T, interval = 'confidence')[c(1, 2)],
+    predict(lmr_out, new_dat, se.fit = T, interval = 'confidence')[c(1, 2)]
+  )
+
+  # weights
+  lm_out <- lm(y ~ z * x + cl, data = dat, weights = w)
+  lmr_out <- lm_robust(y ~ z * x + cl, data = dat, se_type = 'classical', weights = w)
+
+  expect_equivalent(
+    predict(lm_out, dat),
+    predict(lmr_out, dat)
+  )
+
+  expect_equivalent(
+    predict(lm_out, dat, se.fit = T, interval = 'confidence')[c(1, 2)],
+    predict(lmr_out, dat, se.fit = T, interval = 'confidence')[c(1, 2)]
+  )
+
+  expect_warning(
+    plmo <- predict(lm_out, dat, se.fit = T, interval = 'prediction')[c(1, 2)],
+    'Assuming constant prediction variance'
+  )
+  expect_warning(
+    plmro <- predict(lmr_out, dat, se.fit = T, interval = 'prediction')[c(1, 2)],
+    'Assuming constant prediction variance'
+  )
+  expect_equivalent(
+    plmo,
+    plmro
+  )
+
+  # Now with missingness and newdat
+
+  expect_equivalent(
+    predict(lm_out, new_dat),
+    predict(lmr_out, new_dat)
+  )
+
+
+  # mimic lm behavior with missing weights (can't get prediction intervals)
+  new_dat$w[3] <- NA
+  # various specifications
+  expect_equivalent(
+    predict(lm_out, new_dat, se.fit = T, interval = 'confidence', weights = ~ w)[c(1, 2)],
+    predict(lmr_out, new_dat, se.fit = T, interval = 'confidence', weights = w)[c(1, 2)]
+  )
+
+  expect_equivalent(
+    predict(lm_out, new_dat, se.fit = T, interval = 'prediction', weights = ~w)[c(1, 2)],
+    predict(lmr_out, new_dat, se.fit = T, interval = 'prediction', weights = w)[c(1, 2)]
+  )
+
+  # other arguments
+  expect_equivalent(
+    predict(lm_out, new_dat, se.fit = T, interval = 'prediction', pred.var = 2.3)[c(1, 2)],
+    predict(lmr_out, new_dat, se.fit = T, interval = 'prediction', pred.var = 2.3)[c(1, 2)]
+  )
+
+  # lm_lin
+  n <- 11
+  new_dat <- data.frame(x = rep(0:1, times = c(5, 6)),
+                        z = rnorm(n),
+                        cl = as.factor(sample(letters[1:3], size = n, replace = TRUE)),
+                        y = rnorm(n))
+
+  lml_out <- lm_lin(y ~ x, covariates = ~ z + cl, data = dat, se_type = "classical")
+
+  dat$z_bar <- dat$z - mean(dat$z)
+  dat$clb <- as.numeric(dat$cl == 'b')
+  dat$clc <- as.numeric(dat$cl == 'c')
+  dat$clb_bar <- dat$clb - mean(dat$clb)
+  dat$clc_bar <- dat$clc - mean(dat$clc)
+
+  lm_int_out <- lm(y ~ x + x*z_bar + x*clb_bar + x*clc_bar, data = dat)
+
+  # have to scale new data by old mean values!
+  # now predict does this for you! ok.emoji
+
+  new_dat$z_bar <- new_dat$z - mean(dat$z)
+  new_dat$clb <- as.numeric(new_dat$cl == 'b')
+  new_dat$clc <- as.numeric(new_dat$cl == 'c')
+  new_dat$clb_bar <- new_dat$clb - mean(dat$clb)
+  new_dat$clc_bar <- new_dat$clc - mean(dat$clc)
+
+  # not identical due to some numerical difference, presumably due to the way I save the means from lm_lin
+  expect_equivalent(
+    predict(lml_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1,2)],
+    predict(lm_int_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1,2)]
+  )
+
+  # TODO works with rank deficient X
 })
 

@@ -332,9 +332,9 @@ horvitz_thompson <-
     # Build and return output
     #-----
 
-    return_list$alpha <- alpha
-
-    return_list$coefficient_name <- all.vars(formula[[3]])
+    return_list <- dim_like_return(return_list,
+                                   alpha = alpha,
+                                   formula = formula)
 
     attr(return_list, "class") <- "horvitz_thompson"
 

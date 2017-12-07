@@ -96,6 +96,9 @@ lm_robust_fit <- function(y,
   ci_upper <- NA
   dof <- NA
 
+  n <- nrow(X)
+  rank <- sum(!is.na(est))
+
   if(se_type != "none"){
 
     se <- sqrt(diag(fit$Vcov_hat))
@@ -112,9 +115,8 @@ lm_robust_fit <- function(y,
 
       } else {
 
-        N <- nrow(X)
-        k <- ncol(X)
-        dof <- N - k
+        # TODO explicitly pass rank from RRQR/cholesky
+        dof <- n - rank
 
       }
 
@@ -138,13 +140,23 @@ lm_robust_fit <- function(y,
       ci_upper = ci_upper,
       df = dof,
       alpha = alpha,
-      which_covs = coefficient_name
+      which_covs = coefficient_name,
+      res_var = ifelse(fit$res_var < 0, NA, fit$res_var),
+      XtX_inv = fit$XtX_inv,
+      n = n,
+      rank = rank
     )
 
   if (return_vcov & se_type != 'none') {
+    #return_list$residuals <- fit$residuals
     return_list$vcov <- fit$Vcov_hat
     dimnames(return_list$vcov) <- list(return_list$coefficient_name,
                                        return_list$coefficient_name)
+  }
+
+  return_list$weighted <- !is.null(weights)
+  if (return_list$weighted) {
+    return_list$res_var <- sum(fit$residuals^2 * weight_mean) / (n - rank)
   }
 
   attr(return_list, "class") <- "lm_robust"

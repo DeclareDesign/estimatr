@@ -52,6 +52,9 @@ lm_robust <- function(formula,
       return_vcov = return_vcov
     )
 
-  return(return_list)
+  return_list <- lm_return(return_list,
+                           model_data = model_data,
+                           formula = formula)
 
+  return(return_list)
 }
