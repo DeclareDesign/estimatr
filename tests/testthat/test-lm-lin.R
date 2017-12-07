@@ -7,7 +7,7 @@ test_that("Test LM Lin",{
                    X1 = rnorm(100),
                    X2 = rbinom(100, 1, .5),
                    cluster = sample(1:10, size = 100, replace = T))
-  lm_lin_out <- lm_lin(Y ~ Z, data = dat, covariates = ~ X1 + X2)
+  lm_lin_out <- lm_lin(Y ~ Z, covariates = ~ X1 + X2, data = dat)
   expect_error(
     lm_lin_out <- lm_lin(Y ~ Z, data = dat, covariates = ~ X1 + X2),
     NA
@@ -37,7 +37,7 @@ test_that("Test LM Lin",{
   )
 
   expect_error(
-    lm_lin(Y ~ cluster,
+    lm_lin(Y ~ factor(cluster),
            ~ X1,
            data = dat),
     'no more than two levels'
