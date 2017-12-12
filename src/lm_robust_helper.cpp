@@ -53,6 +53,7 @@ arma::mat mat_sqrt_inv(const arma::mat & X, const bool & tol) {
 //----------
 // Main LM fit and SE function
 //----------
+//' @export
 // [[Rcpp::export]]
 List lm_robust_helper(const arma::vec & y,
                       arma::mat & X,
@@ -77,19 +78,23 @@ List lm_robust_helper(const arma::vec & y,
   arma::colvec dof(X.n_cols);
   dof.fill(-99);
 
+  double s2 = -99;
+
+  arma::colvec ei;
+
   if(type != "none"){
 
     // residuals
-    arma::colvec ei = y - X * beta_hat;
+    ei = y - X * beta_hat;
 
     double n = X.n_rows;
     double k = X.n_cols;
+    s2 = std::inner_product(ei.begin(), ei.end(), ei.begin(), 0.0)/(n - k);
 
     if (type == "classical") {
 
       // the next line due to Dirk Eddelbuettel
       // http://dirk.eddelbuettel.com/code/rcpp.armadillo.html
-      double s2 = std::inner_product(ei.begin(), ei.end(), ei.begin(), 0.0)/(n - k);
       Vcov_hat = s2 * XtX_inv;
 
     } else if ( (type == "HC0") | (type == "HC1") | (type == "HC2") | (type == "HC3") ) {
@@ -137,7 +142,7 @@ List lm_robust_helper(const arma::vec & y,
       arma::vec levels = unique(clusters);
       double J = levels.n_elem;
 
-      Rcpp::Rcout << 'here' << std::endl;
+      // Rcpp::Rcout << 'here' << std::endl;
 
       if (type == "CR2") {
 
@@ -175,6 +180,7 @@ List lm_robust_helper(const arma::vec & y,
 
         arma::mat MUWTWUM = XtX_inv * Xt * arma::trans(Xt) * XtX_inv;
         arma::mat Omega_ct = arma::chol(MUWTWUM, "lower");
+        // Rcout << Omega_ct << std::endl;
 
         // iterate over unique cluster values
         for(arma::vec::const_iterator j = levels.begin();
@@ -240,10 +246,15 @@ List lm_robust_helper(const arma::vec & y,
               arma::mat H2 = H2s.subcube(arma::span(p), arma::span::all, arma::span::all);
               arma::mat H3 = H3s.subcube(arma::span(p), arma::span::all, arma::span::all);
 
+              // Rcout << H1 << std::endl<< std::endl;
+
               arma::mat uf = arma::trans(H1) * H2;
 
               arma::mat P_array = arma::trans(H3)*H3 - uf - arma::trans(uf);
               P_array.diag() += P_diags.row(p);
+
+              // Rcout << std::pow(arma::trace(P_array), 2) << " and " << arma::accu(arma::pow(P_array, 2)) << std::endl;
+             // Rcout << P_array << std::endl;
 
               dof[p] = std::pow(arma::trace(P_array), 2) / arma::accu(arma::pow(P_array, 2));
             }
@@ -260,11 +271,21 @@ List lm_robust_helper(const arma::vec & y,
             ++j){
           arma::uvec cluster_ids = find(clusters == *j);
 
+          // Rcout << "XteetX: " << Xt.cols(cluster_ids) * ei.elem(cluster_ids) *
+            // arma::trans(ei.elem(cluster_ids)) * X.rows(cluster_ids) << std::endl;
+
           XteetX += Xt.cols(cluster_ids) * ei.elem(cluster_ids) *
             arma::trans(ei.elem(cluster_ids)) * X.rows(cluster_ids);
         }
-
-        Vcov_hat = ((J * (n - 1)) / ((J - 1) * (n - k))) * XtX_inv * XteetX * XtX_inv;
+//
+//         Rcout << "XteetX: " << XteetX << std::endl;
+//
+//         Rcout << "J: " << J << std::endl;
+//         Rcout << "n: " << n << std::endl;
+//         Rcout << "k: " << k << std::endl;
+//         Rcout << "corr: " << ((J * (n - 1)) / ((J - 1) * (n - k))) << std::endl;
+//         Rcout << "sandwich: " << (XtX_inv * XteetX * XtX_inv) << std::endl;
+        Vcov_hat = ((J * (n - 1)) / ((J - 1) * (n - k))) * (XtX_inv * XteetX * XtX_inv);
 
         dof.fill(J - 1);
 
@@ -275,7 +296,10 @@ List lm_robust_helper(const arma::vec & y,
 
   return List::create(_["beta_hat"]= beta_hat,
                       _["Vcov_hat"]= Vcov_hat,
-                      _["dof"]= dof);
+                      _["dof"]= dof,
+                      _["res_var"]= s2,
+                      _["XtX_inv"]= XtX_inv,
+                      _["residuals"]= ei);
 }
 
 

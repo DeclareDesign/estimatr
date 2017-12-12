@@ -45,8 +45,13 @@ mat_sqrt_inv <- function(X, tol) {
     .Call(`_estimatr_mat_sqrt_inv`, X, tol)
 }
 
+#' @export
 lm_robust_helper <- function(y, X, Xunweighted, weight, weight_mean, cluster, ci, type, which_covs) {
     .Call(`_estimatr_lm_robust_helper`, y, X, Xunweighted, weight, weight_mean, cluster, ci, type, which_covs)
+}
+
+AtA <- function(A) {
+    .Call(`_estimatr_AtA`, A)
 }
 
 #' @export
@@ -65,12 +70,7 @@ extract_mat_rows <- function(full, ind) {
 }
 
 #' @export
-lm_ei_test <- function(X, y, Xunweighted, weight, weight_mean, cluster, cluster_levels, ci, type, which_covs, chol, trychol) {
-    .Call(`_estimatr_lm_ei_test`, X, y, Xunweighted, weight, weight_mean, cluster, cluster_levels, ci, type, which_covs, chol, trychol)
-}
-
-#' @export
-lm_old <- function(X, y) {
-    .Call(`_estimatr_lm_old`, X, y)
+lm_ei_test <- function(Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, chol, trychol) {
+    .Call(`_estimatr_lm_ei_test`, Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, chol, trychol)
 }
 

@@ -27,7 +27,8 @@ test_that("lm cluster se", {
     clusters = J,
     coefficient_name = c("Z", "X"),
     se_type = 'stata',
-    data = dat
+    data = dat,
+    ci = T
   )
 
   expect_equivalent(
@@ -40,7 +41,7 @@ test_that("lm cluster se", {
         data = dat
       )[c("p", "ci_lower", "ci_upper")]
     ),
-    rep(NA, 3)
+    rep(NA, 9)
   )
 
   ## Test equality
@@ -69,6 +70,8 @@ test_that("lm cluster se", {
       clustervar = as.factor(dat$J),
       IK = FALSE
     )
+
+  bm_interact
 
   bm_interact_interval <-
     lm_interact_simple$coefficients["Z:X"] +
@@ -199,7 +202,7 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
 
   # works with factor
   dat$J_fac <- as.factor(dat$J)
-  expect_identical(
+  expect_equivalent(
     lm_robust(Y~Z, data = dat, clusters = J_fac),
     lm_robust(Y~Z, data = dat, clusters = J)
   )

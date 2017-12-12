@@ -2,9 +2,8 @@
 #' Linear regression with the Lin (2013) covariate adjustment
 #'
 #' @param formula An object of class "formula", such as Y ~ Z. Should only have the outcome and the treatment.
-#'
-#' @param data A data.frame.
 #' @param covariates A one-sided formula with all of the covariates on the right hand side, such as ~ x1 + x2 + x3.
+#' @param data A data.frame.
 #' @param weights the bare (unquoted) names of the weights variable in the supplied data.
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
 #' @param clusters An optional bare (unquoted) name of the variable that corresponds to the clusters in the data.
@@ -17,8 +16,8 @@
 #' @export
 #'
 lm_lin <- function(formula,
-                   data,
                    covariates,
+                   data,
                    weights,
                    subset,
                    clusters,
@@ -26,7 +25,8 @@ lm_lin <- function(formula,
                    ci = TRUE,
                    alpha = .05,
                    coefficient_name = NULL,
-                   return_vcov = TRUE) {
+                   return_vcov = TRUE,
+                   ei = TRUE) {
 
   ## Check formula
   if (length(all.vars(formula[[3]])) > 1) {
@@ -65,10 +65,19 @@ lm_lin <- function(formula,
   cluster <- model_data$cluster
 
   # If Z is a factor, can't use variable name
-  # So get first column non intercept column
+  # So get first non-intercept column (always will be treatment)
   treat_col <- which(attr(design_matrix, "assign") == 1)
   treat_name <- colnames(design_matrix)[treat_col]
+
+  # allow drop to 1 dim if well specified
+  # this allows * operator to "sweep" across demeaned covars later
   treatment <- design_matrix[, treat_col]
+
+  if (is.matrix(treatment)) {
+    stop(
+      "Treatment variable must have no more than two levels in the data (or the subset you are using)."
+    )
+  }
 
   if (any(!(treatment %in% c(0, 1)))) {
     stop(
@@ -87,6 +96,8 @@ lm_lin <- function(formula,
       center = TRUE,
       scale = FALSE
     )
+
+  original_covar_names <- colnames(demeaned_covars)
 
   # Change name of centered covariates to end in bar
   colnames(demeaned_covars) <- paste0(colnames(demeaned_covars), '_bar')
@@ -110,8 +121,16 @@ lm_lin <- function(formula,
       se_type = se_type,
       alpha = alpha,
       coefficient_name = coefficient_name,
-      return_vcov = return_vcov
+      return_vcov = return_vcov,
+      ei = ei
     )
+
+  return_list <- lm_return(return_list,
+                           model_data = model_data,
+                           formula = formula)
+
+  return_list[["scaled_center"]] <- attr(demeaned_covars, "scaled:center")
+  setNames(return_list[["scaled_center"]], original_covar_names)
 
   return(return_list)
 }

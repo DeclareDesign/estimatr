@@ -4,15 +4,16 @@
 \alias{lm_lin}
 \title{Linear regression with the Lin (2013) covariate adjustment}
 \usage{
-lm_lin(formula, data, covariates, weights, subset, clusters, se_type = NULL,
-  ci = TRUE, alpha = 0.05, coefficient_name = NULL, return_vcov = TRUE)
+lm_lin(formula, covariates, data, weights, subset, clusters, se_type = NULL,
+  ci = TRUE, alpha = 0.05, coefficient_name = NULL, return_vcov = TRUE,
+  ei = TRUE)
 }
 \arguments{
 \item{formula}{An object of class "formula", such as Y ~ Z. Should only have the outcome and the treatment.}
 
-\item{data}{A data.frame.}
-
 \item{covariates}{A one-sided formula with all of the covariates on the right hand side, such as ~ x1 + x2 + x3.}
+
+\item{data}{A data.frame.}
 
 \item{weights}{the bare (unquoted) names of the weights variable in the supplied data.}
 

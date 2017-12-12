@@ -80,8 +80,10 @@ clean_model_data <- function(formula,
     }
   })
 
+  # TODO when using . it adds weights and clusters to model!
+
   ret <- list(
-    outcome=model.response(mf),
+    outcome=model.response(mf, type = "numeric"),
     design_matrix=model.matrix.default(formula, data = mf)
   )
 
@@ -91,7 +93,7 @@ clean_model_data <- function(formula,
 
   if(!missing(cluster)){
     ret[["cluster"]] <- model.extract(mf, "cluster")
-    if(is.character(ret[["cluster"]]))
+    if(class(ret[["cluster"]]) %in% c('character', 'numeric'))
       ret[["cluster"]] <- as.factor(ret[["cluster"]])
   }
 
@@ -108,6 +110,8 @@ clean_model_data <- function(formula,
       )
     }
   }
+
+  ret[["terms"]] <- attr(mf, "terms")
 
   return(ret)
 }

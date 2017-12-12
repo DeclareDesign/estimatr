@@ -101,7 +101,8 @@ tidy_data_frame <- function(object, digits = NULL) {
       "p",
       "ci_lower",
       "ci_upper",
-      "df"
+      "df",
+      "outcome"
     )
 
   return_frame <- as.data.frame(object[return_cols])

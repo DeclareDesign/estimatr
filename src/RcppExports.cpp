@@ -169,6 +169,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// AtA
+Eigen::MatrixXd AtA(const Eigen::MatrixXd& A);
+RcppExport SEXP _estimatr_AtA(SEXP ASEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type A(ASEXP);
+    rcpp_result_gen = Rcpp::wrap(AtA(A));
+    return rcpp_result_gen;
+END_RCPP
+}
 // mult_diag
 Eigen::MatrixXd mult_diag(const Eigen::MatrixXd& x, const Eigen::ArrayXd& d);
 RcppExport SEXP _estimatr_mult_diag(SEXP xSEXP, SEXP dSEXP) {
@@ -206,36 +217,24 @@ BEGIN_RCPP
 END_RCPP
 }
 // lm_ei_test
-List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& X, const Eigen::Map<Eigen::VectorXd>& y, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Rcpp::Nullable<Rcpp::NumericVector>& weight, const double& weight_mean, const Rcpp::Nullable<Rcpp::NumericVector>& cluster, const Rcpp::Nullable<Rcpp::NumericVector>& cluster_levels, const bool& ci, const String type, const std::vector<bool>& which_covs, const bool& chol, const bool& trychol);
-RcppExport SEXP _estimatr_lm_ei_test(SEXP XSEXP, SEXP ySEXP, SEXP XunweightedSEXP, SEXP weightSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP cluster_levelsSEXP, SEXP ciSEXP, SEXP typeSEXP, SEXP which_covsSEXP, SEXP cholSEXP, SEXP trycholSEXP) {
+List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& Xfull, const Eigen::Map<Eigen::VectorXd>& y, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Rcpp::Nullable<Rcpp::NumericVector>& weight, const double& weight_mean, const Rcpp::Nullable<Rcpp::IntegerVector>& cluster, const unsigned& J, const bool& ci, const String type, const std::vector<bool>& which_covs, const bool& chol, const bool& trychol);
+RcppExport SEXP _estimatr_lm_ei_test(SEXP XfullSEXP, SEXP ySEXP, SEXP XunweightedSEXP, SEXP weightSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP typeSEXP, SEXP which_covsSEXP, SEXP cholSEXP, SEXP trycholSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd>& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd>& >::type Xfull(XfullSEXP);
     Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd>& >::type y(ySEXP);
     Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericMatrix>& >::type Xunweighted(XunweightedSEXP);
     Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericVector>& >::type weight(weightSEXP);
     Rcpp::traits::input_parameter< const double& >::type weight_mean(weight_meanSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericVector>& >::type cluster(clusterSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericVector>& >::type cluster_levels(cluster_levelsSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::IntegerVector>& >::type cluster(clusterSEXP);
+    Rcpp::traits::input_parameter< const unsigned& >::type J(JSEXP);
     Rcpp::traits::input_parameter< const bool& >::type ci(ciSEXP);
     Rcpp::traits::input_parameter< const String >::type type(typeSEXP);
     Rcpp::traits::input_parameter< const std::vector<bool>& >::type which_covs(which_covsSEXP);
     Rcpp::traits::input_parameter< const bool& >::type chol(cholSEXP);
     Rcpp::traits::input_parameter< const bool& >::type trychol(trycholSEXP);
-    rcpp_result_gen = Rcpp::wrap(lm_ei_test(X, y, Xunweighted, weight, weight_mean, cluster, cluster_levels, ci, type, which_covs, chol, trychol));
-    return rcpp_result_gen;
-END_RCPP
-}
-// lm_old
-List lm_old(arma::mat& X, const arma::vec& y);
-RcppExport SEXP _estimatr_lm_old(SEXP XSEXP, SEXP ySEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type y(ySEXP);
-    rcpp_result_gen = Rcpp::wrap(lm_old(X, y));
+    rcpp_result_gen = Rcpp::wrap(lm_ei_test(Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, chol, trychol));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -253,11 +252,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_estimatr_mult_diag2", (DL_FUNC) &_estimatr_mult_diag2, 2},
     {"_estimatr_mat_sqrt_inv", (DL_FUNC) &_estimatr_mat_sqrt_inv, 2},
     {"_estimatr_lm_robust_helper", (DL_FUNC) &_estimatr_lm_robust_helper, 9},
+    {"_estimatr_AtA", (DL_FUNC) &_estimatr_AtA, 1},
     {"_estimatr_mult_diag", (DL_FUNC) &_estimatr_mult_diag, 2},
     {"_estimatr_extract_vec", (DL_FUNC) &_estimatr_extract_vec, 2},
     {"_estimatr_extract_mat_rows", (DL_FUNC) &_estimatr_extract_mat_rows, 2},
     {"_estimatr_lm_ei_test", (DL_FUNC) &_estimatr_lm_ei_test, 12},
-    {"_estimatr_lm_old", (DL_FUNC) &_estimatr_lm_old, 2},
     {NULL, NULL, 0}
 };
 

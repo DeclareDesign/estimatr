@@ -24,7 +24,7 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="index.html">estimatr</a>
+      <a class="navbar-brand" href="">estimatr</a>
     </div>
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
@@ -33,6 +33,9 @@
 </li>
 <li>
   <a href="reference/index.html">Reference</a>
+</li>
+<li>
+  <a href="http://discuss.declaredesign.org">Ask for Help</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -56,18 +59,12 @@
   </ul>
 </li>
 <li>
-  <a href="http://discuss.declaredesign.org">Discussion Board</a>
-</li>
-<li>
   <a href="http://declaredesign.org">DeclareDesign home</a>
 </li>
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/DeclareDesign/estimatr">
-    <span class="fa fa-github fa-lg"></span>
-     
-  </a>
+  <a></a>
 </li>
       </ul>
 </div>
@@ -89,10 +86,10 @@
 <div id="estimatr-fast-estimators-for-social-scientists" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#estimatr-fast-estimators-for-social-scientists" class="anchor"></a>estimatr: Fast estimators for social scientists</h1></div>
+
 <p>Technical papers and textbooks demand complex estimation strategies that are often difficult to implement, even for scientists who are expert coders. The result is slow code copied and pasted from the internet, where the result is taken on faith.</p>
-<p><strong>estimatr</strong> provides a small set of commonly-used estimators (methods for estimating quantities of interest like treatment effects or regression parameters), written in <code>C++</code> for speed, and implemented in <code>R</code> with simple, accessible syntax. We include two functions that implement means estimators, <code>difference_in_means</code> and <code>horvitz_thompson</code>. In addition, we include two functions for linear regression estimators, <code>lm_robust</code> and <code>lm_lin</code>. In each case, scientists can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs.</p>
+<p><strong>estimatr</strong> provides a small set of commonly-used estimators (methods for estimating quantities of interest like treatment effects or regression parameters), written in <code>C++</code> for speed, and implemented in <code>R</code> with simple, accessible syntax. We include two functions that implement means estimators, <a href="reference/difference_in_means.html"><code><a href="reference/difference_in_means.html">difference_in_means()</a></code></a> and <a href="reference/horvitz_thompson.html"><code><a href="reference/horvitz_thompson.html">horvitz_thompson()</a></code></a>. In addition, we include two functions for linear regression estimators, <a href="reference/lm_robust.html"><code><a href="reference/lm_robust.html">lm_robust()</a></code></a> and <a href="reference/lm_lin.html"><code><a href="reference/lm_lin.html">lm_lin()</a></code></a>. In each case, scientists can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs.</p>
 <p>Fast estimators also enable fast simulation of research designs to learn about their properties (see <a href="http://declaredesign.org">DeclareDesign</a>).</p>
-<p><em>This software is in not yet ready for general release. Please contact the authors before using in experiments or published work. Specifications, names, and arguments of functions are subject to change.</em></p>
 <div id="installing-estimatr" class="section level3">
 <h3 class="hasAnchor">
 <a href="#installing-estimatr" class="anchor"></a>Installing estimatr</h3>
@@ -103,7 +100,7 @@
 <div id="easy-to-use" class="section level3">
 <h3 class="hasAnchor">
 <a href="#easy-to-use" class="anchor"></a>Easy to use</h3>
-<p>Once the package is installed, getting appropriate estimates and standard errors is now both fast and easy. You can see examples with all of the estimators we provide in the <a href="articles/estimatr-vignette.html">getting started</a> vignette.</p>
+<p>Once the package is installed, getting appropriate estimates and standard errors is now both fast and easy.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(estimatr)
 
 <span class="co"># robust standard errors</span>
@@ -114,7 +111,25 @@
 
 <span class="co"># blocked designs</span>
 <span class="kw"><a href="reference/difference_in_means.html">difference_in_means</a></span>(y <span class="op">~</span><span class="st"> </span>z, <span class="dt">data =</span> sample_dat, <span class="dt">blocks =</span> my_block_var)</code></pre></div>
-<p><strong>estimatr</strong> can do so much more. Please read our <a href="estimatr-vignette.html">online tutorial</a> for more information about how to make <strong>estimatr</strong> work for your analysis.</p>
+<p>The <a href="articles/estimatr-vignette.html">Getting Started</a> guide describes each estimator provided by <strong>estimatr</strong> and how it can be used in your analysis.</p>
+</div>
+<div id="fast-to-use" class="section level3">
+<h3 class="hasAnchor">
+<a href="#fast-to-use" class="anchor"></a>Fast to use</h3>
+<p>Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using <code>lm()</code> and the <code>sandwich</code> package to get HC2 standard errors.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># estimatr</span>
+<span class="kw"><a href="reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>x1 <span class="op">+</span><span class="st"> </span>x2 <span class="op">+</span><span class="st"> </span>x3 <span class="op">+</span><span class="st"> </span>x4, <span class="dt">data =</span> dat)
+
+<span class="co"># usual specification (lm + sandwich)</span>
+lm_out &lt;-<span class="st"> </span><span class="kw">lm</span>(y <span class="op">~</span><span class="st"> </span>x1 <span class="op">+</span><span class="st"> </span>x2 <span class="op">+</span><span class="st"> </span>x3 <span class="op">+</span><span class="st"> </span>x4, <span class="dt">data =</span> dat)
+lmtest<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/lmtest/topics/coeftest">coeftest</a></span>(lm_out, <span class="dt">vcov =</span> sandwich<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/sandwich/topics/vcovHC">vcovHC</a></span>(lm_out, <span class="dt">type =</span> <span class="st">'HC2'</span>))</code></pre></div>
+<div class="figure">
+<img src="articles/lm_speed.png">
+</div>
+<div class="figure">
+<img src="articles/lm_speed_covars.png">
+</div>
+<hr>
 <p>This project is generously supported by a grant from the <a href="http://www.arnoldfoundation.org">Laura and John Arnold Foundation</a> and seed funding from <a href="http://egap.org">Evidence in Governance and Politics (EGAP)</a>.</p>
 </div>
 </div>
@@ -122,17 +137,17 @@
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
-    <h2 class="hasAnchor">
-<a href="#sidebar" class="anchor"></a>Links</h2>
+    <div id="sidebar_links">
+<h2 class="hasAnchor">
+<a href="#sidebar_links" class="anchor"></a>Links</h2>
 <ul class="list-unstyled">
-<li>
-<a href="https://github.com/DeclareDesign/estimatr/issues">Report a bug</a><br>
-</li>
-<li>
-<a href="https://github.com/DeclareDesign/estimatr">Help develop estimatr</a><br>
-</li>
+<li><a href="https://github.com/DeclareDesign/estimatr">Help develop estimatr</a></li>
+<li><a href="https://github.com/DeclareDesign/estimatr/issues">Report a bug</a></li>
 </ul>
-<h2>Developers</h2>
+</div>
+<div id="sidebar_authors">
+<h2 class="hasAnchor">
+<a href="#sidebar_authors" class="anchor"></a>Developers</h2>
 <ul class="list-unstyled">
 <li>Graeme Blair <br><small class="roles"> Author, maintainer </small> </li>
 <li>Jasper Cooper <br><small class="roles"> Author </small> </li>
@@ -141,6 +156,7 @@
 <li>Luke Sonnet <br><small class="roles"> Contributor </small> </li>
 </ul>
 </div>
+      </div>
 
 </div>
 

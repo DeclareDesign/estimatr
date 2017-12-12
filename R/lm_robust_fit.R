@@ -20,7 +20,8 @@ lm_robust_fit <- function(y,
                           se_type,
                           alpha,
                           coefficient_name,
-                          return_vcov) {
+                          return_vcov,
+                          ei) {
 
   ## allowable se_types with clustering
   cl_se_types <- c("CR2", "stata")
@@ -65,43 +66,94 @@ lm_robust_fit <- function(y,
     # which_ests <- return_frame$variable_names %in% deparse(substitute(coefficient_name))
   }
 
-  if (!is.null(weights)) {
-    Xunweighted <- X
-    weight_mean <- mean(weights)
-    weights <- sqrt(weights / weight_mean)
-    X <- weights * X
-    y <- weights * y
+
+  if(ei) {
+
+    if (!is.null(cluster)) {
+      cl_ord <- order(cluster)
+      y <- y[cl_ord]
+      X <- X[cl_ord,]
+      cluster <- cluster[cl_ord]
+      J <- length(unique(cluster))
+      if (!is.null(weights)) {
+        weights <- weights[cl_ord]
+      }
+
+    } else {
+      J <- 1
+    }
+
+    if (!is.null(weights)) {
+      Xunweighted <- X
+      weight_mean <- mean(weights)
+      weights <- sqrt(weights / weight_mean)
+      X <- weights * X
+      y <- weights * y
+    } else {
+      weight_mean <- 1
+      Xunweighted <- NULL
+    }
+
+
+    fit <-
+      lm_ei_test(
+        y = y,
+        X = X,
+        Xunweighted = Xunweighted,
+        weight = weights,
+        weight_mean = weight_mean,
+        cluster = cluster,
+        J = J,
+        ci = ci,
+        type = se_type,
+        which_covs = which_covs,
+        F,
+        F
+      )
   } else {
-    weight_mean <- 1
-    Xunweighted <- NULL
+
+
+    if (!is.null(weights)) {
+      Xunweighted <- X
+      weight_mean <- mean(weights)
+      weights <- sqrt(weights / weight_mean)
+      X <- weights * X
+      y <- weights * y
+    } else {
+      weight_mean <- 1
+      Xunweighted <- NULL
+    }
+
+    fit <-
+      lm_robust_helper(
+        y = y,
+        X = X,
+        Xunweighted = Xunweighted,
+        weight = weights,
+        weight_mean = weight_mean,
+        cluster = cluster,
+        ci = ci,
+        type = se_type,
+        which_covs = which_covs
+      )
   }
 
-  fit <-
-    lm_ei_test(
-      y = y,
-      X = X,
-      Xunweighted = Xunweighted,
-      weight = weights,
-      weight_mean = weight_mean,
-      cluster = cluster,
-      cluster_levels = unique(cluster),
-      ci = ci,
-      type = se_type,
-      which_covs = which_covs,
-      F,
-      F
-    )
 
   est <- as.vector(fit$beta_hat)
-  se <- NA
-  p <- NA
-  ci_lower <- NA
-  ci_upper <- NA
-  dof <- NA
+  se <- rep(NA, length(est))
+  p <- rep(NA, length(est))
+  ci_lower <- rep(NA, length(est))
+  ci_upper <- rep(NA, length(est))
+  dof <- rep(NA, length(est))
+
+  n <- nrow(X)
+  rank <- sum(!is.na(est))
+
+  #print(fit)
 
   if(se_type != "none"){
 
-    se <- sqrt(diag(fit$Vcov_hat))
+    se[!is.na(est)] <- sqrt(diag(fit$Vcov_hat))
 
     if(ci) {
 
@@ -109,15 +161,15 @@ lm_robust_fit <- function(y,
 
         ## Replace -99 with NA, easy way to flag that we didn't compute
         ## the DoF because the user didn't ask for it
-        dof <- ifelse(fit$dof == -99,
-                      NA,
-                      fit$dof)
+        dof[!is.na(est)] <-
+          ifelse(fit$dof == -99,
+                 NA,
+                 fit$dof)
 
       } else {
 
-        N <- nrow(X)
-        k <- ncol(X)
-        dof <- N - k
+        # TODO explicitly pass rank from RRQR/cholesky
+        dof[!is.na(est)] <- n - rank
 
       }
 
@@ -141,13 +193,24 @@ lm_robust_fit <- function(y,
       ci_upper = ci_upper,
       df = dof,
       alpha = alpha,
-      which_covs = coefficient_name
+      which_covs = coefficient_name,
+      res_var = ifelse(fit$res_var < 0, NA, fit$res_var),
+      XtX_inv = fit$XtX_inv,
+      n = n,
+      rank = rank
     )
 
+
   if (return_vcov & se_type != 'none') {
+    #return_list$residuals <- fit$residuals
     return_list$vcov <- fit$Vcov_hat
     dimnames(return_list$vcov) <- list(return_list$coefficient_name,
                                        return_list$coefficient_name)
+  }
+
+  return_list$weighted <- !is.null(weights)
+  if (return_list$weighted) {
+    return_list$res_var <- sum(fit$residuals^2 * weight_mean) / (n - rank)
   }
 
   attr(return_list, "class") <- "lm_robust"
