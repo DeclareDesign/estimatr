@@ -100,6 +100,8 @@ List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& Xfull,
 
   bool full_rank = true;
 
+  // Many of the lines below are inspired by the fastLm function from RcppEigen
+  // https://cran.r-project.org/web/packages/RcppEigen/vignettes/RcppEigen-Introduction.pdf
   if (chol) {
     const Eigen::LLT<Eigen::MatrixXd> llt(Xfullt*Xfull);
     beta_out = llt.solve(Xfull.adjoint() * y);
@@ -216,20 +218,20 @@ List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& Xfull,
   // Rcout << "beta_hat:" << beta_hat << std::endl << std::endl;
 
   Eigen::VectorXd dof(r);
+  Eigen::VectorXd ei;
+  double s2;
 
   // Standard error calculations
   if(type != "none"){
 
     // residuals
-    Eigen::VectorXd ei = y - X * beta_hat;
+    ei = y - X * beta_hat;
+    s2 = ei.dot(ei)/(n - r);
 
     // Rcout << ei << std::endl;
 
     if (type == "classical") {
 
-      // the next line due to Dirk Eddelbuettel
-      // http://dirk.eddelbuettel.com/code/rcpp.armadillo.html
-      double s2 = ei.dot(ei)/(n - r);
       Vcov_hat = s2 * XtX_inv;
 
     } else if ( (type == "HC0") | (type == "HC1") | (type == "HC2") | (type == "HC3") ) {
@@ -493,6 +495,8 @@ List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& Xfull,
 
   return List::create(_["beta_hat"]= beta_out,
                       _["Vcov_hat"]= Vcov_hat,
+                      _["dof"]= dof,
+                      _["res_var"]= s2,
                       _["XtX_inv"]= XtX_inv,
-                      _["dof"]= dof);
+                      _["residuals"]= ei);
 }
