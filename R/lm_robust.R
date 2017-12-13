@@ -26,7 +26,8 @@ lm_robust <- function(formula,
                       alpha = .05,
                       coefficient_name = NULL,
                       return_vcov = TRUE,
-                      ei = TRUE) {
+                      ei = TRUE,
+                      trychol = FALSE) {
 
   where <- parent.frame()
   model_data <- eval(substitute(
@@ -51,7 +52,8 @@ lm_robust <- function(formula,
       alpha = alpha,
       coefficient_name = coefficient_name,
       return_vcov = return_vcov,
-      ei = ei
+      ei = ei,
+      trychol = trychol
     )
 
   return_list <- lm_return(return_list,

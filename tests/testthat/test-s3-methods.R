@@ -152,6 +152,8 @@ test_that('coef and confint work', {
     cbind(ht$ci_lower, ht$ci_upper)
   )
 
+  # TODO rank deficient
+
 })
 
 test_that('predict works', {
@@ -295,6 +297,11 @@ test_that('predict works', {
     predict(lm_int_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1,2)]
   )
 
-  # TODO works with rank deficient X
+  # TODO get working with rank deficient X
+  head(dat)
+  dat$z2 <- dat$z
+
+  lmr_rd <- lm_robust(y ~ z + z2 + x, data = dat)
+  predict(lmr_rd, dat)
 })
 

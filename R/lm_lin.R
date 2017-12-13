@@ -26,7 +26,8 @@ lm_lin <- function(formula,
                    alpha = .05,
                    coefficient_name = NULL,
                    return_vcov = TRUE,
-                   ei = TRUE) {
+                   ei = TRUE,
+                   trychol = FALSE) {
 
   ## Check formula
   if (length(all.vars(formula[[3]])) > 1) {
@@ -122,7 +123,8 @@ lm_lin <- function(formula,
       alpha = alpha,
       coefficient_name = coefficient_name,
       return_vcov = return_vcov,
-      ei = ei
+      ei = ei,
+      trychol = trychol
     )
 
   return_list <- lm_return(return_list,

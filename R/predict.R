@@ -61,7 +61,7 @@ predict.lm_robust <- function(
   mf <- model.frame(rhs_terms, newdata, na.action = na.action)
 
   # Check class of columns in newdata match those in model fit
-  if(!is.null(cl <- attr(rhs_terms, "dataClasses"))) .checkMFClasses(cl, mf)
+  if (!is.null(cl <- attr(rhs_terms, "dataClasses"))) .checkMFClasses(cl, mf)
 
   X <- model.matrix(rhs_terms, mf, contrasts.arg = object$contrasts)
 

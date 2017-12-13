@@ -21,7 +21,8 @@ lm_robust_fit <- function(y,
                           alpha,
                           coefficient_name,
                           return_vcov,
-                          ei) {
+                          ei,
+                          trychol) {
 
   ## allowable se_types with clustering
   cl_se_types <- c("CR2", "stata")
@@ -107,8 +108,8 @@ lm_robust_fit <- function(y,
         ci = ci,
         type = se_type,
         which_covs = which_covs,
-        F,
-        F
+        chol = F, # This only does LLt, no QR, recommended not to use
+        trychol = trychol
       )
   } else {
 
@@ -146,14 +147,16 @@ lm_robust_fit <- function(y,
   ci_upper <- rep(NA, length(est))
   dof <- rep(NA, length(est))
 
+  est_exists <- !is.na(est)
+
   n <- nrow(X)
-  rank <- sum(!is.na(est))
+  rank <- sum(est_exists)
 
   #print(fit)
 
   if(se_type != "none"){
 
-    se[!is.na(est)] <- sqrt(diag(fit$Vcov_hat))
+    se[est_exists] <- sqrt(diag(fit$Vcov_hat))
 
     if(ci) {
 
@@ -161,7 +164,7 @@ lm_robust_fit <- function(y,
 
         ## Replace -99 with NA, easy way to flag that we didn't compute
         ## the DoF because the user didn't ask for it
-        dof[!is.na(est)] <-
+        dof[est_exists] <-
           ifelse(fit$dof == -99,
                  NA,
                  fit$dof)
@@ -169,7 +172,7 @@ lm_robust_fit <- function(y,
       } else {
 
         # TODO explicitly pass rank from RRQR/cholesky
-        dof[!is.na(est)] <- n - rank
+        dof[est_exists] <- n - rank
 
       }
 
@@ -204,8 +207,8 @@ lm_robust_fit <- function(y,
   if (return_vcov & se_type != 'none') {
     #return_list$residuals <- fit$residuals
     return_list$vcov <- fit$Vcov_hat
-    dimnames(return_list$vcov) <- list(return_list$coefficient_name,
-                                       return_list$coefficient_name)
+    dimnames(return_list$vcov) <- list(return_list$coefficient_name[est_exists],
+                                       return_list$coefficient_name[est_exists])
   }
 
   return_list$weighted <- !is.null(weights)

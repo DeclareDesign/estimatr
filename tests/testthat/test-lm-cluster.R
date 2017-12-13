@@ -117,6 +117,22 @@ test_that("lm cluster se", {
     cbind(bm_full$se, bm_full_lower, bm_full_upper)
   )
 
+  ## Works with rank deficient case
+  dat$X2 <- dat$X
+  lmr_rd <- lm_robust(Y ~ X + Z + X2, data = dat, clusters = J, se_type = 'stata')
+  lmr_full <- lm_robust(Y ~ X + Z, data = dat, clusters = J, se_type = 'stata')
+  expect_identical(
+    tidy(lmr_rd)[1:3,],
+    tidy(lmr_full)
+  )
+
+  lmr_rd_cr2 <- lm_robust(Y ~ X + Z + X2, data = dat, clusters = J, se_type = 'CR2')
+  lmr_full_cr2 <- lm_robust(Y ~ X + Z, data = dat, clusters = J, se_type = 'CR2')
+  expect_identical(
+    tidy(lmr_rd_cr2)[1:3,],
+    tidy(lmr_full_cr2)
+  )
+
   ## Test error handling
   expect_error(
     lm_robust(

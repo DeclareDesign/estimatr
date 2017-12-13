@@ -105,5 +105,5 @@ tidy_data_frame <- function(object, digits = NULL) {
       "outcome"
     )
 
-  return_frame <- as.data.frame(object[return_cols])
+  return_frame <- as.data.frame(object[return_cols], stringsAsFactors = FALSE)
 }
