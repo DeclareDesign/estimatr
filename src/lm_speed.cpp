@@ -10,6 +10,7 @@
 #include <RcppEigen.h>
 #include <Rcpp.h>
 using namespace Rcpp;
+using namespace Eigen;
 
 // Much of what follows is modified from RcppEigen Vignette by Douglas Bates and Dirk Eddelbuettel
 // https://cran.r-project.org/web/packages/RcppEigen/vignettes/RcppEigen-Introduction.pdf
@@ -172,16 +173,18 @@ List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& Xfull,
     }
   }
 
+  // TODO See whether beta was not fit (i.e. dependent columns of X)
+  //Eigen::ArrayBase<Derived> = beta_out.array().isNaN();
+
   Eigen::MatrixXd Xoriginal(n, r);
   Eigen::MatrixXd Xoriginalfull(n, p);
   Eigen::MatrixXd X(n, r);
   Eigen::VectorXd beta_hat(r);
   Eigen::ArrayXd weights;
-  bool weighted = false;
-  if (Xunweighted.isNotNull()) {
+  bool weighted = Xunweighted.isNotNull();
+  if (weighted) {
     weights = Rcpp::as<Eigen::Map<Eigen::ArrayXd> >(weight);
     Xoriginalfull = Rcpp::as<Eigen::Map<Eigen::MatrixXd> >(Xunweighted);
-    weighted = true;
   }
   // Reshape objects if rank-deficient
   if (r < p) {

@@ -6,7 +6,7 @@
 \usage{
 lm_robust(formula, data, weights, subset, clusters, se_type = NULL,
   ci = TRUE, alpha = 0.05, coefficient_name = NULL, return_vcov = TRUE,
-  ei = TRUE)
+  ei = TRUE, trychol = FALSE)
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}.}

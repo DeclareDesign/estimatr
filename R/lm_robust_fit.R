@@ -204,7 +204,7 @@ lm_robust_fit <- function(y,
     )
 
 
-  if (return_vcov & se_type != 'none') {
+  if (return_vcov && se_type != 'none') {
     #return_list$residuals <- fit$residuals
     return_list$vcov <- fit$Vcov_hat
     dimnames(return_list$vcov) <- list(return_list$coefficient_name[est_exists],

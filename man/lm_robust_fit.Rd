@@ -5,7 +5,7 @@
 \title{Internal method that creates linear fits}
 \usage{
 lm_robust_fit(y, X, weights, cluster, ci, se_type, alpha, coefficient_name,
-  return_vcov, ei)
+  return_vcov, ei, trychol)
 }
 \arguments{
 \item{y}{numeric outcome vector}

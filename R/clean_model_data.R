@@ -93,7 +93,7 @@ clean_model_data <- function(formula,
 
   if(!missing(cluster)){
     ret[["cluster"]] <- model.extract(mf, "cluster")
-    if(class(ret[["cluster"]]) %in% c('character', 'numeric'))
+    if(!(class(ret[["cluster"]]) %in% c('factor', 'integer')))
       ret[["cluster"]] <- as.factor(ret[["cluster"]])
   }
 

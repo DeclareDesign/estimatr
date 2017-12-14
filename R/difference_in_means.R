@@ -29,13 +29,13 @@
 #'
 difference_in_means <-
   function(formula,
-           blocks = NULL,
-           clusters = NULL,
+           blocks,
+           clusters,
            condition1 = NULL,
            condition2 = NULL,
            data,
-           weights = NULL,
-           subset = NULL,
+           weights,
+           subset,
            alpha = .05) {
 
     if (length(all.vars(formula[[3]])) > 1) {
