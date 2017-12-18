@@ -21,7 +21,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
                 const Rcpp::Nullable<Rcpp::NumericVector> & weight,
                 const double & weight_mean,
                 const Rcpp::Nullable<Rcpp::IntegerVector> & cluster,
-                const unsigned & J,
+                const int & J,
                 const bool & ci,
                 const String type,
                 const std::vector<bool> & which_covs,
@@ -33,8 +33,6 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
   Eigen::MatrixXd XtX_inv, R_inv, Vcov_hat;
   Eigen::VectorXd beta_out(Eigen::VectorXd::Constant(p, ::NA_REAL));
 
-  bool full_rank = true;
-
   // Much of the OLS solution code is inspired by or copied directly from the fastLm function from RcppEigen
   // https://cran.r-project.org/web/packages/RcppEigen/vignettes/RcppEigen-Introduction.pdf
   try {
@@ -43,7 +41,6 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
 
       // Catch case where Xfull is rank-deficient
       if(llt.info() == Eigen::NumericalIssue) {
-        full_rank = false;
         throw std::runtime_error("Possibly non semi-positive definite matrix!");
       } else {
         beta_out = llt.solve(Xfull.adjoint() * y);
@@ -120,8 +117,8 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
     // Rcout << "Rank-deficient!" << std::endl;
     // Rcout << "beta_out:" << beta_out << std::endl;
 
-    unsigned j = 0;
-    for (unsigned i = 0; i < p; i++) {
+    int j = 0;
+    for (int i = 0; i < p; i++) {
       // Rcout << "isnan: " << std::isnan(beta_out(i)) << std::endl;
       if (!std::isnan(beta_out(i))) {
         // Rcout << "not NA: " << i << std::endl;
@@ -230,12 +227,12 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
        // Rcout << "XtX_inv: " << XtX_inv.rows() << "x" << XtX_inv.cols() << std::endl;
 
        double current_cluster = clusters(0);
-       unsigned j = 0;
-       unsigned start_pos = 0;
-       unsigned len = 1;
+       int j = 0;
+       int start_pos = 0;
+       int len = 1;
 
        // iterate over unique cluster values
-       for(unsigned i = 1;
+       for(int i = 1;
            i < n;
            ++i){
 
@@ -268,7 +265,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
            );
 
            Eigen::VectorXd eigvals = At_WX.eigenvalues();
-           for (unsigned m = 0; m < eigvals.size(); ++m) {
+           for (int m = 0; m < eigvals.size(); ++m) {
              if (eigvals(m) > std::pow(10.0, -12.0)) {
                eigvals(m) = 1.0 / std::sqrt(eigvals(m));
              } else {
@@ -297,7 +294,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
 
              Eigen::MatrixXd MEU = ME * Xoriginal.block(start_pos, 0, len, r);
 
-             unsigned p_pos = j*r;
+             int p_pos = j*r;
              // Rcout << "p_pos: " << p_pos << std::endl;
              H1s.block(0, p_pos, r, r) = MEU * M_U_ct;
              H2s.block(0, p_pos, r, r) = ME * X.block(start_pos, 0, len, r) * M_U_ct;
@@ -338,8 +335,8 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
 
        if (ci) {
          dof.fill(-99);
-         unsigned k = 0;
-         for(unsigned j = 0; j < p; j++){
+         int k = 0;
+         for(int j = 0; j < p; j++){
            // only compute for covars that we need the DoF for
            if (!std::isnan(beta_out(j))) {
              if (which_covs[j]) {
@@ -371,11 +368,11 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
 
         Eigen::MatrixXd XteetX = Eigen::MatrixXd::Zero(r, r);
         double current_cluster = clusters(0);
-        unsigned start_pos = 0;
-        unsigned len = 1;
+        int start_pos = 0;
+        int len = 1;
 
         // iterate over unique cluster values
-        for(unsigned i = 1;
+        for(int i = 1;
             i < n;
             ++i){
 

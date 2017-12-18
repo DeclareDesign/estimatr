@@ -22,8 +22,8 @@ double ht_var_total(const Eigen::VectorXd & y,
 
   double total_variance = 0.0;
 
-  for (unsigned i = 0; i < y.size(); ++i) {
-    for (unsigned j = 0; j < y.size(); ++j) {
+  for (int i = 0; i < y.size(); ++i) {
+    for (int j = 0; j < y.size(); ++j) {
       total_variance +=
         ht_var(
           p(i, j),
@@ -46,8 +46,8 @@ double ht_covar_partial(const Eigen::VectorXd & y1,
                         const Eigen::VectorXd & p0) {
   double cov_total = 0.0;
 
-  for (unsigned i = 0; i < y1.size(); ++i) {
-    for(unsigned j = 0; j < y0.size(); ++j) {
+  for (int i = 0; i < y1.size(); ++i) {
+    for(int j = 0; j < y0.size(); ++j) {
       if(p10(i, j) == 0) {
         cov_total += y1(i) * y0(j) * (p10(i, j) - p1(i) * p0(j));
       } else {
@@ -64,8 +64,8 @@ double ht_var_partial(const Eigen::VectorXd & y,
                       const Eigen::MatrixXd & p) {
   double var_total = 0.0;
 
-  for (unsigned i = 0; i < y.size(); ++i) {
-    for(unsigned j = 0; j < y.size(); ++j) {
+  for (int i = 0; i < y.size(); ++i) {
+    for(int j = 0; j < y.size(); ++j) {
       if(i != j) {
         if (p(i, j) == 0) {
           var_total += y(i) * y(j) * (p(i, j) - p(i,i) * p(j,j)) +
@@ -90,8 +90,8 @@ double ht_covar_total(const Eigen::VectorXd & y0,
 
   double cov_total = 0.0;
 
-  for (unsigned i = 0; i < y0.size(); ++i) {
-    for (unsigned j = 0; j < y0.size(); ++j) {
+  for (int i = 0; i < y0.size(); ++i) {
+    for (int j = 0; j < y0.size(); ++j) {
       if (i != j) {
         cov_total +=
           ht_var(
@@ -111,7 +111,7 @@ double ht_covar_total(const Eigen::VectorXd & y0,
 // [[Rcpp::export]]
 double joint_incl_pr(const double & pi,
                      const double & pj,
-                     const unsigned & same,
+                     const int & same,
                      const double & ntotal) {
   return pi * ((pj * ntotal - same) / (ntotal - 1));
 }
@@ -119,11 +119,11 @@ double joint_incl_pr(const double & pi,
 // [[Rcpp::export]]
 Eigen::MatrixXd gen_pr_matrix_complete(const Eigen::VectorXd & prs) {
 
-  unsigned n = prs.size();
+  int n = prs.size();
   Eigen::MatrixXd pr_mat(2*n, 2*n);
 
-  for (unsigned i = 0; i < n; ++i) {
-    for (unsigned j = 0; j < n; ++j) {
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < n; ++j) {
       if (i == j) {
         pr_mat(i, j) = 1 - prs(i);
         pr_mat(i + n, j) = 0;
@@ -150,8 +150,8 @@ double ht_var_total2(const Eigen::VectorXd & y,
   double upper_triangle_variance = 0.0;
   double diag_variance = 0.0;
 
-  for (unsigned i = 0; i < y.size(); ++i) {
-    for (unsigned j = i; j < y.size(); ++j) {
+  for (int i = 0; i < y.size(); ++i) {
+    for (int j = i; j < y.size(); ++j) {
       double temp_var =
         ht_var(
           p(i, j),

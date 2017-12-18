@@ -96,8 +96,8 @@ lm_robust_fit <- function(y,
 
   fit <-
     lm_solver(
+      Xfull = X,
       y = y,
-      X = X,
       Xunweighted = Xunweighted,
       weight = weights,
       weight_mean = weight_mean,
