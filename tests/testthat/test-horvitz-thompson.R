@@ -123,12 +123,32 @@ test_that("Horvitz-Thompson works with clustered data", {
 
 # test missingness works as expected
 # test blocks in the data
+
 # test auxiliary funtions (get condition pr)
-
 test_that("gen_pr_matrix_complete works as expected", {
-  prs <- c(0.4, 0.4, 0.4, 0.4, 0.4)
-  gen_pr_matrix_complete(prs)
+  # TODO test other methods
+  n <- 5
+  prs <- rep(0.4, times = n)
+  pr_mat <- gen_pr_matrix_complete(prs)
 
+  # FALSE until randomizr on CRAN
+  if (TRUE) {
+    perms <- randomizr::obtain_permutation_matrix(randomizr::declare_ra(N = n, prob = prs[1]))
+
+    # From Chris Kennedy (https://github.com/ck37)
+    # for the htestimate package (https://github.com/ck37/htestimate)
+    stacked_inds <- matrix(nrow = 2 * n, ncol = ncol(perms))
+
+    for (assign in 1:2) {
+      indicator_matrix <- as.numeric(perms == (assign - 1))
+      stacked_inds[(n*(assign-1)+1):(n*assign), ] <- indicator_matrix
+    }
+
+    # Use the stacked indicator matrices to calculate the probability matrix.
+    result <- stacked_inds %*% t(stacked_inds) / ncol(perms)
+    expect_equivalent(pr_mat, result)
+
+  }
 })
 
 # errors when arguments are passed that shouldn't be together

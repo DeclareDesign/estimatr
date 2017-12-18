@@ -21,8 +21,8 @@ ht_covar_total <- function(y0, y1, p00, p11, pj) {
     .Call(`_estimatr_ht_covar_total`, y0, y1, p00, p11, pj)
 }
 
-joint_incl_pr <- function(pi, pj, nleft, ntotal) {
-    .Call(`_estimatr_joint_incl_pr`, pi, pj, nleft, ntotal)
+joint_incl_pr <- function(pi, pj, same, ntotal) {
+    .Call(`_estimatr_joint_incl_pr`, pi, pj, same, ntotal)
 }
 
 gen_pr_matrix_complete <- function(prs) {

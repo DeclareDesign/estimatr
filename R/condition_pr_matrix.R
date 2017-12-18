@@ -30,6 +30,14 @@ declaration_to_condition_pr_mat <- function(declaration) {
 
   } else if (declaration$ra_type == 'complete') {
 
+    if (length(unique(p2)) > 1) {
+      stop("Complete randomization only works with a constant treatment proability.")
+    }
+
+    if (p2[1] * length(p2) %% 1 != 0) {
+      warning("Compete randomization with differing numbers of treated units across randomizations.")
+    }
+
     condition_pr_matrix <-
       gen_pr_matrix_complete(p2)
 

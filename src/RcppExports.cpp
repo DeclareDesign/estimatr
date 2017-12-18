@@ -77,16 +77,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // joint_incl_pr
-double joint_incl_pr(const double& pi, const double& pj, const double& nleft, const double& ntotal);
-RcppExport SEXP _estimatr_joint_incl_pr(SEXP piSEXP, SEXP pjSEXP, SEXP nleftSEXP, SEXP ntotalSEXP) {
+double joint_incl_pr(const double& pi, const double& pj, const unsigned& same, const double& ntotal);
+RcppExport SEXP _estimatr_joint_incl_pr(SEXP piSEXP, SEXP pjSEXP, SEXP sameSEXP, SEXP ntotalSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const double& >::type pi(piSEXP);
     Rcpp::traits::input_parameter< const double& >::type pj(pjSEXP);
-    Rcpp::traits::input_parameter< const double& >::type nleft(nleftSEXP);
+    Rcpp::traits::input_parameter< const unsigned& >::type same(sameSEXP);
     Rcpp::traits::input_parameter< const double& >::type ntotal(ntotalSEXP);
-    rcpp_result_gen = Rcpp::wrap(joint_incl_pr(pi, pj, nleft, ntotal));
+    rcpp_result_gen = Rcpp::wrap(joint_incl_pr(pi, pj, same, ntotal));
     return rcpp_result_gen;
 END_RCPP
 }

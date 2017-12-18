@@ -111,9 +111,9 @@ double ht_covar_total(const Eigen::VectorXd & y0,
 // [[Rcpp::export]]
 double joint_incl_pr(const double & pi,
                      const double & pj,
-                     const double & nleft,
+                     const unsigned & same,
                      const double & ntotal) {
-  return (2.0 * nleft * pi * pj) / (2.0 * ntotal - pi - pj);
+  return pi * ((pj * ntotal - same) / (ntotal - 1));
 }
 
 // [[Rcpp::export]]
@@ -130,10 +130,10 @@ Eigen::MatrixXd gen_pr_matrix_complete(const Eigen::VectorXd & prs) {
         pr_mat(i, j + n) = 0;
         pr_mat(i + n, j + n) = prs(i);
       } else {
-        pr_mat(i, j) = joint_incl_pr(1-prs(i), 1-prs(j), n-1, n);
-        pr_mat(i + n, j) = joint_incl_pr(prs(i), 1-prs(j), n, n);
-        pr_mat(i, j + n) = joint_incl_pr(1-prs(i), prs(j), n, n);
-        pr_mat(i + n, j + n) = joint_incl_pr(prs(i), prs(j), n-1, n);
+        pr_mat(i, j) = joint_incl_pr(1-prs(i), 1-prs(j), 1, n);
+        pr_mat(i + n, j) = joint_incl_pr(prs(i), 1-prs(j), 0, n);
+        pr_mat(i, j + n) = joint_incl_pr(1-prs(i), prs(j), 0, n);
+        pr_mat(i + n, j + n) = joint_incl_pr(prs(i), prs(j), 1, n);
       }
     }
   }
