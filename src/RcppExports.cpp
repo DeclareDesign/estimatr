@@ -138,15 +138,15 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// mat_sqrt_inv
-arma::mat mat_sqrt_inv(const arma::mat& X, const bool& tol);
-RcppExport SEXP _estimatr_mat_sqrt_inv(SEXP XSEXP, SEXP tolSEXP) {
+// mat_sqrt_inv2
+arma::mat mat_sqrt_inv2(const arma::mat& X, const bool& tol);
+RcppExport SEXP _estimatr_mat_sqrt_inv2(SEXP XSEXP, SEXP tolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
     Rcpp::traits::input_parameter< const bool& >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(mat_sqrt_inv(X, tol));
+    rcpp_result_gen = Rcpp::wrap(mat_sqrt_inv2(X, tol));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -177,42 +177,6 @@ BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type A(ASEXP);
     rcpp_result_gen = Rcpp::wrap(AtA(A));
-    return rcpp_result_gen;
-END_RCPP
-}
-// mult_diag
-Eigen::MatrixXd mult_diag(const Eigen::MatrixXd& x, const Eigen::ArrayXd& d);
-RcppExport SEXP _estimatr_mult_diag(SEXP xSEXP, SEXP dSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type x(xSEXP);
-    Rcpp::traits::input_parameter< const Eigen::ArrayXd& >::type d(dSEXP);
-    rcpp_result_gen = Rcpp::wrap(mult_diag(x, d));
-    return rcpp_result_gen;
-END_RCPP
-}
-// extract_vec
-Eigen::VectorXd extract_vec(const Eigen::VectorXd& full, const Eigen::VectorXi& ind);
-RcppExport SEXP _estimatr_extract_vec(SEXP fullSEXP, SEXP indSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type full(fullSEXP);
-    Rcpp::traits::input_parameter< const Eigen::VectorXi& >::type ind(indSEXP);
-    rcpp_result_gen = Rcpp::wrap(extract_vec(full, ind));
-    return rcpp_result_gen;
-END_RCPP
-}
-// extract_mat_rows
-Eigen::MatrixXd extract_mat_rows(const Eigen::MatrixXd& full, const Eigen::VectorXi& ind);
-RcppExport SEXP _estimatr_extract_mat_rows(SEXP fullSEXP, SEXP indSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type full(fullSEXP);
-    Rcpp::traits::input_parameter< const Eigen::VectorXi& >::type ind(indSEXP);
-    rcpp_result_gen = Rcpp::wrap(extract_mat_rows(full, ind));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -250,12 +214,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_estimatr_gen_pr_matrix_complete", (DL_FUNC) &_estimatr_gen_pr_matrix_complete, 1},
     {"_estimatr_ht_var_total_clusters", (DL_FUNC) &_estimatr_ht_var_total_clusters, 3},
     {"_estimatr_mult_diag2", (DL_FUNC) &_estimatr_mult_diag2, 2},
-    {"_estimatr_mat_sqrt_inv", (DL_FUNC) &_estimatr_mat_sqrt_inv, 2},
+    {"_estimatr_mat_sqrt_inv2", (DL_FUNC) &_estimatr_mat_sqrt_inv2, 2},
     {"_estimatr_lm_robust_helper", (DL_FUNC) &_estimatr_lm_robust_helper, 9},
     {"_estimatr_AtA", (DL_FUNC) &_estimatr_AtA, 1},
-    {"_estimatr_mult_diag", (DL_FUNC) &_estimatr_mult_diag, 2},
-    {"_estimatr_extract_vec", (DL_FUNC) &_estimatr_extract_vec, 2},
-    {"_estimatr_extract_mat_rows", (DL_FUNC) &_estimatr_extract_mat_rows, 2},
     {"_estimatr_lm_ei_test", (DL_FUNC) &_estimatr_lm_ei_test, 12},
     {NULL, NULL, 0}
 };

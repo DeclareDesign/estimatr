@@ -41,8 +41,8 @@ mult_diag2 <- function(x, d) {
     .Call(`_estimatr_mult_diag2`, x, d)
 }
 
-mat_sqrt_inv <- function(X, tol) {
-    .Call(`_estimatr_mat_sqrt_inv`, X, tol)
+mat_sqrt_inv2 <- function(X, tol) {
+    .Call(`_estimatr_mat_sqrt_inv2`, X, tol)
 }
 
 #' @export
@@ -52,21 +52,6 @@ lm_robust_helper <- function(y, X, Xunweighted, weight, weight_mean, cluster, ci
 
 AtA <- function(A) {
     .Call(`_estimatr_AtA`, A)
-}
-
-#' @export
-mult_diag <- function(x, d) {
-    .Call(`_estimatr_mult_diag`, x, d)
-}
-
-#' @export
-extract_vec <- function(full, ind) {
-    .Call(`_estimatr_extract_vec`, full, ind)
-}
-
-#' @export
-extract_mat_rows <- function(full, ind) {
-    .Call(`_estimatr_extract_mat_rows`, full, ind)
 }
 
 #' @export

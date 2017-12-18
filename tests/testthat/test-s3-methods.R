@@ -75,6 +75,11 @@ test_that('tidy, summary, and print work', {
     print(dim)
   )
   )
+
+  # rank deficient
+  dat$z2 <- dat$z
+  lmro <- lm_robust(y ~ z + z2 + x, data = dat)
+  tidy(lmro)
 })
 
 
@@ -107,6 +112,13 @@ test_that('vcov works', {
     "supported|difference_in_means"
   )
 
+  # rank deficient
+  dat$z2 <- dat$z
+  lmro <- lm_robust(y ~ z + z2 + x, data = dat)
+  expect_equivalent(
+    dim(vcov(lmro)),
+    c(3, 3)
+  )
 })
 
 
@@ -152,8 +164,11 @@ test_that('coef and confint work', {
     cbind(ht$ci_lower, ht$ci_upper)
   )
 
-  # TODO rank deficient
-
+  # rank deficient
+  dat$z2 <- dat$z
+  lmro <- lm_robust(y ~ z + z2 + x, data = dat)
+  confint(lmro)
+  coef(lmro)
 })
 
 test_that('predict works', {

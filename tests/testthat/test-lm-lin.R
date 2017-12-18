@@ -186,4 +186,15 @@ test_that("Test LM Lin",{
     tidy(lin_out)[, -1],
     tidy(rob_out)[, -1]
   )
+
+  # rank deficient cases
+  dat$treat2 <- dat$treat
+  dat$X1_2 <- dat$X1
+
+  lm_lin(Y ~ treat, ~ treat2 + X1, data = dat)  # somewhat odd behavior
+  expect_equivalent(
+    is.na(lm_lin(Y ~ treat, ~ X1_2 + X1, data = dat)$est),
+    c(FALSE, FALSE, FALSE, TRUE, FALSE, TRUE)
+  )
+
 })

@@ -30,7 +30,7 @@ arma::mat mult_diag2(const arma::mat& x, const arma::vec& d) {
 // Get's the inverse square root of a matrix (X)^{-1/2}
 // Used in computing the BM standard errors (I - P_ss^&{-1/2}
 // [[Rcpp::export]]
-arma::mat mat_sqrt_inv(const arma::mat & X, const bool & tol) {
+arma::mat mat_sqrt_inv2(const arma::mat & X, const bool & tol) {
   arma::vec eigvals;
   arma::mat eigvecs;
   arma::eig_sym(eigvals, eigvecs, X);
@@ -202,7 +202,7 @@ List lm_robust_helper(const arma::vec & y,
           //(thet - h %*% thet - thet %*% t(h) + u %*% MUWTWUM %*% t(u))
 
           // A' W R in clubSand notation
-          arma::mat At_WX = mat_sqrt_inv(
+          arma::mat At_WX = mat_sqrt_inv2(
             I_min_H - arma::trans(H) + Xoriginal.rows(cluster_ids) * MUWTWUM * arma::trans(Xoriginal.rows(cluster_ids)),
             true
           ) * X.rows(cluster_ids) ;

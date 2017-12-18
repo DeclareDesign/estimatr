@@ -4,9 +4,8 @@
 \alias{difference_in_means}
 \title{Built-in Estimators: Difference-in-means}
 \usage{
-difference_in_means(formula, blocks = NULL, clusters = NULL,
-  condition1 = NULL, condition2 = NULL, data, weights = NULL,
-  subset = NULL, alpha = 0.05)
+difference_in_means(formula, blocks, clusters, condition1 = NULL,
+  condition2 = NULL, data, weights, subset, alpha = 0.05)
 }
 \arguments{
 \item{formula}{An object of class "formula", such as Y ~ Z}

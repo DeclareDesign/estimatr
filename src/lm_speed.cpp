@@ -1,16 +1,9 @@
-// [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::depends(RcppEigen)]]
 // [[Rcpp::plugins(cpp11)]]
 
-// These functions implement
-// Using Heteroscedasticity Consistent Standard Errors in the Linear Regression Model
-// J. Scott Long and Laurie H. Ervin
-#define ARMA_64BIT_WORD 1
-#include <RcppArmadillo.h>
 #include <RcppEigen.h>
 #include <Rcpp.h>
 using namespace Rcpp;
-using namespace Eigen;
 
 // Much of what follows is modified from RcppEigen Vignette by Douglas Bates and Dirk Eddelbuettel
 // https://cran.r-project.org/web/packages/RcppEigen/vignettes/RcppEigen-Introduction.pdf
@@ -21,62 +14,9 @@ Eigen::MatrixXd AtA(const Eigen::MatrixXd& A) {
                              .rankUpdate(A.adjoint());
 }
 
-//' @export
-// [[Rcpp::export]]
-Eigen::MatrixXd mult_diag(const Eigen::MatrixXd& x, const Eigen::ArrayXd& d) {
-
-  Eigen::MatrixXd out(x.rows(), x.cols());
-  for (unsigned j = 0; j < x.cols(); ++j) {
-    out.col(j) = x.col(j) * d(j);
-  }
-
-  return out;
-}
-
-//' @export
-// [[Rcpp::export]]
-Eigen::VectorXd extract_vec(const Eigen::VectorXd& full, const Eigen::VectorXi& ind)
-{
-  int num_indices = ind.sum();
-  Eigen::VectorXd target(num_indices);
-  int j = 0;
-  for (int i = 0; i < full.size(); i++)
-  {
-    if (ind(i) == 1) {
-      target(j) = full(i);
-      j++;
-    }
-  }
-  return target;
-}
-
-//' @export
-// [[Rcpp::export]]
-Eigen::MatrixXd extract_mat_rows(const Eigen::MatrixXd& full, const Eigen::VectorXi& ind)
-{
-  int num_indices = ind.sum();
-  Eigen::MatrixXd target(num_indices, full.cols());
-  int j = 0;
-  for (int i = 0; i < full.rows(); i++)
-  {
-    if (ind(i) == 1) {
-      target.row(j) = full.row(i);
-      j++;
-    }
-  }
-  return target;
-}
-
-// extract_mat(const Eigen::DenseBase<Eigen::Matrix>& full, const Eigen::DenseBase<T>& ind)
-// {
-//   int num_indices = ind.innerSize();
-//   target_t target(num_indices);
-//   for (int i = 0; i < num_indices; i++)
-//   {
-//     target[i] = full[ind[i]];
-//   }
-//   return target;
-// }
+// Get's the inverse square root of a matrix (X)^{-1/2}
+// Used in computing the BM standard errors (I - P_ss)^{-1/2}
+// Eigen has .operatorInverseSqrt() but need to be able to set tolerance
 
 //' @export
 // [[Rcpp::export]]
@@ -103,74 +43,69 @@ List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& Xfull,
 
   // Many of the lines below are inspired by the fastLm function from RcppEigen
   // https://cran.r-project.org/web/packages/RcppEigen/vignettes/RcppEigen-Introduction.pdf
-  if (chol) {
-    const Eigen::LLT<Eigen::MatrixXd> llt(Xfullt*Xfull);
-    beta_out = llt.solve(Xfull.adjoint() * y);
-    R_inv = llt.matrixL().solve(Eigen::MatrixXd::Identity(p, p));
-    XtX_inv = R_inv.transpose() * R_inv;
-  } else {
-    try {
-      if (trychol) {
-        const Eigen::LLT<Eigen::MatrixXd> llt(Xfullt*Xfull);
+  try {
+    if (trychol) {
+      const Eigen::LLT<Eigen::MatrixXd> llt(Xfullt*Xfull);
 
-        // Catch case where Xfull is rank-deficient
-        if(llt.info() == Eigen::NumericalIssue) {
-          full_rank = false;
-          throw std::runtime_error("Possibly non semi-positive definite matrix!");
-        } else {
-          beta_out = llt.solve(Xfull.adjoint() * y);
-          R_inv = llt.matrixL().solve(Eigen::MatrixXd::Identity(p, p));
-          XtX_inv = R_inv.transpose() * R_inv;
-        }
+      // Catch case where Xfull is rank-deficient
+      if(llt.info() == Eigen::NumericalIssue) {
+        full_rank = false;
+        throw std::runtime_error("Possibly non semi-positive definite matrix!");
       } else {
-        throw std::runtime_error("move to QR");
+        beta_out = llt.solve(Xfull.adjoint() * y);
+        R_inv = llt.matrixL().solve(Eigen::MatrixXd::Identity(p, p));
+        XtX_inv = R_inv.transpose() * R_inv;
       }
-
-    } catch (const std::exception& e) {
-
-      Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR(Xfull);
-      const Eigen::ColPivHouseholderQR<Eigen::MatrixXd>::PermutationType Pmat(PQR.colsPermutation());
-
-      r = PQR.rank();
-
-      R_inv = PQR.matrixQR().topLeftCorner(r, r).triangularView<Eigen::Upper>().solve(Eigen::MatrixXd::Identity(r, r));
-      Eigen::VectorXd effects(PQR.householderQ().adjoint() * y);
-      beta_out.head(r) = R_inv * effects.head(r);
-      // Rcout << beta_out << std::endl << std::endl;
-      beta_out = Pmat * beta_out;
-
-      // Get all column indices
-      Eigen::ArrayXi Pmat_indices = Pmat.indices();
-      // Get the order for the columns you are keeping
-      Eigen::ArrayXi Pmat_keep = Pmat_indices.head(r);
-      // Get the indices for columns you are discarding
-      Eigen::ArrayXi Pmat_toss = Pmat_indices.tail(p - r);
-
-      // this code takes the indices you are keeping, and, while preserving order, keeps them in the range [0, r-1]
-      // For each one, see how many dropped indices are smaller, and subtract that difference
-      // Ex: p = 4, r = 2
-      // Pmat_indices = {3, 1, 0, 2}
-      // Pmat_keep = {3, 1}
-      // Pmat_toss = {0, 2}
-      // Now we go through each keeper, count how many in toss are smaller, and then modify accordingly
-      // 3 - 2 and 1 - 1
-      // Pmat_keep = {1, 0}
-      for(Eigen::Index i=0; i<r; ++i)
-      {
-        Pmat_keep(i) = Pmat_keep(i) - (Pmat_toss < Pmat_keep(i)).count();
-      }
-      // Rcout << Pmat_indices << std::endl << std::endl;
-      // Rcout << Pmat_keep << std::endl << std::endl;
-      //
-      // Rcout << Pmat * Eigen::MatrixXd::Identity(p, p) << std::endl << std::endl;
-
-      Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P = Eigen::PermutationWrapper<Eigen::ArrayXi>(Pmat_keep);
-      // Rcout << P * Eigen::MatrixXd::Identity(r, r) << std::endl << std::endl;
-
-      R_inv = P * R_inv * P;
-      XtX_inv = R_inv * R_inv.transpose();
-      // Rcout << XtX_inv << std::endl;
+    } else {
+      throw std::runtime_error("move to QR");
     }
+
+  } catch (const std::exception& e) {
+
+    // Rcout << Xfull << std::endl;
+
+    Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR(Xfull);
+    const Eigen::ColPivHouseholderQR<Eigen::MatrixXd>::PermutationType Pmat(PQR.colsPermutation());
+
+    r = PQR.rank();
+
+    R_inv = PQR.matrixQR().topLeftCorner(r, r).triangularView<Eigen::Upper>().solve(Eigen::MatrixXd::Identity(r, r));
+    Eigen::VectorXd effects(PQR.householderQ().adjoint() * y);
+    beta_out.head(r) = R_inv * effects.head(r);
+    // Rcout << beta_out << std::endl << std::endl;
+    beta_out = Pmat * beta_out;
+
+    // Get all column indices
+    Eigen::ArrayXi Pmat_indices = Pmat.indices();
+    // Get the order for the columns you are keeping
+    Eigen::ArrayXi Pmat_keep = Pmat_indices.head(r);
+    // Get the indices for columns you are discarding
+    Eigen::ArrayXi Pmat_toss = Pmat_indices.tail(p - r);
+
+    // this code takes the indices you are keeping, and, while preserving order, keeps them in the range [0, r-1]
+    // For each one, see how many dropped indices are smaller, and subtract that difference
+    // Ex: p = 4, r = 2
+    // Pmat_indices = {3, 1, 0, 2}
+    // Pmat_keep = {3, 1}
+    // Pmat_toss = {0, 2}
+    // Now we go through each keeper, count how many in toss are smaller, and then modify accordingly
+    // 3 - 2 and 1 - 1
+    // Pmat_keep = {1, 0}
+    for(Eigen::Index i=0; i<r; ++i)
+    {
+      Pmat_keep(i) = Pmat_keep(i) - (Pmat_toss < Pmat_keep(i)).count();
+    }
+    // Rcout << Pmat_indices << std::endl << std::endl;
+    // Rcout << Pmat_keep << std::endl << std::endl;
+    //
+    // Rcout << Pmat * Eigen::MatrixXd::Identity(p, p) << std::endl << std::endl;
+
+    Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P = Eigen::PermutationWrapper<Eigen::ArrayXi>(Pmat_keep);
+    // Rcout << P * Eigen::MatrixXd::Identity(r, r) << std::endl << std::endl;
+
+    R_inv = P * R_inv * P;
+    XtX_inv = R_inv * R_inv.transpose();
+    // Rcout << XtX_inv << std::endl;
   }
 
   // TODO See whether beta was not fit (i.e. dependent columns of X)
@@ -243,26 +178,26 @@ List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& Xfull,
       Eigen::ArrayXd ei2 = ei.array().pow(2);
 
       if(type == "HC0"){
-        Vcov_hat = XtX_inv * mult_diag(X.transpose(), ei2) * X * XtX_inv;
+        Vcov_hat = XtX_inv * (X.transpose() * ei2.matrix().asDiagonal()) * X * XtX_inv;
 
       } else if (type == "HC1") {
-        Vcov_hat = n/(n-r) * XtX_inv * mult_diag(X.transpose(), ei2) * X * XtX_inv;
+        Vcov_hat = n/(n-r) * XtX_inv * (X.transpose() * ei2.matrix().asDiagonal()) * X * XtX_inv;
       } else if (type == "HC2") {
         Eigen::ArrayXd hii(n);
 
         for(int i = 0; i < n; i++){
           Eigen::VectorXd Xi = X.row(i);
-          hii(i) = 1.0 - (Xi.transpose() * XtX_inv * Xi);
+          hii(i) = ei2(i) / (1.0 - (Xi.transpose() * XtX_inv * Xi));
         }
-        Vcov_hat = XtX_inv * mult_diag(X.transpose(), ei2 / hii) * X * XtX_inv;
+        Vcov_hat = XtX_inv * (X.transpose() * hii.matrix().asDiagonal()) * X * XtX_inv;
       } else if (type == "HC3") {
         Eigen::ArrayXd hii(n);
 
         for(int i = 0; i < n; i++){
           Eigen::VectorXd Xi = X.row(i);
-          hii(i) = std::pow(1.0 - Xi.transpose() * XtX_inv * Xi, 2);
+          hii(i) = ei2(i) / (std::pow(1.0 - Xi.transpose() * XtX_inv * Xi, 2));
         }
-        Vcov_hat = XtX_inv * mult_diag(X.transpose(), ei2 / hii) * X * XtX_inv;
+        Vcov_hat = XtX_inv * (X.transpose() * hii.matrix().asDiagonal()) * X * XtX_inv;
       }
 
    } else if ( (type == "stata") | (type == "CR2") ) {
@@ -285,10 +220,6 @@ List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& Xfull,
        Eigen::MatrixXd H2s(r, r*J);
        Eigen::MatrixXd H3s(r, r*J);
        Eigen::MatrixXd P_diags(r, J);
-       // arma::cube H1s(k, k, J);
-       // arma::cube H2s(k, k, J);
-       // arma::cube H3s(k, k, J);
-       // arma::mat P_diags(k, J);
 
        Eigen::MatrixXd M_U_ct = XtX_inv.llt().matrixL();
 
@@ -338,14 +269,25 @@ List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& Xfull,
            // Rcout << "MUWTWUM: " << MUWTWUM << std::endl;
 
            Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> At_WX(
-               (Eigen::MatrixXd::Identity(len, len) - H) - H.transpose() + Xoriginal.block(start_pos, 0, len, r) * MUWTWUM * Xoriginal.block(start_pos, 0, len, r).transpose()
+               (Eigen::MatrixXd::Identity(len, len) - H) - H + Xoriginal.block(start_pos, 0, len, r) * MUWTWUM * Xoriginal.block(start_pos, 0, len, r).transpose()
            );
+
+           Eigen::VectorXd eigvals = At_WX.eigenvalues();
+           for (unsigned m = 0; m < eigvals.size(); ++m) {
+             if (eigvals(m) > std::pow(10.0, -12.0)) {
+               eigvals(m) = 1.0 / std::sqrt(eigvals(m));
+             } else {
+               eigvals(m) = 0;
+             }
+           }
 
            // Rcout << "Xblock: " << X.block(start_pos, 0, len, r) << std::endl;
            // Rcout << "At_WX_inv: " << At_WX.operatorInverseSqrt() << std::endl;
 
            // TODO mimic tol in arma implementation
-           Eigen::MatrixXd At_WX_inv = At_WX.operatorInverseSqrt() * X.block(start_pos, 0, len, r);
+           //Eigen::MatrixXd At_WX_inv = At_WX.operatorInverseSqrt() * X.block(start_pos, 0, len, r);
+           Eigen::MatrixXd At_WX_inv = ((At_WX.eigenvectors() * eigvals.asDiagonal()) * At_WX.eigenvectors().transpose())
+             * X.block(start_pos, 0, len, r);
 
            if (ci) {
 
@@ -495,6 +437,8 @@ List lm_ei_test(Eigen::Map<Eigen::MatrixXd>& Xfull,
      }
     }
   }
+
+  // Rcout << beta_out << std::endl;
 
   return List::create(_["beta_hat"]= beta_out,
                       _["Vcov_hat"]= Vcov_hat,

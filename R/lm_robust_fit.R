@@ -52,6 +52,7 @@ lm_robust_fit <- function(y,
   }
 
   variable_names <- colnames(X)
+  k <- ncol(X)
 
   # Get coefficients to get df adjustments for and return
   if (is.null(coefficient_name)) {
@@ -200,6 +201,7 @@ lm_robust_fit <- function(y,
       res_var = ifelse(fit$res_var < 0, NA, fit$res_var),
       XtX_inv = fit$XtX_inv,
       n = n,
+      k = k,
       rank = rank
     )
 
