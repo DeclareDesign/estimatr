@@ -5,7 +5,7 @@
 \title{Internal method that creates linear fits}
 \usage{
 lm_robust_fit(y, X, weights, cluster, ci, se_type, alpha, coefficient_name,
-  return_vcov, ei, trychol)
+  return_vcov, trychol)
 }
 \arguments{
 \item{y}{numeric outcome vector}
@@ -25,6 +25,8 @@ lm_robust_fit(y, X, weights, cluster, ci, se_type, alpha, coefficient_name,
 \item{coefficient_name}{character vector of coefficients to return}
 
 \item{return_vcov}{a boolean for whether to return the vcov matrix for later usage}
+
+\item{trychol}{a boolean for whether to try using a cholesky decomposition to solve LS instead of a QR decomposition}
 }
 \description{
 Internal method that creates linear fits

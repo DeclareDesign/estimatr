@@ -12,7 +12,8 @@
 #' @param alpha The significance level, 0.05 by default.
 #' @param coefficient_name a character or character vector that indicates which coefficients should be reported. If left unspecified, returns all coefficients.
 #' @param return_vcov a boolean for whether to return the vcov matrix for later usage, TRUE by default.
-#'
+#' @param trychol a boolean for whether to try using a cholesky decomposition to solve LS instead of a QR decomposition, FALSE by default. See 'details'.
+
 #' @export
 #'
 lm_lin <- function(formula,
@@ -26,7 +27,6 @@ lm_lin <- function(formula,
                    alpha = .05,
                    coefficient_name = NULL,
                    return_vcov = TRUE,
-                   ei = TRUE,
                    trychol = FALSE) {
 
   ## Check formula
@@ -123,7 +123,6 @@ lm_lin <- function(formula,
       alpha = alpha,
       coefficient_name = coefficient_name,
       return_vcov = return_vcov,
-      ei = ei,
       trychol = trychol
     )
 

@@ -9,6 +9,7 @@
 #' @param alpha numeric denoting the test size for confidence intervals
 #' @param coefficient_name character vector of coefficients to return
 #' @param return_vcov a boolean for whether to return the vcov matrix for later usage
+#' @param trychol a boolean for whether to try using a cholesky decomposition to solve LS instead of a QR decomposition
 #'
 #' @export
 #'
@@ -21,7 +22,6 @@ lm_robust_fit <- function(y,
                           alpha,
                           coefficient_name,
                           return_vcov,
-                          ei,
                           trychol) {
 
   ## allowable se_types with clustering
@@ -68,77 +68,46 @@ lm_robust_fit <- function(y,
     # which_ests <- return_frame$variable_names %in% deparse(substitute(coefficient_name))
   }
 
-
-  if(ei) {
-
-    if (!is.null(cluster)) {
-      cl_ord <- order(cluster)
-      y <- y[cl_ord]
-      X <- X[cl_ord,]
-      cluster <- cluster[cl_ord]
-      J <- length(unique(cluster))
-      if (!is.null(weights)) {
-        weights <- weights[cl_ord]
-      }
-
-    } else {
-      J <- 1
-    }
-
+  if (!is.null(cluster)) {
+    cl_ord <- order(cluster)
+    y <- y[cl_ord]
+    X <- X[cl_ord,]
+    cluster <- cluster[cl_ord]
+    J <- length(unique(cluster))
     if (!is.null(weights)) {
-      Xunweighted <- X
-      weight_mean <- mean(weights)
-      weights <- sqrt(weights / weight_mean)
-      X <- weights * X
-      y <- weights * y
-    } else {
-      weight_mean <- 1
-      Xunweighted <- NULL
+      weights <- weights[cl_ord]
     }
 
-
-    fit <-
-      lm_ei_test(
-        y = y,
-        X = X,
-        Xunweighted = Xunweighted,
-        weight = weights,
-        weight_mean = weight_mean,
-        cluster = cluster,
-        J = J,
-        ci = ci,
-        type = se_type,
-        which_covs = which_covs,
-        chol = F, # This only does LLt, no QR, recommended not to use
-        trychol = trychol
-      )
   } else {
-
-
-    if (!is.null(weights)) {
-      Xunweighted <- X
-      weight_mean <- mean(weights)
-      weights <- sqrt(weights / weight_mean)
-      X <- weights * X
-      y <- weights * y
-    } else {
-      weight_mean <- 1
-      Xunweighted <- NULL
-    }
-
-    fit <-
-      lm_robust_helper(
-        y = y,
-        X = X,
-        Xunweighted = Xunweighted,
-        weight = weights,
-        weight_mean = weight_mean,
-        cluster = cluster,
-        ci = ci,
-        type = se_type,
-        which_covs = which_covs
-      )
+    J <- 1
   }
+
+  if (!is.null(weights)) {
+    Xunweighted <- X
+    weight_mean <- mean(weights)
+    weights <- sqrt(weights / weight_mean)
+    X <- weights * X
+    y <- weights * y
+  } else {
+    weight_mean <- 1
+    Xunweighted <- NULL
+  }
+
+
+  fit <-
+    lm_solver(
+      y = y,
+      X = X,
+      Xunweighted = Xunweighted,
+      weight = weights,
+      weight_mean = weight_mean,
+      cluster = cluster,
+      J = J,
+      ci = ci,
+      type = se_type,
+      which_covs = which_covs,
+      trychol = trychol
+    )
 
 
   est <- as.vector(fit$beta_hat)

@@ -33,25 +33,12 @@ ht_var_total2 <- function(y, p) {
     .Call(`_estimatr_ht_var_total2`, y, p)
 }
 
-mult_diag2 <- function(x, d) {
-    .Call(`_estimatr_mult_diag2`, x, d)
-}
-
-mat_sqrt_inv2 <- function(X, tol) {
-    .Call(`_estimatr_mat_sqrt_inv2`, X, tol)
-}
-
-#' @export
-lm_robust_helper <- function(y, X, Xunweighted, weight, weight_mean, cluster, ci, type, which_covs) {
-    .Call(`_estimatr_lm_robust_helper`, y, X, Xunweighted, weight, weight_mean, cluster, ci, type, which_covs)
-}
-
 AtA <- function(A) {
     .Call(`_estimatr_AtA`, A)
 }
 
 #' @export
-lm_ei_test <- function(Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, chol, trychol) {
-    .Call(`_estimatr_lm_ei_test`, Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, chol, trychol)
+lm_solver <- function(Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, chol, trychol) {
+    .Call(`_estimatr_lm_solver`, Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, chol, trychol)
 }
 
