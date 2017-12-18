@@ -125,6 +125,12 @@ test_that("Horvitz-Thompson works with clustered data", {
 # test blocks in the data
 # test auxiliary funtions (get condition pr)
 
+test_that("gen_pr_matrix_complete works as expected", {
+  prs <- c(0.4, 0.4, 0.4, 0.4, 0.4)
+  gen_pr_matrix_complete(prs)
+
+})
+
 # errors when arguments are passed that shouldn't be together
 test_that("Horvitz-Thompson properly checks arguments", {
 

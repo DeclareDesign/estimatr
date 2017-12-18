@@ -9,10 +9,6 @@ ht_var_total <- function(y, p) {
     .Call(`_estimatr_ht_var_total`, y, p)
 }
 
-ht_var_total2 <- function(y, p) {
-    .Call(`_estimatr_ht_var_total2`, y, p)
-}
-
 ht_covar_partial <- function(y1, y0, p10, p1, p0) {
     .Call(`_estimatr_ht_covar_partial`, y1, y0, p10, p1, p0)
 }
@@ -33,8 +29,8 @@ gen_pr_matrix_complete <- function(prs) {
     .Call(`_estimatr_gen_pr_matrix_complete`, prs)
 }
 
-ht_var_total_clusters <- function(y, ps, cluster) {
-    .Call(`_estimatr_ht_var_total_clusters`, y, ps, cluster)
+ht_var_total2 <- function(y, p) {
+    .Call(`_estimatr_ht_var_total2`, y, p)
 }
 
 mult_diag2 <- function(x, d) {
