@@ -9,6 +9,7 @@
 #' @param alpha numeric denoting the test size for confidence intervals
 #' @param coefficient_name character vector of coefficients to return
 #' @param return_vcov a boolean for whether to return the vcov matrix for later usage
+#' @param trychol a boolean for whether to try using a cholesky decomposition to solve LS instead of a QR decomposition
 #'
 #' @export
 #'
@@ -20,7 +21,8 @@ lm_robust_fit <- function(y,
                           se_type,
                           alpha,
                           coefficient_name,
-                          return_vcov) {
+                          return_vcov,
+                          trychol) {
 
   ## allowable se_types with clustering
   cl_se_types <- c("CR2", "stata")
@@ -50,6 +52,7 @@ lm_robust_fit <- function(y,
   }
 
   variable_names <- colnames(X)
+  k <- ncol(X)
 
   # Get coefficients to get df adjustments for and return
   if (is.null(coefficient_name)) {
@@ -65,6 +68,20 @@ lm_robust_fit <- function(y,
     # which_ests <- return_frame$variable_names %in% deparse(substitute(coefficient_name))
   }
 
+  if (!is.null(cluster)) {
+    cl_ord <- order(cluster)
+    y <- y[cl_ord]
+    X <- X[cl_ord,]
+    cluster <- cluster[cl_ord]
+    J <- length(unique(cluster))
+    if (!is.null(weights)) {
+      weights <- weights[cl_ord]
+    }
+
+  } else {
+    J <- 1
+  }
+
   if (!is.null(weights)) {
     Xunweighted <- X
     weight_mean <- mean(weights)
@@ -76,32 +93,40 @@ lm_robust_fit <- function(y,
     Xunweighted <- NULL
   }
 
+
   fit <-
-    lm_robust_helper(
+    lm_solver(
+      Xfull = X,
       y = y,
-      X = X,
       Xunweighted = Xunweighted,
       weight = weights,
       weight_mean = weight_mean,
       cluster = cluster,
+      J = J,
       ci = ci,
       type = se_type,
-      which_covs = which_covs
+      which_covs = which_covs,
+      trychol = trychol
     )
 
+
   est <- as.vector(fit$beta_hat)
-  se <- NA
-  p <- NA
-  ci_lower <- NA
-  ci_upper <- NA
-  dof <- NA
+  se <- rep(NA, length(est))
+  p <- rep(NA, length(est))
+  ci_lower <- rep(NA, length(est))
+  ci_upper <- rep(NA, length(est))
+  dof <- rep(NA, length(est))
+
+  est_exists <- !is.na(est)
 
   n <- nrow(X)
-  rank <- sum(!is.na(est))
+  rank <- sum(est_exists)
+
+  #print(fit)
 
   if(se_type != "none"){
 
-    se <- sqrt(diag(fit$Vcov_hat))
+    se[est_exists] <- sqrt(diag(fit$Vcov_hat))
 
     if(ci) {
 
@@ -109,14 +134,15 @@ lm_robust_fit <- function(y,
 
         ## Replace -99 with NA, easy way to flag that we didn't compute
         ## the DoF because the user didn't ask for it
-        dof <- ifelse(fit$dof == -99,
-                      NA,
-                      fit$dof)
+        dof[est_exists] <-
+          ifelse(fit$dof == -99,
+                 NA,
+                 fit$dof)
 
       } else {
 
         # TODO explicitly pass rank from RRQR/cholesky
-        dof <- n - rank
+        dof[est_exists] <- n - rank
 
       }
 
@@ -144,14 +170,16 @@ lm_robust_fit <- function(y,
       res_var = ifelse(fit$res_var < 0, NA, fit$res_var),
       XtX_inv = fit$XtX_inv,
       n = n,
+      k = k,
       rank = rank
     )
 
-  if (return_vcov & se_type != 'none') {
+
+  if (return_vcov && se_type != 'none') {
     #return_list$residuals <- fit$residuals
     return_list$vcov <- fit$Vcov_hat
-    dimnames(return_list$vcov) <- list(return_list$coefficient_name,
-                                       return_list$coefficient_name)
+    dimnames(return_list$vcov) <- list(return_list$coefficient_name[est_exists],
+                                       return_list$coefficient_name[est_exists])
   }
 
   return_list$weighted <- !is.null(weights)

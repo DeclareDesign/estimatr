@@ -1,8 +1,8 @@
 Package: estimatr
 Type: Package
 Title: Fast estimators for social scientists
-Version: 1.0
-Date: 2017-03-26
+Version: 0.0.9
+Date: 2017-12-18
 Authors@R: c(person("Graeme", "Blair", email = "graeme.blair@ucla.edu", role = c("aut", "cre")),
              person("Jasper", "Cooper", email = "jjc2247@columbia.edu", role = c("aut")),
              person("Alexander", "Coppock", email = "alex.coppock@yale.edu", role = c("aut")),
@@ -12,13 +12,16 @@ Description: This package provides fast estimators for common models in social s
 URL: http://estimatr.declaredesign.org, https://github.com/DeclareDesign/estimatr
 BugReports: https://github.com/DeclareDesign/estimatr/issues
 License: MIT + file LICENSE
+Depends:	R (>= 2.10)
 Imports: Rcpp (>= 0.12.10)
-LinkingTo: Rcpp, RcppArmadillo
+LinkingTo: Rcpp, RcppEigen
 RoxygenNote: 6.0.1
 LazyData: true
 Suggests: 
     testthat,
     sandwich,
+    RcppEigen,
+    fabricatr,
     randomizr,
     knitr,
     rmarkdown

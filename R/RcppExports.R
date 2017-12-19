@@ -9,10 +9,6 @@ ht_var_total <- function(y, p) {
     .Call(`_estimatr_ht_var_total`, y, p)
 }
 
-ht_var_total2 <- function(y, p) {
-    .Call(`_estimatr_ht_var_total2`, y, p)
-}
-
 ht_covar_partial <- function(y1, y0, p10, p1, p0) {
     .Call(`_estimatr_ht_covar_partial`, y1, y0, p10, p1, p0)
 }
@@ -25,27 +21,23 @@ ht_covar_total <- function(y0, y1, p00, p11, pj) {
     .Call(`_estimatr_ht_covar_total`, y0, y1, p00, p11, pj)
 }
 
-joint_incl_pr <- function(pi, pj, nleft, ntotal) {
-    .Call(`_estimatr_joint_incl_pr`, pi, pj, nleft, ntotal)
+joint_incl_pr <- function(pi, pj, same, ntotal) {
+    .Call(`_estimatr_joint_incl_pr`, pi, pj, same, ntotal)
 }
 
 gen_pr_matrix_complete <- function(prs) {
     .Call(`_estimatr_gen_pr_matrix_complete`, prs)
 }
 
-ht_var_total_clusters <- function(y, ps, cluster) {
-    .Call(`_estimatr_ht_var_total_clusters`, y, ps, cluster)
+ht_var_total2 <- function(y, p) {
+    .Call(`_estimatr_ht_var_total2`, y, p)
 }
 
-mult_diag <- function(x, d) {
-    .Call(`_estimatr_mult_diag`, x, d)
+AtA <- function(A) {
+    .Call(`_estimatr_AtA`, A)
 }
 
-mat_sqrt_inv <- function(X, tol) {
-    .Call(`_estimatr_mat_sqrt_inv`, X, tol)
-}
-
-lm_robust_helper <- function(y, X, Xunweighted, weight, weight_mean, cluster, ci, type, which_covs) {
-    .Call(`_estimatr_lm_robust_helper`, y, X, Xunweighted, weight, weight_mean, cluster, ci, type, which_covs)
+lm_solver <- function(Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, trychol) {
+    .Call(`_estimatr_lm_solver`, Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, trychol)
 }
 

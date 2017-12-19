@@ -7,7 +7,9 @@ output:
 link-citations: yes
 bibliography: estimatr.bib
 vignette: |
-  %\VignetteIndexEntry{Estimatr - Fast estimators for social scientists} %\VignetteEngine{knitr::rmarkdown} \usepackage[utf8]{inputenc}
+  %\VignetteIndexEntry{Estimatr - Fast estimators for social scientists} 
+  %\VignetteEngine{knitr::knitr}
+  \usepackage[utf8]{inputenc}
 ---
 
 \newcommand{\X}{\mathbf{X}}

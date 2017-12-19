@@ -5,7 +5,8 @@
 \title{Linear regression with the Lin (2013) covariate adjustment}
 \usage{
 lm_lin(formula, covariates, data, weights, subset, clusters, se_type = NULL,
-  ci = TRUE, alpha = 0.05, coefficient_name = NULL, return_vcov = TRUE)
+  ci = TRUE, alpha = 0.05, coefficient_name = NULL, return_vcov = TRUE,
+  trychol = FALSE)
 }
 \arguments{
 \item{formula}{An object of class "formula", such as Y ~ Z. Should only have the outcome and the treatment.}
@@ -29,6 +30,8 @@ lm_lin(formula, covariates, data, weights, subset, clusters, se_type = NULL,
 \item{coefficient_name}{a character or character vector that indicates which coefficients should be reported. If left unspecified, returns all coefficients.}
 
 \item{return_vcov}{a boolean for whether to return the vcov matrix for later usage, TRUE by default.}
+
+\item{trychol}{a boolean for whether to try using a cholesky decomposition to solve LS instead of a QR decomposition, FALSE by default. See 'details'.}
 }
 \description{
 Linear regression with the Lin (2013) covariate adjustment

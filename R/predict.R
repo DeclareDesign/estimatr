@@ -61,7 +61,7 @@ predict.lm_robust <- function(
   mf <- model.frame(rhs_terms, newdata, na.action = na.action)
 
   # Check class of columns in newdata match those in model fit
-  if(!is.null(cl <- attr(rhs_terms, "dataClasses"))) .checkMFClasses(cl, mf)
+  if (!is.null(cl <- attr(rhs_terms, "dataClasses"))) .checkMFClasses(cl, mf)
 
   X <- model.matrix(rhs_terms, mf, contrasts.arg = object$contrasts)
 
@@ -88,8 +88,11 @@ predict.lm_robust <- function(
                interacted_covars)
   }
 
+  # Get NAs from rank-deficient
+  beta_na <- is.na(object$est)
+
   # Get predicted values
-  predictor <- drop(X %*% object$est)
+  predictor <- drop(X[, !beta_na, drop = FALSE] %*% object$est[!beta_na])
 
   df_resid <- object$n - object$rank
   interval <- match.arg(interval)
@@ -99,7 +102,7 @@ predict.lm_robust <- function(
     ret <- list()
 
     var_fit <-
-      apply(X, 1, function(x) tcrossprod(crossprod(x, object$vcov), x))
+      apply(X[, !beta_na, drop = FALSE], 1, function(x) tcrossprod(crossprod(x, object$vcov), x))
 
     if (interval != "none") {
 

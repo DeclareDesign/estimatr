@@ -56,6 +56,9 @@ tidy.default <- function(object, ...) {
 #' @export
 tidy.lm_robust <- function(object, ...) {
   return_frame <- tidy_data_frame(object)
+
+  warn_singularities(object)
+
   if (!is.null(object$which_covs)) {
     return(return_frame[return_frame$coefficient_name %in% object$which_covs, ])
   } else {
@@ -105,5 +108,12 @@ tidy_data_frame <- function(object, digits = NULL) {
       "outcome"
     )
 
-  return_frame <- as.data.frame(object[return_cols])
+  return_frame <- as.data.frame(object[return_cols], stringsAsFactors = FALSE)
+}
+
+warn_singularities <- function(object) {
+  if (object$rank < object$k) {
+    singularities <- object$k - object$rank
+    message(sprintf('%i coefficient%s not defined because of singularities\n', singularities, ifelse(singularities > 1, 's', '')))
+  }
 }

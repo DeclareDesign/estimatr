@@ -27,7 +27,8 @@ test_that("lm cluster se", {
     clusters = J,
     coefficient_name = c("Z", "X"),
     se_type = 'stata',
-    data = dat
+    data = dat,
+    ci = T
   )
 
   expect_equivalent(
@@ -40,7 +41,7 @@ test_that("lm cluster se", {
         data = dat
       )[c("p", "ci_lower", "ci_upper")]
     ),
-    rep(NA, 3)
+    rep(NA, 9)
   )
 
   ## Test equality
@@ -69,6 +70,8 @@ test_that("lm cluster se", {
       clustervar = as.factor(dat$J),
       IK = FALSE
     )
+
+  bm_interact
 
   bm_interact_interval <-
     lm_interact_simple$coefficients["Z:X"] +
@@ -112,6 +115,22 @@ test_that("lm cluster se", {
   expect_equivalent(
     as.matrix( tidy(lm_full)[, c("se", "ci_lower", "ci_upper")] ),
     cbind(bm_full$se, bm_full_lower, bm_full_upper)
+  )
+
+  ## Works with rank deficient case
+  dat$X2 <- dat$X
+  lmr_rd <- lm_robust(Y ~ X + Z + X2, data = dat, clusters = J, se_type = 'stata')
+  lmr_full <- lm_robust(Y ~ X + Z, data = dat, clusters = J, se_type = 'stata')
+  expect_identical(
+    tidy(lmr_rd)[1:3,],
+    tidy(lmr_full)
+  )
+
+  lmr_rd_cr2 <- lm_robust(Y ~ X + Z + X2, data = dat, clusters = J, se_type = 'CR2')
+  lmr_full_cr2 <- lm_robust(Y ~ X + Z, data = dat, clusters = J, se_type = 'CR2')
+  expect_identical(
+    tidy(lmr_rd_cr2)[1:3,],
+    tidy(lmr_full_cr2)
   )
 
   ## Test error handling

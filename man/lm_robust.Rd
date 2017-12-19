@@ -5,7 +5,8 @@
 \title{Ordinary Least Squares with Robust Standard Errors}
 \usage{
 lm_robust(formula, data, weights, subset, clusters, se_type = NULL,
-  ci = TRUE, alpha = 0.05, coefficient_name = NULL, return_vcov = TRUE)
+  ci = TRUE, alpha = 0.05, coefficient_name = NULL, return_vcov = TRUE,
+  trychol = FALSE)
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}.}
@@ -27,6 +28,8 @@ lm_robust(formula, data, weights, subset, clusters, se_type = NULL,
 \item{coefficient_name}{a character or character vector that indicates which coefficients should be reported. If left unspecified, returns all coefficients.}
 
 \item{return_vcov}{a boolean for whether to return the vcov matrix for later usage, TRUE by default.}
+
+\item{trychol}{a boolean for whether to try using a cholesky decomposition to solve LS instead of a QR decomposition, FALSE by default. See 'details'.}
 }
 \description{
 Ordinary Least Squares with Robust Standard Errors

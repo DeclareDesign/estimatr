@@ -4,37 +4,37 @@ context("Difference in means")
 
 test_that("DIM", {
 
-  df <- data.frame(Y = rnorm(100), Z = rbinom(100, 1, .5), X = rnorm(100))
+  dat <- data.frame(Y = rnorm(100), Z = rbinom(100, 1, .5), X = rnorm(100))
 
-  difference_in_means(Y ~ Z, data = df)
-  difference_in_means(Y ~ Z, condition1 = 0, condition2 = 1, data = df)
-  difference_in_means(Y ~ Z, condition1 = 1, condition2 = 0, data = df)
+  difference_in_means(Y ~ Z, data = dat)
+  difference_in_means(Y ~ Z, condition1 = 0, condition2 = 1, data = dat)
+  difference_in_means(Y ~ Z, condition1 = 1, condition2 = 0, data = dat)
 
-  difference_in_means(Y ~ Z, alpha = .05, data = df)
-  difference_in_means(Y ~ Z, alpha = .10, data = df)
+  difference_in_means(Y ~ Z, alpha = .05, data = dat)
+  difference_in_means(Y ~ Z, alpha = .10, data = dat)
 
-  df <- data.frame(Y = rnorm(100), Z = sample(1:3, 100, replace = TRUE), X = rnorm(100))
+  dat <- data.frame(Y = rnorm(100), Z = sample(1:3, 100, replace = TRUE), X = rnorm(100))
 
-  difference_in_means(Y ~ Z, data = df)
-  difference_in_means(Y ~ Z, condition1 = 1, condition2 = 2, data = df)
-  difference_in_means(Y ~ Z, condition1 = 2, condition2 = 1, data = df)
-  difference_in_means(Y ~ Z, condition1 = 3, condition2 = 1, data = df)
-  difference_in_means(Y ~ Z, condition1 = 3, condition2 = 2, data = df)
+  difference_in_means(Y ~ Z, data = dat)
+  difference_in_means(Y ~ Z, condition1 = 1, condition2 = 2, data = dat)
+  difference_in_means(Y ~ Z, condition1 = 2, condition2 = 1, data = dat)
+  difference_in_means(Y ~ Z, condition1 = 3, condition2 = 1, data = dat)
+  difference_in_means(Y ~ Z, condition1 = 3, condition2 = 2, data = dat)
 
 })
 
 test_that("DIM Blocked", {
 
-  df <- data.frame(Y = rnorm(100),
+  dat <- data.frame(Y = rnorm(100),
                    Z = rbinom(100, 1, .5),
                    block = sample(c("A", "B", "C"), 100, replace = TRUE))
 
-  difference_in_means(Y ~ Z, blocks = block, data = df)
-  difference_in_means(Y ~ Z, condition1 = 0, condition2 = 1, blocks = block, data = df)
-  difference_in_means(Y ~ Z, condition1 = 1, condition2 = 0, blocks = block, data = df)
+  difference_in_means(Y ~ Z, blocks = block, data = dat)
+  difference_in_means(Y ~ Z, condition1 = 0, condition2 = 1, blocks = block, data = dat)
+  difference_in_means(Y ~ Z, condition1 = 1, condition2 = 0, blocks = block, data = dat)
 
-  difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = df)
-  difference_in_means(Y ~ Z, alpha = .10, blocks = block, data = df)
+  difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = dat)
+  difference_in_means(Y ~ Z, alpha = .10, blocks = block, data = dat)
 
 })
 
@@ -58,16 +58,16 @@ test_that("DIM same as t.test", {
 
 test_that("DIM Weighted", {
 
-  df <- data.frame(Y = rnorm(100),
+  dat <- data.frame(Y = rnorm(100),
                    Z = rbinom(100, 1, .5),
                    weights = runif(100),
                    weights2 = 1)
 
-  difference_in_means(Y ~ Z, alpha = .10, weights = weights, data = df)
+  difference_in_means(Y ~ Z, alpha = .10, weights = weights, data = dat)
 
   expect_equal(
-    difference_in_means(Y ~ Z, alpha = .10, weights = weights2, data = df),
-    difference_in_means(Y ~ Z, alpha = .10, data = df)
+    difference_in_means(Y ~ Z, alpha = .10, weights = weights2, data = dat),
+    difference_in_means(Y ~ Z, alpha = .10, data = dat)
   )
 
 })
@@ -75,40 +75,40 @@ test_that("DIM Weighted", {
 
 test_that("DIM Clustered", {
 
-  df <- data.frame(weights = runif(100),
+  dat <- data.frame(weights = runif(100),
                    weights2 = 1,
                    J = rep(1:4, each = 25))
 
-  df$Y <- rnorm(100, mean = rep(rnorm(4, sd = sqrt(0.1)), each = 25), sd = sqrt(0.9))
-  df$Z <- as.numeric(df$J %in% 1:2)
+  dat$Y <- rnorm(100, mean = rep(rnorm(4, sd = sqrt(0.1)), each = 25), sd = sqrt(0.9))
+  dat$Z <- as.numeric(dat$J %in% 1:2)
 
-  difference_in_means(Y ~ Z, alpha = .10, data = df)
-  difference_in_means(Y ~ Z, alpha = .10, clusters = J, data = df)
+  difference_in_means(Y ~ Z, alpha = .10, data = dat)
+  difference_in_means(Y ~ Z, alpha = .10, clusters = J, data = dat)
 
 })
 
 test_that("DIM Pair Matched", {
 
-  df <- data.frame(Y = rnorm(100),
+  dat <- data.frame(Y = rnorm(100),
                    Z = rbinom(100, 1, .5),
                    weights = runif(100),
                    weights2 = 1,
                    block = rep(1:50, each = 2))
 
   expect_error(
-    difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = df),
+    difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = dat),
     'both treatment'
   )
 
-  df$Z <- rep(0:1, 50)
-  difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = df)
+  dat$Z <- rep(0:1, 50)
+  difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = dat)
 
 })
 
 
 test_that("DIM Matched Pair Cluster Randomization", {
 
-  df <- data.frame(Y = rnorm(100),
+  dat <- data.frame(Y = rnorm(100),
                    block = rep(1:25, each = 4),
                    cluster = as.character(rep(1:50, each = 2)),
                    Z = rep(0:1, times = 50))
@@ -119,37 +119,37 @@ test_that("DIM Matched Pair Cluster Randomization", {
       alpha = .05,
       blocks = block,
       clusters = cluster,
-      data = df
+      data = dat
     ),
     'same treatment condition'
   )
 
-  df$Z <- c(rep(rep(0:1, each = 4), 12), rep(0, 4))
+  dat$Z <- c(rep(rep(0:1, each = 4), 12), rep(0, 4))
   expect_error(
     difference_in_means(
       Y ~ Z,
       alpha = .05,
       blocks = block,
       clusters = cluster,
-      data = df
+      data = dat
     ),
     'both treatment conditions'
   )
 
-  df$Z <- rep(rep(0:1, each = 2), 25)
+  dat$Z <- rep(rep(0:1, each = 2), 25)
   difference_in_means(
     Y ~ Z,
     alpha = .05,
     blocks = block,
     clusters = cluster,
-    data = df
+    data = dat
   )
 
 
 })
 
 test_that("DIM Matched Pair Cluster Randomization = Matched Pair when cluster size is 1", {
-  df <- data.frame(Y = rnorm(100),
+  dat <- data.frame(Y = rnorm(100),
                    block = rep(1:25, each = 4),
                    cluster = 1:100,
                    Z = rep(c(0,0,1,1), times = 25))
@@ -160,33 +160,33 @@ test_that("DIM Matched Pair Cluster Randomization = Matched Pair when cluster si
       alpha = .05,
       blocks = block,
       clusters = cluster,
-      data = df
+      data = dat
     ),
     difference_in_means(
       Y ~ Z,
       alpha = .05,
       blocks = block,
-      data = df
+      data = dat
     )
   )
 
 })
 
 test_that("DIM works with missingness", {
-  df <- data.frame(Y = rnorm(100),
+  dat <- data.frame(Y = rnorm(100),
                    block = rep(1:2, each = 50),
                    cluster = 1:100,
                    Z = rep(c(0,0,1,1), times = 25))
 
   ## Missingness on treatment
-  df$Z[23] <- NA
+  dat$Z[23] <- NA
 
   expect_error(
     estimatr_dim_out <- difference_in_means(
       Y ~ Z,
       alpha = .05,
       blocks = block,
-      data = df
+      data = dat
     ),
     NA
   )
@@ -197,19 +197,19 @@ test_that("DIM works with missingness", {
       Y ~ Z,
       alpha = .05,
       blocks = block,
-      data = df[-23, ]
+      data = dat[-23, ]
     )
   )
 
   ## Missingness on block
-  df$block[35] <- NA
+  dat$block[35] <- NA
 
   expect_warning(
     estimatr_missblock_dim <- difference_in_means(
       Y ~ Z,
       alpha = .05,
       blocks = block,
-      data = df
+      data = dat
     ),
     'missingness in the block'
   )
@@ -220,19 +220,19 @@ test_that("DIM works with missingness", {
       Y ~ Z,
       alpha = .05,
       blocks = block,
-      data = df[-c(23, 35), ]
+      data = dat[-c(23, 35), ]
     )
   )
 
   ## Missingness on cluster
-  df$cluster[1] <- NA
+  dat$cluster[1] <- NA
 
   expect_warning(
     estimatr_missclust_dim <- difference_in_means(
       Y ~ Z,
       alpha = .05,
       clusters = cluster,
-      data = df
+      data = dat
     ),
     'missingness in the cluster'
   )
@@ -243,7 +243,7 @@ test_that("DIM works with missingness", {
       Y ~ Z,
       alpha = .05,
       clusters = cluster,
-      data = df[-c(1, 23), ]
+      data = dat[-c(1, 23), ]
     )
   )
 
@@ -256,52 +256,52 @@ context("Difference in means")
 
 test_that("DIM", {
 
-  df <- data.frame(Y = rnorm(100), Z = rbinom(100, 1, .5), X = rnorm(100))
+  dat <- data.frame(Y = rnorm(100), Z = rbinom(100, 1, .5), X = rnorm(100))
 
-  difference_in_means(Y ~ Z, data = df)
-  difference_in_means(Y ~ Z, condition1 = 0, condition2 = 1, data = df)
-  difference_in_means(Y ~ Z, condition1 = 1, condition2 = 0, data = df)
+  difference_in_means(Y ~ Z, data = dat)
+  difference_in_means(Y ~ Z, condition1 = 0, condition2 = 1, data = dat)
+  difference_in_means(Y ~ Z, condition1 = 1, condition2 = 0, data = dat)
 
-  difference_in_means(Y ~ Z, alpha = .05, data = df)
-  difference_in_means(Y ~ Z, alpha = .10, data = df)
+  difference_in_means(Y ~ Z, alpha = .05, data = dat)
+  difference_in_means(Y ~ Z, alpha = .10, data = dat)
 
-  df <- data.frame(Y = rnorm(100), Z = sample(1:3, 100, replace = TRUE), X = rnorm(100))
+  dat <- data.frame(Y = rnorm(100), Z = sample(1:3, 100, replace = TRUE), X = rnorm(100))
 
-  difference_in_means(Y ~ Z, data = df)
-  difference_in_means(Y ~ Z, condition1 = 1, condition2 = 2, data = df)
-  difference_in_means(Y ~ Z, condition1 = 2, condition2 = 1, data = df)
-  difference_in_means(Y ~ Z, condition1 = 3, condition2 = 1, data = df)
-  difference_in_means(Y ~ Z, condition1 = 3, condition2 = 2, data = df)
+  difference_in_means(Y ~ Z, data = dat)
+  difference_in_means(Y ~ Z, condition1 = 1, condition2 = 2, data = dat)
+  difference_in_means(Y ~ Z, condition1 = 2, condition2 = 1, data = dat)
+  difference_in_means(Y ~ Z, condition1 = 3, condition2 = 1, data = dat)
+  difference_in_means(Y ~ Z, condition1 = 3, condition2 = 2, data = dat)
 
 })
 
 test_that("DIM Blocked", {
 
-  df <- data.frame(Y = rnorm(100),
+  dat <- data.frame(Y = rnorm(100),
                    Z = rbinom(100, 1, .5),
                    block = sample(c("A", "B", "C"), 100, replace = TRUE))
 
-  difference_in_means(Y ~ Z, blocks = block, data = df)
-  difference_in_means(Y ~ Z, condition1 = 0, condition2 = 1, blocks = block, data = df)
-  difference_in_means(Y ~ Z, condition1 = 1, condition2 = 0, blocks = block, data = df)
+  difference_in_means(Y ~ Z, blocks = block, data = dat)
+  difference_in_means(Y ~ Z, condition1 = 0, condition2 = 1, blocks = block, data = dat)
+  difference_in_means(Y ~ Z, condition1 = 1, condition2 = 0, blocks = block, data = dat)
 
-  difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = df)
-  difference_in_means(Y ~ Z, alpha = .10, blocks = block, data = df)
+  difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = dat)
+  difference_in_means(Y ~ Z, alpha = .10, blocks = block, data = dat)
 
 })
 
 test_that("DIM Weighted", {
 
-  df <- data.frame(Y = rnorm(100),
+  dat <- data.frame(Y = rnorm(100),
                    Z = rbinom(100, 1, .5),
                    weights = runif(100),
                    weights2 = 1)
 
-  difference_in_means(Y ~ Z, alpha = .10, weights = weights, data = df)
+  difference_in_means(Y ~ Z, alpha = .10, weights = weights, data = dat)
 
   expect_equal(
-    difference_in_means(Y ~ Z, alpha = .10, weights = weights2, data = df),
-    difference_in_means(Y ~ Z, alpha = .10, data = df)
+    difference_in_means(Y ~ Z, alpha = .10, weights = weights2, data = dat),
+    difference_in_means(Y ~ Z, alpha = .10, data = dat)
   )
 
 })
@@ -309,40 +309,40 @@ test_that("DIM Weighted", {
 
 test_that("DIM Clustered", {
 
-  df <- data.frame(weights = runif(100),
+  dat <- data.frame(weights = runif(100),
                    weights2 = 1,
                    J = rep(1:4, each = 25))
 
-  df$Y <- rnorm(100, mean = rep(rnorm(4, sd = sqrt(0.1)), each = 25), sd = sqrt(0.9))
-  df$Z <- as.numeric(df$J %in% 1:2)
+  dat$Y <- rnorm(100, mean = rep(rnorm(4, sd = sqrt(0.1)), each = 25), sd = sqrt(0.9))
+  dat$Z <- as.numeric(dat$J %in% 1:2)
 
-  difference_in_means(Y ~ Z, alpha = .10, data = df)
-  difference_in_means(Y ~ Z, alpha = .10, clusters = J, data = df)
+  difference_in_means(Y ~ Z, alpha = .10, data = dat)
+  difference_in_means(Y ~ Z, alpha = .10, clusters = J, data = dat)
 
 })
 
 test_that("DIM Pair Matched", {
 
-  df <- data.frame(Y = rnorm(100),
+  dat <- data.frame(Y = rnorm(100),
                    Z = rbinom(100, 1, .5),
                    weights = runif(100),
                    weights2 = 1,
                    block = rep(1:50, each = 2))
 
   expect_error(
-    difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = df),
+    difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = dat),
     'both treatment'
   )
 
-  df$Z <- rep(0:1, 50)
-  difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = df)
+  dat$Z <- rep(0:1, 50)
+  difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = dat)
 
 })
 
 
 test_that("DIM Matched Pair Cluster Randomization", {
 
-  df <- data.frame(Y = rnorm(100),
+  dat <- data.frame(Y = rnorm(100),
                    block = rep(1:25, each = 4),
                    cluster = as.character(rep(1:50, each = 2)),
                    Z = rep(0:1, times = 50))
@@ -353,30 +353,30 @@ test_that("DIM Matched Pair Cluster Randomization", {
       alpha = .05,
       blocks = block,
       clusters = cluster,
-      data = df
+      data = dat
     ),
     'same treatment condition'
   )
 
-  df$Z <- c(rep(rep(0:1, each = 4), 12), rep(0, 4))
+  dat$Z <- c(rep(rep(0:1, each = 4), 12), rep(0, 4))
   expect_error(
     difference_in_means(
       Y ~ Z,
       alpha = .05,
       blocks = block,
       clusters = cluster,
-      data = df
+      data = dat
     ),
     'both treatment conditions'
   )
 
-  df$Z <- rep(rep(0:1, each = 2), 25)
+  dat$Z <- rep(rep(0:1, each = 2), 25)
   difference_in_means(
     Y ~ Z,
     alpha = .05,
     blocks = block,
     clusters = cluster,
-    data = df
+    data = dat
   )
 
 
@@ -384,7 +384,7 @@ test_that("DIM Matched Pair Cluster Randomization", {
 })
 
 test_that("DIM Matched Pair Cluster Randomization = Matched Pair when cluster size is 1", {
-  df <- data.frame(Y = rnorm(100),
+  dat <- data.frame(Y = rnorm(100),
                    block = rep(1:25, each = 4),
                    cluster = 1:100,
                    Z = rep(c(0,0,1,1), times = 25))
@@ -395,33 +395,33 @@ test_that("DIM Matched Pair Cluster Randomization = Matched Pair when cluster si
       alpha = .05,
       blocks = block,
       clusters = cluster,
-      data = df
+      data = dat
     ),
     difference_in_means(
       Y ~ Z,
       alpha = .05,
       blocks = block,
-      data = df
+      data = dat
     )
   )
 
 })
 
 test_that("DIM works with missingness", {
-  df <- data.frame(Y = rnorm(100),
+  dat <- data.frame(Y = rnorm(100),
                    block = rep(1:2, each = 50),
                    cluster = 1:100,
                    Z = rep(c(0,0,1,1), times = 25))
 
   ## Missingness on treatment
-  df$Z[23] <- NA
+  dat$Z[23] <- NA
 
   expect_error(
     estimatr_dim_out <- difference_in_means(
       Y ~ Z,
       alpha = .05,
       blocks = block,
-      data = df
+      data = dat
     ),
     NA
   )
@@ -432,19 +432,19 @@ test_that("DIM works with missingness", {
       Y ~ Z,
       alpha = .05,
       blocks = block,
-      data = df[-23, ]
+      data = dat[-23, ]
     )
   )
 
   ## Missingness on block
-  df$block[35] <- NA
+  dat$block[35] <- NA
 
   expect_warning(
     estimatr_missblock_dim <- difference_in_means(
       Y ~ Z,
       alpha = .05,
       blocks = block,
-      data = df
+      data = dat
     ),
     'missingness in the block'
   )
@@ -455,19 +455,19 @@ test_that("DIM works with missingness", {
       Y ~ Z,
       alpha = .05,
       blocks = block,
-      data = df[-c(23, 35), ]
+      data = dat[-c(23, 35), ]
     )
   )
 
   ## Missingness on cluster
-  df$cluster[1] <- NA
+  dat$cluster[1] <- NA
 
   expect_warning(
     estimatr_missclust_dim <- difference_in_means(
       Y ~ Z,
       alpha = .05,
       clusters = cluster,
-      data = df
+      data = dat
     ),
     'missingness in the cluster'
   )
@@ -478,7 +478,7 @@ test_that("DIM works with missingness", {
       Y ~ Z,
       alpha = .05,
       clusters = cluster,
-      data = df[-c(1, 23), ]
+      data = dat[-c(1, 23), ]
     )
   )
 
@@ -487,7 +487,7 @@ test_that("DIM works with missingness", {
 
 
 test_that("DIM works with character args", {
-  df <- data.frame(Y = rnorm(100),
+  dat <- data.frame(Y = rnorm(100),
                    block = rep(1:25, each = 4),
                    cluster = 1:100,
                    Z = rep(c(0,0,1,1), times = 25))
@@ -498,14 +498,14 @@ test_that("DIM works with character args", {
       alpha = .05,
       blocks = block,
       clusters = cluster,
-      data = df
+      data = dat
     ),
     difference_in_means(
       Y ~ Z,
       alpha = .05,
       blocks = "block",
       clusters = "cluster",
-      data = df
+      data = dat
     )
   )
 
@@ -515,13 +515,13 @@ test_that("DIM works with character args", {
       Y ~ Z,
       alpha = .05,
       weights = cluster,
-      data = df
+      data = dat
     ),
     difference_in_means(
       Y ~ Z,
       alpha = .05,
       weights = "cluster",
-      data = df
+      data = dat
     )
   )
 

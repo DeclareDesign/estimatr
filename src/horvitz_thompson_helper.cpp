@@ -1,10 +1,10 @@
-// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::depends(RcppEigen)]]
 // [[Rcpp::plugins(cpp11)]]
 
-// These functions return variance for clustered horvitz thompson designs
-#define ARMA_64BIT_WORD 1
-#include <RcppArmadillo.h>
+#include <RcppEigen.h>
 using namespace Rcpp;
+
+// These functions return variance for clustered horvitz thompson designs
 
 // [[Rcpp::export]]
 double ht_var(const double & p1p2,
@@ -16,13 +16,13 @@ double ht_var(const double & p1p2,
 }
 
 // [[Rcpp::export]]
-double ht_var_total(const arma::vec & y,
-                    const arma::mat & p) {
+double ht_var_total(const Eigen::VectorXd & y,
+                    const Eigen::MatrixXd & p) {
 
   double total_variance = 0.0;
 
-  for (unsigned i = 0; i < y.n_elem; ++i) {
-    for (unsigned j = 0; j < y.n_elem; ++j) {
+  for (int i = 0; i < y.size(); ++i) {
+    for (int j = 0; j < y.size(); ++j) {
       total_variance +=
         ht_var(
           p(i, j),
@@ -37,46 +37,16 @@ double ht_var_total(const arma::vec & y,
   return total_variance;
 }
 
-// If p is symmetric the following is ~30pct faster
 // [[Rcpp::export]]
-double ht_var_total2(const arma::vec & y,
-                     const arma::mat & p) {
-
-  double upper_triangle_variance = 0.0;
-  double diag_variance = 0.0;
-
-  for (unsigned i = 0; i < y.n_elem; ++i) {
-    for (unsigned j = i; j < y.n_elem; ++j) {
-      double temp_var =
-        ht_var(
-          p(i, j),
-          p(i, i),
-          p(j, j),
-          y(i),
-          y(j)
-        );
-
-      if (i == j) {
-        diag_variance += temp_var;
-      } else {
-        upper_triangle_variance += temp_var;
-      }
-    }
-  }
-
-  return diag_variance + 2.0 * upper_triangle_variance;
-}
-
-// [[Rcpp::export]]
-double ht_covar_partial(const arma::vec & y1,
-                        const arma::vec & y0,
-                        const arma::mat & p10,
-                        const arma::vec & p1,
-                        const arma::vec & p0) {
+double ht_covar_partial(const Eigen::VectorXd & y1,
+                        const Eigen::VectorXd & y0,
+                        const Eigen::MatrixXd & p10,
+                        const Eigen::VectorXd & p1,
+                        const Eigen::VectorXd & p0) {
   double cov_total = 0.0;
 
-  for (unsigned i = 0; i < y1.n_elem; ++i) {
-    for(unsigned j = 0; j < y0.n_elem; ++j) {
+  for (int i = 0; i < y1.size(); ++i) {
+    for(int j = 0; j < y0.size(); ++j) {
       if(p10(i, j) == 0) {
         cov_total += y1(i) * y0(j) * (p10(i, j) - p1(i) * p0(j));
       } else {
@@ -89,12 +59,12 @@ double ht_covar_partial(const arma::vec & y1,
 }
 
 // [[Rcpp::export]]
-double ht_var_partial(const arma::vec & y,
-                      const arma::mat & p) {
+double ht_var_partial(const Eigen::VectorXd & y,
+                      const Eigen::MatrixXd & p) {
   double var_total = 0.0;
 
-  for (unsigned i = 0; i < y.n_elem; ++i) {
-    for(unsigned j = 0; j < y.n_elem; ++j) {
+  for (int i = 0; i < y.size(); ++i) {
+    for(int j = 0; j < y.size(); ++j) {
       if(i != j) {
         if (p(i, j) == 0) {
           var_total += y(i) * y(j) * (p(i, j) - p(i,i) * p(j,j)) +
@@ -111,16 +81,16 @@ double ht_var_partial(const arma::vec & y,
 }
 
 // [[Rcpp::export]]
-double ht_covar_total(const arma::vec & y0,
-                      const arma::vec & y1,
-                      const arma::mat & p00,
-                      const arma::mat & p11,
-                      const arma::mat & pj) {
+double ht_covar_total(const Eigen::VectorXd & y0,
+                      const Eigen::VectorXd & y1,
+                      const Eigen::MatrixXd & p00,
+                      const Eigen::MatrixXd & p11,
+                      const Eigen::MatrixXd & pj) {
 
   double cov_total = 0.0;
 
-  for (unsigned i = 0; i < y0.n_elem; ++i) {
-    for (unsigned j = 0; j < y0.n_elem; ++j) {
+  for (int i = 0; i < y0.size(); ++i) {
+    for (int j = 0; j < y0.size(); ++j) {
       if (i != j) {
         cov_total +=
           ht_var(
@@ -140,67 +110,63 @@ double ht_covar_total(const arma::vec & y0,
 // [[Rcpp::export]]
 double joint_incl_pr(const double & pi,
                      const double & pj,
-                     const double & nleft,
+                     const int & same,
                      const double & ntotal) {
-  return (2.0 * nleft * pi * pj) / (2.0 * ntotal - pi - pj);
+  return pi * ((pj * ntotal - same) / (ntotal - 1));
 }
 
 // [[Rcpp::export]]
-arma::mat gen_pr_matrix_complete(const arma::vec & prs) {
+Eigen::MatrixXd gen_pr_matrix_complete(const Eigen::VectorXd & prs) {
 
-  double n = prs.n_elem;
-  arma::mat mat_11(n, n);
-  arma::mat mat_00(n, n);
-  arma::mat mat_01(n, n);
-  arma::mat mat_10(n, n);
+  int n = prs.size();
+  Eigen::MatrixXd pr_mat(2*n, 2*n);
 
-  for (unsigned i = 0; i < n; ++i) {
-    for (unsigned j = 0; j < n; ++j) {
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < n; ++j) {
       if (i == j) {
-        mat_11(i, j) = prs[i];
-        mat_00(i, j) = 1 - prs[i];
-        mat_01(i, j) = 0;
-        mat_10(i, j) = 0;
+        pr_mat(i, j) = 1 - prs(i);
+        pr_mat(i + n, j) = 0;
+        pr_mat(i, j + n) = 0;
+        pr_mat(i + n, j + n) = prs(i);
       } else {
-        mat_11(i, j) = joint_incl_pr(prs[i], prs[j], n-1, n);
-        mat_00(i, j) = joint_incl_pr(1-prs[i], 1-prs[j], n-1, n);
-        mat_01(i, j) = joint_incl_pr(1-prs[i], prs[j], n, n);
-        mat_10(i, j) = joint_incl_pr(prs[i], 1-prs[j], n, n);
+        pr_mat(i, j) = joint_incl_pr(1-prs(i), 1-prs(j), 1, n);
+        pr_mat(i + n, j) = joint_incl_pr(prs(i), 1-prs(j), 0, n);
+        pr_mat(i, j + n) = joint_incl_pr(1-prs(i), prs(j), 0, n);
+        pr_mat(i + n, j + n) = joint_incl_pr(prs(i), prs(j), 1, n);
       }
     }
   }
-
-   arma::mat pr_mat = arma::join_rows(
-    arma::join_cols(mat_00, mat_01),
-    arma::join_cols(mat_10, mat_11)
-  );
 
   return pr_mat;
 }
 
-// old
+// unused right now
+// If p is symmetric the following is ~30pct faster
 // [[Rcpp::export]]
-double ht_var_total_clusters(const arma::vec & y,
-                             const arma::vec & ps,
-                             const arma::vec & cluster) {
-  double total_variance = 0.0;
-  arma::vec levels = unique(cluster);
+double ht_var_total2(const Eigen::VectorXd & y,
+                     const Eigen::MatrixXd & p) {
 
-  // iterate over unique cluster values
-  for(arma::vec::const_iterator j = levels.begin();
-      j != levels.end();
-      ++j){
+  double upper_triangle_variance = 0.0;
+  double diag_variance = 0.0;
 
-    arma::uvec cluster_ids = find(cluster == *j);
-    arma::vec y_cl = y(cluster_ids);
-    double ps_cl = ps(cluster_ids[0]);
-    for (unsigned i = 0; i < y_cl.n_elem; ++i) {
-      for (unsigned j = 0; j < y_cl.n_elem; ++j) {
-        total_variance += (1 - ps_cl) * ps_cl * y_cl[i] * y_cl[j];
+  for (int i = 0; i < y.size(); ++i) {
+    for (int j = i; j < y.size(); ++j) {
+      double temp_var =
+        ht_var(
+          p(i, j),
+          p(i, i),
+          p(j, j),
+          y(i),
+          y(j)
+        );
+
+      if (i == j) {
+        diag_variance += temp_var;
+      } else {
+        upper_triangle_variance += temp_var;
       }
     }
   }
 
-  return total_variance;
-
+  return diag_variance + 2.0 * upper_triangle_variance;
 }
