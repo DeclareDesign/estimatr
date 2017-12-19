@@ -76,14 +76,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // joint_incl_pr
-double joint_incl_pr(const double& pi, const double& pj, const unsigned& same, const double& ntotal);
+double joint_incl_pr(const double& pi, const double& pj, const int& same, const double& ntotal);
 RcppExport SEXP _estimatr_joint_incl_pr(SEXP piSEXP, SEXP pjSEXP, SEXP sameSEXP, SEXP ntotalSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const double& >::type pi(piSEXP);
     Rcpp::traits::input_parameter< const double& >::type pj(pjSEXP);
-    Rcpp::traits::input_parameter< const unsigned& >::type same(sameSEXP);
+    Rcpp::traits::input_parameter< const int& >::type same(sameSEXP);
     Rcpp::traits::input_parameter< const double& >::type ntotal(ntotalSEXP);
     rcpp_result_gen = Rcpp::wrap(joint_incl_pr(pi, pj, same, ntotal));
     return rcpp_result_gen;
@@ -124,8 +124,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // lm_solver
-List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull, const Eigen::Map<Eigen::VectorXd>& y, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Rcpp::Nullable<Rcpp::NumericVector>& weight, const double& weight_mean, const Rcpp::Nullable<Rcpp::IntegerVector>& cluster, const unsigned& J, const bool& ci, const String type, const std::vector<bool>& which_covs, const bool& chol, const bool& trychol);
-RcppExport SEXP _estimatr_lm_solver(SEXP XfullSEXP, SEXP ySEXP, SEXP XunweightedSEXP, SEXP weightSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP typeSEXP, SEXP which_covsSEXP, SEXP cholSEXP, SEXP trycholSEXP) {
+List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull, const Eigen::Map<Eigen::VectorXd>& y, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Rcpp::Nullable<Rcpp::NumericVector>& weight, const double& weight_mean, const Rcpp::Nullable<Rcpp::IntegerVector>& cluster, const int& J, const bool& ci, const String type, const std::vector<bool>& which_covs, const bool& trychol);
+RcppExport SEXP _estimatr_lm_solver(SEXP XfullSEXP, SEXP ySEXP, SEXP XunweightedSEXP, SEXP weightSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP typeSEXP, SEXP which_covsSEXP, SEXP trycholSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -135,13 +135,12 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericVector>& >::type weight(weightSEXP);
     Rcpp::traits::input_parameter< const double& >::type weight_mean(weight_meanSEXP);
     Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::IntegerVector>& >::type cluster(clusterSEXP);
-    Rcpp::traits::input_parameter< const unsigned& >::type J(JSEXP);
+    Rcpp::traits::input_parameter< const int& >::type J(JSEXP);
     Rcpp::traits::input_parameter< const bool& >::type ci(ciSEXP);
     Rcpp::traits::input_parameter< const String >::type type(typeSEXP);
     Rcpp::traits::input_parameter< const std::vector<bool>& >::type which_covs(which_covsSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type chol(cholSEXP);
     Rcpp::traits::input_parameter< const bool& >::type trychol(trycholSEXP);
-    rcpp_result_gen = Rcpp::wrap(lm_solver(Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, chol, trychol));
+    rcpp_result_gen = Rcpp::wrap(lm_solver(Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, trychol));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -156,7 +155,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_estimatr_gen_pr_matrix_complete", (DL_FUNC) &_estimatr_gen_pr_matrix_complete, 1},
     {"_estimatr_ht_var_total2", (DL_FUNC) &_estimatr_ht_var_total2, 2},
     {"_estimatr_AtA", (DL_FUNC) &_estimatr_AtA, 1},
-    {"_estimatr_lm_solver", (DL_FUNC) &_estimatr_lm_solver, 12},
+    {"_estimatr_lm_solver", (DL_FUNC) &_estimatr_lm_solver, 11},
     {NULL, NULL, 0}
 };
 

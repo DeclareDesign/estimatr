@@ -2,7 +2,6 @@
 // [[Rcpp::plugins(cpp11)]]
 
 #include <RcppEigen.h>
-#include <Rcpp.h>
 using namespace Rcpp;
 
 // These functions return variance for clustered horvitz thompson designs

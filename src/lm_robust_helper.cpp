@@ -2,7 +2,6 @@
 // [[Rcpp::plugins(cpp11)]]
 
 #include <RcppEigen.h>
-#include <Rcpp.h>
 using namespace Rcpp;
 
 // Much of what follows is modified from RcppEigen Vignette by Douglas Bates and Dirk Eddelbuettel
