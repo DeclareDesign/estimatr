@@ -26,3 +26,4 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
+Additional_repositories: http://r.declaredesign.org
