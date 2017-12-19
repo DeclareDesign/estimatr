@@ -132,7 +132,7 @@ test_that("gen_pr_matrix_complete works as expected", {
   pr_mat <- gen_pr_matrix_complete(prs)
 
   # FALSE until randomizr on CRAN
-  if (TRUE) {
+  if (FALSE) {
     perms <- randomizr::obtain_permutation_matrix(randomizr::declare_ra(N = n, prob = prs[1]))
 
     # From Chris Kennedy (https://github.com/ck37)
