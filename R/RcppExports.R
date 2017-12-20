@@ -37,7 +37,7 @@ AtA <- function(A) {
     .Call(`_estimatr_AtA`, A)
 }
 
-lm_solver <- function(Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, trychol) {
-    .Call(`_estimatr_lm_solver`, Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, trychol)
+lm_solver <- function(Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, try_cholesky) {
+    .Call(`_estimatr_lm_solver`, Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, try_cholesky)
 }
 
