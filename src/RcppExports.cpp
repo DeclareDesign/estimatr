@@ -124,8 +124,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // lm_solver
-List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull, const Eigen::Map<Eigen::VectorXd>& y, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Rcpp::Nullable<Rcpp::NumericVector>& weight, const double& weight_mean, const Rcpp::Nullable<Rcpp::IntegerVector>& cluster, const int& J, const bool& ci, const String type, const std::vector<bool>& which_covs, const bool& trychol);
-RcppExport SEXP _estimatr_lm_solver(SEXP XfullSEXP, SEXP ySEXP, SEXP XunweightedSEXP, SEXP weightSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP typeSEXP, SEXP which_covsSEXP, SEXP trycholSEXP) {
+List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull, const Eigen::Map<Eigen::VectorXd>& y, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Rcpp::Nullable<Rcpp::NumericVector>& weight, const double& weight_mean, const Rcpp::Nullable<Rcpp::IntegerVector>& cluster, const int& J, const bool& ci, const String type, const std::vector<bool>& which_covs, const bool& try_cholesky);
+RcppExport SEXP _estimatr_lm_solver(SEXP XfullSEXP, SEXP ySEXP, SEXP XunweightedSEXP, SEXP weightSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP typeSEXP, SEXP which_covsSEXP, SEXP try_choleskySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -139,8 +139,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const bool& >::type ci(ciSEXP);
     Rcpp::traits::input_parameter< const String >::type type(typeSEXP);
     Rcpp::traits::input_parameter< const std::vector<bool>& >::type which_covs(which_covsSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type trychol(trycholSEXP);
-    rcpp_result_gen = Rcpp::wrap(lm_solver(Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, trychol));
+    Rcpp::traits::input_parameter< const bool& >::type try_cholesky(try_choleskySEXP);
+    rcpp_result_gen = Rcpp::wrap(lm_solver(Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, try_cholesky));
     return rcpp_result_gen;
 END_RCPP
 }

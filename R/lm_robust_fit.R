@@ -9,7 +9,7 @@
 #' @param alpha numeric denoting the test size for confidence intervals
 #' @param coefficient_name character vector of coefficients to return
 #' @param return_vcov a boolean for whether to return the vcov matrix for later usage
-#' @param trychol a boolean for whether to try using a cholesky decomposition to solve LS instead of a QR decomposition
+#' @param try_cholesky a boolean for whether to try using a cholesky decomposition to solve LS instead of a QR decomposition
 #'
 #' @export
 #'
@@ -22,7 +22,7 @@ lm_robust_fit <- function(y,
                           alpha,
                           coefficient_name,
                           return_vcov,
-                          trychol) {
+                          try_cholesky) {
 
   ## allowable se_types with clustering
   cl_se_types <- c("CR2", "stata")
@@ -106,7 +106,7 @@ lm_robust_fit <- function(y,
       ci = ci,
       type = se_type,
       which_covs = which_covs,
-      trychol = trychol
+      try_cholesky = try_cholesky
     )
 
 
