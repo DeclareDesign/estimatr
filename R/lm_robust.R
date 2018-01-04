@@ -59,5 +59,8 @@ lm_robust <- function(formula,
                            model_data = model_data,
                            formula = formula)
 
+
+  return_list$call <- match.call()
+
   return(return_list)
 }
