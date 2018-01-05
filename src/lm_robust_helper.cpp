@@ -24,7 +24,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
                 const bool & ci,
                 const String type,
                 const std::vector<bool> & which_covs,
-                const bool& trychol) {
+                const bool& try_cholesky) {
 
   const int n(Xfull.rows()), p(Xfull.cols());
   int r = p;
@@ -35,7 +35,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
   // Much of the OLS solution code is inspired by or copied directly from the fastLm function from RcppEigen
   // https://cran.r-project.org/web/packages/RcppEigen/vignettes/RcppEigen-Introduction.pdf
   try {
-    if (trychol) {
+    if (try_cholesky) {
       const Eigen::LLT<Eigen::MatrixXd> llt(Xfullt*Xfull);
 
       // Catch case where Xfull is rank-deficient

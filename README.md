@@ -37,7 +37,7 @@ lm_robust(y ~ z, data = sample_dat, clusters = my_cluster_var)
 difference_in_means(y ~ z, data = sample_dat, blocks = my_block_var)
 ```
 
-The [Getting Started](articles/estimatr-vignette.html) guide describes each estimator provided by **estimatr** and how it can be used in your analysis.
+The [Getting Started Guide](http://estimatr.declaredesign.org/articles/estimatr-vignette.html) describes each estimator provided by **estimatr** and how it can be used in your analysis.
 
 ### Fast to use
 

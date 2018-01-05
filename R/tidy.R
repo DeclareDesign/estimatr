@@ -114,6 +114,7 @@ tidy_data_frame <- function(object, digits = NULL) {
 warn_singularities <- function(object) {
   if (object$rank < object$k) {
     singularities <- object$k - object$rank
-    message(sprintf('%i coefficient%s not defined because of singularities\n', singularities, ifelse(singularities > 1, 's', '')))
+    plural <- ifelse(singularities > 1, "s", "")
+    message(singularities, " coefficient", plural, " not defined because the design matrix is rank deficient\n")
   }
 }
