@@ -29,7 +29,7 @@ lm_lin <- function(formula,
                    return_vcov = TRUE,
                    try_cholesky = FALSE) {
 
-  ## Check formula
+  # Check formula
   if (length(all.vars(formula[[3]])) > 1) {
     stop(
       "The formula should only include one variable on the right-hand side: the treatment variable."
@@ -37,7 +37,7 @@ lm_lin <- function(formula,
   }
 
   cov_terms <- terms(covariates)
-  ## check covariates is right hand sided fn
+  # Check covariates is right hand sided fn
   if (attr(cov_terms, "response") != 0) {
     stop(
       "The covariate formula should be a right-hand sided equation, such as '~ x1 + x2 + x3'"
@@ -46,7 +46,7 @@ lm_lin <- function(formula,
   cov_names <- all.vars(covariates)
 
   # Get all variables for the design matrix
-  full_formula <- update(formula, reformulate(c('.', cov_names), "."))
+  full_formula <- update(formula, reformulate(c(".", cov_names), "."))
 
   where <- parent.frame()
   model_data <- eval(substitute(
@@ -61,29 +61,47 @@ lm_lin <- function(formula,
   ))
 
   outcome <- model_data$outcome
+  n <- length(outcome)
   design_matrix <- model_data$design_matrix
   weights <- model_data$weights
   cluster <- model_data$cluster
 
-  # If Z is a factor, can't use variable name
-  # So get first non-intercept column (always will be treatment)
+  # Get treatment columns
+  has_intercept <- attr(terms(formula), "intercept")
   treat_col <- which(attr(design_matrix, "assign") == 1)
-  treat_name <- colnames(design_matrix)[treat_col]
+  treatment <- design_matrix[, treat_col, drop = FALSE]
+  design_mat_treatment <- colnames(design_matrix)[treat_col]
 
-  # allow drop to 1 dim if well specified
-  # this allows * operator to "sweep" across demeaned covars later
-  treatment <- design_matrix[, treat_col]
-
-  if (is.matrix(treatment)) {
-    stop(
-      "Treatment variable must have no more than two levels in the data (or the subset you are using)."
-    )
-  }
-
+  # Check case where treatment is not factor and is not binary
   if (any(!(treatment %in% c(0, 1)))) {
-    stop(
-      "Treatment variable must be binary for the Lin estimator."
-    )
+    if (ncol(treatment) > 1) {
+      stop(
+        "Treatment variable must be binary or a factor for the Lin estimator."
+      )
+    } else {
+      # create dummies for non-factor treatment variable
+
+      # Drop out first group if there is an intercept
+      vals <- sort(unique(treatment))[if(has_intercept) {-1} else {TRUE}]
+      n_treats <- length(vals)
+      # TODO warn if too many values?
+
+      treatment_mat <- matrix(
+        NA,
+        nrow = n,
+        ncol = n_treats,
+        dimnames = list(NULL,
+                        paste0(colnames(design_matrix)[treat_col], vals))
+      )
+
+      for (i in 1:n_treats) {
+        treatment_mat[, i] <- as.numeric(treatment == vals[i])
+      }
+
+      treatment <- treatment_mat
+
+    }
+
   }
 
   # center all covariates
@@ -91,8 +109,8 @@ lm_lin <- function(formula,
     scale(
       design_matrix[
         ,
-        setdiff(colnames(design_matrix), c(treat_name, '(Intercept)')),
-        drop = F
+        setdiff(colnames(design_matrix), c(design_mat_treatment, "(Intercept)")),
+        drop = FALSE
       ],
       center = TRUE,
       scale = FALSE
@@ -101,16 +119,45 @@ lm_lin <- function(formula,
   original_covar_names <- colnames(demeaned_covars)
 
   # Change name of centered covariates to end in bar
-  colnames(demeaned_covars) <- paste0(colnames(demeaned_covars), '_bar')
+  colnames(demeaned_covars) <- paste0(colnames(demeaned_covars), "_bar")
+
+  n_treat_cols <- ncol(treatment)
+  n_covars <- ncol(demeaned_covars)
 
   # Interacted
-  interacted_covars <- treatment * demeaned_covars
-  colnames(interacted_covars) <- paste0(treat_name, ':', colnames(demeaned_covars))
+  #n_int_covar_cols <- n_covars * (n_treat_cols + has_intercept)
+  n_int_covar_cols <- n_covars * (n_treat_cols)
+  interacted_covars <- matrix(0, nrow = n, ncol = n_int_covar_cols)
+  interacted_covars_names <- character(n_int_covar_cols)
+  for (i in 1:n_covars) {
 
-  # Interact with treatment
-  X <- cbind(design_matrix[, attr(design_matrix, "assign") <= 1, drop = F],
-             demeaned_covars,
-             interacted_covars)
+    covar_name <- colnames(demeaned_covars)[i]
+
+    cols <- (i - 1) * n_treat_cols + (1:n_treat_cols)
+    interacted_covars[, cols] <-  apply(treatment, 2, `*`, demeaned_covars[, i])
+    interacted_covars_names[cols] <- paste0(colnames(treatment), ":", covar_name)
+  }
+  colnames(interacted_covars) <- interacted_covars_names
+  #print(interacted_covars)
+
+  if (has_intercept) {
+    # Have to manually create intercept if treatment wasn't a factor
+    X <- cbind(matrix(1, nrow = n, ncol = 1, dimnames = list(NULL, c("(Intercept)"))),
+               treatment,
+               demeaned_covars,
+               interacted_covars)
+  } else {
+    # If no intercept, but treatment is only one column, need to add base terms for covariates
+    if (n_treat_cols == 1) {
+      X <- cbind(treatment,
+                 demeaned_covars,
+                 interacted_covars)
+    } else {
+      X <- cbind(treatment,
+                 interacted_covars)
+    }
+
+  }
 
   return_list <-
     lm_robust_fit(
