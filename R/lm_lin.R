@@ -82,21 +82,15 @@ lm_lin <- function(formula,
       # create dummies for non-factor treatment variable
 
       # Drop out first group if there is an intercept
-      vals <- sort(unique(treatment))[if(has_intercept) {-1} else {TRUE}]
+      vals <- sort(unique(treatment))
+      if (has_intercept) vals <- vals[-1]
+
       n_treats <- length(vals)
-      # TODO warn if too many values?
+      # TODO warn if too many values? (ie. if there are as many treatments as observations, maybe we should warn)
 
-      treatment_mat <- matrix(
-        NA,
-        nrow = n,
-        ncol = n_treats,
-        dimnames = list(NULL,
-                        paste0(colnames(design_matrix)[treat_col], vals))
-      )
-
-      for (i in 1:n_treats) {
-        treatment_mat[, i] <- as.numeric(treatment == vals[i])
-      }
+      # Create matrix of dummies
+      treatment_mat <- outer(drop(treatment), vals, function(x, y) as.numeric(x == y))
+      colnames(treatment_mat) <- paste0(colnames(design_matrix)[treat_col], vals)
 
       treatment <- treatment_mat
 
@@ -134,15 +128,14 @@ lm_lin <- function(formula,
     covar_name <- colnames(demeaned_covars)[i]
 
     cols <- (i - 1) * n_treat_cols + (1:n_treat_cols)
-    interacted_covars[, cols] <-  apply(treatment, 2, `*`, demeaned_covars[, i])
+    interacted_covars[, cols] <- treatment * demeaned_covars[, i]
     interacted_covars_names[cols] <- paste0(colnames(treatment), ":", covar_name)
   }
   colnames(interacted_covars) <- interacted_covars_names
-  #print(interacted_covars)
 
   if (has_intercept) {
     # Have to manually create intercept if treatment wasn't a factor
-    X <- cbind(matrix(1, nrow = n, ncol = 1, dimnames = list(NULL, c("(Intercept)"))),
+    X <- cbind(matrix(1, nrow = n, ncol = 1, dimnames = list(NULL, "(Intercept)")),
                treatment,
                demeaned_covars,
                interacted_covars)
