@@ -86,13 +86,19 @@ lm_lin <- function(formula,
       if (has_intercept) vals <- vals[-1]
 
       n_treats <- length(vals)
-      # TODO warn if too many values? (ie. if there are as many treatments as observations, maybe we should warn)
+      # Should we warn if too many values?
+      # (ie. if there are as many treatments as observations)
+
+      names(vals) <- paste0(colnames(design_matrix)[treat_col], vals)
+
 
       # Create matrix of dummies
-      treatment_mat <- outer(drop(treatment), vals, function(x, y) as.numeric(x == y))
-      colnames(treatment_mat) <- paste0(colnames(design_matrix)[treat_col], vals)
-
-      treatment <- treatment_mat
+      treatment <-
+        outer(
+          drop(treatment),
+          vals,
+          function(x, y) as.numeric(x == y)
+        )
 
     }
 
