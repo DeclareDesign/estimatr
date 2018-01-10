@@ -60,9 +60,18 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
     r = PQR.rank();
 
     R_inv = PQR.matrixQR().topLeftCorner(r, r).triangularView<Eigen::Upper>().solve(Eigen::MatrixXd::Identity(r, r));
+
+    // Rcout << "R_inv:" << std::endl;
+    // Rcout << R_inv << std::endl;
+
     Eigen::VectorXd effects(PQR.householderQ().adjoint() * y);
+
+    // Rcout << "effects:" << std::endl;
+    // Rcout << effects << std::endl;
+
     beta_out.head(r) = R_inv * effects.head(r);
-    // Rcout << beta_out << std::endl << std::endl;
+    // Rcout << "beta_out:" << std::endl;
+    // Rcout << beta_out << std::endl;
     beta_out = Pmat * beta_out;
 
     // Get all column indices
@@ -91,10 +100,12 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
     // Rcout << Pmat * Eigen::MatrixXd::Identity(p, p) << std::endl << std::endl;
 
     Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P = Eigen::PermutationWrapper<Eigen::ArrayXi>(Pmat_keep);
-    // Rcout << P * Eigen::MatrixXd::Identity(r, r) << std::endl << std::endl;
+    // Rcout << "Pmat * I" << std::endl;
+    // Rcout << Pmat * Eigen::MatrixXd::Identity(r, r) << std::endl << std::endl;
 
     R_inv = P * R_inv * P;
     XtX_inv = R_inv * R_inv.transpose();
+    // Rcout << "XtX_inv: " << std::endl;
     // Rcout << XtX_inv << std::endl;
   }
 

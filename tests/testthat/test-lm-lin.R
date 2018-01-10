@@ -22,12 +22,13 @@ test_that("Test LM Lin",{
 
   dat2 <- dat
   dat2$Z <- rnorm(100)
-  expect_error(
-    lm_lin(Y ~ Z,
-           covariates = ~ X1,
-           data = dat2),
-    'binary'
-  )
+  # For now we allow huge multi-valued treatments, but output is wonky
+  # expect_error(
+  #   lm_lin(Y ~ Z,
+  #          covariates = ~ X1,
+  #          data = dat2),
+  #   'binary'
+  # )
 
   expect_error(
     lm_lin(Y ~ Z,
@@ -36,12 +37,14 @@ test_that("Test LM Lin",{
     'right-hand sided equation'
   )
 
+  # Now allows multi-valued treatments
   expect_error(
     lm_lin(Y ~ factor(cluster),
            ~ X1,
            data = dat),
-    'no more than two levels'
+    NA
   )
+
 
   # works with one covar
   expect_error(
@@ -67,6 +70,55 @@ test_that("Test LM Lin",{
   )
 
 
+  ## Works with multi-valued treatments
+  dat$Z_mult <- rep_len(1:3, length.out = 100)
+
+  test_mult <- function(treatment_type, dat) {
+    dat$Z_mult <-
+      switch(treatment_type,
+             int = rep_len(1:3, length.out = 100),
+             num = rep_len(c(1.5, 2.5, 5), length.out = 100),
+             char = rep_len(letters[1:4], length.out = 100),
+             bin = rbinom(100, 1, 0.5))
+
+    mult_out <- lm_lin(Y ~ Z_mult,
+                       covariates = ~ X1 + X2,
+                       data = dat)
+    fact_mult_out <- lm_lin(Y ~ factor(Z_mult),
+                            covariates = ~ X1 + X2,
+                            data = dat)
+    noint_mult_out <- lm_lin(Y ~ Z_mult + 0,
+                             covariates = ~ X1 + X2,
+                             data = dat)
+    noint_fact_mult_out <- lm_lin(Y ~ factor(Z_mult) + 0,
+                                  covariates = ~ X1 + X2,
+                                  data = dat)
+
+    expect_identical(
+      tidy(mult_out)[, -1],
+      tidy(fact_mult_out)[, -1]
+    )
+
+    rob_fact_mult_out <- lm_robust(Y ~ factor(Z_mult)*X1_bar + factor(Z_mult)*X2_bar, data = dat)
+
+    expect_identical(
+      tidy(fact_mult_out),
+      tidy(rob_fact_mult_out)
+    )
+
+    # Also works with no intercept!
+    expect_identical(
+      tidy(noint_mult_out)[, -1],
+      tidy(noint_fact_mult_out)[, -1]
+    )
+
+  }
+
+  test_mult("int", dat)
+  test_mult("num", dat)
+  test_mult("char", dat)
+  #test_mult("bin", dat) this gives weird answers because it isn't really valid when not a factor!
+
   ## Works with missing data in treatment
   dat$Z[23] <- NA
   dat$X1_bar <- dat$X1 - mean(dat$X1[-23])
@@ -74,19 +126,10 @@ test_that("Test LM Lin",{
 
   expect_identical(
     summary(lm_lin(Y ~ Z,
-           covariates = ~ X1 + X2,
-           data = dat)),
+                   covariates = ~ X1 + X2,
+                   data = dat)),
     summary(lm_robust(Y ~ Z + Z*X1_bar + Z*X2_bar,
-              data = dat))
-  )
-
-  ## Works with no intercept
-  expect_identical(
-    summary(lm_lin(Y ~ Z + 0,
-           covariates = ~ X1 + X2,
-           data = dat)),
-    summary(lm_robust(Y ~ Z + Z*X1_bar + Z*X2_bar + 0,
-              data = dat))
+                      data = dat))
   )
 
   ## Test cluster passes through
