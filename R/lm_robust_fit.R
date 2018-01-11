@@ -51,12 +51,12 @@ lm_robust_fit <- function(y,
 
   }
 
+  k <- ncol(X)
+
   if (is.null(colnames(X))) {
-    colnames(X) <- paste0("X", 1:ncol(X))
+    colnames(X) <- paste0("X", 1:k)
   }
   variable_names <- colnames(X)
-
-  k <- ncol(X)
 
   # Get coefficients to get df adjustments for and return
   if (is.null(coefficient_name)) {
