@@ -240,4 +240,11 @@ test_that("Test LM Lin",{
     c(FALSE, FALSE, FALSE, TRUE, FALSE, TRUE)
   )
 
+  # Does lm_lin parse covariate names correctly?
+  # Previously it dropped the factor(), now properly builds factor
+  lmlo <- lm_lin(Y ~ treat, ~factor(cluster) + X1, data = dat)
+  expect_equal(
+    nrow(tidy(lmlo)),
+    22
+  )
 })
