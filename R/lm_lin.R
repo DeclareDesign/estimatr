@@ -43,10 +43,15 @@ lm_lin <- function(formula,
       "The covariate formula should be a right-hand sided equation, such as '~ x1 + x2 + x3'"
     )
   }
-  cov_names <- all.vars(covariates)
 
   # Get all variables for the design matrix
-  full_formula <- update(formula, reformulate(c(".", cov_names), "."))
+  full_formula <-
+    update(
+      formula,
+      reformulate(
+        c('.', labels(cov_terms), response = '.')
+      )
+    )
 
   where <- parent.frame()
   model_data <- eval(substitute(
