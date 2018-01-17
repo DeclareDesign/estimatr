@@ -9,7 +9,9 @@
 #' @return a data.frame
 #'
 #' @export
-tidy <- function(object, ...) UseMethod("tidy")
+tidy <- function(object, ...) {
+  if(requireNamespace("broom", quietly=TRUE)) broom::tidy(object, ...) else UseMethod("tidy")
+}
 
 
 #' tidy on a NULL input
