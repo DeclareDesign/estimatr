@@ -55,6 +55,7 @@ tidy.default <- function(object, ...) {
 #' errors, confidence intervals, p-values, degrees of freedom for the covariates
 #' specified by which_covs
 #'
+#' @export tidy.lm_robust
 #' @export
 tidy.lm_robust <- function(object, ...) {
   return_frame <- tidy_data_frame(object)
