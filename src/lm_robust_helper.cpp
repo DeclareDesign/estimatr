@@ -243,16 +243,16 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
 
        // iterate over unique cluster values
        for(int i = 1;
-           i < n;
+           i <= n;
            ++i){
 
-         if ((clusters(i) != current_cluster) | (i == (n-1))) {
-           if(i == (n-1)) {
-             len++;
-           }
-           // Rcout << current_cluster << std::endl;
-           // Rcout << start_pos << std::endl;
-           // Rcout << len << std::endl << std::endl;
+         //Rcout << "clusters(i): " << clusters(i) << std::endl;
+         if ((i == n) || (clusters(i) != current_cluster)) {
+           // Rcout << "Current cluster: " << current_cluster << std::endl;
+           // Rcout << "Starting position: " << start_pos << std::endl;
+           // Rcout << "len: " << len << std::endl << std::endl;
+           // Rcout <<  X.transpose().block(0, start_pos, r, len) << std::endl << std::endl;
+
            // Rcout <<  X.transpose().block(0, start_pos, r, len) << std::endl << std::endl;
 
            Eigen::MatrixXd H = Xoriginal.block(start_pos, 0, len, r) * XtX_inv * X.block(start_pos, 0, len, r).transpose();
@@ -316,13 +316,17 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
            // Below use  t(tutX) %*% tutX to sum contributions across clusters
 
            // Rcout << "At_WX_inv: " << At_WX_inv << std::endl;
-
+           // Rcout << "ei: " << ei.segment(start_pos, len).transpose() << std::endl;
            tutX.row(j) = ei.segment(start_pos, len).transpose() * At_WX_inv;
 
-           current_cluster = clusters(i);
-           len = 1;
-           start_pos = i;
-           j++;
+           if (i < n) {
+             current_cluster = clusters(i);
+             len = 1;
+             start_pos = i;
+             j++;
+           }
+
+
          } else {
            len++;
            continue;
@@ -330,7 +334,9 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
 
        }
 
-       // Rcout << "tutX: " << tutX << std::endl;
+
+       // Rcout << "XtX_inv: " << std::endl << XtX_inv << std::endl;
+       // Rcout << "tutX: " << std::endl << tutX << std::endl;
 
        Vcov_hat = XtX_inv * (tutX.transpose() * tutX) * XtX_inv;
 //
@@ -383,22 +389,23 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
 
         // iterate over unique cluster values
         for(int i = 1;
-            i < n;
+            i <= n;
             ++i){
 
-          if ((clusters(i) != current_cluster) | (i == (n-1))) {
-            if(i == (n-1)) {
-              len++;
-            }
+          if ((i == n) || (clusters(i) != current_cluster)) {
             // Rcout << current_cluster << std::endl;
             // Rcout << start_pos << std::endl;
             // Rcout << len << std::endl << std::endl;
             // Rcout <<  X.transpose().block(0, start_pos, r, len) << std::endl << std::endl;
             // Rcout << "XteetX: " << AtA(ei.segment(start_pos, len).transpose() * X.block(start_pos, 0, len, r)) << std::endl;
             XteetX += AtA(ei.segment(start_pos, len).transpose() * X.block(start_pos, 0, len, r));
-            current_cluster = clusters(i);
-            len = 1;
-            start_pos = i;
+
+            if (i < n) {
+              current_cluster = clusters(i);
+              len = 1;
+              start_pos = i;
+            }
+
           } else {
             len++;
             continue;
