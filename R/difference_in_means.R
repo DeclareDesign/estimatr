@@ -147,14 +147,17 @@ difference_in_means <-
       if (pair_matched) {
 
         if (is.null(data$cluster)) {
-          # Pair matched, cluster randomized (Gerber Green 2012, p77, eq3.16)
+          # Pair matched, unit randomized (Gerber Green 2012, p77, eq3.16)
           se <-
             with(
               block_estimates,
               sqrt( (1 / (n_blocks * (n_blocks - 1))) * sum((est - diff)^2) )
             )
+
+          # I'm using a conservative DoF here
+          df <- n_blocks - 1
         } else {
-          # Pair matched, unit randomized (Imai, King, Nall 2009, p36, eq6)
+          # Pair matched, cluster randomized (Imai, King, Nall 2009, p36, eq6)
           se <-
             with(
               block_estimates,
@@ -175,7 +178,9 @@ difference_in_means <-
 
       if(is.na(df)) {
         ## we don't know if this is correct!
-        df <- N_overall - n_blocks
+        ## matches lm_lin, two estimates per block without clustering
+        ## But with clustering it appears to be far too large
+        df <- N_overall - 2 * n_blocks
       }
 
       p <- 2 * pt(abs(diff / se), df = df, lower.tail = FALSE)
@@ -193,6 +198,8 @@ difference_in_means <-
         )
 
     }
+
+    #print(c("Pair Matched? ", pair_matched))
 
     return_list <- dim_like_return(return_list,
                                    alpha = alpha,
@@ -272,65 +279,85 @@ difference_in_means_internal <-
 
     df <- NA
 
-    if (is.null(data$weights)) {
+    if (!is.null(data$cluster) && !pair_matched) {
 
-      diff <- mean(Y2) - mean(Y1)
+      # For now, all clustered cases go to lm_robust
+      # CR2 nests Gerber and Green 2012, p. 83, eq. 3.23 when clusters are
+      # equal sizes (we think) and is more appropriate when clusters are different sizes
 
-      if (pair_matched) {
-        # Pair matched designs
-        se <- NA
-      } else {
+      X <- cbind(1, t = as.numeric(data$t == condition2))
 
-        if (is.null(data$cluster)) {
-        # Non-pair matched designs, unit level randomization
-        se <- sqrt(var(Y2) / length(Y2) + var(Y1) / length(Y1))
+      # print("Using lm_robust")
+      cr2_out <- lm_robust_fit(
+        y = data$y,
+        X = cbind(1, t = as.numeric(data$t == condition2)),
+        cluster = data$cluster,
+        se_type = "CR2",
+        weights = data$weights,
+        ci = TRUE,
+        coefficient_name = "t",
+        try_cholesky = TRUE,
+        alpha = alpha,
+        return_vcov = FALSE
+      )
 
-        } else {
-          # Non-pair matched designs, cluster randomization
-          # (Gerber and Green 2012, p. 83, eq. 3.23)
-          k <- length(unique(data$cluster))
-
-          # In the below we set na.rm = T because if cluster is a factor, subsetting
-          # it will keep the other levels
-          se <- sqrt(
-            (var(tapply(Y2, data$cluster[data$t == condition2], mean), na.rm = T) * N) /
-              (k * length(Y2)) +
-            (var(tapply(Y1, data$cluster[data$t == condition1], mean), na.rm = T) * N) /
-              (k * length(Y1))
-          )
-        }
-
-        df <- se^4 /
-          (
-            (var(Y2) / length(Y2))^2 / (length(Y2) - 1) +
-              (var(Y1) / length(Y1))^2 / (length(Y1) - 1)
-          )
-      }
-
+      diff <- cr2_out$est[2]
+      se <- cr2_out$se[2]
+      df <- cr2_out$df[2]
 
     } else {
 
-      # TODO: weights and clusters
-      # TODO: weights and matched pair
+      if (is.null(data$weights)) {
 
-      w2 <- data$weights[data$t == condition2]
-      w1 <- data$weights[data$t == condition1]
+        diff <- mean(Y2) - mean(Y1)
 
-      mean2 <- weighted.mean(Y2, w2)
-      mean1 <- weighted.mean(Y1, w1)
-      diff <-  mean2 - mean1
+        if (pair_matched) {
+          # Pair matched designs
+          se <- NA
+        } else {
+          # Non-pair matched designs, unit level randomization
+          var_Y2 <- var(Y2)
+          var_Y1 <- var(Y1)
+          N2 <- length(Y2)
+          N1 <- length(Y1)
 
-      var2 <- weighted_var_internal(w2, Y2, mean2)
-      var1 <- weighted_var_internal(w1, Y1, mean1)
+          se <- sqrt(var_Y2 / N2 + var_Y1 / N1)
 
-      se <- sqrt(var2 + var1)
+          df <- se^4 /
+            (
+              (var_Y2 / N2)^2 / (N2 - 1) +
+                (var_Y1 / N1)^2 / (N1 - 1)
+            )
 
-      # todo: check welch approximation with weights
-      df <- se^4 /
-        (
-          (var2^2 / (length(Y2)-1)) +
-          (var1^2 / (length(Y1)-1))
-        )
+        }
+
+      } else {
+
+        # TODO: weights and matched pair
+        if (pair_matched) {
+          stop("Weights not supported with matched-pairs.")
+        }
+
+        w2 <- data$weights[data$t == condition2]
+        w1 <- data$weights[data$t == condition1]
+
+        mean2 <- weighted.mean(Y2, w2)
+        mean1 <- weighted.mean(Y1, w1)
+        diff <-  mean2 - mean1
+
+        var2 <- weighted_var_internal(w2, Y2, mean2)
+        var1 <- weighted_var_internal(w1, Y1, mean1)
+
+        se <- sqrt(var2 + var1)
+
+        # todo: check welch approximation with weights
+        df <- se^4 /
+          (
+            (var2^2 / (length(Y2)-1)) +
+              (var1^2 / (length(Y1)-1))
+          )
+      }
+
     }
 
     return_frame <-
