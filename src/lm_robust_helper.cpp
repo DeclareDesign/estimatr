@@ -335,8 +335,8 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
        }
 
 
-       Rcout << "XtX_inv: " << std::endl << XtX_inv << std::endl;
-       Rcout << "tutX: " << std::endl << tutX << std::endl;
+       // Rcout << "XtX_inv: " << std::endl << XtX_inv << std::endl;
+       // Rcout << "tutX: " << std::endl << tutX << std::endl;
 
        Vcov_hat = XtX_inv * (tutX.transpose() * tutX) * XtX_inv;
 //
