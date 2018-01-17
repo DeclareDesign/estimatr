@@ -74,7 +74,9 @@ difference_in_means <-
         alpha = alpha
       )
 
-      ## todo: add inflation from GG fn 20 ch 3
+      # For clustered cases Gerber & Green suggest footnote 20 on ch 3
+      # Instead we use CR2 in lm_robust
+      # For un-clustered cases we just do the following
       if (is.na(return_frame$df)) {
         return_frame$df <- with(return_frame,
                                 N - 2)
@@ -154,8 +156,6 @@ difference_in_means <-
               sqrt( (1 / (n_blocks * (n_blocks - 1))) * sum((est - diff)^2) )
             )
 
-          # I'm using a conservative DoF here
-          df <- n_blocks - 1
         } else {
           # Pair matched, cluster randomized (Imai, King, Nall 2009, p36, eq6)
           se <-
@@ -166,21 +166,25 @@ difference_in_means <-
                   sum( (N * est - (N_overall * diff)/n_blocks)^2 )
               )
             )
-
-          # from  (Imai, King, Nall 2009, p37)
-          df <- n_blocks - 1
         }
+
+        # For pair matched, cluster randomized Imai et al. 2009 recommend (p. 37)
+        df <- n_blocks - 1
 
       } else {
         # Block randomized (Gerber and Green 2012, p. 74, footnote 17)
         se <- with(block_estimates, sqrt(sum(se^2 * (N/N_overall)^2)))
-      }
 
-      if(is.na(df)) {
+
         ## we don't know if this is correct!
-        ## matches lm_lin, two estimates per block without clustering
-        ## But with clustering it appears to be far too large
-        df <- N_overall - 2 * n_blocks
+        ## matches lm_lin, two estimates per block
+        if (is.null(data$cluster)) {
+          df <- N_overall - 2 * n_blocks
+        } else {
+          # Also matches lm_lin for even sized clusters, should be conservative
+          df <- sum(clust_per_block) - 2 * n_blocks
+        }
+
       }
 
       p <- 2 * pt(abs(diff / se), df = df, lower.tail = FALSE)
