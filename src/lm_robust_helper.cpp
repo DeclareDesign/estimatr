@@ -203,7 +203,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
         Vcov_hat = XtX_inv * (X.transpose() * hii.matrix().asDiagonal()) * X * XtX_inv;
       }
 
-   } else if ( (type == "stata") | (type == "CR2") ) {
+    } else if ( (type == "stata") || (type == "CR2") || (type == "CR0") ) {
 
      Eigen::Map<Eigen::ArrayXi> clusters = Rcpp::as<Eigen::Map<Eigen::ArrayXi> >(cluster);
 
