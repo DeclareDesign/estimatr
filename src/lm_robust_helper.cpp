@@ -179,10 +179,12 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
       Eigen::ArrayXd ei2 = ei.array().pow(2);
 
       if(type == "HC0"){
+
         Vcov_hat = XtX_inv * (X.transpose() * ei2.matrix().asDiagonal()) * X * XtX_inv;
 
       } else if (type == "HC1") {
-        Vcov_hat = n/(n-r) * XtX_inv * (X.transpose() * ei2.matrix().asDiagonal()) * X * XtX_inv;
+
+        Vcov_hat = (double)n / ((double)n - (double)r) * XtX_inv * (X.transpose() * ei2.matrix().asDiagonal()) * X * XtX_inv;
       } else if (type == "HC2") {
         Eigen::ArrayXd hii(n);
 
