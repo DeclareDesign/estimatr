@@ -242,9 +242,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
        int len = 1;
 
        // iterate over unique cluster values
-       for(int i = 1;
-           i <= n;
-           ++i){
+       for(int i = 1; i <= n; ++i){
 
          //Rcout << "clusters(i): " << clusters(i) << std::endl;
          if ((i == n) || (clusters(i) != current_cluster)) {
@@ -388,9 +386,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
         int len = 1;
 
         // iterate over unique cluster values
-        for(int i = 1;
-            i <= n;
-            ++i){
+        for(int i = 1; i <= n; ++i){
 
           if ((i == n) || (clusters(i) != current_cluster)) {
             // Rcout << current_cluster << std::endl;
