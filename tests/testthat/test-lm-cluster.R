@@ -226,3 +226,31 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
   # works with being cast in the call
   lm_robust(Y~Z, data = dat, clusters = as.factor(J))
 })
+
+test_that("Clustered SEs work with clusters of size 1", {
+  dat <- data.frame(Y = rnorm(100),
+                    X = rnorm(100),
+                    J = 1:100)
+
+  lm_cr2 <- lm_robust(Y ~ X, data = dat, clusters = J)
+  lm_stata <- lm_robust(Y ~ X, data = dat, clusters = J, se_type = "stata")
+  lmo <- lm(Y ~ X, data = dat)
+
+  bmo <-
+    BMlmSE(
+      lmo,
+      clustervar = as.factor(dat$J),
+      IK = FALSE
+    )
+
+  expect_equivalent(
+    as.matrix(tidy(lm_cr2)[, c('est', 'se', 'df')]),
+    cbind(lmo$coefficients, bmo$se, bmo$dof)
+  )
+
+  expect_equivalent(
+    as.matrix(tidy(lm_stata)[, c('est', 'se')]),
+    cbind(lmo$coefficients, bmo$se.Stata)
+  )
+
+})
