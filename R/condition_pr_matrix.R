@@ -49,7 +49,7 @@ declaration_to_condition_pr_mat <- function(declaration) {
 
     condition_pr_matrix <-
       gen_pr_matrix_cluster(
-        clusters = declaration$clust_var,
+        clusters = declaration$clusters,
         treat_probs = p2,
         simple = simple
       )
