@@ -7,7 +7,7 @@ output:
 link-citations: yes
 bibliography: estimatr.bib
 vignette: |
-  %\VignetteIndexEntry{Estimatr - Fast estimators for social scientists} 
+  %\VignetteIndexEntry{Getting started using estimatr} 
   %\VignetteEngine{knitr::knitr}
   \usepackage[utf8]{inputenc}
 ---

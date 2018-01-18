@@ -380,7 +380,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
            }
          }
        }
-     } else if (type == "stata") {
+     } else if ((type == "stata") || (type == "CR0")) {
 
         Eigen::MatrixXd XteetX = Eigen::MatrixXd::Zero(r, r);
         double current_cluster = clusters(0);
@@ -423,7 +423,13 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
         // Rcout << "r: " << r << std::endl;
         // Rcout << "corr: " << ((J * (n - 1)) / ((J - 1) * (n - r))) << std::endl;
         // Rcout << "sandwich: " << (XtX_inv * XteetX * XtX_inv) << std::endl;
-        Vcov_hat = (((double)J * (n - 1)) / (((double)J - 1) * (n - r))) * (XtX_inv * XteetX * XtX_inv);
+
+        if (type == "stata") {
+          Vcov_hat = (((double)J * (n - 1)) / (((double)J - 1) * (n - r))) * (XtX_inv * XteetX * XtX_inv);
+        } else {
+          Vcov_hat = XtX_inv * XteetX * XtX_inv;
+        }
+
         dof.fill(J - 1);
 
         //Rcpp::Rcout << 'here' << std::endl;

@@ -25,8 +25,8 @@ lm_robust_fit <- function(y,
                           try_cholesky) {
 
   ## allowable se_types with clustering
-  cl_se_types <- c("CR2", "stata")
-  rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical")
+  cl_se_types <- c("CR0", "CR2", "stata")
+  rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata")
 
   ## Parse cluster variable
   if (!is.null(cluster)) {
@@ -43,10 +43,10 @@ lm_robust_fit <- function(y,
     # set/check se_type
     if (is.null(se_type)) {
       se_type <- "HC2"
-    } else if (se_type %in% cl_se_types) {
-      stop("Incorrect se_type. 'CR2' and 'stata' only allowed for clustered standard errors.")
+    } else if (se_type %in% setdiff(cl_se_types, "stata")) {
+      stop("Incorrect se_type. 'CR0' and 'CR2' only allowed for clustered standard errors.")
     } else if (!(se_type %in% c(rob_se_types, "none"))) {
-      stop('Incorrect se_type. "HC0", "HC1", "HC2", "HC3", "classical" are the se_type options without clustering. Also can choose "none".')
+      stop("Incorrect se_type. 'HC0', 'HC1', 'stata', 'HC2', 'HC3', 'classical' are the se_type options without clustering. Also can choose 'none'.")
     }
 
   }
