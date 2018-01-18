@@ -15,3 +15,5 @@ _pkgdown.yml
 update_repo.R
 ^data-raw$
 ^_pkgdown\.yml$
+^tests/testthat/mtcars\.csv$
+^tests/testthat/run-stata-models\.do$
