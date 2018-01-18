@@ -78,6 +78,7 @@ tidy.lm_robust <- function(object, ...) {
 #' @return A data.frame with with coefficient names, estimates, standard
 #' errors, confidence intervals, p-values, degrees of freedom
 #'
+#' @export tidy.difference_in_means
 #' @export
 tidy.difference_in_means <- function(object, ...) {
   return_frame <- tidy_data_frame(object)
@@ -92,6 +93,7 @@ tidy.difference_in_means <- function(object, ...) {
 #' @return A data.frame with with coefficient names, estimates, standard
 #' errors, confidence intervals, p-values, degrees of freedom
 #'
+#' @export tidy.horvitz_thompson
 #' @export
 tidy.horvitz_thompson <- function(object, ...) {
   return_frame <- tidy_data_frame(object)
