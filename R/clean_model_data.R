@@ -29,7 +29,7 @@ clean_model_data <- function(formula,
   mf <- mf[c(1, match(names(formals(sys.function())), names(mf),0L))] #drop formals left missing
   mf[[1]] <- quote(stats::model.frame)
   mf[["where"]] <- NULL # drop the where argument
-  mf[["na.action"]] <- quote(estimatr:::na.omit_detailed.data.frame) #TODO fix :::via roxygen
+  mf[["na.action"]] <- quote(estimatr::na.omit_detailed.data.frame)
 
   # Weights and clusters may be quoted...
   # TODO helper function

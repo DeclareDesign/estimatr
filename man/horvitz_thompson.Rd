@@ -97,7 +97,7 @@ horvitz_thompson(y ~ z, data = dat, condition_pr_mat = arb_pr_mat)
 # Clustered treatment, complete random assigment
 # Simulating data
 dat$cl <- rep(1:4, times = c(2, 2, 3, 3))
-clust_crs_decl <- randomizr::declare_ra(N = nrow(dat), clust_var = dat$cl, prob = 0.5)
+clust_crs_decl <- randomizr::declare_ra(N = nrow(dat), clusters = dat$cl, prob = 0.5)
 dat$z <- randomizr::conduct_ra(clust_crs_decl)
 # Regular SE using Young's inequality
 horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl)
