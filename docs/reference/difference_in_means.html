@@ -52,7 +52,10 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../articles/estimatr-vignette.html">Getting Started</a>
+  <a href="../articles/getting-started.html">Getting Started</a>
+</li>
+<li>
+  <a href="../articles/technical-notes.html">Technical Notes</a>
 </li>
 <li>
   <a href="../reference/index.html">Reference</a>
@@ -108,9 +111,8 @@
     <p>Built-in Estimators: Difference-in-means</p>
     
 
-    <pre class="usage"><span class='fu'>difference_in_means</span>(<span class='no'>formula</span>, <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>data</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>subset</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>)</pre>
+    <pre class="usage"><span class='fu'>difference_in_means</span>(<span class='no'>formula</span>, <span class='no'>blocks</span>, <span class='no'>clusters</span>, <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>data</span>, <span class='no'>weights</span>, <span class='no'>subset</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -165,11 +167,17 @@
                   <span class='kw'>block</span> <span class='kw'>=</span> <span class='fu'>sample</span>(<span class='fu'>c</span>(<span class='st'>"A"</span>, <span class='st'>"B"</span>, <span class='st'>"C"</span>), <span class='fl'>100</span>, <span class='kw'>replace</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>))
 
  <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p   ci_lower  ci_upper       df
-#&gt; 1                Z 0.1224875 0.2674282 0.6485812 -0.4123728 0.6573477 60.41608</div><div class='input'> <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p  ci_lower  ci_upper       df
-#&gt; 1                Z 0.2770966 0.2432306 0.2588673 -0.208847 0.7630401 63.76421</div><div class='input'>
- <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>block</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name        est        se        p  ci_lower  ci_upper df
-#&gt; 1                Z 0.02735372 0.2960366 0.926571 -0.560197 0.6149045 97</div><div class='input'> <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>block</span>, <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p   ci_lower  ci_upper df
-#&gt; 1                Z 0.2107775 0.2830092 0.4582099 -0.3509175 0.7724725 97</div><div class='input'>
+#&gt; 1                Z 0.1224875 0.2674282 0.6485812 -0.4123728 0.6573477 60.41608
+#&gt;   outcome
+#&gt; 1       Y</div><div class='input'> <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p  ci_lower  ci_upper       df
+#&gt; 1                Z 0.2770966 0.2432306 0.2588673 -0.208847 0.7630401 63.76421
+#&gt;   outcome
+#&gt; 1       Y</div><div class='input'>
+ <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>block</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name        est        se        p   ci_lower  ci_upper df
+#&gt; 1                Z 0.02735372 0.2960366 0.926577 -0.5604339 0.6151414 94
+#&gt;   outcome
+#&gt; 1       Y</div><div class='input'> <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>block</span>, <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p  ci_lower ci_upper df outcome
+#&gt; 1                Z 0.2107775 0.2830092 0.4582673 -0.351144 0.772699 94       Y</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -187,7 +195,7 @@
 
       <footer>
       <div class="copyright" style="flex:3;">
-  <p>Developed by Graeme Blair, Jasper Cooper, Alexander Coppock, Macartan Humphreys, Luke Sonnet.</p>
+  <p>Developed by Graeme Blair, Jasper Cooper, Alexander Coppock, Macartan Humphreys, Luke Sonnet, Neal Fultz.</p>
   <p>Code is licensed under <a href="https://opensource.org/licenses/mit-license.php">MIT</a> license.</p>
 </div>
 

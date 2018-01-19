@@ -1,0 +1,247 @@
+---
+title: 'Getting started using estimatr'
+author: "Luke Sonnet"
+output:
+  html_document:
+    df_print: paged
+link-citations: yes
+bibliography: estimatr.bib
+vignette: |
+  %\VignetteIndexEntry{Getting started using estimatr} 
+  %\VignetteEngine{knitr::knitr}
+  \usepackage[utf8]{inputenc}
+---
+
+\newcommand{\X}{\mathbf{X}}
+\newcommand{\Pb}{\mathbf{P}}
+\newcommand{\Gb}{\mathbf{G}}
+\newcommand{\XtXinv}{(\X^{\top}\X)^{-1}}
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\e}{\mathbf{e}}
+\newcommand{\V}{\mathbb{V}}
+
+```{r, echo = FALSE}
+set.seed(42)
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+options(digits = 2)
+```
+
+**estimatr** is a package in R dedicated to providing fast estimators for social scientists. Estimators are statistical methods for estimating quantities of interest like treatment effects or regression parameters. Many of the estimators included with the R programming language or popular R packages are slow and have default settings that lead to statistically inappropriate estimates. Certain estimators that reflect cutting-edge advances in statistics are not yet implemented in R packages for convenient use. **estimatr** is designed to solve these problems.
+
+# Estimators
+
+The current estimators we provide are:
+
+* [`lm_robust()`](#lm_robust) - for fitting linear models with heteroskedasticity/cluster robust standard errors
+* [`lm_lin()`](#lm_lin) - a wrapper for `lm_robust()` to simplify interacting centered pre-treatment covariates with a treatment variable
+* [`difference_in_means()`](#difference_in_means) - for estimating differences in means with appropriate standard errors for simple, cluster randomized, block randomized, matched-pair designs and more
+* [`horvitz_thompson()`](#horvitz_thompson) - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs
+
+To demonstrate basic usage of each of the estimators, I first create some sample data.
+
+```{r echo=TRUE, results="hide"}
+library(estimatr)
+
+# Example dataset to be used throughout built using fabricatr and randomizr
+library(fabricatr)
+library(randomizr)
+dat <- fabricate(
+  N = 100,                        # sample size
+  x = runif(N, 0, 1),             # pre-treatment covariate
+  y0 = rnorm(N, mean = x),        # control potential outcome
+  y1 = y0 + 0.35,                 # treatment potential outcome
+  z = randomizr::complete_ra(N),  # complete random assignment to treatment
+  y = ifelse(z, y1, y0),          # observed outcome
+
+  # We will also consider clustered data
+  clust = sample(rep(letters[1:20], each = 5)),
+  z_clust = cluster_ra(clust),
+  y_clust = ifelse(z_clust, y1, y0)
+)
+
+head(dat)
+```
+```{r echo=FALSE}
+knitr::kable(head(dat))
+```
+
+## `lm_robust`
+
+The `estimatr` package provides a function to quickly fit linear models with the most common variance estimators and degrees of freedom corrections used in social science. You can easily return heteroskedastic standard errors, clustered standard errors, and classical standard errors.
+
+Usage largely mimics `lm()`, although it defaults to using Eicker-Huber-White robust standard errors, specifically 'HC2' standard errors:
+
+```{r, lm_robust, results="hide"}
+res <- lm_robust(y ~ z + x, data = dat)
+tidy(res) # summary(res) is very similar
+```
+```{r, echo=FALSE}
+knitr::kable(tidy(res))
+```
+
+It is straightforward to do cluster-robust inference, by passing the name of your cluster variable to the `clusters =` argument. Note that `lm_robust()` is much quicker if your cluster variable is a factor!
+
+```{r, echo=TRUE, results="hide"}
+res_cl <- lm_robust(
+  y_clust ~ z_clust + x,
+  data = dat,
+  clusters = clust
+)
+tidy(res_cl)
+```
+```{r echo=FALSE}
+knitr::kable(tidy(res_cl))
+```
+
+The default variance estimator with clusters is dubbed 'CR2' because it is analogous to 'HC2' for the clustered case, and utilizes recent advances proposed by @pustejovskytipton2016 to correct hypotheses tests for small samples and work with commonly specified fixed effects and weights.
+
+Researchers can also replicate Stata's clustered standard errors by using the `se_type =` argument:
+```{r echo=TRUE, results="hide"}
+res_stata <- lm_robust(
+  y_clust ~ z_clust + x,
+  data = dat,
+  clusters = clust,
+  se_type = "stata"
+)
+tidy(res_stata)
+```
+```{r echo=FALSE}
+knitr::kable(tidy(res_stata))
+```
+
+## `lm_lin`
+
+Following the critique by @freedman2008 that pre-treatment covariate adjustment biases estimates of average treatment effects, @lin2013 proposed an alternative estimator that would reduce this bias and improve precision. The @lin2013 estimator suggests centering all pre-treatment covariates and interacting them with the treatment variable. To facilitate this, we provide a wrapper that can do that process for you. 
+
+```{r echo=TRUE, results="hide"}
+res_lin <- lm_lin(
+  y ~ z,
+  covariates = ~ x,
+  data = dat
+)
+tidy(res_lin)
+```
+```{r echo=FALSE}
+knitr::kable(tidy(res_lin))
+```
+
+As this function is a wrapper for `lm_robust()`, all arguments that work for `lm_robust()` work here.
+
+## `difference_in_means`
+
+While estimating differences in means may seem straightforward, we provide a function that appropriately adjusts estimates for blocking and clustering to match the current state of knowledge in social science methodology. Usage is similar to usage in regression functions.
+
+```{r echo=TRUE, results="hide"}
+# Simple version
+res_dim <- difference_in_means(
+  y ~ z,
+  data = dat
+)
+tidy(res_dim)
+```
+```{r echo=FALSE}
+knitr::kable(tidy(res_dim))
+```
+```{r echo=TRUE, results="hide"}
+# Clustered version
+res_dim_cl <- difference_in_means(
+  y_clust ~ z_clust,
+  data = dat,
+  clusters = clust
+)
+```
+```{r echo=FALSE}
+knitr::kable(tidy(res_dim_cl))
+```
+
+## `horvitz_thompson`
+
+Horvitz-Thompson estimators are useful when estimating treatment effects without bias when there is a clustered design with unequal size clusters or when the treatment assignment process is arbitrarily complex. Horvitz-Thompson estimators require information about the treatment (and control) probabilities for each unit, and the joint treatment and control probabilities of every pair of units. For designs that are not arbitrarily complex, passing your randomization scheme using `randomizr::declare_ra()` is the easiest path forward.
+
+```{r, results="hide"}
+# Complete random assignment declaration
+crs_decl <- declare_ra(
+  N = nrow(dat),
+  prob = 0.5,
+  simple = FALSE
+)
+
+ht_comp <- horvitz_thompson(
+  y ~ z,
+  data = dat,
+  declaration = crs_decl
+)
+tidy(ht_comp)
+```
+```{r, echo=FALSE}
+knitr::kable(tidy(ht_comp))
+```
+
+```{r, results = "hide"}
+# Clustered random assignment declaration
+crs_clust_decl <- declare_ra(
+  N = nrow(dat),
+  clusters = dat$clust,
+  prob = 0.5,
+  simple = FALSE
+)
+
+ht_clust <- horvitz_thompson(
+  y_clust ~ z_clust,
+  data = dat,
+  declaration = crs_clust_decl
+)
+tidy(ht_clust)
+```
+```{r echo=FALSE}
+knitr::kable(tidy(ht_clust))
+```
+
+There are two main variance estimators we provide, a conservative estimator using Young's inequality (`se_type = "youngs"`), described by @aronowmiddleton2013, and an estimator that assumes constant treatment effects (`se_type = "constant"`). The default is the conservative estimator.
+
+```{r, results="hide"}
+ht_constant <- horvitz_thompson(
+  y_clust ~ z_clust,
+  data = dat,
+  declaration = crs_clust_decl,
+  se_type = "constant"
+)
+tidy(ht_constant)
+```
+```{r echo=FALSE}
+knitr::kable(tidy(ht_constant))
+```
+
+You can also build the condition probability matrix (`condition_prob_mat = `) that `horvitz_thompson()` needs yourself. This matrix is an 2N by 2N matrix, where the first N rows and N columns (the upper-left corner) are the joint probability of each unit being in the control condition with every other unit being in the control condition. The upper right N by N matrix is the joint probability of each unit being in the control condition with every other unit being in the treated condition. The second N rows are the same, with the joint probability of each unit being in the treated condition first with each unit being in the control (first N columns) and then with each unit being in the treated as well (second N columns).
+
+We also provide helper functions to build this matrix from a set of possible permutations of the treatment vector.
+
+```{r, results="hide"}
+# Generate 500 arbitrary permutations
+permutes <- matrix(
+  rbinom(nrow(dat) * 500, size = 1, prob = 0.5),
+  nrow = nrow(dat)
+)
+dim(permutes)
+permutes[1:5, 1:2]
+
+# Get condition probability matrix
+arb_pr_mat <- permutations_to_condition_pr_mat(permutes)
+
+ht_arb <- horvitz_thompson(
+  y ~ z,
+  data = dat,
+  condition_pr_mat = arb_pr_mat
+)
+tidy(ht_arb)
+```
+```{r echo=FALSE}
+knitr::kable(tidy(ht_arb))
+```
+
+# References

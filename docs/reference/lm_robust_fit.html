@@ -52,7 +52,10 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../articles/estimatr-vignette.html">Getting Started</a>
+  <a href="../articles/getting-started.html">Getting Started</a>
+</li>
+<li>
+  <a href="../articles/technical-notes.html">Technical Notes</a>
 </li>
 <li>
   <a href="../reference/index.html">Reference</a>
@@ -109,7 +112,7 @@
     
 
     <pre class="usage"><span class='fu'>lm_robust_fit</span>(<span class='no'>y</span>, <span class='no'>X</span>, <span class='no'>weights</span>, <span class='no'>cluster</span>, <span class='no'>ci</span>, <span class='no'>se_type</span>, <span class='no'>alpha</span>, <span class='no'>coefficient_name</span>,
-  <span class='no'>return_vcov</span>)</pre>
+  <span class='no'>return_vcov</span>, <span class='no'>try_cholesky</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -150,6 +153,10 @@
       <th>return_vcov</th>
       <td><p>a boolean for whether to return the vcov matrix for later usage</p></td>
     </tr>
+    <tr>
+      <th>try_cholesky</th>
+      <td><p>a boolean for whether to try using a cholesky decomposition to solve LS instead of a QR decomposition</p></td>
+    </tr>
     </table>
     
 
@@ -165,7 +172,7 @@
 
       <footer>
       <div class="copyright" style="flex:3;">
-  <p>Developed by Graeme Blair, Jasper Cooper, Alexander Coppock, Macartan Humphreys, Luke Sonnet.</p>
+  <p>Developed by Graeme Blair, Jasper Cooper, Alexander Coppock, Macartan Humphreys, Luke Sonnet, Neal Fultz.</p>
   <p>Code is licensed under <a href="https://opensource.org/licenses/mit-license.php">MIT</a> license.</p>
 </div>
 

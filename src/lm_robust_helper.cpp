@@ -179,10 +179,12 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
       Eigen::ArrayXd ei2 = ei.array().pow(2);
 
       if(type == "HC0"){
+
         Vcov_hat = XtX_inv * (X.transpose() * ei2.matrix().asDiagonal()) * X * XtX_inv;
 
       } else if (type == "HC1") {
-        Vcov_hat = n/(n-r) * XtX_inv * (X.transpose() * ei2.matrix().asDiagonal()) * X * XtX_inv;
+
+        Vcov_hat = (double)n / ((double)n - (double)r) * XtX_inv * (X.transpose() * ei2.matrix().asDiagonal()) * X * XtX_inv;
       } else if (type == "HC2") {
         Eigen::ArrayXd hii(n);
 
@@ -201,7 +203,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
         Vcov_hat = XtX_inv * (X.transpose() * hii.matrix().asDiagonal()) * X * XtX_inv;
       }
 
-   } else if ( (type == "stata") | (type == "CR2") ) {
+    } else if ( (type == "stata") || (type == "CR2") || (type == "CR0") ) {
 
      Eigen::Map<Eigen::ArrayXi> clusters = Rcpp::as<Eigen::Map<Eigen::ArrayXi> >(cluster);
 
@@ -378,7 +380,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
            }
          }
        }
-     } else if (type == "stata") {
+     } else if ((type == "stata") || (type == "CR0")) {
 
         Eigen::MatrixXd XteetX = Eigen::MatrixXd::Zero(r, r);
         double current_cluster = clusters(0);
@@ -419,7 +421,13 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
         // Rcout << "r: " << r << std::endl;
         // Rcout << "corr: " << ((J * (n - 1)) / ((J - 1) * (n - r))) << std::endl;
         // Rcout << "sandwich: " << (XtX_inv * XteetX * XtX_inv) << std::endl;
-        Vcov_hat = (((double)J * (n - 1)) / (((double)J - 1) * (n - r))) * (XtX_inv * XteetX * XtX_inv);
+
+        if (type == "stata") {
+          Vcov_hat = (((double)J * (n - 1)) / (((double)J - 1) * (n - r))) * (XtX_inv * XteetX * XtX_inv);
+        } else {
+          Vcov_hat = XtX_inv * XteetX * XtX_inv;
+        }
+
         dof.fill(J - 1);
 
         //Rcpp::Rcout << 'here' << std::endl;

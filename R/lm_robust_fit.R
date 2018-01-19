@@ -25,8 +25,8 @@ lm_robust_fit <- function(y,
                           try_cholesky) {
 
   ## allowable se_types with clustering
-  cl_se_types <- c("CR2", "stata")
-  rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical")
+  cl_se_types <- c("CR0", "CR2", "stata")
+  rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata")
 
   ## Parse cluster variable
   if (!is.null(cluster)) {
@@ -35,7 +35,7 @@ lm_robust_fit <- function(y,
     if (is.null(se_type)) {
       se_type <- "CR2"
     } else if (!(se_type %in% c(cl_se_types, "none"))) {
-      stop("Incorrect se_type. Only 'CR2' or 'stata' allowed for se_type with clustered standard errors. Also can choose 'none'.")
+      stop("Incorrect se_type. Only 'CR0', 'stata', or 'CR2' allowed for se_type with clustered standard errors. Also can choose 'none'.")
     }
 
   } else {
@@ -43,10 +43,12 @@ lm_robust_fit <- function(y,
     # set/check se_type
     if (is.null(se_type)) {
       se_type <- "HC2"
-    } else if (se_type %in% cl_se_types) {
-      stop("Incorrect se_type. 'CR2' and 'stata' only allowed for clustered standard errors.")
+    } else if (se_type %in% setdiff(cl_se_types, "stata")) {
+      stop("Incorrect se_type. 'CR0' and 'CR2' are only allowed for clustered standard errors.")
     } else if (!(se_type %in% c(rob_se_types, "none"))) {
-      stop('Incorrect se_type. "HC0", "HC1", "HC2", "HC3", "classical" are the se_type options without clustering. Also can choose "none".')
+      stop("Incorrect se_type. 'HC0', 'HC1', 'stata', 'HC2', 'HC3', 'classical' are the se_type options without clustering. Also can choose 'none'.")
+    } else if (se_type == "stata") {
+      se_type <- "HC1"
     }
 
   }
@@ -126,8 +128,6 @@ lm_robust_fit <- function(y,
   n <- nrow(X)
   rank <- sum(est_exists)
 
-  #print(fit)
-
   if(se_type != "none"){
 
     se[est_exists] <- sqrt(diag(fit$Vcov_hat))
@@ -136,8 +136,8 @@ lm_robust_fit <- function(y,
 
       if(se_type %in% cl_se_types){
 
-        ## Replace -99 with NA, easy way to flag that we didn't compute
-        ## the DoF because the user didn't ask for it
+        # Replace -99 with NA, easy way to flag that we didn't compute
+        # the DoF because the user didn't ask for it
         dof[est_exists] <-
           ifelse(fit$dof == -99,
                  NA,
@@ -157,7 +157,6 @@ lm_robust_fit <- function(y,
       ci_upper <- est + qt(1 - alpha / 2, df = dof) * se
 
     }
-
   }
 
   return_list <-

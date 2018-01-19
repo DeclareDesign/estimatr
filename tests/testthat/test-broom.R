@@ -3,6 +3,8 @@
 context("Broom compatability")
 
 test_that("estimatr::tidy works loaded before or after after broom", {
+  detach("package:estimatr", unload = TRUE)
+
   library(broom)
   library(estimatr)
 
@@ -43,4 +45,5 @@ test_that("estimatr::tidy works loaded before or after after broom", {
     broom_tidy_lm_robust,
     estimatr_tidy_lm_robust
   )
+
 })

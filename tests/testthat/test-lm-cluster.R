@@ -2,11 +2,12 @@ context("lm cluster se")
 
 test_that("lm cluster se", {
 
-  dat <- data.frame(Y = rnorm(100),
-                    Z = rbinom(100, 1, .5),
-                    X = rnorm(100),
-                    J = sample(1:10, 100, replace = T),
-                    W = runif(100))
+  N <- 100
+  dat <- data.frame(Y = rnorm(N),
+                    Z = rbinom(N, 1, .5),
+                    X = rnorm(N),
+                    J = sample(1:10, N, replace = T),
+                    W = runif(N))
 
 
   ## Test functionality
@@ -152,6 +153,47 @@ test_that("lm cluster se", {
     ),
     'CR2'
   )
+
+  # To easily do with and without weights
+  test_lm_cluster_variance <- function(w) {
+    # Test other estimators
+    lm_cr0 <- lm_robust(Y ~ Z + X, data = dat, weights = w, clusters = J, se_type = "CR0")
+    lm_stata <- lm_robust(Y ~ Z + X, data = dat, weights = w, clusters = J, se_type = "stata")
+    lm_cr2 <- lm_robust(Y ~ Z + X, data = dat, weights = w, clusters = J, se_type = "CR2")
+
+    # Stata is the same as CR0 but with finite sample
+    expect_equivalent(
+      lm_cr0$se^2,
+      lm_stata$se^2 * (N - length(lm_stata$est)) * (length(unique(dat$J)) - 1) / ((N - 1) * length(unique(dat$J)))
+    )
+
+    expect_false(all(lm_cr0$se == lm_stata$se))
+    expect_false(all(lm_cr0$se == lm_cr2$se))
+    expect_false(all(lm_stata$se == lm_cr2$se))
+    expect_false(all(lm_stata$df == lm_cr2$df))
+
+    expect_equivalent(
+      lm_cr0$df,
+      lm_stata$df
+    )
+  }
+
+  # No weights first
+  test_lm_cluster_variance(NULL)
+  test_lm_cluster_variance(dat$W)
+
+  # Test weights with BMlmSE
+  lm_cr2_w <- lm_robust(Y ~ X, data = dat, weights = W, clusters = J)
+  lm_w <- lm(Y ~ X, data = dat, weights = W)
+  bm_w <- BMlmSE(
+    lm_w,
+    clustervar = factor(dat$J),
+    IK = FALSE
+  )
+
+  clubSandwich::coef_test(lm_w, clubSandwich::vcovCR(lm_w, cluster = dat$J, type = "CR2"))
+  lm_cr2_w$se
+  lm_cr2_w$vcov
 })
 
 test_that("lm cluster se with missingness", {

@@ -27,14 +27,26 @@ Once the package is installed, getting appropriate estimates and standard errors
 ``` r
 library(estimatr)
 
+# sample data from cluster-randomized experiment
+library(fabricatr)
+library(randomizr)
+set.seed(42)
+dat <- fabricate(
+  N = 100,
+  y = rnorm(N),
+  cluster = sample(letters[1:10], size = N, replace = TRUE),
+  z = cluster_ra(cluster)
+)
+
 # robust standard errors
-lm_robust(y ~ z, data = sample_dat)
+res_rob <- lm_robust(y ~ z, data = sample_dat)
 
 # cluster robust standard errors
-lm_robust(y ~ z, data = sample_dat, clusters = my_cluster_var)
+res_cl <- lm_robust(y ~ z, data = sample_dat, clusters = my_cluster_var)
 
-# blocked designs
-difference_in_means(y ~ z, data = sample_dat, blocks = my_block_var)
+# matched-pair design
+data(sleep)
+res_dim <- difference_in_means(extra ~ group, data = sleep, blocks = ID)
 ```
 
 The [Getting Started Guide](http://estimatr.declaredesign.org/articles/estimatr-vignette.html) describes each estimator provided by **estimatr** and how it can be used in your analysis.
@@ -44,12 +56,15 @@ The [Getting Started Guide](http://estimatr.declaredesign.org/articles/estimatr-
 Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using `lm()` and the `sandwich` package to get HC2 standard errors.
 
 ``` r
+# not evaluated here
 # estimatr
 lm_robust(y ~ x1 + x2 + x3 + x4, data = dat)
 
 # usual specification (lm + sandwich)
+library(lmtest)
+library(sandwich)
 lm_out <- lm(y ~ x1 + x2 + x3 + x4, data = dat)
-lmtest::coeftest(lm_out, vcov = sandwich::vcovHC(lm_out, type = 'HC2'))
+coeftest(lm_out, vcov = vcovHC(lm_out, type = 'HC2'))
 ```
 
 ![](vignettes/lm_speed.png)

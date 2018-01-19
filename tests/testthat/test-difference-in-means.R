@@ -663,3 +663,54 @@ test_that("DIM unbiased", {
   }
 
 })
+
+test_that("DIM matches lm_robust under certain conditions", {
+
+  dat <- data.frame(Y = rnorm(400))
+  ## DIM and lm_robust agree without clustering except for DoF because DIM uses Satterthwaite approx
+  dat$z <- c(0, 1)
+  lm_o <- lm_robust(Y ~ z, data = dat, coefficient_name = "z")
+  dim_o <- difference_in_means(Y ~ z, data = dat)
+  expect_equivalent(
+    tidy(lm_o)[, 1:3],
+    tidy(dim_o)[, 1:3]
+  )
+
+  ## DIM and lm_robust agree with clustering becuase DIM just uses lm_robust w/ CR2!
+  dat$cl_diff_size <- sample(100, size = 400, replace = TRUE)
+  dat$z_clustered <- as.numeric(dat$cl_diff_size <= 50)
+
+  lm_cl_o <- lm_robust(Y ~ z_clustered, clusters = cl_diff_size, data = dat, coefficient_name = "z_clustered")
+  dim_cl_o <- difference_in_means(Y ~ z_clustered, clusters = cl_diff_size, data = dat)
+  expect_equivalent(
+    tidy(lm_cl_o),
+    tidy(dim_cl_o)
+  )
+
+  ## Blocked design is equivalent to lm_lin
+  dat$bl <- rep(1:25, each = 16)
+  dat$z_blocked <- rep(c(0, 1), each = 2)
+
+  lm_bl_o <- lm_lin(Y ~ z_blocked, ~ factor(bl), data = dat, coefficient_name = "z_blocked")
+  dim_bl_o <- difference_in_means(Y ~ z_blocked, blocks = bl, data = dat)
+
+  # Not identical since row name of lm_bl_o is 2 due to the intercept
+  expect_equivalent(
+    tidy(lm_bl_o),
+    tidy(dim_bl_o)
+  )
+
+  ## Block-clustered is equivalent to lm_lin
+  ## (and indeed uses lm_robust machinery for the ests and ses, the DoF are equivalent with equal clusters
+  ## by design
+  dat$cl <- rep(1:200, each = 2)
+  lm_blcl_o <- lm_lin(Y ~ z_blocked, ~ factor(bl), data = dat, clusters = cl, coefficient_name = "z_blocked")
+  dim_blcl_o <- difference_in_means(Y ~ z_blocked, blocks = bl, clusters = cl, data = dat)
+
+  # Not identical since row name of lm_bl_o is 2 due to the intercept
+  expect_equivalent(
+    tidy(lm_blcl_o),
+    tidy(dim_blcl_o)
+  )
+
+})

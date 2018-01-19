@@ -73,7 +73,7 @@
 #' # Clustered treatment, complete random assigment
 #' # Simulating data
 #' dat$cl <- rep(1:4, times = c(2, 2, 3, 3))
-#' clust_crs_decl <- randomizr::declare_ra(N = nrow(dat), clust_var = dat$cl, prob = 0.5)
+#' clust_crs_decl <- randomizr::declare_ra(N = nrow(dat), clusters = dat$cl, prob = 0.5)
 #' dat$z <- randomizr::conduct_ra(clust_crs_decl)
 #' # Regular SE using Young's inequality
 #' horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl)
@@ -125,18 +125,18 @@ horvitz_thompson <-
       }
 
       # Add clusters, blocks, and treatment probabilities to data so they can be cleaned with clean_model_data
-      if (!is.null(declaration$clust_var)) {
+      if (!is.null(declaration$clusters)) {
         if (is.null(data$`.clusters_ddinternal`)) {
-          data$`.clusters_ddinternal` <- declaration$clust_var
+          data$`.clusters_ddinternal` <- declaration$clusters
           clusters <- '.clusters_ddinternal'
         } else {
           stop("estimatr stores clusters from declarations in a variable called .clusters_ddinternal in your data. Please remove it and try again.")
         }
       }
 
-      if (!is.null(declaration$block_var)) {
+      if (!is.null(declaration$blocks)) {
         if (is.null(data$`.blocks_ddinternal`)) {
-          data$`.blocks_ddinternal` <- declaration$block_var
+          data$`.blocks_ddinternal` <- declaration$blocks
           blocks <- '.blocks_ddinternal'
         } else {
           stop("estimatr stores blocks from declarations in a variable called .blocks_ddinternal in your data. Please remove it and try again.")
