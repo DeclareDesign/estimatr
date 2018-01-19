@@ -182,18 +182,7 @@ test_that("lm cluster se", {
   test_lm_cluster_variance(NULL)
   test_lm_cluster_variance(dat$W)
 
-  # Test weights with BMlmSE
-  lm_cr2_w <- lm_robust(Y ~ X, data = dat, weights = W, clusters = J)
-  lm_w <- lm(Y ~ X, data = dat, weights = W)
-  bm_w <- BMlmSE(
-    lm_w,
-    clustervar = factor(dat$J),
-    IK = FALSE
-  )
-
-  clubSandwich::coef_test(lm_w, clubSandwich::vcovCR(lm_w, cluster = dat$J, type = "CR2"))
-  lm_cr2_w$se
-  lm_cr2_w$vcov
+  # bmlmse doesn't take into consideration weights, can't test
 })
 
 test_that("lm cluster se with missingness", {
