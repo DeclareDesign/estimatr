@@ -52,7 +52,10 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../articles/estimatr-vignette.html">Getting Started</a>
+  <a href="../articles/getting-started.html">Getting Started</a>
+</li>
+<li>
+  <a href="../articles/technical-notes.html">Technical Notes</a>
 </li>
 <li>
   <a href="../reference/index.html">Reference</a>
@@ -108,8 +111,9 @@
     <p>Linear regression with the Lin (2013) covariate adjustment</p>
     
 
-    <pre class="usage"><span class='fu'>lm_lin</span>(<span class='no'>formula</span>, <span class='no'>data</span>, <span class='no'>covariates</span>, <span class='no'>weights</span>, <span class='no'>subset</span>, <span class='no'>clusters</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>coefficient_name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>return_vcov</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+    <pre class="usage"><span class='fu'>lm_lin</span>(<span class='no'>formula</span>, <span class='no'>covariates</span>, <span class='no'>data</span>, <span class='no'>weights</span>, <span class='no'>subset</span>, <span class='no'>clusters</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>coefficient_name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>return_vcov</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>try_cholesky</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -119,12 +123,12 @@
       <td><p>An object of class "formula", such as Y ~ Z. Should only have the outcome and the treatment.</p></td>
     </tr>
     <tr>
-      <th>data</th>
-      <td><p>A data.frame.</p></td>
-    </tr>
-    <tr>
       <th>covariates</th>
       <td><p>A one-sided formula with all of the covariates on the right hand side, such as ~ x1 + x2 + x3.</p></td>
+    </tr>
+    <tr>
+      <th>data</th>
+      <td><p>A data.frame.</p></td>
     </tr>
     <tr>
       <th>weights</th>
@@ -158,6 +162,10 @@
       <th>return_vcov</th>
       <td><p>a boolean for whether to return the vcov matrix for later usage, TRUE by default.</p></td>
     </tr>
+    <tr>
+      <th>try_cholesky</th>
+      <td><p>a boolean for whether to try using a cholesky decomposition to solve LS instead of a QR decomposition, FALSE by default. See 'details'.</p></td>
+    </tr>
     </table>
     
 
@@ -173,7 +181,7 @@
 
       <footer>
       <div class="copyright" style="flex:3;">
-  <p>Developed by Graeme Blair, Jasper Cooper, Alexander Coppock, Macartan Humphreys, Luke Sonnet.</p>
+  <p>Developed by Graeme Blair, Jasper Cooper, Alexander Coppock, Macartan Humphreys, Luke Sonnet, Neal Fultz.</p>
   <p>Code is licensed under <a href="https://opensource.org/licenses/mit-license.php">MIT</a> license.</p>
 </div>
 

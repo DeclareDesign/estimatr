@@ -19,13 +19,15 @@ roles_include:
 navbar:
   type: default
   left:
-  - text: "Getting Started"
-    href: articles/estimatr-vignette.html
+  - text: Getting Started
+    href: articles/getting-started.html
+  - text: Technical Notes
+    href: articles/technical-notes.html
   - text: Reference
     href: reference/index.html
-  - text: "Ask for Help"
+  - text: Ask for Help
     href: http://discuss.declaredesign.org
-  - text: "Packages"
+  - text: Packages
     menu:
       - text: DeclareDesign
         href: http://declaredesign.org
@@ -38,4 +40,4 @@ navbar:
   - text: "DeclareDesign home"
     href: http://declaredesign.org
   right:
-  - text: 
+  - text:
