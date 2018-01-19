@@ -23,7 +23,6 @@ test_that("lm robust se",{
   )
 
   # we gotta figure out no quoting....
-  expect_error(lm_robust(Y ~ Z + X, coefficient_name = X, data = dat))
   expect_error(lm_robust(Y ~ Z + X, coefficient_name = c(Z, X), data = dat))
   expect_error(lm_robust(Y ~ Z + X, coefficient_name = c((Intercept), Z, X), data = dat))
   expect_error(lm_robust(Y ~ Z*X, coefficient_name = Z:X, data = dat))

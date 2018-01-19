@@ -1,7 +1,5 @@
 // This file fits many models in stata and outputs the estimates for comparison with estimatr
 
-cd ~/Dropbox/coding/dd/estimatr/tests/testthat/
-
 clear all
 import delimited mtcars.csv
 
@@ -30,6 +28,7 @@ mat V=e(V)
 file write outf _n "stata_cl" _tab (V[1,1]) _tab (V[2,2]) _tab (e(df_r))
 
 reg mpg hp [aweight=w]
+predict hii, hat
 mat V=e(V)
 file write outf _n "classicalw" _tab (V[1,1]) _tab (V[2,2]) _tab (e(df_r))
 

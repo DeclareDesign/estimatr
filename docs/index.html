@@ -91,7 +91,7 @@
 <a href="#estimatr-fast-estimators-for-social-scientists" class="anchor"></a>estimatr: Fast estimators for social scientists</h1></div>
 
 <p>Technical papers and textbooks demand complex estimation strategies that are often difficult to implement, even for scientists who are expert coders. The result is slow code copied and pasted from the internet, where the result is taken on faith.</p>
-<p><strong>estimatr</strong> provides a small set of commonly-used estimators (methods for estimating quantities of interest like treatment effects or regression parameters), written in <code>C++</code> for speed, and implemented in <code>R</code> with simple, accessible syntax. We include a difference in means estimator <a href="reference/difference_in_means.html"><code><a href="reference/difference_in_means.html">difference_in_means()</a></code></a>, a difference in totals estimator <a href="reference/horvitz_thompson.html"><code><a href="reference/horvitz_thompson.html">horvitz_thompson()</a></code></a>, and two functions for linear regression estimators, <a href="reference/lm_robust.html"><code><a href="reference/lm_robust.html">lm_robust()</a></code></a> and <a href="reference/lm_lin.html"><code><a href="reference/lm_lin.html">lm_lin()</a></code></a>. In each case, scientists can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs.</p>
+<p><strong>estimatr</strong> provides a small set of commonly-used estimators (methods for estimating quantities of interest like treatment effects or regression parameters), written in <code>C++</code> for speed, and implemented in <code>R</code> with simple, accessible syntax. We include two functions that implement means estimators, <a href="reference/difference_in_means.html"><code><a href="reference/difference_in_means.html">difference_in_means()</a></code></a> and <a href="reference/horvitz_thompson.html"><code><a href="reference/horvitz_thompson.html">horvitz_thompson()</a></code></a>. In addition, we include two functions for linear regression estimators, <a href="reference/lm_robust.html"><code><a href="reference/lm_robust.html">lm_robust()</a></code></a> and <a href="reference/lm_lin.html"><code><a href="reference/lm_lin.html">lm_lin()</a></code></a>. In each case, scientists can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs.</p>
 <p>Fast estimators also enable fast simulation of research designs to learn about their properties (see <a href="http://declaredesign.org">DeclareDesign</a>).</p>
 <div id="installing-estimatr" class="section level3">
 <h3 class="hasAnchor">
@@ -106,26 +106,41 @@
 <p>Once the package is installed, getting appropriate estimates and standard errors is now both fast and easy.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(estimatr)
 
+<span class="co"># sample data from cluster-randomized experiment</span>
+<span class="kw">library</span>(fabricatr)
+<span class="kw">library</span>(randomizr)
+<span class="kw">set.seed</span>(<span class="dv">42</span>)
+dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/fabricatr/topics/fabricate">fabricate</a></span>(
+  <span class="dt">N =</span> <span class="dv">100</span>,
+  <span class="dt">y =</span> <span class="kw">rnorm</span>(N),
+  <span class="dt">cluster =</span> <span class="kw">sample</span>(letters[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>], <span class="dt">size =</span> N, <span class="dt">replace =</span> <span class="ot">TRUE</span>),
+  <span class="dt">z =</span> <span class="kw"><a href="http://www.rdocumentation.org/packages/randomizr/topics/cluster_ra">cluster_ra</a></span>(cluster)
+)
+
 <span class="co"># robust standard errors</span>
-<span class="kw"><a href="reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>z, <span class="dt">data =</span> sample_dat)
+res_rob &lt;-<span class="st"> </span><span class="kw"><a href="reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>z, <span class="dt">data =</span> sample_dat)
 
 <span class="co"># cluster robust standard errors</span>
-<span class="kw"><a href="reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>z, <span class="dt">data =</span> sample_dat, <span class="dt">clusters =</span> my_cluster_var)
+res_cl &lt;-<span class="st"> </span><span class="kw"><a href="reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>z, <span class="dt">data =</span> sample_dat, <span class="dt">clusters =</span> my_cluster_var)
 
-<span class="co"># blocked designs</span>
-<span class="kw"><a href="reference/difference_in_means.html">difference_in_means</a></span>(y <span class="op">~</span><span class="st"> </span>z, <span class="dt">data =</span> sample_dat, <span class="dt">blocks =</span> my_block_var)</code></pre></div>
+<span class="co"># matched-pair design</span>
+<span class="kw">data</span>(sleep)
+res_dim &lt;-<span class="st"> </span><span class="kw"><a href="reference/difference_in_means.html">difference_in_means</a></span>(extra <span class="op">~</span><span class="st"> </span>group, <span class="dt">data =</span> sleep, <span class="dt">blocks =</span> ID)</code></pre></div>
 <p>The <a href="http://estimatr.declaredesign.org/articles/estimatr-vignette.html">Getting Started Guide</a> describes each estimator provided by <strong>estimatr</strong> and how it can be used in your analysis.</p>
 </div>
 <div id="fast-to-use" class="section level3">
 <h3 class="hasAnchor">
 <a href="#fast-to-use" class="anchor"></a>Fast to use</h3>
 <p>Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using <code>lm()</code> and the <code>sandwich</code> package to get HC2 standard errors.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># estimatr</span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># not evaluated here</span>
+<span class="co"># estimatr</span>
 <span class="kw"><a href="reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>x1 <span class="op">+</span><span class="st"> </span>x2 <span class="op">+</span><span class="st"> </span>x3 <span class="op">+</span><span class="st"> </span>x4, <span class="dt">data =</span> dat)
 
 <span class="co"># usual specification (lm + sandwich)</span>
+<span class="kw">library</span>(lmtest)
+<span class="kw">library</span>(sandwich)
 lm_out &lt;-<span class="st"> </span><span class="kw">lm</span>(y <span class="op">~</span><span class="st"> </span>x1 <span class="op">+</span><span class="st"> </span>x2 <span class="op">+</span><span class="st"> </span>x3 <span class="op">+</span><span class="st"> </span>x4, <span class="dt">data =</span> dat)
-lmtest<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/lmtest/topics/coeftest">coeftest</a></span>(lm_out, <span class="dt">vcov =</span> sandwich<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/sandwich/topics/vcovHC">vcovHC</a></span>(lm_out, <span class="dt">type =</span> <span class="st">'HC2'</span>))</code></pre></div>
+<span class="kw"><a href="http://www.rdocumentation.org/packages/lmtest/topics/coeftest">coeftest</a></span>(lm_out, <span class="dt">vcov =</span> <span class="kw"><a href="http://www.rdocumentation.org/packages/sandwich/topics/vcovHC">vcovHC</a></span>(lm_out, <span class="dt">type =</span> <span class="st">'HC2'</span>))</code></pre></div>
 <div class="figure">
 <img src="articles/lm_speed.png">
 </div>

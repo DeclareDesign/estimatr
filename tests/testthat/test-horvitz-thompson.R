@@ -28,7 +28,7 @@ test_that("Horvitz-Thompson works with clustered data", {
                     cl = rep(1:4, each = 2))
 
   ## Complete random sample, clustered
-  clust_crs_decl <- randomizr::declare_ra(N = nrow(dat), clust_var = dat$cl, prob = 0.4)
+  clust_crs_decl <- randomizr::declare_ra(N = nrow(dat), clusters = dat$cl, prob = 0.4)
   dat$z <- randomizr::conduct_ra(clust_crs_decl)
 
   # Regular SE using Young's inequality
@@ -62,7 +62,7 @@ test_that("Horvitz-Thompson works with clustered data", {
 
   ## Simple random sample, clustered
   clust_srs_decl <- randomizr::declare_ra(N = nrow(dat),
-                                          clust_var = dat$cl,
+                                          clusters = dat$cl,
                                           prob = 0.4,
                                           simple = T)
 

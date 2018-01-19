@@ -128,8 +128,6 @@ lm_robust_fit <- function(y,
   n <- nrow(X)
   rank <- sum(est_exists)
 
-  #print(fit)
-
   if(se_type != "none"){
 
     se[est_exists] <- sqrt(diag(fit$Vcov_hat))
@@ -138,8 +136,8 @@ lm_robust_fit <- function(y,
 
       if(se_type %in% cl_se_types){
 
-        ## Replace -99 with NA, easy way to flag that we didn't compute
-        ## the DoF because the user didn't ask for it
+        # Replace -99 with NA, easy way to flag that we didn't compute
+        # the DoF because the user didn't ask for it
         dof[est_exists] <-
           ifelse(fit$dof == -99,
                  NA,
@@ -159,7 +157,6 @@ lm_robust_fit <- function(y,
       ci_upper <- est + qt(1 - alpha / 2, df = dof) * se
 
     }
-
   }
 
   return_list <-
