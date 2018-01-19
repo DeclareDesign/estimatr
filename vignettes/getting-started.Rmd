@@ -93,7 +93,7 @@ lm_robust(y_clust ~ z_clust + x,
 knitr::kable(summary(lm_robust(y_clust ~ z_clust + x, data = dat, clusters = clust))$coefficients)
 ```
 
-The default variance estimator with clusters is dubbed 'CR2' because it is analogous to 'HC2' for the clustered case, and utilizes recent advances proposed by [@pustejovskytipton2016] to correct hypotheses tests for small samples and work with commonly specified fixed effects and weights.
+The default variance estimator with clusters is dubbed 'CR2' because it is analogous to 'HC2' for the clustered case, and utilizes recent advances proposed by @pustejovskytipton2016 to correct hypotheses tests for small samples and work with commonly specified fixed effects and weights.
 
 Researchers can also replicate Stata's clustered standard errors by using the `se_type =` argument:
 ```{r echo=TRUE, results="hide"}
@@ -111,7 +111,7 @@ knitr::kable(summary(lm_robust(y_clust ~ z_clust + x,
 
 ## `lm_lin`
 
-Following the critique by [@freedman2008] that pre-treatment covariate adjustment biases estimates of average treatment effects, [@lin2013] proposed an alternative estimator that would reduce this bias and improve precision. The [@lin2013] estimator suggests centering all pre-treatment covariates and interacting them with the treatment variable. To facilitate this, we provide a wrapper that can do that process for you. 
+Following the critique by @freedman2008 that pre-treatment covariate adjustment biases estimates of average treatment effects, @lin2013 proposed an alternative estimator that would reduce this bias and improve precision. The @lin2013 estimator suggests centering all pre-treatment covariates and interacting them with the treatment variable. To facilitate this, we provide a wrapper that can do that process for you. 
 
 ```{r echo=TRUE, results="hide"}
 lm_lin(y ~ z, 
@@ -122,7 +122,7 @@ lm_lin(y ~ z,
 knitr::kable(summary(lm_lin(y ~ z, covariates = ~ x, data = dat))$coefficients)
 ```
 
-Furthermore, it is just a wrapper for `lm_robust()`, so all arguments that work for `lm_robust()` work here.
+As this function is a wrapper for `lm_robust()`, all arguments that work for `lm_robust()` work here.
 
 ## `difference_in_means`
 
@@ -148,7 +148,7 @@ knitr::kable(summary(difference_in_means(y_clust ~ z_clust, data = dat, clusters
 
 ## `horvitz_thompson`
 
-Horvitz-Thompson estimators are useful when estimating treatment effects without bias when there is a clustered design with unequal size clusters or when the treatment assignment process is arbitrarily complex. Horvitz-Thompson estimators require information about the treatment (and control) probabilities for each unit, and the joint treatment and control probabilities of every pair of units. For simpler designs, passing your randomization scheme using `randomizr::declare_ra()` is the easiest path forward.
+Horvitz-Thompson estimators are useful when estimating treatment effects without bias when there is a clustered design with unequal size clusters or when the treatment assignment process is arbitrarily complex. Horvitz-Thompson estimators require information about the treatment (and control) probabilities for each unit, and the joint treatment and control probabilities of every pair of units. For designs that are not arbitrarily complex, passing your randomization scheme using `randomizr::declare_ra()` is the easiest path forward.
 
 ```{r, results="hide"}
 # Complete random assignment declaration
@@ -176,7 +176,7 @@ knitr::kable(summary(horvitz_thompson(y_clust ~ z_clust,
                  declaration = crs_clust_decl))$coefficients)
 ```
 
-There are two main variance estimators we provide, a conservative estimator using Young's inequality (`se_type = "youngs"`), described by [@aronowmiddleton2013], and an estimator that assumes constant treatment effects (`se_type = "constant"`). The default is the conservative estimator.
+There are two main variance estimators we provide, a conservative estimator using Young's inequality (`se_type = "youngs"`), described by @aronowmiddleton2013, and an estimator that assumes constant treatment effects (`se_type = "constant"`). The default is the conservative estimator.
 
 ```{r, results="hide"}
 horvitz_thompson(
@@ -196,7 +196,7 @@ knitr::kable(summary(horvitz_thompson(
 
 You can also build the condition probability matrix (`condition_prob_mat = `) that `horvitz_thompson()` needs yourself. This matrix is an 2N by 2N matrix, where the first N rows and N columns (the upper-left corner) are the joint probability of each unit being in the control condition with every other unit being in the control condition. The upper right N by N matrix is the joint probability of each unit being in the control condition with every other unit being in the treated condition. The second N rows are the same, with the joint probability of each unit being in the treated condition first with each unit being in the control (first N columns) and then with each unit being in the treated as well (second N columns).
 
-We also provide helper functions to build this matrix from any given permutation of treatments (`condition.
+We also provide helper functions to build this matrix from a set of possible permutations of the treatment vector.
 
 ```{r, results="hide"}
 # Generate 500 arbitrary permutations
@@ -218,300 +218,6 @@ horvitz_thompson(y ~ z,
 knitr::kable(summary(horvitz_thompson(y ~ z, 
                  data = dat, 
                  condition_pr_mat = arb_pr_mat))$coefficients)
-```
-
-```{r hide-technical-appendix, eval = F, echo = F}
-
-# Technical Appendix
-
-## `lm_robust()` technical notes
-
-All of the following works with weights except for the clustered standard errors (todo: finish weights with clustered SEs and write up weights in below.)
-
-### Coefficient estimates
-
-\[
-\hat{\beta} =\XtXinv\X^{\top}\y
-\]
-
-### Variance
-
-**Definitions**
-
-* $\x_i$ is the $i$th row of $\X$.
-* $h_{ii} = \x_i\XtXinv\x^{\top}_i$
-* $e_i = y_i - \x_i\hat{\beta}$
-* $\mathrm{diag}[.]$ is an operator that creates a diagonal matrix
-
-#### Heteroskedasticity-Robust Variance
-
-**HC2 (default)**
-\[
-\hat{\V}[\hat{\beta}]_{HC2} =  \XtXinv\X^{\top}\mathrm{diag}\left[\frac{e_i^2}{1-h_{ii}}\right]\X\XtXinv
-\]
-
-**HC0**
-\[
-\hat{\V}[\hat{\beta}]_{HC0} =  \XtXinv\X^{\top}\mathrm{diag}\left[e_i^2\right]\X\XtXinv
-\]
-
-**HC1**
-\[
-\hat{\V}[\hat{\beta}]_{HC1} =  \frac{N}{N-K}\XtXinv\X^{\top}\mathrm{diag}\left[e_i^2\right]\X\XtXinv
-\]
-where $N$ is the number of observations and $K$ is the number of elements in $\beta$.
-
-**HC3**
-\[
-\hat{\V}[\hat{\beta}]_{HC3} =  \XtXinv\X^{\top}\mathrm{diag}\left[\frac{e_i^2}{(1-h_{ii})^2}\right]\X\XtXinv
-\]
-
-#### Cluster-Robust Variance
-
-**Definitions**
-
-* $S$ is the number of clusters
-* $\X_s$ is the rows of $\X$ that belong to cluster $s$
-* $\Pb_{ss} = \X_s \XtXinv \X^\top_s$
-* $N_s$ is the number of units in cluster $s$
-* $I_n$ is an identity matrix of size $n\times n$
-* $\e_s$ is the elements of the residual matrix $\e$ in cluster $s$, or $\e_s = \y_s - \X_s \hat{\beta}$
-
-**BM (default, also known as CR2 or Bell-McCaffrey)**
-
-TODO update with CR2 estimator
-
-Analogy to HC2 for cluster-robust variance estimation. For the original reference, see [@bellmccaffrey2002]. For papers that have also mention it, see $\V_{\mathrm{LZ2}}$ on p. 709 of [@imbenskolesar2016] and the CR2 estimator shown in equations (4) and (5) in [@pustejovskytipton2016]. Note that we will be implementing the estimator proposed in [@pustejovskytipton2016] soon; more can be found on their GitHub page for an accompanying R package [clubSandwich](https://github.com/jepusto/clubSandwich).
-
-\[
-\hat{\V}[\hat{\beta}]_{BM} =  \XtXinv \sum^S_{s=1} \left[\X^\top_s (I_{N_s} - \Pb_{ss})^{-\frac{1}{2}} \e_s\e^\top_s (I_{N_s} - \Pb_{ss})^{-\frac{1}{2}} \X_s \right] \XtXinv
-\]
-
-**stata**
-
-\[
-\hat{\V}[\hat{\beta}]_{stata} = \frac{N-1}{N-K}\frac{S}{S-1} \XtXinv \sum^S_{s=1} \left[\X^\top_s \e_s\e^\top_s \X_s \right] \XtXinv
-\]
-
-#### Classical
-
-**classical**
-\[
-\hat{\V}[\hat{\beta}]_{classical} =  \frac{\e^\top\e}{N-K} \XtXinv 
-\]
-
-### Confidence intervals and hypothesis testing
-
-For confidence intervals and hypothesis testing, we use $t$-statistics and thus require degrees of freedom. For all specifications that *do not involve clustering*,
-
-\[
-df = N - K
-\]
-
-When there is clustering and `se_type = "stata"` and, we match Stata's conservative degrees of freedom by setting
-
-\[
-df_{stata} = S - 1
-\]
-
-When there is clustering and `se_type = "BM"`, we match Bell and McCaffrey's degrees of freedom adjustment (this is described in detail on p. 709 of [@imbenskolesar2016] as well as equation (11) in [@pustejovskytipton2016]). Where $z_{K,k}$ is a vector of length $K$ where the $k$th element is 1 and all other elements are 0. The $k$ signifies for which coefficient we are getting the degrees of freedom.
-
-Also, $\Pb = \X\XtXinv\X^\top$ and $(I - \Pb)_s$ is the $N_s$ columns that correspond to cluster $s$.
-
-We define $\Gb$ as an $N\times S$ matrix with each column as
-
-\[
-\Gb_s = (I-\Pb)_s (I_{N_s} - \Pb_{ss})^{-\frac{1}{2}} \X_s \XtXinv z_{K, k}
-\]
-
-Then the degrees of freedom for coefficient $k$ is
-
-\[
-df_{k, BM} = \frac{\left(\sum^S_{s=1} \lambda_i\right)^2}{\sum^S_{s=1} \lambda^2_i}
-\]
-where $\lambda_i$ are the eigenvalues of $\Gb^\top\Gb$.
-
-Then, if $\hat{\V}_k$ is the $k$th diagonal element of $\hat{\V}$, we build confidence intervals using the user specified $\alpha$ as:
-
-\[
-\mathrm{CI}^{1-\alpha} = \left(\hat{\beta_k} + t^{df}_{\alpha/2} \sqrt{\hat{\V}_k}, \hat{\beta_k} + t^{df}_{1 - \alpha/2} \sqrt{\hat{\V}_k}\right)
-\]
-
-The associated p-values for a two-sided null hypothesis test where the null is that the coefficient is 0 uses a t-distribution with the aforementioned significance level $\alpha$ and degrees of freedom $df$.
-
-## `lm_lin()` technical notes
-
-The `lm_lin()` estimator is a data pre-processor for `lm_robust()` that implements the regression method for covariate adjustment suggested by [@lin2013]. In response to the critique by [@freedman2008] that using regression to adjust for pre-treatment covariates could bias estimates of treatment effects, [@lin2013] demonstrates the small magnitude of this bias while also presenting an estimator to reduce said bias.
-
-This estimator takes the outcome and treatment variable as the main formula (`formula`) and takes a right-sided formula of all pre-treatment covariates (`covariates`). These pre-treatment covariates are then centered to be mean zero and interacted with the treatment variable before being added to the formula and passed to `lm_robust()`.
-
-The rest of the estimation proceeds just as in [`lm_robust()`](#lm_robust).
-
-## `difference_in_means()` technical notes
-
-There are six kinds of experimental designs for which our `difference_in_means()` estimator can estimate treatment effects, provide estiamtes of uncertainty, construct confidence intervals, and 
-provide p-values. We list them here along with how the software learns the design:
-
-* Simple (both `clusters` and `blocks` are unused)
-* Clustered (`clusters` is specified while `blocks` is not)
-* Blocked (`blocks` is specified while `clusters` is not)
-* Blocked and clustered (both are specified)
-
-There are two subsets of blocked designs that we also consider:
-
-* Matched-pairs (only `blocks` is specified and all blocks are size two)
-* Matched-pair clustered design (both names are specified and each block only has two clusters)
-
-In addition, weights can be specified.
-
-### Estimates
-
-**Any unblocked design**
-\[
-\hat{\tau} = \frac{1}{N} \sum^N_{i=1} z_i y_i - (1 - z_i) y_i
-\]
-where $z_i$ is the treatment variable, $y_i$ is the outcome, and $N$ is the total number of units.
-
-**Blocked design (including matched-pairs designs)**
-\[
-\hat{\tau} = \sum^J_{j=1} \frac{N_j}{N} \hat{\tau_j}
-\]
-where $J$ is the number of blocks, $N_j$ is the size of those blocks, and $\hat{\tau_j}$ is the estimated difference-in-means in block $j$.
-
-### Variance
-
-**Simple**
-\[
-\hat{\V}[\hat{\tau}] = \frac{\hat{\V}[y_{i,0}]}{N_0} + \frac{\hat{\V}[y_{i,1}]}{N_1}
-\]
-where $\hat{\V}[y_{i,k}]$ is the Bessel-corrected variance of all units where $z_i = k$ and $N_k$ is the number of units in condition $k$.
-
-**Clustered**
-\[
-\hat{\V}[\hat{\tau}] = \frac{N\hat{\V}[y_{i,0}]}{SN_0} + \frac{N\hat{\V}[y_{i,1}]}{SN_1}
-\]
-where $S$ is the number of clusters. See equation 3.23 on page 83 of [@gerbergreen2012] for a reference.
-
-**Blocked & blocked and clustered**
-\[
-\hat{\V}[\hat{\tau}] = \sum^J_{j=1} \left(\frac{N_j}{N}\right)^2 \hat{\V}[\hat{\tau_j}] 
-\]
-where $\hat{\V}[\hat{\tau_j}]$ is the variance of the estimated difference-in-means in block $j$. See footnote 17 on page 74 of [@gerbergreen2012] for a reference.
-
-**Matched-pairs**
-\[
-\hat{\V}[\hat{\tau}] = \frac{1}{J(J-1)} \sum^J_{j=1} \left(\hat{\tau_j} - \hat{\tau}\right)^2 
-\]
-See equation 3.16 on page 77 of [@gerbergreen2012] for a reference.
-
-**Matched-pair cluster randomized**
-This formula is the variance of the SATE defined in Equation 6 on page 36 of [@imaietal2009].
-\[
-\hat{\V}[\hat{\tau}] = \frac{J}{(J-1)N^2} \sum^J_{j=1} \left(N_j \hat{\tau_j} - \frac{N \hat{\tau}}{J}\right)^2
-\]
-
-### Confidence intervals and hypothesis testing
-
-In order to estimate confidence intervals and produce p-values, we first must estimate the degrees of freedom.
-
-**Simple**
-We use the well known Welch-Satterthwaite equation to estimate the degrees of freedom for simple designs.
-\[
-df = \frac{(\hat{\V}[\hat{\tau}])^2}{\frac{(\hat{\V}[y_{i,0}])^2}{N^2_0(N_0-1)} + \frac{(\hat{\V}[y_{i,1}])^2}{N^2_1(N_1-1)}}
-\]
-
-**Clustered**
-We use the same degrees of freedom above for cluster randomized experiments. However, [@gerbergreen2012] recommend in footnote 20 on page 83 that the bounds of the confidence interval must be expanded by $\sqrt{(J-1)/(J-2)}$. We do not implement this. TODO: instead of expanding confidence intervals, find equivalent degrees of freedom correction so that p-values and hypothesis tests are in accordance.
-
-**Blocked & block-clustered & matched-pair**
-TODO: check best practices on degrees of freedom with blocks. Here we set
-\[
-df = N - J - 1
-\]
-which matches the degrees of freedom when using regression to estimate treatment effects with dummy variables for each block.
-
-**Matched-pair cluster randomized**
-Following advice of [@imaietal2009] on page 37, we use the following conservative estimate of the degrees of freedom:
-\[
-df_{MPCR} = J - 1
-\]
-
-## `horvitz_thompson()` technical notes
-
-Right now the Horvitz-Thompson estimator only works for designs where there is neither cluster randomization nor blocking, but should work for any design of arbitrary complexity beyond that (complete random sampling, simple random sampling, and any scheme with complex marginal or joint treatment probabilities, such as an exeriment on a network).
-
-Some definitions I will use here:
-
-* $\pi_{zi}$ is the marginal probability of being in condition $z \in \{0, 1\}$ for unit i
-* $\pi_{ziwj}$ is the joint probability of unit $i$ being in condition $z$ and unit $j$ being in condition $w \in \{0, 1\}$
-* $\epsilon_{ziwj}$ is the indicator function $\mathbb{1}\left(\pi_{ziwj} = 0\right)$
-
-## Estimates
-
-**Simple, complete, clustered**
-
-\[
-\hat{\tau} = \frac{1}{N} \sum^N_{i=1} z_i \frac{y_i}{\pi_{1i}} - (1 - z_i) \frac{y_i}{\pi_{0i}} 
-\]
-
-**Blocked**
-
-\[
-\hat{\tau} = \sum^J_{j=1} \frac{N_j}{N} \hat{\tau_j}
-\]
-where $J$ is the number of blocks, $N_j$ is the size of those blocks, and $\hat{\tau_j}$ is the Horvitz-Thompson estimate in block $j$.
-
-## Variance
-
-Currently we provide variance estimates that rely on two separate assumptions:
-
-* `"youngs"` which implements a conservative variance estimate using Young's inequality, described in equation 35 on page 147 of [@aronowmiddleton2013] and in [@aronowsamii2017] on pages 11-15.
-* `"constant"` which assumes constant treatment effects for which the only reference in the case with general joint inclusion probabilities can be found, possibly with an error, in an older version of [@aronowsamii2017] from March 2012 chich can be found [here](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.394.5477&rep=rep1&type=pdf).
-
-For complicated designs, including clustered designs, the following variance estimator's are sufficient as they incorporate the design through the marginal and joint condition probabilities. However, there is also an estimator proposed in equation 35 on page 147 of [@aronowmiddleton2013] using collapsed cluster totals.
-
-**Young's inequality**
-\begin{align*}
-  \hat{\V}_{Y}[\hat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[& z_i \left(\frac{y_i}{\pi_{1i}}\right)^2 + (1 - z_i) \left(\frac{y_i}{\pi_{0i}}\right)^2 + \sum_{j \neq i} \bigg(\frac{z_i z_j}{\pi_{1i1j} + \epsilon_{1i1j}}(\pi_{1i1j} - \pi_{1i}\pi_{1j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{1j}} \\
-  & + \frac{(1-z_i) (1-z_j)}{\pi_{0i0j} + \epsilon_{0i0j}}(\pi_{0i0j} - \pi_{0i}\pi_{0j})\frac{y_i}{\pi_{0i}}\frac{y_j}{\pi_{0j}} - 2 \frac{z_i (1-z_j)}{\pi_{1i0j} + \epsilon_{1i0j}}(\pi_{1i0j} - \pi_{1i}\pi_{0j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{0j}} \\
-  & + \sum_{\forall j \colon \pi_{1i1j} = 0} \left( z_i \frac{y^2_i}{2\pi_{1i}} + z_j \frac{y^2_j}{\pi_{1j}}\right) + \sum_{\forall j \colon \pi_{0i0j} = 0} \left( (1-z_i) \frac{y^2_i}{2\pi_{0i}} + (1-z_j) \frac{y^2_j}{\pi_{0j}}\right)
-  \Bigg]
-\end{align*}
-
-There are some simplifications of the above for simpler designs that follow algebraically from the above. For example, if there are no two units for which the joint probability of being in either condition is 0, which is the case for most experiments that are not matched-pair experiments, then we get:
-
-\begin{align*}
-  \hat{\V}_{Y}[\hat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[& z_i \left(\frac{y_i}{\pi_{1i}}\right)^2 + (1 - z_i) \left(\frac{y_i}{\pi_{0i}}\right)^2 + \sum_{j \neq i} \bigg(\frac{z_i z_j}{\pi_{1i1j}}(\pi_{1i1j} - \pi_{1i}\pi_{1j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{1j}} \\
-  & + \frac{(1-z_i) (1-z_j)}{\pi_{0i0j}}(\pi_{0i0j} - \pi_{0i}\pi_{0j})\frac{y_i}{\pi_{0i}}\frac{y_j}{\pi_{0j}} - 2 \frac{z_i (1-z_j)}{\pi_{1i0j}}(\pi_{1i0j} - \pi_{1i}\pi_{0j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{0j}}
-  \Bigg]
-\end{align*}
-
-If we further simplify to the case where there is simple random assignment, and there is absolutely no dependence among units (i.e. $\pi_{ziwj} = \pi_{zi}\pi_{wj} \;\;\forall\;\;z,w,i,j$), we get:
-
-\begin{align*}
-  \hat{\V}_{Y}[\hat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[& z_i \left(\frac{y_i}{\pi_{1i}}\right)^2 + (1 - z_i) \left(\frac{y_i}{\pi_{0i}}\right)^2\Bigg]
-\end{align*}
-
-For clustered designs, you can also use the following estimator where $M$ is the total number of clusters, $y_k$ is the total of the outcomes $y_i$ for all $i$ units in cluster $k$, $\pi_zk$ is the marginal probability of cluster $k$ being in condition $z \in \{0, 1\}$, and $z_k$ and $\pi_{zkwl}$ are defined analogously.
-\begin{align*}
-  \hat{\V}_{Y}[\hat{\tau}] = \frac{1}{N^2} \sum^M_{k=1} \Bigg[& z_k \left(\frac{y_k}{\pi_{1k}}\right)^2 + (1 - z_k) \left(\frac{y_k}{\pi_{0k}}\right)^2 + \sum_{l \neq k} \bigg(\frac{z_k z_l}{\pi_{1k1l} + \epsilon_{1k1l}}(\pi_{1k1l} - \pi_{1k}\pi_{1l})\frac{y_k}{\pi_{1k}}\frac{y_l}{\pi_{1l}} \\
-  & + \frac{(1-z_k) (1-z_l)}{\pi_{0k0l} + \epsilon_{0k0l}}(\pi_{0k0l} - \pi_{0k}\pi_{0l})\frac{y_k}{\pi_{0k}}\frac{y_l}{\pi_{0l}} - 2 \frac{z_k (1-z_l)}{\pi_{1k0l} + \epsilon_{1k0l}}(\pi_{1k0l} - \pi_{1k}\pi_{0l})\frac{y_k}{\pi_{1k}}\frac{y_l}{\pi_{0l}} \\
-  & + \sum_{\forall l \colon \pi_{1k1l} = 0} \left( z_k \frac{y^2_k}{2\pi_{1k}} + z_l \frac{y^2_l}{\pi_{1l}}\right) + \sum_{\forall l \colon \pi_{0k0l} = 0} \left( (1-z_k) \frac{y^2_k}{2\pi_{0k}} + (1-z_l) \frac{y^2_l}{\pi_{0l}}\right)
-  \Bigg]
-\end{align*}
-
-**Constant effects**
-
-Alternatively, one can assume constant treatment effects and, under that assumption, estimate the variance that is consistent under that assumption but less conservative.
-
-* $y_{zi}$ is the potential outcome for condition $z$ for unit $i$. This is either observed if $z_i = z$ or estimated using the constant effects assumption if $z_i \neq z$, where $z_i$ is the condition for unit $i$. To be precise $y_{1i} = z_i y_{i} + (1 - z_i) (y_{i} + \hat{\tau})$ and  $y_{0i} = z_i (y_{i} - \hat{\tau}) + (1 - z_i) y_{i}$, where $\hat{\tau}$ is the estimated treatment effect.
-
-\begin{align*}
-    \hat{\V}_{C}[\hat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[& (1 - \pi_{0i}) \pi_{0i} \left(\frac{y_{0i}}{\pi_{0i}}\right)^2 + (1 - \pi_{1i}) \pi_{1i} \left(\frac{y_{1i}}{\pi_{1i}}\right)^2 - 2 y_{1i} y_{0i} \\
-    & + \sum_{j \neq i} \Big( (\pi_{0i0j} - \pi_{0i} \pi_{0j}) \frac{y_{0i}}{\pi_{0i}} \frac{y_{0j}}{\pi_{0j}} + (\pi_{1i1j} - \pi_{1i} \pi_{1j}) \frac{y_{1i}}{\pi_{1i}} \frac{y_{1j}}{\pi_{1j}} \\
-    &- 2 (\pi_{1i0j} - \pi_{1i} \pi_{0j}) \frac{y_{1i}}{\pi_{1i}} \frac{y_{0j}}{\pi_{0j}}
-  \Big)\Bigg]
-\end{align*}
 ```
 
 # References

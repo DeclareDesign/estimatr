@@ -295,7 +295,7 @@ dat &lt;-<span class="st"> </span>fabricatr<span class="op">::</span><span class
 </tr>
 </tbody>
 </table>
-<p>The default variance estimator with clusters is dubbed ‘CR2’ because it is analogous to ‘HC2’ for the clustered case, and utilizes recent advances proposed by <span class="citation">(Pustejovsky and Tipton <a href="#ref-pustejovskytipton2016">2016</a>)</span> to correct hypotheses tests for small samples and work with commonly specified fixed effects and weights.</p>
+<p>The default variance estimator with clusters is dubbed ‘CR2’ because it is analogous to ‘HC2’ for the clustered case, and utilizes recent advances proposed by <span class="citation">Pustejovsky and Tipton (<a href="#ref-pustejovskytipton2016">2016</a>)</span> to correct hypotheses tests for small samples and work with commonly specified fixed effects and weights.</p>
 <p>Researchers can also replicate Stata’s clustered standard errors by using the <code>se_type =</code> argument:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(y_clust <span class="op">~</span><span class="st"> </span>z_clust <span class="op">+</span><span class="st"> </span>x, 
           <span class="dt">data =</span> dat, 
@@ -346,7 +346,7 @@ dat &lt;-<span class="st"> </span>fabricatr<span class="op">::</span><span class
 <h2 class="hasAnchor">
 <a href="#lm_lin" class="anchor"></a><code>lm_lin</code>
 </h2>
-<p>Following the critique by <span class="citation">(Freedman <a href="#ref-freedman2008">2008</a>)</span> that pre-treatment covariate adjustment biases estimates of average treatment effects, <span class="citation">(Lin and others <a href="#ref-lin2013">2013</a>)</span> proposed an alternative estimator that would reduce this bias and improve precision. The <span class="citation">(Lin and others <a href="#ref-lin2013">2013</a>)</span> estimator suggests centering all pre-treatment covariates and interacting them with the treatment variable. To facilitate this, we provide a wrapper that can do that process for you.</p>
+<p>Following the critique by <span class="citation">Freedman (<a href="#ref-freedman2008">2008</a>)</span> that pre-treatment covariate adjustment biases estimates of average treatment effects, <span class="citation">Lin and others (<a href="#ref-lin2013">2013</a>)</span> proposed an alternative estimator that would reduce this bias and improve precision. The <span class="citation">Lin and others (<a href="#ref-lin2013">2013</a>)</span> estimator suggests centering all pre-treatment covariates and interacting them with the treatment variable. To facilitate this, we provide a wrapper that can do that process for you.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/lm_lin.html">lm_lin</a></span>(y <span class="op">~</span><span class="st"> </span>z, 
        <span class="dt">covariates =</span> <span class="op">~</span><span class="st"> </span>x, 
        <span class="dt">data =</span> dat)</code></pre></div>
@@ -399,7 +399,7 @@ dat &lt;-<span class="st"> </span>fabricatr<span class="op">::</span><span class
 </tr>
 </tbody>
 </table>
-<p>Furthermore, it is just a wrapper for <code><a href="../reference/lm_robust.html">lm_robust()</a></code>, so all arguments that work for <code><a href="../reference/lm_robust.html">lm_robust()</a></code> work here.</p>
+<p>As this function is a wrapper for <code><a href="../reference/lm_robust.html">lm_robust()</a></code>, all arguments that work for <code><a href="../reference/lm_robust.html">lm_robust()</a></code> work here.</p>
 </div>
 <div id="difference_in_means" class="section level2">
 <h2 class="hasAnchor">
@@ -458,7 +458,7 @@ dat &lt;-<span class="st"> </span>fabricatr<span class="op">::</span><span class
 <h2 class="hasAnchor">
 <a href="#horvitz_thompson" class="anchor"></a><code>horvitz_thompson</code>
 </h2>
-<p>Horvitz-Thompson estimators are useful when estimating treatment effects without bias when there is a clustered design with unequal size clusters or when the treatment assignment process is arbitrarily complex. Horvitz-Thompson estimators require information about the treatment (and control) probabilities for each unit, and the joint treatment and control probabilities of every pair of units. For simpler designs, passing your randomization scheme using <code><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">randomizr::declare_ra()</a></code> is the easiest path forward.</p>
+<p>Horvitz-Thompson estimators are useful when estimating treatment effects without bias when there is a clustered design with unequal size clusters or when the treatment assignment process is arbitrarily complex. Horvitz-Thompson estimators require information about the treatment (and control) probabilities for each unit, and the joint treatment and control probabilities of every pair of units. For designs that are not arbitrarily complex, passing your randomization scheme using <code><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">randomizr::declare_ra()</a></code> is the easiest path forward.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Complete random assignment declaration</span>
 crs_decl &lt;-<span class="st"> </span>randomizr<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">declare_ra</a></span>(<span class="dt">N =</span> <span class="kw">nrow</span>(dat), 
                                   <span class="dt">prob =</span> <span class="fl">0.5</span>, 
@@ -497,7 +497,7 @@ crs_clust_decl &lt;-<span class="st"> </span>randomizr<span class="op">::</span>
 <td align="right">98</td>
 </tr></tbody>
 </table>
-<p>There are two main variance estimators we provide, a conservative estimator using Young’s inequality (<code>se_type = "youngs"</code>), described by <span class="citation">(Aronow and Middleton <a href="#ref-aronowmiddleton2013">2013</a>)</span>, and an estimator that assumes constant treatment effects (<code>se_type = "constant"</code>). The default is the conservative estimator.</p>
+<p>There are two main variance estimators we provide, a conservative estimator using Young’s inequality (<code>se_type = "youngs"</code>), described by <span class="citation">Aronow and Middleton (<a href="#ref-aronowmiddleton2013">2013</a>)</span>, and an estimator that assumes constant treatment effects (<code>se_type = "constant"</code>). The default is the conservative estimator.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/horvitz_thompson.html">horvitz_thompson</a></span>(
   y_clust <span class="op">~</span><span class="st"> </span>z_clust, 
   <span class="dt">data =</span> dat, 
@@ -525,7 +525,7 @@ crs_clust_decl &lt;-<span class="st"> </span>randomizr<span class="op">::</span>
 </tr></tbody>
 </table>
 <p>You can also build the condition probability matrix (<code>condition_prob_mat =</code>) that <code><a href="../reference/horvitz_thompson.html">horvitz_thompson()</a></code> needs yourself. This matrix is an 2N by 2N matrix, where the first N rows and N columns (the upper-left corner) are the joint probability of each unit being in the control condition with every other unit being in the control condition. The upper right N by N matrix is the joint probability of each unit being in the control condition with every other unit being in the treated condition. The second N rows are the same, with the joint probability of each unit being in the treated condition first with each unit being in the control (first N columns) and then with each unit being in the treated as well (second N columns).</p>
-<p>We also provide helper functions to build this matrix from any given permutation of treatments (`condition.</p>
+<p>We also provide helper functions to build this matrix from a set of possible permutations of the treatment vector.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Generate 500 arbitrary permutations</span>
 permutes &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">rbinom</span>(<span class="kw">nrow</span>(dat) <span class="op">*</span><span class="st"> </span><span class="dv">500</span>, 
                           <span class="dt">size =</span> <span class="dv">1</span>, 

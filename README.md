@@ -27,6 +27,14 @@ Once the package is installed, getting appropriate estimates and standard errors
 ``` r
 library(estimatr)
 
+# sample data
+sample_dat <- fabricatr::fabricate(
+  N = 100,
+  y = rnorm(N),
+  cluster = sample(letters[1:10], size = N, replace = T),
+  z = randomizr::cluster_ra(cluster)
+)
+
 # robust standard errors
 lm_robust(y ~ z, data = sample_dat)
 

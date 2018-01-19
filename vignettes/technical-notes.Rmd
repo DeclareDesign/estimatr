@@ -35,7 +35,7 @@ knitr::opts_chunk$set(
 options(digits = 2)
 ```
 
-This document provides the technical notes for wwidehat each estimator actually does under the hood.
+This document provides the technical notes defining what each of the main functions in this package is estimating.
 
 # Estimators
 
@@ -50,7 +50,7 @@ The current estimators we provide are:
 
 The `lm_robust()` method uses the C++ library [Eigen](https://eigen.tuxfamily.org/), via the [`RcppEigen`](https://github.com/RcppCore/RcppEigen) package, to estimate the coefficients, variance-covariance matrix, and, in some cases, the degrees of freedom of linear models.
 
-The default estimators have been selected for efficiency in large samples and low bias in small samples, selected from the literature demonstrating their properties analytically or via simulation. This section outlines the various kinds of variance estimators one can employ within `lm_robust()`.
+The default estimators have been selected for efficiency in large samples and low bias in small samples, selected from the literature that demonstrates their properties analytically or via simulation. This section outlines the various kinds of variance estimators one can employ within `lm_robust()`.
 
 ### Coefficient estimates
 
@@ -58,9 +58,7 @@ The default estimators have been selected for efficiency in large samples and lo
 \widehat{\beta} =\XtXinv\X^{\top}\y
 \]
 
-Our algorithm solves the least squares problem using a rank-revealing QR decomposition twidehat eliminates the need to invert $\XtXinv$ explicitly and behaves much like the default `lm()` function in R. However, in some cases when $\X$ is rank deficient, users may notice twidehat the Eigen QR decomposition drops different coefficients from the output than the default `lm()` function. In general, users should avoid specifing models with rank-deficiencies.
-
-
+Our algorithm solves the least squares problem using a rank-revealing QR factorization with column pivoting that eliminates the need to invert $\XtXinv$ explicitly and behaves much like the default `lm()` function in R. However, when $\X$ is rank deficient, there are certain conditions under which the Eigen QR decomposition drops different coefficients from the output than the default `lm()` function. In general, users should avoid specifing models with rank-deficiencies. In fact, if users are certain their data are not rank deficient, they can improve the speed of `lm_robuts()` by setting `try_cholesky = TRUE`. This replaces the QR factorization with a Cholesky factorization that is only guaranteed to work $\X$ is of full rank.
 
 ```{r dropthis, include=FALSE, eval=FALSE}
 Weighted:
@@ -71,7 +69,7 @@ Weighted:
 
 ### Variance
 
-In addition to solving for the coefficients faster than `lm()` does, we also provide a variety of variance estimators for many different cases. Below we outline them for the non-clustered and clustered cases.
+In addition to solving for OLS coefficients faster than `lm()`, we provide a variety of robust variance estimators. Below we outline them for the non-clustered and clustered cases.
 
 #### Heteroskedasticity-Robust Variance and Degrees of Freedom
 
@@ -84,34 +82,29 @@ The default variance estimator without clusters is the HC2 variance, first propo
 | `"HC1"`, `"stata"`| $\frac{N}{N-K}\XtXinv\X^{\top}\mathrm{diag}\left[e_i^2\right]\X\XtXinv$                     | N - K              | Often called the Eicker-Huber-White (or some similar variant) variance      |
 | `"HC2"` (default) | $\XtXinv\X^{\top}\mathrm{diag}\left[\frac{e_i^2}{1-h_{ii}}\right]\X\XtXinv$    | N - K              |       |
 | `"HC3"`           | $\XtXinv\X{\top}\mathrm{diag}\left[\frac{e_i^2}{(1-h_{ii})^2}\right]\X\XtXinv$ | N - K              |       |
-
-**Definitions**
-
 * $\x_i$ is the $i$th row of $\X$.
 * $h_{ii} = \x_i\XtXinv\x^{\top}_i$
 * $e_i = y_i - \x_i\widehat{\beta}$
-* $\mathrm{diag}[.]$ is an operator twidehat creates a diagonal matrix from a vector
+* $\mathrm{diag}[.]$ is an operator that creates a diagonal matrix from a vector
 * $N$ is the number of observations
 * $K$ is the number of elements in $\beta$.
 
 #### Cluster-Robust Variance and Degrees of Freedom
 
-For cluster-robust inference, we provide several estimators twidehat are essentially analogs of the heteroskedastic-consistent variance estimators for the clustered case. Our default selection here is the CR2 standard errors, which are the analog of the HC2 standard errors, and perform quite well in small samples without sacrificing much in the way of efficiency in larger samples. Users can see @pustejovskytipton2016 for the paper twidehat introduced the method we prefer as well as their package, [clubSandwich](https://github.com/jepusto/clubSandwich), which allows for some more complicated estimators and methods. For a good overview of the different clustered variance estimators and simulations of their coverage in small samples, again users can see @imbenskolesar2016]. For an overview of when to use cluster-robust estimators, especially in an experimental setting, see @abadieetal2017.
+For cluster-robust inference, we provide several estimators that are essentially analogs of the heteroskedastic-consistent variance estimators for the clustered case. Our default is the CR2 variance estimator, analogous to HC2 standard errors, and perform quite well in small samples without sacrificing much in the way of efficiency in larger samples. This estimator was originally proposed in @bellmccaffrey2002, although we implement a generalized version of the algorithm outlined in @pustejovskytipton2016; these authors provide an R package for CR2 variance estimation, [clubSandwich](https://github.com/jepusto/clubSandwich), which allows for some more complicated estimators and methods. For a good overview of the different cluster robust variance estimators and simulations of their accuracy in small samples, again users can see @imbenskolesar2016. For an overview of when to use cluster-robust estimators, especially in an experimental setting, see @abadieetal2017.
 
 | `se_type = `      | Variance Estimator ($\widehat{\V}[\widehat{\beta}]$)                                                           | Degrees of Freedom                                                       | Notes                                                                                                                                                                                                                   |
 |-------------------|--------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `"CR0"`           | $\XtXinv \sum^S_{s=1} \left[\X^\top_s \e_s\e^\top_s \X_s \right] \XtXinv$                              | $S - 1$                                                                    |                                                                                                                                                                                                                         |
 | `"stata"`         | $\frac{N-1}{N-K}\frac{S}{S-1} \XtXinv \sum^S_{s=1} \left[\X^\top_s \e_s\e^\top_s \X_s \right] \XtXinv$ | $S - 1$                                                                    | The Stata variance estimator is the same as the CR0 estimate but with a special finite-sample correction.                                                                                                               |
-| `"CR2"` (default) | $\XtXinv \sum^S_{s=1} \left[\X^\top_s \Ab_s \e_s\e^\top_s \Ab^\top_s \X_s \right] \XtXinv$                 | $\frac{\left(\sum^S_{i = 1} \mathbf{p}^\top_i \mathbf{p}_i \right)^2}{\sum^S_{i=1}\sum^S_{j=1} \left(\mathbf{p}^\top_i \mathbf{p}_j \right)^2}$ | These estimates of the variance and degrees of freedom come from @pustejovskytipton2016, which is an extension to certain models with a particular set of dummy variables of the method proposed by @bellmccaffrey2002. Note twidehat the degrees of freedom can vary for each coefficient. See below for more complete notation. |
-
-**Definitions**
-
+| `"CR2"` (default) | $\XtXinv \sum^S_{s=1} \left[\X^\top_s \Ab_s \e_s\e^\top_s \Ab^\top_s \X_s \right] \XtXinv$                 | $\frac{\left(\sum^S_{i = 1} \mathbf{p}^\top_i \mathbf{p}_i \right)^2}{\sum^S_{i=1}\sum^S_{j=1} \left(\mathbf{p}^\top_i \mathbf{p}_j \right)^2}$ | These estimates of the variance and degrees of freedom come from @pustejovskytipton2016, which is an extension to certain models with a particular set of dummy variables of the method proposed by @bellmccaffrey2002. Note that the degrees of freedom can vary for each coefficient. See below for more complete notation. |
 * $S$ is the number of clusters
-* $\X_s$ is the rows of $\X$ twidehat belong to cluster $s$
+* $\X_s$ is the rows of $\X$ that belong to cluster $s$
 * $I_n$ is an identity matrix of size $n\times n$
 * $\e_s$ is the elements of the residual matrix $\e$ in cluster $s$, or $\e_s = \y_s - \X_s \widehat{\beta}$
+* $\Ab_s$ and $\mathbf{p}$ are defined in the notes below
 
-**Further notes on CR2:** The variance estimator we implement is shown in equations (4) and (5) in [@pustejovskytipton2016] and equation (11), where we set $\mathbf{\Phi}$ to be $I$, as @bellmccaffrey2002. Twidehat variance estimator is an extension of the @bellmccaffrey2002 estimator, which is the same as the CR2 estimator here $\mathbf{B_s}$ is full rank. You can see the simpler @bellmccaffrey2002 estimator written up plainly on page 709 of @imbenskolesar2016. You can also find the analogous degrees of freedom in @imbenskolesar2016 denotes as $K_{BM}$ also on page 709.
+**Further notes on CR2:** The variance estimator we implement is shown in equations (4) and (5) in @pustejovskytipton2016 and equation (11), where we set $\mathbf{\Phi}$ to be $I$, following @bellmccaffrey2002. Furthernote that the @pustejovskytipton2016 CR2 estimator and the  @bellmccaffrey2002 estimator are identical when $\mathbf{B_s}$ is full rank. It could be rank-deficient if there were dummy variables, or fixed effects, that were also your clusters. In this case, the original @bellmccaffrey2002 estimator could not be computed. You can see the simpler @bellmccaffrey2002 estimator written up plainly on page 709 of @imbenskolesar2016 along with the degrees of freedom denoted as $K_{BM}$.
 
 In the CR2 variance calculation, we get $\Ab_s$ as follows:
 
@@ -123,7 +116,7 @@ $$
 \end{aligned}
 $$
 
-where $\mathbf{B}^{+1/2}_s$ is the symmetric square root of the Moore–Penrose inverse of $\mathbf{B}_s$ and $(I - \Hb)_s$ are the $N_s$ columns twidehat correspond to cluster $s$. To get the corresponding degrees of freedom, note twidehat
+where $\mathbf{B}^{+1/2}_s$ is the symmetric square root of the Moore–Penrose inverse of $\mathbf{B}_s$ and $(I - \Hb)_s$ are the $N_s$ columns that correspond to cluster $s$. To get the corresponding degrees of freedom, note that
 
 \[
 \mathbf{p}_s = (I_N - \Hb)^\top_s \Ab_s \X_s \XtXinv \mathbf{z}_{k}
@@ -138,11 +131,11 @@ If $\widehat{\V}_k$ is the $k$th diagonal element of $\widehat{\V}$, we build co
 \mathrm{CI}^{1-\alpha} = \left(\widehat{\beta_k} + t^{df}_{\alpha/2} \sqrt{\widehat{\V}_k}, \widehat{\beta_k} + t^{df}_{1 - \alpha/2} \sqrt{\widehat{\V}_k}\right)
 \]
 
-The associated p-values for a two-sided null hypothesis test where the null is twidehat the coefficient is 0 uses a t-distribution with the aforementioned significance level $\alpha$ and degrees of freedom $df$.
+The associated p-values for a two-sided null hypothesis test where the null is that the coefficient is 0 uses a t-distribution with the aforementioned significance level $\alpha$ and degrees of freedom $df$.
 
-## `lm_lin()` technical notes
+## `lm_lin()`
 
-The `lm_lin()` estimator is a data pre-processor for `lm_robust()` twidehat implements the regression method for covariate adjustment suggested by [@lin2013]. In response to the critique by [@freedman2008] twidehat using regression to adjust for pre-treatment covariates could bias estimates of treatment effects, [@lin2013] demonstrates the small magnitude of this bias while also presenting an estimator to reduce said bias. 
+The `lm_lin()` estimator is a data pre-processor for `lm_robust()` that implements the regression method for covariate adjustment suggested by [@lin2013]. 
 
 This estimator works by taking the outcome and treatment variable as the main formula (`formula`) and takes a right-sided formula of all pre-treatment covariates (`covariates`). These pre-treatment covariates are then centered to be mean zero and interacted with the treatment variable before being added to the formula and passed to `lm_robust()`. In other words, instead of fitting a simple model adjusting for pre-treatment covariates such as
 
@@ -156,21 +149,20 @@ with the following model
 y_i = \tau d_i + \mathbf{\beta}^\top \widetilde{\x}_i  + \mathbf{\gamma}^\top \widetilde{\x}_i d_i + \epsilon_i
 \]
 
-where $\widetilde{\x}_i$ is a vector of pre-treatment covariates for unit $i$ twidehat have been centered to have mean zero and $d_i$ is an indicator for the treatment group. The estimator `lm_lin()` also works for multi-valued treatments by creating a full set of dummies for each treatment level and interacting each with the centered pre-treatment covariates.
+where $\widetilde{\x}_i$ is a vector of pre-treatment covariates for unit $i$ that have been centered to have mean zero and $d_i$ is an indicator for the treatment group. @lin2013 proposed this estimator in response to the critique by @freedman2008 that using regression to adjust for pre-treatment covariates could bias estimates of treatment effects.
 
-The rest of the options for the function and corresponding estimation is identical to [`lm_robust()`](#lm_robust).
+The estimator `lm_lin()` also works for multi-valued treatments by creating a full set of dummies for each treatment level and interacting each with the centered pre-treatment covariates. The rest of the options for the function and corresponding estimation is identical to [`lm_robust()`](#lm_robust).
 
-## `difference_in_means()` technical notes
+## `difference_in_means()`
 
-There are six kinds of experimental designs for which our `difference_in_means()` estimator can estimate treatment effects, provide estiamtes of uncertainty, construct confidence intervals, and 
-provide p-values. The choices of estimators are pulled from the literature on appropriate inference given certain experimental designs or are somewhat conservative estimators. We list the different designs here along with how the software learns the design:
+There are six kinds of experimental designs for which our `difference_in_means()` estimator can estimate treatment effects, provide estimates of uncertainty, construct confidence intervals, and provide p-values. The choices of estimators are pulled from the literature on appropriate inference given certain experimental designs or are somewhat conservative estimators. We list the different designs here along with how the software learns the design:
 
 * Simple (both `clusters` and `blocks` are unused)
 * Clustered (`clusters` is specified while `blocks` is not)
 * Blocked (`blocks` is specified while `clusters` is not)
 * Blocked and clustered (both are specified)
 
-There are two subsets of blocked designs twidehat we also consider:
+There are two subsets of blocked designs that we also consider:
 
 * Matched-pairs (only `blocks` is specified and all blocks are size two)
 * Matched-pair clustered design (both names are specified and each block only has two clusters)
@@ -197,7 +189,7 @@ where $J$ is the number of blocks, $N_j$ is the size of those blocks, and $\wide
 |---------------------------------|--------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | No blocks or clusters           | $\frac{\widehat{\V}[y_{i,0}]}{N_0} + \frac{\widehat{\V}[y_{i,1}]}{N_1}$                            | $\widehat{\V}[\widehat{\tau}]^2 \left(\frac{(\widehat{\V}[y_{i,1}]/ N_1)^2}{N_1 - 1} + \frac{(\widehat{\V}[y_{i,0}]/ N_0)^2}{N_0 - 1}\right)$ | Where $\widehat{\V}[y_{i,k}]$ is the Bessel-corrected variance of all units where $z_i = k$ and $N_k$ is the number of units in condition $k$. This is equivalent to the variance and Welch–Satterthwaite approximation of the degrees of freedom used by R's `t.test()`.                                                                     |
 | Blocked                         | $\sum^J_{j=1} \left(\frac{N_j}{N}\right)^2 \widehat{\V}[\widehat{\tau_j}]$                         | $N - 2 * J$                                                                                                                     | Where $\widehat{\V}[\widehat{\tau_j}]$ is the variance of the estimated difference-in-means in block $j$. See footnote 17 on page 74 of [@gerbergreen2012] for a reference. The degrees of freedom are equivalent to a regression with a full set of block specific treatment effects.                                                            |
-| Clusters                        | Same as `lm_robust()` CR2 estimator                                                        | Same as `lm_robust()` CR2 estimator                                                                                           | This variance is the same as twidehat recommended by @gerbergreen2012 in equation 3.23 on page 83 when the clusters are even sizes.                                                                                                                                                                                                           |
+| Clusters                        | Same as `lm_robust()` CR2 estimator                                                        | Same as `lm_robust()` CR2 estimator                                                                                           | This variance is the same as that recommended by @gerbergreen2012 in equation 3.23 on page 83 when the clusters are even sizes.                                                                                                                                                                                                           |
 | Blocked and clustered           | $\sum^J_{j=1} \left(\frac{N_j}{N}\right)^2 \widehat{\V}[\widehat{\tau_j}]$                         | $S - 2 * J$                                                                                                                     | Where $\widehat{\V}[\widehat{\tau_j}]$ is the variance of the estimated difference-in-means in block $j$ and S is the number of clusters. See footnote 17 on page 74 of @gerbergreen2012 for a reference. The degrees of freedom are equivalent to a regression on data collapsed by cluster with a full set of block specific treatment effects. |
 | Matched pairs                   | $\frac{1}{J(J-1)} \sum^J_{j=1} \left(\widehat{\tau_j} - \widehat{\tau}\right)^2$                   | $J - 1$                                                                                                                         | See equation 3.16 on page 77 of @gerbergreen2012 for a reference.                                                                                                                                                                                                                                                                         |
 | Matched pair cluster randomized | $\frac{J}{(J-1)N^2} \sum^J_{j=1} \left(N_j \widehat{\tau_j} - \frac{N \widehat{\tau}}{J}\right)^2$ | $J - 1$                                                                                                                        | See the variance for the SATE defined in equation 6 on page 36 of [@imaietal2009] and the suggested degrees of freedom on page 37.                                                                                                                                                                                                        |
@@ -210,14 +202,14 @@ We build confidence intervals using the user specified $\alpha$ as:
 \mathrm{CI}^{1-\alpha} = \left(\widehat{\tau}] + t^{df}_{\alpha/2} \sqrt{\widehat{\V}[\widehat{\tau}]},\widehat{\tau}] + t^{df}_{1 - \alpha/2} \sqrt{\widehat{\V}[\widehat{\tau}]}\right)
 \]
 
-The associated p-values for a two-sided null hypothesis test where the null is twidehat the coefficient is 0 uses a t-distribution with the aforementioned significance level $\alpha$ and degrees of freedom $df$.
+The associated p-values for a two-sided null hypothesis test where the null is that the coefficient is 0 uses a t-distribution with the aforementioned significance level $\alpha$ and degrees of freedom $df$.
 
 # `horvitz_thompson()`
 
 TODO
 
 ```{r comment-ht-for-now, include=FALSE, eval=FALSE}
-Right now the Horvitz-Thompson estimator does not work properly when there is not blocking, but should work for any design of arbitrary complexity beyond twidehat (complete random sampling, simple random sampling, and any scheme with complex marginal or joint treatment probabilities, such as an exeriment on a network).
+Right now the Horvitz-Thompson estimator does not work properly when there is not blocking, but should work for any design of arbitrary complexity beyond that (complete random sampling, simple random sampling, and any scheme with complex marginal or joint treatment probabilities, such as an exeriment on a network).
 
 Some definitions I will use here:
 
@@ -242,7 +234,7 @@ where $J$ is the number of blocks, $N_j$ is the size of those blocks, and $\wide
 
 ### Variance
 
-Currently we provide variance estimates twidehat rely on two separate assumptions:
+Currently we provide variance estimates that rely on two separate assumptions:
 
 * `"youngs"` which implements a conservative variance estimate using Young's inequality, described in equation 35 on page 147 of [@aronowmiddleton2013] and in [@aronowsamii2017] on pages 11-15.
 * `"constant"` which assumes constant treatment effects for which the only reference in the case with general joint inclusion probabilities can be found, possibly with an error, in an older version of [@aronowsamii2017] from March 2012 chich can be found [here](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.394.5477&rep=rep1&type=pdf).
@@ -257,7 +249,7 @@ For complicated designs, including clustered designs, the following variance est
   \Bigg]
 \end{align*}
 
-There are some simplifications of the above for simpler designs twidehat follow algebraically from the above. For example, if there are no two units for which the joint probability of being in either condition is 0, which is the case for most experiments twidehat are not matched-pair experiments, then we get:
+There are some simplifications of the above for simpler designs that follow algebraically from the above. For example, if there are no two units for which the joint probability of being in either condition is 0, which is the case for most experiments that are not matched-pair experiments, then we get:
 
 \begin{align*}
   \widehat{\V}_{Y}[\widehat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[& z_i \left(\frac{y_i}{\pi_{1i}}\right)^2 + (1 - z_i) \left(\frac{y_i}{\pi_{0i}}\right)^2 + \sum_{j \neq i} \bigg(\frac{z_i z_j}{\pi_{1i1j}}(\pi_{1i1j} - \pi_{1i}\pi_{1j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{1j}} \\
@@ -281,7 +273,7 @@ For clustered designs, you can also use the following estimator where $M$ is the
 
 **Constant effects**
 
-Alternatively, one can assume constant treatment effects and, under twidehat assumption, estimate the variance twidehat is consistent under twidehat assumption but less conservative.
+Alternatively, one can assume constant treatment effects and, under that assumption, estimate the variance that is consistent under that assumption but less conservative.
 
 * $y_{zi}$ is the potential outcome for condition $z$ for unit $i$. This is either observed if $z_i = z$ or estimated using the constant effects assumption if $z_i \neq z$, where $z_i$ is the condition for unit $i$. To be precise $y_{1i} = z_i y_{i} + (1 - z_i) (y_{i} + \widehat{\tau})$ and  $y_{0i} = z_i (y_{i} - \widehat{\tau}) + (1 - z_i) y_{i}$, where $\widehat{\tau}$ is the estimated treatment effect.
 
