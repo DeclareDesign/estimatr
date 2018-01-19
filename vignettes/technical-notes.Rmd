@@ -41,14 +41,14 @@ This document provides the technical notes defining what each of the main functi
 
 The current estimators we provide are:
 
-* [`lm_robust()`](#lm_robust) - for fitting linear models with heteroskedasticity/cluster robust standard errors
-* [`lm_lin()`](#lm_lin) - a wrapper for `lm_robust()` to simplify interacting centered pre-treatment covariates with a treatment variable
-* [`difference_in_means()`](#difference_in_means) - for estimating differences in means with appropriate standard errors for simple, cluster randomized, block randomized, matched-pair designs and more
-* [`horvitz_thompson()`](#horvitz_thompson) - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs
+* `lm_robust()` - for fitting linear models with heteroskedasticity/cluster robust standard errors
+* `lm_lin()` - a wrapper for `lm_robust()` to simplify interacting centered pre-treatment covariates with a treatment variable
+* `difference_in_means()` - for estimating differences in means with appropriate standard errors for simple, cluster randomized, block randomized, matched-pair designs and more
+* `horvitz_thompson()` - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs
 
-# `lm_robust()`
+## `lm_robust()`
 
-The `lm_robust()` method uses the C++ library [Eigen](https://eigen.tuxfamily.org/), via the [`RcppEigen`](https://github.com/RcppCore/RcppEigen) package, to estimate the coefficients, variance-covariance matrix, and, in some cases, the degrees of freedom of linear models.
+The [`lm_robust()`](#lm_robust) method uses the C++ library [Eigen](https://eigen.tuxfamily.org/), via the [`RcppEigen`](https://github.com/RcppCore/RcppEigen) package, to estimate the coefficients, variance-covariance matrix, and, in some cases, the degrees of freedom of linear models.
 
 The default estimators have been selected for efficiency in large samples and low bias in small samples, selected from the literature that demonstrates their properties analytically or via simulation. This section outlines the various kinds of variance estimators one can employ within `lm_robust()`.
 
@@ -135,7 +135,7 @@ The associated p-values for a two-sided null hypothesis test where the null is t
 
 ## `lm_lin()`
 
-The `lm_lin()` estimator is a data pre-processor for `lm_robust()` that implements the regression method for covariate adjustment suggested by [@lin2013]. 
+The [`lm_lin()`](#lm_lin) estimator is a data pre-processor for `lm_robust()` that implements the regression method for covariate adjustment suggested by [@lin2013]. 
 
 This estimator works by taking the outcome and treatment variable as the main formula (`formula`) and takes a right-sided formula of all pre-treatment covariates (`covariates`). These pre-treatment covariates are then centered to be mean zero and interacted with the treatment variable before being added to the formula and passed to `lm_robust()`. In other words, instead of fitting a simple model adjusting for pre-treatment covariates such as
 
@@ -155,7 +155,7 @@ The estimator `lm_lin()` also works for multi-valued treatments by creating a fu
 
 ## `difference_in_means()`
 
-There are six kinds of experimental designs for which our `difference_in_means()` estimator can estimate treatment effects, provide estimates of uncertainty, construct confidence intervals, and provide p-values. The choices of estimators are pulled from the literature on appropriate inference given certain experimental designs or are somewhat conservative estimators. We list the different designs here along with how the software learns the design:
+There are six kinds of experimental designs for which our [`difference_in_means()`](#difference_in_means) estimator can estimate treatment effects, provide estimates of uncertainty, construct confidence intervals, and provide p-values. The choices of estimators are pulled from the literature on appropriate inference given certain experimental designs or are somewhat conservative estimators. We list the different designs here along with how the software learns the design:
 
 * Simple (both `clusters` and `blocks` are unused)
 * Clustered (`clusters` is specified while `blocks` is not)
@@ -204,7 +204,7 @@ We build confidence intervals using the user specified $\alpha$ as:
 
 The associated p-values for a two-sided null hypothesis test where the null is that the coefficient is 0 uses a t-distribution with the aforementioned significance level $\alpha$ and degrees of freedom $df$.
 
-# `horvitz_thompson()`
+## `horvitz_thompson()`
 
 TODO
 

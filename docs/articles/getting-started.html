@@ -106,18 +106,21 @@
 </ul>
 <p>To demonstrate basic usage of each of the estimators, I first create some sample data.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(estimatr)
+
 <span class="co"># Example dataset to be used throughout built using fabricatr and randomizr</span>
-dat &lt;-<span class="st"> </span>fabricatr<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/fabricatr/topics/fabricate">fabricate</a></span>(
-  <span class="dt">N =</span> <span class="dv">100</span>,                       <span class="co"># sample size</span>
-  <span class="dt">x =</span> <span class="kw">runif</span>(N, <span class="dv">0</span>, <span class="dv">1</span>),            <span class="co"># pre-treatment covariate</span>
-  <span class="dt">y0 =</span> <span class="kw">rnorm</span>(N, <span class="dt">mean =</span> x),       <span class="co"># control potential outcome</span>
-  <span class="dt">y1 =</span> y0 <span class="op">+</span><span class="st"> </span><span class="fl">0.35</span>,                <span class="co"># treatment potential outcome</span>
-  <span class="dt">z =</span> randomizr<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/randomizr/topics/complete_ra">complete_ra</a></span>(N), <span class="co"># complete random assignment to treatment</span>
-  <span class="dt">y =</span> <span class="kw">ifelse</span>(z, y1, y0),         <span class="co"># observed outcome</span>
-  
+<span class="kw">library</span>(fabricatr)
+<span class="kw">library</span>(randomizr)
+dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/fabricatr/topics/fabricate">fabricate</a></span>(
+  <span class="dt">N =</span> <span class="dv">100</span>,                        <span class="co"># sample size</span>
+  <span class="dt">x =</span> <span class="kw">runif</span>(N, <span class="dv">0</span>, <span class="dv">1</span>),             <span class="co"># pre-treatment covariate</span>
+  <span class="dt">y0 =</span> <span class="kw">rnorm</span>(N, <span class="dt">mean =</span> x),        <span class="co"># control potential outcome</span>
+  <span class="dt">y1 =</span> y0 <span class="op">+</span><span class="st"> </span><span class="fl">0.35</span>,                 <span class="co"># treatment potential outcome</span>
+  <span class="dt">z =</span> randomizr<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/randomizr/topics/complete_ra">complete_ra</a></span>(N),  <span class="co"># complete random assignment to treatment</span>
+  <span class="dt">y =</span> <span class="kw">ifelse</span>(z, y1, y0),          <span class="co"># observed outcome</span>
+
   <span class="co"># We will also consider clustered data</span>
   <span class="dt">clust =</span> <span class="kw">sample</span>(<span class="kw">rep</span>(letters[<span class="dv">1</span><span class="op">:</span><span class="dv">20</span>], <span class="dt">each =</span> <span class="dv">5</span>)),
-  <span class="dt">z_clust =</span> randomizr<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/randomizr/topics/cluster_ra">cluster_ra</a></span>(clust),
+  <span class="dt">z_clust =</span> <span class="kw"><a href="http://www.rdocumentation.org/packages/randomizr/topics/cluster_ra">cluster_ra</a></span>(clust),
   <span class="dt">y_clust =</span> <span class="kw">ifelse</span>(z_clust, y1, y0)
 )
 
@@ -203,141 +206,159 @@ dat &lt;-<span class="st"> </span>fabricatr<span class="op">::</span><span class
 </tr>
 </tbody>
 </table>
-<p>Results presented in this vignette are rounded to two digits for visual display.</p>
 <div id="lm_robust" class="section level2">
 <h2 class="hasAnchor">
 <a href="#lm_robust" class="anchor"></a><code>lm_robust</code>
 </h2>
 <p>The <code>estimatr</code> package provides a function to quickly fit linear models with the most common variance estimators and degrees of freedom corrections used in social science. You can easily return heteroskedastic standard errors, clustered standard errors, and classical standard errors.</p>
 <p>Usage largely mimics <code>lm()</code>, although it defaults to using Eicker-Huber-White robust standard errors, specifically ‘HC2’ standard errors:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>z <span class="op">+</span><span class="st"> </span>x, <span class="dt">data =</span> dat)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>z <span class="op">+</span><span class="st"> </span>x, <span class="dt">data =</span> dat)
+<span class="kw"><a href="../reference/tidy.html">tidy</a></span>(res) <span class="co"># summary(res) is very similar</span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
-<th></th>
-<th align="right">Estimate</th>
-<th align="right">Std. Error</th>
-<th align="right">Pr(&gt;|t|)</th>
+<th align="left">coefficient_name</th>
+<th align="right">est</th>
+<th align="right">se</th>
+<th align="right">p</th>
 <th align="right">ci_lower</th>
 <th align="right">ci_upper</th>
 <th align="right">df</th>
+<th align="left">outcome</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td>(Intercept)</td>
+<td align="left">(Intercept)</td>
 <td align="right">-0.19</td>
 <td align="right">0.21</td>
 <td align="right">0.37</td>
 <td align="right">-0.60</td>
 <td align="right">0.22</td>
 <td align="right">97</td>
+<td align="left">y</td>
 </tr>
 <tr class="even">
-<td>z</td>
+<td align="left">z</td>
 <td align="right">0.23</td>
 <td align="right">0.19</td>
 <td align="right">0.21</td>
 <td align="right">-0.14</td>
 <td align="right">0.60</td>
 <td align="right">97</td>
+<td align="left">y</td>
 </tr>
 <tr class="odd">
-<td>x</td>
+<td align="left">x</td>
 <td align="right">1.42</td>
 <td align="right">0.29</td>
 <td align="right">0.00</td>
 <td align="right">0.85</td>
 <td align="right">1.99</td>
 <td align="right">97</td>
+<td align="left">y</td>
 </tr>
 </tbody>
 </table>
 <p>It is straightforward to do cluster-robust inference, by passing the name of your cluster variable to the <code>clusters =</code> argument. Note that <code><a href="../reference/lm_robust.html">lm_robust()</a></code> is much quicker if your cluster variable is a factor!</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(y_clust <span class="op">~</span><span class="st"> </span>z_clust <span class="op">+</span><span class="st"> </span>x, 
-          <span class="dt">data =</span> dat, 
-          <span class="dt">clusters =</span> clust)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res_cl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(
+  y_clust <span class="op">~</span><span class="st"> </span>z_clust <span class="op">+</span><span class="st"> </span>x,
+  <span class="dt">data =</span> dat,
+  <span class="dt">clusters =</span> clust
+)
+<span class="kw"><a href="../reference/tidy.html">tidy</a></span>(res_cl)</code></pre></div>
 <table class="table">
 <thead><tr class="header">
-<th></th>
-<th align="right">Estimate</th>
-<th align="right">Std. Error</th>
-<th align="right">Pr(&gt;|t|)</th>
+<th align="left">coefficient_name</th>
+<th align="right">est</th>
+<th align="right">se</th>
+<th align="right">p</th>
 <th align="right">ci_lower</th>
 <th align="right">ci_upper</th>
 <th align="right">df</th>
+<th align="left">outcome</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td>(Intercept)</td>
+<td align="left">(Intercept)</td>
 <td align="right">-0.48</td>
 <td align="right">0.22</td>
 <td align="right">0.05</td>
 <td align="right">-0.97</td>
 <td align="right">0.0</td>
 <td align="right">12</td>
+<td align="left">y_clust</td>
 </tr>
 <tr class="even">
-<td>z_clust</td>
+<td align="left">z_clust</td>
 <td align="right">0.81</td>
 <td align="right">0.17</td>
 <td align="right">0.00</td>
 <td align="right">0.45</td>
 <td align="right">1.2</td>
 <td align="right">18</td>
+<td align="left">y_clust</td>
 </tr>
 <tr class="odd">
-<td>x</td>
+<td align="left">x</td>
 <td align="right">1.43</td>
 <td align="right">0.34</td>
 <td align="right">0.00</td>
 <td align="right">0.72</td>
 <td align="right">2.1</td>
 <td align="right">17</td>
+<td align="left">y_clust</td>
 </tr>
 </tbody>
 </table>
 <p>The default variance estimator with clusters is dubbed ‘CR2’ because it is analogous to ‘HC2’ for the clustered case, and utilizes recent advances proposed by <span class="citation">Pustejovsky and Tipton (<a href="#ref-pustejovskytipton2016">2016</a>)</span> to correct hypotheses tests for small samples and work with commonly specified fixed effects and weights.</p>
 <p>Researchers can also replicate Stata’s clustered standard errors by using the <code>se_type =</code> argument:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(y_clust <span class="op">~</span><span class="st"> </span>z_clust <span class="op">+</span><span class="st"> </span>x, 
-          <span class="dt">data =</span> dat, 
-          <span class="dt">clusters =</span> clust, 
-          <span class="dt">se_type =</span> <span class="st">'stata'</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res_stata &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(
+  y_clust <span class="op">~</span><span class="st"> </span>z_clust <span class="op">+</span><span class="st"> </span>x,
+  <span class="dt">data =</span> dat,
+  <span class="dt">clusters =</span> clust,
+  <span class="dt">se_type =</span> <span class="st">"stata"</span>
+)
+<span class="kw"><a href="../reference/tidy.html">tidy</a></span>(res_stata)</code></pre></div>
 <table class="table">
 <thead><tr class="header">
-<th></th>
-<th align="right">Estimate</th>
-<th align="right">Std. Error</th>
-<th align="right">Pr(&gt;|t|)</th>
+<th align="left">coefficient_name</th>
+<th align="right">est</th>
+<th align="right">se</th>
+<th align="right">p</th>
 <th align="right">ci_lower</th>
 <th align="right">ci_upper</th>
 <th align="right">df</th>
+<th align="left">outcome</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td>(Intercept)</td>
+<td align="left">(Intercept)</td>
 <td align="right">-0.48</td>
 <td align="right">0.22</td>
 <td align="right">0.04</td>
 <td align="right">-0.95</td>
 <td align="right">-0.02</td>
 <td align="right">19</td>
+<td align="left">y_clust</td>
 </tr>
 <tr class="even">
-<td>z_clust</td>
+<td align="left">z_clust</td>
 <td align="right">0.81</td>
 <td align="right">0.17</td>
 <td align="right">0.00</td>
 <td align="right">0.46</td>
 <td align="right">1.16</td>
 <td align="right">19</td>
+<td align="left">y_clust</td>
 </tr>
 <tr class="odd">
-<td>x</td>
+<td align="left">x</td>
 <td align="right">1.43</td>
 <td align="right">0.33</td>
 <td align="right">0.00</td>
 <td align="right">0.73</td>
 <td align="right">2.13</td>
 <td align="right">19</td>
+<td align="left">y_clust</td>
 </tr>
 </tbody>
 </table>
@@ -347,55 +368,63 @@ dat &lt;-<span class="st"> </span>fabricatr<span class="op">::</span><span class
 <a href="#lm_lin" class="anchor"></a><code>lm_lin</code>
 </h2>
 <p>Following the critique by <span class="citation">Freedman (<a href="#ref-freedman2008">2008</a>)</span> that pre-treatment covariate adjustment biases estimates of average treatment effects, <span class="citation">Lin and others (<a href="#ref-lin2013">2013</a>)</span> proposed an alternative estimator that would reduce this bias and improve precision. The <span class="citation">Lin and others (<a href="#ref-lin2013">2013</a>)</span> estimator suggests centering all pre-treatment covariates and interacting them with the treatment variable. To facilitate this, we provide a wrapper that can do that process for you.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/lm_lin.html">lm_lin</a></span>(y <span class="op">~</span><span class="st"> </span>z, 
-       <span class="dt">covariates =</span> <span class="op">~</span><span class="st"> </span>x, 
-       <span class="dt">data =</span> dat)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res_lin &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_lin.html">lm_lin</a></span>(
+  y <span class="op">~</span><span class="st"> </span>z,
+  <span class="dt">covariates =</span> <span class="op">~</span><span class="st"> </span>x,
+  <span class="dt">data =</span> dat
+)
+<span class="kw"><a href="../reference/tidy.html">tidy</a></span>(res_lin)</code></pre></div>
 <table class="table">
 <thead><tr class="header">
-<th></th>
-<th align="right">Estimate</th>
-<th align="right">Std. Error</th>
-<th align="right">Pr(&gt;|t|)</th>
+<th align="left">coefficient_name</th>
+<th align="right">est</th>
+<th align="right">se</th>
+<th align="right">p</th>
 <th align="right">ci_lower</th>
 <th align="right">ci_upper</th>
 <th align="right">df</th>
+<th align="left">outcome</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td>(Intercept)</td>
+<td align="left">(Intercept)</td>
 <td align="right">0.55</td>
 <td align="right">0.15</td>
 <td align="right">0.00</td>
 <td align="right">0.25</td>
 <td align="right">0.84</td>
 <td align="right">96</td>
+<td align="left">y</td>
 </tr>
 <tr class="even">
-<td>z</td>
+<td align="left">z</td>
 <td align="right">0.24</td>
 <td align="right">0.19</td>
 <td align="right">0.21</td>
 <td align="right">-0.13</td>
 <td align="right">0.61</td>
 <td align="right">96</td>
+<td align="left">y</td>
 </tr>
 <tr class="odd">
-<td>x_bar</td>
+<td align="left">x_bar</td>
 <td align="right">1.72</td>
 <td align="right">0.47</td>
 <td align="right">0.00</td>
 <td align="right">0.79</td>
 <td align="right">2.65</td>
 <td align="right">96</td>
+<td align="left">y</td>
 </tr>
 <tr class="even">
-<td>z:x_bar</td>
+<td align="left">z:x_bar</td>
 <td align="right">-0.58</td>
 <td align="right">0.58</td>
 <td align="right">0.32</td>
 <td align="right">-1.73</td>
 <td align="right">0.57</td>
 <td align="right">96</td>
+<td align="left">y</td>
 </tr>
 </tbody>
 </table>
@@ -407,50 +436,59 @@ dat &lt;-<span class="st"> </span>fabricatr<span class="op">::</span><span class
 </h2>
 <p>While estimating differences in means may seem straightforward, we provide a function that appropriately adjusts estimates for blocking and clustering to match the current state of knowledge in social science methodology. Usage is similar to usage in regression functions.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Simple version</span>
-<span class="kw"><a href="../reference/difference_in_means.html">difference_in_means</a></span>(y <span class="op">~</span><span class="st"> </span>z, 
-                    <span class="dt">data =</span> dat)</code></pre></div>
+res_dim &lt;-<span class="st"> </span><span class="kw"><a href="../reference/difference_in_means.html">difference_in_means</a></span>(
+  y <span class="op">~</span><span class="st"> </span>z,
+  <span class="dt">data =</span> dat
+)
+<span class="kw"><a href="../reference/tidy.html">tidy</a></span>(res_dim)</code></pre></div>
 <table class="table">
 <thead><tr class="header">
-<th></th>
-<th align="right">Estimate</th>
-<th align="right">Std. Error</th>
-<th align="right">Pr(&gt;|t|)</th>
+<th align="left">coefficient_name</th>
+<th align="right">est</th>
+<th align="right">se</th>
+<th align="right">p</th>
 <th align="right">ci_lower</th>
 <th align="right">ci_upper</th>
 <th align="right">df</th>
+<th align="left">outcome</th>
 </tr></thead>
 <tbody><tr class="odd">
-<td>z</td>
+<td align="left">z</td>
 <td align="right">0.16</td>
 <td align="right">0.2</td>
 <td align="right">0.44</td>
 <td align="right">-0.25</td>
 <td align="right">0.56</td>
 <td align="right">90</td>
+<td align="left">y</td>
 </tr></tbody>
 </table>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Clustered version</span>
-<span class="kw"><a href="../reference/difference_in_means.html">difference_in_means</a></span>(y_clust <span class="op">~</span><span class="st"> </span>z_clust, 
-                    <span class="dt">data =</span> dat, 
-                    <span class="dt">clusters =</span> clust)</code></pre></div>
+res_dim_cl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/difference_in_means.html">difference_in_means</a></span>(
+  y_clust <span class="op">~</span><span class="st"> </span>z_clust,
+  <span class="dt">data =</span> dat,
+  <span class="dt">clusters =</span> clust
+)</code></pre></div>
 <table class="table">
 <thead><tr class="header">
-<th></th>
-<th align="right">Estimate</th>
-<th align="right">Std. Error</th>
-<th align="right">Pr(&gt;|t|)</th>
+<th align="left">coefficient_name</th>
+<th align="right">est</th>
+<th align="right">se</th>
+<th align="right">p</th>
 <th align="right">ci_lower</th>
 <th align="right">ci_upper</th>
 <th align="right">df</th>
+<th align="left">outcome</th>
 </tr></thead>
 <tbody><tr class="odd">
-<td>z_clust</td>
+<td align="left">z_clust</td>
 <td align="right">0.82</td>
 <td align="right">0.17</td>
 <td align="right">0</td>
 <td align="right">0.45</td>
 <td align="right">1.2</td>
 <td align="right">18</td>
+<td align="left">y_clust</td>
 </tr></tbody>
 </table>
 </div>
@@ -460,104 +498,145 @@ dat &lt;-<span class="st"> </span>fabricatr<span class="op">::</span><span class
 </h2>
 <p>Horvitz-Thompson estimators are useful when estimating treatment effects without bias when there is a clustered design with unequal size clusters or when the treatment assignment process is arbitrarily complex. Horvitz-Thompson estimators require information about the treatment (and control) probabilities for each unit, and the joint treatment and control probabilities of every pair of units. For designs that are not arbitrarily complex, passing your randomization scheme using <code><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">randomizr::declare_ra()</a></code> is the easiest path forward.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Complete random assignment declaration</span>
-crs_decl &lt;-<span class="st"> </span>randomizr<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">declare_ra</a></span>(<span class="dt">N =</span> <span class="kw">nrow</span>(dat), 
-                                  <span class="dt">prob =</span> <span class="fl">0.5</span>, 
-                                  <span class="dt">simple =</span> <span class="ot">FALSE</span>)
-<span class="kw"><a href="../reference/horvitz_thompson.html">horvitz_thompson</a></span>(y <span class="op">~</span><span class="st"> </span>z, 
-                 <span class="dt">data =</span> dat, 
-                 <span class="dt">declaration =</span> crs_decl)
-
-<span class="co"># Clustered random assignment declaration</span>
-crs_clust_decl &lt;-<span class="st"> </span>randomizr<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">declare_ra</a></span>(
-  <span class="dt">N =</span> <span class="kw">nrow</span>(dat), 
-  <span class="dt">clust_var =</span> dat<span class="op">$</span>clust, 
-  <span class="dt">prob =</span> <span class="fl">0.5</span>, 
+crs_decl &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">declare_ra</a></span>(
+  <span class="dt">N =</span> <span class="kw">nrow</span>(dat),
+  <span class="dt">prob =</span> <span class="fl">0.5</span>,
   <span class="dt">simple =</span> <span class="ot">FALSE</span>
 )
-<span class="kw"><a href="../reference/horvitz_thompson.html">horvitz_thompson</a></span>(y_clust <span class="op">~</span><span class="st"> </span>z_clust, 
-                 <span class="dt">data =</span> dat, 
-                 <span class="dt">declaration =</span> crs_clust_decl)</code></pre></div>
+
+ht_comp &lt;-<span class="st"> </span><span class="kw"><a href="../reference/horvitz_thompson.html">horvitz_thompson</a></span>(
+  y <span class="op">~</span><span class="st"> </span>z,
+  <span class="dt">data =</span> dat,
+  <span class="dt">declaration =</span> crs_decl
+)
+<span class="kw"><a href="../reference/tidy.html">tidy</a></span>(ht_comp)</code></pre></div>
 <table class="table">
 <thead><tr class="header">
-<th></th>
-<th align="right">Estimate</th>
-<th align="right">Std. Error</th>
-<th align="right">Pr(&gt;|t|)</th>
+<th align="left">coefficient_name</th>
+<th align="right">est</th>
+<th align="right">se</th>
+<th align="right">p</th>
 <th align="right">ci_lower</th>
 <th align="right">ci_upper</th>
 <th align="right">df</th>
+<th align="left">outcome</th>
 </tr></thead>
 <tbody><tr class="odd">
-<td>z_clust</td>
+<td align="left">z</td>
+<td align="right">0.16</td>
+<td align="right">0.2</td>
+<td align="right">0.44</td>
+<td align="right">-0.25</td>
+<td align="right">0.56</td>
+<td align="right">98</td>
+<td align="left">y</td>
+</tr></tbody>
+</table>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Clustered random assignment declaration</span>
+crs_clust_decl &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">declare_ra</a></span>(
+  <span class="dt">N =</span> <span class="kw">nrow</span>(dat),
+  <span class="dt">clusters =</span> dat<span class="op">$</span>clust,
+  <span class="dt">prob =</span> <span class="fl">0.5</span>,
+  <span class="dt">simple =</span> <span class="ot">FALSE</span>
+)
+
+ht_clust &lt;-<span class="st"> </span><span class="kw"><a href="../reference/horvitz_thompson.html">horvitz_thompson</a></span>(
+  y_clust <span class="op">~</span><span class="st"> </span>z_clust,
+  <span class="dt">data =</span> dat,
+  <span class="dt">declaration =</span> crs_clust_decl
+)
+<span class="kw"><a href="../reference/tidy.html">tidy</a></span>(ht_clust)</code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left">coefficient_name</th>
+<th align="right">est</th>
+<th align="right">se</th>
+<th align="right">p</th>
+<th align="right">ci_lower</th>
+<th align="right">ci_upper</th>
+<th align="right">df</th>
+<th align="left">outcome</th>
+</tr></thead>
+<tbody><tr class="odd">
+<td align="left">z_clust</td>
 <td align="right">0.82</td>
 <td align="right">0.13</td>
 <td align="right">0</td>
 <td align="right">0.55</td>
 <td align="right">1.1</td>
 <td align="right">98</td>
+<td align="left">y_clust</td>
 </tr></tbody>
 </table>
 <p>There are two main variance estimators we provide, a conservative estimator using Young’s inequality (<code>se_type = "youngs"</code>), described by <span class="citation">Aronow and Middleton (<a href="#ref-aronowmiddleton2013">2013</a>)</span>, and an estimator that assumes constant treatment effects (<code>se_type = "constant"</code>). The default is the conservative estimator.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/horvitz_thompson.html">horvitz_thompson</a></span>(
-  y_clust <span class="op">~</span><span class="st"> </span>z_clust, 
-  <span class="dt">data =</span> dat, 
-  <span class="dt">declaration =</span> crs_clust_decl, 
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ht_constant &lt;-<span class="st"> </span><span class="kw"><a href="../reference/horvitz_thompson.html">horvitz_thompson</a></span>(
+  y_clust <span class="op">~</span><span class="st"> </span>z_clust,
+  <span class="dt">data =</span> dat,
+  <span class="dt">declaration =</span> crs_clust_decl,
   <span class="dt">se_type =</span> <span class="st">"constant"</span>
-)</code></pre></div>
+)
+<span class="kw"><a href="../reference/tidy.html">tidy</a></span>(ht_constant)</code></pre></div>
 <table class="table">
 <thead><tr class="header">
-<th></th>
-<th align="right">Estimate</th>
-<th align="right">Std. Error</th>
-<th align="right">Pr(&gt;|t|)</th>
+<th align="left">coefficient_name</th>
+<th align="right">est</th>
+<th align="right">se</th>
+<th align="right">p</th>
 <th align="right">ci_lower</th>
 <th align="right">ci_upper</th>
 <th align="right">df</th>
+<th align="left">outcome</th>
 </tr></thead>
 <tbody><tr class="odd">
-<td>z_clust</td>
+<td align="left">z_clust</td>
 <td align="right">0.82</td>
 <td align="right">0.17</td>
 <td align="right">0</td>
 <td align="right">0.48</td>
 <td align="right">1.1</td>
 <td align="right">98</td>
+<td align="left">y_clust</td>
 </tr></tbody>
 </table>
 <p>You can also build the condition probability matrix (<code>condition_prob_mat =</code>) that <code><a href="../reference/horvitz_thompson.html">horvitz_thompson()</a></code> needs yourself. This matrix is an 2N by 2N matrix, where the first N rows and N columns (the upper-left corner) are the joint probability of each unit being in the control condition with every other unit being in the control condition. The upper right N by N matrix is the joint probability of each unit being in the control condition with every other unit being in the treated condition. The second N rows are the same, with the joint probability of each unit being in the treated condition first with each unit being in the control (first N columns) and then with each unit being in the treated as well (second N columns).</p>
 <p>We also provide helper functions to build this matrix from a set of possible permutations of the treatment vector.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Generate 500 arbitrary permutations</span>
-permutes &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">rbinom</span>(<span class="kw">nrow</span>(dat) <span class="op">*</span><span class="st"> </span><span class="dv">500</span>, 
-                          <span class="dt">size =</span> <span class="dv">1</span>, 
-                          <span class="dt">prob =</span> <span class="fl">0.5</span>), 
-                   <span class="dt">nrow =</span> <span class="kw">nrow</span>(dat))
+permutes &lt;-<span class="st"> </span><span class="kw">matrix</span>(
+  <span class="kw">rbinom</span>(<span class="kw">nrow</span>(dat) <span class="op">*</span><span class="st"> </span><span class="dv">500</span>, <span class="dt">size =</span> <span class="dv">1</span>, <span class="dt">prob =</span> <span class="fl">0.5</span>),
+  <span class="dt">nrow =</span> <span class="kw">nrow</span>(dat)
+)
 <span class="kw">dim</span>(permutes)
 permutes[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="op">:</span><span class="dv">2</span>]
 
 <span class="co"># Get condition probability matrix</span>
 arb_pr_mat &lt;-<span class="st"> </span><span class="kw"><a href="../reference/permutations_to_condition_pr_mat.html">permutations_to_condition_pr_mat</a></span>(permutes)
 
-<span class="kw"><a href="../reference/horvitz_thompson.html">horvitz_thompson</a></span>(y <span class="op">~</span><span class="st"> </span>z, 
-                 <span class="dt">data =</span> dat, 
-                 <span class="dt">condition_pr_mat =</span> arb_pr_mat)</code></pre></div>
+ht_arb &lt;-<span class="st"> </span><span class="kw"><a href="../reference/horvitz_thompson.html">horvitz_thompson</a></span>(
+  y <span class="op">~</span><span class="st"> </span>z,
+  <span class="dt">data =</span> dat,
+  <span class="dt">condition_pr_mat =</span> arb_pr_mat
+)
+<span class="kw"><a href="../reference/tidy.html">tidy</a></span>(ht_arb)</code></pre></div>
 <table class="table">
 <thead><tr class="header">
-<th></th>
-<th align="right">Estimate</th>
-<th align="right">Std. Error</th>
-<th align="right">Pr(&gt;|t|)</th>
+<th align="left">coefficient_name</th>
+<th align="right">est</th>
+<th align="right">se</th>
+<th align="right">p</th>
 <th align="right">ci_lower</th>
 <th align="right">ci_upper</th>
 <th align="right">df</th>
+<th align="left">outcome</th>
 </tr></thead>
 <tbody><tr class="odd">
-<td>z</td>
+<td align="left">z</td>
 <td align="right">0.16</td>
 <td align="right">0.24</td>
 <td align="right">0.52</td>
 <td align="right">-0.32</td>
 <td align="right">0.63</td>
 <td align="right">98</td>
+<td align="left">y</td>
 </tr></tbody>
 </table>
 </div>

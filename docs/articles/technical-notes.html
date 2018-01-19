@@ -96,20 +96,19 @@
 <p>The current estimators we provide are:</p>
 <ul>
 <li>
-<a href="#lm_robust"><code><a href="../reference/lm_robust.html">lm_robust()</a></code></a> - for fitting linear models with heteroskedasticity/cluster robust standard errors</li>
+<code><a href="../reference/lm_robust.html">lm_robust()</a></code> - for fitting linear models with heteroskedasticity/cluster robust standard errors</li>
 <li>
-<a href="#lm_lin"><code><a href="../reference/lm_lin.html">lm_lin()</a></code></a> - a wrapper for <code><a href="../reference/lm_robust.html">lm_robust()</a></code> to simplify interacting centered pre-treatment covariates with a treatment variable</li>
+<code><a href="../reference/lm_lin.html">lm_lin()</a></code> - a wrapper for <code><a href="../reference/lm_robust.html">lm_robust()</a></code> to simplify interacting centered pre-treatment covariates with a treatment variable</li>
 <li>
-<a href="#difference_in_means"><code><a href="../reference/difference_in_means.html">difference_in_means()</a></code></a> - for estimating differences in means with appropriate standard errors for simple, cluster randomized, block randomized, matched-pair designs and more</li>
+<code><a href="../reference/difference_in_means.html">difference_in_means()</a></code> - for estimating differences in means with appropriate standard errors for simple, cluster randomized, block randomized, matched-pair designs and more</li>
 <li>
-<a href="#horvitz_thompson"><code><a href="../reference/horvitz_thompson.html">horvitz_thompson()</a></code></a> - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs</li>
+<code><a href="../reference/horvitz_thompson.html">horvitz_thompson()</a></code> - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs</li>
 </ul>
-</div>
-<div id="lm_robust" class="section level1">
-<h1 class="hasAnchor">
+<div id="lm_robust" class="section level2">
+<h2 class="hasAnchor">
 <a href="#lm_robust" class="anchor"></a><code><a href="../reference/lm_robust.html">lm_robust()</a></code>
-</h1>
-<p>The <code><a href="../reference/lm_robust.html">lm_robust()</a></code> method uses the C++ library <a href="https://eigen.tuxfamily.org/">Eigen</a>, via the <a href="https://github.com/RcppCore/RcppEigen"><code>RcppEigen</code></a> package, to estimate the coefficients, variance-covariance matrix, and, in some cases, the degrees of freedom of linear models.</p>
+</h2>
+<p>The <a href="#lm_robust"><code><a href="../reference/lm_robust.html">lm_robust()</a></code></a> method uses the C++ library <a href="https://eigen.tuxfamily.org/">Eigen</a>, via the <a href="https://github.com/RcppCore/RcppEigen"><code>RcppEigen</code></a> package, to estimate the coefficients, variance-covariance matrix, and, in some cases, the degrees of freedom of linear models.</p>
 <p>The default estimators have been selected for efficiency in large samples and low bias in small samples, selected from the literature that demonstrates their properties analytically or via simulation. This section outlines the various kinds of variance estimators one can employ within <code><a href="../reference/lm_robust.html">lm_robust()</a></code>.</p>
 <div id="coefficient-estimates" class="section level3">
 <h3 class="hasAnchor">
@@ -266,11 +265,12 @@
 \]</span></p>
 <p>The associated p-values for a two-sided null hypothesis test where the null is that the coefficient is 0 uses a t-distribution with the aforementioned significance level <span class="math inline">\(\alpha\)</span> and degrees of freedom <span class="math inline">\(df\)</span>.</p>
 </div>
+</div>
 <div id="lm_lin" class="section level2">
 <h2 class="hasAnchor">
 <a href="#lm_lin" class="anchor"></a><code><a href="../reference/lm_lin.html">lm_lin()</a></code>
 </h2>
-<p>The <code><a href="../reference/lm_lin.html">lm_lin()</a></code> estimator is a data pre-processor for <code><a href="../reference/lm_robust.html">lm_robust()</a></code> that implements the regression method for covariate adjustment suggested by <span class="citation">(Lin and others <a href="#ref-lin2013">2013</a>)</span>.</p>
+<p>The <a href="#lm_lin"><code><a href="../reference/lm_lin.html">lm_lin()</a></code></a> estimator is a data pre-processor for <code><a href="../reference/lm_robust.html">lm_robust()</a></code> that implements the regression method for covariate adjustment suggested by <span class="citation">(Lin and others <a href="#ref-lin2013">2013</a>)</span>.</p>
 <p>This estimator works by taking the outcome and treatment variable as the main formula (<code>formula</code>) and takes a right-sided formula of all pre-treatment covariates (<code>covariates</code>). These pre-treatment covariates are then centered to be mean zero and interacted with the treatment variable before being added to the formula and passed to <code><a href="../reference/lm_robust.html">lm_robust()</a></code>. In other words, instead of fitting a simple model adjusting for pre-treatment covariates such as</p>
 <p><span class="math display">\[
 y_i = \tau d_i + \mathbf{\beta}^\top {\mathbf{x}}_i + \epsilon_i
@@ -286,7 +286,7 @@ y_i = \tau d_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
 <h2 class="hasAnchor">
 <a href="#difference_in_means" class="anchor"></a><code><a href="../reference/difference_in_means.html">difference_in_means()</a></code>
 </h2>
-<p>There are six kinds of experimental designs for which our <code><a href="../reference/difference_in_means.html">difference_in_means()</a></code> estimator can estimate treatment effects, provide estimates of uncertainty, construct confidence intervals, and provide p-values. The choices of estimators are pulled from the literature on appropriate inference given certain experimental designs or are somewhat conservative estimators. We list the different designs here along with how the software learns the design:</p>
+<p>There are six kinds of experimental designs for which our <a href="#difference_in_means"><code><a href="../reference/difference_in_means.html">difference_in_means()</a></code></a> estimator can estimate treatment effects, provide estimates of uncertainty, construct confidence intervals, and provide p-values. The choices of estimators are pulled from the literature on appropriate inference given certain experimental designs or are somewhat conservative estimators. We list the different designs here along with how the software learns the design:</p>
 <ul>
 <li>Simple (both <code>clusters</code> and <code>blocks</code> are unused)</li>
 <li>Clustered (<code>clusters</code> is specified while <code>blocks</code> is not)</li>
@@ -376,12 +376,12 @@ y_i = \tau d_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
 <p>The associated p-values for a two-sided null hypothesis test where the null is that the coefficient is 0 uses a t-distribution with the aforementioned significance level <span class="math inline">\(\alpha\)</span> and degrees of freedom <span class="math inline">\(df\)</span>.</p>
 </div>
 </div>
-</div>
-<div id="horvitz_thompson" class="section level1">
-<h1 class="hasAnchor">
+<div id="horvitz_thompson" class="section level2">
+<h2 class="hasAnchor">
 <a href="#horvitz_thompson" class="anchor"></a><code><a href="../reference/horvitz_thompson.html">horvitz_thompson()</a></code>
-</h1>
+</h2>
 <p>TODO</p>
+</div>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1 class="hasAnchor">
@@ -427,14 +427,14 @@ y_i = \tau d_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-<li><a href="#estimators">Estimators</a></li>
-      <li>
-<a href="#lm_robust"><code><a href="--/reference/lm_robust-html">lm_robust()</a></code></a><ul class="nav nav-pills nav-stacked">
-<li><a href="#lm_lin"><code><a href="--/reference/lm_lin-html">lm_lin()</a></code></a></li>
+<li>
+<a href="#estimators">Estimators</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#lm_robust"><code><a href="--/reference/lm_robust-html">lm_robust()</a></code></a></li>
+      <li><a href="#lm_lin"><code><a href="--/reference/lm_lin-html">lm_lin()</a></code></a></li>
       <li><a href="#difference_in_means"><code><a href="--/reference/difference_in_means-html">difference_in_means()</a></code></a></li>
+      <li><a href="#horvitz_thompson"><code><a href="--/reference/horvitz_thompson-html">horvitz_thompson()</a></code></a></li>
       </ul>
 </li>
-      <li><a href="#horvitz_thompson"><code><a href="--/reference/horvitz_thompson-html">horvitz_thompson()</a></code></a></li>
       <li><a href="#references">References</a></li>
       </ul>
 </div>
