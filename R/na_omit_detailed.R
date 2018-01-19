@@ -23,6 +23,7 @@
 #' which contains the leftmost column containing an NA for each row that was dropped, by
 #' column name, if any were dropped.
 #'
+#' @export
 #' @seealso \code{\link{na.omit}}
 na.omit_detailed.data.frame <- function (object, ...)
 {
