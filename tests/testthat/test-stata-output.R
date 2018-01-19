@@ -7,7 +7,8 @@ test_that("lm_robust matches stata", {
   #           row.names = F)
 
   stata_ests <- read.table('tests/testthat/stata-ests.txt',
-                           col.names = c("model", "se1", "se2", "df"))
+                           col.names = c("model", "se1", "se2", "df"),
+                           stringsAsFactors = FALSE)
 
   mtcars$w <- mtcars$drat / 5
 
@@ -39,6 +40,6 @@ test_that("lm_robust matches stata", {
   estimatr_mat[10, ] <- c(lm_stata_w$se^2, lm_stata_w$df[2])
 
   # All look numerically identical except for HC2 and HC3 with weights which hae not insignificant differences
-  max(estimatr_mat - apply(stata_ests[, c(3, 2, 4)], 2, as.numeric))
+  cbind(stata_ests[, 1], estimatr_mat - apply(stata_ests[, c(3, 2, 4)], 2, as.numeric))
 
 })

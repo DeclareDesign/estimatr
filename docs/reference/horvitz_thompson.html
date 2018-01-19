@@ -194,14 +194,14 @@
 <span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='fu'>rbinom</span>(<span class='no'>n</span>, <span class='kw'>size</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>p</span>)
 
 <span class='co'># If you only pass condition_prs, we assume simple random sampling</span>
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_prs</span> <span class='kw'>=</span> <span class='no'>p</span>)</div><div class='output co'>#&gt;   coefficient_name   est   se    p ci_lower ci_upper df outcome
-#&gt; 1                z -0.25 0.61 0.69     -1.7      1.2  8       y</div><div class='input'><span class='co'># Assume constant effects instead</span>
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_prs</span> <span class='kw'>=</span> <span class='no'>p</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"constant"</span>)</div><div class='output co'>#&gt;   coefficient_name   est  se    p ci_lower ci_upper df outcome
-#&gt; 1                z -0.25 0.6 0.69     -1.6      1.1  8       y</div><div class='input'>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_prs</span> <span class='kw'>=</span> <span class='no'>p</span>)</div><div class='output co'>#&gt;   coefficient_name        est       se         p  ci_lower ci_upper df outcome
+#&gt; 1                z -0.2532128 0.609167 0.6885769 -1.657954 1.151529  8       y</div><div class='input'><span class='co'># Assume constant effects instead</span>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_prs</span> <span class='kw'>=</span> <span class='no'>p</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"constant"</span>)</div><div class='output co'>#&gt;   coefficient_name        est        se         p  ci_lower ci_upper df outcome
+#&gt; 1                z -0.2532128 0.6038814 0.6860232 -1.645766  1.13934  8       y</div><div class='input'>
 <span class='co'># Also can use randomizr to pass a declaration</span>
 <span class='no'>srs_declaration</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>randomizr</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/declare_ra'>declare_ra</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>), <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.5</span>, <span class='kw'>simple</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>srs_declaration</span>)</div><div class='output co'>#&gt;   coefficient_name   est   se    p ci_lower ci_upper df outcome
-#&gt; 1                z -0.25 0.61 0.69     -1.7      1.2  8       y</div><div class='input'>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>srs_declaration</span>)</div><div class='output co'>#&gt;   coefficient_name        est       se         p  ci_lower ci_upper df outcome
+#&gt; 1                z -0.2532128 0.609167 0.6885769 -1.657954 1.151529  8       y</div><div class='input'>
 <span class='co'>#----------</span>
 <span class='co'># Complete random assignemtn</span>
 <span class='co'>#----------</span>
@@ -209,12 +209,12 @@
 <span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='fu'>sample</span>(<span class='fu'>rep</span>(<span class='fl'>0</span>:<span class='fl'>1</span>, <span class='kw'>each</span> <span class='kw'>=</span> <span class='no'>n</span>/<span class='fl'>2</span>))
 <span class='co'># Can use a declaration</span>
 <span class='no'>crs_declaration</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>randomizr</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/declare_ra'>declare_ra</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>), <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.5</span>, <span class='kw'>simple</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>crs_declaration</span>)</div><div class='output co'>#&gt;   coefficient_name   est   se    p ci_lower ci_upper df outcome
-#&gt; 1                z -0.25 0.53 0.65     -1.5     0.98  8       y</div><div class='input'><span class='co'># Can precompute condition_pr_mat and pass it</span>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>crs_declaration</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p  ci_lower  ci_upper df outcome
+#&gt; 1                z -0.247794 0.5309541 0.6531633 -1.472176 0.9765883  8       y</div><div class='input'><span class='co'># Can precompute condition_pr_mat and pass it</span>
 <span class='co'># (faster for multiple runs with same condition probability matrix)</span>
 <span class='no'>crs_pr_mat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='declaration_to_condition_pr_mat.html'>declaration_to_condition_pr_mat</a></span>(<span class='no'>crs_declaration</span>)
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>crs_pr_mat</span>)</div><div class='output co'>#&gt;   coefficient_name   est   se    p ci_lower ci_upper df outcome
-#&gt; 1                z -0.25 0.53 0.65     -1.5     0.98  8       y</div><div class='input'>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>crs_pr_mat</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p  ci_lower  ci_upper df outcome
+#&gt; 1                z -0.247794 0.5309541 0.6531633 -1.472176 0.9765883  8       y</div><div class='input'>
 <span class='co'>#----------</span>
 <span class='co'># More complicated assignment</span>
 <span class='co'>#----------</span>
@@ -228,18 +228,22 @@
 <span class='no'>arb_pr_mat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='permutations_to_condition_pr_mat.html'>permutations_to_condition_pr_mat</a></span>(<span class='no'>possible_treats</span>)
 <span class='co'># Simulating a column to be realized treatment</span>
 <span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='no'>possible_treats</span>[, <span class='fu'>sample</span>(<span class='fu'>ncol</span>(<span class='no'>possible_treats</span>), <span class='kw'>size</span> <span class='kw'>=</span> <span class='fl'>1</span>)]
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>arb_pr_mat</span>)</div><div class='output co'>#&gt;   coefficient_name  est se    p ci_lower ci_upper df outcome
-#&gt; 1                z -1.4  1 0.22     -3.8        1  8       y</div><div class='input'>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>arb_pr_mat</span>)</div><div class='output co'>#&gt;   coefficient_name       est       se         p  ci_lower ci_upper df outcome
+#&gt; 1                z -1.368389 1.033353 0.2220105 -3.751306 1.014527  8       y</div><div class='input'>
 <span class='co'># Clustered treatment, complete random assigment</span>
 <span class='co'># Simulating data</span>
 <span class='no'>dat</span>$<span class='no'>cl</span> <span class='kw'>&lt;-</span> <span class='fu'>rep</span>(<span class='fl'>1</span>:<span class='fl'>4</span>, <span class='kw'>times</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='fl'>2</span>, <span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>3</span>))
 <span class='no'>clust_crs_decl</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>randomizr</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/declare_ra'>declare_ra</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>), <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>cl</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.5</span>)
 <span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>randomizr</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/conduct_ra'>conduct_ra</a></span>(<span class='no'>clust_crs_decl</span>)
 <span class='co'># Regular SE using Young's inequality</span>
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>clust_crs_decl</span>)</div><div class='output co'>#&gt;   coefficient_name   est   se    p ci_lower ci_upper df outcome
-#&gt; 1                z 0.028 0.27 0.92    -0.59     0.64  8       y</div><div class='input'><span class='co'># SE using collapsed cluster totals and Young's inequality</span>
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>clust_crs_decl</span>, <span class='kw'>collapsed</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt;   coefficient_name   est   se    p ci_lower ci_upper df outcome
-#&gt; 1                z 0.028 0.23 0.91    -0.51     0.56  8       y</div><div class='input'>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>clust_crs_decl</span>)</div><div class='output co'>#&gt;   coefficient_name        est        se         p   ci_lower  ci_upper df
+#&gt; 1                z 0.02766919 0.2671404 0.9200557 -0.5883577 0.6436961  8
+#&gt;   outcome
+#&gt; 1       y</div><div class='input'><span class='co'># SE using collapsed cluster totals and Young's inequality</span>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>clust_crs_decl</span>, <span class='kw'>collapsed</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</div><div class='output co'>#&gt;   coefficient_name        est        se         p   ci_lower  ci_upper df
+#&gt; 1                z 0.02766919 0.2311512 0.9076709 -0.5053664 0.5607048  8
+#&gt;   outcome
+#&gt; 1       y</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

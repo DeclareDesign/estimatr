@@ -125,7 +125,7 @@
 <div id="heteroskedasticity-robust-variance-and-degrees-of-freedom" class="section level4">
 <h4 class="hasAnchor">
 <a href="#heteroskedasticity-robust-variance-and-degrees-of-freedom" class="anchor"></a>Heteroskedasticity-Robust Variance and Degrees of Freedom</h4>
-<p>The default variance estimator without clusters is the HC2 variance, first proposed by <span class="citation">MacKinnon and White (<a href="#ref-mackinnonwhite1985">1985</a>)</span>, as it suffers from miniminal efficiency losses relative to the HC1 variance estimator, the default in Stata, while performing much better in very small samples.</p>
+<p>The default variance estimator without clusters is the HC2 variance, first proposed by <span class="citation">MacKinnon and White (<a href="#ref-mackinnonwhite1985">1985</a>)</span>. This estimator has the advantage of being equivalent to a conservative randomization-based “Neyman” estimator of the variance <span class="citation">(Samii and Aronow <a href="#ref-samiiaronow2012">2012</a>)</span>. Furthermore, while it is somewhat less efficient than the HC1 variance estimator, the default in Stata, it tends to perform better in small samples.</p>
 <table style="width:100%;" class="table">
 <colgroup>
 <col width="14%">
@@ -411,6 +411,9 @@ y_i = \tau d_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
 </div>
 <div id="ref-pustejovskytipton2016">
 <p>Pustejovsky, James E, and Elizabeth Tipton. 2016. “Small Sample Methods for Cluster-Robust Variance Estimation and Hypothesis Testing in Fixed Effects Models.” <em>Journal of Business &amp; Economic Statistics</em>. Taylor &amp; Francis. <a href="https://doi.org/10.1080/07350015.2016.1247004" class="uri">https://doi.org/10.1080/07350015.2016.1247004</a>.</p>
+</div>
+<div id="ref-samiiaronow2012">
+<p>Samii, Cyrus, and Peter M Aronow. 2012. “On Equivalencies Between Design-Based and Regression-Based Variance Estimators for Randomized Experiments.” <em>Statistics and Probability Letters</em> 82 (2). <a href="https://doi.org/10.1016/j.spl.2011.10.024" class="uri">https://doi.org/10.1016/j.spl.2011.10.024</a>.</p>
 </div>
 </div>
 </div>

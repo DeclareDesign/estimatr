@@ -75,7 +75,7 @@ In addition to solving for the coefficients faster than `lm()` does, we also pro
 
 #### Heteroskedasticity-Robust Variance and Degrees of Freedom
 
-The default variance estimator without clusters is the HC2 variance, first proposed by @mackinnonwhite1985, as it suffers from miniminal efficiency losses relative to the HC1 variance estimator, the default in Stata, while performing much better in very small samples.
+The default variance estimator without clusters is the HC2 variance, first proposed by @mackinnonwhite1985. This estimator has the advantage of being equivalent to a conservative randomization-based "Neyman" estimator of the variance [@samiiaronow2012]. Furthermore, while it is somewhat less efficient than the HC1 variance estimator, the default in Stata, it tends to perform better in small samples.
 
 | `se_type = `      | Variance Estimator ($\widehat{\V}[\widehat{\beta}]$)                                   | Degrees of Freedom | Notes |
 |----------|--------------------------|------|----------------------------|
