@@ -175,5 +175,10 @@ test_that("Condition arguments behave as expected", {
     )
   )
 
+  # Works with factor
+  dat$z <- factor(c("T", "C"))
+  # Must pass string!
+  difference_in_means(y ~ z, condition2 = "T", data = dat)
+
 })
 
