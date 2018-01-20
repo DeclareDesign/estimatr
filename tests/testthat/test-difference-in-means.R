@@ -272,7 +272,7 @@ test_that("DIM works with character args", {
     data = dat
   )
 
-  expect_identical(
+  expect_equal(
     dim_unquote,
     dim_quote
   )
