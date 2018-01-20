@@ -176,7 +176,7 @@ horvitz_thompson <-
     }
 
     data <- data.frame(y = model_data$outcome,
-                       t = model_data$design_matrix[, ncol(model_data$design_matrix)])
+                       t = model_data$original_treatment)
 
     # Parse conditions
     if (is.null(condition1) || is.null(condition2)) {
@@ -264,7 +264,6 @@ horvitz_thompson <-
           se_type = se_type,
           alpha = alpha
         )
-      print(return_list)
 
       return_list$df <- with(return_list,
                               N - 2)
@@ -332,9 +331,9 @@ horvitz_thompson <-
 
       n_blocks <- nrow(block_estimates)
 
-      diff <- with(block_estimates, sum(est) * N/N_overall)
+      diff <- with(block_estimates, sum(est * N/N_overall))
 
-      se <- with(block_estimates, sqrt(sum(se^2) * (N/N_overall)^2))
+      se <- with(block_estimates, sqrt(sum(se^2 * (N/N_overall)^2)))
 
       ## we don't know if this is correct!
       df <- n_blocks - 2
@@ -360,7 +359,8 @@ horvitz_thompson <-
 
     return_list <- dim_like_return(return_list,
                                    alpha = alpha,
-                                   formula = formula)
+                                   formula = formula,
+                                   conditions = list(condition1, condition2))
 
     attr(return_list, "class") <- "horvitz_thompson"
 
@@ -400,8 +400,6 @@ horvitz_thompson_internal <-
 
     # print(table(condition_pr_mat))
 
-    N <- length(data$y)
-
     t2 <- which(data$t == condition2)
     t1 <- which(data$t == condition1)
 
@@ -410,6 +408,8 @@ horvitz_thompson_internal <-
 
     Y2 <- data$y[t2] / ps2
     Y1 <- data$y[t1] / ps1
+
+    N <- length(Y2) + length(Y1)
 
     # Estimator from Middleton & Aronow 2015 page 51
     # TODO figure out why below is not equivalent for constant pr cluster randomized exps
@@ -573,13 +573,13 @@ horvitz_thompson_internal <-
     }
     # }
 
-    return_list <-
-      list(
+    return_frame <-
+      data.frame(
         est = diff,
         se = se,
         N = N
       )
 
-    return(return_list)
+    return(return_frame)
 
   }

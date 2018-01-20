@@ -58,7 +58,7 @@ difference_in_means <-
     ))
 
     data <- data.frame(y = model_data$outcome,
-                       t = model_data$design_matrix[, ncol(model_data$design_matrix)])
+                       t = model_data$original_treatment)
     data$cluster <- model_data$cluster
     data$weights <- model_data$weights
     data$block <- model_data$block
@@ -222,7 +222,8 @@ difference_in_means <-
 
     return_list <- dim_like_return(return_list,
                                    alpha = alpha,
-                                   formula = formula)
+                                   formula = formula,
+                                   conditions = list(condition1, condition2))
 
     attr(return_list, "class") <- "difference_in_means"
 
@@ -269,17 +270,19 @@ difference_in_means_internal <-
       }
     }
 
-    N <- length(data$y)
-
     Y2 <- data$y[data$t == condition2]
     Y1 <- data$y[data$t == condition1]
 
-    if ((length(Y1) == 0) || (length(Y2) == 0)) {
+    N2 <- length(Y2)
+    N1 <- length(Y1)
+    N <- N2 + N1
+
+    if ((N1 == 0) || (N2 == 0)) {
       stop("Must have units with both treatment conditions within each block.")
     }
 
     ## Check to make sure multiple in each group if pair matched is false
-    if (!pair_matched & (length(Y2) == 1 | length(Y1) == 1)) {
+    if (!pair_matched & (N2 == 1 | N1 == 1)) {
       stop(
         "Not a pair matched design and one treatment condition only has one ",
         "value, making standard errors impossible to calculate."
@@ -327,8 +330,6 @@ difference_in_means_internal <-
           # Non-pair matched designs, unit level randomization
           var_Y2 <- var(Y2)
           var_Y1 <- var(Y1)
-          N2 <- length(Y2)
-          N1 <- length(Y1)
 
           se <- sqrt(var_Y2 / N2 + var_Y1 / N1)
 
@@ -362,8 +363,8 @@ difference_in_means_internal <-
         # todo: check welch approximation with weights
         df <- se^4 /
           (
-            (var2^2 / (length(Y2)-1)) +
-              (var1^2 / (length(Y1)-1))
+            (var2^2 / (N2-1)) +
+              (var1^2 / (N1-1))
           )
       }
 

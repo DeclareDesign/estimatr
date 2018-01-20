@@ -32,9 +32,9 @@ horvitz_thompson(formula, data, condition_prs, blocks, clusters,
 
 \item{alpha}{The significance level, 0.05 by default.}
 
-\item{condition1}{names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.}
+\item{condition1}{values of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.}
 
-\item{condition2}{names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.}
+\item{condition2}{values of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.}
 }
 \description{
 Horvitz-Thompson estimator of treatment effects

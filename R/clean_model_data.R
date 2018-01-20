@@ -83,9 +83,17 @@ clean_model_data <- function(formula,
   # TODO when using . it adds weights and clusters to model!
 
   ret <- list(
-    outcome=model.response(mf, type = "numeric"),
-    design_matrix=model.matrix.default(formula, data = mf)
+    outcome = model.response(mf, type = "numeric"),
+    design_matrix = model.matrix.default(formula, data = mf)
   )
+
+  # Keep the original treatment vector for DiM and HT
+  # They will never have a model frame larger than 6 covars
+  # so we can add a check that prevents slowing down large
+  # lm_robust calls
+  if (ncol(mf) < 6) {
+    ret[["original_treatment"]] <- mf[, colnames(mf) == all.vars(formula[[3]])[1]]
+  }
 
   if(!missing(weights)){
     ret[["weights"]] <- model.extract(mf, "weights")

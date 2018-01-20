@@ -194,10 +194,19 @@ test_that("Works without variation in treatment", {
   dat <- data.frame(
     y = rnorm(20),
     bl = 1:5,
-    ps = 0.5
+    ps = 0.4
   )
 
+  # Simple case
   dat$z_const <- 1
+
+  ht_const_1 <- horvitz_thompson(
+    y ~ z_const,
+    data = dat
+  )
+
+  expect_equal(ht_const_1$est, mean(dat$y))
+  expect_equal(ht_const_1$se, 1/(nrow(dat)) * sqrt(sum(dat$y^2)))
 
   ht_const <- horvitz_thompson(
     y ~ z_const,
@@ -205,8 +214,59 @@ test_that("Works without variation in treatment", {
     condition_prs = ps
   )
 
-  expect_identical(ht_const$est, mean(dat$y / dat$ps))
-  expect_identical(ht_const$se, 1/(nrow(dat) * sqrt(sum((dat$y / dat$ps)^2))))
+  expect_equal(ht_const$est, mean(dat$y / dat$ps))
+  expect_equal(ht_const$se, 1/(nrow(dat)) * sqrt(sum((dat$y / dat$ps)^2)))
+
+  ## Blocks and all are treated
+  ht_block <- horvitz_thompson(
+    y ~ z_const,
+    data = dat,
+    blocks = bl,
+    condition_prs = ps
+  )
+
+  expect_equal(ht_block$est, mean(dat$y / dat$ps))
+  expect_identical(ht_block$se, 1/(nrow(dat)) * sqrt(sum((dat$y / dat$ps)^2)))
+
+
+  ## Blocks and some are treated!
+  dat$z_diff <- as.numeric(dat$bl <= 2)
+  ht_block <- horvitz_thompson(
+    y ~ z_diff,
+    data = dat,
+    blocks = bl,
+    condition_prs = rep(0.4, nrow(dat))
+  )
+  ht_block
+
+  # With only one treatment, but value is 0, still put it as treatment!!
+  # But note we leave a hint in the coefficient name
+  dat$z <- 0
+  ht_zero <- horvitz_thompson(
+    y ~ z,
+    data = dat,
+    blocks = bl,
+    condition_prs = rep(0.5, nrow(dat))
+  )
+
+  expect_identical(ht_zero$coefficient_name, "z0")
+
+  # Drop name if they specify the only treatment as condition1
+  ht_rev <- horvitz_thompson(
+    y ~ z,
+    data = dat,
+    blocks = bl,
+    condition1 = 0,
+    condition_prs = rep(0.5, nrow(dat))
+  )
+
+  expect_identical(ht_rev$coefficient_name, "z")
+
+  # This is only true because condition prs are 0.5
+  expect_identical(
+    tidy(ht_zero)[c("est", "se")],
+    tidy(ht_rev)[c("est", "se")] * c(-1, 1)
+  )
 
 })
 
