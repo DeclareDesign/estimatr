@@ -11,8 +11,8 @@
 #' @param se_type can be one of \code{c("youngs", "constant")} and correspond's to estimating the standard errors using Young's inequality (default, conservative), or the constant effects assumption.
 #' @param collapsed A boolean used to collapse clusters to their cluster totals for variance estimation, FALSE by default.
 #' @param alpha The significance level, 0.05 by default.
-#' @param condition1 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
-#' @param condition2 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
+#' @param condition1 values of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
+#' @param condition2 values of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
 #'
 #' @details This function implements the Horvitz-Thompson estimator for treatment effects.
 #'
@@ -168,11 +168,27 @@ horvitz_thompson <-
 
     ## condition_pr_mat, if supplied, must be same length
     if (!is.null(condition_pr_mat) && (2*length(model_data$outcome) != nrow(condition_pr_mat))) {
-      stop(sprintf("After cleaning the data, it has %d rows while condition_pr_mat has %d. condition_pr_mat should have twice the rows.", length(model_data$outcome), nrow(condition_pr_mat)))
+      stop(
+        "After cleaning the data, it has ", length(model_data$outcome), " ",
+        "while condition_pr_mat has ", nrow(condition_pr_mat), ". ",
+        "condition_pr_mat should have twice the rows."
+      )
     }
 
     data <- data.frame(y = model_data$outcome,
                        t = model_data$design_matrix[, ncol(model_data$design_matrix)])
+
+    # Parse conditions
+    if (is.null(condition1) || is.null(condition2)) {
+      condition_names <- parse_conditions(
+        treatment = data$t,
+        condition1 = condition1,
+        condition2 = condition2,
+        estimator = "horvitz_thompson"
+      )
+      condition2 <- condition_names[[2]]
+      condition1 <- condition_names[[1]]
+    }
 
     if (!is.null(declaration)) {
 
@@ -211,7 +227,16 @@ horvitz_thompson <-
       }
 
     } else {
-      data$condition_probabilities <- diag(condition_pr_mat)[(length(data$y)+1):(2*length(data$y))]
+      if (!is.null(condition_pr_mat)) {
+        data$condition_probabilities <- diag(condition_pr_mat)[(length(data$y)+1):(2*length(data$y))]
+      } else {
+        pr_treat <- mean(data$t == condition2)
+        message(
+          "Assuming simple random assignment with probability of treatment ",
+          "equal to the mean number of obs in condition2, which = ", pr_treat
+        )
+        data$condition_probabilities <- pr_treat
+      }
     }
 
     rm(model_data)
@@ -228,7 +253,7 @@ horvitz_thompson <-
     # Estimation
     #-----
 
-    if (is.null(data$blocks)){
+    if (is.null(data$blocks)) {
       return_list <-
         horvitz_thompson_internal(
           condition_pr_mat = condition_pr_mat,
@@ -239,6 +264,7 @@ horvitz_thompson <-
           se_type = se_type,
           alpha = alpha
         )
+      print(return_list)
 
       return_list$df <- with(return_list,
                               N - 2)
@@ -267,20 +293,20 @@ horvitz_thompson <-
         clust_per_block <- tabulate(as.factor(data$blocks))
       }
 
-      ## Check if design is pair matched
-      if (any(clust_per_block == 1)) {
-        stop(
-          "Some blocks have only one unit or cluster. Blocks must have multiple units or clusters."
-        )
-      } else if (all(clust_per_block == 2)) {
-        stop(
-          "Cannot compute variance for Horvitz-Thompson estimator with one treated and control unit per block."
-        )
-      } else if (any(clust_per_block == 2) & any(clust_per_block > 2)) {
-        stop(
-          "Some blocks have two units or clusters. All blocks must be of size 3 or greater."
-        )
-      }
+      # Check if design is pair matched
+      # if (any(clust_per_block == 1)) {
+      #   stop(
+      #     "Some blocks have only one unit or cluster. Blocks must have multiple units or clusters."
+      #   )
+      # } else if (all(clust_per_block == 2)) {
+      #   stop(
+      #     "Cannot compute variance for Horvitz-Thompson estimator with one treated and control unit per block."
+      #   )
+      # } else if (any(clust_per_block == 2) & any(clust_per_block > 2)) {
+      #   stop(
+      #     "Some blocks have two units or clusters. All blocks must be of size 3 or greater."
+      #   )
+      # }
 
       N <- nrow(data)
 
@@ -357,20 +383,9 @@ horvitz_thompson_internal <-
            se_type,
            alpha = .05) {
 
-    if (is.factor(data$t)) {
-      condition_names <- levels(data$t)
-    } else{
-      condition_names <- sort(unique(data$t))
-    }
-
-    if (length(condition_names) == 1) {
-      stop("Must have units with both treatment conditions within each block.")
-    }
-
-    if (is.null(condition1) & is.null(condition2)) {
-      condition1 <- condition_names[1]
-      condition2 <- condition_names[2]
-    }
+    #if (length(condition_names) == 1) {
+    #  stop("Must have units with both treatment conditions within each block.")
+    #}
 
     # Check that treatment status is uniform within cluster, checked here
     # so that the treatment vector t doesn't have to be built anywhere else
@@ -427,8 +442,13 @@ horvitz_thompson_internal <-
 
     if (collapsed) {
 
+      # TODO this may not work with 3 valued treatments as it
+      # may not subset everything correction
       if (is.null(data$clusters)) {
-        stop("The collapsed estimator only works if you either pass a declaration with clusters or explicitly specify the clusters.")
+        stop(
+          "The collapsed estimator only works if you either pass a ",
+          "declaration with clusters or explicitly specify the clusters."
+        )
       }
 
       k <- length(unique(data$clusters))

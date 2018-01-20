@@ -250,10 +250,6 @@ test_that("DIM works with missingness", {
 
 })
 
-
-context("Difference in means")
-
-
 test_that("DIM", {
 
   dat <- data.frame(Y = rnorm(100), Z = rbinom(100, 1, .5), X = rnorm(100))

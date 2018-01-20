@@ -161,6 +161,12 @@ test_that("Horvitz-Thompson properly checks arguments", {
                     x = runif(n))
   decl <- randomizr::declare_ra(N = n, prob = 0.4, simple = F)
 
+  # default is ps = 0.5
+  expect_identical(
+    horvitz_thompson(y ~ z, data = dat),
+    horvitz_thompson(y ~ z, data = dat, condition_prs = rep(0.5, times = nrow(dat)))
+  )
+
   expect_error(
     horvitz_thompson(y ~ z, data = dat, condition_prs = ps, declaration = decl),
     "Cannot use declaration with any of"
@@ -180,6 +186,27 @@ test_that("Horvitz-Thompson properly checks arguments", {
     horvitz_thompson(y ~ z, data = dat, declaration = randomizr::declare_ra(N = n+1, prob = 0.4)),
     "N|declaration"
   )
+
+})
+
+test_that("Works without variation in treatment", {
+
+  dat <- data.frame(
+    y = rnorm(20),
+    bl = 1:5,
+    ps = 0.5
+  )
+
+  dat$z_const <- 1
+
+  ht_const <- horvitz_thompson(
+    y ~ z_const,
+    data = dat,
+    condition_prs = ps
+  )
+
+  expect_identical(ht_const$est, mean(dat$y / dat$ps))
+  expect_identical(ht_const$se, 1/(nrow(dat) * sqrt(sum((dat$y / dat$ps)^2))))
 
 })
 

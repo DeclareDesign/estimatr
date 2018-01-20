@@ -65,6 +65,18 @@ difference_in_means <-
 
     rm(model_data)
 
+    # parse condition names
+    if (is.null(condition1) || is.null(condition2)) {
+      condition_names <- parse_conditions(
+        treatment = data$t,
+        condition1 = condition1,
+        condition2 = condition2,
+        estimator = "difference_in_means"
+      )
+      condition2 <- condition_names[[2]]
+      condition1 <- condition_names[[1]]
+    }
+
     if (is.null(data$block)){
 
       return_frame <- difference_in_means_internal(
@@ -114,13 +126,16 @@ difference_in_means <-
       ## Check if design is pair matched
       if (any(clust_per_block == 1)) {
         stop(
-          "Some blocks have only one unit or cluster. Blocks must have multiple units or clusters."
+          "Some blocks have only one unit or cluster. Blocks must have ",
+          "multiple units or clusters."
         )
       } else if (all(clust_per_block == 2)) {
         pair_matched <- TRUE
       } else if (any(clust_per_block == 2) & any(clust_per_block > 2)) {
         stop(
-          "Some blocks have two units or clusters, while others have more units or clusters. Design must either be paired or all blocks must be of size 3 or greater."
+          "Some blocks have two units or clusters, while others have more ",
+          "units or clusters. Design must either be paired or all blocks ",
+          "must be of size 3 or greater."
         )
       }
 
@@ -239,21 +254,6 @@ difference_in_means_internal <-
            pair_matched = FALSE,
            alpha = .05) {
 
-    if (is.factor(data$t)) {
-      condition_names <- levels(data$t)
-    } else{
-      condition_names <- sort(unique(data$t))
-    }
-
-    if (length(condition_names) == 1) {
-      stop("Must have units with both treatment conditions within each block.")
-    }
-
-    if (is.null(condition1) & is.null(condition2)) {
-      condition1 <- condition_names[1]
-      condition2 <- condition_names[2]
-    }
-
     # Check that treatment status is uniform within cluster, checked here
     # so that the treatment vector t doesn't have to be built anywhere else
     if (!is.null(data$cluster)) {
@@ -274,10 +274,15 @@ difference_in_means_internal <-
     Y2 <- data$y[data$t == condition2]
     Y1 <- data$y[data$t == condition1]
 
+    if ((length(Y1) == 0) || (length(Y2) == 0)) {
+      stop("Must have units with both treatment conditions within each block.")
+    }
+
     ## Check to make sure multiple in each group if pair matched is false
     if (!pair_matched & (length(Y2) == 1 | length(Y1) == 1)) {
       stop(
-        "Not a pair matched design and one treatment condition only has one value, making standard errors impossible to calculate."
+        "Not a pair matched design and one treatment condition only has one ",
+        "value, making standard errors impossible to calculate."
       )
     }
 
