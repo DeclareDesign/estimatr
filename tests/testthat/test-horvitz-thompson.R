@@ -226,7 +226,7 @@ test_that("Works without variation in treatment", {
   )
 
   expect_equal(ht_block$est, mean(dat$y / dat$ps))
-  expect_identical(ht_block$se, 1/(nrow(dat)) * sqrt(sum((dat$y / dat$ps)^2)))
+  expect_equal(ht_block$se, 1/(nrow(dat)) * sqrt(sum((dat$y / dat$ps)^2)))
 
 
   ## Blocks and some are treated!

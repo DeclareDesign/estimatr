@@ -17,15 +17,63 @@
 #'
 #' @examples
 #'
-#'  df <- data.frame(Y = rnorm(100),
-#'                   Z = sample(1:3, 100, replace = TRUE),
-#'                   block = sample(c("A", "B", "C"), 100, replace = TRUE))
+#'  library(fabricatr)
+#'  library(randomizr)
+#'  # Get appropriate standard errors for simple designs
+#'  dat <- fabricate(
+#'    N = 100,
+#'    Y = rnorm(100),
+#'    Z_simp = simple_ra(N, prob = 0.4),
+#'  )
 #'
-#'  difference_in_means(Y ~ Z, data = df)
-#'  difference_in_means(Y ~ Z, condition1 = 3, condition2 = 2, data = df)
+#'  table(dat$Z_simp)
+#'  difference_in_means(Y ~ Z_simp, data = dat)
 #'
-#'  difference_in_means(Y ~ Z, blocks = block, data = df)
-#'  difference_in_means(Y ~ Z, blocks = block, condition1 = 3, condition2 = 2, data = df)
+#'  # Accurates estimates and standard errors for clustered designs
+#'  dat$clust <- sample(20, size = nrow(dat), replace = TRUE)
+#'  dat$Z_clust <- cluster_ra(dat$clust, prob = 0.6)
+#'
+#'  table(dat$Z_clust, dat$clust)
+#'  difference_in_means(Y ~ Z_clust, clusters = clust, data = dat)
+#'
+#'  # Accurate estimates and standard errors for blocked designs
+#'  dat$block <- rep(1:10, each = 10)
+#'  dat$Z_block <- block_ra(dat$block, prob = 0.5)
+#'
+#'  table(dat$Z_block, dat$block)
+#'  difference_in_means(Y ~ Z_block, blocks = block, data = dat)
+#'
+#'  # Matched-pair estimates and standard errors are also accurate
+#'  # Specified same as blocked design, function learns that
+#'  # it is matched pair from size of blocks!
+#'  dat$pairs <- rep(1:50, each = 2)
+#'  dat$Z_pairs <- block_ra(dat$pairs, prob = 0.5)
+#'
+#'  table(dat$pairs, dat$Z_pairs)
+#'  difference_in_means(Y ~ Z_pairs, blocks = pairs, data = dat)
+#'
+#'  # Also works with multi-valued treatments if users specify
+#'  # comparison of interest
+#'  dat$Z_multi <- simple_ra(
+#'    nrow(dat),
+#'    condition_names = c("Treatment 2", "Treatment 1", "Control"),
+#'    prob_each = c(0.4, 0.4, 0.2)
+#'  )
+#'
+#'  # Only need to specify which condition is treated "condition2" and
+#'  # which is control "condition1"
+#'  difference_in_means(
+#'    Y ~ Z_multi,
+#'    condition1 = "Treatment 2",
+#'    condition2 = "Control",
+#'    data = dat
+#'  )
+#'  difference_in_means(
+#'    Y ~ Z_multi,
+#'    condition1 = "Treatment 1",
+#'    condition2 = "Control",
+#'    data = dat
+#'  )
 #'
 difference_in_means <-
   function(formula,
