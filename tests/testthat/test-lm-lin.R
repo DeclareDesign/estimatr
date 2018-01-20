@@ -148,7 +148,7 @@ test_that("Test LM Lin",{
   dat$X1_bar <- dat$X1 - mean(dat$X1[keep])
   dat$X2_bar <- dat$X2 - mean(dat$X2[keep])
 
-  expect_identical(
+  expect_equal(
     summary(lm_lin(Y ~ Z,
            covariates = ~ X1 + X2,
            data = dat,
