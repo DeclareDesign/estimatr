@@ -292,21 +292,6 @@ horvitz_thompson <-
         clust_per_block <- tabulate(as.factor(data$blocks))
       }
 
-      # Check if design is pair matched
-      # if (any(clust_per_block == 1)) {
-      #   stop(
-      #     "Some blocks have only one unit or cluster. Blocks must have multiple units or clusters."
-      #   )
-      # } else if (all(clust_per_block == 2)) {
-      #   stop(
-      #     "Cannot compute variance for Horvitz-Thompson estimator with one treated and control unit per block."
-      #   )
-      # } else if (any(clust_per_block == 2) & any(clust_per_block > 2)) {
-      #   stop(
-      #     "Some blocks have two units or clusters. All blocks must be of size 3 or greater."
-      #   )
-      # }
-
       N <- nrow(data)
 
       data$index <- 1:N
