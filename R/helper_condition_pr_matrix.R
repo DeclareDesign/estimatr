@@ -19,16 +19,17 @@ declaration_to_condition_pr_mat <- function(declaration) {
   declaration_call <- as.list(declaration$original_call)
   simple <- eval(declaration_call$simple)
 
-  if (declaration$ra_type == 'simple') {
+  n <- nrow(declaration$probabilities_matrix)
 
-    n <- nrow(declaration$probabilities_matrix)
+  if (declaration$ra_type == "simple") {
+
     v <- c(p1, p2)
     condition_pr_matrix <- tcrossprod(v)
     diag(condition_pr_matrix) <- v
     condition_pr_matrix[cbind(n+1:n, 1:n)] <- 0
     condition_pr_matrix[cbind(1:n, n+1:n)] <- 0
 
-  } else if (declaration$ra_type == 'complete') {
+  } else if (declaration$ra_type == "complete") {
 
     if (length(unique(p2)) > 1) {
       stop("Complete randomization only works with a constant treatment proability.")
@@ -41,7 +42,7 @@ declaration_to_condition_pr_mat <- function(declaration) {
     condition_pr_matrix <-
       gen_pr_matrix_complete(p2)
 
-  } else if (declaration$ra_type == 'clustered') {
+  } else if (declaration$ra_type == "clustered") {
 
     if (length(declaration_call) == 0) {
       warning("Assuming cluster randomization is complete. To have declare_ra work with simple random assignment of clusters, upgrade to the newest version of randomizr on GitHub.")
@@ -54,9 +55,62 @@ declaration_to_condition_pr_mat <- function(declaration) {
         simple = simple
       )
 
-  } else if (declaration$ra_type == 'blocked') {
-    stop('blocked designs cannot be read from declare_ra for now.')
+  } else if (declaration$ra_type %in% c("blocked", "blocked_and_clustered")) {
+    # Assume complete randomization
+
+    condition_pr_matrix <- matrix(NA, nrow = 2*n, ncol = 2*n)
+
+    # Split by block and get complete randomized values within each block
+    id_dat <- data.frame(p1 = p1, p2 = p2, ids = 1:n)
+
+    if (declaration$ra_type == "blocked_and_clustered") {
+      id_dat$clusters <- declaration$clusters
+    }
+
+    block_dat <- split(
+      id_dat,
+      declaration$block
+    )
+
+    n_blocks <- length(block_dat)
+
+    # TODO speed up with assumption probability in block is constant
+
+    for (i in 1:n_blocks) {
+      ids <- c(block_dat[[i]]$ids, n + block_dat[[i]]$ids)
+
+      if (declaration$ra_type == "blocked") {
+        condition_pr_matrix[ids, ids] <-
+          gen_pr_matrix_complete(block_dat[[i]]$p2)
+      } else if (declaration$ra_type == "blocked_and_clustered") {
+        condition_pr_matrix[ids, ids] <-
+          gen_pr_matrix_cluster(
+            clusters = block_dat[[i]]$clusters,
+            treat_probs = block_dat[[i]]$p2,
+            simple = FALSE
+          )
+      }
+
+      for (j in 1:n_blocks) {
+        if (i != j) {
+          condition_pr_matrix[
+            ids,
+            c(block_dat[[j]]$ids, n + block_dat[[j]]$ids)
+          ] <- tcrossprod(
+            c(block_dat[[i]]$p1, block_dat[[i]]$p2),
+            c(block_dat[[j]]$p1, block_dat[[j]]$p2)
+          )
+        }
+      }
+    }
+  } else if (declaration$ra_type == "custom") {
+    # Use permutation matrix
+    return(permutations_to_condition_pr_mat(declaration$permutation_matrix))
   }
+
+  # Add names
+  colnames(condition_pr_matrix) <- rownames(condition_pr_matrix) <-
+    c(paste0("0_", 1:n), paste0("1_", 1:n))
 
   return(condition_pr_matrix)
 
@@ -82,8 +136,8 @@ gen_pr_matrix_cluster <- function(clusters, treat_probs, simple) {
   # Complete random sampling
   if (is.null(simple) || !simple) {
 
-    ## todo: make work with odd number of clusters
-    ## Conditional probabilities
+    # TODO get working with odd number of clusters
+    # Conditional probabilities
     # p(j==0|i==0)
     pr_j0_given_i0 <-
       (
@@ -171,7 +225,7 @@ gen_pr_matrix_cluster <- function(clusters, treat_probs, simple) {
   return(condition_pr_matrix)
 }
 
-#' Build condition probaability matrix for Horvitz-Thompson estimation from treatment permutations
+#' Build condition probability matrix for Horvitz-Thompson estimation from treatment permutations
 #'
 #' @param permutations A matrix where the rows are units and the columns are different treatment permutations; treated units must be represented with a 1 and control units with a 0
 #'
@@ -184,8 +238,7 @@ permutations_to_condition_pr_mat <- function(permutations) {
     stop("Permutations matrix must only have 0s and 1s in it.")
   }
 
-  condition_pr_matrix <- tcrossprod(rbind(permutations, 1 - permutations)) / ncol(permutations)
-
+  condition_pr_matrix <- tcrossprod(rbind(1- permutations, permutations)) / ncol(permutations)
 
   colnames(condition_pr_matrix) <- rownames(condition_pr_matrix) <-
     c(paste0("0_", 1:N), paste0("1_", 1:N))

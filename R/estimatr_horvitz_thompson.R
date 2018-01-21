@@ -126,8 +126,8 @@ horvitz_thompson <-
 
       # Add clusters, blocks, and treatment probabilities to data so they can be cleaned with clean_model_data
       if (!is.null(declaration$clusters)) {
-        if (is.null(data$`.clusters_ddinternal`)) {
-          data$`.clusters_ddinternal` <- declaration$clusters
+        if (is.null(data[[".clusters_ddinternal"]])) {
+          data[[".clusters_ddinternal"]] <- declaration$clusters
           clusters <- '.clusters_ddinternal'
         } else {
           stop("estimatr stores clusters from declarations in a variable called .clusters_ddinternal in your data. Please remove it and try again.")
@@ -135,16 +135,16 @@ horvitz_thompson <-
       }
 
       if (!is.null(declaration$blocks)) {
-        if (is.null(data$`.blocks_ddinternal`)) {
-          data$`.blocks_ddinternal` <- declaration$blocks
+        if (is.null(data[[".blocks_ddinternal"]])) {
+          data[[".blocks_ddinternal"]] <- declaration$blocks
           blocks <- '.blocks_ddinternal'
         } else {
           stop("estimatr stores blocks from declarations in a variable called .blocks_ddinternal in your data. Please remove it and try again.")
         }
       }
 
-      if (is.null(data$`.treatment_prob_ddinternal`)) {
-        data$`.treatment_prob_ddinternal` <- declaration$probabilities_matrix[, 2]
+      if (is.null(data[[".treatment_prob_ddinternal"]])) {
+        data[[".treatment_prob_ddinternal"]] <- declaration$probabilities_matrix[, 2]
         condition_prs <- '.treatment_prob_ddinternal'
       } else {
         stop("estimatr stores treatment probabilities from declarations in a variable called .treatment_prob_ddinternal in your data. Please remove/rename it and try again.")
@@ -254,7 +254,7 @@ horvitz_thompson <-
     #-----
 
     if (is.null(data$blocks)) {
-      return_list <-
+      return_frame <-
         horvitz_thompson_internal(
           condition_pr_mat = condition_pr_mat,
           condition1 = condition1,
@@ -265,14 +265,7 @@ horvitz_thompson <-
           alpha = alpha
         )
 
-      return_list$df <- with(return_list,
-                              N - 2)
-      return_list$p <- with(return_list,
-                             2 * pt(abs(est / se), df = df, lower.tail = FALSE))
-      return_list$ci_lower <- with(return_list,
-                                    est - qt(1 - alpha / 2, df = df) * se)
-      return_list$ci_upper <- with(return_list,
-                                    est + qt(1 - alpha / 2, df = df) * se)
+      return_frame$df <- with(return_frame, N - 2)
 
     } else {
 
@@ -322,21 +315,16 @@ horvitz_thompson <-
 
       ## we don't know if this is correct!
       df <- n_blocks - 2
-      p <- 2 * pt(abs(diff / se), df = df, lower.tail = FALSE)
-      ci_lower <- diff - qt(1 - alpha / 2, df = df) * se
-      ci_upper <- diff + qt(1 - alpha / 2, df = df) * se
 
-      return_list <-
-        list(
-          est = diff,
-          se = se,
-          p = p,
-          ci_lower = ci_lower,
-          ci_upper = ci_upper,
-          df = df
-        )
+      return_frame <- data.frame(
+        est = diff,
+        se = se,
+        df = df
+      )
 
     }
+
+    return_list <- add_cis_pvals(return_frame, alpha)
 
     #-----
     # Build and return output

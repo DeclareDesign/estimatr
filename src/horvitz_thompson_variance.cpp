@@ -4,7 +4,7 @@
 #include <RcppEigen.h>
 using namespace Rcpp;
 
-// These functions return variance for clustered horvitz thompson designs
+// These functions help compute the variance for the Horvitz-Thompson estimators
 
 // [[Rcpp::export]]
 double ht_var(const double & p1p2,
@@ -105,39 +105,6 @@ double ht_covar_total(const Eigen::VectorXd & y0,
   }
 
   return cov_total;
-}
-
-// [[Rcpp::export]]
-double joint_incl_pr(const double & pi,
-                     const double & pj,
-                     const int & same,
-                     const double & ntotal) {
-  return pi * ((pj * ntotal - same) / (ntotal - 1));
-}
-
-// [[Rcpp::export]]
-Eigen::MatrixXd gen_pr_matrix_complete(const Eigen::VectorXd & prs) {
-
-  int n = prs.size();
-  Eigen::MatrixXd pr_mat(2*n, 2*n);
-
-  for (int i = 0; i < n; ++i) {
-    for (int j = 0; j < n; ++j) {
-      if (i == j) {
-        pr_mat(i, j) = 1 - prs(i);
-        pr_mat(i + n, j) = 0;
-        pr_mat(i, j + n) = 0;
-        pr_mat(i + n, j + n) = prs(i);
-      } else {
-        pr_mat(i, j) = joint_incl_pr(1-prs(i), 1-prs(j), 1, n);
-        pr_mat(i + n, j) = joint_incl_pr(prs(i), 1-prs(j), 0, n);
-        pr_mat(i, j + n) = joint_incl_pr(1-prs(i), prs(j), 0, n);
-        pr_mat(i + n, j + n) = joint_incl_pr(prs(i), prs(j), 1, n);
-      }
-    }
-  }
-
-  return pr_mat;
 }
 
 // unused right now

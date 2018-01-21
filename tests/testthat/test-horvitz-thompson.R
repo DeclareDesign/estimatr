@@ -121,47 +121,65 @@ test_that("Horvitz-Thompson works with clustered data", {
 
 })
 
-# test missingness works as expected
+# TODO test missingness works as expected
+test_that("Horvitz-Thompson works with missingness", {
+  n <- 40
+  dat <- data.frame(
+    y = rnorm(n),
+    bl = rep(1:10, each = 4),
+    ps = 0.35
+  )
+
+  decl <- randomizr::declare_ra(n, prob = 0.35)
+  dat$z <- randomizr::conduct_ra(decl)
+  dat$y[23] <- NA
+
+  expect_error(
+    horvitz_thompson(y ~ z, data = dat, declaration = decl),
+    NA
+  )
+
+})
+
 # test blocks in the data
+test_that("Estimating Horvitz-Thompson can be done two ways with blocks", {
+  n <- 40
+  dat <- data.frame(
+    y = rnorm(n),
+    bl = rep(1:10, each = 4)
+  )
 
-# test auxiliary funtions (get condition pr)
-test_that("gen_pr_matrix_complete works as expected", {
-  # TODO test other methods
-  n <- 5
-  prs <- rep(0.4, times = n)
-  pr_mat <- gen_pr_matrix_complete(prs)
+  bl_ra <- randomizr::declare_ra(blocks = dat$bl)
+  dat$z <- randomizr::conduct_ra(bl_ra)
+  bl_pr_mat <- declaration_to_condition_pr_mat(bl_ra)
 
-  # FALSE until randomizr on CRAN
-  if (FALSE) {
-    perms <- randomizr::obtain_permutation_matrix(randomizr::declare_ra(N = n, prob = prs[1]))
+  # This creates estimates within blocks and then joins them together using the common
+  # formula
+  ht_declare_bl <- horvitz_thompson(y ~ z, data = dat, declaration = bl_ra)
+  # This estimates the treatment effect at once using only condition_pr_mat
+  ht_condmat_bl <- horvitz_thompson(y ~ z, data = dat, condition_pr_mat = bl_pr_mat)
 
-    # From Chris Kennedy (https://github.com/ck37)
-    # for the htestimate package (https://github.com/ck37/htestimate)
-    stacked_inds <- matrix(nrow = 2 * n, ncol = ncol(perms))
-
-    for (assign in 1:2) {
-      indicator_matrix <- as.numeric(perms == (assign - 1))
-      stacked_inds[(n*(assign-1)+1):(n*assign), ] <- indicator_matrix
-    }
-
-    # Use the stacked indicator matrices to calculate the probability matrix.
-    result <- stacked_inds %*% t(stacked_inds) / ncol(perms)
-    expect_equivalent(pr_mat, result)
-
-  }
+  # p-value not the same because df calculation is totally different
+  # TODO resolve p-values
+  expect_equal(
+    ht_declare_bl[c('est', 'se')],
+    ht_condmat_bl[c('est', 'se')]
+  )
 })
 
 # errors when arguments are passed that shouldn't be together
-test_that("Horvitz-Thompson properly checks arguments", {
+test_that("Horvitz-Thompson properly checks arguments and data", {
 
   n <- 8
   dat <- data.frame(y = rnorm(n),
                     ps = 0.4,
                     z = sample(rep(0:1, each = n/2)),
-                    x = runif(n))
+                    x = runif(n),
+                    cl = rep(1:4, each = 2),
+                    bl = rep(1:2, each = 4))
   decl <- randomizr::declare_ra(N = n, prob = 0.4, simple = F)
 
-  # default is ps = 0.5
+  # default is mean(ps)
   expect_identical(
     horvitz_thompson(y ~ z, data = dat),
     horvitz_thompson(y ~ z, data = dat, condition_prs = rep(0.5, times = nrow(dat)))
@@ -185,6 +203,48 @@ test_that("Horvitz-Thompson properly checks arguments", {
   expect_error(
     horvitz_thompson(y ~ z, data = dat, declaration = randomizr::declare_ra(N = n+1, prob = 0.4)),
     "N|declaration"
+  )
+
+  # Reserved variable names
+  dat[[".clusters_ddinternal"]] <- 1
+  expect_error(
+    horvitz_thompson(
+      y ~ z,
+      data = dat,
+      declaration = randomizr::declare_ra(clusters = dat$cl)
+    ),
+    ".clusters_ddinternal"
+  )
+
+  dat[[".blocks_ddinternal"]] <- 1
+  expect_error(
+    horvitz_thompson(
+      y ~ z,
+      data = dat,
+      declaration = randomizr::declare_ra(blocks = dat$bl)
+    ),
+    ".blocks_ddinternal"
+  )
+
+  dat[[".treatment_prob_ddinternal"]] <- 1
+  expect_error(
+    horvitz_thompson(
+      y ~ z,
+      data = dat,
+      declaration = randomizr::declare_ra(N = n)
+    ),
+    ".treatment_prob_ddinternal"
+  )
+
+
+  # condition pr mat is the wrong size
+  expect_error(
+    horvitz_thompson(
+      y ~ z,
+      data = dat,
+      condition_pr_mat = matrix(rnorm(4), 2, 2)
+    ),
+    "cleaning the data"
   )
 
 })

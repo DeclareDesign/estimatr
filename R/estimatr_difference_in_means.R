@@ -142,15 +142,6 @@ difference_in_means <-
                                 N - 2)
       }
 
-      return_frame$p <- with(return_frame,
-                             2 * pt(abs(est / se), df = df, lower.tail = FALSE))
-      return_frame$ci_lower <- with(return_frame,
-                                    est - qt(1 - alpha / 2, df = df) * se)
-      return_frame$ci_upper <- with(return_frame,
-                                    est + qt(1 - alpha / 2, df = df) * se)
-
-      return_list <- as.list(return_frame)
-
     } else {
 
       pair_matched <- FALSE
@@ -250,21 +241,15 @@ difference_in_means <-
 
       }
 
-      p <- 2 * pt(abs(diff / se), df = df, lower.tail = FALSE)
-      ci_lower <- diff - qt(1 - alpha / 2, df = df) * se
-      ci_upper <- diff + qt(1 - alpha / 2, df = df) * se
-
-      return_list <-
-        list(
-          est = diff,
-          se = se,
-          p = p,
-          ci_lower = ci_lower,
-          ci_upper = ci_upper,
-          df = df
-        )
+      return_frame <- data.frame(
+        est = diff,
+        se = se,
+        df = df
+      )
 
     }
+
+    return_list <- add_cis_pvals(return_frame, alpha)
 
     #print(c("Pair Matched? ", pair_matched))
 
