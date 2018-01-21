@@ -1,6 +1,6 @@
 # This file is ignored by .Rbuildignore to keep from suggesting broom
 
-context("Broom compatability")
+context("S3 - tidy and broom compatability")
 
 test_that("estimatr::tidy works loaded before or after after broom", {
   detach("package:estimatr", unload = TRUE)

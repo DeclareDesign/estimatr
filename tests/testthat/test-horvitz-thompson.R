@@ -122,8 +122,27 @@ test_that("Horvitz-Thompson works with clustered data", {
 })
 
 # TODO test missingness works as expected
+test_that("Horvitz-Thompson works with missingness", {
+  n <- 40
+  dat <- data.frame(
+    y = rnorm(n),
+    bl = rep(1:10, each = 4),
+    ps = 0.35
+  )
+
+  decl <- randomizr::declare_ra(n, prob = 0.35)
+  dat$z <- randomizr::conduct_ra(decl)
+  dat$y[23] <- NA
+
+  expect_error(
+    horvitz_thompson(y ~ z, data = dat, declaration = decl),
+    NA
+  )
+
+})
+
 # test blocks in the data
-test_that("Horvitz-Thompson blocks work both ways", {
+test_that("Estimating Horvitz-Thompson can be done two ways with blocks", {
   n <- 40
   dat <- data.frame(
     y = rnorm(n),
@@ -149,16 +168,18 @@ test_that("Horvitz-Thompson blocks work both ways", {
 })
 
 # errors when arguments are passed that shouldn't be together
-test_that("Horvitz-Thompson properly checks arguments", {
+test_that("Horvitz-Thompson properly checks arguments and data", {
 
   n <- 8
   dat <- data.frame(y = rnorm(n),
                     ps = 0.4,
                     z = sample(rep(0:1, each = n/2)),
-                    x = runif(n))
+                    x = runif(n),
+                    cl = rep(1:4, each = 2),
+                    bl = rep(1:2, each = 4))
   decl <- randomizr::declare_ra(N = n, prob = 0.4, simple = F)
 
-  # default is ps = 0.5
+  # default is mean(ps)
   expect_identical(
     horvitz_thompson(y ~ z, data = dat),
     horvitz_thompson(y ~ z, data = dat, condition_prs = rep(0.5, times = nrow(dat)))
@@ -182,6 +203,48 @@ test_that("Horvitz-Thompson properly checks arguments", {
   expect_error(
     horvitz_thompson(y ~ z, data = dat, declaration = randomizr::declare_ra(N = n+1, prob = 0.4)),
     "N|declaration"
+  )
+
+  # Reserved variable names
+  dat$`.clusters_ddinternal` <- 1
+  expect_error(
+    horvitz_thompson(
+      y ~ z,
+      data = dat,
+      declaration = randomizr::declare_ra(clusters = dat$cl)
+    ),
+    ".clusters_ddinternal"
+  )
+
+  dat$`.blocks_ddinternal` <- 1
+  expect_error(
+    horvitz_thompson(
+      y ~ z,
+      data = dat,
+      declaration = randomizr::declare_ra(blocks = dat$bl)
+    ),
+    ".blocks_ddinternal"
+  )
+
+  dat$`.treatment_prob_ddinternal` <- 1
+  expect_error(
+    horvitz_thompson(
+      y ~ z,
+      data = dat,
+      declaration = randomizr::declare_ra(N = n)
+    ),
+    ".treatment_prob_ddinternal"
+  )
+
+
+  # condition pr mat is the wrong size
+  expect_error(
+    horvitz_thompson(
+      y ~ z,
+      data = dat,
+      condition_pr_mat = matrix(rnorm(4), 2, 2)
+    ),
+    "cleaning the data"
   )
 
 })
