@@ -162,8 +162,8 @@ test_that("lm robust works with weights",{
   )
 
   expect_error(
-    lm_robust(Y ~ Z, data = dat, weights = c(0, runif(N - 1))),
-    "weights must all be positive and non-zero."
+    lm_robust(Y ~ Z, data = dat, weights = c(-0.5, runif(N - 1))),
+    "weights must not be negative"
   )
 
 })

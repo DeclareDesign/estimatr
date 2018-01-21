@@ -325,8 +325,6 @@ test_that("DIM unbiased", {
   declaration <- randomizr::declare_ra(N = nrow(dat))
   treatment_perms <- randomizr::obtain_permutation_matrix(declaration)
 
-  treatment_perms
-
   ests <- apply(treatment_perms,
                 2,
                 function(x) {
