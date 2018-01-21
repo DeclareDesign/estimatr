@@ -132,8 +132,12 @@ test_that("Horvitz-Thompson blocks work both ways", {
 
   bl_ra <- randomizr::declare_ra(blocks = dat$bl)
   dat$z <- randomizr::conduct_ra(bl_ra)
+  bl_pr_mat <- declaration_to_condition_pr_mat(bl_ra)
 
+  # This creates estimates within blocks and then joins them together using the common
+  # formula
   ht_declare_bl <- horvitz_thompson(y ~ z, data = dat, declaration = bl_ra)
+  # This estimates the treatment effect at once using only condition_pr_mat
   ht_condmat_bl <- horvitz_thompson(y ~ z, data = dat, condition_pr_mat = bl_pr_mat)
 
   # p-value not the same because df calculation is totally different

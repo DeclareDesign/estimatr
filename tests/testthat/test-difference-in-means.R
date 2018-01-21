@@ -325,6 +325,8 @@ test_that("DIM unbiased", {
   declaration <- randomizr::declare_ra(N = nrow(dat))
   treatment_perms <- randomizr::obtain_permutation_matrix(declaration)
 
+  treatment_perms
+
   ests <- apply(treatment_perms,
                 2,
                 function(x) {
@@ -343,7 +345,7 @@ test_that("DIM unbiased", {
   ## cluster randomized design, 5 blocks of 2
   dat$cluster <- rep(1:5, each = 2)
   declaration <- randomizr::declare_ra(N = nrow(dat),
-                                       blocks = dat$cluster)
+                                       clusters = dat$cluster)
   treatment_perms <- randomizr::obtain_permutation_matrix(declaration)
 
   ests <- apply(treatment_perms,
@@ -416,7 +418,7 @@ test_that("DIM unbiased", {
   dat$clusters <- c(1, 1, 2, 2, 3, 3, 4, 4, 5, 6)
   declaration <- randomizr::declare_ra(N = nrow(dat),
                                        blocks = dat$blocks,
-                                       blocks = dat$clusters)
+                                       clusters = dat$clusters)
   treatment_perms <- randomizr::obtain_permutation_matrix(declaration)
 
   ests <- apply(treatment_perms,
