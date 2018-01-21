@@ -6,6 +6,31 @@
 
 using namespace Rcpp;
 
+// joint_incl_pr
+double joint_incl_pr(const double& pi, const double& pj, const int& same, const double& ntotal);
+RcppExport SEXP _estimatr_joint_incl_pr(SEXP piSEXP, SEXP pjSEXP, SEXP sameSEXP, SEXP ntotalSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const double& >::type pi(piSEXP);
+    Rcpp::traits::input_parameter< const double& >::type pj(pjSEXP);
+    Rcpp::traits::input_parameter< const int& >::type same(sameSEXP);
+    Rcpp::traits::input_parameter< const double& >::type ntotal(ntotalSEXP);
+    rcpp_result_gen = Rcpp::wrap(joint_incl_pr(pi, pj, same, ntotal));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gen_pr_matrix_complete
+Eigen::MatrixXd gen_pr_matrix_complete(const Eigen::VectorXd& prs);
+RcppExport SEXP _estimatr_gen_pr_matrix_complete(SEXP prsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type prs(prsSEXP);
+    rcpp_result_gen = Rcpp::wrap(gen_pr_matrix_complete(prs));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ht_var
 double ht_var(const double& p1p2, const double& p1, const double& p2, const double& y1, const double& y2);
 RcppExport SEXP _estimatr_ht_var(SEXP p1p2SEXP, SEXP p1SEXP, SEXP p2SEXP, SEXP y1SEXP, SEXP y2SEXP) {
@@ -60,58 +85,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// ht_covar_total
-double ht_covar_total(const Eigen::VectorXd& y0, const Eigen::VectorXd& y1, const Eigen::MatrixXd& p00, const Eigen::MatrixXd& p11, const Eigen::MatrixXd& pj);
-RcppExport SEXP _estimatr_ht_covar_total(SEXP y0SEXP, SEXP y1SEXP, SEXP p00SEXP, SEXP p11SEXP, SEXP pjSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type y0(y0SEXP);
-    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type y1(y1SEXP);
-    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type p00(p00SEXP);
-    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type p11(p11SEXP);
-    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type pj(pjSEXP);
-    rcpp_result_gen = Rcpp::wrap(ht_covar_total(y0, y1, p00, p11, pj));
-    return rcpp_result_gen;
-END_RCPP
-}
-// joint_incl_pr
-double joint_incl_pr(const double& pi, const double& pj, const int& same, const double& ntotal);
-RcppExport SEXP _estimatr_joint_incl_pr(SEXP piSEXP, SEXP pjSEXP, SEXP sameSEXP, SEXP ntotalSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const double& >::type pi(piSEXP);
-    Rcpp::traits::input_parameter< const double& >::type pj(pjSEXP);
-    Rcpp::traits::input_parameter< const int& >::type same(sameSEXP);
-    Rcpp::traits::input_parameter< const double& >::type ntotal(ntotalSEXP);
-    rcpp_result_gen = Rcpp::wrap(joint_incl_pr(pi, pj, same, ntotal));
-    return rcpp_result_gen;
-END_RCPP
-}
-// gen_pr_matrix_complete
-Eigen::MatrixXd gen_pr_matrix_complete(const Eigen::VectorXd& prs);
-RcppExport SEXP _estimatr_gen_pr_matrix_complete(SEXP prsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type prs(prsSEXP);
-    rcpp_result_gen = Rcpp::wrap(gen_pr_matrix_complete(prs));
-    return rcpp_result_gen;
-END_RCPP
-}
-// ht_var_total2
-double ht_var_total2(const Eigen::VectorXd& y, const Eigen::MatrixXd& p);
-RcppExport SEXP _estimatr_ht_var_total2(SEXP ySEXP, SEXP pSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type y(ySEXP);
-    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(ht_var_total2(y, p));
-    return rcpp_result_gen;
-END_RCPP
-}
 // AtA
 Eigen::MatrixXd AtA(const Eigen::MatrixXd& A);
 RcppExport SEXP _estimatr_AtA(SEXP ASEXP) {
@@ -146,14 +119,12 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_estimatr_joint_incl_pr", (DL_FUNC) &_estimatr_joint_incl_pr, 4},
+    {"_estimatr_gen_pr_matrix_complete", (DL_FUNC) &_estimatr_gen_pr_matrix_complete, 1},
     {"_estimatr_ht_var", (DL_FUNC) &_estimatr_ht_var, 5},
     {"_estimatr_ht_var_total", (DL_FUNC) &_estimatr_ht_var_total, 2},
     {"_estimatr_ht_covar_partial", (DL_FUNC) &_estimatr_ht_covar_partial, 5},
     {"_estimatr_ht_var_partial", (DL_FUNC) &_estimatr_ht_var_partial, 2},
-    {"_estimatr_ht_covar_total", (DL_FUNC) &_estimatr_ht_covar_total, 5},
-    {"_estimatr_joint_incl_pr", (DL_FUNC) &_estimatr_joint_incl_pr, 4},
-    {"_estimatr_gen_pr_matrix_complete", (DL_FUNC) &_estimatr_gen_pr_matrix_complete, 1},
-    {"_estimatr_ht_var_total2", (DL_FUNC) &_estimatr_ht_var_total2, 2},
     {"_estimatr_AtA", (DL_FUNC) &_estimatr_AtA, 1},
     {"_estimatr_lm_solver", (DL_FUNC) &_estimatr_lm_solver, 11},
     {NULL, NULL, 0}

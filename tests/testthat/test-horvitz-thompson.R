@@ -197,7 +197,7 @@ test_that("Horvitz-Thompson properly checks arguments and data", {
 
   expect_error(
     horvitz_thompson(y ~ z + x, data = dat, declaration = decl),
-    "formula"
+    "must have only one variable on the right-hand side"
   )
 
   expect_error(

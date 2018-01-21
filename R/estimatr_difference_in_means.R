@@ -89,7 +89,8 @@ difference_in_means <-
 
     if (length(all.vars(formula[[3]])) > 1) {
       stop(
-        "The formula should only include one variable on the right-hand side: the treatment variable."
+        "'formula' must have only one variable on the right-hand side: the ",
+        "treatment variable."
       )
     }
 
@@ -147,35 +148,21 @@ difference_in_means <-
 
       pair_matched <- FALSE
 
-      if (!is.null(data$cluster)) {
+      # When learning whether it is matched pairs, should only use relevant conditions
+      data <- subset.data.frame(data, t %in% c(condition1, condition2))
 
-        ## Check that clusters nest within blocks
-        if (!all(tapply(data$block, data$cluster, function(x)
-          all(x == x[1])))) {
-          stop("All units within a cluster must be in the same block.")
-        }
+      clust_per_block <- check_clusters_blocks(data)
 
-        ## get number of clusters per block
-        clust_per_block <- tapply(data$cluster,
-                                  data$block,
-                                  function(x) length(unique(x)))
-      } else {
-        clust_per_block <- tabulate(as.factor(data$block))
-      }
-
-      ## Check if design is pair matched
+      # Check if design is pair matched
       if (any(clust_per_block == 1)) {
-        stop(
-          "Some blocks have only one unit or cluster. Blocks must have ",
-          "multiple units or clusters."
-        )
+        stop("All blocks must have multiple units (or clusters)")
       } else if (all(clust_per_block == 2)) {
         pair_matched <- TRUE
       } else if (any(clust_per_block == 2) & any(clust_per_block > 2)) {
         stop(
-          "Some blocks have two units or clusters, while others have more ",
-          "units or clusters. Design must either be paired or all blocks ",
-          "must be of size 3 or greater."
+          "Blocks must either all have two units (or clusters) or all have ",
+          "more than two units. You cannot mix blocks of size two with ",
+          "blocks of a larger size."
         )
       }
 

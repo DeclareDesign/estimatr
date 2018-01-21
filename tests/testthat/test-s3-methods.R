@@ -7,6 +7,14 @@ test_that('tidy, summary, and print work', {
                     z = rnorm(n),
                     y = rnorm(n))
 
+  expect_is(
+    tidy(NULL),
+    "data.frame"
+  )
+
+  d <- date()
+  tidy(d)
+
   ## lm_robust
   lmo <- lm_robust(y ~ x, data = dat, se_type = 'classical')
 
@@ -141,7 +149,7 @@ test_that('coef and confint work', {
   )
 
   expect_equivalent(
-    coef(lmo, param = "x"),
+    coef(lmo, parm = "x"),
     lmo$est[lmo$coefficient_name== "x"]
   )
 
@@ -152,7 +160,7 @@ test_that('coef and confint work', {
   )
 
   expect_equivalent(
-    confint(lmo, param = 'x', level = 0.15),
+    confint(lmo, parm = 'x', level = 0.15),
     with(lm_robust(y ~ x, data = dat, coefficient_name = 'x', alpha = 0.15),
          cbind(ci_lower[2], ci_upper[2]))
   )

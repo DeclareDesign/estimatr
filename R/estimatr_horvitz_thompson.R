@@ -101,7 +101,8 @@ horvitz_thompson <-
     #-----
     if (length(all.vars(formula[[3]])) > 1) {
       stop(
-        "The formula should only include one variable on the right-hand side: the treatment variable."
+        "'formula' must have only one variable on the right-hand side: the ",
+        "treatment variable."
       )
     }
 
@@ -270,21 +271,7 @@ horvitz_thompson <-
 
     } else {
 
-      if (!is.null(data$clusters)) {
-
-        ## Check that clusters nest within blocks
-        if (!all(tapply(data$blocks, data$clusters, function(x)
-          all(x == x[1])))) {
-          stop("All units within a cluster must be in the same block.")
-        }
-
-        ## get number of clusters per block
-        clust_per_block <- tapply(data$clusters,
-                                  data$blocks,
-                                  function(x) length(unique(x)))
-      } else {
-        clust_per_block <- tabulate(as.factor(data$blocks))
-      }
+      clust_per_block <- check_clusters_blocks(data)
 
       N <- nrow(data)
 
