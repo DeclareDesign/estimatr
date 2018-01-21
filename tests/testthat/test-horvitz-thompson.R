@@ -121,34 +121,27 @@ test_that("Horvitz-Thompson works with clustered data", {
 
 })
 
-# test missingness works as expected
+# TODO test missingness works as expected
 # test blocks in the data
+test_that("Horvitz-Thompson blocks work both ways", {
+  n <- 40
+  dat <- data.frame(
+    y = rnorm(n),
+    bl = rep(1:10, each = 4)
+  )
 
-# test auxiliary funtions (get condition pr)
-test_that("gen_pr_matrix_complete works as expected", {
-  # TODO test other methods
-  n <- 5
-  prs <- rep(0.4, times = n)
-  pr_mat <- gen_pr_matrix_complete(prs)
+  bl_ra <- randomizr::declare_ra(blocks = dat$bl)
+  dat$z <- randomizr::conduct_ra(bl_ra)
 
-  # FALSE until randomizr on CRAN
-  if (FALSE) {
-    perms <- randomizr::obtain_permutation_matrix(randomizr::declare_ra(N = n, prob = prs[1]))
+  ht_declare_bl <- horvitz_thompson(y ~ z, data = dat, declaration = bl_ra)
+  ht_condmat_bl <- horvitz_thompson(y ~ z, data = dat, condition_pr_mat = bl_pr_mat)
 
-    # From Chris Kennedy (https://github.com/ck37)
-    # for the htestimate package (https://github.com/ck37/htestimate)
-    stacked_inds <- matrix(nrow = 2 * n, ncol = ncol(perms))
-
-    for (assign in 1:2) {
-      indicator_matrix <- as.numeric(perms == (assign - 1))
-      stacked_inds[(n*(assign-1)+1):(n*assign), ] <- indicator_matrix
-    }
-
-    # Use the stacked indicator matrices to calculate the probability matrix.
-    result <- stacked_inds %*% t(stacked_inds) / ncol(perms)
-    expect_equivalent(pr_mat, result)
-
-  }
+  # p-value not the same because df calculation is totally different
+  # TODO resolve p-values
+  expect_equal(
+    ht_declare_bl[c('est', 'se')],
+    ht_condmat_bl[c('est', 'se')]
+  )
 })
 
 # errors when arguments are passed that shouldn't be together

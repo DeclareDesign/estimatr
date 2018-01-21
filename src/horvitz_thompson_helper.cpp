@@ -115,6 +115,8 @@ double joint_incl_pr(const double & pi,
   return pi * ((pj * ntotal - same) / (ntotal - 1));
 }
 
+//' Gets a probability matrix for complete randomization from a vector of treatment probabilities
+//' @export
 // [[Rcpp::export]]
 Eigen::MatrixXd gen_pr_matrix_complete(const Eigen::VectorXd & prs) {
 

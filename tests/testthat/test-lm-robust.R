@@ -175,11 +175,6 @@ test_that("lm robust works with large data", {
 
 })
 
-test_that("", {
-
-})
-
-
 test_that("lm robust works with rank-deficient X", {
   N <- 100
   dat <- data.frame(Y = rbinom(N, 1, .5),
