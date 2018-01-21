@@ -1,4 +1,4 @@
-context('Test S3 methods')
+context('S3')
 
 test_that('tidy, summary, and print work', {
   n <- 10
@@ -141,7 +141,18 @@ test_that('coef and confint work', {
   )
 
   expect_equivalent(
-    confint(lmo, parm = 'x', level = 0.15),
+    coef(lmo, param = "x"),
+    lmo$est[lmo$coefficient_name== "x"]
+  )
+
+  lm2o <- lm_robust(y ~ x + z, data = dat, coefficient_name = "x")
+  expect_equivalent(
+    coef(lm2o),
+    lm2o$est[lm2o$coefficient_name== "x"]
+  )
+
+  expect_equivalent(
+    confint(lmo, param = 'x', level = 0.15),
     with(lm_robust(y ~ x, data = dat, coefficient_name = 'x', alpha = 0.15),
          cbind(ci_lower[2], ci_upper[2]))
   )
@@ -154,11 +165,19 @@ test_that('coef and confint work', {
 
   dim <- difference_in_means(y ~ x, data = dat)
   expect_equivalent(
+    coef(dim),
+    dim$est
+  )
+  expect_equivalent(
     confint(dim),
     cbind(dim$ci_lower, dim$ci_upper)
   )
 
   ht <- horvitz_thompson(y ~ x, condition_prs = p, data = dat)
+  expect_equivalent(
+    coef(ht),
+    ht$est
+  )
   expect_equivalent(
     confint(ht),
     cbind(ht$ci_lower, ht$ci_upper)

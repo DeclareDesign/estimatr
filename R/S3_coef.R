@@ -1,7 +1,7 @@
 #' Extract coefficients from \code{\link{lm_robust}} object
 #'
 #' @param object an object of class 'lm_robust'
-#' @param parm a specification of which parameters are to be given confidence
+#' @param param a specification of which parameters are to be given confidence
 #' intervals, either a vector of numbers or a vector of names. Defaults to
 #' 'coefficient_name' passed to  \code{\link{lm_robust}}. Returns all if missing.
 #' @param ... other arguments, unused
@@ -10,15 +10,15 @@
 coef.lm_robust <-
   function(
     object,
-    parm = NULL,
+    param = NULL,
     ...
   ) {
 
     coefs <- object$est
     names(coefs) <- object$coefficient_name
 
-    if (!is.null(parm)) {
-      coefs <- coefs[parm]
+    if (!is.null(param)) {
+      coefs <- coefs[param]
     } else if (!is.null(object$which_covs)) {
       coefs <- coefs[object$which_covs]
     }
