@@ -25,8 +25,6 @@ joint_incl_pr <- function(pi, pj, same, ntotal) {
     .Call(`_estimatr_joint_incl_pr`, pi, pj, same, ntotal)
 }
 
-#' Gets a probability matrix for complete randomization from a vector of treatment probabilities
-#' @export
 gen_pr_matrix_complete <- function(prs) {
     .Call(`_estimatr_gen_pr_matrix_complete`, prs)
 }
