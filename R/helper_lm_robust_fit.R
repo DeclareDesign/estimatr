@@ -116,21 +116,20 @@ lm_robust_fit <- function(y,
     )
 
 
-  est <- as.vector(fit$beta_hat)
-  se <- rep(NA, length(est))
-  p <- rep(NA, length(est))
-  ci_lower <- rep(NA, length(est))
-  ci_upper <- rep(NA, length(est))
-  dof <- rep(NA, length(est))
+  return_frame <- data.frame(
+    est = as.vector(fit$beta_hat),
+    se = NA,
+    df = NA
+  )
 
-  est_exists <- !is.na(est)
+  est_exists <- !is.na(return_frame$est)
 
   n <- nrow(X)
   rank <- sum(est_exists)
 
   if(se_type != "none"){
 
-    se[est_exists] <- sqrt(diag(fit$Vcov_hat))
+    return_frame$se[est_exists] <- sqrt(diag(fit$Vcov_hat))
 
     if(ci) {
 
@@ -138,7 +137,7 @@ lm_robust_fit <- function(y,
 
         # Replace -99 with NA, easy way to flag that we didn't compute
         # the DoF because the user didn't ask for it
-        dof[est_exists] <-
+        return_frame$df[est_exists] <-
           ifelse(fit$dof == -99,
                  NA,
                  fit$dof)
@@ -146,49 +145,35 @@ lm_robust_fit <- function(y,
       } else {
 
         # TODO explicitly pass rank from RRQR/cholesky
-        dof[est_exists] <- n - rank
+        return_frame$df[est_exists] <- n - rank
 
       }
-
-      dof <- as.vector(dof)
-
-      p <- 2 * pt(abs(est / se), df = dof, lower.tail = FALSE)
-      ci_lower <- est - qt(1 - alpha / 2, df = dof) * se
-      ci_upper <- est + qt(1 - alpha / 2, df = dof) * se
 
     }
   }
 
-  return_list <-
-    list(
-      coefficient_name = variable_names,
-      est = est,
-      se = se,
-      p = p,
-      ci_lower = ci_lower,
-      ci_upper = ci_upper,
-      df = dof,
-      outcome = deparse(substitute(y)),
-      alpha = alpha,
-      which_covs = coefficient_name,
-      res_var = ifelse(fit$res_var < 0, NA, fit$res_var),
-      XtX_inv = fit$XtX_inv,
-      n = n,
-      k = k,
-      rank = rank
-    )
+  return_list <- add_cis_pvals(return_frame, alpha)
 
+  return_list[["coefficient_name"]] <- variable_names
+  return_list[["outcome"]] <- deparse(substitute(y))
+  return_list[["alpha"]] <- alpha
+  return_list[["which_covs"]] <- coefficient_name
+  return_list[["res_var"]] <- ifelse(fit$res_var < 0, NA, fit$res_var)
+  return_list[["XtX_inv"]] <- fit$XtX_inv
+  return_list[["n"]] <- n
+  return_list[["k"]] <- k
+  return_list[["rank"]] <- rank
 
   if (return_vcov && se_type != 'none') {
     #return_list$residuals <- fit$residuals
-    return_list$vcov <- fit$Vcov_hat
-    dimnames(return_list$vcov) <- list(return_list$coefficient_name[est_exists],
-                                       return_list$coefficient_name[est_exists])
+    return_list[["vcov"]] <- fit$Vcov_hat
+    dimnames(return_list[["vcov"]]) <- list(return_list$coefficient_name[est_exists],
+                                            return_list$coefficient_name[est_exists])
   }
 
-  return_list$weighted <- !is.null(weights)
-  if (return_list$weighted) {
-    return_list$res_var <- sum(fit$residuals^2 * weight_mean) / (n - rank)
+  return_list[["weighted"]] <- !is.null(weights)
+  if (return_list[["weighted"]]) {
+    return_list[["res_var"]] <- sum(fit$residuals^2 * weight_mean) / (n - rank)
   }
 
   attr(return_list, "class") <- "lm_robust"

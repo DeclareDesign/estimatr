@@ -97,6 +97,9 @@ clean_model_data <- function(formula,
 
   if(!missing(weights)){
     ret[["weights"]] <- model.extract(mf, "weights")
+    if (any(ret[["weights"]] <= 0)) {
+      stop("weights must all be positive and non-zero.")
+    }
   }
 
   if(!missing(cluster)){

@@ -116,10 +116,11 @@ test_that("lm robust works with missingness",{
 
 test_that("lm robust works with weights",{
 
-  dat <- data.frame(Y = rnorm(100),
-                   Z = rbinom(100, 1, .5),
-                   X = rnorm(100),
-                   W = runif(100))
+  N <- 100
+  dat <- data.frame(Y = rnorm(N),
+                   Z = rbinom(N, 1, .5),
+                   X = rnorm(N),
+                   W = runif(N))
 
   ## Make sure weighting works
   expect_error(
@@ -158,6 +159,11 @@ test_that("lm robust works with weights",{
   expect_equivalent(
     as.matrix(tidy(estimatr_miss_out)[, c('est', 'se')]),
     lmo_miss_hc2
+  )
+
+  expect_error(
+    lm_robust(Y ~ Z, data = dat, weights = c(0, runif(N - 1))),
+    "weights must all be positive and non-zero."
   )
 
 })
