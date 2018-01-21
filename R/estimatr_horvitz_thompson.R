@@ -91,6 +91,7 @@ horvitz_thompson <-
            subset,
            se_type = c('youngs', 'constant'),
            collapsed = FALSE,
+           ci = TRUE,
            alpha = .05,
            condition1 = NULL,
            condition2 = NULL) {
@@ -319,12 +320,13 @@ horvitz_thompson <-
       return_frame <- data.frame(
         est = diff,
         se = se,
-        df = df
+        df = df,
+        N = N_overall
       )
 
     }
 
-    return_list <- add_cis_pvals(return_frame, alpha)
+    return_list <- add_cis_pvals(return_frame, alpha, ci)
 
     #-----
     # Build and return output

@@ -1,5 +1,5 @@
 
-context("Difference in means")
+context("Estimator - difference_in_means")
 
 
 test_that("DIM", {
@@ -18,12 +18,18 @@ test_that("DIM", {
   difference_in_means(Y ~ Z, alpha = .05, data = dat)
   difference_in_means(Y ~ Z, alpha = .10, data = dat)
 
+  expect_equivalent(
+    as.matrix(tidy(difference_in_means(Y ~ Z, data = dat, ci = FALSE))[, c("p", "ci_lower", "ci_upper")]),
+    matrix(NA, nrow = 1, ncol = 3)
+  )
+
   dat <- data.frame(Y = rnorm(100), Z = sample(1:3, 100, replace = TRUE), X = rnorm(100))
 
   difference_in_means(Y ~ Z, condition1 = 1, condition2 = 2, data = dat)
   difference_in_means(Y ~ Z, condition1 = 2, condition2 = 1, data = dat)
   difference_in_means(Y ~ Z, condition1 = 3, condition2 = 1, data = dat)
   difference_in_means(Y ~ Z, condition1 = 3, condition2 = 2, data = dat)
+
 
 })
 

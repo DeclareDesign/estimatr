@@ -84,6 +84,7 @@ difference_in_means <-
            data,
            weights,
            subset,
+           ci = TRUE,
            alpha = .05) {
 
     if (length(all.vars(formula[[3]])) > 1) {
@@ -244,12 +245,13 @@ difference_in_means <-
       return_frame <- data.frame(
         est = diff,
         se = se,
-        df = df
+        df = df,
+        N = N_overall
       )
 
     }
 
-    return_list <- add_cis_pvals(return_frame, alpha)
+    return_list <- add_cis_pvals(return_frame, alpha, ci)
 
     #print(c("Pair Matched? ", pair_matched))
 
@@ -333,6 +335,8 @@ difference_in_means_internal <-
       X <- cbind(1, t = as.numeric(data$t == condition2))
 
       # print("Using lm_robust")
+      # TODO currently lm_robust_fit does too much, need to refactor it
+      # if it will be used here in the long run
       cr2_out <- lm_robust_fit(
         y = data$y,
         X = cbind(1, t = as.numeric(data$t == condition2)),

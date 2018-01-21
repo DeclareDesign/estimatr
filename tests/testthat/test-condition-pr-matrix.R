@@ -1,4 +1,4 @@
-context("HT: condition_pr_matrix")
+context("Helper - HT condition_pr_matrix")
 
 test_that("condition_pr_matrix behaves as expected", {
 

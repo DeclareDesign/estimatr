@@ -1,4 +1,4 @@
-context("lm robust se")
+context("Estimator - lm_robust, non-clustered")
 
 test_that("lm robust se",{
 

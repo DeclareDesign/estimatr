@@ -124,7 +124,7 @@ lm_robust_fit <- function(y,
 
   est_exists <- !is.na(return_frame$est)
 
-  n <- nrow(X)
+  N <- nrow(X)
   rank <- sum(est_exists)
 
   if(se_type != "none"){
@@ -145,14 +145,14 @@ lm_robust_fit <- function(y,
       } else {
 
         # TODO explicitly pass rank from RRQR/cholesky
-        return_frame$df[est_exists] <- n - rank
+        return_frame$df[est_exists] <- N - rank
 
       }
 
     }
   }
 
-  return_list <- add_cis_pvals(return_frame, alpha)
+  return_list <- add_cis_pvals(return_frame, alpha, ci && se_type != "none")
 
   return_list[["coefficient_name"]] <- variable_names
   return_list[["outcome"]] <- deparse(substitute(y))
@@ -160,7 +160,7 @@ lm_robust_fit <- function(y,
   return_list[["which_covs"]] <- coefficient_name
   return_list[["res_var"]] <- ifelse(fit$res_var < 0, NA, fit$res_var)
   return_list[["XtX_inv"]] <- fit$XtX_inv
-  return_list[["n"]] <- n
+  return_list[["N"]] <- N
   return_list[["k"]] <- k
   return_list[["rank"]] <- rank
 
@@ -173,7 +173,7 @@ lm_robust_fit <- function(y,
 
   return_list[["weighted"]] <- !is.null(weights)
   if (return_list[["weighted"]]) {
-    return_list[["res_var"]] <- sum(fit$residuals^2 * weight_mean) / (n - rank)
+    return_list[["res_var"]] <- sum(fit$residuals^2 * weight_mean) / (N - rank)
   }
 
   attr(return_list, "class") <- "lm_robust"
