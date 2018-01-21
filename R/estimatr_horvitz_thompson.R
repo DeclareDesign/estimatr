@@ -127,8 +127,8 @@ horvitz_thompson <-
 
       # Add clusters, blocks, and treatment probabilities to data so they can be cleaned with clean_model_data
       if (!is.null(declaration$clusters)) {
-        if (is.null(data$`.clusters_ddinternal`)) {
-          data$`.clusters_ddinternal` <- declaration$clusters
+        if (is.null(data[[".clusters_ddinternal"]])) {
+          data[[".clusters_ddinternal"]] <- declaration$clusters
           clusters <- '.clusters_ddinternal'
         } else {
           stop("estimatr stores clusters from declarations in a variable called .clusters_ddinternal in your data. Please remove it and try again.")
@@ -136,16 +136,16 @@ horvitz_thompson <-
       }
 
       if (!is.null(declaration$blocks)) {
-        if (is.null(data$`.blocks_ddinternal`)) {
-          data$`.blocks_ddinternal` <- declaration$blocks
+        if (is.null(data[[".blocks_ddinternal"]])) {
+          data[[".blocks_ddinternal"]] <- declaration$blocks
           blocks <- '.blocks_ddinternal'
         } else {
           stop("estimatr stores blocks from declarations in a variable called .blocks_ddinternal in your data. Please remove it and try again.")
         }
       }
 
-      if (is.null(data$`.treatment_prob_ddinternal`)) {
-        data$`.treatment_prob_ddinternal` <- declaration$probabilities_matrix[, 2]
+      if (is.null(data[[".treatment_prob_ddinternal"]])) {
+        data[[".treatment_prob_ddinternal"]] <- declaration$probabilities_matrix[, 2]
         condition_prs <- '.treatment_prob_ddinternal'
       } else {
         stop("estimatr stores treatment probabilities from declarations in a variable called .treatment_prob_ddinternal in your data. Please remove/rename it and try again.")

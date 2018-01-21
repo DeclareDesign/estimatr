@@ -211,7 +211,7 @@ test_that("Horvitz-Thompson properly checks arguments and data", {
   )
 
   # Reserved variable names
-  dat$`.clusters_ddinternal` <- 1
+  dat[[".clusters_ddinternal"]] <- 1
   expect_error(
     horvitz_thompson(
       y ~ z,
@@ -221,7 +221,7 @@ test_that("Horvitz-Thompson properly checks arguments and data", {
     ".clusters_ddinternal"
   )
 
-  dat$`.blocks_ddinternal` <- 1
+  dat[[".blocks_ddinternal"]] <- 1
   expect_error(
     horvitz_thompson(
       y ~ z,
@@ -231,7 +231,7 @@ test_that("Horvitz-Thompson properly checks arguments and data", {
     ".blocks_ddinternal"
   )
 
-  dat$`.treatment_prob_ddinternal` <- 1
+  dat[[".treatment_prob_ddinternal"]] <- 1
   expect_error(
     horvitz_thompson(
       y ~ z,

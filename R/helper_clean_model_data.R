@@ -38,25 +38,25 @@ clean_model_data <- function(formula,
     why_omit  <- attr(na.action, "why_omit")
 
     # Todo generalize to all extra components
-    if(!is.null(why_omit$`(cluster)`)){
+    if(!is.null(why_omit[["(cluster)"]])){
       warning(
         "Some observations have missingness in the cluster variable but not in the outcome or covariates. These observations have been dropped."
       )
     }
 
-    if(!is.null(why_omit$`(condition_pr)`)){
+    if(!is.null(why_omit[["(condition_pr)"]])){
       warning(
         "Some observations have missingness in the condition_pr variable but not in the outcome or covariates. These observations have been dropped."
       )
     }
 
-    if(!is.null(why_omit$`(block)`)){
+    if(!is.null(why_omit[["(block)"]])){
       warning(
         "Some observations have missingness in the block variable but not in the outcome or covariates. These observations have been dropped."
       )
     }
 
-    if(!is.null(why_omit$`(weights)`)){
+    if(!is.null(why_omit[["(weights)"]])){
       warning(
         "Some observations have missingness in the weights variable but not in the outcome or covariates. These observations have been dropped."
       )
@@ -80,8 +80,8 @@ clean_model_data <- function(formula,
 
   if(!missing(weights)){
     ret[["weights"]] <- model.extract(mf, "weights")
-    if (any(ret[["weights"]] <= 0)) {
-      stop("weights must all be positive and non-zero.")
+    if (any(ret[["weights"]] < 0)) {
+      stop("weights must not be negative")
     }
   }
 
