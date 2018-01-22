@@ -18,7 +18,7 @@ test_that("lm robust se",{
 
   expect_error(
     lm_robust(Y ~ Z + X, data = dat, se_type = "not_a_real_one"),
-    "`se_type` must be either 'CR0', 'stata', 'CR2', or 'none'"
+    "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3',"
   )
 
   lm_robust(Y ~ Z + X, data = dat, subset = W > 0.5)

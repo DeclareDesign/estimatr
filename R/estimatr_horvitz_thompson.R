@@ -10,6 +10,7 @@
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
 #' @param se_type can be one of \code{c("youngs", "constant")} and correspond's to estimating the standard errors using Young's inequality (default, conservative), or the constant effects assumption.
 #' @param collapsed A boolean used to collapse clusters to their cluster totals for variance estimation, FALSE by default.
+#' @param ci A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
 #' @param condition1 values of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
 #' @param condition2 values of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
