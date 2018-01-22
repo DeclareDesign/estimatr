@@ -35,7 +35,10 @@ lm_robust_fit <- function(y,
     if (is.null(se_type)) {
       se_type <- "CR2"
     } else if (!(se_type %in% c(cl_se_types, "none"))) {
-      stop("Incorrect se_type. Only 'CR0', 'stata', or 'CR2' allowed for se_type with clustered standard errors. Also can choose 'none'.")
+      stop(
+        "`se_type` must be either 'CR0', 'stata', 'CR2', or 'none' when ",
+        "`clusters` are specified.\nYou passed: ", se_type
+      )
     }
 
   } else {
@@ -44,9 +47,16 @@ lm_robust_fit <- function(y,
     if (is.null(se_type)) {
       se_type <- "HC2"
     } else if (se_type %in% setdiff(cl_se_types, "stata")) {
-      stop("Incorrect se_type. 'CR0' and 'CR2' are only allowed for clustered standard errors.")
+      stop(
+        "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3', ",
+        "'classical' or 'none' with no `clusters`.\nYou passed: ", se_type,
+        " which is reserved for a case with clusters."
+      )
     } else if (!(se_type %in% c(rob_se_types, "none"))) {
-      stop("Incorrect se_type. 'HC0', 'HC1', 'stata', 'HC2', 'HC3', 'classical' are the se_type options without clustering. Also can choose 'none'.")
+      stop(
+        "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3', ",
+        "'classical' or 'none' with no `clusters`.\nYou passed: ", se_type
+      )
     } else if (se_type == "stata") {
       se_type <- "HC1"
     }

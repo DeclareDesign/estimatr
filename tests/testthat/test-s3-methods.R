@@ -110,6 +110,11 @@ test_that('vcov works', {
   )
 
   expect_error(
+    vcov(lm_robust(y ~ x, data = dat, return_vcov = FALSE)),
+    "return_vcov = TRUE"
+  )
+
+  expect_error(
     vcov(horvitz_thompson(y ~ x, condition_prs = p, data = dat)),
     "supported|horvitz_thompson"
   )

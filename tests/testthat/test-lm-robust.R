@@ -2,6 +2,7 @@ context("Estimator - lm_robust, non-clustered")
 
 test_that("lm robust se",{
 
+
   N <- 100
   dat <- data.frame(Y = rnorm(N), Z = rbinom(N, 1, .5), X = rnorm(N), W = runif(N))
 
@@ -14,6 +15,11 @@ test_that("lm robust se",{
   lm_robust(Y ~ Z + X, coefficient_name = c("Z", "X"), data = dat)
   lm_robust(Y ~ Z + X, coefficient_name = c("(Intercept)", "Z", "X"), data = dat)
   lm_robust(Y ~ Z*X, coefficient_name = "Z:X", data = dat)
+
+  expect_error(
+    lm_robust(Y ~ Z + X, data = dat, se_type = "not_a_real_one"),
+    "`se_type` must be either 'CR0', 'stata', 'CR2', or 'none'"
+  )
 
   lm_robust(Y ~ Z + X, data = dat, subset = W > 0.5)
   # Works with subset
@@ -166,6 +172,30 @@ test_that("lm robust works with weights",{
     "weights must not be negative"
   )
 
+})
+
+test_that("lm_robust_fit adds column names", {
+  n <- 10
+  y <- rnorm(n)
+  X <- matrix(rnorm(n * 3), ncol = 3)
+
+  lm_o <- lm_robust_fit(
+    y = y,
+    X = X,
+    weights = NULL,
+    cluster = NULL,
+    ci = TRUE,
+    se_type = "classical",
+    alpha = 0.05,
+    coefficient_name = NULL,
+    return_vcov = TRUE,
+    try_cholesky = TRUE
+  )
+
+  expect_equal(
+    lm_o$coefficient_name,
+    c("X1", "X2", "X3")
+  )
 })
 
 test_that("lm robust works with large data", {

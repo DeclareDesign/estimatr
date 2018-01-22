@@ -8,6 +8,7 @@ context("lm lin replicates lin 2013")
 
 test_that("lm_lin recreates Lin 2013 Table 2", {
 
+  library(estimatr)
   data("alo_star_men")
 
   ## Table 2
