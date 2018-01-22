@@ -6,31 +6,6 @@
 
 using namespace Rcpp;
 
-// joint_incl_pr
-double joint_incl_pr(const double& pi, const double& pj, const int& same, const double& ntotal);
-RcppExport SEXP _estimatr_joint_incl_pr(SEXP piSEXP, SEXP pjSEXP, SEXP sameSEXP, SEXP ntotalSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const double& >::type pi(piSEXP);
-    Rcpp::traits::input_parameter< const double& >::type pj(pjSEXP);
-    Rcpp::traits::input_parameter< const int& >::type same(sameSEXP);
-    Rcpp::traits::input_parameter< const double& >::type ntotal(ntotalSEXP);
-    rcpp_result_gen = Rcpp::wrap(joint_incl_pr(pi, pj, same, ntotal));
-    return rcpp_result_gen;
-END_RCPP
-}
-// gen_pr_matrix_complete
-Eigen::MatrixXd gen_pr_matrix_complete(const Eigen::VectorXd& prs);
-RcppExport SEXP _estimatr_gen_pr_matrix_complete(SEXP prsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type prs(prsSEXP);
-    rcpp_result_gen = Rcpp::wrap(gen_pr_matrix_complete(prs));
-    return rcpp_result_gen;
-END_RCPP
-}
 // ht_var
 double ht_var(const double& p1p2, const double& p1, const double& p2, const double& y1, const double& y2);
 RcppExport SEXP _estimatr_ht_var(SEXP p1p2SEXP, SEXP p1SEXP, SEXP p2SEXP, SEXP y1SEXP, SEXP y2SEXP) {
@@ -119,8 +94,6 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_estimatr_joint_incl_pr", (DL_FUNC) &_estimatr_joint_incl_pr, 4},
-    {"_estimatr_gen_pr_matrix_complete", (DL_FUNC) &_estimatr_gen_pr_matrix_complete, 1},
     {"_estimatr_ht_var", (DL_FUNC) &_estimatr_ht_var, 5},
     {"_estimatr_ht_var_total", (DL_FUNC) &_estimatr_ht_var_total, 2},
     {"_estimatr_ht_covar_partial", (DL_FUNC) &_estimatr_ht_covar_partial, 5},

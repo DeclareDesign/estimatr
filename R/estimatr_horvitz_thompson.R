@@ -114,6 +114,10 @@ horvitz_thompson <-
     # User can either use declaration or the arguments, not both!
     if (!is.null(declaration)) {
 
+      if (ncol(declaration$probabilities_matrix) > 2) {
+        stop("Cannot use `horvitz_thompson` with declarations with more than two treatment arms for now.")
+      }
+
       if (!missing(clusters) |
           !missing(condition_prs) |
           !missing(blocks) |
@@ -173,7 +177,7 @@ horvitz_thompson <-
       stop(
         "After cleaning the data, it has ", length(model_data$outcome), " ",
         "while condition_pr_mat has ", nrow(condition_pr_mat), ". ",
-        "condition_pr_mat should have twice the rows."
+        "condition_pr_mat should have twice the rows"
       )
     }
 
@@ -205,6 +209,8 @@ horvitz_thompson <-
       if (declaration$ra_type == "simple") {
         condition_pr_mat <- NULL
       } else {
+        # TODO to allow for declaration with multiple arms, get probability matrix
+        # and build it like decl$pr_mat <- cbind(decl$pr_mat[, c(cond1, cond2)])
         condition_pr_mat <- declaration_to_condition_pr_mat(declaration)
       }
 
