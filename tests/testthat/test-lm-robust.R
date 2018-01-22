@@ -116,9 +116,22 @@ test_that("lm robust works with missingness",{
     lm_missout_hc2
   )
 
+})
 
+test_that("lm_robust doesn't include aux variables when . is used", {
+  n <- 10
+  dat <- data.frame(y = rnorm(n), x = rnorm(n))
+
+  # not in data.frame
+  clust <- rep(1:5, each = 2)
+
+  expect_identical(
+    lm_robust(y ~ ., clusters = clust, data = dat),
+    lm_robust(y ~ x, clusters = clust, data = dat)
+  )
 
 })
+
 
 test_that("lm robust works with weights",{
 
@@ -237,6 +250,8 @@ test_that("lm robust works with rank-deficient X", {
   # )
 
   dat$Z1 <- dat$X1 + 5
+
+  library(RcppEigen)
 
   ## Not the same as LM! Different QR decompositions when dependency isn't just equivalency
   expect_equivalent(
