@@ -165,7 +165,7 @@ lm_robust_fit <- function(y,
   return_list <- add_cis_pvals(return_frame, alpha, ci && se_type != "none")
 
   return_list[["coefficient_name"]] <- variable_names
-  return_list[["outcome"]] <- deparse(substitute(y))
+  return_list[["outcome"]] <- NA_character_
   return_list[["alpha"]] <- alpha
   return_list[["which_covs"]] <- coefficient_name
   return_list[["res_var"]] <- ifelse(fit$res_var < 0, NA, fit$res_var)

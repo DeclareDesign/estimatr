@@ -320,7 +320,7 @@ horvitz_thompson <-
 
     }
 
-    return_list <- add_cis_pvals(return_frame, alpha, ci)
+    return_list <- add_cis_pvals(return_frame, alpha, ci, ttest = FALSE)
 
     #-----
     # Build and return output
