@@ -1,4 +1,4 @@
-context("lm lin")
+context("Estimator - lm_lin")
 
 test_that("Test LM Lin",{
 
@@ -17,7 +17,7 @@ test_that("Test LM Lin",{
     lm_lin(Y ~ Z + X1,
            covariates = ~ X2,
            data = dat),
-    'right-hand side'
+    'one variable on the right-hand side'
   )
 
   dat2 <- dat
@@ -34,7 +34,7 @@ test_that("Test LM Lin",{
     lm_lin(Y ~ Z,
            covariates = Y ~ X1,
            data = dat),
-    'right-hand sided equation'
+    'right-sided formula'
   )
 
   # Now allows multi-valued treatments
@@ -43,6 +43,16 @@ test_that("Test LM Lin",{
            ~ X1,
            data = dat),
     NA
+  )
+
+  expect_error(
+    lm_lin(Y ~ treat, dat$X1, data = dat),
+    'must be specified as a formula'
+  )
+
+  expect_error(
+    lm_lin(Y ~ treat, ~ 1, data = dat),
+    'variable on the right-hand side'
   )
 
 
@@ -124,7 +134,7 @@ test_that("Test LM Lin",{
   dat$X1_bar <- dat$X1 - mean(dat$X1[-23])
   dat$X2_bar <- dat$X2 - mean(dat$X2[-23])
 
-  expect_identical(
+  expect_equal(
     summary(lm_lin(Y ~ Z,
                    covariates = ~ X1 + X2,
                    data = dat)),
@@ -148,7 +158,7 @@ test_that("Test LM Lin",{
   dat$X1_bar <- dat$X1 - mean(dat$X1[keep])
   dat$X2_bar <- dat$X2 - mean(dat$X2[keep])
 
-  expect_identical(
+  expect_equal(
     summary(lm_lin(Y ~ Z,
            covariates = ~ X1 + X2,
            data = dat,
@@ -247,4 +257,6 @@ test_that("Test LM Lin",{
     nrow(tidy(lmlo)),
     22
   )
+
+
 })

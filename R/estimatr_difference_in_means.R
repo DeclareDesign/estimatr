@@ -6,6 +6,7 @@
 #' @param data A data.frame.
 #' @param weights An optional bare (unquoted) name of the weights variable.
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
+#' #' @param ci A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
 #' @param condition1 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
 #' @param condition2 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
@@ -17,15 +18,63 @@
 #'
 #' @examples
 #'
-#'  df <- data.frame(Y = rnorm(100),
-#'                   Z = sample(1:3, 100, replace = TRUE),
-#'                   block = sample(c("A", "B", "C"), 100, replace = TRUE))
+#'  library(fabricatr)
+#'  library(randomizr)
+#'  # Get appropriate standard errors for simple designs
+#'  dat <- fabricate(
+#'    N = 100,
+#'    Y = rnorm(100),
+#'    Z_simp = simple_ra(N, prob = 0.4),
+#'  )
 #'
-#'  difference_in_means(Y ~ Z, data = df)
-#'  difference_in_means(Y ~ Z, condition1 = 3, condition2 = 2, data = df)
+#'  table(dat$Z_simp)
+#'  difference_in_means(Y ~ Z_simp, data = dat)
 #'
-#'  difference_in_means(Y ~ Z, blocks = block, data = df)
-#'  difference_in_means(Y ~ Z, blocks = block, condition1 = 3, condition2 = 2, data = df)
+#'  # Accurates estimates and standard errors for clustered designs
+#'  dat$clust <- sample(20, size = nrow(dat), replace = TRUE)
+#'  dat$Z_clust <- cluster_ra(dat$clust, prob = 0.6)
+#'
+#'  table(dat$Z_clust, dat$clust)
+#'  difference_in_means(Y ~ Z_clust, clusters = clust, data = dat)
+#'
+#'  # Accurate estimates and standard errors for blocked designs
+#'  dat$block <- rep(1:10, each = 10)
+#'  dat$Z_block <- block_ra(dat$block, prob = 0.5)
+#'
+#'  table(dat$Z_block, dat$block)
+#'  difference_in_means(Y ~ Z_block, blocks = block, data = dat)
+#'
+#'  # Matched-pair estimates and standard errors are also accurate
+#'  # Specified same as blocked design, function learns that
+#'  # it is matched pair from size of blocks!
+#'  dat$pairs <- rep(1:50, each = 2)
+#'  dat$Z_pairs <- block_ra(dat$pairs, prob = 0.5)
+#'
+#'  table(dat$pairs, dat$Z_pairs)
+#'  difference_in_means(Y ~ Z_pairs, blocks = pairs, data = dat)
+#'
+#'  # Also works with multi-valued treatments if users specify
+#'  # comparison of interest
+#'  dat$Z_multi <- simple_ra(
+#'    nrow(dat),
+#'    condition_names = c("Treatment 2", "Treatment 1", "Control"),
+#'    prob_each = c(0.4, 0.4, 0.2)
+#'  )
+#'
+#'  # Only need to specify which condition is treated "condition2" and
+#'  # which is control "condition1"
+#'  difference_in_means(
+#'    Y ~ Z_multi,
+#'    condition1 = "Treatment 2",
+#'    condition2 = "Control",
+#'    data = dat
+#'  )
+#'  difference_in_means(
+#'    Y ~ Z_multi,
+#'    condition1 = "Treatment 1",
+#'    condition2 = "Control",
+#'    data = dat
+#'  )
 #'
 difference_in_means <-
   function(formula,
@@ -36,11 +85,13 @@ difference_in_means <-
            data,
            weights,
            subset,
+           ci = TRUE,
            alpha = .05) {
 
     if (length(all.vars(formula[[3]])) > 1) {
       stop(
-        "The formula should only include one variable on the right-hand side: the treatment variable."
+        "'formula' must have only one variable on the right-hand side: the ",
+        "treatment variable."
       )
     }
 
@@ -58,12 +109,24 @@ difference_in_means <-
     ))
 
     data <- data.frame(y = model_data$outcome,
-                       t = model_data$design_matrix[, ncol(model_data$design_matrix)])
+                       t = model_data$original_treatment)
     data$cluster <- model_data$cluster
     data$weights <- model_data$weights
     data$block <- model_data$block
 
     rm(model_data)
+
+    # parse condition names
+    if (is.null(condition1) || is.null(condition2)) {
+      condition_names <- parse_conditions(
+        treatment = data$t,
+        condition1 = condition1,
+        condition2 = condition2,
+        estimator = "difference_in_means"
+      )
+      condition2 <- condition_names[[2]]
+      condition1 <- condition_names[[1]]
+    }
 
     if (is.null(data$block)){
 
@@ -82,45 +145,25 @@ difference_in_means <-
                                 N - 2)
       }
 
-      return_frame$p <- with(return_frame,
-                             2 * pt(abs(est / se), df = df, lower.tail = FALSE))
-      return_frame$ci_lower <- with(return_frame,
-                                    est - qt(1 - alpha / 2, df = df) * se)
-      return_frame$ci_upper <- with(return_frame,
-                                    est + qt(1 - alpha / 2, df = df) * se)
-
-      return_list <- as.list(return_frame)
-
     } else {
 
       pair_matched <- FALSE
 
-      if (!is.null(data$cluster)) {
+      # When learning whether it is matched pairs, should only use relevant conditions
+      data <- subset.data.frame(data, t %in% c(condition1, condition2))
 
-        ## Check that clusters nest within blocks
-        if (!all(tapply(data$block, data$cluster, function(x)
-          all(x == x[1])))) {
-          stop("All units within a cluster must be in the same block.")
-        }
+      clust_per_block <- check_clusters_blocks(data)
 
-        ## get number of clusters per block
-        clust_per_block <- tapply(data$cluster,
-                                  data$block,
-                                  function(x) length(unique(x)))
-      } else {
-        clust_per_block <- tabulate(as.factor(data$block))
-      }
-
-      ## Check if design is pair matched
+      # Check if design is pair matched
       if (any(clust_per_block == 1)) {
-        stop(
-          "Some blocks have only one unit or cluster. Blocks must have multiple units or clusters."
-        )
+        stop("All blocks must have multiple units (or clusters)")
       } else if (all(clust_per_block == 2)) {
         pair_matched <- TRUE
       } else if (any(clust_per_block == 2) & any(clust_per_block > 2)) {
         stop(
-          "Some blocks have two units or clusters, while others have more units or clusters. Design must either be paired or all blocks must be of size 3 or greater."
+          "Blocks must either all have two units (or clusters) or all have ",
+          "more than two units. You cannot mix blocks of size two with ",
+          "blocks of a larger size."
         )
       }
 
@@ -187,27 +230,23 @@ difference_in_means <-
 
       }
 
-      p <- 2 * pt(abs(diff / se), df = df, lower.tail = FALSE)
-      ci_lower <- diff - qt(1 - alpha / 2, df = df) * se
-      ci_upper <- diff + qt(1 - alpha / 2, df = df) * se
-
-      return_list <-
-        list(
-          est = diff,
-          se = se,
-          p = p,
-          ci_lower = ci_lower,
-          ci_upper = ci_upper,
-          df = df
-        )
+      return_frame <- data.frame(
+        est = diff,
+        se = se,
+        df = df,
+        N = N_overall
+      )
 
     }
+
+    return_list <- add_cis_pvals(return_frame, alpha, ci)
 
     #print(c("Pair Matched? ", pair_matched))
 
     return_list <- dim_like_return(return_list,
                                    alpha = alpha,
-                                   formula = formula)
+                                   formula = formula,
+                                   conditions = list(condition1, condition2))
 
     attr(return_list, "class") <- "difference_in_means"
 
@@ -239,21 +278,6 @@ difference_in_means_internal <-
            pair_matched = FALSE,
            alpha = .05) {
 
-    if (is.factor(data$t)) {
-      condition_names <- levels(data$t)
-    } else{
-      condition_names <- sort(unique(data$t))
-    }
-
-    if (length(condition_names) == 1) {
-      stop("Must have units with both treatment conditions within each block.")
-    }
-
-    if (is.null(condition1) & is.null(condition2)) {
-      condition1 <- condition_names[1]
-      condition2 <- condition_names[2]
-    }
-
     # Check that treatment status is uniform within cluster, checked here
     # so that the treatment vector t doesn't have to be built anywhere else
     if (!is.null(data$cluster)) {
@@ -269,15 +293,22 @@ difference_in_means_internal <-
       }
     }
 
-    N <- length(data$y)
-
     Y2 <- data$y[data$t == condition2]
     Y1 <- data$y[data$t == condition1]
 
+    N2 <- length(Y2)
+    N1 <- length(Y1)
+    N <- N2 + N1
+
+    if ((N1 == 0) || (N2 == 0)) {
+      stop("Must have units with both treatment conditions within each block.")
+    }
+
     ## Check to make sure multiple in each group if pair matched is false
-    if (!pair_matched & (length(Y2) == 1 | length(Y1) == 1)) {
+    if (!pair_matched & (N2 == 1 | N1 == 1)) {
       stop(
-        "Not a pair matched design and one treatment condition only has one value, making standard errors impossible to calculate."
+        "Not a pair matched design and one treatment condition only has one ",
+        "value, making standard errors impossible to calculate."
       )
     }
 
@@ -292,6 +323,8 @@ difference_in_means_internal <-
       X <- cbind(1, t = as.numeric(data$t == condition2))
 
       # print("Using lm_robust")
+      # TODO currently lm_robust_fit does too much, need to refactor it
+      # if it will be used here in the long run
       cr2_out <- lm_robust_fit(
         y = data$y,
         X = cbind(1, t = as.numeric(data$t == condition2)),
@@ -322,8 +355,6 @@ difference_in_means_internal <-
           # Non-pair matched designs, unit level randomization
           var_Y2 <- var(Y2)
           var_Y1 <- var(Y1)
-          N2 <- length(Y2)
-          N1 <- length(Y1)
 
           se <- sqrt(var_Y2 / N2 + var_Y1 / N1)
 
@@ -357,8 +388,8 @@ difference_in_means_internal <-
         # todo: check welch approximation with weights
         df <- se^4 /
           (
-            (var2^2 / (length(Y2)-1)) +
-              (var1^2 / (length(Y1)-1))
+            (var2^2 / (N2-1)) +
+              (var1^2 / (N1-1))
           )
       }
 

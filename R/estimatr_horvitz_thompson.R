@@ -10,9 +10,10 @@
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
 #' @param se_type can be one of \code{c("youngs", "constant")} and correspond's to estimating the standard errors using Young's inequality (default, conservative), or the constant effects assumption.
 #' @param collapsed A boolean used to collapse clusters to their cluster totals for variance estimation, FALSE by default.
+#' @param ci A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
-#' @param condition1 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
-#' @param condition2 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
+#' @param condition1 values of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
+#' @param condition2 values of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
 #'
 #' @details This function implements the Horvitz-Thompson estimator for treatment effects.
 #'
@@ -91,6 +92,7 @@ horvitz_thompson <-
            subset,
            se_type = c('youngs', 'constant'),
            collapsed = FALSE,
+           ci = TRUE,
            alpha = .05,
            condition1 = NULL,
            condition2 = NULL) {
@@ -100,7 +102,8 @@ horvitz_thompson <-
     #-----
     if (length(all.vars(formula[[3]])) > 1) {
       stop(
-        "The formula should only include one variable on the right-hand side: the treatment variable."
+        "'formula' must have only one variable on the right-hand side: the ",
+        "treatment variable."
       )
     }
 
@@ -111,6 +114,10 @@ horvitz_thompson <-
     #-----
     # User can either use declaration or the arguments, not both!
     if (!is.null(declaration)) {
+
+      if (ncol(declaration$probabilities_matrix) > 2) {
+        stop("Cannot use `horvitz_thompson` with declarations with more than two treatment arms for now.")
+      }
 
       if (!missing(clusters) |
           !missing(condition_prs) |
@@ -126,8 +133,8 @@ horvitz_thompson <-
 
       # Add clusters, blocks, and treatment probabilities to data so they can be cleaned with clean_model_data
       if (!is.null(declaration$clusters)) {
-        if (is.null(data$`.clusters_ddinternal`)) {
-          data$`.clusters_ddinternal` <- declaration$clusters
+        if (is.null(data[[".clusters_ddinternal"]])) {
+          data[[".clusters_ddinternal"]] <- declaration$clusters
           clusters <- '.clusters_ddinternal'
         } else {
           stop("estimatr stores clusters from declarations in a variable called .clusters_ddinternal in your data. Please remove it and try again.")
@@ -135,16 +142,16 @@ horvitz_thompson <-
       }
 
       if (!is.null(declaration$blocks)) {
-        if (is.null(data$`.blocks_ddinternal`)) {
-          data$`.blocks_ddinternal` <- declaration$blocks
+        if (is.null(data[[".blocks_ddinternal"]])) {
+          data[[".blocks_ddinternal"]] <- declaration$blocks
           blocks <- '.blocks_ddinternal'
         } else {
           stop("estimatr stores blocks from declarations in a variable called .blocks_ddinternal in your data. Please remove it and try again.")
         }
       }
 
-      if (is.null(data$`.treatment_prob_ddinternal`)) {
-        data$`.treatment_prob_ddinternal` <- declaration$probabilities_matrix[, 2]
+      if (is.null(data[[".treatment_prob_ddinternal"]])) {
+        data[[".treatment_prob_ddinternal"]] <- declaration$probabilities_matrix[, 2]
         condition_prs <- '.treatment_prob_ddinternal'
       } else {
         stop("estimatr stores treatment probabilities from declarations in a variable called .treatment_prob_ddinternal in your data. Please remove/rename it and try again.")
@@ -168,11 +175,27 @@ horvitz_thompson <-
 
     ## condition_pr_mat, if supplied, must be same length
     if (!is.null(condition_pr_mat) && (2*length(model_data$outcome) != nrow(condition_pr_mat))) {
-      stop(sprintf("After cleaning the data, it has %d rows while condition_pr_mat has %d. condition_pr_mat should have twice the rows.", length(model_data$outcome), nrow(condition_pr_mat)))
+      stop(
+        "After cleaning the data, it has ", length(model_data$outcome), " ",
+        "while condition_pr_mat has ", nrow(condition_pr_mat), ". ",
+        "condition_pr_mat should have twice the rows"
+      )
     }
 
     data <- data.frame(y = model_data$outcome,
-                       t = model_data$design_matrix[, ncol(model_data$design_matrix)])
+                       t = model_data$original_treatment)
+
+    # Parse conditions
+    if (is.null(condition1) || is.null(condition2)) {
+      condition_names <- parse_conditions(
+        treatment = data$t,
+        condition1 = condition1,
+        condition2 = condition2,
+        estimator = "horvitz_thompson"
+      )
+      condition2 <- condition_names[[2]]
+      condition1 <- condition_names[[1]]
+    }
 
     if (!is.null(declaration)) {
 
@@ -187,6 +210,8 @@ horvitz_thompson <-
       if (declaration$ra_type == "simple") {
         condition_pr_mat <- NULL
       } else {
+        # TODO to allow for declaration with multiple arms, get probability matrix
+        # and build it like decl$pr_mat <- cbind(decl$pr_mat[, c(cond1, cond2)])
         condition_pr_mat <- declaration_to_condition_pr_mat(declaration)
       }
 
@@ -211,7 +236,16 @@ horvitz_thompson <-
       }
 
     } else {
-      data$condition_probabilities <- diag(condition_pr_mat)[(length(data$y)+1):(2*length(data$y))]
+      if (!is.null(condition_pr_mat)) {
+        data$condition_probabilities <- diag(condition_pr_mat)[(length(data$y)+1):(2*length(data$y))]
+      } else {
+        pr_treat <- mean(data$t == condition2)
+        message(
+          "Assuming simple random assignment with probability of treatment ",
+          "equal to the mean number of obs in condition2, which = ", pr_treat
+        )
+        data$condition_probabilities <- pr_treat
+      }
     }
 
     rm(model_data)
@@ -228,8 +262,8 @@ horvitz_thompson <-
     # Estimation
     #-----
 
-    if (is.null(data$blocks)){
-      return_list <-
+    if (is.null(data$blocks)) {
+      return_frame <-
         horvitz_thompson_internal(
           condition_pr_mat = condition_pr_mat,
           condition1 = condition1,
@@ -240,47 +274,11 @@ horvitz_thompson <-
           alpha = alpha
         )
 
-      return_list$df <- with(return_list,
-                              N - 2)
-      return_list$p <- with(return_list,
-                             2 * pt(abs(est / se), df = df, lower.tail = FALSE))
-      return_list$ci_lower <- with(return_list,
-                                    est - qt(1 - alpha / 2, df = df) * se)
-      return_list$ci_upper <- with(return_list,
-                                    est + qt(1 - alpha / 2, df = df) * se)
+      return_frame$df <- with(return_frame, N - 2)
 
     } else {
 
-      if (!is.null(data$clusters)) {
-
-        ## Check that clusters nest within blocks
-        if (!all(tapply(data$blocks, data$clusters, function(x)
-          all(x == x[1])))) {
-          stop("All units within a cluster must be in the same block.")
-        }
-
-        ## get number of clusters per block
-        clust_per_block <- tapply(data$clusters,
-                                  data$blocks,
-                                  function(x) length(unique(x)))
-      } else {
-        clust_per_block <- tabulate(as.factor(data$blocks))
-      }
-
-      ## Check if design is pair matched
-      if (any(clust_per_block == 1)) {
-        stop(
-          "Some blocks have only one unit or cluster. Blocks must have multiple units or clusters."
-        )
-      } else if (all(clust_per_block == 2)) {
-        stop(
-          "Cannot compute variance for Horvitz-Thompson estimator with one treated and control unit per block."
-        )
-      } else if (any(clust_per_block == 2) & any(clust_per_block > 2)) {
-        stop(
-          "Some blocks have two units or clusters. All blocks must be of size 3 or greater."
-        )
-      }
+      clust_per_block <- check_clusters_blocks(data)
 
       N <- nrow(data)
 
@@ -306,27 +304,23 @@ horvitz_thompson <-
 
       n_blocks <- nrow(block_estimates)
 
-      diff <- with(block_estimates, sum(est) * N/N_overall)
+      diff <- with(block_estimates, sum(est * N/N_overall))
 
-      se <- with(block_estimates, sqrt(sum(se^2) * (N/N_overall)^2))
+      se <- with(block_estimates, sqrt(sum(se^2 * (N/N_overall)^2)))
 
       ## we don't know if this is correct!
       df <- n_blocks - 2
-      p <- 2 * pt(abs(diff / se), df = df, lower.tail = FALSE)
-      ci_lower <- diff - qt(1 - alpha / 2, df = df) * se
-      ci_upper <- diff + qt(1 - alpha / 2, df = df) * se
 
-      return_list <-
-        list(
-          est = diff,
-          se = se,
-          p = p,
-          ci_lower = ci_lower,
-          ci_upper = ci_upper,
-          df = df
-        )
+      return_frame <- data.frame(
+        est = diff,
+        se = se,
+        df = df,
+        N = N_overall
+      )
 
     }
+
+    return_list <- add_cis_pvals(return_frame, alpha, ci)
 
     #-----
     # Build and return output
@@ -334,7 +328,8 @@ horvitz_thompson <-
 
     return_list <- dim_like_return(return_list,
                                    alpha = alpha,
-                                   formula = formula)
+                                   formula = formula,
+                                   conditions = list(condition1, condition2))
 
     attr(return_list, "class") <- "horvitz_thompson"
 
@@ -357,20 +352,9 @@ horvitz_thompson_internal <-
            se_type,
            alpha = .05) {
 
-    if (is.factor(data$t)) {
-      condition_names <- levels(data$t)
-    } else{
-      condition_names <- sort(unique(data$t))
-    }
-
-    if (length(condition_names) == 1) {
-      stop("Must have units with both treatment conditions within each block.")
-    }
-
-    if (is.null(condition1) & is.null(condition2)) {
-      condition1 <- condition_names[1]
-      condition2 <- condition_names[2]
-    }
+    #if (length(condition_names) == 1) {
+    #  stop("Must have units with both treatment conditions within each block.")
+    #}
 
     # Check that treatment status is uniform within cluster, checked here
     # so that the treatment vector t doesn't have to be built anywhere else
@@ -385,8 +369,6 @@ horvitz_thompson_internal <-
 
     # print(table(condition_pr_mat))
 
-    N <- length(data$y)
-
     t2 <- which(data$t == condition2)
     t1 <- which(data$t == condition1)
 
@@ -395,6 +377,8 @@ horvitz_thompson_internal <-
 
     Y2 <- data$y[t2] / ps2
     Y1 <- data$y[t1] / ps1
+
+    N <- length(Y2) + length(Y1)
 
     # Estimator from Middleton & Aronow 2015 page 51
     # TODO figure out why below is not equivalent for constant pr cluster randomized exps
@@ -427,8 +411,13 @@ horvitz_thompson_internal <-
 
     if (collapsed) {
 
+      # TODO this may not work with 3 valued treatments as it
+      # may not subset everything correction
       if (is.null(data$clusters)) {
-        stop("The collapsed estimator only works if you either pass a declaration with clusters or explicitly specify the clusters.")
+        stop(
+          "The collapsed estimator only works if you either pass a ",
+          "declaration with clusters or explicitly specify the clusters."
+        )
       }
 
       k <- length(unique(data$clusters))
@@ -553,13 +542,13 @@ horvitz_thompson_internal <-
     }
     # }
 
-    return_list <-
-      list(
+    return_frame <-
+      data.frame(
         est = diff,
         se = se,
         N = N
       )
 
-    return(return_list)
+    return(return_frame)
 
   }

@@ -1,4 +1,4 @@
-context("lm cluster se")
+context("Estimator - lm_robust, clustered")
 
 test_that("lm cluster se", {
 
@@ -33,16 +33,18 @@ test_that("lm cluster se", {
   )
 
   expect_equivalent(
-    unlist(
-      lm_robust(
-        Y ~ X + Z,
-        clusters = J,
-        ci = FALSE,
-        coefficient_name = c("X", "Z"),
-        data = dat
-      )[c("p", "ci_lower", "ci_upper")]
+    as.matrix(
+      tidy(
+        lm_robust(
+          Y ~ X + Z,
+          clusters = J,
+          ci = FALSE,
+          coefficient_name = c("X", "Z"),
+          data = dat
+        )
+      )[, c("p", "ci_lower", "ci_upper")]
     ),
-    rep(NA, 9)
+    matrix(NA, nrow = 2, ncol = 3)
   )
 
   ## Test equality
@@ -194,7 +196,6 @@ test_that("lm cluster se with missingness", {
 
   dat$X[23] <- NA
   dat$J[63] <- NA
-
 
   expect_warning(
     estimatr_cluster_out <- lm_robust(

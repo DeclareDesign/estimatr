@@ -94,7 +94,7 @@ predict.lm_robust <- function(
   # Get predicted values
   predictor <- drop(X[, !beta_na, drop = FALSE] %*% object$est[!beta_na])
 
-  df_resid <- object$n - object$rank
+  df_resid <- object$N - object$rank
   interval <- match.arg(interval)
 
   if (se.fit || interval != "none") {

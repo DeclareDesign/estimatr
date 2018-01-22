@@ -1,20 +1,3 @@
-# Internal method to check for missingness on auxiliary variables and warn
-find_warn_missing <- function(x, type) {
-  x_missing <- is.na(x)
-
-  if (any(x_missing)) {
-    warning(
-      sprintf(
-        "Some observations have missingness in the %s variable. These observations have been dropped.",
-        type
-      )
-    )
-  }
-
-  return(x_missing)
-}
-
-
 # Internal method to process data
 clean_model_data <- function(formula,
                              data,
@@ -55,25 +38,25 @@ clean_model_data <- function(formula,
     why_omit  <- attr(na.action, "why_omit")
 
     # Todo generalize to all extra components
-    if(!is.null(why_omit$`(cluster)`)){
+    if(!is.null(why_omit[["(cluster)"]])){
       warning(
         "Some observations have missingness in the cluster variable but not in the outcome or covariates. These observations have been dropped."
       )
     }
 
-    if(!is.null(why_omit$`(condition_pr)`)){
+    if(!is.null(why_omit[["(condition_pr)"]])){
       warning(
         "Some observations have missingness in the condition_pr variable but not in the outcome or covariates. These observations have been dropped."
       )
     }
 
-    if(!is.null(why_omit$`(block)`)){
+    if(!is.null(why_omit[["(block)"]])){
       warning(
         "Some observations have missingness in the block variable but not in the outcome or covariates. These observations have been dropped."
       )
     }
 
-    if(!is.null(why_omit$`(weights)`)){
+    if(!is.null(why_omit[["(weights)"]])){
       warning(
         "Some observations have missingness in the weights variable but not in the outcome or covariates. These observations have been dropped."
       )
@@ -81,14 +64,24 @@ clean_model_data <- function(formula,
   })
 
   # TODO when using . it adds weights and clusters to model!
-
   ret <- list(
-    outcome=model.response(mf, type = "numeric"),
-    design_matrix=model.matrix.default(formula, data = mf)
+    outcome = model.response(mf, type = "numeric"),
+    design_matrix = model.matrix.default(terms(mf), data = mf)
   )
+
+  # Keep the original treatment vector for DiM and HT
+  # They will never have a model frame larger than 6 covars
+  # so we can add a check that prevents slowing down large
+  # lm_robust calls
+  if (ncol(mf) < 6) {
+    ret[["original_treatment"]] <- mf[, colnames(mf) == all.vars(formula[[3]])[1]]
+  }
 
   if(!missing(weights)){
     ret[["weights"]] <- model.extract(mf, "weights")
+    if (any(ret[["weights"]] < 0)) {
+      stop("weights must not be negative")
+    }
   }
 
   if(!missing(cluster)){

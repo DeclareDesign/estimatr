@@ -36,9 +36,12 @@ vcov.horvitz_thompson <-
 vcov_simple <-
   function(object) {
     if (is.null(object$vcov)) {
-      stop("Object cannot return vcov. Try setting return_vcov = TRUE.")
+      stop(
+        "Object must have vcov matrix. Try setting `return_vcov = TRUE` in ",
+        "the estimator function."
+      )
     } else {
-      # todo: should we only keep the which_covs?
+      # TODO should we only keep the which_covs?
       return(object$vcov)
     }
   }
