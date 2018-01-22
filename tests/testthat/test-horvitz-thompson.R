@@ -1,4 +1,4 @@
-context("Horvitz Thompson")
+context("Estimator - horvitz_thompson")
 
 
 test_that("Horvitz-Thompson matches d-i-m under certain conditions", {
@@ -197,12 +197,17 @@ test_that("Horvitz-Thompson properly checks arguments and data", {
 
   expect_error(
     horvitz_thompson(y ~ z + x, data = dat, declaration = decl),
-    "formula"
+    "must have only one variable on the right-hand side"
   )
 
   expect_error(
     horvitz_thompson(y ~ z, data = dat, declaration = randomizr::declare_ra(N = n+1, prob = 0.4)),
     "N|declaration"
+  )
+
+  expect_equivalent(
+    as.matrix(tidy(horvitz_thompson(y ~ z, data = dat, ci = FALSE))[, c("p", "ci_lower", "ci_upper")]),
+    matrix(NA, nrow = 1, ncol = 3)
   )
 
   # Reserved variable names

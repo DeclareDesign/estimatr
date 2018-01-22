@@ -2,7 +2,7 @@
 % Please edit documentation in R/helper_condition_pr_matrix.R
 \name{permutations_to_condition_pr_mat}
 \alias{permutations_to_condition_pr_mat}
-\title{Build condition probability matrix for Horvitz-Thompson estimation from treatment permutations}
+\title{Builds a condition probaability matrix for Horvitz-Thompson estimation from treatment permutation matrix}
 \usage{
 permutations_to_condition_pr_mat(permutations)
 }
@@ -10,5 +10,8 @@ permutations_to_condition_pr_mat(permutations)
 \item{permutations}{A matrix where the rows are units and the columns are different treatment permutations; treated units must be represented with a 1 and control units with a 0}
 }
 \description{
-Build condition probability matrix for Horvitz-Thompson estimation from treatment permutations
+Builds a condition probaability matrix for Horvitz-Thompson estimation from treatment permutation matrix
+}
+\details{
+This function takes a matrix of permutations, for example from from the \code{\link[randomizr]{declare_ra}} function in \pkg{randomizr} and returns a 2n*2n matrix that can be used to fully specify the design for \code{\link{horvitz_thompson}} estimation. This is done by passing this matrix to the \code{condition_pr_mat} argument of \code{\link{horvitz_thompson}}.
 }

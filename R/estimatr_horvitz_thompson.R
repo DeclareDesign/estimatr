@@ -10,6 +10,7 @@
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
 #' @param se_type can be one of \code{c("youngs", "constant")} and correspond's to estimating the standard errors using Young's inequality (default, conservative), or the constant effects assumption.
 #' @param collapsed A boolean used to collapse clusters to their cluster totals for variance estimation, FALSE by default.
+#' @param ci A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
 #' @param condition1 values of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
 #' @param condition2 values of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
@@ -91,6 +92,7 @@ horvitz_thompson <-
            subset,
            se_type = c('youngs', 'constant'),
            collapsed = FALSE,
+           ci = TRUE,
            alpha = .05,
            condition1 = NULL,
            condition2 = NULL) {
@@ -100,7 +102,8 @@ horvitz_thompson <-
     #-----
     if (length(all.vars(formula[[3]])) > 1) {
       stop(
-        "The formula should only include one variable on the right-hand side: the treatment variable."
+        "'formula' must have only one variable on the right-hand side: the ",
+        "treatment variable."
       )
     }
 
@@ -111,6 +114,10 @@ horvitz_thompson <-
     #-----
     # User can either use declaration or the arguments, not both!
     if (!is.null(declaration)) {
+
+      if (ncol(declaration$probabilities_matrix) > 2) {
+        stop("Cannot use `horvitz_thompson` with declarations with more than two treatment arms for now.")
+      }
 
       if (!missing(clusters) |
           !missing(condition_prs) |
@@ -171,7 +178,7 @@ horvitz_thompson <-
       stop(
         "After cleaning the data, it has ", length(model_data$outcome), " ",
         "while condition_pr_mat has ", nrow(condition_pr_mat), ". ",
-        "condition_pr_mat should have twice the rows."
+        "condition_pr_mat should have twice the rows"
       )
     }
 
@@ -203,6 +210,8 @@ horvitz_thompson <-
       if (declaration$ra_type == "simple") {
         condition_pr_mat <- NULL
       } else {
+        # TODO to allow for declaration with multiple arms, get probability matrix
+        # and build it like decl$pr_mat <- cbind(decl$pr_mat[, c(cond1, cond2)])
         condition_pr_mat <- declaration_to_condition_pr_mat(declaration)
       }
 
@@ -269,21 +278,7 @@ horvitz_thompson <-
 
     } else {
 
-      if (!is.null(data$clusters)) {
-
-        ## Check that clusters nest within blocks
-        if (!all(tapply(data$blocks, data$clusters, function(x)
-          all(x == x[1])))) {
-          stop("All units within a cluster must be in the same block.")
-        }
-
-        ## get number of clusters per block
-        clust_per_block <- tapply(data$clusters,
-                                  data$blocks,
-                                  function(x) length(unique(x)))
-      } else {
-        clust_per_block <- tabulate(as.factor(data$blocks))
-      }
+      clust_per_block <- check_clusters_blocks(data)
 
       N <- nrow(data)
 
@@ -319,12 +314,13 @@ horvitz_thompson <-
       return_frame <- data.frame(
         est = diff,
         se = se,
-        df = df
+        df = df,
+        N = N_overall
       )
 
     }
 
-    return_list <- add_cis_pvals(return_frame, alpha)
+    return_list <- add_cis_pvals(return_frame, alpha, ci)
 
     #-----
     # Build and return output

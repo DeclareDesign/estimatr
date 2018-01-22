@@ -46,6 +46,28 @@ parse_conditions <- function(treatment, condition1, condition2, estimator) {
   return(conditions)
 }
 
+# This function ensures that blocks and  clusters have been specified correctly
+check_clusters_blocks <- function(data) {
+  if (!is.null(data$cluster)) {
+
+    one_block_per_clust <-
+      tapply(data$block, data$cluster, function(x) all(x == x[1]))
+
+    # Check that clusters nest within blocks
+    if (any(!one_block_per_clust)) {
+      stop("All clusters must be contained within blocks")
+    }
+
+    # get number of clusters per block
+    clust_per_block <- tapply(data$cluster,
+                              data$block,
+                              function(x) length(unique(x)))
+  } else {
+    clust_per_block <- tabulate(as.factor(data$block))
+  }
+
+  return(clust_per_block)
+}
 
 ## todo: figure out which assignment is the "treatment" in Z, or the binary variable
 ## unused for now!

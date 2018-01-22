@@ -1,22 +1,8 @@
 
-context("Difference in means")
+context("Estimator - difference_in_means")
 
 
 test_that("DIM", {
-
-  dat <- data.frame(Y = rnorm(100), Z = rbinom(100, 1, .5), X = rnorm(100))
-
-  difference_in_means(Y ~ Z, data = dat)
-  dim_normal <- difference_in_means(Y ~ Z, condition1 = 0, condition2 = 1, data = dat)
-  dim_reverse <- difference_in_means(Y ~ Z, condition1 = 1, condition2 = 0, data = dat)
-
-  expect_equal(
-    tidy(dim_normal)[c("est", "se")],
-    tidy(dim_reverse)[c("est", "se")] * c(-1, 1)
-  )
-
-  difference_in_means(Y ~ Z, alpha = .05, data = dat)
-  difference_in_means(Y ~ Z, alpha = .10, data = dat)
 
   dat <- data.frame(Y = rnorm(100), Z = sample(1:3, 100, replace = TRUE), X = rnorm(100))
 
@@ -24,6 +10,51 @@ test_that("DIM", {
   difference_in_means(Y ~ Z, condition1 = 2, condition2 = 1, data = dat)
   difference_in_means(Y ~ Z, condition1 = 3, condition2 = 1, data = dat)
   difference_in_means(Y ~ Z, condition1 = 3, condition2 = 2, data = dat)
+
+})
+
+test_that("DIM arguments parsed correctly", {
+
+  dat <- data.frame(Y = rnorm(100), Z = rbinom(100, 1, .5), X = rnorm(100))
+
+  expect_equivalent(
+    as.matrix(tidy(difference_in_means(
+      Y ~ Z, data = dat, ci = FALSE
+    ))[, c("p", "ci_lower", "ci_upper")]),
+    matrix(NA, nrow = 1, ncol = 3)
+  )
+
+  expect_error(
+    difference_in_means(Y ~ Z + X, data = dat),
+    "must have only one variable on the right-hand side"
+  )
+
+  dat$bl <- rep(1:10, each = 10)
+  dat$bad_cl <- rep(1:10, times = 10)
+  expect_error(
+    difference_in_means(Y ~ Z, blocks = bl, clusters = bad_cl, data = dat),
+    "All clusters must be contained within blocks"
+  )
+
+  dat$bad_bl <- c(1, rep(2:10, length.out = 99))
+  expect_error(
+    difference_in_means(Y ~ Z, blocks = bad_bl, data = dat),
+    "All blocks must have multiple units"
+  )
+
+  dat$bad_mp <- rep(1:50, each = 2)
+  dat$bad_mp[dat$bad_mp == 50] <- 49
+  expect_error(
+    difference_in_means(Y ~ Z, blocks = bad_mp, data = dat),
+    "Blocks must either all have two units"
+  )
+
+  expect_error(
+    difference_in_means(Y ~ Z + X, data = dat),
+    "must have only one variable on the right-hand side"
+  )
+
+  # not matched pair but
 
 })
 

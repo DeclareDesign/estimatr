@@ -6,8 +6,8 @@
 \usage{
 horvitz_thompson(formula, data, condition_prs, blocks, clusters,
   condition_pr_mat = NULL, declaration = NULL, subset,
-  se_type = c("youngs", "constant"), collapsed = FALSE, alpha = 0.05,
-  condition1 = NULL, condition2 = NULL)
+  se_type = c("youngs", "constant"), collapsed = FALSE, ci = TRUE,
+  alpha = 0.05, condition1 = NULL, condition2 = NULL)
 }
 \arguments{
 \item{formula}{An object of class "formula", such as Y ~ Z}
@@ -29,6 +29,8 @@ horvitz_thompson(formula, data, condition_prs, blocks, clusters,
 \item{se_type}{can be one of \code{c("youngs", "constant")} and correspond's to estimating the standard errors using Young's inequality (default, conservative), or the constant effects assumption.}
 
 \item{collapsed}{A boolean used to collapse clusters to their cluster totals for variance estimation, FALSE by default.}
+
+\item{ci}{A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.}
 
 \item{alpha}{The significance level, 0.05 by default.}
 

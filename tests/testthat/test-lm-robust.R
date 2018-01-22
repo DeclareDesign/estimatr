@@ -1,6 +1,7 @@
-context("lm robust se")
+context("Estimator - lm_robust, non-clustered")
 
 test_that("lm robust se",{
+
 
   N <- 100
   dat <- data.frame(Y = rnorm(N), Z = rbinom(N, 1, .5), X = rnorm(N), W = runif(N))
@@ -14,6 +15,11 @@ test_that("lm robust se",{
   lm_robust(Y ~ Z + X, coefficient_name = c("Z", "X"), data = dat)
   lm_robust(Y ~ Z + X, coefficient_name = c("(Intercept)", "Z", "X"), data = dat)
   lm_robust(Y ~ Z*X, coefficient_name = "Z:X", data = dat)
+
+  expect_error(
+    lm_robust(Y ~ Z + X, data = dat, se_type = "not_a_real_one"),
+    "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3',"
+  )
 
   lm_robust(Y ~ Z + X, data = dat, subset = W > 0.5)
   # Works with subset
@@ -110,9 +116,22 @@ test_that("lm robust works with missingness",{
     lm_missout_hc2
   )
 
+})
 
+test_that("lm_robust doesn't include aux variables when . is used", {
+  n <- 10
+  dat <- data.frame(y = rnorm(n), x = rnorm(n))
+
+  # not in data.frame
+  clust <- rep(1:5, each = 2)
+
+  expect_identical(
+    lm_robust(y ~ ., clusters = clust, data = dat),
+    lm_robust(y ~ x, clusters = clust, data = dat)
+  )
 
 })
+
 
 test_that("lm robust works with weights",{
 
@@ -168,6 +187,30 @@ test_that("lm robust works with weights",{
 
 })
 
+test_that("lm_robust_fit adds column names", {
+  n <- 10
+  y <- rnorm(n)
+  X <- matrix(rnorm(n * 3), ncol = 3)
+
+  lm_o <- lm_robust_fit(
+    y = y,
+    X = X,
+    weights = NULL,
+    cluster = NULL,
+    ci = TRUE,
+    se_type = "classical",
+    alpha = 0.05,
+    coefficient_name = NULL,
+    return_vcov = TRUE,
+    try_cholesky = TRUE
+  )
+
+  expect_equal(
+    lm_o$coefficient_name,
+    c("X1", "X2", "X3")
+  )
+})
+
 test_that("lm robust works with large data", {
   N <- 75000
   dat <- data.frame(Y = rbinom(N, 1, .5),
@@ -207,6 +250,8 @@ test_that("lm robust works with rank-deficient X", {
   # )
 
   dat$Z1 <- dat$X1 + 5
+
+  library(RcppEigen)
 
   ## Not the same as LM! Different QR decompositions when dependency isn't just equivalency
   expect_equivalent(

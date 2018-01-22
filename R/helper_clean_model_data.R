@@ -1,20 +1,3 @@
-# Internal method to check for missingness on auxiliary variables and warn
-find_warn_missing <- function(x, type) {
-  x_missing <- is.na(x)
-
-  if (any(x_missing)) {
-    warning(
-      sprintf(
-        "Some observations have missingness in the %s variable. These observations have been dropped.",
-        type
-      )
-    )
-  }
-
-  return(x_missing)
-}
-
-
 # Internal method to process data
 clean_model_data <- function(formula,
                              data,
@@ -81,10 +64,9 @@ clean_model_data <- function(formula,
   })
 
   # TODO when using . it adds weights and clusters to model!
-
   ret <- list(
     outcome = model.response(mf, type = "numeric"),
-    design_matrix = model.matrix.default(formula, data = mf)
+    design_matrix = model.matrix.default(terms(mf), data = mf)
   )
 
   # Keep the original treatment vector for DiM and HT

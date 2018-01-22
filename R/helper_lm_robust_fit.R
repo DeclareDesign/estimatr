@@ -35,7 +35,10 @@ lm_robust_fit <- function(y,
     if (is.null(se_type)) {
       se_type <- "CR2"
     } else if (!(se_type %in% c(cl_se_types, "none"))) {
-      stop("Incorrect se_type. Only 'CR0', 'stata', or 'CR2' allowed for se_type with clustered standard errors. Also can choose 'none'.")
+      stop(
+        "`se_type` must be either 'CR0', 'stata', 'CR2', or 'none' when ",
+        "`clusters` are specified.\nYou passed: ", se_type
+      )
     }
 
   } else {
@@ -44,9 +47,16 @@ lm_robust_fit <- function(y,
     if (is.null(se_type)) {
       se_type <- "HC2"
     } else if (se_type %in% setdiff(cl_se_types, "stata")) {
-      stop("Incorrect se_type. 'CR0' and 'CR2' are only allowed for clustered standard errors.")
+      stop(
+        "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3', ",
+        "'classical' or 'none' with no `clusters`.\nYou passed: ", se_type,
+        " which is reserved for a case with clusters."
+      )
     } else if (!(se_type %in% c(rob_se_types, "none"))) {
-      stop("Incorrect se_type. 'HC0', 'HC1', 'stata', 'HC2', 'HC3', 'classical' are the se_type options without clustering. Also can choose 'none'.")
+      stop(
+        "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3', ",
+        "'classical' or 'none' with no `clusters`.\nYou passed: ", se_type
+      )
     } else if (se_type == "stata") {
       se_type <- "HC1"
     }
@@ -124,7 +134,7 @@ lm_robust_fit <- function(y,
 
   est_exists <- !is.na(return_frame$est)
 
-  n <- nrow(X)
+  N <- nrow(X)
   rank <- sum(est_exists)
 
   if(se_type != "none"){
@@ -145,14 +155,14 @@ lm_robust_fit <- function(y,
       } else {
 
         # TODO explicitly pass rank from RRQR/cholesky
-        return_frame$df[est_exists] <- n - rank
+        return_frame$df[est_exists] <- N - rank
 
       }
 
     }
   }
 
-  return_list <- add_cis_pvals(return_frame, alpha)
+  return_list <- add_cis_pvals(return_frame, alpha, ci && se_type != "none")
 
   return_list[["coefficient_name"]] <- variable_names
   return_list[["outcome"]] <- deparse(substitute(y))
@@ -160,7 +170,7 @@ lm_robust_fit <- function(y,
   return_list[["which_covs"]] <- coefficient_name
   return_list[["res_var"]] <- ifelse(fit$res_var < 0, NA, fit$res_var)
   return_list[["XtX_inv"]] <- fit$XtX_inv
-  return_list[["n"]] <- n
+  return_list[["N"]] <- N
   return_list[["k"]] <- k
   return_list[["rank"]] <- rank
 
@@ -173,7 +183,7 @@ lm_robust_fit <- function(y,
 
   return_list[["weighted"]] <- !is.null(weights)
   if (return_list[["weighted"]]) {
-    return_list[["res_var"]] <- sum(fit$residuals^2 * weight_mean) / (n - rank)
+    return_list[["res_var"]] <- sum(fit$residuals^2 * weight_mean) / (N - rank)
   }
 
   attr(return_list, "class") <- "lm_robust"

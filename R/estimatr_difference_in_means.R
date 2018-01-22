@@ -6,6 +6,7 @@
 #' @param data A data.frame.
 #' @param weights An optional bare (unquoted) name of the weights variable.
 #' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
+#' #' @param ci A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
 #' @param condition1 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
 #' @param condition2 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
@@ -84,11 +85,13 @@ difference_in_means <-
            data,
            weights,
            subset,
+           ci = TRUE,
            alpha = .05) {
 
     if (length(all.vars(formula[[3]])) > 1) {
       stop(
-        "The formula should only include one variable on the right-hand side: the treatment variable."
+        "'formula' must have only one variable on the right-hand side: the ",
+        "treatment variable."
       )
     }
 
@@ -146,35 +149,21 @@ difference_in_means <-
 
       pair_matched <- FALSE
 
-      if (!is.null(data$cluster)) {
+      # When learning whether it is matched pairs, should only use relevant conditions
+      data <- subset.data.frame(data, t %in% c(condition1, condition2))
 
-        ## Check that clusters nest within blocks
-        if (!all(tapply(data$block, data$cluster, function(x)
-          all(x == x[1])))) {
-          stop("All units within a cluster must be in the same block.")
-        }
+      clust_per_block <- check_clusters_blocks(data)
 
-        ## get number of clusters per block
-        clust_per_block <- tapply(data$cluster,
-                                  data$block,
-                                  function(x) length(unique(x)))
-      } else {
-        clust_per_block <- tabulate(as.factor(data$block))
-      }
-
-      ## Check if design is pair matched
+      # Check if design is pair matched
       if (any(clust_per_block == 1)) {
-        stop(
-          "Some blocks have only one unit or cluster. Blocks must have ",
-          "multiple units or clusters."
-        )
+        stop("All blocks must have multiple units (or clusters)")
       } else if (all(clust_per_block == 2)) {
         pair_matched <- TRUE
       } else if (any(clust_per_block == 2) & any(clust_per_block > 2)) {
         stop(
-          "Some blocks have two units or clusters, while others have more ",
-          "units or clusters. Design must either be paired or all blocks ",
-          "must be of size 3 or greater."
+          "Blocks must either all have two units (or clusters) or all have ",
+          "more than two units. You cannot mix blocks of size two with ",
+          "blocks of a larger size."
         )
       }
 
@@ -244,12 +233,13 @@ difference_in_means <-
       return_frame <- data.frame(
         est = diff,
         se = se,
-        df = df
+        df = df,
+        N = N_overall
       )
 
     }
 
-    return_list <- add_cis_pvals(return_frame, alpha)
+    return_list <- add_cis_pvals(return_frame, alpha, ci)
 
     #print(c("Pair Matched? ", pair_matched))
 
@@ -333,6 +323,8 @@ difference_in_means_internal <-
       X <- cbind(1, t = as.numeric(data$t == condition2))
 
       # print("Using lm_robust")
+      # TODO currently lm_robust_fit does too much, need to refactor it
+      # if it will be used here in the long run
       cr2_out <- lm_robust_fit(
         y = data$y,
         X = cbind(1, t = as.numeric(data$t == condition2)),
