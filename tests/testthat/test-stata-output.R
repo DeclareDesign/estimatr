@@ -1,4 +1,4 @@
-context("lm robust matches Stata")
+context("Verification - lm_robust matches Stata")
 
 test_that("lm_robust matches stata", {
 

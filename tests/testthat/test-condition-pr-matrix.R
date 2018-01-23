@@ -177,7 +177,11 @@ test_that("condition_pr_matrix behaves as expected", {
   )
 
   # Errors for things that we can't support
-  # Simple blocked
-
+  # multiple armed experiments
+  mult_ra <- randomizr::declare_ra(N = 10, prob_each = c(0.2, 0.2, 0.6))
+  expect_error(
+    declaration_to_condition_pr_mat(mult_ra),
+    "`declaration` must have only two arms when passed directly"
+  )
 
 })

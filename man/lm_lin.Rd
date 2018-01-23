@@ -28,7 +28,7 @@ corresponds to the clusters in the data.}
 
 \item{se_type}{The sort of standard error sought. Without clustering:
 "HC0", "HC1" (or "stata", the equivalent), "HC2" (default), "HC3", or
-"classical". With clustering: "CR0", "CR2" (default), or "stata". are
+"classical". With clustering: "CR0", "CR2" (default), or "stata" are
 permissible.}
 
 \item{ci}{A boolean for whether to compute and return pvalues and confidence

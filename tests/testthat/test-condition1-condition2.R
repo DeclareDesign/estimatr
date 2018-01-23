@@ -1,4 +1,4 @@
-context("Conditions for difference estimators")
+context("Helper - Condition parsing for difference estimators")
 
 
 test_that("Condition arguments behave as expected", {

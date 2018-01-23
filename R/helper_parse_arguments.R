@@ -8,8 +8,7 @@ parse_conditions <- function(treatment, condition1, condition2, estimator) {
   }
 
   if (any(!(c(condition1, condition2) %in% condition_names))) {
-    stop("Conditions specified in condition1 and condition2 not found in ",
-         "treatment variable")
+    stop("`condition1` and `condition2` must be values found in the treatment")
   }
 
   n_conditions <- length(condition_names)
@@ -17,8 +16,12 @@ parse_conditions <- function(treatment, condition1, condition2, estimator) {
   conditions <- list(NULL, NULL)
 
   if (n_conditions > 2) {
-    stop("Treatment has > 2 values; must specify both 'condition1' and ",
-         "'condition2' or use a treatment with only 2 values.")
+    if (is.null(condition1) || is.null(condition2)) {
+      stop("Treatment has > 2 values; must specify both 'condition1' and ",
+           "'condition2' or use a treatment with only 2 values.")
+    } else {
+      conditions[1:2] <- c(condition1, condition2)
+    }
   } else if (n_conditions == 2) {
     if (is.null(condition1) && is.null(condition2)) {
       conditions[1:2] <- condition_names
@@ -26,6 +29,8 @@ parse_conditions <- function(treatment, condition1, condition2, estimator) {
       conditions[1:2] <- c(setdiff(condition_names, condition2), condition2)
     } else if (!is.null(condition1)) {
       conditions[1:2] <- c(condition1, setdiff(condition_names, condition1))
+    } else {
+      conditions[1:2] <- c(condition1, condition2)
     }
   } else if (n_conditions == 1) {
     # Allowable for HT estimator

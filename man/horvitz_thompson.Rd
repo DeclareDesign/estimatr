@@ -7,7 +7,8 @@
 horvitz_thompson(formula, data, condition_prs, blocks, clusters,
   condition_pr_mat = NULL, declaration = NULL, subset,
   se_type = c("youngs", "constant"), collapsed = FALSE, ci = TRUE,
-  alpha = 0.05, condition1 = NULL, condition2 = NULL)
+  alpha = 0.05, condition1 = NULL, condition2 = NULL,
+  return_condition_pr_mat = FALSE)
 }
 \arguments{
 \item{formula}{An object of class "formula", such as Y ~ Z}
