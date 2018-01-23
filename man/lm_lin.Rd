@@ -131,7 +131,7 @@ dat$z_clust <- cluster_ra(clusters = dat$clusterID)
 lm_lin(y ~ z_clust, covariates = ~ x, data = dat, clusters = clusterID)
 
 # Works with multi-valued treatments
-dat$z_multi <- sample(1:3, size = nrow(dat), replace = T)
+dat$z_multi <- sample(1:3, size = nrow(dat), replace = TRUE)
 lm_lin(y ~ z_multi, covariates = ~ x, data = dat)
 
 }
