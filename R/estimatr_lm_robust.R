@@ -38,11 +38,11 @@
 #' does, and all auxiliary variables, such as clusters and weights, can be
 #' passed either as quoted names of columns, as bare column names, or
 #' as a self-contained vector. Examples of usage can be seen below and in the
-#' \href{../doc/getting-started.html}{Getting Started vignette}
+#' \href{http://estimatr.declaredesign.org/articles/getting-started.html}{Getting Started vignette}.
 #'
 #' To see what the exact equations and computations each different
 #' type of standard error entails, users can see the
-#' \href{../doc/technical-notes.html}{technical notes in this vignette}.
+#' \href{http://estimatr.declaredesign.org/articles/technical-notes.html}{technical notes in this vignette}.
 #' The default estimators for the non-clustered and clustered case have been
 #' chosen for desirable similarities to randomization estimators, performance
 #' in small samples, or some combination of both.
