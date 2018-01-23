@@ -30,8 +30,8 @@ env:
 r_github_packages:
 - DeclareDesign/DDtools
 - hadley/pkgdown
+- r-lib/covr
 r_packages:
-- covr
 - drat
 - git2r
 - broom

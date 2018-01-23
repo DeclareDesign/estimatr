@@ -42,6 +42,11 @@ test_that("Horvitz-Thompson works with clustered data", {
     ht_crs_mat
   )
 
+  expect_equal(
+    ht_crs_decl$df,
+    NA
+  )
+
   # Also should be same with collapsed totals
   expect_identical(
     horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, collapsed = T),
@@ -272,6 +277,13 @@ test_that("Works without variation in treatment", {
 
   expect_equal(ht_const_1$est, mean(dat$y))
   expect_equal(ht_const_1$se, 1/(nrow(dat)) * sqrt(sum(dat$y^2)))
+
+
+  expect_equal(
+    ht_const_1$df,
+    NA
+  )
+
 
   ht_const <- horvitz_thompson(
     y ~ z_const,
