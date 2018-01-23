@@ -33,14 +33,16 @@ options(digits = 2)
 
 **estimatr** is a package in R dedicated to providing fast estimators for social scientists. Estimators are statistical methods for estimating quantities of interest like treatment effects or regression parameters. Many of the estimators included with the R programming language or popular R packages are slow and have default settings that lead to statistically inappropriate estimates. Certain estimators that reflect cutting-edge advances in statistics are not yet implemented in R packages for convenient use. **estimatr** is designed to solve these problems.
 
+The most up-to-date version of this vignette can be found on the [DeclareDesign website here](http://estimatr.declaredesign.org/articles/getting-started.html).
+
 # Estimators
 
 The current estimators we provide are:
 
-* [`lm_robust()`](#lm_robust) - for fitting linear models with heteroskedasticity/cluster robust standard errors
-* [`lm_lin()`](#lm_lin) - a wrapper for `lm_robust()` to simplify interacting centered pre-treatment covariates with a treatment variable
-* [`difference_in_means()`](#difference_in_means) - for estimating differences in means with appropriate standard errors for simple, cluster randomized, block randomized, matched-pair designs and more
-* [`horvitz_thompson()`](#horvitz_thompson) - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs
+* [`lm_robust`](#lm_robust) - for fitting linear models with heteroskedasticity/cluster robust standard errors
+* [`lm_lin`](#lm_lin) - a wrapper for `lm_robust()` to simplify interacting centered pre-treatment covariates with a treatment variable
+* [`difference_in_means`](#difference_in_means) - for estimating differences in means with appropriate standard errors for simple, cluster randomized, block randomized, matched-pair designs and more
+* [`horvitz_thompson`](#horvitz_thompson) - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs
 
 To demonstrate basic usage of each of the estimators, I first create some sample data.
 

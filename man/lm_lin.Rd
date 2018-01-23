@@ -9,30 +9,132 @@ lm_lin(formula, covariates, data, weights, subset, clusters, se_type = NULL,
   try_cholesky = FALSE)
 }
 \arguments{
-\item{formula}{An object of class "formula", such as Y ~ Z. Should only have the outcome and the treatment.}
+\item{formula}{an object of class formula, as in \code{\link{lm}}, such as
+\code{Y ~ Z} with only one variable on the right-hand side, the treatment}
 
-\item{covariates}{A one-sided formula with all of the covariates on the right hand side, such as ~ x1 + x2 + x3.}
+\item{covariates}{a right-sided formula with pre-treatment covaraites on
+the right hand side, such as \code{ ~ x1 + x2 + x3}.}
 
-\item{data}{A data.frame.}
+\item{data}{A \code{data.frame}}
 
-\item{weights}{the bare (unquoted) names of the weights variable in the supplied data.}
+\item{weights}{the bare (unquoted) names of the weights variable in the
+supplied data.}
 
-\item{subset}{An optional bare (unquoted) expression specifying a subset of observations to be used.}
+\item{subset}{An optional bare (unquoted) expression specifying a subset
+of observations to be used.}
 
-\item{clusters}{An optional bare (unquoted) name of the variable that corresponds to the clusters in the data.}
+\item{clusters}{An optional bare (unquoted) name of the variable that
+corresponds to the clusters in the data.}
 
-\item{se_type}{The sort of standard error sought. Without clustering: "HC0", "HC1", "HC2" (default), "HC3", or "classical". With clustering: "BM" (default), "stata".}
+\item{se_type}{The sort of standard error sought. Without clustering:
+"HC0", "HC1" (or "stata", the equivalent), "HC2" (default), "HC3", or
+"classical". With clustering: "CR0", "CR2" (default), or "stata". are
+permissible.}
 
-\item{ci}{A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.}
+\item{ci}{A boolean for whether to compute and return pvalues and confidence
+intervals, TRUE by default.}
 
 \item{alpha}{The significance level, 0.05 by default.}
 
-\item{coefficient_name}{a character or character vector that indicates which coefficients should be reported. If left unspecified, returns all coefficients.}
+\item{coefficient_name}{a character or character vector that indicates which
+coefficients should be reported. If left unspecified, returns all
+coefficients. Especially for models with clustering where only one
+coefficient is of interest, specifying a coefficient of interest may
+result in improvements in speed}
 
-\item{return_vcov}{a boolean for whether to return the vcov matrix for later usage, TRUE by default.}
+\item{return_vcov}{a boolean for whether to return the variance-covariance
+matrix for later usage, TRUE by default.}
 
-\item{try_cholesky}{a boolean for whether to try using a cholesky decomposition to solve LS instead of a QR decomposition, FALSE by default. See 'details'.}
+\item{try_cholesky}{a boolean for whether to try using a Cholesky
+decomposition to solve LS instead of a QR decomposition, FALSE by default.
+Using a Cholesky decomposition may result in speed gains, but should only
+be used if users are sure their model is full-rank (i.e. there is no
+perfect multi-collinearity)}
+}
+\value{
+\code{lm_lin} returns an object of class \code{"lm_robust"}.
+
+The functions \code{summary} and \code{\link{tidy}} can be used to get
+the results as a \code{data.frame}. To get useful data out of the return,
+you can use these data frames, you can use the resulting list directly, or
+you can use the generic accessor functions \code{coef}, \code{vcov},
+\code{confint}, and \code{predict}.
+
+An object of class \code{"lm_robust"} is a list containing at least the
+following components:
+\describe{
+  \item{est}{the estimated coefficients}
+  \item{se}{the estimated standard errors}
+  \item{df}{the estimated degrees of freedom}
+  \item{p}{the p-values from the t-test using \code{est}, \code{se}, and \code{df}}
+  \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
+  \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
+  \item{coefficient_name}{a character vector of coefficient names}
+  \item{alpha}{the significance level specified by the user}
+  \item{res_var}{the residual variance, used for uncertainty when using \code{predict}}
+  \item{N}{the number of observations used}
+  \item{k}{the number of columns in the design matrix (includes linearly dependent columns!)}
+  \item{rank}{the rank of the fitted model}
+  \item{vcov}{the fitted variance covariance matrix}
+  \item{weighted}{whether or not weights were applied}
+  \item{scaled_center}{the means of each of the covariates used for centering them}
+}
+We also return \code{terms} and \code{contrasts}, used by \code{predict}.
 }
 \description{
-Linear regression with the Lin (2013) covariate adjustment
+This function is a wrapper for \code{\link{lm_robust}} that
+is useful for estimating treatment effects with pre-treatment covariate
+data. This implements the method described by Lin (2013) to reduce the bias
+of such estimation
+}
+\details{
+This function is simply a wrapper for \code{\link{lm_robust}}. This method
+pre-processes the data by taking the covariates specified in the
+\code{`covariates`} argument, centering them by subtracting from each covariate
+its mean, and interacting them with the treatment. If the treatment has
+multiple values, a series of dummies for each value is created and each of
+those is interacted with the demeaned covariates. More details can be found
+in the
+\href{http://estimatr.declaredesign.org/articles/getting-started.html}{Getting Started vignette}
+and the
+\href{http://estimatr.declaredesign.org/articles/technical-notes.html}{technical notes}.
+}
+\examples{
+library(fabricatr)
+library(randomizr)
+dat <- fabricate(
+  N = 40,
+  x = rnorm(N, mean = 2.3),
+  x2 = rpois(N, lambda = 2),
+  x3 = runif(N),
+  y0 = rnorm(N) + x,
+  y1 = rnorm(N) + x + 0.35
+)
+
+dat$z <- simple_ra(N = nrow(dat))
+dat$y <- ifelse(dat$z == 1, dat$y1, dat$y0)
+
+# Same specification as `lm_robust()` with one additional argument
+lmlin_out <- lm_lin(y ~ z, covariates = ~ x, data = dat)
+tidy(lmlin_out)
+
+# Works with multiple pre-treatment covariates
+lm_lin(y ~ z, covariates = ~ x + x2, data = dat)
+
+# Also centers data AFTER evaluating any functions in formula
+lm_lin(y ~ z, covariates = ~ x + log(x3), data = dat)
+
+# Works easily with clusters
+dat$clusterID <- rep(1:20, each = 2)
+dat$z_clust <- cluster_ra(clusters = dat$clusterID)
+
+lm_lin(y ~ z_clust, covariates = ~ x, data = dat, clusters = clusterID)
+
+# Works with multi-valued treatments
+dat$z_multi <- sample(1:3, size = nrow(dat), replace = TRUE)
+lm_lin(y ~ z_multi, covariates = ~ x, data = dat)
+
+}
+\references{
+
 }

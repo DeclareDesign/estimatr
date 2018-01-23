@@ -169,7 +169,7 @@ lm_robust_fit <- function(y,
   return_list[["alpha"]] <- alpha
   return_list[["which_covs"]] <- coefficient_name
   return_list[["res_var"]] <- ifelse(fit$res_var < 0, NA, fit$res_var)
-  return_list[["XtX_inv"]] <- fit$XtX_inv
+  # return_list[["XtX_inv"]] <- fit$XtX_inv
   return_list[["N"]] <- N
   return_list[["k"]] <- k
   return_list[["rank"]] <- rank

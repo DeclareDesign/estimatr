@@ -258,5 +258,12 @@ test_that("Test LM Lin",{
     22
   )
 
+  # works with a binary with no intercept (bit odd, though!)
+  dat$z <- rbinom(nrow(dat), 1, 0.5)
+  lmlo <- lm_lin(Y ~ z + 0, ~X1, data = dat)
+  expect_equal(
+    lmlo$coefficient_name,
+    c("z", "X1_bar", "z:X1_bar")
+  )
 
 })
