@@ -95,7 +95,8 @@ horvitz_thompson <-
            ci = TRUE,
            alpha = .05,
            condition1 = NULL,
-           condition2 = NULL) {
+           condition2 = NULL,
+           return_condition_pr_mat = FALSE) {
 
     #-----
     # Check arguments
@@ -116,7 +117,10 @@ horvitz_thompson <-
     if (!is.null(declaration)) {
 
       if (ncol(declaration$probabilities_matrix) > 2) {
-        stop("Cannot use `horvitz_thompson` with declarations with more than two treatment arms for now.")
+        stop(
+          "Cannot use horvitz_thompson() with a `declaration` with more than ",
+          "two treatment arms for now."
+        )
       }
 
       if (!missing(clusters) |
@@ -151,10 +155,35 @@ horvitz_thompson <-
       }
 
       if (is.null(data[[".treatment_prob_ddinternal"]])) {
-        data[[".treatment_prob_ddinternal"]] <- declaration$probabilities_matrix[, 2]
+        if (!is.null(condition2)) {
+          treatnum <-
+            which(declaration$cleaned_arguments$condition_names == condition2)
+
+          if (length(treatnum) == 0) {
+            stop(
+              "If `condition2` and `declaration` are both specified, ",
+              "`condition2` must match the condition_names in `declaration`.",
+              "\n`condition2`: ", condition2, "\n`condition_names`: ",
+              paste0(
+                declaration$cleaned_arguments$condition_names,
+                collapse = ", "
+              )
+            )
+          }
+
+          treatment_prob <- declaration$probabilities_matrix[, treatnum]
+        } else {
+          # assuming treatment is second column
+          treatment_prob <- declaration$probabilities_matrix[, 2]
+        }
+        data[[".treatment_prob_ddinternal"]] <- treatment_prob
         condition_prs <- '.treatment_prob_ddinternal'
       } else {
-        stop("estimatr stores treatment probabilities from declarations in a variable called .treatment_prob_ddinternal in your data. Please remove/rename it and try again.")
+        stop(
+          "Cannot have a variable in your `data` called ",
+          "'.treatment_prob_ddinternal' as this function uses that to store ",
+          "the treatment probabilities.\nPlease remove/rename it and try again"
+        )
       }
 
     }
@@ -186,16 +215,14 @@ horvitz_thompson <-
                        t = model_data$original_treatment)
 
     # Parse conditions
-    if (is.null(condition1) || is.null(condition2)) {
-      condition_names <- parse_conditions(
-        treatment = data$t,
-        condition1 = condition1,
-        condition2 = condition2,
-        estimator = "horvitz_thompson"
-      )
-      condition2 <- condition_names[[2]]
-      condition1 <- condition_names[[1]]
-    }
+    condition_names <- parse_conditions(
+      treatment = data$t,
+      condition1 = condition1,
+      condition2 = condition2,
+      estimator = "horvitz_thompson"
+    )
+    condition2 <- condition_names[[2]]
+    condition1 <- condition_names[[1]]
 
     if (!is.null(declaration)) {
 
@@ -254,7 +281,7 @@ horvitz_thompson <-
     if (!is.null(data$clusters)) {
       # check condition ps constant within cluster
       if(any(!tapply(data$condition_probabilities, data$clusters, function(x) all(x == x[1])))) {
-        stop("condition probabilities must be constant within cluster.")
+        stop("`condition_prs` must be constant within `cluster`")
       }
     }
 
@@ -331,6 +358,10 @@ horvitz_thompson <-
                                    formula = formula,
                                    conditions = list(condition1, condition2))
 
+    if (return_condition_pr_mat) {
+      return_list[["condition_pr_mat"]] <- condition_pr_mat
+    }
+
     attr(return_list, "class") <- "horvitz_thompson"
 
     return(return_list)
@@ -360,9 +391,9 @@ horvitz_thompson_internal <-
     # so that the treatment vector t doesn't have to be built anywhere else
     if (!is.null(data$clusters)) {
 
-      if (!all(tapply(data$t, data$clusters, function(x) all(x == x[1])))) {
+      if (any(!tapply(data$t, data$clusters, function(x) all(x == x[1])))) {
         stop(
-          "All units within a cluster must have the same treatment condition."
+          "All units within a cluster must have the same treatment condition"
         )
       }
     }
@@ -412,7 +443,7 @@ horvitz_thompson_internal <-
     if (collapsed) {
 
       # TODO this may not work with 3 valued treatments as it
-      # may not subset everything correction
+      # may not subset everything correctly
       if (is.null(data$clusters)) {
         stop(
           "The collapsed estimator only works if you either pass a ",
@@ -530,13 +561,15 @@ horvitz_thompson_internal <-
 
         if (!is.nan(varN2)) {
           if (varN2 < 0) {
-            warning("Variance below 0, consider using constant effects assumption or a different estimator.")
+            warning("Variance below 0, consider using constant effects assumption or a different estimator")
+            se <- NA
           } else {
             se <- sqrt(varN2) / N
           }
 
         } else {
-          stop("Variance is NaN. This is likely the result of a complex condition probability matrix.")
+          warning("Variance is NaN. This is likely the result of a complex condition probability matrix")
+          se <- NA
         }
       }
     }

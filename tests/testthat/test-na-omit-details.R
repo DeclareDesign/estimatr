@@ -1,5 +1,5 @@
 
-context("na.omit_detailed")
+context("Helper - na.omit_detailed")
 
 df <- expand.grid(Y = c(1:5, NA), Z = c(LETTERS, NA))
 

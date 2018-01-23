@@ -1,4 +1,4 @@
-context("lm lin replicates lin 2013")
+context("Verification - lm_lin replicates Lin 2013")
 # Lin paper available here: www.stat.berkeley.edu/~winston/agnostic.pdf
 # Citation:
 # Lin, Winston. 2013. "Agnostic notes on regression adjustments to experimental

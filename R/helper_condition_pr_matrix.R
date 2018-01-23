@@ -71,12 +71,12 @@ declaration_to_condition_pr_mat <- function(declaration) {
     stop("'declaration' must be an object of class 'ra_declaration'")
   }
 
-  # if (ncol(declaration$probabilities_matrix) > 2) {
-  #   stop(
-  #     "'declaration' must have been generated with a binary treatment ",
-  #     "variable when `declaration_to_condition_pr_mat` is called directly"
-  #   )
-  # }
+  if (ncol(declaration$probabilities_matrix) > 2) {
+    stop(
+      "`declaration` must have only two arms when passed directly to ",
+      "declaration_to_condition_pr_mat()"
+    )
+  }
 
   p1 <- declaration$probabilities_matrix[, 1]
   p2 <- declaration$probabilities_matrix[, 2]

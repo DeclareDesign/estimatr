@@ -54,14 +54,19 @@ test_that("Structure of output is the same", {
     colnames(tidy(dim_bl_o))
   )
 
+  expect_equal(
+    difference_in_means(y ~ z - 1, data = dat)$coefficient_name,
+    "z"
+  )
+
 })
 
-test_that("Warns properly if df is negative or 0", {
-  dat = data.frame(y = 1, z = 1, p = .5)
-  # I can't come up with a meaningful test for this now
-  # This should never happen I don't think
-  # expect_warning(
-  #   (y ~ z, data = dat, condition_prs = p),
-  #   "Estimated negative or zero degrees of freedom"
-  # )
-})
+# test_that("Warns properly if df is negative or 0", {
+#   dat = data.frame(y = 1, z = 1, p = .5)
+#   I can't come up with a meaningful test for this now
+#   This should never happen I don't think
+#   expect_warning(
+#     (y ~ z, data = dat, condition_prs = p),
+#     "Estimated negative or zero degrees of freedom"
+#   )
+# })
