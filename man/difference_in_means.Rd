@@ -22,8 +22,9 @@ difference_in_means(formula, blocks, clusters, condition1 = NULL,
 
 \item{weights}{An optional bare (unquoted) name of the weights variable.}
 
-\item{subset}{An optional bare (unquoted) expression specifying a subset of observations to be used.
-#' @param ci A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.}
+\item{subset}{An optional bare (unquoted) expression specifying a subset of observations to be used.}
+
+\item{ci}{A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.}
 
 \item{alpha}{The significance level, 0.05 by default.}
 }
