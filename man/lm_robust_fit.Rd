@@ -4,8 +4,8 @@
 \alias{lm_robust_fit}
 \title{Internal method that creates linear fits}
 \usage{
-lm_robust_fit(y, X, weights, cluster, ci, se_type, alpha, coefficient_name,
-  return_vcov, try_cholesky)
+lm_robust_fit(y, X, weights, cluster, ci, se_type, alpha, return_vcov,
+  try_cholesky)
 }
 \arguments{
 \item{y}{numeric outcome vector}
@@ -21,8 +21,6 @@ lm_robust_fit(y, X, weights, cluster, ci, se_type, alpha, coefficient_name,
 \item{se_type}{character denoting which kind of SEs to return}
 
 \item{alpha}{numeric denoting the test size for confidence intervals}
-
-\item{coefficient_name}{character vector of coefficients to return}
 
 \item{return_vcov}{a boolean for whether to return the vcov matrix for later usage}
 

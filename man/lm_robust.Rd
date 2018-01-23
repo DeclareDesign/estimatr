@@ -5,8 +5,7 @@
 \title{Ordinary Least Squares with Robust Standard Errors}
 \usage{
 lm_robust(formula, data, weights, subset, clusters, se_type = NULL,
-  ci = TRUE, alpha = 0.05, coefficient_name = NULL, return_vcov = TRUE,
-  try_cholesky = FALSE)
+  ci = TRUE, alpha = 0.05, return_vcov = TRUE, try_cholesky = FALSE)
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}}
@@ -31,12 +30,6 @@ permissible.}
 intervals, TRUE by default.}
 
 \item{alpha}{The significance level, 0.05 by default.}
-
-\item{coefficient_name}{a character or character vector that indicates which
-coefficients should be reported. If left unspecified, returns all
-coefficients. Especially for models with clustering where only one
-coefficient is of interest, specifying a coefficient of interest may
-result in improvements in speed}
 
 \item{return_vcov}{a boolean for whether to return the variance-covariance
 matrix for later usage, TRUE by default.}
@@ -169,9 +162,5 @@ lm_robust(y ~ x, data = dat, subset = z == 1)
 # One can also choose to set the significance level for different CIs
 lm_robust(y ~ x + z, data = dat, alpha = 0.1)
 
-# Or only return coefficients of interest
-lmro_z <- lm_robust(y ~ z + x, data = dat, coefficient_name = c("z", "x"))
-# Resulting data.frame doesn't have the intercept!
-tidy(lmro_z)
 
 }

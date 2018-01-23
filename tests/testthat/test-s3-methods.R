@@ -31,8 +31,8 @@ test_that('tidy, summary, and print work', {
   )
 
   expect_equal(
-    nrow(tidy(lm_robust(y ~ x, coefficient_name = 'x', data = dat, se_type = 'classical'))),
-    1
+    nrow(tidy(lm_robust(y ~ x, data = dat, se_type = 'classical'))),
+    2
   )
 
   capture_output(
@@ -168,20 +168,20 @@ test_that('coef and confint work', {
     lmo$est[lmo$coefficient_name== "x"]
   )
 
-  lm2o <- lm_robust(y ~ x + z, data = dat, coefficient_name = "x")
+  lm2o <- lm_robust(y ~ x + z, data = dat)
   expect_equivalent(
-    coef(lm2o),
+    coef(lm2o)[2],
     lm2o$est[lm2o$coefficient_name== "x"]
   )
 
   expect_equivalent(
-    confint(lm2o),
+    confint(lm2o)[2, , drop = FALSE],
     confint(lm2o, parm = "x")
   )
 
   expect_equivalent(
     confint(lmo, parm = 'x', level = 0.15),
-    with(lm_robust(y ~ x, data = dat, coefficient_name = 'x', alpha = 0.15),
+    with(lm_robust(y ~ x, data = dat, alpha = 0.15),
          cbind(ci_lower[2], ci_upper[2]))
   )
 

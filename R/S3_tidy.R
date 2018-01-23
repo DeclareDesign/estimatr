@@ -52,8 +52,7 @@ tidy.default <- function(object, ...) {
 #' @param ... extra arguments (not used)
 #'
 #' @return A data.frame with with coefficient names, estimates, standard
-#' errors, confidence intervals, p-values, degrees of freedom for the covariates
-#' specified by which_covs
+#' errors, confidence intervals, p-values, and degrees of freedom
 #'
 #' @export tidy.lm_robust
 #' @export
@@ -62,11 +61,7 @@ tidy.lm_robust <- function(object, ...) {
 
   warn_singularities(object)
 
-  if (!is.null(object$which_covs)) {
-    return(return_frame[return_frame$coefficient_name %in% object$which_covs, ])
-  } else {
-    return(return_frame)
-  }
+  return(return_frame)
 
 }
 

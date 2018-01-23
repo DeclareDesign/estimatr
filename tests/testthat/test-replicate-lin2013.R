@@ -20,9 +20,8 @@ test_that("lm_lin recreates Lin 2013 Table 2", {
       tidy(
         lm_robust(GPA_year1 ~ sfsp,
                           data = alo_star_men,
-                          se_type = 'HC0',
-                          coefficient_name = 'sfsp')
-      )[, c('est', 'se')],
+                          se_type = 'HC0')
+      )[2, c('est', 'se')],
       3
     ),
     c(-0.036, 0.158)
@@ -35,9 +34,8 @@ test_that("lm_lin recreates Lin 2013 Table 2", {
       tidy(
         lm_robust(GPA_year1 ~ sfsp + gpa0,
                             data = alo_star_men,
-                            se_type = 'HC0',
-                            coefficient_name = 'sfsp')
-      )[, c('est', 'se')],
+                            se_type = 'HC0')
+      )[2, c('est', 'se')],
       3
     )),
     c(-0.083, 0.146)
@@ -50,9 +48,8 @@ test_that("lm_lin recreates Lin 2013 Table 2", {
         lm_lin(GPA_year1 ~ sfsp,
                          covariates = ~ gpa0,
                          data = alo_star_men,
-                         se_type = 'HC0',
-                         coefficient_name = 'sfsp')
-      )[, c('est', 'se')],
+                         se_type = 'HC0')
+      )[2, c('est', 'se')],
       3
     )),
     c(-0.081, 0.146)
@@ -73,14 +70,14 @@ if (rep_table_3) {
   its <- 250000
   set.seed(161235)
   check_cover <- function(obj, point = 0) {
-    return(obj$ci_lower < point & obj$ci_upper > point)
+    return(obj$ci_lower[2] < point & obj$ci_upper[2] > point)
   }
   ci_dist <- function(obj) {
-    return(obj$ci_upper - obj$ci_lower)
+    return(obj$ci_upper[2] - obj$ci_lower[2])
   }
   ci_custom <- function(obj) {
-    return(list(ci_upper = obj$est + obj$se * 1.96,
-                ci_lower = obj$est - obj$se * 1.96))
+    return(list(ci_upper = obj$est[2] + obj$se[2] * 1.96,
+                ci_lower = obj$est[2] - obj$se[2] * 1.96))
   }
 
   ses <- c('HC0', 'HC1', 'HC2', 'HC3')
@@ -100,19 +97,16 @@ if (rep_table_3) {
     for(j in 1:length(ses)) {
       unadj <- lm_robust(GPA_year1 ~ sfsp,
                          data = samp_dat,
-                         se_type = ses[j],
-                         coefficient_name = 'sfsp')
+                         se_type = ses[j])
       tradadj <- lm_robust(GPA_year1 ~ sfsp + gpa0,
                            data = samp_dat,
-                           se_type = ses[j],
-                           coefficient_name = 'sfsp')
+                           se_type = ses[j])
       intadj <- lm_lin(GPA_year1 ~ sfsp,
                        covariates = ~ gpa0,
                        data = samp_dat,
-                       se_type = ses[j],
-                       coefficient_name = 'sfsp')
+                       se_type = ses[j])
 
-      sd_mat[j, ] <- c(unadj$se, tradadj$se, intadj$se)
+      sd_mat[j, ] <- c(unadj$se[2], tradadj$se[2], intadj$se[2])
       cover_mat[j, ] <- c(check_cover(ci_custom(unadj)),
                           check_cover(ci_custom(tradadj)),
                           check_cover(ci_custom(intadj)))
@@ -122,7 +116,7 @@ if (rep_table_3) {
 
     }
 
-    ests[i, ] <- c(unadj$est, tradadj$est, intadj$est)
+    ests[i, ] <- c(unadj$est[2], tradadj$est[2], intadj$est[2])
     sd_mats[i, , ] <- sd_mat
     cover_mats[i, , ] <- cover_mat
     width_mats[i, , ] <- width_mat

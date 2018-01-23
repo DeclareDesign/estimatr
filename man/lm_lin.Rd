@@ -5,8 +5,7 @@
 \title{Linear regression with the Lin (2013) covariate adjustment}
 \usage{
 lm_lin(formula, covariates, data, weights, subset, clusters, se_type = NULL,
-  ci = TRUE, alpha = 0.05, coefficient_name = NULL, return_vcov = TRUE,
-  try_cholesky = FALSE)
+  ci = TRUE, alpha = 0.05, return_vcov = TRUE, try_cholesky = FALSE)
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}, such as
@@ -35,12 +34,6 @@ permissible.}
 intervals, TRUE by default.}
 
 \item{alpha}{The significance level, 0.05 by default.}
-
-\item{coefficient_name}{a character or character vector that indicates which
-coefficients should be reported. If left unspecified, returns all
-coefficients. Especially for models with clustering where only one
-coefficient is of interest, specifying a coefficient of interest may
-result in improvements in speed}
 
 \item{return_vcov}{a boolean for whether to return the variance-covariance
 matrix for later usage, TRUE by default.}

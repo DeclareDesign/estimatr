@@ -7,7 +7,6 @@
 #' @param ci boolean that when T returns confidence intervals and p-values
 #' @param se_type character denoting which kind of SEs to return
 #' @param alpha numeric denoting the test size for confidence intervals
-#' @param coefficient_name character vector of coefficients to return
 #' @param return_vcov a boolean for whether to return the vcov matrix for later usage
 #' @param try_cholesky a boolean for whether to try using a cholesky decomposition to solve LS instead of a QR decomposition
 #'
@@ -20,7 +19,6 @@ lm_robust_fit <- function(y,
                           ci,
                           se_type,
                           alpha,
-                          coefficient_name,
                           return_vcov,
                           try_cholesky) {
 
@@ -70,28 +68,8 @@ lm_robust_fit <- function(y,
   }
   variable_names <- colnames(X)
 
-  # Get coefficients to get df adjustments for and return
-  if (is.null(coefficient_name)) {
-
-    which_covs <- rep(TRUE, ncol(X))
-
-  } else {
-
-    # subset return to coefficients the user asked for
-    which_covs <- variable_names %in% coefficient_name
-
-    if (any(!(coefficient_name %in% variable_names))) {
-      stop(
-        "Must specify `coefficient_name` as character of variable in the ",
-        "`formula`.\n `coefficient_name: ",
-        paste0(coefficient_name, collapse = ', '), "\nVariables in model: ",
-        variable_names
-      )
-    }
-
-    # if ever we can figure out all the use cases in the test....
-    # which_ests <- return_frame$variable_names %in% deparse(substitute(coefficient_name))
-  }
+  # Legacy, in case we want to only get some covs in the future
+  which_covs <- rep(TRUE, ncol(X))
 
   if (!is.null(cluster)) {
     cl_ord <- order(cluster)
@@ -176,7 +154,6 @@ lm_robust_fit <- function(y,
   return_list[["coefficient_name"]] <- variable_names
   return_list[["outcome"]] <- NA_character_
   return_list[["alpha"]] <- alpha
-  return_list[["which_covs"]] <- coefficient_name
   return_list[["res_var"]] <- ifelse(fit$res_var < 0, NA, fit$res_var)
   # return_list[["XtX_inv"]] <- fit$XtX_inv
   return_list[["N"]] <- N

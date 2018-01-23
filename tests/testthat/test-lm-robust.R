@@ -10,15 +10,7 @@ test_that("lm robust se",{
   lm_robust(Y ~ Z, se_type = "none", data = dat)
 
   lm_robust(Y ~ Z + X, data = dat)
-  lm_robust(Y ~ Z + X, coefficient_name = "X", data = dat)
-  lm_robust(Y ~ Z + X, coefficient_name = c("Z", "X"), data = dat)
-  lm_robust(Y ~ Z + X, coefficient_name = c("(Intercept)", "Z", "X"), data = dat)
-  lm_robust(Y ~ Z*X, coefficient_name = "Z:X", data = dat)
-
-  expect_error(
-    lm_robust(Y ~ Z*X, coefficient_name = "Z*X", data = dat),
-    "Must specify `coefficient_name` as character of variable in the "
-  )
+  lm_robust(Y ~ Z * X, data = dat)
 
   expect_error(
     lm_robust(Y ~ Z + X, data = dat, se_type = "not_a_real_one"),
@@ -31,12 +23,6 @@ test_that("lm robust se",{
     lm_robust(Y ~ Z + X, data = dat, subset = W > 0.5),
     lm_robust(Y ~ Z + X, data = dat[dat$W > 0.5, ])
   )
-
-  # we gotta figure out no quoting....
-  expect_error(lm_robust(Y ~ Z + X, coefficient_name = c(Z, X), data = dat))
-  expect_error(lm_robust(Y ~ Z + X, coefficient_name = c((Intercept), Z, X), data = dat))
-  expect_error(lm_robust(Y ~ Z*X, coefficient_name = Z:X, data = dat))
-
 
   lm_robust(Y ~ Z, weights = W, data = dat)
 
@@ -99,10 +85,8 @@ test_that("lm robust works with missingness",{
     lm_robust(Y ~ Z + X, data = dat),
     lm_robust(Y ~ Z + X, data = dat[-23, ])
   )
-  lm_robust(Y ~ Z + X, coefficient_name = "X", data = dat)
-  lm_robust(Y ~ Z + X, coefficient_name = c("Z", "X"), data = dat)
-  lm_robust(Y ~ Z + X, coefficient_name = c("(Intercept)", "Z", "X"), data = dat)
-  lm_robust(Y ~ Z*X, coefficient_name = "Z:X", data = dat)
+  lm_robust(Y ~ Z + X, data = dat)
+  lm_robust(Y ~ Z * X, data = dat)
 
   ## Outcome missingness
   dat$Y[35] <- NA
@@ -210,7 +194,6 @@ test_that("lm_robust_fit adds column names", {
     ci = TRUE,
     se_type = "classical",
     alpha = 0.05,
-    coefficient_name = NULL,
     return_vcov = TRUE,
     try_cholesky = TRUE
   )

@@ -334,7 +334,6 @@ difference_in_means_internal <-
         se_type = "CR2",
         weights = data$weights,
         ci = TRUE,
-        coefficient_name = "t",
         try_cholesky = TRUE,
         alpha = alpha,
         return_vcov = FALSE
@@ -390,6 +389,23 @@ difference_in_means_internal <-
             (var2^2 / (N2-1)) +
               (var1^2 / (N1-1))
           )
+
+        X <- cbind(1, t = as.numeric(data$t == condition2))
+
+        # print("Using lm_robust")
+        # TODO currently lm_robust_fit does too much, need to refactor it
+        # if it will be used here in the long run
+        # w_out <- lm_robust_fit(
+        #   y = data$y,
+        #   X = cbind(1, t = as.numeric(data$t == condition2)),
+        #   cluster = data$cluster,
+        #   se_type = "CR2",
+        #   weights = data$weights,
+        #   ci = TRUE,
+        #   try_cholesky = TRUE,
+        #   alpha = alpha,
+        #   return_vcov = FALSE
+        # )
       }
 
     }

@@ -18,11 +18,6 @@
 #' @param ci A boolean for whether to compute and return pvalues and confidence
 #' intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
-#' @param coefficient_name a character or character vector that indicates which
-#' coefficients should be reported. If left unspecified, returns all
-#' coefficients. Especially for models with clustering where only one
-#' coefficient is of interest, specifying a coefficient of interest may
-#' result in improvements in speed
 #' @param return_vcov a boolean for whether to return the variance-covariance
 #' matrix for later usage, TRUE by default.
 #' @param try_cholesky a boolean for whether to try using a Cholesky
@@ -149,10 +144,6 @@
 #' # One can also choose to set the significance level for different CIs
 #' lm_robust(y ~ x + z, data = dat, alpha = 0.1)
 #'
-#' # Or only return coefficients of interest
-#' lmro_z <- lm_robust(y ~ z + x, data = dat, coefficient_name = c("z", "x"))
-#' # Resulting data.frame doesn't have the intercept!
-#' tidy(lmro_z)
 #'
 #' @export
 lm_robust <- function(formula,
@@ -163,7 +154,6 @@ lm_robust <- function(formula,
                       se_type = NULL,
                       ci = TRUE,
                       alpha = .05,
-                      coefficient_name = NULL,
                       return_vcov = TRUE,
                       try_cholesky = FALSE) {
   where <- parent.frame()
@@ -187,7 +177,6 @@ lm_robust <- function(formula,
       ci = ci,
       se_type = se_type,
       alpha = alpha,
-      coefficient_name = coefficient_name,
       return_vcov = return_vcov,
       try_cholesky = try_cholesky
     )

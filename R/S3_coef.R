@@ -2,8 +2,7 @@
 #'
 #' @param object an object of class 'lm_robust'
 #' @param parm a specification of which parameters are to be given confidence
-#' intervals, either a vector of numbers or a vector of names. Defaults to
-#' 'coefficient_name' passed to  \code{\link{lm_robust}}. Returns all if missing.
+#' intervals, either a vector of numbers or a vector of names. Returns all if missing.
 #' @param ... other arguments, unused
 #'
 #' @export
@@ -19,8 +18,6 @@ coef.lm_robust <-
 
     if (!is.null(parm)) {
       coefs <- coefs[parm]
-    } else if (!is.null(object$which_covs)) {
-      coefs <- coefs[object$which_covs]
     }
 
     return(coefs)
