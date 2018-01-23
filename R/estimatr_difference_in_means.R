@@ -367,7 +367,9 @@ difference_in_means_internal <-
 
       #if (is.null(data$weights)) {
 
-        diff <- sum(Y2) / N2 - sum(Y1) / N1
+        meanY2 <- sum(Y2) / N2
+        meanY1 <- sum(Y1) / N1
+        diff <- meanY2 - meanY1
 
         if (pair_matched) {
           # Pair matched designs
@@ -378,13 +380,13 @@ difference_in_means_internal <-
             var_Y2 <- var(Y2)
             var_Y1 <- var(Y1)
           } else {
-            var_Y2 <- sum(W2 * ((Y2/W2) - mean(Y2))^2) / (N2 - sum(W2^2)/N2)
-            var_Y1 <- sum(W1 * ((Y1/W1) - mean(Y1))^2) / (N1 - sum(W1^2)/N1)
+            var_Y2 <- sum(W2 * ((Y2/W2) - meanY2)^2) / (N2 - sum(W2^2)/N2)
+            var_Y1 <- sum(W1 * ((Y1/W1) - meanY1)^2) / (N1 - sum(W1^2)/N1)
           }
           print(var_Y2)
           print(var_Y1)
 
-          se <- sqrt(var_Y2 / N2 + var_Y1 / N1)
+          se <- sqrt(var_Y2 / length(Y2) + var_Y1 / length(Y1))
 
           df <- se^4 /
             (
