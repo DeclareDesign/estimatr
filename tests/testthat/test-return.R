@@ -66,7 +66,7 @@ test_that("Structure of output is the same", {
 #   I can't come up with a meaningful test for this now
 #   This should never happen I don't think
 #   expect_warning(
-#     (y ~ z, data = dat, condition2_probs = p),
+#     (y ~ z, data = dat, condition_prs = p),
 #     "Estimated negative or zero degrees of freedom"
 #   )
 # })

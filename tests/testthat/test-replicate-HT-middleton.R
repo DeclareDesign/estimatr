@@ -74,7 +74,7 @@ test_that("We match Joel's estimator", {
   ht_prob_o  <- horvitz_thompson(
     y ~ z,
     data = dat,
-    condition2_probs = p
+    condition_prs = p
   )
 
   expect_equal(

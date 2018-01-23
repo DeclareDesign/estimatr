@@ -27,7 +27,7 @@ clean_model_data <- function(formula,
   if(!is.null(mf$block) && is.character(mf[['block']]))
     mf[["block"]] <- as.symbol(mf[["block"]])
 
-  # condition2_probs...
+  # condition_prs...
   if(!is.null(mf$condition_pr) && is.character(mf[['condition_pr']]))
     mf[["condition_pr"]] <- as.symbol(mf[["condition_pr"]])
 
