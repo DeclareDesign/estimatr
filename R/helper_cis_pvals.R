@@ -3,15 +3,15 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
 
   if (ci) {
     if (alpha <= 0 || alpha >= 1) {
-      stop("'alpha' must be numeric between 0 and 1")
+      stop("`alpha` must be numeric between 0 and 1")
     }
 
     if (ttest) {
 
       if (any(return_frame$df <= 0, na.rm = TRUE)) {
         warning(
-          "Estimated negative or zero degrees of freedom, p-values and ",
-          "confidence intervals may not be calculated"
+          "Some degrees of freedom have been estimated as negative or zero; ",
+          "p-values and confidence intervals may not be calculated"
         )
 
         return_frame$dof <- ifelse(return_frame$df <= 0, NA, return_frame$df)

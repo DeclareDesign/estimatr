@@ -179,6 +179,20 @@ test_that("Condition arguments behave as expected", {
   dat$z <- factor(c("T", "C"))
   # Must pass string!
   difference_in_means(y ~ z, condition2 = "T", data = dat)
+  # Errors if not found
+  expect_error(
+    difference_in_means(
+      y ~ z,
+      condition = 1,
+      data = dat
+    )
+  )
+
+  dat$z <- 1
+  expect_error(
+    difference_in_means(y ~ z, data = dat),
+    "Must have more than one value in treatment unless using Horvitz"
+  )
 
 })
 

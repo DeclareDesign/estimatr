@@ -80,6 +80,15 @@ lm_robust_fit <- function(y,
     # subset return to coefficients the user asked for
     which_covs <- variable_names %in% coefficient_name
 
+    if (any(!(coefficient_name %in% variable_names))) {
+      stop(
+        "Must specify `coefficient_name` as character of variable in the ",
+        "`formula`.\n `coefficient_name: ",
+        paste0(coefficient_name, collapse = ', '), "\nVariables in model: ",
+        variable_names
+      )
+    }
+
     # if ever we can figure out all the use cases in the test....
     # which_ests <- return_frame$variable_names %in% deparse(substitute(coefficient_name))
   }

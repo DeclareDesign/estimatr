@@ -12,8 +12,13 @@ test_that('tidy, summary, and print work', {
     "data.frame"
   )
 
+  # Might need to force this test of tidy.default
+
   d <- date()
-  tidy(d)
+  expect_warning(
+    estimatr:::tidy.default(d),
+    "using as.data.frame"
+  )
 
   ## lm_robust
   lmo <- lm_robust(y ~ x, data = dat, se_type = 'classical')
@@ -58,6 +63,11 @@ test_that('tidy, summary, and print work', {
   expect_is(
     tidy(ht),
     "data.frame"
+  )
+
+  expect_equivalent(
+    as.matrix(tidy(ht)[, c("est", "se", "p", "ci_lower", "ci_upper", "df")]),
+    summary(ht)$coefficients
   )
 
 

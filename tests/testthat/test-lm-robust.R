@@ -2,7 +2,6 @@ context("Estimator - lm_robust, non-clustered")
 
 test_that("lm robust se",{
 
-
   N <- 100
   dat <- data.frame(Y = rnorm(N), Z = rbinom(N, 1, .5), X = rnorm(N), W = runif(N))
 
@@ -15,6 +14,11 @@ test_that("lm robust se",{
   lm_robust(Y ~ Z + X, coefficient_name = c("Z", "X"), data = dat)
   lm_robust(Y ~ Z + X, coefficient_name = c("(Intercept)", "Z", "X"), data = dat)
   lm_robust(Y ~ Z*X, coefficient_name = "Z:X", data = dat)
+
+  expect_error(
+    lm_robust(Y ~ Z*X, coefficient_name = "Z*X", data = dat),
+    "Must specify `coefficient_name` as character of variable in the "
+  )
 
   expect_error(
     lm_robust(Y ~ Z + X, data = dat, se_type = "not_a_real_one"),

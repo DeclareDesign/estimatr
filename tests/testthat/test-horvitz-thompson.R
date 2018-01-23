@@ -245,11 +245,23 @@ test_that("Estimating Horvitz-Thompson can be done two ways with blocks", {
   # This estimates the treatment effect at once using only condition_pr_mat
   ht_condmat_bl <- horvitz_thompson(y ~ z, data = dat, condition_pr_mat = bl_pr_mat)
 
-  # p-value not the same because df calculation is totally different
-  # TODO resolve p-values
-  expect_equal(
-    ht_declare_bl[c('est', 'se')],
-    ht_condmat_bl[c('est', 'se')]
+  expect_equivalent(
+    tidy(ht_declare_bl),
+    tidy(ht_condmat_bl)
+  )
+
+  dat$mps <- rep(1:20, each = 2)
+  mp_ra <- randomizr::declare_ra(blocks = dat$mps)
+  dat$z <- randomizr::conduct_ra(mp_ra)
+  mp_pr_mat <- declaration_to_condition_pr_mat(mp_ra)
+
+  ht_declare_mp <- horvitz_thompson(y ~ z, data = dat, declaration = mp_ra)
+  # This estimates the treatment effect at once using only condition_pr_mat
+  ht_condmat_mp <- horvitz_thompson(y ~ z, data = dat, condition_pr_mat = mp_pr_mat)
+
+  expect_equivalent(
+    tidy(ht_declare_mp),
+    tidy(ht_condmat_mp)
   )
 })
 
