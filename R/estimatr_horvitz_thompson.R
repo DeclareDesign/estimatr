@@ -542,7 +542,6 @@ horvitz_thompson_internal <-
         #print('full youngs')
         #print(condition_pr_mat)
         # Young's inequality
-        print("here")
         varN2 <-
           sum(Y2^2) +
             sum(Y1^2) +

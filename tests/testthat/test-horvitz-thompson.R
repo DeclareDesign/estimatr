@@ -468,9 +468,12 @@ test_that("multi-valued treatments not allowed in declaration", {
     condition_prs = ps
   )
 
-  expect_equivalent(
+  expect_equal(
     ht_condition,
-    ht_subdat,
+    ht_subdat
+  )
+  expect_equal(
+    ht_condition,
     ht_subset
   )
 
