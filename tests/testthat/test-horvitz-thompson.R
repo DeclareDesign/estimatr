@@ -184,13 +184,22 @@ test_that("Horvitz-Thompson works with clustered data", {
     "`condition_prs` must be constant within `cluster`"
   )
 
+  # Or pr outside of 0 1
+  dat$p_wrong[1] <- 1.5
+  expect_error(
+    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = p_wrong),
+    "`condition_pr` must be a vector of values all within"
+  )
+
+  # or treatment varying within a cluster
   dat$z_wrong <- dat$z
-  dat$z_wrong[2] <- 0
+  dat$z_wrong[1:2] <- c(0, 1)
   table(dat$z_wrong, dat$cl)
   expect_error(
     horvitz_thompson(y ~ z_wrong, data = dat, clusters = cl, condition_prs = ps),
     "All units within a cluster must have the same treatment condition"
   )
+
 })
 
 # TODO test missingness works as expected

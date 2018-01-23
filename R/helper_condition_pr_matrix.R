@@ -97,20 +97,10 @@ declaration_to_condition_pr_mat <- function(declaration) {
   } else if (declaration$ra_type == "complete") {
 
     if (length(unique(p2)) > 1) {
-      stop("Treatment probabilities must be fixed for complete randomized designs")
+      stop(
+        "Treatment probabilities must be fixed for complete randomized designs"
+      )
     }
-
-    # On average the number of treated units may not be an integer
-    # if (treated_remainder != 0) {
-    #   stop(
-    #     "Can't use 'declaration' with complete randomization when the number ",
-    #     "of treated units is not fixed across randomizations (i.e. when the ",
-    #     "number of total units is 3 and the probability of treatment is 0.5, ",
-    #     "meaning there can be either 1 or 2 treated units. Instead, simulate ",
-    #     "many treatment vectors using randomizr and pass those permutations ",
-    #     "to `permutations_to_condition_pr_mat`."
-    #   )
-    # }
 
     condition_pr_matrix <-
       gen_pr_matrix_complete(
@@ -119,10 +109,6 @@ declaration_to_condition_pr_mat <- function(declaration) {
       )
 
   } else if (declaration$ra_type == "clustered") {
-
-    if (length(declaration_call) == 0) {
-      warning("Assuming cluster randomization is complete. To have declare_ra work with simple random assignment of clusters, upgrade to the newest version of randomizr on GitHub.")
-    }
 
     condition_pr_matrix <- gen_pr_matrix_cluster(
       clusters = declaration$clusters,
@@ -156,7 +142,10 @@ declaration_to_condition_pr_mat <- function(declaration) {
       if (declaration$ra_type == "blocked") {
 
         if (length(unique(block_dat[[i]]$p2)) > 1) {
-          stop("Treatment probabilities must be fixed within blocks for block randomized designs")
+          stop(
+            "Treatment probabilities must be fixed within blocks for block ",
+            "randomized designs"
+          )
         }
 
         condition_pr_matrix[ids, ids] <-
@@ -225,7 +214,10 @@ gen_pr_matrix_cluster <- function(clusters, treat_probs, simple) {
   if (is.null(simple) || !simple) {
 
     if (length(unique(cluster_marginal_probs)) > 1) {
-      stop("Treatment probabilities must be fixed for complete (clustered) randomized clustered designs")
+      stop(
+        "Treatment probabilities must be fixed for complete (clustered) ",
+        "randomized clustered designs"
+      )
     }
 
     prs <- gen_joint_pr_complete(cluster_marginal_probs[1], n_clust)
@@ -311,7 +303,7 @@ permutations_to_condition_pr_mat <- function(permutations) {
   N <- nrow(permutations)
 
   if (!all(permutations %in% c(0, 1))) {
-    stop("Permutations matrix must only have 0s and 1s in it.")
+    stop("Matrix of `permutations` must be comprised of only 0s and 1s")
   }
 
   condition_pr_matrix <- tcrossprod(rbind(1- permutations, permutations)) / ncol(permutations)
@@ -321,18 +313,6 @@ permutations_to_condition_pr_mat <- function(permutations) {
 
   return(condition_pr_matrix)
 
-}
-
-# Helper functions based on Stack Overflow answer by user Ujjwal
-# https://stackoverflow.com/questions/26377199/convert-a-matrix-in-r-into-a-upper-triangular-lower-triangular-matrix-with-those
-copy_upper_to_lower_triangle <- function(mat) {
-  mat[lower.tri(mat, diag = F)] <- t(mat)[lower.tri(mat)]
-  return(mat)
-}
-
-copy_lower_to_upper_triangle <- function(mat) {
-  mat[upper.tri(mat, diag = F)] <- t(mat)[upper.tri(mat)]
-  return(mat)
 }
 
 gen_pr_matrix_complete <- function(pr, n_total) {
@@ -393,3 +373,16 @@ gen_joint_pr_complete <- function(pr, n_total) {
   return(prs)
 
 }
+
+# Helper functions based on Stack Overflow answer by user Ujjwal
+# Unused for now
+# https://stackoverflow.com/questions/26377199/convert-a-matrix-in-r-into-a-upper-triangular-lower-triangular-matrix-with-those
+# copy_upper_to_lower_triangle <- function(mat) {
+#   mat[lower.tri(mat, diag = F)] <- t(mat)[lower.tri(mat)]
+#   return(mat)
+# }
+#
+# copy_lower_to_upper_triangle <- function(mat) {
+#   mat[upper.tri(mat, diag = F)] <- t(mat)[upper.tri(mat)]
+#   return(mat)
+# }

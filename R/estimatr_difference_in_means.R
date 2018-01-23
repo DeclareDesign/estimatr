@@ -139,11 +139,11 @@ difference_in_means <-
 
       # For clustered cases Gerber & Green suggest footnote 20 on ch 3
       # Instead we use CR2 in lm_robust
-      # For un-clustered cases we just do the following
-      if (is.na(return_frame$df)) {
-        return_frame$df <- with(return_frame,
-                                N - 2)
-      }
+      # Following is no longer needed:
+      # if (is.na(return_frame$df)) {
+      #   return_frame$df <- with(return_frame,
+      #                           N - 2)
+      # }
 
     } else {
 
@@ -307,8 +307,9 @@ difference_in_means_internal <-
     ## Check to make sure multiple in each group if pair matched is false
     if (!pair_matched & (N2 == 1 | N1 == 1)) {
       stop(
-        "Not a pair matched design and one treatment condition only has one ",
-        "value, making standard errors impossible to calculate."
+        "Each block must have at least two treated units if design is not ",
+        "pair-matched (i.e. every block is of size two). Only one treated or ",
+        "control unit in a block makes standard errors impossible to calculate"
       )
     }
 
@@ -368,10 +369,7 @@ difference_in_means_internal <-
 
       } else {
 
-        # TODO: weights and matched pair
-        if (pair_matched) {
-          stop("Weights not supported with matched-pairs.")
-        }
+        # TODO: Figure out if any of this is right (it isn't!)
 
         w2 <- data$weights[data$t == condition2]
         w1 <- data$weights[data$t == condition1]
@@ -385,7 +383,7 @@ difference_in_means_internal <-
 
         se <- sqrt(var2 + var1)
 
-        # todo: check welch approximation with weights
+        # TODO: check welch approximation with weights
         df <- se^4 /
           (
             (var2^2 / (N2-1)) +

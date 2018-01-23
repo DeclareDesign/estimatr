@@ -175,6 +175,11 @@ test_that('coef and confint work', {
   )
 
   expect_equivalent(
+    confint(lm2o),
+    confint(lm2o, parm = "x")
+  )
+
+  expect_equivalent(
     confint(lmo, parm = 'x', level = 0.15),
     with(lm_robust(y ~ x, data = dat, coefficient_name = 'x', alpha = 0.15),
          cbind(ci_lower[2], ci_upper[2]))

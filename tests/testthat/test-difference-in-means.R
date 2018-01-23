@@ -54,7 +54,14 @@ test_that("DIM arguments parsed correctly", {
     "must have only one variable on the right-hand side"
   )
 
-  # not matched pair but
+  # not matched pair but has some blocks with only 1 treated
+  bl <- rep(1:2, each = 4)
+  z <- c(1, 0, 0, 0, 1, 1, 0, 0)
+  y <- rnorm(8)
+  expect_error(
+    difference_in_means(y ~ z, blocks = bl),
+    "Each block must have at least two treated units if design is not"
+  )
 
 })
 

@@ -120,6 +120,12 @@ test_that("lm robust works with missingness",{
     lm_missout_hc2
   )
 
+  # nested DFs
+  dat$Y2 <- matrix(dat$Y)
+  expect_equivalent(
+    tidy(lm_robust(Y ~ Z + X, data = dat))[,1:6],
+    tidy(lm_robust(Y2 ~ Z + X, data = dat))[,1:6]
+  )
 })
 
 test_that("lm_robust doesn't include aux variables when . is used", {
@@ -186,7 +192,7 @@ test_that("lm robust works with weights",{
 
   expect_error(
     lm_robust(Y ~ Z, data = dat, weights = c(-0.5, runif(N - 1))),
-    "weights must not be negative"
+    "`weights` must not be negative"
   )
 
 })
@@ -229,6 +235,7 @@ test_that("lm robust works with large data", {
 })
 
 test_that("lm robust works with rank-deficient X", {
+  set.seed(42)
   N <- 100
   dat <- data.frame(Y = rbinom(N, 1, .5),
                    X1 = rnorm(N),
@@ -263,4 +270,17 @@ test_that("lm robust works with rank-deficient X", {
     as.matrix(summary(RcppEigen::fastLm(Y ~ X1 + X2 + Z1 + X3, data = dat))$coefficients[, 1:2])
   )
 
+  # trigger cascade to QR from try_chol; set seed above because try_cholesky
+  # sometimes will work!
+  expect_equivalent(
+    tidy(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat)),
+    tidy(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat, try_cholesky = TRUE))
+  )
+
+  # Weighted rank deficient
+  dat$w <- 1
+  expect_equivalent(
+    tidy(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat)),
+    tidy(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat, weights = w))
+  )
 })

@@ -80,7 +80,7 @@ clean_model_data <- function(formula,
   if(!missing(weights)){
     ret[["weights"]] <- model.extract(mf, "weights")
     if (any(ret[["weights"]] < 0)) {
-      stop("weights must not be negative")
+      stop("`weights` must not be negative")
     }
   }
 
@@ -99,7 +99,7 @@ clean_model_data <- function(formula,
 
     if (any(ret[["condition_pr"]] < 0 | ret[["condition_pr"]] > 1)) {
       stop(
-        "Some condition probabilities are outside of [0, 1]."
+        "`condition_pr` must be a vector of values all within [0, 1], inclusive"
       )
     }
   }
