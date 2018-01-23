@@ -384,7 +384,7 @@ difference_in_means_internal <-
           print(var_Y2)
           print(var_Y1)
 
-          se <- sqrt(var_Y2 / length(Y2) + var_Y1 / length(Y1))
+          se <- sqrt(var_Y2 / N2 + var_Y1 / N1)
 
           df <- se^4 /
             (
