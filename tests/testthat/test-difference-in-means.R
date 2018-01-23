@@ -519,4 +519,9 @@ test_that("DIM matches lm_robust under certain conditions", {
     tidy(dim_blcl_o)
   )
 
+  dat$mps <- rep(1:(nrow(dat)/2), each = 2)
+  dat$z_mps <- randomizr::block_ra(blocks = dat$mps, m = 1)
+  lm_mps_o <- lm_lin(Y ~ z_mps, ~ factor(mps), data = dat, coefficient_name = "z_mps")
+  dim_mps_o <- difference_in_means(Y ~ z_mps, blocks = mps, data = dat)
+
 })

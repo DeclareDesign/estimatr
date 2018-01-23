@@ -117,15 +117,21 @@ difference_in_means <-
     rm(model_data)
 
     # parse condition names
-    if (is.null(condition1) || is.null(condition2)) {
-      condition_names <- parse_conditions(
-        treatment = data$t,
-        condition1 = condition1,
-        condition2 = condition2,
-        estimator = "difference_in_means"
-      )
-      condition2 <- condition_names[[2]]
-      condition1 <- condition_names[[1]]
+    condition_names <- parse_conditions(
+      treatment = data$t,
+      condition1 = condition1,
+      condition2 = condition2,
+      estimator = "difference_in_means"
+    )
+    condition2 <- condition_names[[2]]
+    condition1 <- condition_names[[1]]
+
+    if (!is.null(data$weights)) {
+      weight_mean <- mean(data$weights)
+      weights <- data$weights / weight_mean
+      data$y <- data$y * weights
+    } else {
+      weights = NULL
     }
 
     if (is.null(data$block)){
@@ -134,7 +140,8 @@ difference_in_means <-
         condition1 = condition1,
         condition2 = condition2,
         data = data,
-        alpha = alpha
+        alpha = alpha,
+        weights = weights
       )
 
       # For clustered cases Gerber & Green suggest footnote 20 on ch 3
@@ -275,6 +282,7 @@ difference_in_means_internal <-
   function(condition1 = NULL,
            condition2 = NULL,
            data,
+           weights = NULL,
            pair_matched = FALSE,
            alpha = .05) {
 
@@ -296,8 +304,21 @@ difference_in_means_internal <-
     Y2 <- data$y[data$t == condition2]
     Y1 <- data$y[data$t == condition1]
 
-    N2 <- length(Y2)
-    N1 <- length(Y1)
+    if (is.null(weights)) {
+      N2 <- length(Y2)
+    } else {
+      W2 <- weights[data$t == condition2]
+      N2 <- sum(W2)
+    }
+
+    if (is.null(weights)) {
+      N1 <- length(Y1)
+    } else {
+      W1 <- weights[data$t == condition1]
+      N1 <- sum(W1)
+    }
+    print(N1)
+    print(N2)
     N <- N2 + N1
 
     if ((N1 == 0) || (N2 == 0)) {
@@ -344,19 +365,26 @@ difference_in_means_internal <-
 
     } else {
 
-      if (is.null(data$weights)) {
+      #if (is.null(data$weights)) {
 
-        diff <- mean(Y2) - mean(Y1)
+        diff <- sum(Y2) / N2 - sum(Y1) / N1
 
         if (pair_matched) {
           # Pair matched designs
           se <- NA
         } else {
           # Non-pair matched designs, unit level randomization
-          var_Y2 <- var(Y2)
-          var_Y1 <- var(Y1)
+          if (is.null(weights)) {
+            var_Y2 <- var(Y2)
+            var_Y1 <- var(Y1)
+          } else {
+            var_Y2 <- sum(W2 * ((Y2/W2) - mean(Y2))^2) / (N2 - sum(W2^2)/N2)
+            var_Y1 <- sum(W1 * ((Y1/W1) - mean(Y1))^2) / (N1 - sum(W1^2)/N1)
+          }
+          print(var_Y2)
+          print(var_Y1)
 
-          se <- sqrt(var_Y2 / N2 + var_Y1 / N1)
+          se <- sqrt(var_Y2 / length(Y2) + var_Y1 / length(Y1))
 
           df <- se^4 /
             (
@@ -366,32 +394,32 @@ difference_in_means_internal <-
 
         }
 
-      } else {
-
-        # TODO: weights and matched pair
-        if (pair_matched) {
-          stop("Weights not supported with matched-pairs.")
-        }
-
-        w2 <- data$weights[data$t == condition2]
-        w1 <- data$weights[data$t == condition1]
-
-        mean2 <- weighted.mean(Y2, w2)
-        mean1 <- weighted.mean(Y1, w1)
-        diff <-  mean2 - mean1
-
-        var2 <- weighted_var_internal(w2, Y2, mean2)
-        var1 <- weighted_var_internal(w1, Y1, mean1)
-
-        se <- sqrt(var2 + var1)
-
-        # todo: check welch approximation with weights
-        df <- se^4 /
-          (
-            (var2^2 / (N2-1)) +
-              (var1^2 / (N1-1))
-          )
-      }
+      # } else {
+      #
+      #   # TODO: weights and matched pair
+      #   if (pair_matched) {
+      #     stop("Weights not supported with matched-pairs.")
+      #   }
+      #
+      #   w2 <- data$weights[data$t == condition2]
+      #   w1 <- data$weights[data$t == condition1]
+      #
+      #   mean2 <- weighted.mean(Y2, w2)
+      #   mean1 <- weighted.mean(Y1, w1)
+      #   diff <-  mean2 - mean1
+      #
+      #   var2 <- weighted_var_internal(w2, Y2, mean2)
+      #   var1 <- weighted_var_internal(w1, Y1, mean1)
+      #
+      #   se <- sqrt(var2 + var1)
+      #
+      #   # todo: check welch approximation with weights
+      #   df <- se^4 /
+      #     (
+      #       (var2^2 / (N2-1)) +
+      #         (var1^2 / (N1-1))
+      #     )
+      # }
 
     }
 
