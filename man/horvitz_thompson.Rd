@@ -5,7 +5,7 @@
 \title{Horvitz-Thompson estimator of treatment effects}
 \usage{
 horvitz_thompson(formula, data, condition_prs, blocks, clusters,
-  condition_pr_mat = NULL, declaration = NULL, subset,
+  simple = NULL, condition_pr_mat = NULL, declaration = NULL, subset,
   se_type = c("youngs", "constant"), collapsed = FALSE, ci = TRUE,
   alpha = 0.05, condition1 = NULL, condition2 = NULL,
   return_condition_pr_mat = FALSE)
@@ -21,9 +21,11 @@ horvitz_thompson(formula, data, condition_prs, blocks, clusters,
 
 \item{clusters}{An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.}
 
-\item{condition_pr_mat}{An optional 2n * 2n matrix of marginal and joint probabilities of all units in condition1 and condition2, can be used in place of \code{condition_prs}. See details.}
+\item{simple}{An optional boolean for whether the randomization is simple (TRUE) or complete (FALSE). This is ignored if \code{blocks} are specified, as all blocked designs use complete randomization, or either \code{declaration} or \code{condition_pr_mat} are passed. Otherwise, it defaults to \code{TRUE}.}
 
-\item{declaration}{An object of class "ra_declaration", from the randomizr package that is an alternative way of specifying the design. Cannot be used along with any of \code{condition_prs}, \code{blocks}, \code{clusters}, or \code{condition_pr_mat}. See details.}
+\item{condition_pr_mat}{An optional 2n * 2n matrix of marginal and joint probabilities of all units in condition1 and condition2. Takes precedent over any other means of specifying the design as it can encapsulate everything relevant about the design. See details.}
+
+\item{declaration}{An object of class \code{"ra_declaration"}, from the \code{\link{randomizr}} package that is an alternative way of specifying the design. Cannot be used along with any of \code{condition_prs}, \code{blocks}, \code{clusters}, or \code{condition_pr_mat}. See details.}
 
 \item{subset}{An optional bare (unquoted) expression specifying a subset of observations to be used.}
 
@@ -43,7 +45,9 @@ horvitz_thompson(formula, data, condition_prs, blocks, clusters,
 Horvitz-Thompson estimator of treatment effects
 }
 \details{
-This function implements the Horvitz-Thompson estimator for treatment effects.
+This function implements the Horvitz-Thompson estimator for treatment effects. This estimator is useful for estimating unbiased treatment effects given any randomization scheme as long as the randomization scheme is well known. See the \href{http://estimatr.declaredesign.org/articles/technical-notes.html}{technical notes} for more information and references.
+
+Horvitz-Thompson relies on knowledge of the probability each unit was in condition2, in condition1, and the joint probability with every other unit for all combinations of treatment conditions. This design information can be passed to the \code{horvitz_thompson} function in three ways.
 }
 \examples{
 
