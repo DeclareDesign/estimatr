@@ -116,66 +116,24 @@ declaration_to_condition_pr_mat <- function(declaration) {
       simple = simple
     )
 
-  } else if (declaration$ra_type %in% c("blocked", "blocked_and_clustered")) {
+  } else if (declaration$ra_type == "blocked") {
 
-    # Assume complete randomization
-    condition_pr_matrix <- matrix(NA, nrow = 2*n, ncol = 2*n)
-
-    # Split by block and get complete randomized values within each block
-    id_dat <- data.frame(p1 = p1, p2 = p2, ids = 1:n)
-
-    if (declaration$ra_type == "blocked_and_clustered") {
-      id_dat$clusters <- declaration$clusters
-    }
-
-    block_dat <- split(
-      id_dat,
-      declaration$block
+    condition_pr_matrix <- gen_pr_matrix_block(
+      blocks = declaration$blocks,
+      clusters = NULL,
+      p1 = p1,
+      p2 = p2
     )
 
-    n_blocks <- length(block_dat)
+  } else if (declaration$ra_type == "blocked_and_clustered") {
 
-    for (i in 1:n_blocks) {
+    condition_pr_matrix <- gen_pr_matrix_block(
+      blocks = declaration$blocks,
+      clusters = declaration$clusters,
+      p1 = p1,
+      p2 = p2
+    )
 
-      ids <- c(block_dat[[i]]$ids, n + block_dat[[i]]$ids)
-
-      if (declaration$ra_type == "blocked") {
-
-        if (length(unique(block_dat[[i]]$p2)) > 1) {
-          stop(
-            "Treatment probabilities must be fixed within blocks for block ",
-            "randomized designs"
-          )
-        }
-
-        condition_pr_matrix[ids, ids] <-
-          gen_pr_matrix_complete(
-            pr = block_dat[[i]]$p2[1],
-            n_total = length(block_dat[[i]]$p2)
-          )
-
-      } else if (declaration$ra_type == "blocked_and_clustered") {
-        # Has to be complete randomization of clusters
-        condition_pr_matrix[ids, ids] <-
-          gen_pr_matrix_cluster(
-            clusters = block_dat[[i]]$clusters,
-            treat_probs = block_dat[[i]]$p2,
-            simple = FALSE
-          )
-      }
-
-      for (j in 1:n_blocks) {
-        if (i != j) {
-          condition_pr_matrix[
-            ids,
-            c(block_dat[[j]]$ids, n + block_dat[[j]]$ids)
-          ] <- tcrossprod(
-            c(block_dat[[i]]$p1, block_dat[[i]]$p2),
-            c(block_dat[[j]]$p1, block_dat[[j]]$p2)
-          )
-        }
-      }
-    }
   } else if (declaration$ra_type == "custom") {
     # Use permutation matrix
     return(permutations_to_condition_pr_mat(declaration$permutation_matrix))
@@ -187,6 +145,104 @@ declaration_to_condition_pr_mat <- function(declaration) {
 
   return(condition_pr_matrix)
 
+}
+
+gen_pr_matrix_block <- function(blocks, clusters, p2 = NULL, p1 = NULL, t = NULL, condition2 = NULL) {
+
+  n <- length(blocks)
+  # Assume complete randomization
+  condition_pr_matrix <- matrix(NA, nrow = 2*n, ncol = 2*n)
+
+  # Split by block and get complete randomized values within each block
+  id_dat <- data.frame(ids = 1:n)
+  if (!is.null(p2)) {
+    id_dat$p2 <- p2
+  }
+  if (!is.null(p1)) {
+    id_dat$p1 <- p1
+  }
+  if (!is.null(t)) {
+    id_dat$t <- t
+  }
+
+  if (is.null(t) && is.null(p2) && is.null(p1)) {
+    stop("Must specify one of `t`, `p2`, or `p1`.")
+  }
+
+  clustered <- !is.null(clusters)
+  if (clustered) {
+    id_dat$clusters <- clusters
+  }
+
+  block_dat <- split(
+    id_dat,
+    blocks
+  )
+
+  n_blocks <- length(block_dat)
+
+  for (i in 1:n_blocks) {
+
+    ids <- c(block_dat[[i]]$ids, n + block_dat[[i]]$ids)
+
+    if (clustered) {
+
+      if (is.null(block_dat[[i]]$p2)) {
+        # learn prs
+        cluster_treats <- get_cluster_treats(block_dat[[i]], condition2)
+        block_dat[[i]]$p2 <- mean(cluster_treats$treat_clust)
+      }
+
+      if (is.null(block_dat[[i]]$p1)) {
+        block_dat[[i]]$p1 <- 1 - block_dat[[i]]$p2
+      }
+
+      # Has to be complete randomization of clusters
+      condition_pr_matrix[ids, ids] <-
+        gen_pr_matrix_cluster(
+          clusters = block_dat[[i]]$clusters,
+          treat_probs = block_dat[[i]]$p2,
+          simple = FALSE
+        )
+    } else {
+      if (length(unique(block_dat[[i]]$p2)) > 1) {
+        stop(
+          "Treatment probabilities must be fixed within blocks for block ",
+          "randomized designs"
+        )
+      }
+
+      if (is.null(block_dat[[i]]$p2)) {
+        # learn prs
+        block_dat[[i]]$p2 <- mean(block_dat[[i]]$t)
+      }
+
+      if (is.null(block_dat[[i]]$p1)) {
+        block_dat[[i]]$p1 <- 1 - block_dat[[i]]$p2
+      }
+
+      condition_pr_matrix[ids, ids] <-
+        gen_pr_matrix_complete(
+          pr = block_dat[[i]]$p2[1],
+          n_total = length(block_dat[[i]]$p2)
+        )
+    }
+
+
+    for (j in 1:n_blocks) {
+      if (i != j) {
+        condition_pr_matrix[
+          ids,
+          c(block_dat[[j]]$ids, n + block_dat[[j]]$ids)
+          ] <- tcrossprod(
+            c(block_dat[[i]]$p1, block_dat[[i]]$p2),
+            c(block_dat[[j]]$p1, block_dat[[j]]$p2)
+          )
+      }
+    }
+  }
+
+  return(condition_pr_matrix)
 }
 
 #' Generate condition probability matrix given clusters and probabilities
@@ -207,7 +263,6 @@ gen_pr_matrix_cluster <- function(clusters, treat_probs, simple) {
   cluster_marginal_probs <-
     treat_probs[unique_first_in_cl]
 
-
   # Container mats
   # Get cluster condition_pr_matrices
   # Complete random sampling
@@ -215,8 +270,9 @@ gen_pr_matrix_cluster <- function(clusters, treat_probs, simple) {
 
     if (length(unique(cluster_marginal_probs)) > 1) {
       stop(
-        "Treatment probabilities must be fixed for complete (clustered) ",
-        "randomized clustered designs"
+        "Treatment probabilities cannot vary within blocks for ",
+        "block-clustered randomized designs and cannot vary within the whole ",
+        "sample for complete cluster randomized designs"
       )
     }
 
@@ -373,6 +429,29 @@ gen_joint_pr_complete <- function(pr, n_total) {
   return(prs)
 
 }
+
+
+get_cluster_treats <- function(data, condition2) {
+
+  cluster_dat <- split(
+    data$t,
+    data$clusters
+  )
+
+  n_clust <- length(cluster_dat)
+  treat_clust <- numeric(n_clust)
+
+  for (i in seq_along(cluster_dat)) {
+    if (length(unique(cluster_dat[[i]])) > 1) {
+      stop("Treatment condition must be constant within `cluster`")
+    }
+
+    treat_clust[i] <- as.numeric(cluster_dat[[i]][1] == condition2)
+  }
+
+  return(list(n_clust = n_clust, treat_clust = treat_clust))
+}
+
 
 # Helper functions based on Stack Overflow answer by user Ujjwal
 # Unused for now

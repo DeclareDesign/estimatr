@@ -197,7 +197,7 @@ test_that("condition_pr_matrix behaves as expected", {
       treat_probs = runif(4),
       simple = FALSE
     ),
-    "Treatment probabilities must be fixed for complete \\(clustered\\)"
+    "Treatment probabilities cannot vary within blocks"
   )
 
   # probability not fixed within blocks

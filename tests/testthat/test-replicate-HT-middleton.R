@@ -74,7 +74,7 @@ test_that("We match Joel's estimator", {
   ht_prob_o  <- horvitz_thompson(
     y ~ z,
     data = dat,
-    condition_prs = p
+    condition2_probs = p
   )
 
   expect_equal(
@@ -164,16 +164,26 @@ test_that("We match Joel's estimator", {
   #   c(ht_comp_est, se_comp_constant_ht)
   # )
 
-  ht_comp_const_o  <- horvitz_thompson(
-    y ~ z,
-    data = dat,
-    condition_pr_mat = pmat.CR.true,
-    se_type = "constant"
-  )
 
-  # Not matching
+  # ht_comp_const_o  <- horvitz_thompson(
+  #   y ~ z,
+  #   data = dat,
+  #   condition_pr_mat = pmat.CR.true,
+  #   se_type = "constant"
+  # )
   # expect_equivalent(
   #   tidy(ht_comp_const_o)[, c("est", "se")],
   #   c(ht_comp_est, se_comp_constant_ht)
   # )
+
+  # Not matching so we error
+  expect_error(
+    horvitz_thompson(
+      y ~ z,
+      data = dat,
+      condition_pr_mat = pmat.CR.true,
+      se_type = "constant"
+    ),
+    "`se_type` = 'constant' only supported for simple"
+  )
 })

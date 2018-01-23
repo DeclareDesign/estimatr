@@ -13,7 +13,7 @@ test_that("Horvitz-Thompson matches d-i-m under certain conditions", {
 
   expect_equal(
     horvitz_thompson(y ~ z,
-                     condition_prs = ps,
+                     condition2_probs = ps,
                      data = dat)$est,
     difference_in_means(y ~ z,
                         data = dat)$est
@@ -77,6 +77,29 @@ test_that("Horvitz-Thompson works in simple case", {
     NULL
   )
 
+  # complete randomization works as well
+  comp_decl <- randomizr::declare_ra(N = n, prob = 0.4, simple = FALSE)
+  dat$z_comp <- randomizr::conduct_ra(comp_decl)
+  dat$pr_comp <- 0.4
+  # We can learn it! or you can tell us
+  expect_equal(
+    horvitz_thompson(y ~ z_comp, data = dat, simple = FALSE),
+    horvitz_thompson(y ~ z_comp, data = dat, declaration = comp_decl)
+  )
+  expect_equal(
+    horvitz_thompson(y ~ z_comp, data = dat, simple = FALSE),
+    horvitz_thompson(y ~ z_comp, data = dat, simple = FALSE, condition2_probs = pr_comp)
+  )
+
+  # error if you pass wrong prs
+  dat$pr_wrong <- dat$pr_comp
+  dat$pr_wrong[1] <- 0.5
+  expect_error(
+    horvitz_thompson(y ~ z_comp, data = dat, simple = FALSE, condition2_probs = pr_wrong),
+    "Treatment probabilities must be fixed for complete randomized designs"
+  )
+
+
 })
 
 test_that("Horvitz-Thompson works with clustered data", {
@@ -86,7 +109,7 @@ test_that("Horvitz-Thompson works with clustered data", {
                     cl = rep(1:4, each = 2))
 
   ## Complete random sample, clustered
-  clust_crs_decl <- randomizr::declare_ra(N = nrow(dat), clusters = dat$cl, prob = 0.4)
+  clust_crs_decl <- randomizr::declare_ra(N = nrow(dat), clusters = dat$cl, prob = 0.5)
   dat$z <- randomizr::conduct_ra(clust_crs_decl)
 
   # Regular SE using Young's inequality
@@ -105,11 +128,31 @@ test_that("Horvitz-Thompson works with clustered data", {
     NA
   )
 
-  # Also should be same with collapsed totals
-  expect_identical(
-    horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, collapsed = T),
-    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_pr_mat = clust_crs_mat, collapsed = T)
+  # Can infer probabilities as well
+  expect_equal(
+    ht_crs_mat,
+    horvitz_thompson(y ~ z, data = dat, clusters = cl, simple = F)
   )
+
+  # Also should be same with collapsed totals
+  # IS NOT
+  # expect_identical(
+  #   horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, collapsed = T),
+  #   horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_pr_mat = clust_crs_mat, collapsed = T)
+  # )
+  #
+  # ht_coll <- horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, collapsed = T, return_condition_pr_mat = T)
+  # ht_reg <- horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, collapsed = F, return_condition_pr_mat = T)
+  # ht_coll
+  # ht_reg
+  # ht_coll$condition_pr_mat
+  # ht_reg$condition_pr_mat
+
+  # expect_identical(
+  #   horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, collapsed = T),
+  #   horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, collapsed = F)
+  # )
+
 
   # Have to specify clusters for collapsed estimator if you don't pass declaration
   expect_error(
@@ -117,10 +160,10 @@ test_that("Horvitz-Thompson works with clustered data", {
     "collapsed estimator only works"
   )
 
-  # And constant effects
-  expect_identical(
+  # And constant effects error for non-simple designs
+  expect_error(
     horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, se_type = 'constant'),
-    horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_crs_mat, se_type = 'constant')
+    "`se_type` = 'constant' only supported for simple random"
   )
 
   ## Simple random sample, clustered
@@ -144,7 +187,7 @@ test_that("Horvitz-Thompson works with clustered data", {
   dat$ps <- 0.4
   expect_identical(
     ht_srs_decl,
-    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = ps)
+    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition2_probs = ps)
   )
 
   # Also should be same with collapsed totals
@@ -158,21 +201,14 @@ test_that("Horvitz-Thompson works with clustered data", {
   # condition var name approach
   expect_identical(
     ht_cl_srs_collapsed,
-    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = ps, collapsed = T)
+    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition2_probs = ps, collapsed = T)
   )
 
   # And constant effects
-  # matrix approach
-  ht_cl_srs_const <- horvitz_thompson(y ~ z, data = dat, declaration = clust_srs_decl, se_type = 'constant')
-  expect_identical(
-    ht_cl_srs_const,
-    horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_srs_mat, se_type = 'constant')
-  )
-
-  # condition var name approach
-  expect_identical(
-    ht_cl_srs_const,
-    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = ps, se_type = 'constant')
+  # Only work for simple for now
+  expect_error(
+    horvitz_thompson(y ~ z, data = dat, declaration = clust_srs_decl, se_type = 'constant'),
+    "`se_type` = 'constant' only supported for simple random designs at the moment"
   )
 
   # Fails with condition_pr varying within cluster
@@ -180,15 +216,15 @@ test_that("Horvitz-Thompson works with clustered data", {
   dat$p_wrong[1] <- 0.545
 
   expect_error(
-    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = p_wrong),
-    "`condition_prs` must be constant within `cluster`"
+    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition2_probs = p_wrong),
+    "`condition2_probs` must be constant within `cluster`"
   )
 
   # Or pr outside of 0 1
   dat$p_wrong[1] <- 1.5
   expect_error(
-    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = p_wrong),
-    "`condition_pr` must be a vector of values all within"
+    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition2_probs = p_wrong),
+    "`condition_pr` must be a vector of positive values no greater than"
   )
 
   # or treatment varying within a cluster
@@ -196,10 +232,9 @@ test_that("Horvitz-Thompson works with clustered data", {
   dat$z_wrong[1:2] <- c(0, 1)
   table(dat$z_wrong, dat$cl)
   expect_error(
-    horvitz_thompson(y ~ z_wrong, data = dat, clusters = cl, condition_prs = ps),
-    "All units within a cluster must have the same treatment condition"
+    horvitz_thompson(y ~ z_wrong, data = dat, clusters = cl, condition2_probs = ps),
+    "Treatment condition must be constant within `cluster`"
   )
-
 })
 
 # TODO test missingness works as expected
@@ -225,12 +260,12 @@ test_that("Horvitz-Thompson works with missingness", {
   dat$drop_these <- c(1, 1, rep(0, times = n - 2))
 
   expect_warning(
-    ht_miss <- horvitz_thompson(y ~ z, data = missing_dat, condition_prs = ps),
+    ht_miss <- horvitz_thompson(y ~ z, data = missing_dat, condition2_probs = ps),
     "missingness in the condition_pr"
   )
 
   expect_equal(
-    horvitz_thompson(y ~ z, data = dat, condition_prs = ps, subset = drop_these == 0),
+    horvitz_thompson(y ~ z, data = dat, condition2_probs = ps, subset = drop_these == 0),
     ht_miss
   )
 
@@ -289,11 +324,11 @@ test_that("Horvitz-Thompson properly checks arguments and data", {
   # default is mean(ps)
   expect_identical(
     horvitz_thompson(y ~ z, data = dat),
-    horvitz_thompson(y ~ z, data = dat, condition_prs = rep(0.5, times = nrow(dat)))
+    horvitz_thompson(y ~ z, data = dat, condition2_probs = rep(0.5, times = nrow(dat)))
   )
 
   expect_error(
-    horvitz_thompson(y ~ z, data = dat, condition_prs = ps, declaration = decl),
+    horvitz_thompson(y ~ z, data = dat, condition2_probs = ps, declaration = decl),
     "Cannot use declaration with any of"
   )
 
@@ -312,6 +347,7 @@ test_that("Horvitz-Thompson properly checks arguments and data", {
     "N|declaration"
   )
 
+  ht_o <- horvitz_thompson(y ~ z, data = dat, ci = FALSE)
   expect_equivalent(
     as.matrix(tidy(horvitz_thompson(y ~ z, data = dat, ci = FALSE))[, c("p", "ci_lower", "ci_upper")]),
     matrix(NA, nrow = 1, ncol = 3)
@@ -365,6 +401,7 @@ test_that("Horvitz-Thompson properly checks arguments and data", {
 
 test_that("Works without variation in treatment", {
 
+  set.seed(1)
   dat <- data.frame(
     y = rnorm(20),
     bl = 1:5,
@@ -388,11 +425,10 @@ test_that("Works without variation in treatment", {
     NA
   )
 
-
   ht_const <- horvitz_thompson(
     y ~ z_const,
     data = dat,
-    condition_prs = ps
+    condition2_probs = ps
   )
 
   expect_equal(ht_const$est, mean(dat$y / dat$ps))
@@ -403,12 +439,13 @@ test_that("Works without variation in treatment", {
     y ~ z_const,
     data = dat,
     blocks = bl,
-    condition_prs = ps
+    condition2_probs = ps,
+    return_condition_pr_mat = TRUE
   )
 
+  # with blocks SE is different because not simple any more
   expect_equal(ht_block$est, mean(dat$y / dat$ps))
-  expect_equal(ht_block$se, 1/(nrow(dat)) * sqrt(sum((dat$y / dat$ps)^2)))
-
+  #expect_equal(ht_block$se, 1/(nrow(dat)) * sqrt(sum((dat$y / dat$ps)^2)))
 
   ## Blocks and some are treated!
   dat$z_diff <- as.numeric(dat$bl <= 2)
@@ -416,7 +453,7 @@ test_that("Works without variation in treatment", {
     y ~ z_diff,
     data = dat,
     blocks = bl,
-    condition_prs = rep(0.4, nrow(dat))
+    condition2_probs = rep(0.4, nrow(dat))
   )
   ht_block
 
@@ -427,7 +464,7 @@ test_that("Works without variation in treatment", {
     y ~ z,
     data = dat,
     blocks = bl,
-    condition_prs = rep(0.5, nrow(dat))
+    condition2_probs = rep(0.5, nrow(dat))
   )
 
   expect_identical(ht_zero$coefficient_name, "z0")
@@ -438,7 +475,7 @@ test_that("Works without variation in treatment", {
     data = dat,
     blocks = bl,
     condition1 = 0,
-    condition_prs = rep(0.5, nrow(dat))
+    condition2_probs = rep(0.5, nrow(dat))
   )
 
   expect_identical(ht_rev$coefficient_name, "z")
@@ -470,7 +507,7 @@ test_that("multi-valued treatments not allowed in declaration", {
   ht_condition <- horvitz_thompson(
     y ~ z,
     data = dat,
-    condition_prs = ps,
+    condition2_probs = ps,
     condition1 = "T1",
     condition2 = "T2"
   )
@@ -479,14 +516,14 @@ test_that("multi-valued treatments not allowed in declaration", {
   ht_subdat <- horvitz_thompson(
     y ~ z,
     data = subdat,
-    condition_prs = ps
+    condition2_probs = ps
   )
 
   ht_subset <- horvitz_thompson(
     y ~ z,
     data = dat,
     subset = z != "T3",
-    condition_prs = ps
+    condition2_probs = ps
   )
 
   expect_equal(

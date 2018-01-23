@@ -13,18 +13,13 @@ test_that("Condition arguments behave as expected", {
 
   # Subsetting and just selecting two conditions
   expect_identical(
-    horvitz_thompson(y ~ z, data = dat, subset = z <= 2, condition_prs = ps),
-    horvitz_thompson(y ~ z, data = dat, condition1 = 1, condition2 = 2, condition_prs = ps)
+    horvitz_thompson(y ~ z, data = dat, subset = z <= 2, condition2_probs = ps),
+    horvitz_thompson(y ~ z, data = dat, condition1 = 1, condition2 = 2, condition2_probs = ps)
   )
 
   expect_identical(
     difference_in_means(y ~ z, data = dat, subset = z <= 2),
     difference_in_means(y ~ z, data = dat, condition1 = 1, condition2 = 2)
-  )
-
-  expect_identical(
-    horvitz_thompson(y ~ z, data = dat, subset = z <= 2, condition_prs = ps, blocks = bl),
-    horvitz_thompson(y ~ z, data = dat, condition1 = 1, condition2 = 2, condition_prs = ps, blocks = bl)
   )
 
   expect_identical(
@@ -39,14 +34,14 @@ test_that("Condition arguments behave as expected", {
       data = dat,
       condition1 = 3,
       condition2 = 4,
-      condition_prs = rep(0.5, nrow(dat))
+      condition2_probs = rep(0.5, nrow(dat))
     ))[c("est", "se")],
     tidy(horvitz_thompson(
       y ~ z,
       data = dat,
       condition1 = 4,
       condition2 = 3,
-      condition_prs = rep(0.5, nrow(dat))
+      condition2_probs = rep(0.5, nrow(dat))
     ))[c("est", "se")] * c(-1, 1)
   )
 
@@ -71,7 +66,7 @@ test_that("Condition arguments behave as expected", {
       y ~ z,
       data = dat,
       condition1 = 4,
-      condition_prs = ps
+      condition2_probs = ps
     ),
     "condition1"
   )
@@ -80,7 +75,7 @@ test_that("Condition arguments behave as expected", {
       y ~ z,
       data = dat,
       condition2 = 4,
-      condition_prs = ps
+      condition2_probs = ps
     ),
     "condition1"
   )
@@ -88,7 +83,7 @@ test_that("Condition arguments behave as expected", {
     horvitz_thompson(
       y ~ z,
       data = dat,
-      condition_prs = ps
+      condition2_probs = ps
     ),
     "condition1"
   )

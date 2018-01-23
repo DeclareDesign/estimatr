@@ -27,7 +27,7 @@ clean_model_data <- function(formula,
   if(!is.null(mf$block) && is.character(mf[['block']]))
     mf[["block"]] <- as.symbol(mf[["block"]])
 
-  # Condition_prs...
+  # condition2_probs...
   if(!is.null(mf$condition_pr) && is.character(mf[['condition_pr']]))
     mf[["condition_pr"]] <- as.symbol(mf[["condition_pr"]])
 
@@ -97,9 +97,9 @@ clean_model_data <- function(formula,
   if(!missing(condition_pr)){
     ret[["condition_pr"]] <- model.extract(mf, "condition_pr")
 
-    if (any(ret[["condition_pr"]] < 0 | ret[["condition_pr"]] > 1)) {
+    if (any(ret[["condition_pr"]] <= 0 | ret[["condition_pr"]] > 1)) {
       stop(
-        "`condition_pr` must be a vector of values all within [0, 1], inclusive"
+        "`condition_pr` must be a vector of positive values no greater than 1"
       )
     }
   }

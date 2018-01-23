@@ -60,7 +60,7 @@ test_that("DIM arguments parsed correctly", {
   y <- rnorm(8)
   expect_error(
     difference_in_means(y ~ z, blocks = bl),
-    "Each block must have at least two treated units if design is not"
+    "Each block must have at least two treated"
   )
 
 })

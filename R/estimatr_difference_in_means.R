@@ -161,9 +161,10 @@ difference_in_means <-
         pair_matched <- TRUE
       } else if (any(clust_per_block == 2) & any(clust_per_block > 2)) {
         stop(
-          "Blocks must either all have two units (or clusters) or all have ",
+          "Blocks must either all have two units/clusters (i.e. a matched pairs design) or all have ",
           "more than two units. You cannot mix blocks of size two with ",
-          "blocks of a larger size."
+          "blocks of a larger size. In order to estimate treatment effects with ",
+          "this design, use inverse propensity score weights with lm_robust()"
         )
       }
 
@@ -307,7 +308,7 @@ difference_in_means_internal <-
     ## Check to make sure multiple in each group if pair matched is false
     if (!pair_matched & (N2 == 1 | N1 == 1)) {
       stop(
-        "Each block must have at least two treated units if design is not ",
+        "Each block must have at least two treated/control units if design is not ",
         "pair-matched (i.e. every block is of size two). Only one treated or ",
         "control unit in a block makes standard errors impossible to calculate"
       )
