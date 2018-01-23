@@ -36,6 +36,14 @@ test_that("Horvitz-Thompson works in simple case", {
     return_condition_pr_mat = TRUE
   )
 
+  # Works with constant effects assumption
+  ht_const <- horvitz_thompson(
+    y ~ z,
+    data = dat,
+    declaration = simp_decl,
+    se_type = "constant"
+  )
+
   # picks out right declaration
   ht_rev <- horvitz_thompson(
     y ~ z,
@@ -44,6 +52,18 @@ test_that("Horvitz-Thompson works in simple case", {
     condition2 = 0,
     declaration = simp_decl,
     return_condition_pr_mat = TRUE
+  )
+
+  # Fails properly if condition in treatment but not in declaration
+  dat$z[1] <- 2
+  expect_error(
+    horvitz_thompson(
+      y ~ z,
+      data = dat,
+      condition1 = 0,
+      condition2 = 2,
+      declaration = simp_decl
+    )
   )
 
   expect_equal(
@@ -156,7 +176,6 @@ test_that("Horvitz-Thompson works with clustered data", {
   )
 
   # Fails with condition_pr varying within cluster
-  dat$cl
   dat$p_wrong <- dat$ps
   dat$p_wrong[1] <- 0.545
 
@@ -165,6 +184,13 @@ test_that("Horvitz-Thompson works with clustered data", {
     "`condition_prs` must be constant within `cluster`"
   )
 
+  dat$z_wrong <- dat$z
+  dat$z_wrong[2] <- 0
+  table(dat$z_wrong, dat$cl)
+  expect_error(
+    horvitz_thompson(y ~ z_wrong, data = dat, clusters = cl, condition_prs = ps),
+    "All units within a cluster must have the same treatment condition"
+  )
 })
 
 # TODO test missingness works as expected
@@ -404,7 +430,7 @@ test_that("Works without variation in treatment", {
 
 })
 
-test_that("multi-valued treatments not allowed after subset or in declaration", {
+test_that("multi-valued treatments not allowed in declaration", {
 
   dat <- data.frame(
     y = rnorm(20),

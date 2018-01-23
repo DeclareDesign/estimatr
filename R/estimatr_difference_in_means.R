@@ -286,7 +286,7 @@ difference_in_means_internal <-
         data$cluster <- droplevels(data$cluster)
       }
 
-      if (!all(tapply(data$t, data$cluster, function(x) all(x == x[1])))) {
+      if (any(!tapply(data$t, data$cluster, function(x) all(x == x[1])))) {
         stop(
           "All units within a cluster must have the same treatment condition."
         )

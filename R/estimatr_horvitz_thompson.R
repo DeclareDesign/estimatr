@@ -391,9 +391,9 @@ horvitz_thompson_internal <-
     # so that the treatment vector t doesn't have to be built anywhere else
     if (!is.null(data$clusters)) {
 
-      if (!all(tapply(data$t, data$clusters, function(x) all(x == x[1])))) {
+      if (any(!tapply(data$t, data$clusters, function(x) all(x == x[1])))) {
         stop(
-          "All units within a cluster must have the same treatment condition."
+          "All units within a cluster must have the same treatment condition"
         )
       }
     }
@@ -542,6 +542,7 @@ horvitz_thompson_internal <-
         #print('full youngs')
         #print(condition_pr_mat)
         # Young's inequality
+        print("here")
         varN2 <-
           sum(Y2^2) +
             sum(Y1^2) +
@@ -561,13 +562,15 @@ horvitz_thompson_internal <-
 
         if (!is.nan(varN2)) {
           if (varN2 < 0) {
-            warning("Variance below 0, consider using constant effects assumption or a different estimator.")
+            warning("Variance below 0, consider using constant effects assumption or a different estimator")
+            se <- NA
           } else {
             se <- sqrt(varN2) / N
           }
 
         } else {
-          stop("Variance is NaN. This is likely the result of a complex condition probability matrix.")
+          warning("Variance is NaN. This is likely the result of a complex condition probability matrix")
+          se <- NA
         }
       }
     }
