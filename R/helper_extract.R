@@ -8,7 +8,6 @@
 #' @param model an object of class \code{\link{lm_robust}}
 #'
 #'
-#' @export
 extract.lm_robust <- function(model, include.ci = TRUE, include.rsquared = TRUE, include.adjrs = TRUE,
                        include.nobs = TRUE, include.fstatistic = FALSE, include.rmse = TRUE, ...) {
 
@@ -77,5 +76,3 @@ extract.lm_robust <- function(model, include.ci = TRUE, include.rsquared = TRUE,
     return(tr)
   }
 }
-
-setMethod("extract", signature=className("lm_robust", "estimatr"),definition=extract.lm_robust)
