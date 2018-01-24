@@ -111,6 +111,8 @@ tidy_data_frame <- function(object, digits = NULL) {
     )
 
   return_frame <- as.data.frame(object[return_cols], stringsAsFactors = FALSE)
+  row.names(return_frame) <- NULL
+  return(return_frame)
 }
 
 warn_singularities <- function(object) {

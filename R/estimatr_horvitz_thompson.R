@@ -1,7 +1,7 @@
-#' Horvitz-Thompson estimator for unbiased treatment effects
+#' Horvitz-Thompson estimator for two-armed trials
 #'
-#' @description These Horvitz-Thompson estimators are unbiased for
-#' any design as long as the randomization scheme is known.
+#' @description Horvitz-Thompson estimators that are unbiased for designs in
+#' which the randomization scheme is known
 #'
 #' @param formula an object of class formula, as in \code{\link{lm}}, such as
 #' \code{Y ~ Z} with only one variable on the right-hand side, the treatment.

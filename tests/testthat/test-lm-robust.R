@@ -272,3 +272,45 @@ test_that("lm robust works with rank-deficient X", {
     tidy(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat, weights = w))
   )
 })
+
+test_that("r squared is right", {
+
+  lmo <- summary(lm(mpg ~ hp, mtcars))
+  lmow <- summary(lm(mpg ~ hp, mtcars, weights = wt))
+  lmon <- summary(lm(mpg ~ hp-1, mtcars))
+  lmown <- summary(lm(mpg ~ hp-1, mtcars, weights = wt))
+
+  lmro <- lm_robust(mpg ~ hp, mtcars)
+  lmrow <- lm_robust(mpg ~ hp, mtcars, weights = wt)
+  lmron <- lm_robust(mpg ~ hp-1, mtcars)
+  lmrown <- lm_robust(mpg ~ hp-1, mtcars, weights = wt)
+  lmrclust <- lm_robust(mpg ~ hp-1, mtcars, weights = wt, clusters = carb) # for good measure
+  expect_equal(
+    c(lmo$r.squared, lmo$adj.r.squared, lmo$fstatistic),
+    c(lmro$r.squared, lmro$adj.r.squared, lmro$fstatistic)
+  )
+
+  # Wrong!
+  # expect_equal(
+  #   c(lmow$r.squared, lmow$adj.r.squared, lmow$fstatistic),
+  #   c(lmro$r.squared, lmro$adj.r.squared, lmro$fstatistic)
+  # )
+  # but res_var is right, its in tot_var
+  expect_equal(lmow$sigma^2, lmrow$res_var)
+
+  expect_equal(
+    c(lmon$r.squared, lmon$adj.r.squared, lmon$fstatistic),
+    c(lmron$r.squared, lmron$adj.r.squared, lmron$fstatistic)
+  )
+
+  expect_equal(
+    c(lmown$r.squared, lmown$adj.r.squared, lmown$fstatistic),
+    c(lmrown$r.squared, lmrown$adj.r.squared, lmrown$fstatistic)
+  )
+
+  expect_equal(
+    c(lmown$r.squared, lmown$adj.r.squared, lmown$fstatistic),
+    c(lmrclust$r.squared, lmrclust$adj.r.squared, lmrclust$fstatistic)
+  )
+})
+

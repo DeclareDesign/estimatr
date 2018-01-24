@@ -21,30 +21,31 @@ of observations to be used.}
 \item{clusters}{An optional bare (unquoted) name of the variable that
 corresponds to the clusters in the data.}
 
-\item{se_type}{The sort of standard error sought. Without clustering:
-"HC0", "HC1" (or "stata", the equivalent), "HC2" (default), "HC3", or
-"classical". With clustering: "CR0", "CR2" (default), or "stata". are
+\item{se_type}{The sort of standard error sought. If `clusters` is
+not specified the options are "HC0", "HC1" (or "stata", the equivalent),
+ "HC2" (default), "HC3", or
+"classical". If `clusters` is specified the options are "CR0", "CR2" (default), or "stata" are
 permissible.}
 
-\item{ci}{A boolean for whether to compute and return p-values and confidence
+\item{ci}{logical. Whether to compute and return p-values and confidence
 intervals, TRUE by default.}
 
 \item{alpha}{The significance level, 0.05 by default.}
 
-\item{return_vcov}{a boolean for whether to return the variance-covariance
+\item{return_vcov}{logical. Whether to return the variance-covariance
 matrix for later usage, TRUE by default.}
 
 \item{try_cholesky}{a boolean for whether to try using a Cholesky
-decomposition to solve LS instead of a QR decomposition, FALSE by default.
-Using a Cholesky decomposition may result in speed gains, but should only
-be used if users are sure their model is full-rank (i.e. there is no
+decomposition to solve least squares instead of a QR decomposition,
+FALSE by default. Using a Cholesky decomposition may result in speed gains, but should only
+be used if users are sure their model is full-rank (i.e., there is no
 perfect multi-collinearity)}
 }
 \value{
-\code{lm_robust} returns an object of class \code{"lm_robust"}.
+An object of class \code{"lm_robust"}.
 
-The functions \code{summary} and \code{\link{tidy}} can be used to get
-the results as a \code{data.frame}. To get useful data out of the return,
+The post-estimation commands functions \code{summary} and \code{\link{tidy}}
+return results in a \code{data.frame}. To get useful data out of the return,
 you can use these data frames, you can use the resulting list directly, or
 you can use the generic accessor functions \code{coef}, \code{vcov},
 \code{confint}, and \code{predict}.
@@ -54,7 +55,7 @@ following components:
   \item{est}{the estimated coefficients}
   \item{se}{the estimated standard errors}
   \item{df}{the estimated degrees of freedom}
-  \item{p}{the p-values from the t-test using \code{est}, \code{se}, and \code{df}}
+  \item{p}{the p-values from two-sided t-test using \code{est}, \code{se}, and \code{df}}
   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
   \item{coefficient_name}{a character vector of coefficient names}
@@ -73,19 +74,20 @@ This formula fits a linear model, provides a variety of
 options for robust standard errors, and conducts coefficient tests
 }
 \details{
-This function does linear regression and provides a variety of standard
-errors. It takes formulae and data much in the same was as \code{\link{lm}}
+This function performs linear regression and provides a variety of standard
+errors. It takes a formula and data much in the same was as \code{\link{lm}}
 does, and all auxiliary variables, such as clusters and weights, can be
 passed either as quoted names of columns, as bare column names, or
 as a self-contained vector. Examples of usage can be seen below and in the
 \href{http://estimatr.declaredesign.org/articles/getting-started.html}{Getting Started vignette}.
 
-To see what the exact equations and computations each different
-type of standard error entails, users can see the
-\href{http://estimatr.declaredesign.org/articles/technical-notes.html}{technical notes in this vignette}.
-The default estimators for the non-clustered and clustered case have been
-chosen for desirable similarities to randomization estimators, performance
-in small samples, or some combination of both. The default for the case
+The technical notes in
+\href{http://estimatr.declaredesign.org/articles/technical-notes.html}{this vignette}
+specify the exact estimators used by this function.
+The default variance estimators have been chosen largely in accordance with the
+procedures in
+\href{https://github.com/acoppock/Green-Lab-SOP/blob/master/Green_Lab_SOP.pdf}{this manual}.
+The default for the case
 without clusters is the HC2 estimator and the default with clusters is the
 analogous CR2 estimator. Users can easily replicate Stata standard errors in
 the clustered or non-clustered case by setting \code{se_type = "stata"}.
@@ -107,18 +109,17 @@ dat <- fabricate(
   z = rbinom(N, 1, prob = 0.4)
 )
 
-# Default is to use HC2 robust standard errors
+# Default variance estimator is HC2 robust standard errors
 lmro <- lm_robust(y ~ x + z, data = dat)
 
 # Can `tidy()` or `summary()` the data to easily get output as a data.frame
 tidy(lmro)
 summary(lmro)
-# Can also get coefficients many ways
-all.equal(
-  lmro$est,
-  coef(lmro),
-  tidy(lmro)$est,
-  check.attributes = FALSE
+# Can also get coefficients three
+lmro$est,
+coef(lmro),
+tidy(lmro)$est,
+check.attributes = FALSE
 )
 
 # Can recover classical standard errors
@@ -170,6 +171,7 @@ lm_robust(y ~ x + z, data = dat, alpha = 0.1)
 Abadie, Alberto, Susan Athey, Guido W Imbens, and Jeffrey Wooldridge. 2017. "A Class of Unbiased Estimators of the Average Treatment Effect in Randomized Experiments." arXiv Pre-Print. \url{https://arxiv.org/abs/1710.02926v2}.
 
 Bell, Robert M, and Daniel F McCaffrey. 2002. "Bias Reduction in Standard Errors for Linear Regression with Multi-Stage Samples." Survey Methodology 28 (2): 169-82.
+
 MacKinnon, James, and Halbert White. 1985. "Some Heteroskedasticity-Consistent Covariance Matrix Estimators with Improved Finite Sample Properties." Journal of Econometrics 29 (3): 305-25. \url{https://doi.org/10.1016/0304-4076(85)90158-7}.
 
 Pustejovsky, James E, and Elizabeth Tipton. 2016. "Small Sample Methods for Cluster-Robust Variance Estimation and Hypothesis Testing in Fixed Effects Models." Journal of Business & Economic Statistics. Taylor & Francis. \url{https://doi.org/10.1080/07350015.2016.1247004}.

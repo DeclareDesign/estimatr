@@ -76,8 +76,7 @@ We also return \code{terms} and \code{contrasts}, used by \code{predict}.
 \description{
 This function is a wrapper for \code{\link{lm_robust}} that
 is useful for estimating treatment effects with pre-treatment covariate
-data. This implements the method described by Lin (2013) to reduce the bias
-of such estimation
+data. This implements the method described by Lin (2013).
 }
 \details{
 This function is simply a wrapper for \code{\link{lm_robust}}. This method
@@ -103,7 +102,7 @@ dat <- fabricate(
   y1 = rnorm(N) + x + 0.35
 )
 
-dat$z <- simple_ra(N = nrow(dat))
+dat$z <- complete_ra(N = nrow(dat))
 dat$y <- ifelse(dat$z == 1, dat$y1, dat$y0)
 
 # Same specification as `lm_robust()` with one additional argument

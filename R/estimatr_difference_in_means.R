@@ -1,7 +1,7 @@
 #' Design-based difference-in-means estimator
 #'
-#' @description This difference-in-means estimator selects the appropriate
-#' point estimator, standard errors, and degrees of freedom for a variety of
+#' @description Difference-in-means estimators that selects the appropriate
+#' point estimate, standard errors, and degrees of freedom for a variety of
 #' designs: unit randomized, cluster randomized, block randomized,
 #' block-cluster randomized, matched-pairs, and matched-pair cluster
 #' randomized designs
@@ -89,11 +89,11 @@
 #' dat <- fabricate(
 #'   N = 100,
 #'   Y = rnorm(100),
-#'   Z_simp = simple_ra(N, prob = 0.4),
+#'   Z_comp = complete_ra(N, prob = 0.4),
 #' )
 #'
-#' table(dat$Z_simp)
-#' difference_in_means(Y ~ Z_simp, data = dat)
+#' table(dat$Z_comp)
+#' difference_in_means(Y ~ Z_comp, data = dat)
 #'
 #' # Accurates estimates and standard errors for clustered designs
 #' dat$clust <- sample(20, size = nrow(dat), replace = TRUE)
@@ -143,8 +143,8 @@
 #'
 #' # Specifying weights will result in estimation via `lm_robust`
 #' dat$w <- runif(nrow(dat))
-#' difference_in_means(Y ~ Z_simp, weights = w, data = dat)
-#' lm_robust(Y ~ Z_simp, weights = w, data = dat)
+#' difference_in_means(Y ~ Z_comp, weights = w, data = dat)
+#' lm_robust(Y ~ Z_comp, weights = w, data = dat)
 #'
 #' @export
 difference_in_means <-
@@ -402,7 +402,8 @@ difference_in_means_internal <-
         ci = TRUE,
         try_cholesky = TRUE,
         alpha = alpha,
-        return_vcov = FALSE
+        return_vcov = FALSE,
+        has_int = TRUE
       )
 
       diff <- cr2_out$est[2]
@@ -449,7 +450,8 @@ difference_in_means_internal <-
           ci = TRUE,
           try_cholesky = TRUE,
           alpha = alpha,
-          return_vcov = FALSE
+          return_vcov = FALSE,
+          has_int = TRUE
         )
 
         diff <- w_hc2_out$est[2]

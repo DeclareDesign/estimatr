@@ -67,8 +67,8 @@ least the following components:
   \item{design}{the name of the design learned from the arguments passed}
 }
 \description{
-This difference-in-means estimator selects the appropriate
-point estimator, standard errors, and degrees of freedom for a variety of
+Difference-in-means estimators that selects the appropriate
+point estimate, standard errors, and degrees of freedom for a variety of
 designs: unit randomized, cluster randomized, block randomized,
 block-cluster randomized, matched-pairs, and matched-pair cluster
 randomized designs
@@ -104,11 +104,11 @@ library(randomizr)
 dat <- fabricate(
   N = 100,
   Y = rnorm(100),
-  Z_simp = simple_ra(N, prob = 0.4),
+  Z_comp = complete_ra(N, prob = 0.4),
 )
 
-table(dat$Z_simp)
-difference_in_means(Y ~ Z_simp, data = dat)
+table(dat$Z_comp)
+difference_in_means(Y ~ Z_comp, data = dat)
 
 # Accurates estimates and standard errors for clustered designs
 dat$clust <- sample(20, size = nrow(dat), replace = TRUE)
@@ -158,8 +158,8 @@ difference_in_means(
 
 # Specifying weights will result in estimation via `lm_robust`
 dat$w <- runif(nrow(dat))
-difference_in_means(Y ~ Z_simp, weights = w, data = dat)
-lm_robust(Y ~ Z_simp, weights = w, data = dat)
+difference_in_means(Y ~ Z_comp, weights = w, data = dat)
+lm_robust(Y ~ Z_comp, weights = w, data = dat)
 
 }
 \references{

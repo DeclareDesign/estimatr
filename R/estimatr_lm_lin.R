@@ -1,10 +1,8 @@
-
 #' Linear regression with the Lin (2013) covariate adjustment
 #'
 #' @description This function is a wrapper for \code{\link{lm_robust}} that
 #' is useful for estimating treatment effects with pre-treatment covariate
-#' data. This implements the method described by Lin (2013) to reduce the bias
-#' of such estimation
+#' data. This implements the method described by Lin (2013).
 #'
 #' @param formula an object of class formula, as in \code{\link{lm}}, such as
 #' \code{Y ~ Z} with only one variable on the right-hand side, the treatment
@@ -87,7 +85,7 @@
 #'   y1 = rnorm(N) + x + 0.35
 #' )
 #'
-#' dat$z <- simple_ra(N = nrow(dat))
+#' dat$z <- complete_ra(N = nrow(dat))
 #' dat$y <- ifelse(dat$z == 1, dat$y1, dat$y0)
 #'
 #' # Same specification as `lm_robust()` with one additional argument
@@ -286,7 +284,8 @@ lm_lin <- function(formula,
       se_type = se_type,
       alpha = alpha,
       return_vcov = return_vcov,
-      try_cholesky = try_cholesky
+      try_cholesky = try_cholesky,
+      has_int = has_intercept
     )
 
   return_list <- lm_return(

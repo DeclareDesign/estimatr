@@ -79,8 +79,8 @@ test_that("Test LM Lin", {
   lm_rob_out <- lm_robust(Y ~ Z + Z * X1_bar + Z * X2_bar, data = dat)
 
   expect_identical(
-    summary(lm_lin_out),
-    summary(lm_rob_out)
+    tidy(lm_lin_out),
+    tidy(lm_rob_out)
   )
 
   expect_equivalent(
@@ -152,12 +152,12 @@ test_that("Test LM Lin", {
   dat$X2_bar <- dat$X2 - mean(dat$X2[-23])
 
   expect_equal(
-    summary(lm_lin(
+    tidy(lm_lin(
       Y ~ Z,
       covariates = ~ X1 + X2,
       data = dat
     )),
-    summary(lm_robust(
+    tidy(lm_robust(
       Y ~ Z + Z * X1_bar + Z * X2_bar,
       data = dat
     ))
@@ -165,13 +165,13 @@ test_that("Test LM Lin", {
 
   ## Test cluster passes through
   expect_identical(
-    summary(lm_lin(
+    tidy(lm_lin(
       Y ~ Z,
       covariates = ~ X1 + X2,
       data = dat,
       clusters = cluster
     )),
-    summary(lm_robust(
+    tidy(lm_robust(
       Y ~ Z + Z * X1_bar + Z * X2_bar,
       data = dat,
       clusters = cluster
@@ -184,14 +184,14 @@ test_that("Test LM Lin", {
   dat$X2_bar <- dat$X2 - mean(dat$X2[keep])
 
   expect_equal(
-    summary(lm_lin(
+    tidy(lm_lin(
       Y ~ Z,
       covariates = ~ X1 + X2,
       data = dat,
       clusters = cluster,
       subset = Y > 0
     )),
-    summary(lm_robust(
+    tidy(lm_robust(
       Y ~ Z + Z * X1_bar + Z * X2_bar,
       data = dat,
       clusters = cluster,
@@ -212,13 +212,13 @@ test_that("Test LM Lin", {
   dat$X21_bar <- as.numeric(dat$X2 == 1) - mean(dat$X2 == 1)
 
   expect_equivalent(
-    summary(lm_lin(
+    tidy(lm_lin(
       Y ~ treat,
       covariates = ~ X1 + X2,
       data = dat,
       clusters = cluster
     )),
-    summary(lm_robust(
+    tidy(lm_robust(
       Y ~ treat + treat * X1_bar + treat * X21_bar,
       data = dat,
       clusters = cluster

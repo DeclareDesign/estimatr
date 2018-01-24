@@ -2,7 +2,7 @@
 % Please edit documentation in R/estimatr_horvitz_thompson.R
 \name{horvitz_thompson}
 \alias{horvitz_thompson}
-\title{Horvitz-Thompson estimator for unbiased treatment effects}
+\title{Horvitz-Thompson estimator for two-armed trials}
 \usage{
 horvitz_thompson(formula, data, blocks, clusters, simple = NULL,
   condition_prs, condition_pr_mat = NULL, declaration = NULL, subset,
@@ -94,8 +94,8 @@ least the following components:
   \item{condition_pr_mat}{the condition probability matrix if \code{return_condition_pr_mat} is TRUE}
 }
 \description{
-These Horvitz-Thompson estimators are unbiased for
-any design as long as the randomization scheme is known.
+Horvitz-Thompson estimators that are unbiased for designs in
+which the randomization scheme is known
 }
 \details{
 This function implements the Horvitz-Thompson estimator for

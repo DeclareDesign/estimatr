@@ -381,7 +381,7 @@ test_that("Works without variation in treatment", {
     data = dat
   )
 
-  expect_equal(ht_const_1$est, mean(dat$y))
+  expect_equivalent(ht_const_1$est, mean(dat$y))
   expect_equal(ht_const_1$se, 1 / (nrow(dat)) * sqrt(sum(dat$y ^ 2)))
 
 
@@ -396,7 +396,7 @@ test_that("Works without variation in treatment", {
     condition_prs = ps
   )
 
-  expect_equal(ht_const$est, mean(dat$y / dat$ps))
+  expect_equivalent(ht_const$est, mean(dat$y / dat$ps))
   expect_equal(ht_const$se, 1 / (nrow(dat)) * sqrt(sum((dat$y / dat$ps) ^ 2)))
 
   ## Blocks and all are treated
@@ -409,7 +409,7 @@ test_that("Works without variation in treatment", {
   )
 
   # with blocks SE is different because not simple any more
-  expect_equal(ht_block$est, mean(dat$y / dat$ps))
+  expect_equivalent(ht_block$est, mean(dat$y / dat$ps))
   # expect_equal(ht_block$se, 1/(nrow(dat)) * sqrt(sum((dat$y / dat$ps)^2)))
 
   ## Blocks and some are treated!
