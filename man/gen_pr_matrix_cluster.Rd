@@ -9,9 +9,10 @@ gen_pr_matrix_cluster(clusters, treat_probs, simple)
 \arguments{
 \item{clusters}{A vector of clusters}
 
-\item{treat_probs}{A vector of treatment (condition) probabilities}
+\item{treat_probs}{A vector of treatment (condition 2) probabilities}
 
-\item{simple}{A boolean for whether the assignment is a random sample assignment (TRUE, default) or complete random assignment (FALSE)}
+\item{simple}{A boolean for whether the assignment is a random sample
+assignment (TRUE, default) or complete random assignment (FALSE)}
 }
 \description{
 Generate condition probability matrix given clusters and probabilities

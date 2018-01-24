@@ -35,7 +35,7 @@ the condition 2 (treatment) probabilities. See details.}
 probabilities of all units in condition1 and condition2. See details.}
 
 \item{declaration}{An object of class \code{"ra_declaration"}, from
-the \code{\link[randomizr]{declare_ra}} function in the \code{randomizr}
+the \code{\link[randomizr]{declare_ra}} function in the \pkg{randomizr}
 package. This is the third way that one can specify a design for this
 estimator. Cannot be used along with any of \code{condition_prs},
 \code{blocks}, \code{clusters}, or \code{condition_pr_mat}. See details.}
@@ -97,7 +97,7 @@ for more information and references, or see the references below.
 
 There are three distinct ways that users can specify the design to the
 function. The preferred way is to use
-the \code{\link[randomizr]{declare_ra}} function in the \code{randomizr}
+the \code{\link[randomizr]{declare_ra}} function in the \pkg{randomizr}
 package. This function takes several arguments, including blocks, clusters,
 treatment probabilities, whether randomization is simple or not, and more.
 Passing the outcome of that function, an object of class
@@ -215,4 +215,7 @@ ht_cl_manual
 Aronow, Peter M, and Joel A Middleton. 2013. "A Class of Unbiased Estimators of the Average Treatment Effect in Randomized Experiments." Journal of Causal Inference 1 (1): 135-54. \url{https://doi.org/10.1515/jci-2012-0009}.
 Aronow, Peter M, and Cyrus Samii. 2017. "Estimating Average Causal Effects Under Interference Between Units." Annals of Applied Statistics, forthcoming. \url{https://arxiv.org/abs/1305.6156v3}.
 Middleton, Joel A, and Peter M Aronow. 2015. "Unbiased Estimation of the Average Treatment Effect in Cluster-Randomized Experiments." Statistics, Politics and Policy 6 (1-2): 39-75. \url{https://doi.org/10.1515/spp-2013-0002}.
+}
+\seealso{
+\code{\link[randomizr]{declare_ra}}
 }

@@ -2,29 +2,39 @@
 % Please edit documentation in R/helper_condition_pr_matrix.R
 \name{declaration_to_condition_pr_mat}
 \alias{declaration_to_condition_pr_mat}
-\title{Builds a condition probaability matrix for Horvitz-Thompson estimation from randomizr declaration}
+\title{Builds condition probability matrices for Horvitz-Thompson estimation from
+\pkg{randomizr} declaration}
 \usage{
 declaration_to_condition_pr_mat(declaration)
 }
 \arguments{
-\item{declaration}{An object of class 'ra_declaration' that contains the experimental design}
+\item{declaration}{An object of class \code{"ra_declaration"}, generated
+by the \code{\link[randomizr]{declare_ra}} function in \pkg{randomizr}. This
+object contains the experimental design that will be represented in a}
+}
+\value{
+a numeric 2n*2n matrix of marginal and joint condition treatment
+probabilities to be passed to the \code{condition_pr_mat} argument of
+\code{\link{horvitz_thompson}}. See details.
 }
 \description{
-Builds a condition probaability matrix for Horvitz-Thompson estimation from randomizr declaration
+Builds condition probability matrices for Horvitz-Thompson estimation from
+\pkg{randomizr} declaration
 }
 \details{
-This function takes a 'ra_declaration' from the
-\code{\link[randomizr]{declare_ra}} function in \pkg{randomizr} and returns
- a 2n*2n matrix that can be used to fully specify the design for
- \code{\link{horvitz_thompson}} estimation. This is done by passing this
- matrix to the \code{condition_pr_mat} argument of
- \code{\link{horvitz_thompson}}.
+This function takes a \code{"ra_declaration"}, generated
+by the \code{\link[randomizr]{declare_ra}} function in \pkg{randomizr} and
+returns a 2n*2n matrix that can be used to fully specify the design for
+\code{\link{horvitz_thompson}} estimation. This is done by passing this
+matrix to the \code{condition_pr_mat} argument of
+\code{\link{horvitz_thompson}}.
 
 Currently, this function can learn the condition probability matrix for a
 wide variety of randomizations: simple, complete, simple clustered, complete
 clustered, blocked, block-clustered.
 
-This matrix is made up of four-submatrices, each of which corresponds to the
+A condition probability matrix is made up of four-submatrices, each of which
+corresponds to the
 joint and marginal probability that each observation is in one of the two
 treatment conditions.
 
@@ -55,24 +65,29 @@ Pr(Z_i = Condition2, Z_j = Condition2).
 }
 \examples{
 
-# Learn condition probability matrix from complete clustered design
+# Learn condition probability matrix from complete blocked design
 library(randomizr)
 n <- 100
 dat <- data.frame(
-  clusts = sample(letters[1:10], size = n, replace = TRUE),
+  blocks = sample(letters[1:10], size = n, replace = TRUE),
   y = rnorm(n)
 )
 
-# Declare complete clustered randomization
-cl_declaration <- declare_ra(clusters = dat$clusts, prob = 0.4, simple = FALSE)
+# Declare complete blocked randomization
+bl_declaration <- declare_ra(blocks = dat$blocks, prob = 0.4, simple = FALSE)
 # Get probabilities
-clust_pr_mat <- declaration_to_condition_pr_mat(cl_declaration)
+block_pr_mat <- declaration_to_condition_pr_mat(bl_declaration)
 # Do randomiztion
-dat$z <- cl_declaration$ra_function()
+dat$z <- bl_declaration$ra_function()
 
-horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_pr_mat)
+horvitz_thompson(y ~ z, data = dat, condition_pr_mat = block_pr_mat)
 
 # When you pass a declaration to horvitz_thompson, this function is called
-horvitz_thompson(y ~ z, data = dat, declaration = cl_declaration)
 
+# Equivalent to above call
+horvitz_thompson(y ~ z, data = dat, declaration = bl_declaration)
+
+}
+\seealso{
+\code{\link{permutations_to_condition_pr_mat}}
 }

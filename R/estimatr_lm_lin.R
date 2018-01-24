@@ -74,6 +74,8 @@
 #' }
 #' We also return \code{terms} and \code{contrasts}, used by \code{predict}.
 #'
+#' @seealso \code{\link{lm_robust}}
+#'
 #' @examples
 #' library(fabricatr)
 #' library(randomizr)

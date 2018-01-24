@@ -21,7 +21,7 @@
 #' @param condition_pr_mat An optional 2n * 2n matrix of marginal and joint
 #' probabilities of all units in condition1 and condition2. See details.
 #' @param declaration An object of class \code{"ra_declaration"}, from
-#' the \code{\link[randomizr]{declare_ra}} function in the \code{randomizr}
+#' the \code{\link[randomizr]{declare_ra}} function in the \pkg{randomizr}
 #' package. This is the third way that one can specify a design for this
 #' estimator. Cannot be used along with any of \code{condition_prs},
 #' \code{blocks}, \code{clusters}, or \code{condition_pr_mat}. See details.
@@ -71,7 +71,7 @@
 #'
 #' There are three distinct ways that users can specify the design to the
 #' function. The preferred way is to use
-#' the \code{\link[randomizr]{declare_ra}} function in the \code{randomizr}
+#' the \code{\link[randomizr]{declare_ra}} function in the \pkg{randomizr}
 #' package. This function takes several arguments, including blocks, clusters,
 #' treatment probabilities, whether randomization is simple or not, and more.
 #' Passing the outcome of that function, an object of class
@@ -108,6 +108,8 @@
 #' matrix allows users to specify marginal and joint marginal probabilities
 #' of units being in conditions 1 and 2 of arbitrary complexity. Users should
 #' only use this option if they are certain they know what they are doing.
+#'
+#' @seealso \code{\link[randomizr]{declare_ra}}
 #'
 #' @references
 #' Aronow, Peter M, and Joel A Middleton. 2013. "A Class of Unbiased Estimators of the Average Treatment Effect in Randomized Experiments." Journal of Causal Inference 1 (1): 135-54. \url{https://doi.org/10.1515/jci-2012-0009}.
