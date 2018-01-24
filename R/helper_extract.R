@@ -1,0 +1,81 @@
+# This code modified from
+# https://github.com/leifeld/texreg/blob/master/R/extract.R (no LICENSE)
+#' Extract model data for texreg output
+#'
+#' @description Prepares an \code{"lm_robust"} object for the \pkg{texreg}
+#' package.
+#'
+#' @param model an object of class \code{\link{lm_robust}}
+#'
+#'
+#' @export
+extract.lm_robust <- function(model, include.ci = TRUE, include.rsquared = TRUE, include.adjrs = TRUE,
+                       include.nobs = TRUE, include.fstatistic = FALSE, include.rmse = TRUE, ...) {
+
+  has_texreg <- requireNamespace("texreg", quietly = TRUE)
+
+  if (has_texreg) {
+  } else {
+    s <- summary(model, ...)
+
+    names <- rownames(s$coefficients)
+    co <- s$coefficients[, 1]
+    se <- s$coefficients[, 2]
+    pval <- s$coefficients[, 3]
+    if (include.ci) {
+      cilow <- s$coefficients[, 4]
+      ciupper <- s$coefficients[, 5]
+
+    }
+
+    rs <- s$r.squared  #extract R-squared
+    adj <- s$adj.r.squared  #extract adjusted R-squared
+    n <- nobs(model)  #extract number of observations
+
+    gof <- numeric()
+    gof.names <- character()
+    gof.decimal <- logical()
+    if (include.rsquared) {
+      gof <- c(gof, rs)
+      gof.names <- c(gof.names, "R$^2$")
+      gof.decimal <- c(gof.decimal, TRUE)
+    }
+    if (include.adjrs) {
+      gof <- c(gof, adj)
+      gof.names <- c(gof.names, "Adj.\ R$^2$")
+      gof.decimal <- c(gof.decimal, TRUE)
+    }
+    if (include.nobs) {
+      gof <- c(gof, n)
+      gof.names <- c(gof.names, "Num.\ obs.")
+      gof.decimal <- c(gof.decimal, FALSE)
+    }
+    if (include.fstatistic) {
+      fstat <- s$fstatistic[[1]]
+      gof <- c(gof, fstat)
+      gof.names <- c(gof.names, "F statistic")
+      gof.decimal <- c(gof.decimal, TRUE)
+    }
+    if (include.rmse && !is.null(s[["res_var"]])) {
+      rmse <- sqrt(s[["res_var"]])
+      gof <- c(gof, rmse)
+      gof.names <- c(gof.names, "RMSE")
+      gof.decimal <- c(gof.decimal, TRUE)
+    }
+
+    tr <- texreg::createTexreg(
+      coef.names = names,
+      coef = co,
+      se = se,
+      pvalues = pval,
+      ci.low = cilow,
+      ci.up = ciupper,
+      gof.names = gof.names,
+      gof = gof,
+      gof.decimal = gof.decimal
+    )
+    return(tr)
+  }
+}
+
+setMethod("extract", signature=className("lm_robust", "estimatr"),definition=extract.lm_robust)
