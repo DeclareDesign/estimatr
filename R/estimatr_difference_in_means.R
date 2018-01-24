@@ -2,8 +2,9 @@
 #'
 #' @description This difference-in-means estimator selects the appropriate
 #' point estimator, standard errors, and degrees of freedom for a variety of
-#' designs, including clustered randomization, matched-pairs randomization,
-#' and more
+#' designs: unit randomized, cluster randomized, block randomized,
+#' block-cluster randomized, matched-pairs, and matched-pair cluster
+#' randomized designs
 #'
 #' @param formula an object of class formula, as in \code{\link{lm}}, such as
 #' \code{Y ~ Z} with only one variable on the right-hand side, the treatment.
@@ -27,7 +28,7 @@
 #' default be 0 and \code{condition2} will be 1). See the examples for more.
 #' @param condition2 value in the treatment vector of the condition to be the
 #' treatment. See \code{condition1}.
-#' @param ci A boolean for whether to compute and return pvalues and
+#' @param ci A boolean for whether to compute and return p-values and
 #' confidence intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
 #'
@@ -79,7 +80,7 @@
 #'
 #' @references
 #' Gerber, Alan S, and Donald P Green. 2012. Field Experiments: Design, Analysis, and Interpretation. New York: W.W. Norton.
-#' Imai, Kosuke, Gary King, Clayton Nall, and others. 2009. "The Essential Role of Pair Matching in Cluster-Randomized Experiments, with Application to the Mexican Universal Health Insurance Evaluation." Statistical Science 24 (1). Institute of Mathematical Statistics: 29-53. \url{https://doi.org/10.1214/08-STS274}.
+#' Imai, Kosuke, Gary King, Clayton Nall. 2009. "The Essential Role of Pair Matching in Cluster-Randomized Experiments, with Application to the Mexican Universal Health Insurance Evaluation." Statistical Science 24 (1). Institute of Mathematical Statistics: 29-53. \url{https://doi.org/10.1214/08-STS274}.
 #'
 #' @examples
 #'
@@ -223,13 +224,6 @@ difference_in_means <-
         design <- "Clustered"
       }
 
-      # For clustered cases Gerber & Green suggest footnote 20 on ch 3
-      # Instead we use CR2 in lm_robust
-      # Following is no longer needed:
-      # if (is.na(return_frame$df)) {
-      #   return_frame$df <- with(return_frame,
-      #                           N - 2)
-      # }
     } else {
       pair_matched <- FALSE
 
@@ -475,17 +469,3 @@ difference_in_means_internal <-
 
     return(return_frame)
   }
-
-# Old weighted variance function
-# weighted_var_internal <- function(w, x, xWbar) {
-#   wbar <- mean(w)
-#   n <- length(w)
-#   return(
-#     n / ((n - 1) * sum(w) ^ 2) *
-#       (
-#         sum((w * x - wbar * xWbar) ^ 2)
-#         - 2 * xWbar * sum((w - wbar) * (w * x - wbar * xWbar))
-#           + xWbar ^ 2 * sum((w - wbar) ^ 2)
-#       )
-#   )
-# }

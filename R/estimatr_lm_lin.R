@@ -21,7 +21,7 @@
 #' "HC0", "HC1" (or "stata", the equivalent), "HC2" (default), "HC3", or
 #' "classical". With clustering: "CR0", "CR2" (default), or "stata" are
 #' permissible.
-#' @param ci A boolean for whether to compute and return pvalues and confidence
+#' @param ci A boolean for whether to compute and return p-values and confidence
 #' intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
 #' @param return_vcov a boolean for whether to return the variance-covariance

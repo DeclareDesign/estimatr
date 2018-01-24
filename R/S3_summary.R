@@ -6,12 +6,9 @@
 #' @export
 summary.lm_robust <-
   function(
-    object,
-    ...
-  ) {
-
+           object,
+           ...) {
     return(list(coefficients = summarize_tidy(object)))
-
   }
 
 
@@ -23,13 +20,12 @@ summary.lm_robust <-
 #' @export
 summary.difference_in_means <-
   function(
-    object,
-    ...
-  ) {
-
-    return(list(coefficients = summarize_tidy(object),
-                design = object$design))
-
+           object,
+           ...) {
+    return(list(
+      coefficients = summarize_tidy(object),
+      design = object$design
+    ))
   }
 
 
@@ -41,16 +37,12 @@ summary.difference_in_means <-
 #' @export
 summary.horvitz_thompson <-
   function(
-    object,
-    ...
-  ) {
-
+           object,
+           ...) {
     return(list(coefficients = summarize_tidy(object)))
-
   }
 
 summarize_tidy <- function(object, ...) {
-
   remove_cols <- c("coefficient_name", "outcome")
 
   # This is ugly SO THAT summary(fit)$coefficients returns something like lm does.

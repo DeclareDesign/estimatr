@@ -9,12 +9,10 @@
 #' @export
 confint.lm_robust <-
   function(
-    object,
-    parm = NULL,
-    level = NULL,
-    ...
-  ) {
-
+           object,
+           parm = NULL,
+           level = NULL,
+           ...) {
     cis <- get_ci_mat(object, level)
 
     if (!is.null(parm)) {
@@ -22,7 +20,6 @@ confint.lm_robust <-
     }
 
     return(cis)
-
   }
 
 #' Confidence intervals for \code{\link{difference_in_means}}objects
@@ -35,16 +32,13 @@ confint.lm_robust <-
 #' @export
 confint.difference_in_means <-
   function(
-    object,
-    parm = NULL,
-    level = NULL,
-    ...
-  ) {
-
+           object,
+           parm = NULL,
+           level = NULL,
+           ...) {
     cis <- get_ci_mat(object, level)
 
     return(cis)
-
   }
 
 #' Confidence intervals for \code{\link{horvitz_thompson}} objects
@@ -57,16 +51,13 @@ confint.difference_in_means <-
 #' @export
 confint.horvitz_thompson <-
   function(
-    object,
-    parm = NULL,
-    level = NULL,
-    ...
-  ) {
-
+           object,
+           parm = NULL,
+           level = NULL,
+           ...) {
     cis <- get_ci_mat(object, level)
 
     return(cis)
-
   }
 
 ## internal method that builds confidence intervals and labels the matrix to be returned
@@ -83,7 +74,7 @@ get_ci_mat <- function(object, level) {
   dimnames(cis) <-
     list(
       object$coefficient_name,
-      paste(level / 2 * c(100, -100) + c(0, 100), '%')
+      paste(level / 2 * c(100, -100) + c(0, 100), "%")
     )
 
   return(cis)

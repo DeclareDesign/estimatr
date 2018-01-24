@@ -25,8 +25,7 @@
 #'
 #' @export
 #' @seealso \code{\link{na.omit}}
-na.omit_detailed.data.frame <- function (object, ...)
-{
+na.omit_detailed.data.frame <- function(object, ...) {
   n <- length(object)
   omit <- logical(nrow(object))
   vars <- colnames(object)
@@ -35,25 +34,24 @@ na.omit_detailed.data.frame <- function (object, ...)
 
   for (j in vars) {
     x <- object[[j]]
-    if (!is.atomic(x))
+    if (!is.atomic(x)) {
       next
+    }
     x <- is.na(x)
     d <- dim(x)
 
     # special case for nested df and matrices
-    if(length(d) == 2L && d[2L] > 1L){
-      for(ii in d[2L]:2L){
-        x[,ii-1L] <- x[,ii] | x[,ii-1L]
-
+    if (length(d) == 2L && d[2L] > 1L) {
+      for (ii in d[2L]:2L) {
+        x[, ii - 1L] <- x[, ii] | x[, ii - 1L]
       }
-      x <- x[,1L]
+      x <- x[, 1L]
     }
 
     why_omit[[j]] <- which(x & !omit)
-    #TODO omit/!omit can be factored out of loop, and why_omit can be rebuilt using set logic
+    # TODO omit/!omit can be factored out of loop, and why_omit can be rebuilt using set logic
 
     omit <- omit | x
-
   }
   object <- object[!omit, , drop = FALSE]
 
@@ -68,14 +66,10 @@ na.omit_detailed.data.frame <- function (object, ...)
 
 # NJF 10/18
 # Silly microbenchmark to make sure I didn't make it slower
-#df <- expand.grid(x=c(1:100, NA), y=c(1:5, NA), z=c(1:8, NA), q=c(NA,2:5))
+# df <- expand.grid(x=c(1:100, NA), y=c(1:5, NA), z=c(1:8, NA), q=c(NA,2:5))
 
-#microbenchmark(stock=na.omit(df), hack1=na.omit_detailed.data.frame(df))
+# microbenchmark(stock=na.omit(df), hack1=na.omit_detailed.data.frame(df))
 ## Unit: milliseconds
 ## expr      min       lq     mean   median       uq        max neval
 ## stock 6.114132 6.184318 7.744881 6.232744 6.961491 101.823530   100
 ## hack1 5.360638 5.480531 6.525075 5.694078 7.752104   9.323943   100
-
-
-
-

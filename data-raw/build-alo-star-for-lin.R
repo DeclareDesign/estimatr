@@ -10,16 +10,19 @@
 
 dat <-
   foreign::read.dta(
-    'data-raw/STAR_public_use.dta'
+    "data-raw/STAR_public_use.dta"
   )
 
-alo_star_men <- dat[dat$sex == 'M' &
-                      !is.na(dat$GPA_year1) &
-                      (dat$sfsp == 1 | dat$ssp == 1) &
-                      dat$noshow == 0,
-                    c('gpa0', 'sfsp', 'ssp', 'GPA_year1', 'GPA_year2')
-                    ]
+alo_star_men <- dat[
+  dat$sex == "M" &
+    !is.na(dat$GPA_year1) &
+    (dat$sfsp == 1 | dat$ssp == 1) &
+    dat$noshow == 0,
+  c("gpa0", "sfsp", "ssp", "GPA_year1", "GPA_year2")
+]
 
-devtools::use_data(alo_star_men,
-                   internal = F,
-                   overwrite = T)
+devtools::use_data(
+  alo_star_men,
+  internal = F,
+  overwrite = T
+)

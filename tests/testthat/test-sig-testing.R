@@ -16,5 +16,4 @@ test_that("Errors properly", {
     lm_robust(y ~ z, data = dat, alpha = 10),
     "`alpha` must be numeric between 0 and 1"
   )
-
 })

@@ -1,7 +1,6 @@
 context("Estimator - lm_robust, non-clustered")
 
-test_that("lm robust se",{
-
+test_that("lm robust se", {
   N <- 100
   dat <- data.frame(Y = rnorm(N), Z = rbinom(N, 1, .5), X = rnorm(N), W = runif(N))
 
@@ -26,8 +25,8 @@ test_that("lm robust se",{
 
   lm_robust(Y ~ Z, weights = W, data = dat)
 
-  #matches.
-  #commarobust::commarobust(lm(Y ~ Z, weights = W, data = dat))
+  # matches.
+  # commarobust::commarobust(lm(Y ~ Z, weights = W, data = dat))
 
   # To easily do with and without weights
   test_lm_robust_variance <- function(w) {
@@ -60,24 +59,23 @@ test_that("lm robust se",{
     )
 
     expect_equivalent(
-      lm_hc0$se^2,
-      lm_hc1$se^2 * ((N - length(lm_hc1$est)) / N)
+      lm_hc0$se ^ 2,
+      lm_hc1$se ^ 2 * ((N - length(lm_hc1$est)) / N)
     )
   }
 
   # No weights first
   test_lm_robust_variance(NULL)
   test_lm_robust_variance(dat$W)
-
-
 })
 
-test_that("lm robust works with missingness",{
-
-  dat <- data.frame(Y = rnorm(100),
-                   Z = rbinom(100, 1, .5),
-                   X = rnorm(100),
-                   W = runif(100))
+test_that("lm robust works with missingness", {
+  dat <- data.frame(
+    Y = rnorm(100),
+    Z = rbinom(100, 1, .5),
+    X = rnorm(100),
+    W = runif(100)
+  )
 
   dat$X[23] <- NA
 
@@ -107,8 +105,8 @@ test_that("lm robust works with missingness",{
   # nested DFs
   dat$Y2 <- matrix(dat$Y)
   expect_equivalent(
-    tidy(lm_robust(Y ~ Z + X, data = dat))[,1:6],
-    tidy(lm_robust(Y2 ~ Z + X, data = dat))[,1:6]
+    tidy(lm_robust(Y ~ Z + X, data = dat))[, 1:6],
+    tidy(lm_robust(Y2 ~ Z + X, data = dat))[, 1:6]
   )
 })
 
@@ -123,17 +121,17 @@ test_that("lm_robust doesn't include aux variables when . is used", {
     lm_robust(y ~ ., clusters = clust, data = dat),
     lm_robust(y ~ x, clusters = clust, data = dat)
   )
-
 })
 
 
-test_that("lm robust works with weights",{
-
+test_that("lm robust works with weights", {
   N <- 100
-  dat <- data.frame(Y = rnorm(N),
-                   Z = rbinom(N, 1, .5),
-                   X = rnorm(N),
-                   W = runif(N))
+  dat <- data.frame(
+    Y = rnorm(N),
+    Z = rbinom(N, 1, .5),
+    X = rnorm(N),
+    W = runif(N)
+  )
 
   ## Make sure weighting works
   expect_error(
@@ -143,11 +141,13 @@ test_that("lm robust works with weights",{
 
   # Compare to lm output
   lm_out <- lm(Y ~ Z * X, weights = W, data = dat)
-  lmo_hc2 <- cbind(lm_out$coefficients,
-                   sqrt(diag(sandwich::vcovHC(lm_out, type = 'HC2'))))
+  lmo_hc2 <- cbind(
+    lm_out$coefficients,
+    sqrt(diag(sandwich::vcovHC(lm_out, type = "HC2")))
+  )
 
   expect_equivalent(
-    as.matrix(tidy(estimatr_out)[, c('est', 'se')]),
+    as.matrix(tidy(estimatr_out)[, c("est", "se")]),
     lmo_hc2
   )
 
@@ -156,7 +156,7 @@ test_that("lm robust works with weights",{
 
   expect_warning(
     estimatr_miss_out <- lm_robust(Y ~ Z * X, weights = W, data = dat),
-    'missing'
+    "missing"
   )
 
   expect_identical(
@@ -166,11 +166,13 @@ test_that("lm robust works with weights",{
 
   # Compare to lm output
   lm_miss_out <- lm(Y ~ Z * X, weights = W, data = dat)
-  lmo_miss_hc2 <- cbind(lm_miss_out$coefficients,
-                        sqrt(diag(sandwich::vcovHC(lm_miss_out, type = 'HC2'))))
+  lmo_miss_hc2 <- cbind(
+    lm_miss_out$coefficients,
+    sqrt(diag(sandwich::vcovHC(lm_miss_out, type = "HC2")))
+  )
 
   expect_equivalent(
-    as.matrix(tidy(estimatr_miss_out)[, c('est', 'se')]),
+    as.matrix(tidy(estimatr_miss_out)[, c("est", "se")]),
     lmo_miss_hc2
   )
 
@@ -178,7 +180,6 @@ test_that("lm robust works with weights",{
     lm_robust(Y ~ Z, data = dat, weights = c(-0.5, runif(N - 1))),
     "`weights` must not be negative"
   )
-
 })
 
 test_that("lm_robust_fit adds column names", {
@@ -206,31 +207,34 @@ test_that("lm_robust_fit adds column names", {
 
 test_that("lm robust works with large data", {
   N <- 75000
-  dat <- data.frame(Y = rbinom(N, 1, .5),
-                   X1 = rnorm(N),
-                   X2 = rnorm(N),
-                   X3 = rnorm(N))
+  dat <- data.frame(
+    Y = rbinom(N, 1, .5),
+    X1 = rnorm(N),
+    X2 = rnorm(N),
+    X3 = rnorm(N)
+  )
   expect_error(
-    lm_robust(Y ~ X1 + X2 + X3, data = dat, se_type = 'none'),
+    lm_robust(Y ~ X1 + X2 + X3, data = dat, se_type = "none"),
     NA
   )
-
 })
 
 test_that("lm robust works with rank-deficient X", {
   set.seed(42)
   N <- 100
-  dat <- data.frame(Y = rbinom(N, 1, .5),
-                   X1 = rnorm(N),
-                   X2 = rnorm(N),
-                   X3 = rnorm(N))
+  dat <- data.frame(
+    Y = rbinom(N, 1, .5),
+    X1 = rnorm(N),
+    X2 = rnorm(N),
+    X3 = rnorm(N)
+  )
 
   dat$Z1 <- dat$X1
   sum_lm <- summary(lm(Y ~ X1 + X2 + Z1 + X3, data = dat))
   ## manually build vector of coefficients, can't extract from summary.lm
   out_sumlm <- matrix(NA, nrow = length(sum_lm$aliased), ncol = 2)
   j <- 1
-  for(i in seq_along(sum_lm$aliased)) {
+  for (i in seq_along(sum_lm$aliased)) {
     if (!sum_lm$aliased[i]) {
       out_sumlm[i, ] <- sum_lm$coefficients[j, 1:2]
       j <- j + 1
@@ -249,7 +253,7 @@ test_that("lm robust works with rank-deficient X", {
 
   ## Not the same as LM! Different QR decompositions when dependency isn't just equivalency
   expect_equivalent(
-    as.matrix(tidy(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat, se_type = 'classical'))[, c('est', 'se')]),
+    as.matrix(tidy(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat, se_type = "classical"))[, c("est", "se")]),
     as.matrix(summary(RcppEigen::fastLm(Y ~ X1 + X2 + Z1 + X3, data = dat))$coefficients[, 1:2])
   )
 

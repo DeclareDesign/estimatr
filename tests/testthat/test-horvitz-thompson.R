@@ -2,23 +2,27 @@ context("Estimator - horvitz_thompson")
 
 
 test_that("Horvitz-Thompson matches d-i-m under certain conditions", {
-
   n <- 4
-  dat <- data.frame(y0 = rnorm(n),
-                    z = rep(0:1, each = n/2),
-                    ps = rep(0.5, n))
+  dat <- data.frame(
+    y0 = rnorm(n),
+    z = rep(0:1, each = n / 2),
+    ps = rep(0.5, n)
+  )
 
   dat$y1 <- dat$y0 + 0.43
   dat$y <- ifelse(dat$z, dat$y1, dat$y0)
 
   expect_equal(
-    horvitz_thompson(y ~ z,
-                     condition_prs = ps,
-                     data = dat)$est,
-    difference_in_means(y ~ z,
-                        data = dat)$est
+    horvitz_thompson(
+      y ~ z,
+      condition_prs = ps,
+      data = dat
+    )$est,
+    difference_in_means(
+      y ~ z,
+      data = dat
+    )$est
   )
-
 })
 
 test_that("Horvitz-Thompson works in simple case", {
@@ -98,15 +102,14 @@ test_that("Horvitz-Thompson works in simple case", {
     horvitz_thompson(y ~ z_comp, data = dat, simple = FALSE, condition_prs = pr_wrong),
     "Treatment probabilities must be fixed for complete randomized designs"
   )
-
-
 })
 
 test_that("Horvitz-Thompson works with clustered data", {
-
   n <- 8
-  dat <- data.frame(y = rnorm(n),
-                    cl = rep(1:4, each = 2))
+  dat <- data.frame(
+    y = rnorm(n),
+    cl = rep(1:4, each = 2)
+  )
 
   ## Complete random sample, clustered
   clust_crs_decl <- randomizr::declare_ra(N = nrow(dat), clusters = dat$cl, prob = 0.5)
@@ -128,15 +131,17 @@ test_that("Horvitz-Thompson works with clustered data", {
 
   # And constant effects error for non-simple designs
   expect_error(
-    horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, se_type = 'constant'),
+    horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, se_type = "constant"),
     "`se_type` = 'constant' only supported for simple random"
   )
 
   ## Simple random sample, clustered
-  clust_srs_decl <- randomizr::declare_ra(N = nrow(dat),
-                                          clusters = dat$cl,
-                                          prob = 0.4,
-                                          simple = T)
+  clust_srs_decl <- randomizr::declare_ra(
+    N = nrow(dat),
+    clusters = dat$cl,
+    prob = 0.4,
+    simple = T
+  )
 
   # With declaration
   # Regular SE using Young's inequality
@@ -169,7 +174,7 @@ test_that("Horvitz-Thompson works with clustered data", {
   # And constant effects
   # Only work for simple for now
   expect_error(
-    horvitz_thompson(y ~ z, data = dat, declaration = clust_srs_decl, se_type = 'constant'),
+    horvitz_thompson(y ~ z, data = dat, declaration = clust_srs_decl, se_type = "constant"),
     "`se_type` = 'constant' only supported for simple random designs at the moment"
   )
 
@@ -230,7 +235,6 @@ test_that("Horvitz-Thompson works with missingness", {
     horvitz_thompson(y ~ z, data = dat, condition_prs = ps, subset = drop_these == 0),
     ht_miss
   )
-
 })
 
 # test blocks in the data
@@ -273,14 +277,15 @@ test_that("Estimating Horvitz-Thompson can be done two ways with blocks", {
 
 # errors when arguments are passed that shouldn't be together
 test_that("Horvitz-Thompson properly checks arguments and data", {
-
   n <- 8
-  dat <- data.frame(y = rnorm(n),
-                    ps = 0.4,
-                    z = sample(rep(0:1, each = n/2)),
-                    x = runif(n),
-                    cl = rep(1:4, each = 2),
-                    bl = rep(1:2, each = 4))
+  dat <- data.frame(
+    y = rnorm(n),
+    ps = 0.4,
+    z = sample(rep(0:1, each = n / 2)),
+    x = runif(n),
+    cl = rep(1:4, each = 2),
+    bl = rep(1:2, each = 4)
+  )
   decl <- randomizr::declare_ra(N = n, prob = 0.4, simple = F)
 
   # default is mean(ps)
@@ -305,7 +310,7 @@ test_that("Horvitz-Thompson properly checks arguments and data", {
   )
 
   expect_error(
-    horvitz_thompson(y ~ z, data = dat, declaration = randomizr::declare_ra(N = n+1, prob = 0.4)),
+    horvitz_thompson(y ~ z, data = dat, declaration = randomizr::declare_ra(N = n + 1, prob = 0.4)),
     "N|declaration"
   )
 
@@ -358,11 +363,9 @@ test_that("Horvitz-Thompson properly checks arguments and data", {
   )
 
   # subset and condition_pr_mat checked
-
 })
 
 test_that("Works without variation in treatment", {
-
   set.seed(1)
   dat <- data.frame(
     y = rnorm(20),
@@ -379,7 +382,7 @@ test_that("Works without variation in treatment", {
   )
 
   expect_equal(ht_const_1$est, mean(dat$y))
-  expect_equal(ht_const_1$se, 1/(nrow(dat)) * sqrt(sum(dat$y^2)))
+  expect_equal(ht_const_1$se, 1 / (nrow(dat)) * sqrt(sum(dat$y ^ 2)))
 
 
   expect_equal(
@@ -394,7 +397,7 @@ test_that("Works without variation in treatment", {
   )
 
   expect_equal(ht_const$est, mean(dat$y / dat$ps))
-  expect_equal(ht_const$se, 1/(nrow(dat)) * sqrt(sum((dat$y / dat$ps)^2)))
+  expect_equal(ht_const$se, 1 / (nrow(dat)) * sqrt(sum((dat$y / dat$ps) ^ 2)))
 
   ## Blocks and all are treated
   ht_block <- horvitz_thompson(
@@ -407,7 +410,7 @@ test_that("Works without variation in treatment", {
 
   # with blocks SE is different because not simple any more
   expect_equal(ht_block$est, mean(dat$y / dat$ps))
-  #expect_equal(ht_block$se, 1/(nrow(dat)) * sqrt(sum((dat$y / dat$ps)^2)))
+  # expect_equal(ht_block$se, 1/(nrow(dat)) * sqrt(sum((dat$y / dat$ps)^2)))
 
   ## Blocks and some are treated!
   dat$z_diff <- as.numeric(dat$bl <= 2)
@@ -447,11 +450,9 @@ test_that("Works without variation in treatment", {
     tidy(ht_zero)[c("est", "se")],
     tidy(ht_rev)[c("est", "se")] * c(-1, 1)
   )
-
 })
 
 test_that("multi-valued treatments not allowed in declaration", {
-
   dat <- data.frame(
     y = rnorm(20),
     ps = 0.4
@@ -496,5 +497,4 @@ test_that("multi-valued treatments not allowed in declaration", {
     ht_condition,
     ht_subset
   )
-
 })

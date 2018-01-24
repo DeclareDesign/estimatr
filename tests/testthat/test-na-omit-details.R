@@ -22,4 +22,3 @@ test_that("Row names are set correctly", {
     names(detailed_action)
   )
 })
-

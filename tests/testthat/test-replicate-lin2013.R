@@ -7,7 +7,6 @@ context("Verification - lm_lin replicates Lin 2013")
 # https://projecteuclid.org/euclid.aoas/1365527200.
 
 test_that("lm_lin recreates Lin 2013 Table 2", {
-
   library(estimatr)
   data("alo_star_men")
 
@@ -18,10 +17,12 @@ test_that("lm_lin recreates Lin 2013 Table 2", {
   expect_equivalent(
     round(
       tidy(
-        lm_robust(GPA_year1 ~ sfsp,
-                          data = alo_star_men,
-                          se_type = 'HC0')
-      )[2, c('est', 'se')],
+        lm_robust(
+          GPA_year1 ~ sfsp,
+          data = alo_star_men,
+          se_type = "HC0"
+        )
+      )[2, c("est", "se")],
       3
     ),
     c(-0.036, 0.158)
@@ -32,10 +33,12 @@ test_that("lm_lin recreates Lin 2013 Table 2", {
   expect_equivalent(
     unlist(round(
       tidy(
-        lm_robust(GPA_year1 ~ sfsp + gpa0,
-                            data = alo_star_men,
-                            se_type = 'HC0')
-      )[2, c('est', 'se')],
+        lm_robust(
+          GPA_year1 ~ sfsp + gpa0,
+          data = alo_star_men,
+          se_type = "HC0"
+        )
+      )[2, c("est", "se")],
       3
     )),
     c(-0.083, 0.146)
@@ -45,16 +48,17 @@ test_that("lm_lin recreates Lin 2013 Table 2", {
   expect_equivalent(
     unlist(round(
       tidy(
-        lm_lin(GPA_year1 ~ sfsp,
-                         covariates = ~ gpa0,
-                         data = alo_star_men,
-                         se_type = 'HC0')
-      )[2, c('est', 'se')],
+        lm_lin(
+          GPA_year1 ~ sfsp,
+          covariates = ~ gpa0,
+          data = alo_star_men,
+          se_type = "HC0"
+        )
+      )[2, c("est", "se")],
       3
     )),
     c(-0.081, 0.146)
   )
-
 })
 
 
@@ -62,7 +66,6 @@ test_that("lm_lin recreates Lin 2013 Table 2", {
 rep_table_3 <- FALSE
 
 if (rep_table_3) {
-
   data("alo_star_men")
 
   ## Table 3
@@ -76,44 +79,61 @@ if (rep_table_3) {
     return(obj$ci_upper[2] - obj$ci_lower[2])
   }
   ci_custom <- function(obj) {
-    return(list(ci_upper = obj$est[2] + obj$se[2] * 1.96,
-                ci_lower = obj$est[2] - obj$se[2] * 1.96))
+    return(list(
+      ci_upper = obj$est[2] + obj$se[2] * 1.96,
+      ci_lower = obj$est[2] - obj$se[2] * 1.96
+    ))
   }
 
-  ses <- c('HC0', 'HC1', 'HC2', 'HC3')
+  ses <- c("HC0", "HC1", "HC2", "HC3")
 
-  ests <- matrix(NA,
-                 nrow = its,
-                 ncol = 3)
+  ests <- matrix(
+    NA,
+    nrow = its,
+    ncol = 3
+  )
   sd_mats <- cover_mats <- width_mats <-
-    array(NA,
-          dim = c(its, length(ses), 3))
+    array(
+      NA,
+      dim = c(its, length(ses), 3)
+    )
   for (i in 1:its) {
     samp_dat$sfsp <- sample(samp_dat$sfsp)
     sd_mat <- cover_mat <- width_mat <-
-      matrix(NA,
-             nrow = length(ses),
-             ncol = 3)
-    for(j in 1:length(ses)) {
-      unadj <- lm_robust(GPA_year1 ~ sfsp,
-                         data = samp_dat,
-                         se_type = ses[j])
-      tradadj <- lm_robust(GPA_year1 ~ sfsp + gpa0,
-                           data = samp_dat,
-                           se_type = ses[j])
-      intadj <- lm_lin(GPA_year1 ~ sfsp,
-                       covariates = ~ gpa0,
-                       data = samp_dat,
-                       se_type = ses[j])
+      matrix(
+        NA,
+        nrow = length(ses),
+        ncol = 3
+      )
+    for (j in 1:length(ses)) {
+      unadj <- lm_robust(
+        GPA_year1 ~ sfsp,
+        data = samp_dat,
+        se_type = ses[j]
+      )
+      tradadj <- lm_robust(
+        GPA_year1 ~ sfsp + gpa0,
+        data = samp_dat,
+        se_type = ses[j]
+      )
+      intadj <- lm_lin(
+        GPA_year1 ~ sfsp,
+        covariates = ~ gpa0,
+        data = samp_dat,
+        se_type = ses[j]
+      )
 
       sd_mat[j, ] <- c(unadj$se[2], tradadj$se[2], intadj$se[2])
-      cover_mat[j, ] <- c(check_cover(ci_custom(unadj)),
-                          check_cover(ci_custom(tradadj)),
-                          check_cover(ci_custom(intadj)))
-      width_mat[j, ] <- c(ci_dist(ci_custom(unadj)),
-                          ci_dist(ci_custom(tradadj)),
-                          ci_dist(ci_custom(intadj)))
-
+      cover_mat[j, ] <- c(
+        check_cover(ci_custom(unadj)),
+        check_cover(ci_custom(tradadj)),
+        check_cover(ci_custom(intadj))
+      )
+      width_mat[j, ] <- c(
+        ci_dist(ci_custom(unadj)),
+        ci_dist(ci_custom(tradadj)),
+        ci_dist(ci_custom(intadj))
+      )
     }
 
     ests[i, ] <- c(unadj$est[2], tradadj$est[2], intadj$est[2])
@@ -122,7 +142,7 @@ if (rep_table_3) {
     width_mats[i, , ] <- width_mat
 
 
-    if(i %% 1000 == 0) print(i)
+    if (i %% 1000 == 0) print(i)
   }
 
 

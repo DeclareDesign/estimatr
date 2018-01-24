@@ -145,7 +145,7 @@ test_that("condition_pr_matrix behaves as expected", {
     cl = c(1, 2, 3, 3, 4, 4, 5, 5)
   )
 
-  bl_cl_ra <- randomizr::declare_ra(clusters = dat$cl, blocks = dat$bl, block_m  = c(1, 2))
+  bl_cl_ra <- randomizr::declare_ra(clusters = dat$cl, blocks = dat$bl, block_m = c(1, 2))
   bl_cl_perms <- randomizr::obtain_permutation_matrix(bl_cl_ra)
 
   expect_equal(
@@ -186,7 +186,7 @@ test_that("condition_pr_matrix behaves as expected", {
 
   # Permutation error
   expect_error(
-    permutations_to_condition_pr_mat(matrix(c(1,2,2,1), nrow = 2)),
+    permutations_to_condition_pr_mat(matrix(c(1, 2, 2, 1), nrow = 2)),
     "Matrix of `permutations` must be comprised of only 0s and 1s"
   )
 
@@ -218,5 +218,4 @@ test_that("condition_pr_matrix behaves as expected", {
     declaration_to_condition_pr_mat(comp),
     "Treatment probabilities must be fixed for complete randomized designs"
   )
-
 })

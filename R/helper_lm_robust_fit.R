@@ -38,7 +38,6 @@ lm_robust_fit <- function(y,
         "`clusters` are specified.\nYou passed: ", se_type
       )
     }
-
   } else {
 
     # set/check se_type
@@ -58,7 +57,6 @@ lm_robust_fit <- function(y,
     } else if (se_type == "stata") {
       se_type <- "HC1"
     }
-
   }
 
   k <- ncol(X)
@@ -74,13 +72,12 @@ lm_robust_fit <- function(y,
   if (!is.null(cluster)) {
     cl_ord <- order(cluster)
     y <- y[cl_ord]
-    X <- X[cl_ord,]
+    X <- X[cl_ord, ]
     cluster <- cluster[cl_ord]
     J <- length(unique(cluster))
     if (!is.null(weights)) {
       weights <- weights[cl_ord]
     }
-
   } else {
     J <- 1
   }
@@ -124,28 +121,24 @@ lm_robust_fit <- function(y,
   N <- nrow(X)
   rank <- sum(est_exists)
 
-  if(se_type != "none"){
-
+  if (se_type != "none") {
     return_frame$se[est_exists] <- sqrt(diag(fit$Vcov_hat))
 
-    if(ci) {
-
-      if(se_type %in% cl_se_types){
+    if (ci) {
+      if (se_type %in% cl_se_types) {
 
         # Replace -99 with NA, easy way to flag that we didn't compute
         # the DoF because the user didn't ask for it
         return_frame$df[est_exists] <-
           ifelse(fit$dof == -99,
-                 NA,
-                 fit$dof)
-
+            NA,
+            fit$dof
+          )
       } else {
 
         # TODO explicitly pass rank from RRQR/cholesky
         return_frame$df[est_exists] <- N - rank
-
       }
-
     }
   }
 
@@ -160,20 +153,21 @@ lm_robust_fit <- function(y,
   return_list[["k"]] <- k
   return_list[["rank"]] <- rank
 
-  if (return_vcov && se_type != 'none') {
-    #return_list$residuals <- fit$residuals
+  if (return_vcov && se_type != "none") {
+    # return_list$residuals <- fit$residuals
     return_list[["vcov"]] <- fit$Vcov_hat
-    dimnames(return_list[["vcov"]]) <- list(return_list$coefficient_name[est_exists],
-                                            return_list$coefficient_name[est_exists])
+    dimnames(return_list[["vcov"]]) <- list(
+      return_list$coefficient_name[est_exists],
+      return_list$coefficient_name[est_exists]
+    )
   }
 
   return_list[["weighted"]] <- !is.null(weights)
   if (return_list[["weighted"]]) {
-    return_list[["res_var"]] <- sum(fit$residuals^2 * weight_mean) / (N - rank)
+    return_list[["res_var"]] <- sum(fit$residuals ^ 2 * weight_mean) / (N - rank)
   }
 
   attr(return_list, "class") <- "lm_robust"
 
   return(return_list)
-
 }

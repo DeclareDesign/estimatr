@@ -6,12 +6,9 @@
 #' @export
 print.lm_robust <-
   function(
-    x,
-    ...
-  ) {
-
+           x,
+           ...) {
     print(tidy(x, ...))
-
   }
 
 
@@ -23,13 +20,10 @@ print.lm_robust <-
 #' @export
 print.difference_in_means <-
   function(
-    x,
-    ...
-  ) {
-
+           x,
+           ...) {
     print(paste0("Design: ", x$design))
     print(tidy(x, ...))
-
   }
 
 
@@ -41,10 +35,7 @@ print.difference_in_means <-
 #' @export
 print.horvitz_thompson <-
   function(
-    x,
-    ...
-  ) {
-
+           x,
+           ...) {
     print(tidy(x, ...))
-
   }

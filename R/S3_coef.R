@@ -8,11 +8,9 @@
 #' @export
 coef.lm_robust <-
   function(
-    object,
-    parm = NULL,
-    ...
-  ) {
-
+           object,
+           parm = NULL,
+           ...) {
     coefs <- object$est
     names(coefs) <- object$coefficient_name
 
@@ -31,10 +29,8 @@ coef.lm_robust <-
 #' @export
 coef.difference_in_means <-
   function(
-    object,
-    ...
-  ) {
-
+           object,
+           ...) {
     coefs <- object$est
     names(coefs) <- object$coefficient_name
 
@@ -49,10 +45,8 @@ coef.difference_in_means <-
 #' @export
 coef.horvitz_thompson <-
   function(
-    object,
-    ...
-  ) {
-
+           object,
+           ...) {
     coefs <- object$est
     names(coefs) <- object$coefficient_name
 

@@ -10,7 +10,7 @@
 #'
 #' @export
 tidy <- function(object, ...) {
-  if(requireNamespace("broom", quietly=TRUE)) broom::tidy(object, ...) else UseMethod("tidy")
+  if (requireNamespace("broom", quietly = TRUE)) broom::tidy(object, ...) else UseMethod("tidy")
 }
 
 
@@ -40,9 +40,11 @@ tidy.NULL <- function(object, ...) {
 #'
 #' @export
 tidy.default <- function(object, ...) {
-  warning(paste("No method for tidying an S3 object of class",
-                 class(object),
-                 ", using as.data.frame"))
+  warning(paste(
+    "No method for tidying an S3 object of class",
+    class(object),
+    ", using as.data.frame"
+  ))
   as.data.frame(object)
 }
 
@@ -62,7 +64,6 @@ tidy.lm_robust <- function(object, ...) {
   warn_singularities(object)
 
   return(return_frame)
-
 }
 
 #' Tidying \code{\link{difference_in_means}} output to a data.frame
@@ -98,7 +99,8 @@ tidy.horvitz_thompson <- function(object, ...) {
 
 tidy_data_frame <- function(object, digits = NULL) {
   return_cols <-
-    c("coefficient_name",
+    c(
+      "coefficient_name",
       "est",
       "se",
       "p",

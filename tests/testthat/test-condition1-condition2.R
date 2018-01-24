@@ -2,7 +2,6 @@ context("Helper - Condition parsing for difference estimators")
 
 
 test_that("Condition arguments behave as expected", {
-
   n <- 40
   dat <- data.frame(
     y = rnorm(n),
@@ -188,6 +187,4 @@ test_that("Condition arguments behave as expected", {
     difference_in_means(y ~ z, data = dat),
     "Must have more than one value in treatment unless using Horvitz"
   )
-
 })
-

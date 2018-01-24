@@ -3,7 +3,6 @@ context("Estimator - difference_in_means")
 
 
 test_that("DIM", {
-
   dat <- data.frame(Y = rnorm(100), Z = sample(1:3, 100, replace = TRUE), X = rnorm(100))
 
   difference_in_means(Y ~ Z, condition1 = 1, condition2 = 2, data = dat)
@@ -15,11 +14,9 @@ test_that("DIM", {
     dimo$design,
     "Standard"
   )
-
 })
 
 test_that("DIM arguments parsed correctly", {
-
   dat <- data.frame(Y = rnorm(100), Z = rbinom(100, 1, .5), X = rnorm(100))
 
   expect_equivalent(
@@ -67,14 +64,14 @@ test_that("DIM arguments parsed correctly", {
     difference_in_means(y ~ z, blocks = bl),
     "Each block must have at least two treated"
   )
-
 })
 
 test_that("DIM Blocked", {
-
-  dat <- data.frame(Y = rnorm(100),
-                   Z = rbinom(100, 1, .5),
-                   block = sample(c("A", "B", "C"), 100, replace = TRUE))
+  dat <- data.frame(
+    Y = rnorm(100),
+    Z = rbinom(100, 1, .5),
+    block = sample(c("A", "B", "C"), 100, replace = TRUE)
+  )
 
   difference_in_means(Y ~ Z, blocks = block, data = dat)
   dim_normal <- difference_in_means(Y ~ Z, condition1 = 0, condition2 = 1, blocks = block, data = dat)
@@ -92,8 +89,6 @@ test_that("DIM Blocked", {
     dim_normal$design,
     "Blocked"
   )
-
-
 })
 
 test_that("DIM same as t.test", {
@@ -102,20 +97,21 @@ test_that("DIM same as t.test", {
   dat <- data.frame(Y = rnorm(100), Z = rbinom(100, 1, .5), X = rnorm(100))
 
   expect_equal(
-    unlist(difference_in_means(Y ~ Z, data = dat)[c('p', 'ci_lower', 'ci_upper', 'df')],
-           F,
-           F),
-    unlist(with(dat, t.test(Y[Z==1], Y[Z==0]))[c('p.value', 'conf.int', 'parameter')],
-           F,
-           F)
+    unlist(
+      difference_in_means(Y ~ Z, data = dat)[c("p", "ci_lower", "ci_upper", "df")],
+      F,
+      F
+    ),
+    unlist(
+      with(dat, t.test(Y[Z == 1], Y[Z == 0]))[c("p.value", "conf.int", "parameter")],
+      F,
+      F
+    )
   )
-
-
 })
 
 
 test_that("DIM Weighted", {
-
   n <- 100
   dat <- data.frame(y = rnorm(n), z = 0:1, w = 1, bl = rep(1:10, each = 10))
   dimw <- difference_in_means(y ~ z, weights = w, data = dat)
@@ -133,15 +129,15 @@ test_that("DIM Weighted", {
     dimbw$design,
     "Blocked (weighted)"
   )
-
 })
 
 
 test_that("DIM Clustered", {
-
-  dat <- data.frame(weights = runif(100),
-                   weights2 = 1,
-                   J = rep(1:4, each = 25))
+  dat <- data.frame(
+    weights = runif(100),
+    weights2 = 1,
+    J = rep(1:4, each = 25)
+  )
 
   dat$Y <- rnorm(100, mean = rep(rnorm(4, sd = sqrt(0.1)), each = 25), sd = sqrt(0.9))
   dat$Z <- as.numeric(dat$J %in% 1:2)
@@ -156,20 +152,20 @@ test_that("DIM Clustered", {
     dim_10$design,
     "Clustered"
   )
-
 })
 
 test_that("DIM Pair Matched", {
-
-  dat <- data.frame(Y = rnorm(100),
-                   Z = rbinom(100, 1, .5),
-                   weights = runif(100),
-                   weights2 = 1,
-                   block = rep(1:50, each = 2))
+  dat <- data.frame(
+    Y = rnorm(100),
+    Z = rbinom(100, 1, .5),
+    weights = runif(100),
+    weights2 = 1,
+    block = rep(1:50, each = 2)
+  )
 
   expect_error(
     difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = dat),
-    'both treatment'
+    "both treatment"
   )
 
   dat$Z <- rep(0:1, 50)
@@ -179,16 +175,16 @@ test_that("DIM Pair Matched", {
     dim_mp$design,
     "Matched-pair"
   )
-
 })
 
 
 test_that("DIM Matched Pair Cluster Randomization", {
-
-  dat <- data.frame(Y = rnorm(100),
-                   block = rep(1:25, each = 4),
-                   cluster = as.character(rep(1:50, each = 2)),
-                   Z = rep(0:1, times = 50))
+  dat <- data.frame(
+    Y = rnorm(100),
+    block = rep(1:25, each = 4),
+    cluster = as.character(rep(1:50, each = 2)),
+    Z = rep(0:1, times = 50)
+  )
 
   expect_error(
     difference_in_means(
@@ -198,7 +194,7 @@ test_that("DIM Matched Pair Cluster Randomization", {
       clusters = cluster,
       data = dat
     ),
-    'same treatment condition'
+    "same treatment condition"
   )
 
   dat$Z <- c(rep(rep(0:1, each = 4), 12), rep(0, 4))
@@ -210,7 +206,7 @@ test_that("DIM Matched Pair Cluster Randomization", {
       clusters = cluster,
       data = dat
     ),
-    'both treatment conditions'
+    "both treatment conditions"
   )
 
   dat$Z <- rep(rep(0:1, each = 2), 25)
@@ -226,14 +222,15 @@ test_that("DIM Matched Pair Cluster Randomization", {
     dim_mpc$design,
     "Matched-pair clustered"
   )
-
 })
 
 test_that("DIM Matched Pair Cluster Randomization = Matched Pair when cluster size is 1", {
-  dat <- data.frame(Y = rnorm(100),
-                   block = rep(1:25, each = 4),
-                   cluster = 1:100,
-                   Z = rep(c(0,0,1,1), times = 25))
+  dat <- data.frame(
+    Y = rnorm(100),
+    block = rep(1:25, each = 4),
+    cluster = 1:100,
+    Z = rep(c(0, 0, 1, 1), times = 25)
+  )
 
   expect_equal(
     tidy(difference_in_means(
@@ -250,14 +247,15 @@ test_that("DIM Matched Pair Cluster Randomization = Matched Pair when cluster si
       data = dat
     ))
   )
-
 })
 
 test_that("DIM works with missingness", {
-  dat <- data.frame(Y = rnorm(100),
-                   block = rep(1:2, each = 50),
-                   cluster = 1:100,
-                   Z = rep(c(0,0,1,1), times = 25))
+  dat <- data.frame(
+    Y = rnorm(100),
+    block = rep(1:2, each = 50),
+    cluster = 1:100,
+    Z = rep(c(0, 0, 1, 1), times = 25)
+  )
 
   ## Missingness on treatment
   dat$Z[23] <- NA
@@ -292,7 +290,7 @@ test_that("DIM works with missingness", {
       blocks = block,
       data = dat
     ),
-    'missingness in the block'
+    "missingness in the block"
   )
 
   expect_equal(
@@ -315,7 +313,7 @@ test_that("DIM works with missingness", {
       clusters = cluster,
       data = dat
     ),
-    'missingness in the cluster'
+    "missingness in the cluster"
   )
 
   expect_equal(
@@ -327,16 +325,16 @@ test_that("DIM works with missingness", {
       data = dat[-c(1, 23), ]
     )
   )
-
-
 })
 
 
 test_that("DIM works with character args", {
-  dat <- data.frame(Y = rnorm(100),
-                   block = rep(1:25, each = 4),
-                   cluster = 1:100,
-                   Z = rep(c(0,0,1,1), times = 25))
+  dat <- data.frame(
+    Y = rnorm(100),
+    block = rep(1:25, each = 4),
+    cluster = 1:100,
+    Z = rep(c(0, 0, 1, 1), times = 25)
+  )
 
   dim_unquote <- difference_in_means(
     Y ~ Z,
@@ -373,34 +371,39 @@ test_that("DIM works with character args", {
       data = dat
     )
   )
-
 })
 
 test_that("DIM unbiased", {
-
-  dat <- data.frame(i = 1:10,
-                    Y0 = c(2.1, 3.5, -131.2, -1.3, -4,
-                           0.1, 8.1, -1.3, 1.1, 9.1),
-                    Y1 = c(2.6, 3.0, -132, -0.7, -3.3,
-                           0.5, 24.3, -1, 1.6, 0.3))
+  dat <- data.frame(
+    i = 1:10,
+    Y0 = c(
+      2.1, 3.5, -131.2, -1.3, -4,
+      0.1, 8.1, -1.3, 1.1, 9.1
+    ),
+    Y1 = c(
+      2.6, 3.0, -132, -0.7, -3.3,
+      0.5, 24.3, -1, 1.6, 0.3
+    )
+  )
 
   # True SATE = 0.91
   trueSATE <- mean(dat$Y1) - mean(dat$Y0)
 
   ## Complete Randomization
   # True se(SATE_hat)
-  true_seSATE <- sqrt( (var(dat$Y0) + var(dat$Y1) + 2 * cov(dat$Y0, dat$Y1)) / (10 - 1))
+  true_seSATE <- sqrt((var(dat$Y0) + var(dat$Y1) + 2 * cov(dat$Y0, dat$Y1)) / (10 - 1))
   declaration <- randomizr::declare_ra(N = nrow(dat))
   treatment_perms <- randomizr::obtain_permutation_matrix(declaration)
 
-  ests <- apply(treatment_perms,
-                2,
-                function(x) {
-                  dat$Z <- x
-                  dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
-                  dim <- difference_in_means(Y ~ Z, data = dat)
-                  dim$est
-                }
+  ests <- apply(
+    treatment_perms,
+    2,
+    function(x) {
+      dat$Z <- x
+      dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
+      dim <- difference_in_means(Y ~ Z, data = dat)
+      dim$est
+    }
   )
 
   expect_equivalent(
@@ -410,20 +413,25 @@ test_that("DIM unbiased", {
 
   ## cluster randomized design, 5 blocks of 2
   dat$cluster <- rep(1:5, each = 2)
-  declaration <- randomizr::declare_ra(N = nrow(dat),
-                                       clusters = dat$cluster)
+  declaration <- randomizr::declare_ra(
+    N = nrow(dat),
+    clusters = dat$cluster
+  )
   treatment_perms <- randomizr::obtain_permutation_matrix(declaration)
 
-  ests <- apply(treatment_perms,
-                2,
-                function(x) {
-                  dat$Z <- x
-                  dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
-                  dim <- difference_in_means(Y ~ Z,
-                                             clusters = cluster,
-                                             data = dat)
-                  dim$est
-                }
+  ests <- apply(
+    treatment_perms,
+    2,
+    function(x) {
+      dat$Z <- x
+      dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
+      dim <- difference_in_means(
+        Y ~ Z,
+        clusters = cluster,
+        data = dat
+      )
+      dim$est
+    }
   )
 
   expect_equivalent(
@@ -433,21 +441,26 @@ test_that("DIM unbiased", {
 
   ## Matched pair design, 5 blocks of 2
   dat$blocks <- rep(1:5, each = 2)
-  declaration <- randomizr::declare_ra(N = nrow(dat),
-                                       blocks = dat$blocks,
-                                       block_m = rep(1, 5))
+  declaration <- randomizr::declare_ra(
+    N = nrow(dat),
+    blocks = dat$blocks,
+    block_m = rep(1, 5)
+  )
   treatment_perms <- randomizr::obtain_permutation_matrix(declaration)
 
-  ests <- apply(treatment_perms,
-                2,
-                function(x) {
-                  dat$Z <- x
-                  dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
-                  dim <- difference_in_means(Y ~ Z,
-                                             blocks = blocks,
-                                             data = dat)
-                  dim$est
-                }
+  ests <- apply(
+    treatment_perms,
+    2,
+    function(x) {
+      dat$Z <- x
+      dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
+      dim <- difference_in_means(
+        Y ~ Z,
+        blocks = blocks,
+        data = dat
+      )
+      dim$est
+    }
   )
 
   expect_equivalent(
@@ -457,21 +470,26 @@ test_that("DIM unbiased", {
 
   ## block randomized design, 2 blocks of 5
   dat$blocks <- rep(1:2, each = 5)
-  declaration <- randomizr::declare_ra(N = nrow(dat),
-                                       blocks = dat$blocks,
-                                       block_m = c(3, 3))
+  declaration <- randomizr::declare_ra(
+    N = nrow(dat),
+    blocks = dat$blocks,
+    block_m = c(3, 3)
+  )
   treatment_perms <- randomizr::obtain_permutation_matrix(declaration)
 
-  ests <- apply(treatment_perms,
-                2,
-                function(x) {
-                  dat$Z <- x
-                  dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
-                  dim <- difference_in_means(Y ~ Z,
-                                             blocks = blocks,
-                                             data = dat)
-                  dim$est
-                }
+  ests <- apply(
+    treatment_perms,
+    2,
+    function(x) {
+      dat$Z <- x
+      dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
+      dim <- difference_in_means(
+        Y ~ Z,
+        blocks = blocks,
+        data = dat
+      )
+      dim$est
+    }
   )
 
   expect_equivalent(
@@ -482,33 +500,36 @@ test_that("DIM unbiased", {
   ## cluster matched pair, different sized blocks
   dat$blocks <- rep(1:3, times = c(4, 4, 2))
   dat$clusters <- c(1, 1, 2, 2, 3, 3, 4, 4, 5, 6)
-  declaration <- randomizr::declare_ra(N = nrow(dat),
-                                       blocks = dat$blocks,
-                                       clusters = dat$clusters)
+  declaration <- randomizr::declare_ra(
+    N = nrow(dat),
+    blocks = dat$blocks,
+    clusters = dat$clusters
+  )
   treatment_perms <- randomizr::obtain_permutation_matrix(declaration)
 
-  ests <- apply(treatment_perms,
-                2,
-                function(x) {
-                  dat$Z <- x
-                  dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
-                  dim <- difference_in_means(Y ~ Z,
-                                             blocks = blocks,
-                                             clusters = clusters,
-                                             data = dat)
-                  dim$est
-                }
+  ests <- apply(
+    treatment_perms,
+    2,
+    function(x) {
+      dat$Z <- x
+      dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
+      dim <- difference_in_means(
+        Y ~ Z,
+        blocks = blocks,
+        clusters = clusters,
+        data = dat
+      )
+      dim$est
+    }
   )
 
   expect_equivalent(
     trueSATE,
     mean(ests)
   )
-
 })
 
 test_that("DIM matches lm_robust under certain conditions", {
-
   n <- 400
   dat <- data.frame(Y = rnorm(n))
   ## DIM and lm_robust agree without clustering except for DoF because DIM uses Satterthwaite approx
@@ -612,8 +633,8 @@ test_that("DIM matches lm_robust under certain conditions", {
   )
 
   # errors with matched pairs
-  dat$mps <- rep(1:(n/2), each = 2)
-  dat$z_mps <- rep(0:1, times = (n/2))
+  dat$mps <- rep(1:(n / 2), each = 2)
+  dat$z_mps <- rep(0:1, times = (n / 2))
   expect_error(
     difference_in_means(Y ~ z_mps, data = dat, weights = w, blocks = mps),
     "Cannot use weights with matched pairs design at the moment"
