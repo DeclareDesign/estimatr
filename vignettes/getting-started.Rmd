@@ -80,6 +80,7 @@ Usage largely mimics `lm()`, although it defaults to using Eicker-Huber-White ro
 
 ```{r, lm_robust, results="hide"}
 res <- lm_robust(y ~ z + x, data = dat)
+summary(res)
 tidy(res) # summary(res) is very similar
 ```
 ```{r, echo=FALSE}

@@ -2,7 +2,7 @@ Package: estimatr
 Type: Package
 Title: Fast Estimators for Design-Based Inference
 Version: 0.2.0
-Date: 2017-12-18
+Date: 2018-01-24
 Authors@R: c(person("Graeme", "Blair", email = "graeme.blair@ucla.edu", role = c("aut", "cre")),
              person("Jasper", "Cooper", email = "jjc2247@columbia.edu", role = c("aut")),
              person("Alexander", "Coppock", email = "alex.coppock@yale.edu", role = c("aut")),
@@ -13,6 +13,7 @@ Description: Quickly estimate common models in social science research with robu
 URL: http://estimatr.declaredesign.org, https://github.com/DeclareDesign/estimatr
 BugReports: https://github.com/DeclareDesign/estimatr/issues
 License: MIT + file LICENSE
+Encoding: UTF-8
 Depends: R (>= 3.3.0)
 Imports: Rcpp (>= 0.12.10)
 LinkingTo: Rcpp, RcppEigen

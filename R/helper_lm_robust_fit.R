@@ -9,6 +9,7 @@
 #' @param alpha numeric denoting the test size for confidence intervals
 #' @param return_vcov a boolean for whether to return the vcov matrix for later usage
 #' @param try_cholesky a boolean for whether to try using a cholesky decomposition to solve LS instead of a QR decomposition
+#' @param has_int a boolean for whether the model has an intercept
 #'
 #' @export
 #'
@@ -20,7 +21,8 @@ lm_robust_fit <- function(y,
                           se_type,
                           alpha,
                           return_vcov,
-                          try_cholesky) {
+                          try_cholesky,
+                          has_int) {
 
   ## allowable se_types with clustering
   cl_se_types <- c("CR0", "CR2", "stata")
@@ -72,7 +74,7 @@ lm_robust_fit <- function(y,
   if (!is.null(cluster)) {
     cl_ord <- order(cluster)
     y <- y[cl_ord]
-    X <- X[cl_ord, ]
+    X <- X[cl_ord, , drop = FALSE]
     cluster <- cluster[cl_ord]
     J <- length(unique(cluster))
     if (!is.null(weights)) {
@@ -111,12 +113,12 @@ lm_robust_fit <- function(y,
 
 
   return_frame <- data.frame(
-    est = as.vector(fit$beta_hat),
+    coefficients = setNames(as.vector(fit$beta_hat), variable_names),
     se = NA,
     df = NA
   )
 
-  est_exists <- !is.na(return_frame$est)
+  est_exists <- !is.na(return_frame$coefficients)
 
   N <- nrow(X)
   rank <- sum(est_exists)
@@ -142,12 +144,51 @@ lm_robust_fit <- function(y,
     }
   }
 
+  # ----------
+  # Build return object
+  # ----------
   return_list <- add_cis_pvals(return_frame, alpha, ci && se_type != "none")
 
   return_list[["coefficient_name"]] <- variable_names
   return_list[["outcome"]] <- NA_character_
   return_list[["alpha"]] <- alpha
-  return_list[["res_var"]] <- ifelse(fit$res_var < 0, NA, fit$res_var)
+  return_list[["se_type"]] <- se_type
+
+  return_list[["weighted"]] <- !is.null(weights)
+  if (return_list[["weighted"]]) {
+    return_list[["tot_var"]] <- ifelse(
+      has_int,
+      # everything correct except for this
+      sum(weights^2*(y/weights - weighted.mean(y/weights, weights^2))^2)*weight_mean,
+      sum(y^2 * weight_mean)
+    )
+    return_list[["res_var"]] <- sum(fit$residuals ^ 2 * weight_mean) / (N - rank)
+  } else {
+    return_list[["tot_var"]] <- ifelse(has_int, sum((y - mean(y))^2), sum(y^2))
+    return_list[["res_var"]] <- ifelse(fit$res_var < 0, NA, fit$res_var)
+  }
+
+  return_list[["df.residual"]] <- N - rank
+  return_list[["r.squared"]] <-
+    1 - (
+      return_list[["df.residual"]] * return_list[["res_var"]] /
+        return_list[["tot_var"]]
+    )
+
+
+  return_list[["adj.r.squared"]] <-
+    1 - (
+      (1 - return_list[["r.squared"]]) *
+        ((N - has_int) / return_list[["df.residual"]])
+      )
+
+  return_list[["fstatistic"]] <- c(
+    value = (return_list[["r.squared"]] * return_list[["df.residual"]])
+             / ((1 - return_list[["r.squared"]]) * (rank - has_int)),
+    numdf = rank - has_int,
+    dendf = return_list[["df.residual"]]
+  )
+
   # return_list[["XtX_inv"]] <- fit$XtX_inv
   return_list[["N"]] <- N
   return_list[["k"]] <- k
@@ -160,11 +201,6 @@ lm_robust_fit <- function(y,
       return_list$coefficient_name[est_exists],
       return_list$coefficient_name[est_exists]
     )
-  }
-
-  return_list[["weighted"]] <- !is.null(weights)
-  if (return_list[["weighted"]]) {
-    return_list[["res_var"]] <- sum(fit$residuals ^ 2 * weight_mean) / (N - rank)
   }
 
   attr(return_list, "class") <- "lm_robust"

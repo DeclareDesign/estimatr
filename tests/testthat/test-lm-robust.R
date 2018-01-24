@@ -16,11 +16,12 @@ test_that("lm robust se", {
     "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3',"
   )
 
-  lm_robust(Y ~ Z + X, data = dat, subset = W > 0.5)
   # Works with subset
+  lmsub <- lm_robust(Y ~ Z + X, data = dat, subset = W > 0.5)
+  lmbool <- lm_robust(Y ~ Z + X, data = dat[dat$W > 0.5, ])
   expect_identical(
-    lm_robust(Y ~ Z + X, data = dat, subset = W > 0.5),
-    lm_robust(Y ~ Z + X, data = dat[dat$W > 0.5, ])
+    rmcall(lmsub),
+    rmcall(lmbool)
   )
 
   lm_robust(Y ~ Z, weights = W, data = dat)
@@ -39,8 +40,8 @@ test_that("lm robust se", {
 
     # Stata is the same as HC1
     expect_identical(
-      lm_hc1,
-      lm_stata
+      rmcall(lm_hc1),
+      rmcall(lm_stata)
     )
 
     expect_false(all(lm_hc0$se == lm_hc1$se))
@@ -60,7 +61,7 @@ test_that("lm robust se", {
 
     expect_equivalent(
       lm_hc0$se ^ 2,
-      lm_hc1$se ^ 2 * ((N - length(lm_hc1$est)) / N)
+      lm_hc1$se ^ 2 * ((N - length(lm_hc1$coefficients)) / N)
     )
   }
 
@@ -80,8 +81,8 @@ test_that("lm robust works with missingness", {
   dat$X[23] <- NA
 
   expect_identical(
-    lm_robust(Y ~ Z + X, data = dat),
-    lm_robust(Y ~ Z + X, data = dat[-23, ])
+    rmcall(lm_robust(Y ~ Z + X, data = dat)),
+    rmcall(lm_robust(Y ~ Z + X, data = dat[-23, ]))
   )
   lm_robust(Y ~ Z + X, data = dat)
   lm_robust(Y ~ Z * X, data = dat)
@@ -98,7 +99,7 @@ test_that("lm robust works with missingness", {
   )
 
   expect_equivalent(
-    as.matrix(tidy(estimatr_missout_out)[, c("est", "se")]),
+    as.matrix(tidy(estimatr_missout_out)[, c("coefficients", "se")]),
     lm_missout_hc2
   )
 
@@ -118,8 +119,8 @@ test_that("lm_robust doesn't include aux variables when . is used", {
   clust <- rep(1:5, each = 2)
 
   expect_identical(
-    lm_robust(y ~ ., clusters = clust, data = dat),
-    lm_robust(y ~ x, clusters = clust, data = dat)
+    rmcall(lm_robust(y ~ ., clusters = clust, data = dat)),
+    rmcall(lm_robust(y ~ x, clusters = clust, data = dat))
   )
 })
 
@@ -147,7 +148,7 @@ test_that("lm robust works with weights", {
   )
 
   expect_equivalent(
-    as.matrix(tidy(estimatr_out)[, c("est", "se")]),
+    as.matrix(tidy(estimatr_out)[, c("coefficients", "se")]),
     lmo_hc2
   )
 
@@ -160,8 +161,8 @@ test_that("lm robust works with weights", {
   )
 
   expect_identical(
-    estimatr_miss_out,
-    lm_robust(Y ~ Z * X, weights = W, data = dat[-39, ])
+    rmcall(estimatr_miss_out),
+    rmcall(lm_robust(Y ~ Z * X, weights = W, data = dat[-39, ]))
   )
 
   # Compare to lm output
@@ -172,7 +173,7 @@ test_that("lm robust works with weights", {
   )
 
   expect_equivalent(
-    as.matrix(tidy(estimatr_miss_out)[, c("est", "se")]),
+    as.matrix(tidy(estimatr_miss_out)[, c("coefficients", "se")]),
     lmo_miss_hc2
   )
 
@@ -196,7 +197,8 @@ test_that("lm_robust_fit adds column names", {
     se_type = "classical",
     alpha = 0.05,
     return_vcov = TRUE,
-    try_cholesky = TRUE
+    try_cholesky = TRUE,
+    has_int = FALSE
   )
 
   expect_equal(
@@ -243,7 +245,7 @@ test_that("lm robust works with rank-deficient X", {
 
   ## order sometimes is different! Not stable order!
   # expect_equivalent(
-  #   as.matrix(tidy(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat, se_type = 'classical'))[, c('est', 'se')]),
+  #   as.matrix(tidy(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat, se_type = 'classical'))[, c('coefficients', 'se')]),
   #   out_sumlm
   # )
 
@@ -253,7 +255,7 @@ test_that("lm robust works with rank-deficient X", {
 
   ## Not the same as LM! Different QR decompositions when dependency isn't just equivalency
   expect_equivalent(
-    as.matrix(tidy(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat, se_type = "classical"))[, c("est", "se")]),
+    as.matrix(tidy(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat, se_type = "classical"))[, c("coefficients", "se")]),
     as.matrix(summary(RcppEigen::fastLm(Y ~ X1 + X2 + Z1 + X3, data = dat))$coefficients[, 1:2])
   )
 
@@ -271,3 +273,43 @@ test_that("lm robust works with rank-deficient X", {
     tidy(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat, weights = w))
   )
 })
+
+test_that("r squared is right", {
+
+  lmo <- summary(lm(mpg ~ hp, mtcars))
+  lmow <- summary(lm(mpg ~ hp, mtcars, weights = wt))
+  lmon <- summary(lm(mpg ~ hp-1, mtcars))
+  lmown <- summary(lm(mpg ~ hp-1, mtcars, weights = wt))
+
+  lmro <- lm_robust(mpg ~ hp, mtcars)
+  lmrow <- lm_robust(mpg ~ hp, mtcars, weights = wt)
+  lmron <- lm_robust(mpg ~ hp-1, mtcars)
+  lmrown <- lm_robust(mpg ~ hp-1, mtcars, weights = wt)
+  lmrclust <- lm_robust(mpg ~ hp-1, mtcars, weights = wt, clusters = carb) # for good measure
+
+  expect_equal(
+    c(lmo$r.squared, lmo$adj.r.squared, lmo$fstatistic),
+    c(lmro$r.squared, lmro$adj.r.squared, lmro$fstatistic)
+  )
+
+  expect_equal(
+    c(lmow$r.squared, lmow$adj.r.squared, lmow$fstatistic),
+    c(lmrow$r.squared, lmrow$adj.r.squared, lmrow$fstatistic)
+  )
+
+  expect_equal(
+    c(lmon$r.squared, lmon$adj.r.squared, lmon$fstatistic),
+    c(lmron$r.squared, lmron$adj.r.squared, lmron$fstatistic)
+  )
+
+  expect_equal(
+    c(lmown$r.squared, lmown$adj.r.squared, lmown$fstatistic),
+    c(lmrown$r.squared, lmrown$adj.r.squared, lmrown$fstatistic)
+  )
+
+  expect_equal(
+    c(lmown$r.squared, lmown$adj.r.squared, lmown$fstatistic),
+    c(lmrclust$r.squared, lmrclust$adj.r.squared, lmrclust$fstatistic)
+  )
+})
+

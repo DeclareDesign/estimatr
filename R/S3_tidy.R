@@ -101,7 +101,7 @@ tidy_data_frame <- function(object, digits = NULL) {
   return_cols <-
     c(
       "coefficient_name",
-      "est",
+      "coefficients",
       "se",
       "p",
       "ci_lower",
@@ -111,6 +111,8 @@ tidy_data_frame <- function(object, digits = NULL) {
     )
 
   return_frame <- as.data.frame(object[return_cols], stringsAsFactors = FALSE)
+  row.names(return_frame) <- NULL
+  return(return_frame)
 }
 
 warn_singularities <- function(object) {

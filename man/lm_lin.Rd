@@ -55,11 +55,10 @@ you can use the generic accessor functions \code{coef}, \code{vcov},
 
 An object of class \code{"lm_robust"} is a list containing at least the
 following components:
-\describe{
-  \item{est}{the estimated coefficients}
+  \item{coefficients}{the estimated coefficients}
   \item{se}{the estimated standard errors}
   \item{df}{the estimated degrees of freedom}
-  \item{p}{the p-values from the t-test using \code{est}, \code{se}, and \code{df}}
+  \item{p}{the p-values from the t-test using \code{coefficients}, \code{se}, and \code{df}}
   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
   \item{coefficient_name}{a character vector of coefficient names}
@@ -71,14 +70,13 @@ following components:
   \item{vcov}{the fitted variance covariance matrix}
   \item{weighted}{whether or not weights were applied}
   \item{scaled_center}{the means of each of the covariates used for centering them}
-}
+  \item{call}{the original function call}
 We also return \code{terms} and \code{contrasts}, used by \code{predict}.
 }
 \description{
 This function is a wrapper for \code{\link{lm_robust}} that
 is useful for estimating treatment effects with pre-treatment covariate
-data. This implements the method described by Lin (2013) to reduce the bias
-of such estimation
+data. This implements the method described by Lin (2013).
 }
 \details{
 This function is simply a wrapper for \code{\link{lm_robust}}. This method
@@ -104,7 +102,7 @@ dat <- fabricate(
   y1 = rnorm(N) + x + 0.35
 )
 
-dat$z <- simple_ra(N = nrow(dat))
+dat$z <- complete_ra(N = nrow(dat))
 dat$y <- ifelse(dat$z == 1, dat$y1, dat$y0)
 
 # Same specification as `lm_robust()` with one additional argument
@@ -133,6 +131,7 @@ lm_lin(y ~ z_multi, covariates = ~ x, data = dat)
 }
 \references{
 Freedman, David A. 2008. "On Regression Adjustments in Experiments with Several Treatments." The Annals of Applied Statistics. JSTOR, 176-96. \url{https://doi.org/10.1214/07-AOAS143}.
+
 Lin, Winston. 2013. "Agnostic Notes on Regression Adjustments to Experimental Data: Reexamining Freedman's Critique." The Annals of Applied Statistics 7 (1). Institute of Mathematical Statistics: 295-318. \url{https://doi.org/10.1214/12-AOAS583}.
 }
 \seealso{

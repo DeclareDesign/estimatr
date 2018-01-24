@@ -25,7 +25,9 @@ test_that("tidy, summary, and print work", {
   ## lm_robust
   lmo <- lm_robust(y ~ x, data = dat, se_type = "classical")
 
-  summary(lmo)$coefficients
+  capture_output(
+    summary(lmo)
+  )
 
   expect_is(
     tidy(lmo),
@@ -39,7 +41,7 @@ test_that("tidy, summary, and print work", {
 
   capture_output(
     expect_equivalent(
-      tidy(lmo),
+      summary(lmo)$coefficients,
       print(lmo)
     )
   )
@@ -55,7 +57,7 @@ test_that("tidy, summary, and print work", {
 
   capture_output(
     expect_equivalent(
-      tidy(lmlo),
+      summary(lmlo)$coefficients,
       print(lmlo)
     )
   )
@@ -68,14 +70,14 @@ test_that("tidy, summary, and print work", {
   )
 
   expect_equivalent(
-    as.matrix(tidy(ht)[, c("est", "se", "p", "ci_lower", "ci_upper", "df")]),
+    as.matrix(tidy(ht)[, c("coefficients", "se", "p", "ci_lower", "ci_upper", "df")]),
     summary(ht)$coefficients
   )
 
 
   capture_output(
     expect_equivalent(
-      tidy(ht),
+      summary(ht)$coefficients,
       print(ht)
     )
   )
@@ -91,7 +93,7 @@ test_that("tidy, summary, and print work", {
 
   capture_output(
     expect_equivalent(
-      tidy(dim),
+      summary(dim)$coefficients,
       print(dim)
     )
   )
@@ -161,7 +163,7 @@ test_that("coef and confint work", {
   lmo <- lm_robust(y ~ x, data = dat)
   expect_equivalent(
     coef(lmo),
-    lmo$est
+    lmo$coefficients
   )
 
   expect_equivalent(
@@ -171,13 +173,13 @@ test_that("coef and confint work", {
 
   expect_equivalent(
     coef(lmo, parm = "x"),
-    lmo$est[lmo$coefficient_name == "x"]
+    lmo$coefficients["x"]
   )
 
   lm2o <- lm_robust(y ~ x + z, data = dat)
   expect_equivalent(
     coef(lm2o)[2],
-    lm2o$est[lm2o$coefficient_name == "x"]
+    lm2o$coefficients["x"]
   )
 
   expect_equivalent(
@@ -202,7 +204,7 @@ test_that("coef and confint work", {
   dim <- difference_in_means(y ~ x, data = dat)
   expect_equivalent(
     coef(dim),
-    dim$est
+    dim$coefficients
   )
   expect_equivalent(
     confint(dim),
@@ -212,7 +214,7 @@ test_that("coef and confint work", {
   ht <- horvitz_thompson(y ~ x, condition_prs = p, data = dat)
   expect_equivalent(
     coef(ht),
-    ht$est
+    ht$coefficients
   )
   expect_equivalent(
     confint(ht),

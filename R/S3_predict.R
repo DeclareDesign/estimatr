@@ -90,11 +90,14 @@ predict.lm_robust <- function(
     )
   }
 
+  # Get coefs
+  coefs <- coef(object)
+
   # Get NAs from rank-deficient
-  beta_na <- is.na(object$est)
+  beta_na <- is.na(coefs)
 
   # Get predicted values
-  predictor <- drop(X[, !beta_na, drop = FALSE] %*% object$est[!beta_na])
+  predictor <- drop(X[, !beta_na, drop = FALSE] %*% coefs[!beta_na])
 
   df_resid <- object$N - object$rank
   interval <- match.arg(interval)

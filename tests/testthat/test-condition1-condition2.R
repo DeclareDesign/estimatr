@@ -34,14 +34,14 @@ test_that("Condition arguments behave as expected", {
       condition1 = 3,
       condition2 = 4,
       condition_prs = rep(0.5, nrow(dat))
-    ))[c("est", "se")],
+    ))[c("coefficients", "se")],
     tidy(horvitz_thompson(
       y ~ z,
       data = dat,
       condition1 = 4,
       condition2 = 3,
       condition_prs = rep(0.5, nrow(dat))
-    ))[c("est", "se")] * c(-1, 1)
+    ))[c("coefficients", "se")] * c(-1, 1)
   )
 
   expect_identical(
@@ -50,13 +50,13 @@ test_that("Condition arguments behave as expected", {
       data = dat,
       condition1 = 2,
       condition2 = 1
-    ))[c("est", "se")],
+    ))[c("coefficients", "se")],
     tidy(difference_in_means(
       y ~ z,
       data = dat,
       condition1 = 1,
       condition2 = 2
-    ))[c("est", "se")] * c(-1, 1)
+    ))[c("coefficients", "se")] * c(-1, 1)
   )
 
   # Errors if not specifying both

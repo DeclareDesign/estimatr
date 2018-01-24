@@ -5,7 +5,7 @@
 \title{Internal method that creates linear fits}
 \usage{
 lm_robust_fit(y, X, weights, cluster, ci, se_type, alpha, return_vcov,
-  try_cholesky)
+  try_cholesky, has_int)
 }
 \arguments{
 \item{y}{numeric outcome vector}
@@ -25,6 +25,8 @@ lm_robust_fit(y, X, weights, cluster, ci, se_type, alpha, return_vcov,
 \item{return_vcov}{a boolean for whether to return the vcov matrix for later usage}
 
 \item{try_cholesky}{a boolean for whether to try using a cholesky decomposition to solve LS instead of a QR decomposition}
+
+\item{has_int}{a boolean for whether the model has an intercept}
 }
 \description{
 Internal method that creates linear fits

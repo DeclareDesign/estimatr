@@ -2,7 +2,7 @@
 % Please edit documentation in R/estimatr_horvitz_thompson.R
 \name{horvitz_thompson}
 \alias{horvitz_thompson}
-\title{Horvitz-Thompson estimator for unbiased treatment effects}
+\title{Horvitz-Thompson estimator for two-armed trials}
 \usage{
 horvitz_thompson(formula, data, blocks, clusters, simple = NULL,
   condition_prs, condition_pr_mat = NULL, declaration = NULL, subset,
@@ -69,9 +69,33 @@ intervals, TRUE by default.}
 \item{return_condition_pr_mat}{a boolean for whether to return the condition
 probability matrix. Returns NULL if the design is simple randomization}
 }
+\value{
+\code{horvitz_thompson} returns an object of class
+\code{"horvitz_thompson"}.
+
+The functions \code{summary} and \code{\link{tidy}} can be used to get
+the results as a \code{data.frame}. To get useful data out of the return,
+you can use these data frames, you can use the resulting list directly, or
+you can use the generic accessor functions \code{coef}, and\code{confint}.
+
+An object of class \code{"horvitz_thompson"} is a list containing at
+least the following components:
+
+  \item{coefficients}{the estimated coefficients}
+  \item{se}{the estimated standard errors}
+  \item{df}{the estimated degrees of freedom}
+  \item{p}{the p-values from the t-test using \code{coefficients}, \code{se}, and \code{df}}
+  \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
+  \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
+  \item{coefficient_name}{a character vector of coefficient names}
+  \item{alpha}{the significance level specified by the user}
+  \item{N}{the number of observations used}
+  \item{outcome}{the name of the outcome variable}
+  \item{condition_pr_mat}{the condition probability matrix if \code{return_condition_pr_mat} is TRUE}
+}
 \description{
-These Horvitz-Thompson estimators are unbiased for
-any design as long as the randomization scheme is known.
+Horvitz-Thompson estimators that are unbiased for designs in
+which the randomization scheme is known
 }
 \details{
 This function implements the Horvitz-Thompson estimator for
@@ -213,7 +237,9 @@ ht_cl_manual
 }
 \references{
 Aronow, Peter M, and Joel A Middleton. 2013. "A Class of Unbiased Estimators of the Average Treatment Effect in Randomized Experiments." Journal of Causal Inference 1 (1): 135-54. \url{https://doi.org/10.1515/jci-2012-0009}.
+
 Aronow, Peter M, and Cyrus Samii. 2017. "Estimating Average Causal Effects Under Interference Between Units." Annals of Applied Statistics, forthcoming. \url{https://arxiv.org/abs/1305.6156v3}.
+
 Middleton, Joel A, and Peter M Aronow. 2015. "Unbiased Estimation of the Average Treatment Effect in Cluster-Randomized Experiments." Statistics, Politics and Policy 6 (1-2): 39-75. \url{https://doi.org/10.1515/spp-2013-0002}.
 }
 \seealso{

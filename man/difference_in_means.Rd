@@ -54,11 +54,10 @@ you can use the generic accessor functions \code{coef}, and\code{confint}.
 
 An object of class \code{"difference_in_means"} is a list containing at
 least the following components:
-\describe{
-  \item{est}{the estimated coefficients}
+  \item{coefficients}{the estimated coefficients}
   \item{se}{the estimated standard errors}
   \item{df}{the estimated degrees of freedom}
-  \item{p}{the p-values from the t-test using \code{est}, \code{se}, and \code{df}}
+  \item{p}{the p-values from the t-test using \code{coefficients}, \code{se}, and \code{df}}
   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
   \item{coefficient_name}{a character vector of coefficient names}
@@ -67,10 +66,9 @@ least the following components:
   \item{outcome}{the name of the outcome variable}
   \item{design}{the name of the design learned from the arguments passed}
 }
-}
 \description{
-This difference-in-means estimator selects the appropriate
-point estimator, standard errors, and degrees of freedom for a variety of
+Difference-in-means estimators that selects the appropriate
+point estimate, standard errors, and degrees of freedom for a variety of
 designs: unit randomized, cluster randomized, block randomized,
 block-cluster randomized, matched-pairs, and matched-pair cluster
 randomized designs
@@ -106,11 +104,11 @@ library(randomizr)
 dat <- fabricate(
   N = 100,
   Y = rnorm(100),
-  Z_simp = simple_ra(N, prob = 0.4),
+  Z_comp = complete_ra(N, prob = 0.4),
 )
 
-table(dat$Z_simp)
-difference_in_means(Y ~ Z_simp, data = dat)
+table(dat$Z_comp)
+difference_in_means(Y ~ Z_comp, data = dat)
 
 # Accurates estimates and standard errors for clustered designs
 dat$clust <- sample(20, size = nrow(dat), replace = TRUE)
@@ -160,11 +158,12 @@ difference_in_means(
 
 # Specifying weights will result in estimation via `lm_robust`
 dat$w <- runif(nrow(dat))
-difference_in_means(Y ~ Z_simp, weights = w, data = dat)
-lm_robust(Y ~ Z_simp, weights = w, data = dat)
+difference_in_means(Y ~ Z_comp, weights = w, data = dat)
+lm_robust(Y ~ Z_comp, weights = w, data = dat)
 
 }
 \references{
 Gerber, Alan S, and Donald P Green. 2012. Field Experiments: Design, Analysis, and Interpretation. New York: W.W. Norton.
+
 Imai, Kosuke, Gary King, Clayton Nall. 2009. "The Essential Role of Pair Matching in Cluster-Randomized Experiments, with Application to the Mexican Universal Health Insurance Evaluation." Statistical Science 24 (1). Institute of Mathematical Statistics: 29-53. \url{https://doi.org/10.1214/08-STS274}.
 }

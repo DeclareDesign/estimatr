@@ -22,7 +22,7 @@ test_that("lm_lin recreates Lin 2013 Table 2", {
           data = alo_star_men,
           se_type = "HC0"
         )
-      )[2, c("est", "se")],
+      )[2, c("coefficients", "se")],
       3
     ),
     c(-0.036, 0.158)
@@ -38,7 +38,7 @@ test_that("lm_lin recreates Lin 2013 Table 2", {
           data = alo_star_men,
           se_type = "HC0"
         )
-      )[2, c("est", "se")],
+      )[2, c("coefficients", "se")],
       3
     )),
     c(-0.083, 0.146)
@@ -54,7 +54,7 @@ test_that("lm_lin recreates Lin 2013 Table 2", {
           data = alo_star_men,
           se_type = "HC0"
         )
-      )[2, c("est", "se")],
+      )[2, c("coefficients", "se")],
       3
     )),
     c(-0.081, 0.146)
@@ -80,8 +80,8 @@ if (rep_table_3) {
   }
   ci_custom <- function(obj) {
     return(list(
-      ci_upper = obj$est[2] + obj$se[2] * 1.96,
-      ci_lower = obj$est[2] - obj$se[2] * 1.96
+      ci_upper = obj$coefficients[2] + obj$se[2] * 1.96,
+      ci_lower = obj$coefficients[2] - obj$se[2] * 1.96
     ))
   }
 
@@ -136,7 +136,7 @@ if (rep_table_3) {
       )
     }
 
-    ests[i, ] <- c(unadj$est[2], tradadj$est[2], intadj$est[2])
+    ests[i, ] <- c(unadj$coefficients[2], tradadj$coefficients[2], intadj$coefficients[2])
     sd_mats[i, , ] <- sd_mat
     cover_mats[i, , ] <- cover_mat
     width_mats[i, , ] <- width_mat

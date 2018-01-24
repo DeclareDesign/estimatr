@@ -1,7 +1,7 @@
 #' Design-based difference-in-means estimator
 #'
-#' @description This difference-in-means estimator selects the appropriate
-#' point estimator, standard errors, and degrees of freedom for a variety of
+#' @description Difference-in-means estimators that selects the appropriate
+#' point estimate, standard errors, and degrees of freedom for a variety of
 #' designs: unit randomized, cluster randomized, block randomized,
 #' block-cluster randomized, matched-pairs, and matched-pair cluster
 #' randomized designs
@@ -64,11 +64,10 @@
 #'
 #' An object of class \code{"difference_in_means"} is a list containing at
 #' least the following components:
-#' \describe{
-#'   \item{est}{the estimated coefficients}
+#'   \item{coefficients}{the estimated coefficients}
 #'   \item{se}{the estimated standard errors}
 #'   \item{df}{the estimated degrees of freedom}
-#'   \item{p}{the p-values from the t-test using \code{est}, \code{se}, and \code{df}}
+#'   \item{p}{the p-values from the t-test using \code{coefficients}, \code{se}, and \code{df}}
 #'   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{coefficient_name}{a character vector of coefficient names}
@@ -76,10 +75,10 @@
 #'   \item{N}{the number of observations used}
 #'   \item{outcome}{the name of the outcome variable}
 #'   \item{design}{the name of the design learned from the arguments passed}
-#' }
 #'
 #' @references
 #' Gerber, Alan S, and Donald P Green. 2012. Field Experiments: Design, Analysis, and Interpretation. New York: W.W. Norton.
+#'
 #' Imai, Kosuke, Gary King, Clayton Nall. 2009. "The Essential Role of Pair Matching in Cluster-Randomized Experiments, with Application to the Mexican Universal Health Insurance Evaluation." Statistical Science 24 (1). Institute of Mathematical Statistics: 29-53. \url{https://doi.org/10.1214/08-STS274}.
 #'
 #' @examples
@@ -90,11 +89,11 @@
 #' dat <- fabricate(
 #'   N = 100,
 #'   Y = rnorm(100),
-#'   Z_simp = simple_ra(N, prob = 0.4),
+#'   Z_comp = complete_ra(N, prob = 0.4),
 #' )
 #'
-#' table(dat$Z_simp)
-#' difference_in_means(Y ~ Z_simp, data = dat)
+#' table(dat$Z_comp)
+#' difference_in_means(Y ~ Z_comp, data = dat)
 #'
 #' # Accurates estimates and standard errors for clustered designs
 #' dat$clust <- sample(20, size = nrow(dat), replace = TRUE)
@@ -144,8 +143,8 @@
 #'
 #' # Specifying weights will result in estimation via `lm_robust`
 #' dat$w <- runif(nrow(dat))
-#' difference_in_means(Y ~ Z_simp, weights = w, data = dat)
-#' lm_robust(Y ~ Z_simp, weights = w, data = dat)
+#' difference_in_means(Y ~ Z_comp, weights = w, data = dat)
+#' lm_robust(Y ~ Z_comp, weights = w, data = dat)
 #'
 #' @export
 difference_in_means <-
@@ -263,7 +262,7 @@ difference_in_means <-
       N_overall <- with(block_estimates, sum(N))
 
       # Blocked design, (Gerber Green 2012, p73, eq3.10)
-      diff <- with(block_estimates, sum(est * N / N_overall))
+      diff <- with(block_estimates, sum(coefficients * N / N_overall))
 
       df <- NA
       n_blocks <- nrow(block_estimates)
@@ -275,7 +274,7 @@ difference_in_means <-
           se <-
             with(
               block_estimates,
-              sqrt((1 / (n_blocks * (n_blocks - 1))) * sum((est - diff) ^ 2))
+              sqrt((1 / (n_blocks * (n_blocks - 1))) * sum((coefficients - diff) ^ 2))
             )
         } else {
           design <- "Matched-pair clustered"
@@ -285,7 +284,7 @@ difference_in_means <-
               block_estimates,
               sqrt(
                 (n_blocks / ((n_blocks - 1) * N_overall ^ 2)) *
-                  sum((N * est - (N_overall * diff) / n_blocks) ^ 2)
+                  sum((N * coefficients - (N_overall * diff) / n_blocks) ^ 2)
               )
             )
         }
@@ -310,7 +309,7 @@ difference_in_means <-
       }
 
       return_frame <- data.frame(
-        est = diff,
+        coefficients = diff,
         se = se,
         df = df,
         N = N_overall
@@ -403,10 +402,11 @@ difference_in_means_internal <-
         ci = TRUE,
         try_cholesky = TRUE,
         alpha = alpha,
-        return_vcov = FALSE
+        return_vcov = FALSE,
+        has_int = TRUE
       )
 
-      diff <- cr2_out$est[2]
+      diff <- cr2_out$coefficients[2]
       se <- cr2_out$se[2]
       df <- cr2_out$df[2]
     } else {
@@ -450,10 +450,11 @@ difference_in_means_internal <-
           ci = TRUE,
           try_cholesky = TRUE,
           alpha = alpha,
-          return_vcov = FALSE
+          return_vcov = FALSE,
+          has_int = TRUE
         )
 
-        diff <- w_hc2_out$est[2]
+        diff <- w_hc2_out$coefficients[2]
         se <- w_hc2_out$se[2]
         df <- w_hc2_out$df[2]
       }
@@ -461,7 +462,7 @@ difference_in_means_internal <-
 
     return_frame <-
       data.frame(
-        est = diff,
+        coefficients = diff,
         se = se,
         N = N,
         df = df

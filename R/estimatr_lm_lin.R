@@ -1,10 +1,8 @@
-
 #' Linear regression with the Lin (2013) covariate adjustment
 #'
 #' @description This function is a wrapper for \code{\link{lm_robust}} that
 #' is useful for estimating treatment effects with pre-treatment covariate
-#' data. This implements the method described by Lin (2013) to reduce the bias
-#' of such estimation
+#' data. This implements the method described by Lin (2013).
 #'
 #' @param formula an object of class formula, as in \code{\link{lm}}, such as
 #' \code{Y ~ Z} with only one variable on the right-hand side, the treatment
@@ -55,11 +53,10 @@
 #'
 #' An object of class \code{"lm_robust"} is a list containing at least the
 #' following components:
-#' \describe{
-#'   \item{est}{the estimated coefficients}
+#'   \item{coefficients}{the estimated coefficients}
 #'   \item{se}{the estimated standard errors}
 #'   \item{df}{the estimated degrees of freedom}
-#'   \item{p}{the p-values from the t-test using \code{est}, \code{se}, and \code{df}}
+#'   \item{p}{the p-values from the t-test using \code{coefficients}, \code{se}, and \code{df}}
 #'   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{coefficient_name}{a character vector of coefficient names}
@@ -71,7 +68,7 @@
 #'   \item{vcov}{the fitted variance covariance matrix}
 #'   \item{weighted}{whether or not weights were applied}
 #'   \item{scaled_center}{the means of each of the covariates used for centering them}
-#' }
+#'   \item{call}{the original function call}
 #' We also return \code{terms} and \code{contrasts}, used by \code{predict}.
 #'
 #' @seealso \code{\link{lm_robust}}
@@ -88,7 +85,7 @@
 #'   y1 = rnorm(N) + x + 0.35
 #' )
 #'
-#' dat$z <- simple_ra(N = nrow(dat))
+#' dat$z <- complete_ra(N = nrow(dat))
 #' dat$y <- ifelse(dat$z == 1, dat$y1, dat$y0)
 #'
 #' # Same specification as `lm_robust()` with one additional argument
@@ -116,6 +113,7 @@
 #'
 #' @references
 #' Freedman, David A. 2008. "On Regression Adjustments in Experiments with Several Treatments." The Annals of Applied Statistics. JSTOR, 176-96. \url{https://doi.org/10.1214/07-AOAS143}.
+#'
 #' Lin, Winston. 2013. "Agnostic Notes on Regression Adjustments to Experimental Data: Reexamining Freedman's Critique." The Annals of Applied Statistics 7 (1). Institute of Mathematical Statistics: 295-318. \url{https://doi.org/10.1214/12-AOAS583}.
 #'
 #' @export
@@ -286,7 +284,8 @@ lm_lin <- function(formula,
       se_type = se_type,
       alpha = alpha,
       return_vcov = return_vcov,
-      try_cholesky = try_cholesky
+      try_cholesky = try_cholesky,
+      has_int = has_intercept
     )
 
   return_list <- lm_return(
@@ -297,6 +296,9 @@ lm_lin <- function(formula,
 
   return_list[["scaled_center"]] <- attr(demeaned_covars, "scaled:center")
   setNames(return_list[["scaled_center"]], original_covar_names)
+
+  return_list[["call"]] <- match.call()
+
 
   return(return_list)
 }
