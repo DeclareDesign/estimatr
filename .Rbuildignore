@@ -18,3 +18,4 @@ update_repo.R
 ^tests/testthat/mtcars\.csv$
 ^tests/testthat/run-stata-models\.do$
 ^tests/testthat/test-broom\.R$
+^estimatr_.*\.tar\.gz$

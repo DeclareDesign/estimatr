@@ -46,15 +46,15 @@
 #'
 #' @export
 predict.lm_robust <- function(
-  object,
-  newdata,
-  se.fit = FALSE,
-  interval = c("none", "confidence", "prediction"),
-  alpha = 0.05,
-  na.action = na.pass,
-  pred.var = NULL,
-  weights,
-  ...) {
+                              object,
+                              newdata,
+                              se.fit = FALSE,
+                              interval = c("none", "confidence", "prediction"),
+                              alpha = 0.05,
+                              na.action = na.pass,
+                              pred.var = NULL,
+                              weights,
+                              ...) {
 
   # Get model matrix
   rhs_terms <- delete.response(object$terms)
@@ -73,7 +73,7 @@ predict.lm_robust <- function(
           ,
           names(object$scaled_center),
           drop = F
-          ],
+        ],
         center = object$scaled_center,
         scale = FALSE
       )
@@ -83,9 +83,11 @@ predict.lm_robust <- function(
     treat_name <- attr(object$terms, "term.labels")[1]
     interacted_covars <- X[, treat_name] * demeaned_covars
 
-    X <- cbind(X[, attr(X, "assign") <= 1, drop = F],
-               demeaned_covars,
-               interacted_covars)
+    X <- cbind(
+      X[, attr(X, "assign") <= 1, drop = F],
+      demeaned_covars,
+      interacted_covars
+    )
   }
 
   # Get NAs from rank-deficient
@@ -98,21 +100,18 @@ predict.lm_robust <- function(
   interval <- match.arg(interval)
 
   if (se.fit || interval != "none") {
-
     ret <- list()
 
     var_fit <-
       apply(X[, !beta_na, drop = FALSE], 1, function(x) tcrossprod(crossprod(x, object$vcov), x))
 
     if (interval != "none") {
-
-      tval <- qt(alpha/2, df_resid, lower.tail = FALSE)
+      tval <- qt(alpha / 2, df_resid, lower.tail = FALSE)
 
       if (interval == "prediction") {
 
         # Get weights
         if (missing(weights)) {
-
           if (object$weighted && is.null(pred.var)) {
             warning("Assuming constant prediction variance even though model fit is weighted\\n")
           }
@@ -128,18 +127,19 @@ predict.lm_robust <- function(
         }
 
         hwid <- tval * sqrt(var_fit + pred.var)
-
       } else if (interval == "confidence") {
         hwid <- tval * sqrt(var_fit)
       }
 
       predictor <-
         matrix(
-          c(predictor,
+          c(
+            predictor,
             predictor - hwid,
-            predictor + hwid),
+            predictor + hwid
+          ),
           ncol = 3,
-          dimnames = list(NULL, c('fit', 'lwr', 'upr'))
+          dimnames = list(NULL, c("fit", "lwr", "upr"))
         )
     }
 
@@ -153,6 +153,4 @@ predict.lm_robust <- function(
   } else {
     return(predictor)
   }
-
 }
-

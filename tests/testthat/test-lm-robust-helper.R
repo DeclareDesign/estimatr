@@ -14,7 +14,3 @@
 # system.time(replicate(500, lm_robust_helper(X = X, y = dat$y, type = "HC3")))
 #
 #
-
-
-
-

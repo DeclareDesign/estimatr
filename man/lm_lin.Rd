@@ -5,8 +5,7 @@
 \title{Linear regression with the Lin (2013) covariate adjustment}
 \usage{
 lm_lin(formula, covariates, data, weights, subset, clusters, se_type = NULL,
-  ci = TRUE, alpha = 0.05, coefficient_name = NULL, return_vcov = TRUE,
-  try_cholesky = FALSE)
+  ci = TRUE, alpha = 0.05, return_vcov = TRUE, try_cholesky = FALSE)
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}, such as
@@ -28,19 +27,13 @@ corresponds to the clusters in the data.}
 
 \item{se_type}{The sort of standard error sought. Without clustering:
 "HC0", "HC1" (or "stata", the equivalent), "HC2" (default), "HC3", or
-"classical". With clustering: "CR0", "CR2" (default), or "stata". are
+"classical". With clustering: "CR0", "CR2" (default), or "stata" are
 permissible.}
 
-\item{ci}{A boolean for whether to compute and return pvalues and confidence
+\item{ci}{A boolean for whether to compute and return p-values and confidence
 intervals, TRUE by default.}
 
 \item{alpha}{The significance level, 0.05 by default.}
-
-\item{coefficient_name}{a character or character vector that indicates which
-coefficients should be reported. If left unspecified, returns all
-coefficients. Especially for models with clustering where only one
-coefficient is of interest, specifying a coefficient of interest may
-result in improvements in speed}
 
 \item{return_vcov}{a boolean for whether to return the variance-covariance
 matrix for later usage, TRUE by default.}
@@ -49,7 +42,7 @@ matrix for later usage, TRUE by default.}
 decomposition to solve LS instead of a QR decomposition, FALSE by default.
 Using a Cholesky decomposition may result in speed gains, but should only
 be used if users are sure their model is full-rank (i.e. there is no
-perfect multi-collinearity)}
+perfect multi-collinearity).}
 }
 \value{
 \code{lm_lin} returns an object of class \code{"lm_robust"}.
@@ -122,7 +115,10 @@ tidy(lmlin_out)
 lm_lin(y ~ z, covariates = ~ x + x2, data = dat)
 
 # Also centers data AFTER evaluating any functions in formula
-lm_lin(y ~ z, covariates = ~ x + log(x3), data = dat)
+lmlin_out2 <- lm_lin(y ~ z, covariates = ~ x + log(x3), data = dat)
+lmlin_out2$scaled_center["log(x3)"]
+mean(log(dat$x3))
+
 
 # Works easily with clusters
 dat$clusterID <- rep(1:20, each = 2)
@@ -136,5 +132,9 @@ lm_lin(y ~ z_multi, covariates = ~ x, data = dat)
 
 }
 \references{
-
+Freedman, David A. 2008. "On Regression Adjustments in Experiments with Several Treatments." The Annals of Applied Statistics. JSTOR, 176-96. \url{https://doi.org/10.1214/07-AOAS143}.
+Lin, Winston. 2013. "Agnostic Notes on Regression Adjustments to Experimental Data: Reexamining Freedman's Critique." The Annals of Applied Statistics 7 (1). Institute of Mathematical Statistics: 295-318. \url{https://doi.org/10.1214/12-AOAS583}.
+}
+\seealso{
+\code{\link{lm_robust}}
 }

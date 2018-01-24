@@ -1,13 +1,14 @@
 context("Estimator - lm_robust, clustered")
 
 test_that("lm cluster se", {
-
   N <- 100
-  dat <- data.frame(Y = rnorm(N),
-                    Z = rbinom(N, 1, .5),
-                    X = rnorm(N),
-                    J = sample(1:10, N, replace = T),
-                    W = runif(N))
+  dat <- data.frame(
+    Y = rnorm(N),
+    Z = rbinom(N, 1, .5),
+    X = rnorm(N),
+    J = sample(1:10, N, replace = T),
+    W = runif(N)
+  )
 
 
   ## Test functionality
@@ -18,7 +19,6 @@ test_that("lm cluster se", {
   lm_robust(
     Y ~ Z + X,
     clusters = J,
-    coefficient_name = c("Z", "X"),
     data = dat
   )
 
@@ -26,8 +26,7 @@ test_that("lm cluster se", {
   lm_robust(
     Y ~ Z + X,
     clusters = J,
-    coefficient_name = c("Z", "X"),
-    se_type = 'stata',
+    se_type = "stata",
     data = dat,
     ci = T
   )
@@ -39,33 +38,30 @@ test_that("lm cluster se", {
           Y ~ X + Z,
           clusters = J,
           ci = FALSE,
-          coefficient_name = c("X", "Z"),
           data = dat
         )
       )[, c("p", "ci_lower", "ci_upper")]
     ),
-    matrix(NA, nrow = 2, ncol = 3)
+    matrix(NA, nrow = 3, ncol = 3)
   )
 
   ## Test equality
   lm_interact <-
     lm_robust(
-      Y ~ Z*X,
+      Y ~ Z * X,
       clusters = J,
-      coefficient_name = "Z:X",
       data = dat
     )
 
   lm_interact_stata <-
     lm_robust(
-      Y ~ Z*X,
+      Y ~ Z * X,
       clusters = J,
-      se_type = 'stata',
-      coefficient_name = "Z:X",
+      se_type = "stata",
       data = dat
     )
 
-  lm_interact_simple <- lm(Y ~ Z*X, data = dat)
+  lm_interact_simple <- lm(Y ~ Z * X, data = dat)
 
   bm_interact <-
     BMlmSE(
@@ -82,15 +78,15 @@ test_that("lm cluster se", {
 
   bm_interact_stata_interval <-
     lm_interact_simple$coefficients["Z:X"] +
-    qt(0.975, df = length(unique(dat$J))- 1) * bm_interact$se.Stata["Z:X"] * c(-1, 1)
+    qt(0.975, df = length(unique(dat$J)) - 1) * bm_interact$se.Stata["Z:X"] * c(-1, 1)
 
   expect_equivalent(
-    tidy(lm_interact)[c("se", "ci_lower", "ci_upper")],
+    tidy(lm_interact)[4, c("se", "ci_lower", "ci_upper")],
     c(bm_interact$se["Z:X"], bm_interact_interval)
   )
 
   expect_equivalent(
-    tidy(lm_interact_stata)[c("se", "ci_lower", "ci_upper")],
+    tidy(lm_interact_stata)[4, c("se", "ci_lower", "ci_upper")],
     c(bm_interact$se.Stata["Z:X"], bm_interact_stata_interval)
   )
 
@@ -116,23 +112,23 @@ test_that("lm cluster se", {
   bm_full_upper <- lm_full_simple$coefficients + bm_full_moe
 
   expect_equivalent(
-    as.matrix( tidy(lm_full)[, c("se", "ci_lower", "ci_upper")] ),
+    as.matrix(tidy(lm_full)[, c("se", "ci_lower", "ci_upper")]),
     cbind(bm_full$se, bm_full_lower, bm_full_upper)
   )
 
   ## Works with rank deficient case
   dat$X2 <- dat$X
-  lmr_rd <- lm_robust(Y ~ X + Z + X2, data = dat, clusters = J, se_type = 'stata')
-  lmr_full <- lm_robust(Y ~ X + Z, data = dat, clusters = J, se_type = 'stata')
+  lmr_rd <- lm_robust(Y ~ X + Z + X2, data = dat, clusters = J, se_type = "stata")
+  lmr_full <- lm_robust(Y ~ X + Z, data = dat, clusters = J, se_type = "stata")
   expect_identical(
-    tidy(lmr_rd)[1:3,],
+    tidy(lmr_rd)[1:3, ],
     tidy(lmr_full)
   )
 
-  lmr_rd_cr2 <- lm_robust(Y ~ X + Z + X2, data = dat, clusters = J, se_type = 'CR2')
-  lmr_full_cr2 <- lm_robust(Y ~ X + Z, data = dat, clusters = J, se_type = 'CR2')
+  lmr_rd_cr2 <- lm_robust(Y ~ X + Z + X2, data = dat, clusters = J, se_type = "CR2")
+  lmr_full_cr2 <- lm_robust(Y ~ X + Z, data = dat, clusters = J, se_type = "CR2")
   expect_identical(
-    tidy(lmr_rd_cr2)[1:3,],
+    tidy(lmr_rd_cr2)[1:3, ],
     tidy(lmr_full_cr2)
   )
 
@@ -141,19 +137,19 @@ test_that("lm cluster se", {
     lm_robust(
       Y ~ Z,
       clusters = J,
-      se_type = 'HC2',
+      se_type = "HC2",
       data = dat
     ),
-    'CR2'
+    "CR2"
   )
 
   expect_error(
     lm_robust(
       Y ~ Z,
-      se_type = 'CR2',
+      se_type = "CR2",
       data = dat
     ),
-    'CR2'
+    "CR2"
   )
 
   # To easily do with and without weights
@@ -165,8 +161,8 @@ test_that("lm cluster se", {
 
     # Stata is the same as CR0 but with finite sample
     expect_equivalent(
-      lm_cr0$se^2,
-      lm_stata$se^2 * (N - length(lm_stata$est)) * (length(unique(dat$J)) - 1) / ((N - 1) * length(unique(dat$J)))
+      lm_cr0$se ^ 2,
+      lm_stata$se ^ 2 * (N - length(lm_stata$est)) * (length(unique(dat$J)) - 1) / ((N - 1) * length(unique(dat$J)))
     )
 
     expect_false(all(lm_cr0$se == lm_stata$se))
@@ -188,11 +184,13 @@ test_that("lm cluster se", {
 })
 
 test_that("lm cluster se with missingness", {
-  dat <- data.frame(Y = rnorm(100),
-                    Z = rbinom(100, 1, .5),
-                    X = rnorm(100),
-                    J = sample(1:10, 100, replace = T),
-                    W = runif(100))
+  dat <- data.frame(
+    Y = rnorm(100),
+    Z = rbinom(100, 1, .5),
+    X = rnorm(100),
+    J = sample(1:10, 100, replace = T),
+    W = runif(100)
+  )
 
   dat$X[23] <- NA
   dat$J[63] <- NA
@@ -203,7 +201,7 @@ test_that("lm cluster se with missingness", {
       clusters = J,
       data = dat
     ),
-    'missingness in the cluster'
+    "missingness in the cluster"
   )
 
   expect_identical(
@@ -211,23 +209,23 @@ test_that("lm cluster se with missingness", {
     lm_robust(
       Y ~ Z + X,
       clusters = J,
-      data = dat[-c(23, 63),]
+      data = dat[-c(23, 63), ]
     )
   )
-
-
 })
 
 test_that("lm works with quoted or unquoted vars and withor without factor clusters", {
-  dat <- data.frame(Y = rnorm(100),
-                    Z = rbinom(100, 1, .5),
-                    X = rnorm(100),
-                    J = sample(1:10, 100, replace = T),
-                    W = runif(100))
+  dat <- data.frame(
+    Y = rnorm(100),
+    Z = rbinom(100, 1, .5),
+    X = rnorm(100),
+    J = sample(1:10, 100, replace = T),
+    W = runif(100)
+  )
 
   expect_identical(
     lm_robust(Y~Z, data = dat, weights = W),
-    lm_robust(Y~Z, data = dat, weights = 'W')
+    lm_robust(Y~Z, data = dat, weights = "W")
   )
 
   # works with char
@@ -235,7 +233,7 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
 
   expect_identical(
     lm_robust(Y~Z, data = dat, clusters = J),
-    lm_robust(Y~Z, data = dat, clusters = 'J')
+    lm_robust(Y~Z, data = dat, clusters = "J")
   )
 
 
@@ -244,7 +242,7 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
 
   expect_identical(
     lm_robust(Y~Z, data = dat, clusters = J),
-    lm_robust(Y~Z, data = dat, clusters = 'J')
+    lm_robust(Y~Z, data = dat, clusters = "J")
   )
 
 
@@ -260,9 +258,11 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
 })
 
 test_that("Clustered SEs work with clusters of size 1", {
-  dat <- data.frame(Y = rnorm(100),
-                    X = rnorm(100),
-                    J = 1:100)
+  dat <- data.frame(
+    Y = rnorm(100),
+    X = rnorm(100),
+    J = 1:100
+  )
 
   lm_cr2 <- lm_robust(Y ~ X, data = dat, clusters = J)
   lm_stata <- lm_robust(Y ~ X, data = dat, clusters = J, se_type = "stata")
@@ -276,13 +276,12 @@ test_that("Clustered SEs work with clusters of size 1", {
     )
 
   expect_equivalent(
-    as.matrix(tidy(lm_cr2)[, c('est', 'se', 'df')]),
+    as.matrix(tidy(lm_cr2)[, c("est", "se", "df")]),
     cbind(lmo$coefficients, bmo$se, bmo$dof)
   )
 
   expect_equivalent(
-    as.matrix(tidy(lm_stata)[, c('est', 'se')]),
+    as.matrix(tidy(lm_stata)[, c("est", "se")]),
     cbind(lmo$coefficients, bmo$se.Stata)
   )
-
 })

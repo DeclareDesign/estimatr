@@ -1,6 +1,5 @@
 # This function parses condition names for HT and DiM estimators
 parse_conditions <- function(treatment, condition1, condition2, estimator) {
-
   if (is.factor(treatment)) {
     condition_names <- levels(droplevels(treatment))
   } else {
@@ -8,8 +7,7 @@ parse_conditions <- function(treatment, condition1, condition2, estimator) {
   }
 
   if (any(!(c(condition1, condition2) %in% condition_names))) {
-    stop("Conditions specified in condition1 and condition2 not found in ",
-         "treatment variable")
+    stop("`condition1` and `condition2` must be values found in the treatment")
   }
 
   n_conditions <- length(condition_names)
@@ -17,8 +15,14 @@ parse_conditions <- function(treatment, condition1, condition2, estimator) {
   conditions <- list(NULL, NULL)
 
   if (n_conditions > 2) {
-    stop("Treatment has > 2 values; must specify both 'condition1' and ",
-         "'condition2' or use a treatment with only 2 values.")
+    if (is.null(condition1) || is.null(condition2)) {
+      stop(
+        "Treatment has > 2 values; must specify both 'condition1' and ",
+        "'condition2' or use a treatment with only 2 values."
+      )
+    } else {
+      conditions[1:2] <- c(condition1, condition2)
+    }
   } else if (n_conditions == 2) {
     if (is.null(condition1) && is.null(condition2)) {
       conditions[1:2] <- condition_names
@@ -26,12 +30,16 @@ parse_conditions <- function(treatment, condition1, condition2, estimator) {
       conditions[1:2] <- c(setdiff(condition_names, condition2), condition2)
     } else if (!is.null(condition1)) {
       conditions[1:2] <- c(condition1, setdiff(condition_names, condition1))
+    } else {
+      conditions[1:2] <- c(condition1, condition2)
     }
   } else if (n_conditions == 1) {
     # Allowable for HT estimator
-    if (estimator != 'horvitz_thompson') {
-      stop("Must have more than one value in treatment unless using Horvitz-",
-           "Thompson estimator.")
+    if (estimator != "horvitz_thompson") {
+      stop(
+        "Must have more than one value in treatment unless using Horvitz-",
+        "Thompson estimator."
+      )
     }
 
     if (is.null(condition1) && is.null(condition2)) {
@@ -49,7 +57,6 @@ parse_conditions <- function(treatment, condition1, condition2, estimator) {
 # This function ensures that blocks and  clusters have been specified correctly
 check_clusters_blocks <- function(data) {
   if (!is.null(data$cluster)) {
-
     one_block_per_clust <-
       tapply(data$block, data$cluster, function(x) all(x == x[1]))
 
@@ -59,9 +66,11 @@ check_clusters_blocks <- function(data) {
     }
 
     # get number of clusters per block
-    clust_per_block <- tapply(data$cluster,
-                              data$block,
-                              function(x) length(unique(x)))
+    clust_per_block <- tapply(
+      data$cluster,
+      data$block,
+      function(x) length(unique(x))
+    )
   } else {
     clust_per_block <- tabulate(as.factor(data$block))
   }

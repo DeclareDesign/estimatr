@@ -6,33 +6,6 @@
 
 using namespace Rcpp;
 
-// ht_var
-double ht_var(const double& p1p2, const double& p1, const double& p2, const double& y1, const double& y2);
-RcppExport SEXP _estimatr_ht_var(SEXP p1p2SEXP, SEXP p1SEXP, SEXP p2SEXP, SEXP y1SEXP, SEXP y2SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const double& >::type p1p2(p1p2SEXP);
-    Rcpp::traits::input_parameter< const double& >::type p1(p1SEXP);
-    Rcpp::traits::input_parameter< const double& >::type p2(p2SEXP);
-    Rcpp::traits::input_parameter< const double& >::type y1(y1SEXP);
-    Rcpp::traits::input_parameter< const double& >::type y2(y2SEXP);
-    rcpp_result_gen = Rcpp::wrap(ht_var(p1p2, p1, p2, y1, y2));
-    return rcpp_result_gen;
-END_RCPP
-}
-// ht_var_total
-double ht_var_total(const Eigen::VectorXd& y, const Eigen::MatrixXd& p);
-RcppExport SEXP _estimatr_ht_var_total(SEXP ySEXP, SEXP pSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type y(ySEXP);
-    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(ht_var_total(y, p));
-    return rcpp_result_gen;
-END_RCPP
-}
 // ht_covar_partial
 double ht_covar_partial(const Eigen::VectorXd& y1, const Eigen::VectorXd& y0, const Eigen::MatrixXd& p10, const Eigen::VectorXd& p1, const Eigen::VectorXd& p0);
 RcppExport SEXP _estimatr_ht_covar_partial(SEXP y1SEXP, SEXP y0SEXP, SEXP p10SEXP, SEXP p1SEXP, SEXP p0SEXP) {
@@ -94,8 +67,6 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_estimatr_ht_var", (DL_FUNC) &_estimatr_ht_var, 5},
-    {"_estimatr_ht_var_total", (DL_FUNC) &_estimatr_ht_var_total, 2},
     {"_estimatr_ht_covar_partial", (DL_FUNC) &_estimatr_ht_covar_partial, 5},
     {"_estimatr_ht_var_partial", (DL_FUNC) &_estimatr_ht_var_partial, 2},
     {"_estimatr_AtA", (DL_FUNC) &_estimatr_AtA, 1},

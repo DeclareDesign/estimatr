@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fast Estimators for Social Scientists • estimatr</title>
+<title>Fast Estimators for Design-Based Inference • estimatr</title>
 <!-- jquery --><script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script><!-- Font Awesome icons --><link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
 <!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
@@ -33,6 +33,9 @@
 </li>
 <li>
   <a href="articles/technical-notes.html">Technical Notes</a>
+</li>
+<li>
+  <a href="articles/benchmarking-estimatr.html">Speed Comparisons</a>
 </li>
 <li>
   <a href="reference/index.html">Reference</a>
@@ -86,12 +89,12 @@
     
 <div class="contents">
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-<div id="estimatr-fast-estimators-for-social-scientists" class="section level1">
+<div id="estimatr-fast-estimators-for-design-based-inference" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
-<a href="#estimatr-fast-estimators-for-social-scientists" class="anchor"></a>estimatr: Fast estimators for social scientists</h1></div>
+<a href="#estimatr-fast-estimators-for-design-based-inference" class="anchor"></a>estimatr: Fast Estimators for Design-Based Inference</h1></div>
 
 <p>Technical papers and textbooks demand complex estimation strategies that are often difficult to implement, even for scientists who are expert coders. The result is slow code copied and pasted from the internet, where the result is taken on faith.</p>
-<p><strong>estimatr</strong> provides a small set of commonly-used estimators (methods for estimating quantities of interest like treatment effects or regression parameters), written in <code>C++</code> for speed, and implemented in <code>R</code> with simple, accessible syntax. We include two functions that implement means estimators, <a href="reference/difference_in_means.html"><code><a href="reference/difference_in_means.html">difference_in_means()</a></code></a> and <a href="reference/horvitz_thompson.html"><code><a href="reference/horvitz_thompson.html">horvitz_thompson()</a></code></a>. In addition, we include two functions for linear regression estimators, <a href="reference/lm_robust.html"><code><a href="reference/lm_robust.html">lm_robust()</a></code></a> and <a href="reference/lm_lin.html"><code><a href="reference/lm_lin.html">lm_lin()</a></code></a>. In each case, scientists can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs.</p>
+<p><strong>estimatr</strong> provides a small set of commonly-used estimators (methods for estimating quantities of interest like treatment effects or regression parameters), using <code>C++</code> for speed, and implemented in <code>R</code> with simple, accessible syntax. We include two functions that implement means estimators, <a href="reference/difference_in_means.html"><code><a href="reference/difference_in_means.html">difference_in_means()</a></code></a> and <a href="reference/horvitz_thompson.html"><code><a href="reference/horvitz_thompson.html">horvitz_thompson()</a></code></a>. In addition, we include two functions for linear regression estimators, <a href="reference/lm_robust.html"><code><a href="reference/lm_robust.html">lm_robust()</a></code></a> and <a href="reference/lm_lin.html"><code><a href="reference/lm_lin.html">lm_lin()</a></code></a>. In each case, scientists can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs.</p>
 <p>Fast estimators also enable fast simulation of research designs to learn about their properties (see <a href="http://declaredesign.org">DeclareDesign</a>).</p>
 <div id="installing-estimatr" class="section level3">
 <h3 class="hasAnchor">
@@ -126,13 +129,13 @@ res_cl &lt;-<span class="st"> </span><span class="kw"><a href="reference/lm_robu
 <span class="co"># matched-pair design</span>
 <span class="kw">data</span>(sleep)
 res_dim &lt;-<span class="st"> </span><span class="kw"><a href="reference/difference_in_means.html">difference_in_means</a></span>(extra <span class="op">~</span><span class="st"> </span>group, <span class="dt">data =</span> sleep, <span class="dt">blocks =</span> ID)</code></pre></div>
-<p>The <a href="http://estimatr.declaredesign.org/articles/estimatr-vignette.html">Getting Started Guide</a> describes each estimator provided by <strong>estimatr</strong> and how it can be used in your analysis.</p>
+<p>The <a href="http://estimatr.declaredesign.org/articles/getting-started.html">Getting Started Guide</a> describes each estimator provided by <strong>estimatr</strong> and how it can be used in your analysis. The <a href="http://estimatr.declaredesign.org/articles/technical-notes.html">Technical Notes</a> provide more information about what each estimator is doing under the hood.</p>
 </div>
 <div id="fast-to-use" class="section level3">
 <h3 class="hasAnchor">
 <a href="#fast-to-use" class="anchor"></a>Fast to use</h3>
-<p>Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using <code>lm()</code> and the <code>sandwich</code> package to get HC2 standard errors.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># not evaluated here</span>
+<p>Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using <code>lm()</code> and the <code>sandwich</code> package to get HC2 standard errors. More speed comparisons <a href="http://estimatr.declaredesign.org/articles/benchmarking%20estimatr.html">here</a>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># example code.</span>
 <span class="co"># estimatr</span>
 <span class="kw"><a href="reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>x1 <span class="op">+</span><span class="st"> </span>x2 <span class="op">+</span><span class="st"> </span>x3 <span class="op">+</span><span class="st"> </span>x4, <span class="dt">data =</span> dat)
 
@@ -171,7 +174,7 @@ lm_out &lt;-<span class="st"> </span><span class="kw">lm</span>(y <span class="o
 <li>Jasper Cooper <br><small class="roles"> Author </small> </li>
 <li>Alexander Coppock <br><small class="roles"> Author </small> </li>
 <li>Macartan Humphreys <br><small class="roles"> Author </small> </li>
-<li>Luke Sonnet <br><small class="roles"> Contributor </small> </li>
+<li>Luke Sonnet <br><small class="roles"> Author </small> </li>
 <li>Neal Fultz <br><small class="roles"> Contributor </small> </li>
 </ul>
 </div>

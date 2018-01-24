@@ -60,11 +60,19 @@ The default estimators have been selected for efficiency in large samples and lo
 
 Our algorithm solves the least squares problem using a rank-revealing QR factorization with column pivoting that eliminates the need to invert $\XtXinv$ explicitly and behaves much like the default `lm` function in R. However, when $\X$ is rank deficient, there are certain conditions under which the Eigen QR decomposition drops different coefficients from the output than the default `lm` function. In general, users should avoid specifing models with rank-deficiencies. In fact, if users are certain their data are not rank deficient, they can improve the speed of `lm_robust` by setting `try_cholesky = TRUE`. This replaces the QR factorization with a Cholesky factorization that is only guaranteed to work $\X$ is of full rank.
 
-```{r dropthis, include=FALSE, eval=FALSE}
+#### Weights
+
+If weights are included we transform the data and then proceed as normal, following advice from @romanowolf2017 that this weighted estimator has attractive properties. We do so by first scaling all of the weights so that they sum to one. Then we multiply each row of the design matrix $\X$ by the square root each unit's weight, $\mathbf{x}_i \sqrt{w_i}$, and then do the same to the outcome, $\mathbf{y}_i \sqrt{w_i}$. This results in our coefficients being estimated as follows, where $\W$ is a diagonal matrix with the scaled weights on the diagonal.
+
 Weighted:
 \[
 \widehat{\beta} =\XtWXinv\X^{\top}\W\y
 \]
+
+The transformed data are then used in the analysis below, where $\XtXinv$ is now $\XtWXinv$ and $\X$ is now $\X \mathrm{sqrt}[W]$, where $\mathrm{sqrt}[.]$ is an operator that applies a square root to the coefficients of some matrix.
+
+We should note that this transformation yields the same standard errors as specifying weights using `aweight` in Stata for the "classical", "HC0", and "HC1" ("stata") variance estimators. Furthermore, in the clustered case, our weighted estimator for the "stata" cluster-robust variance also matches Stata. Thus Stata's main robust standard error estimators, "HC1" and their clustered estimator, match our package when weights are applied. Nonetheless, Stata uses a slightly different Hat matrix and thus the "HC2" and "HC3" estimates diverge between our package and Stata when weights are applied.
+
 ```
 
 ### Variance
@@ -183,11 +191,15 @@ where $z_i$ is the treatment variable, $y_i$ is the outcome, and $N$ is the tota
 \]
 where $J$ is the number of blocks, $N_j$ is the size of those blocks, and $\widehat{\tau_j}$ is the estimated difference-in-means in block $j$.
 
+#### Weighting
+
+If the user specifies weights, inference is done mostly by `lm_robust` for now. This may change in the future. Furthermore, there are three exceptions. First, we still compute the degrees of freedom as in the below table. Second, if the design is blocked, a weighted treatment effect and variance estimate are computed within each block using `lm_robust` and then combined as below. Third, specifying weights with a matched-pairs estimator in `difference_in_means` is not supported at the moment.
+
 ### Variance and Degrees of Freedom
 
 | Design type                     | Variance $\widehat{\V}[\widehat{\tau}]$                                                            | Degrees of Freedom                                                                                                            | Notes                                                                                                                                                                                                                                                                                                                                     |
 |---------------------------------|--------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| No blocks or clusters           | $\frac{\widehat{\V}[y_{i,0}]}{N_0} + \frac{\widehat{\V}[y_{i,1}]}{N_1}$                            | $\widehat{\V}[\widehat{\tau}]^2 \left(\frac{(\widehat{\V}[y_{i,1}]/ N_1)^2}{N_1 - 1} + \frac{(\widehat{\V}[y_{i,0}]/ N_0)^2}{N_0 - 1}\right)$ | Where $\widehat{\V}[y_{i,k}]$ is the Bessel-corrected variance of all units where $z_i = k$ and $N_k$ is the number of units in condition $k$. This is equivalent to the variance and Welch–Satterthwaite approximation of the degrees of freedom used by R's `t.test`.                                                                     |
+| No blocks or clusters (standard)           | $\frac{\widehat{\V}[y_{i,0}]}{N_0} + \frac{\widehat{\V}[y_{i,1}]}{N_1}$                            | $\widehat{\V}[\widehat{\tau}]^2 \left(\frac{(\widehat{\V}[y_{i,1}]/ N_1)^2}{N_1 - 1} + \frac{(\widehat{\V}[y_{i,0}]/ N_0)^2}{N_0 - 1}\right)$ | Where $\widehat{\V}[y_{i,k}]$ is the Bessel-corrected variance of all units where $z_i = k$ and $N_k$ is the number of units in condition $k$. This is equivalent to the variance and Welch–Satterthwaite approximation of the degrees of freedom used by R's `t.test`.                                                                     |
 | Blocked                         | $\sum^J_{j=1} \left(\frac{N_j}{N}\right)^2 \widehat{\V}[\widehat{\tau_j}]$                         | $N - 2 * J$                                                                                                                     | Where $\widehat{\V}[\widehat{\tau_j}]$ is the variance of the estimated difference-in-means in block $j$. See footnote 17 on page 74 of [@gerbergreen2012] for a reference. The degrees of freedom are equivalent to a regression with a full set of block specific treatment effects.                                                            |
 | Clusters                        | Same as `lm_robust` CR2 estimator                                                        | Same as `lm_robust` CR2 estimator                                                                                           | This variance is the same as that recommended by @gerbergreen2012 in equation 3.23 on page 83 when the clusters are even sizes.                                                                                                                                                                                                           |
 | Blocked and clustered           | $\sum^J_{j=1} \left(\frac{N_j}{N}\right)^2 \widehat{\V}[\widehat{\tau_j}]$                         | $S - 2 * J$                                                                                                                     | Where $\widehat{\V}[\widehat{\tau_j}]$ is the variance of the estimated difference-in-means in block $j$ and S is the number of clusters. See footnote 17 on page 74 of @gerbergreen2012 for a reference. The degrees of freedom are equivalent to a regression on data collapsed by cluster with a full set of block specific treatment effects. |
@@ -234,11 +246,12 @@ where $J$ is the number of blocks, $N_j$ is the size of those blocks, and $\wide
 Currently we provide variance estimates that rely on two separate assumptions:
 
 * `"youngs"` which implements a conservative variance estimate using Young's inequality, described in equation 35 on page 147 of @aronowmiddleton2013 and in @aronowsamii2017 on pages 11-15.
-* `"constant"` which assumes constant treatment effects across all units but is less conservative
-
-For complicated designs, including clustered designs, the following variance estimator's are sufficient as they incorporate the design through the marginal and joint condition probabilities. However, there is also an estimator proposed in equation 35 on page 147 of @aronowmiddleton2013 using collapsed cluster totals. Users can use this estimator by setting `collapsed = TRUE`.
+* `"constant"` which assumes constant treatment effects across all units but is less conservative. Only works for simple randomized designs.
 
 **Young's inequality**
+
+For designs that that are not clustered we use the following variance:
+
 $$
 \begin{aligned}
   \widehat{\V}_{Y}[\widehat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[& z_i \left(\frac{y_i}{\pi_{1i}}\right)^2 + (1 - z_i) \left(\frac{y_i}{\pi_{0i}}\right)^2 + \sum_{j \neq i} \bigg(\frac{z_i z_j}{\pi_{1i1j} + \epsilon_{1i1j}}(\pi_{1i1j} - \pi_{1i}\pi_{1j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{1j}} \\
@@ -266,7 +279,9 @@ $$
 \end{aligned}
 $$
 
-For clustered designs, users can use the followint collpased estimator by setting `collapsed = TRUE`. Here, $M$ is the total number of clusters, $y_k$ is the total of the outcomes $y_i$ for all $i$ units in cluster $k$, $\pi_zk$ is the marginal probability of cluster $k$ being in condition $z \in \{0, 1\}$, and $z_k$ and $\pi_{zkwl}$ are defined analogously.
+**Clustered designs**
+
+For clustered designs, we use the following collpased estimator by setting `collapsed = TRUE`. Here, $M$ is the total number of clusters, $y_k$ is the total of the outcomes $y_i$ for all $i$ units in cluster $k$, $\pi_zk$ is the marginal probability of cluster $k$ being in condition $z \in \{0, 1\}$, and $z_k$ and $\pi_{zkwl}$ are defined analogously. Warning! If one passes `condition_pr_mat` to `horvitz_thompson` for a clustered design, but not `clusters`, the function will not use the collapsed estimator the the variance estimate will be innacurate.
 
 $$
 \begin{aligned}
@@ -279,7 +294,7 @@ $$
 
 **Constant effects**
 
-Alternatively, one can assume constant treatment effects and, under that assumption, estimate the variance that is consistent under that assumption but less conservative.
+Alternatively, one can assume constant treatment effects and, under that assumption, estimate the variance that is consistent under that assumption but less conservative. Again, this estimator is only implemented for the simple randomized case.
 
 * $y_{zi}$ is the potential outcome for condition $z$ for unit $i$. This is either observed if $z_i = z$ or estimated using the constant effects assumption if $z_i \neq z$, where $z_i$ is the condition for unit $i$. To be precise $y_{1i} = z_i y_{i} + (1 - z_i) (y_{i} + \widehat{\tau})$ and  $y_{0i} = z_i (y_{i} - \widehat{\tau}) + (1 - z_i) y_{i}$, where $\widehat{\tau}$ is the estimated treatment effect.
 
@@ -294,12 +309,11 @@ $$
 
 ### Confidence intervals and hypothesis testing
 
-Theory on hypothesis testing with the Horvitz-Thompson estimator is yet to be developed. We rely on a normal approximation of the samplig distribution and construct confidence intervals in the following way:
+Theory on hypothesis testing with the Horvitz-Thompson estimator is yet to be developed. We rely on a normal approximation and construct confidence intervals in the following way:
 \[
 \mathrm{CI}^{1-\alpha} = \left(\widehat{\tau} + z_{\alpha/2} \sqrt{\widehat{\V}[\widehat{\tau}]}, \widehat{\tau} + z_{1 - \alpha/2} \sqrt{\widehat{\V}[\widehat{\tau}]}\right)
 \]
 
-The associated p-values for a two-sided null hypothesis test where the null is that the coefficient is 0 uses a t-distribution with the aforementioned significance level $\alpha$ and degrees of freedom $df$.
-
+The associated p-values for a two-sided null hypothesis test where the null is that the coefficient is 0 uses a normal distribution with the aforementioned significance level $\alpha$.
 
 # References

@@ -145,7 +145,7 @@ test_that("condition_pr_matrix behaves as expected", {
     cl = c(1, 2, 3, 3, 4, 4, 5, 5)
   )
 
-  bl_cl_ra <- randomizr::declare_ra(clusters = dat$cl, blocks = dat$bl, block_m  = c(1, 2))
+  bl_cl_ra <- randomizr::declare_ra(clusters = dat$cl, blocks = dat$bl, block_m = c(1, 2))
   bl_cl_perms <- randomizr::obtain_permutation_matrix(bl_cl_ra)
 
   expect_equal(
@@ -177,7 +177,45 @@ test_that("condition_pr_matrix behaves as expected", {
   )
 
   # Errors for things that we can't support
-  # Simple blocked
+  # multiple armed experiments
+  mult_ra <- randomizr::declare_ra(N = 10, prob_each = c(0.2, 0.2, 0.6))
+  expect_error(
+    declaration_to_condition_pr_mat(mult_ra),
+    "`declaration` must have only two arms when passed directly"
+  )
 
+  # Permutation error
+  expect_error(
+    permutations_to_condition_pr_mat(matrix(c(1, 2, 2, 1), nrow = 2)),
+    "Matrix of `permutations` must be comprised of only 0s and 1s"
+  )
 
+  # Not unique treatment prob for all clusters when complete randomized
+  expect_error(
+    gen_pr_matrix_cluster(
+      c(1, 1, 2, 2),
+      treat_probs = runif(4),
+      simple = FALSE
+    ),
+    "Treatment probabilities cannot vary within blocks"
+  )
+
+  # probability not fixed within blocks
+  bl_small <- randomizr::declare_ra(
+    blocks = c(1, 1, 2, 2),
+    prob = 0.4
+  )
+  bl_small$probabilities_matrix <-
+    cbind(c(0.4, 0.5, 0.6, 0.7), c(0.6, 0.5, 0.4, 0.3))
+  expect_error(
+    declaration_to_condition_pr_mat(bl_small),
+    "Treatment probabilities must be fixed within blocks for block randomized"
+  )
+
+  comp <- randomizr::declare_ra(N = 2, m = 1)
+  comp$probabilities_matrix <- cbind(c(0.4, 0.5), c(0.6, 0.5))
+  expect_error(
+    declaration_to_condition_pr_mat(comp),
+    "Treatment probabilities must be fixed for complete randomized designs"
+  )
 })

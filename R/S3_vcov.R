@@ -41,7 +41,6 @@ vcov_simple <-
         "the estimator function."
       )
     } else {
-      # TODO should we only keep the which_covs?
       return(object$vcov)
     }
   }

@@ -2,30 +2,24 @@
 #'
 #' @param object an object of class \code{\link{lm_robust}}
 #' @param parm a specification of which parameters are to be given confidence
-#' intervals, either a vector of numbers or a vector of names. Defaults to
-#' 'coefficient_name' passed to  \code{\link{lm_robust}}. Returns all if missing.
+#' intervals, either a vector of numbers or a vector of names. Returns all if missing.
 #' @param level the significance level, defaults to 'alpha' specified in \code{\link{lm_robust}}
 #' @param ... other arguments, unused
 #'
 #' @export
 confint.lm_robust <-
   function(
-    object,
-    parm = NULL,
-    level = NULL,
-    ...
-  ) {
-
+           object,
+           parm = NULL,
+           level = NULL,
+           ...) {
     cis <- get_ci_mat(object, level)
 
     if (!is.null(parm)) {
       cis <- cis[parm, , drop = F]
-    } else if (!is.null(object$which_covs)) {
-      cis <- cis[object$which_covs, , drop = F]
     }
 
     return(cis)
-
   }
 
 #' Confidence intervals for \code{\link{difference_in_means}}objects
@@ -38,16 +32,13 @@ confint.lm_robust <-
 #' @export
 confint.difference_in_means <-
   function(
-    object,
-    parm = NULL,
-    level = NULL,
-    ...
-  ) {
-
+           object,
+           parm = NULL,
+           level = NULL,
+           ...) {
     cis <- get_ci_mat(object, level)
 
     return(cis)
-
   }
 
 #' Confidence intervals for \code{\link{horvitz_thompson}} objects
@@ -60,16 +51,13 @@ confint.difference_in_means <-
 #' @export
 confint.horvitz_thompson <-
   function(
-    object,
-    parm = NULL,
-    level = NULL,
-    ...
-  ) {
-
+           object,
+           parm = NULL,
+           level = NULL,
+           ...) {
     cis <- get_ci_mat(object, level)
 
     return(cis)
-
   }
 
 ## internal method that builds confidence intervals and labels the matrix to be returned
@@ -86,7 +74,7 @@ get_ci_mat <- function(object, level) {
   dimnames(cis) <-
     list(
       object$coefficient_name,
-      paste(level / 2 * c(100, -100) + c(0, 100), '%')
+      paste(level / 2 * c(100, -100) + c(0, 100), "%")
     )
 
   return(cis)

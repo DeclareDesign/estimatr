@@ -10,8 +10,7 @@
 \item{object}{an object of class \code{\link{lm_robust}}}
 
 \item{parm}{a specification of which parameters are to be given confidence
-intervals, either a vector of numbers or a vector of names. Defaults to
-'coefficient_name' passed to  \code{\link{lm_robust}}. Returns all if missing.}
+intervals, either a vector of numbers or a vector of names. Returns all if missing.}
 
 \item{level}{the significance level, defaults to 'alpha' specified in \code{\link{lm_robust}}}
 

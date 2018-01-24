@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Built-in Estimators: Difference-in-means — difference_in_means • estimatr</title>
+<title>Design-based difference-in-means estimator — difference_in_means • estimatr</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -58,6 +58,9 @@
   <a href="../articles/technical-notes.html">Technical Notes</a>
 </li>
 <li>
+  <a href="../articles/benchmarking-estimatr.html">Speed Comparisons</a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li>
@@ -104,50 +107,73 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Built-in Estimators: Difference-in-means</h1>
+    <h1>Design-based difference-in-means estimator</h1>
     </div>
 
     
-    <p>Built-in Estimators: Difference-in-means</p>
+    <p>This difference-in-means estimator selects the appropriate
+point estimator, standard errors, and degrees of freedom for a variety of
+designs: unit randomized, cluster randomized, block randomized,
+block-cluster randomized, matched-pairs, and matched-pair cluster
+randomized designs</p>
     
 
-    <pre class="usage"><span class='fu'>difference_in_means</span>(<span class='no'>formula</span>, <span class='no'>blocks</span>, <span class='no'>clusters</span>, <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>data</span>, <span class='no'>weights</span>, <span class='no'>subset</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>)</pre>
+    <pre class="usage"><span class='fu'>difference_in_means</span>(<span class='no'>formula</span>, <span class='no'>data</span>, <span class='no'>blocks</span>, <span class='no'>clusters</span>, <span class='no'>weights</span>, <span class='no'>subset</span>,
+  <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>formula</th>
-      <td><p>An object of class "formula", such as Y ~ Z</p></td>
-    </tr>
-    <tr>
-      <th>blocks</th>
-      <td><p>An optional bare (unquoted) name of the block variable. Use for blocked designs only.</p></td>
-    </tr>
-    <tr>
-      <th>clusters</th>
-      <td><p>An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.</p></td>
-    </tr>
-    <tr>
-      <th>condition1</th>
-      <td><p>names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.</p></td>
-    </tr>
-    <tr>
-      <th>condition2</th>
-      <td><p>names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.</p></td>
+      <td><p>an object of class formula, as in <code>lm</code>, such as
+<code>Y ~ Z</code> with only one variable on the right-hand side, the treatment.</p></td>
     </tr>
     <tr>
       <th>data</th>
-      <td><p>A data.frame.</p></td>
+      <td><p>A <code>data.frame</code>.</p></td>
+    </tr>
+    <tr>
+      <th>blocks</th>
+      <td><p>An optional bare (unquoted) name of the block variable. Use
+for blocked designs only.</p></td>
+    </tr>
+    <tr>
+      <th>clusters</th>
+      <td><p>An optional bare (unquoted) name of the variable that
+corresponds to the clusters in the data; used for cluster randomized
+designs. For blocked designs, clusters must nest within blocks.</p></td>
     </tr>
     <tr>
       <th>weights</th>
-      <td><p>An optional bare (unquoted) name of the weights variable.</p></td>
+      <td><p>the bare (unquoted) names of the weights variable in the
+supplied data.</p></td>
     </tr>
     <tr>
       <th>subset</th>
-      <td><p>An optional bare (unquoted) expression specifying a subset of observations to be used.</p></td>
+      <td><p>An optional bare (unquoted) expression specifying a subset of
+observations to be used.</p></td>
+    </tr>
+    <tr>
+      <th>condition1</th>
+      <td><p>value in the treatment vector of the condition
+to be the control. Effects are
+estimated with <code>condition1</code> as the control and <code>condition2</code> as the
+treatment. If unspecified, <code>condition1</code> is the "first" condition and
+<code>condition2</code> is the "second" according to levels if the treatment is a
+factor or according to a sortif it is a numeric or character variable (i.e
+if unspecified and the treatment is 0s and 1s, <code>condition1</code> will by
+default be 0 and <code>condition2</code> will be 1). See the examples for more.</p></td>
+    </tr>
+    <tr>
+      <th>condition2</th>
+      <td><p>value in the treatment vector of the condition to be the
+treatment. See <code>condition1</code>.</p></td>
+    </tr>
+    <tr>
+      <th>ci</th>
+      <td><p>A boolean for whether to compute and return p-values and
+confidence intervals, TRUE by default.</p></td>
     </tr>
     <tr>
       <th>alpha</th>
@@ -155,29 +181,205 @@
     </tr>
     </table>
     
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p><code>difference_in_means</code> returns an object of class
+<code>"difference_in_means"</code>.</p>
+<p>The functions <code>summary</code> and <code><a href='tidy.html'>tidy</a></code> can be used to get
+the results as a <code>data.frame</code>. To get useful data out of the return,
+you can use these data frames, you can use the resulting list directly, or
+you can use the generic accessor functions <code>coef</code>, and<code>confint</code>.</p>
+<p>An object of class <code>"difference_in_means"</code> is a list containing at
+least the following components:</p><dl class='dl-horizontal'>
+  <dt>est</dt><dd><p>the estimated coefficients</p></dd>
+  <dt>se</dt><dd><p>the estimated standard errors</p></dd>
+  <dt>df</dt><dd><p>the estimated degrees of freedom</p></dd>
+  <dt>p</dt><dd><p>the p-values from the t-test using <code>est</code>, <code>se</code>, and <code>df</code></p></dd>
+  <dt>ci_lower</dt><dd><p>the lower bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
+  <dt>ci_upper</dt><dd><p>the upper bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
+  <dt>coefficient_name</dt><dd><p>a character vector of coefficient names</p></dd>
+  <dt>alpha</dt><dd><p>the significance level specified by the user</p></dd>
+  <dt>N</dt><dd><p>the number of observations used</p></dd>
+  <dt>outcome</dt><dd><p>the name of the outcome variable</p></dd>
+  <dt>design</dt><dd><p>the name of the design learned from the arguments passed</p></dd>
+</dl>
+
+    
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>This function implements difference-in-means estimation, with and without blocking. Standard errors are estimated as the square root of the sum of the within-group variances, divided by their respective sample sizes (Equation 3.6 in Gerber and Green 2012). If blocked, the difference in means estimate is taken in each block, then averaged together according to block size.</p>
+    <p>This function implements a difference-in-means estimator, with
+support for blocked, clustered, matched-pairs, block-clustered, and
+matched-pair clustered designs. One specifies their design by passing
+the blocks and clusters in their data and this function chooses which
+estimator is most appropriate.</p>
+<p>If you pass only <code>blocks</code>, if all blocks are of size two, we will
+infer that the design is a matched-pairs design. If they are all size four
+or larger, we will infer that it is a regular blocked design. If you pass
+both <code>blocks</code> and <code>clusters</code>, we will similarly
+infer whether it is a matched-pairs clustered design or a block-clustered
+design the number of clusters per block. If the user passes only
+<code>clusters</code>, we will infer that the design was cluster-randomized. If
+the user specifies neither the <code>blocks</code> nor the <code>clusters</code>,
+a regular Welch's t-test will be performed.</p>
+<p>Importantly, if the user specifies weights, the estimation is handed off
+to <code><a href='lm_robust.html'>lm_robust</a></code> with the appropriate robust standard errors
+as weighted difference-in-means estimators are not implemented here.
+More details of the about each of the estimators can be found in the
+<a href='estimatr.declaredesign.org/articles/technical-notes.html'>technical notes</a>.</p>
+    
+    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
+
+    <p>Gerber, Alan S, and Donald P Green. 2012. Field Experiments: Design, Analysis, and Interpretation. New York: W.W. Norton.
+Imai, Kosuke, Gary King, Clayton Nall. 2009. "The Essential Role of Pair Matching in Cluster-Randomized Experiments, with Application to the Mexican Universal Health Insurance Evaluation." Statistical Science 24 (1). Institute of Mathematical Statistics: 29-53. <a href='https://doi.org/10.1214/08-STS274'>https://doi.org/10.1214/08-STS274</a>.</p>
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'>
- <span class='no'>df</span> <span class='kw'>&lt;-</span> <span class='fu'>data.frame</span>(<span class='kw'>Y</span> <span class='kw'>=</span> <span class='fu'>rnorm</span>(<span class='fl'>100</span>),
-                  <span class='kw'>Z</span> <span class='kw'>=</span> <span class='fu'>sample</span>(<span class='fl'>1</span>:<span class='fl'>3</span>, <span class='fl'>100</span>, <span class='kw'>replace</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>),
-                  <span class='kw'>block</span> <span class='kw'>=</span> <span class='fu'>sample</span>(<span class='fu'>c</span>(<span class='st'>"A"</span>, <span class='st'>"B"</span>, <span class='st'>"C"</span>), <span class='fl'>100</span>, <span class='kw'>replace</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>))
+<span class='fu'>library</span>(<span class='no'>fabricatr</span>)
+<span class='fu'>library</span>(<span class='no'>randomizr</span>)
+<span class='co'># Get appropriate standard errors for simple designs</span>
+<span class='no'>dat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/fabricatr/topics/fabricate'>fabricate</a></span>(
+  <span class='kw'>N</span> <span class='kw'>=</span> <span class='fl'>100</span>,
+  <span class='kw'>Y</span> <span class='kw'>=</span> <span class='fu'>rnorm</span>(<span class='fl'>100</span>),
+  <span class='kw'>Z_simp</span> <span class='kw'>=</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/simple_ra'>simple_ra</a></span>(<span class='no'>N</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.4</span>),
+)
 
- <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p   ci_lower  ci_upper       df
-#&gt; 1                Z 0.1224875 0.2674282 0.6485812 -0.4123728 0.6573477 60.41608
-#&gt;   outcome
-#&gt; 1       Y</div><div class='input'> <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p  ci_lower  ci_upper       df
-#&gt; 1                Z 0.2770966 0.2432306 0.2588673 -0.208847 0.7630401 63.76421
+<span class='fu'>table</span>(<span class='no'>dat</span>$<span class='no'>Z_simp</span>)</div><div class='output co'>#&gt; 
+#&gt;  0  1 
+#&gt; 51 49 </div><div class='input'><span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_simp</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt; [1] "Design: Standard"
+#&gt;   coefficient_name       est        se        p   ci_lower  ci_upper       df
+#&gt; 1           Z_simp -0.110078 0.2005905 0.584412 -0.5081456 0.2879895 97.95751
 #&gt;   outcome
 #&gt; 1       Y</div><div class='input'>
- <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>block</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name        est        se        p   ci_lower  ci_upper df
-#&gt; 1                Z 0.02735372 0.2960366 0.926577 -0.5604339 0.6151414 94
+<span class='co'># Accurates estimates and standard errors for clustered designs</span>
+<span class='no'>dat</span>$<span class='no'>clust</span> <span class='kw'>&lt;-</span> <span class='fu'>sample</span>(<span class='fl'>20</span>, <span class='kw'>size</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>), <span class='kw'>replace</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
+<span class='no'>dat</span>$<span class='no'>Z_clust</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/cluster_ra'>cluster_ra</a></span>(<span class='no'>dat</span>$<span class='no'>clust</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.6</span>)
+
+<span class='fu'>table</span>(<span class='no'>dat</span>$<span class='no'>Z_clust</span>, <span class='no'>dat</span>$<span class='no'>clust</span>)</div><div class='output co'>#&gt;    
+#&gt;     1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+#&gt;   0 3 5 7 0 0 0 0 8 5  0  0  0  0  0  2  0  0  6  0  6
+#&gt;   1 0 0 0 7 7 6 2 0 0  4  6  1  8  3  0  3  6  0  5  0</div><div class='input'><span class='fu'>summary</span>(<span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_clust</span>, <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>clust</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>))</div><div class='output co'>#&gt; $coefficients
+#&gt;           Estimate Std. Error  Pr(&gt;|t|)   ci_lower  ci_upper       df
+#&gt; Z_clust 0.09426617  0.2147297 0.6676325 -0.3680591 0.5565915 13.44919
+#&gt; 
+#&gt; $design
+#&gt; [1] "Clustered"
+#&gt; </div><div class='input'>
+<span class='co'># Accurate estimates and standard errors for blocked designs</span>
+<span class='no'>dat</span>$<span class='no'>block</span> <span class='kw'>&lt;-</span> <span class='fu'>rep</span>(<span class='fl'>1</span>:<span class='fl'>10</span>, <span class='kw'>each</span> <span class='kw'>=</span> <span class='fl'>10</span>)
+<span class='no'>dat</span>$<span class='no'>Z_block</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/block_ra'>block_ra</a></span>(<span class='no'>dat</span>$<span class='no'>block</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.5</span>)
+
+<span class='fu'>table</span>(<span class='no'>dat</span>$<span class='no'>Z_block</span>, <span class='no'>dat</span>$<span class='no'>block</span>)</div><div class='output co'>#&gt;    
+#&gt;     1 2 3 4 5 6 7 8 9 10
+#&gt;   0 5 5 5 5 5 5 5 5 5  5
+#&gt;   1 5 5 5 5 5 5 5 5 5  5</div><div class='input'><span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_block</span>, <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>block</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt; [1] "Design: Blocked"
+#&gt;   coefficient_name       est        se         p   ci_lower  ci_upper df
+#&gt; 1          Z_block -0.075066 0.2077237 0.7187723 -0.4884493 0.3383173 80
 #&gt;   outcome
-#&gt; 1       Y</div><div class='input'> <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z</span>, <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>block</span>, <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>df</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p  ci_lower ci_upper df outcome
-#&gt; 1                Z 0.2107775 0.2830092 0.4582673 -0.351144 0.772699 94       Y</div><div class='input'>
+#&gt; 1       Y</div><div class='input'>
+<span class='co'># Matched-pair estimates and standard errors are also accurate</span>
+<span class='co'># Specified same as blocked design, function learns that</span>
+<span class='co'># it is matched pair from size of blocks!</span>
+<span class='no'>dat</span>$<span class='no'>pairs</span> <span class='kw'>&lt;-</span> <span class='fu'>rep</span>(<span class='fl'>1</span>:<span class='fl'>50</span>, <span class='kw'>each</span> <span class='kw'>=</span> <span class='fl'>2</span>)
+<span class='no'>dat</span>$<span class='no'>Z_pairs</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/block_ra'>block_ra</a></span>(<span class='no'>dat</span>$<span class='no'>pairs</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.5</span>)
+
+<span class='fu'>table</span>(<span class='no'>dat</span>$<span class='no'>pairs</span>, <span class='no'>dat</span>$<span class='no'>Z_pairs</span>)</div><div class='output co'>#&gt;     
+#&gt;      0 1
+#&gt;   1  1 1
+#&gt;   2  1 1
+#&gt;   3  1 1
+#&gt;   4  1 1
+#&gt;   5  1 1
+#&gt;   6  1 1
+#&gt;   7  1 1
+#&gt;   8  1 1
+#&gt;   9  1 1
+#&gt;   10 1 1
+#&gt;   11 1 1
+#&gt;   12 1 1
+#&gt;   13 1 1
+#&gt;   14 1 1
+#&gt;   15 1 1
+#&gt;   16 1 1
+#&gt;   17 1 1
+#&gt;   18 1 1
+#&gt;   19 1 1
+#&gt;   20 1 1
+#&gt;   21 1 1
+#&gt;   22 1 1
+#&gt;   23 1 1
+#&gt;   24 1 1
+#&gt;   25 1 1
+#&gt;   26 1 1
+#&gt;   27 1 1
+#&gt;   28 1 1
+#&gt;   29 1 1
+#&gt;   30 1 1
+#&gt;   31 1 1
+#&gt;   32 1 1
+#&gt;   33 1 1
+#&gt;   34 1 1
+#&gt;   35 1 1
+#&gt;   36 1 1
+#&gt;   37 1 1
+#&gt;   38 1 1
+#&gt;   39 1 1
+#&gt;   40 1 1
+#&gt;   41 1 1
+#&gt;   42 1 1
+#&gt;   43 1 1
+#&gt;   44 1 1
+#&gt;   45 1 1
+#&gt;   46 1 1
+#&gt;   47 1 1
+#&gt;   48 1 1
+#&gt;   49 1 1
+#&gt;   50 1 1</div><div class='input'><span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_pairs</span>, <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>pairs</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt; [1] "Design: Matched-pair"
+#&gt;   coefficient_name       est        se         p   ci_lower  ci_upper df
+#&gt; 1          Z_pairs 0.1279107 0.2035161 0.5325926 -0.2810702 0.5368916 49
+#&gt;   outcome
+#&gt; 1       Y</div><div class='input'>
+<span class='co'># Also works with multi-valued treatments if users specify</span>
+<span class='co'># comparison of interest</span>
+<span class='no'>dat</span>$<span class='no'>Z_multi</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/simple_ra'>simple_ra</a></span>(
+  <span class='fu'>nrow</span>(<span class='no'>dat</span>),
+  <span class='kw'>condition_names</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"Treatment 2"</span>, <span class='st'>"Treatment 1"</span>, <span class='st'>"Control"</span>),
+  <span class='kw'>prob_each</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='fl'>0.4</span>, <span class='fl'>0.4</span>, <span class='fl'>0.2</span>)
+)
+
+<span class='co'># Only need to specify which condition is treated "condition2" and</span>
+<span class='co'># which is control "condition1"</span>
+<span class='fu'>difference_in_means</span>(
+  <span class='no'>Y</span> ~ <span class='no'>Z_multi</span>,
+  <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='st'>"Treatment 2"</span>,
+  <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='st'>"Control"</span>,
+  <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>
+)</div><div class='output co'>#&gt; [1] "Design: Standard"
+#&gt;   coefficient_name         est        se        p   ci_lower  ci_upper       df
+#&gt; 1   Z_multiControl -0.02186428 0.3002911 0.942377 -0.6317747 0.5880462 34.54505
+#&gt;   outcome
+#&gt; 1       Y</div><div class='input'><span class='fu'>difference_in_means</span>(
+  <span class='no'>Y</span> ~ <span class='no'>Z_multi</span>,
+  <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='st'>"Treatment 1"</span>,
+  <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='st'>"Control"</span>,
+  <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>
+)</div><div class='output co'>#&gt; [1] "Design: Standard"
+#&gt;   coefficient_name       est        se         p   ci_lower  ci_upper       df
+#&gt; 1   Z_multiControl 0.2074861 0.2972427 0.4900263 -0.3971726 0.8121447 33.12422
+#&gt;   outcome
+#&gt; 1       Y</div><div class='input'>
+<span class='co'># Specifying weights will result in estimation via `lm_robust`</span>
+<span class='no'>dat</span>$<span class='no'>w</span> <span class='kw'>&lt;-</span> <span class='fu'>runif</span>(<span class='fu'>nrow</span>(<span class='no'>dat</span>))
+<span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_simp</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='no'>w</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt; [1] "Design: Standard (weighted)"
+#&gt;   coefficient_name         est       se         p   ci_lower  ci_upper df
+#&gt; 1           Z_simp -0.08534263 0.225205 0.7055409 -0.5322546 0.3615694 98
+#&gt;   outcome
+#&gt; 1       Y</div><div class='input'><span class='fu'><a href='lm_robust.html'>lm_robust</a></span>(<span class='no'>Y</span> ~ <span class='no'>Z_simp</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='no'>w</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;   coefficient_name         est        se         p   ci_lower  ci_upper df
+#&gt; 1      (Intercept)  0.02889963 0.1598783 0.8569291 -0.2883737 0.3461729 98
+#&gt; 2           Z_simp -0.08534263 0.2252050 0.7055409 -0.5322546 0.3615694 98
+#&gt;   outcome
+#&gt; 1       Y
+#&gt; 2       Y</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -185,7 +387,11 @@
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
       
+      <li><a href="#value">Value</a></li>
+
       <li><a href="#details">Details</a></li>
+
+      <li><a href="#references">References</a></li>
       
       <li><a href="#examples">Examples</a></li>
     </ul>

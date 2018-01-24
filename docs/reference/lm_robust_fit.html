@@ -58,6 +58,9 @@
   <a href="../articles/technical-notes.html">Technical Notes</a>
 </li>
 <li>
+  <a href="../articles/benchmarking-estimatr.html">Speed Comparisons</a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li>
@@ -111,8 +114,8 @@
     <p>Internal method that creates linear fits</p>
     
 
-    <pre class="usage"><span class='fu'>lm_robust_fit</span>(<span class='no'>y</span>, <span class='no'>X</span>, <span class='no'>weights</span>, <span class='no'>cluster</span>, <span class='no'>ci</span>, <span class='no'>se_type</span>, <span class='no'>alpha</span>, <span class='no'>coefficient_name</span>,
-  <span class='no'>return_vcov</span>, <span class='no'>try_cholesky</span>)</pre>
+    <pre class="usage"><span class='fu'>lm_robust_fit</span>(<span class='no'>y</span>, <span class='no'>X</span>, <span class='no'>weights</span>, <span class='no'>cluster</span>, <span class='no'>ci</span>, <span class='no'>se_type</span>, <span class='no'>alpha</span>, <span class='no'>return_vcov</span>,
+  <span class='no'>try_cholesky</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -144,10 +147,6 @@
     <tr>
       <th>alpha</th>
       <td><p>numeric denoting the test size for confidence intervals</p></td>
-    </tr>
-    <tr>
-      <th>coefficient_name</th>
-      <td><p>character vector of coefficients to return</p></td>
     </tr>
     <tr>
       <th>return_vcov</th>

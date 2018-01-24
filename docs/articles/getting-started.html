@@ -35,6 +35,9 @@
   <a href="../articles/technical-notes.html">Technical Notes</a>
 </li>
 <li>
+  <a href="../articles/benchmarking-estimatr.html">Speed Comparisons</a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li>
@@ -89,27 +92,29 @@
     
     
 <div class="contents">
-<p><strong>estimatr</strong> is a package in R dedicated to providing fast estimators for social scientists. Estimators are statistical methods for estimating quantities of interest like treatment effects or regression parameters. Many of the estimators included with the R programming language or popular R packages are slow and have default settings that lead to statistically inappropriate estimates. Certain estimators that reflect cutting-edge advances in statistics are not yet implemented in R packages for convenient use. <strong>estimatr</strong> is designed to solve these problems.</p>
+<p><strong>estimatr</strong> is a package in R dedicated to providing <a href="articles/benchmarking-estimatr.html">fast</a> estimators for social scientists. Estimators are statistical methods for estimating quantities of interest like treatment effects or regression parameters. Many of the estimators included with the R programming language or popular R packages are slow and have default settings that lead to statistically inappropriate estimates. Certain estimators that reflect cutting-edge advances in statistics are not yet implemented in R packages for convenient use. <strong>estimatr</strong> is designed to solve these problems and provide estimators tuned for design-based inference.</p>
+<p>The most up-to-date version of this vignette can be found on the <a href="http://estimatr.declaredesign.org/articles/getting-started.html">DeclareDesign website here</a>.</p>
 <div id="estimators" class="section level1">
 <h1 class="hasAnchor">
 <a href="#estimators" class="anchor"></a>Estimators</h1>
 <p>The current estimators we provide are:</p>
 <ul>
 <li>
-<a href="#lm_robust"><code><a href="../reference/lm_robust.html">lm_robust()</a></code></a> - for fitting linear models with heteroskedasticity/cluster robust standard errors</li>
+<a href="#lm_robust"><code>lm_robust</code></a> - for fitting linear models with heteroskedasticity/cluster robust standard errors</li>
 <li>
-<a href="#lm_lin"><code><a href="../reference/lm_lin.html">lm_lin()</a></code></a> - a wrapper for <code><a href="../reference/lm_robust.html">lm_robust()</a></code> to simplify interacting centered pre-treatment covariates with a treatment variable</li>
+<a href="#lm_lin"><code>lm_lin</code></a> - a wrapper for <code><a href="../reference/lm_robust.html">lm_robust()</a></code> to simplify interacting centered pre-treatment covariates with a treatment variable</li>
 <li>
-<a href="#difference_in_means"><code><a href="../reference/difference_in_means.html">difference_in_means()</a></code></a> - for estimating differences in means with appropriate standard errors for simple, cluster randomized, block randomized, matched-pair designs and more</li>
+<a href="#difference_in_means"><code>difference_in_means</code></a> - for estimating differences in means with appropriate standard errors for simple, cluster randomized, block randomized, matched-pair designs and more</li>
 <li>
-<a href="#horvitz_thompson"><code><a href="../reference/horvitz_thompson.html">horvitz_thompson()</a></code></a> - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs</li>
+<a href="#horvitz_thompson"><code>horvitz_thompson</code></a> - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs</li>
 </ul>
-<p>To demonstrate basic usage of each of the estimators, I first create some sample data.</p>
+<p>To demonstrate basic usage of each of the estimators, I will first create some sample data.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(estimatr)
 
 <span class="co"># Example dataset to be used throughout built using fabricatr and randomizr</span>
 <span class="kw">library</span>(fabricatr)
 <span class="kw">library</span>(randomizr)
+<span class="co">#&gt; Warning: package 'randomizr' was built under R version 3.4.3</span>
 dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/fabricatr/topics/fabricate">fabricate</a></span>(
   <span class="dt">N =</span> <span class="dv">100</span>,                        <span class="co"># sample size</span>
   <span class="dt">x =</span> <span class="kw">runif</span>(N, <span class="dv">0</span>, <span class="dv">1</span>),             <span class="co"># pre-treatment covariate</span>
@@ -210,8 +215,8 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 <h2 class="hasAnchor">
 <a href="#lm_robust" class="anchor"></a><code>lm_robust</code>
 </h2>
-<p>The <code>estimatr</code> package provides a function to quickly fit linear models with the most common variance estimators and degrees of freedom corrections used in social science. You can easily return heteroskedastic standard errors, clustered standard errors, and classical standard errors.</p>
-<p>Usage largely mimics <code>lm()</code>, although it defaults to using Eicker-Huber-White robust standard errors, specifically ‘HC2’ standard errors:</p>
+<p>The <code>estimatr</code> package provides <code><a href="../reference/lm_robust.html">lm_robust()</a></code> to quickly fit linear models with the most common variance estimators and degrees of freedom corrections used in social science. You can easily estimate heteroskedastic standard errors, clustered standard errors, and classical standard errors.</p>
+<p>Usage largely mimics <code>lm()</code>, although it defaults to using Eicker-Huber-White robust standard errors, specifically “HC2” standard errors. More about the exact specifications used can be found in the <a href="articles/technical-notes.html#lm_robust-notes">technical notes</a> and more about the estimator can be found on its reference page: <code><a href="../reference/lm_robust.html">lm_robust()</a></code>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>z <span class="op">+</span><span class="st"> </span>x, <span class="dt">data =</span> dat)
 <span class="kw"><a href="../reference/tidy.html">tidy</a></span>(res) <span class="co"># summary(res) is very similar</span></code></pre></div>
 <table class="table">
@@ -310,7 +315,7 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 </tbody>
 </table>
 <p>The default variance estimator with clusters is dubbed ‘CR2’ because it is analogous to ‘HC2’ for the clustered case, and utilizes recent advances proposed by <span class="citation">Pustejovsky and Tipton (<a href="#ref-pustejovskytipton2016">2016</a>)</span> to correct hypotheses tests for small samples and work with commonly specified fixed effects and weights.</p>
-<p>Researchers can also replicate Stata’s clustered standard errors by using the <code>se_type =</code> argument:</p>
+<p>Researchers can also replicate Stata’s standard errors by using the <code>se_type =</code> argument both with and without clusters:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res_stata &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(
   y_clust <span class="op">~</span><span class="st"> </span>z_clust <span class="op">+</span><span class="st"> </span>x,
   <span class="dt">data =</span> dat,
@@ -367,7 +372,8 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 <h2 class="hasAnchor">
 <a href="#lm_lin" class="anchor"></a><code>lm_lin</code>
 </h2>
-<p>Following the critique by <span class="citation">Freedman (<a href="#ref-freedman2008">2008</a>)</span> that pre-treatment covariate adjustment biases estimates of average treatment effects, <span class="citation">Lin and others (<a href="#ref-lin2013">2013</a>)</span> proposed an alternative estimator that would reduce this bias and improve precision. The <span class="citation">Lin and others (<a href="#ref-lin2013">2013</a>)</span> estimator suggests centering all pre-treatment covariates and interacting them with the treatment variable. To facilitate this, we provide a wrapper that can do that process for you.</p>
+<p>Adjusting for pre-treatment covariates when using regression to estimate treatment effects is common practice across scientific disciplines. However, <span class="citation">Freedman (<a href="#ref-freedman2008">2008</a>)</span> demonstrated that pre-treatment covariate adjustment biases estimates of average treatment effects. In response, <span class="citation">Lin (<a href="#ref-lin2013">2013</a>)</span> proposed an alternative estimator that would reduce this bias and improve precision. <span class="citation">Lin (<a href="#ref-lin2013">2013</a>)</span> proposes centering all pre-treatment covariates, interacting them with the treatment variable, and regressing the outcome on the treatment, the centered pre-treatment covariates, and all of the interaction terms. This can require a bit of pre-processing.</p>
+<p>To facilitate this, we provide a wrapper that can does this whole process for you in an estimator we dub <code><a href="../reference/lm_lin.html">lm_lin()</a></code>. This function is a wrapper for <code><a href="../reference/lm_robust.html">lm_robust()</a></code>, and all arguments that work for <code><a href="../reference/lm_robust.html">lm_robust()</a></code> work here. The only difference is in the second argument <code>covariates</code>, where one specifies a right-sided formula with all of your pre-treatment covariates. Below is an example, and more can be seen on the function reference page <a href="#lm_lin"><code>lm_lin</code></a> and some formal notation can be seen in the <a href="#lm_lin-notes">technical notes</a>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res_lin &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_lin.html">lm_lin</a></span>(
   y <span class="op">~</span><span class="st"> </span>z,
   <span class="dt">covariates =</span> <span class="op">~</span><span class="st"> </span>x,
@@ -428,13 +434,13 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 </tr>
 </tbody>
 </table>
-<p>As this function is a wrapper for <code><a href="../reference/lm_robust.html">lm_robust()</a></code>, all arguments that work for <code><a href="../reference/lm_robust.html">lm_robust()</a></code> work here.</p>
 </div>
 <div id="difference_in_means" class="section level2">
 <h2 class="hasAnchor">
 <a href="#difference_in_means" class="anchor"></a><code>difference_in_means</code>
 </h2>
-<p>While estimating differences in means may seem straightforward, we provide a function that appropriately adjusts estimates for blocking and clustering to match the current state of knowledge in social science methodology. Usage is similar to usage in regression functions.</p>
+<p>While estimating differences in means may seem straightforward, we provide a function that appropriately adjusts estimates for experimental design, whether it be blocking, clustering, matched pairs or a more complicated design. Usage is similar to usage in regression functions and here are a few short examples; more can be seen on the function reference page: <code><a href="../reference/difference_in_means.html">difference_in_means()</a></code>.</p>
+<p>Technical details are available <a href="articles/technical-notes.html#lm_robust-notes">here</a>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Simple version</span>
 res_dim &lt;-<span class="st"> </span><span class="kw"><a href="../reference/difference_in_means.html">difference_in_means</a></span>(
   y <span class="op">~</span><span class="st"> </span>z,
@@ -491,12 +497,13 @@ res_dim_cl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <td align="left">y_clust</td>
 </tr></tbody>
 </table>
+<p>Users can see more examples</p>
 </div>
 <div id="horvitz_thompson" class="section level2">
 <h2 class="hasAnchor">
 <a href="#horvitz_thompson" class="anchor"></a><code>horvitz_thompson</code>
 </h2>
-<p>Horvitz-Thompson estimators are useful when estimating treatment effects without bias when there is a clustered design with unequal size clusters or when the treatment assignment process is arbitrarily complex. Horvitz-Thompson estimators require information about the treatment (and control) probabilities for each unit, and the joint treatment and control probabilities of every pair of units. For designs that are not arbitrarily complex, passing your randomization scheme using <code><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">randomizr::declare_ra()</a></code> is the easiest path forward.</p>
+<p>Horvitz-Thompson estimators are useful when estimating treatment effects without bias when there is a clustered design with unequal size clusters or when the treatment assignment process is arbitrarily complex. Horvitz-Thompson estimators require information about the treatment (and control) probabilities for each unit, and the joint treatment and control probabilities of every pair of units. For designs that are not arbitrarily complex, passing your randomization scheme using <code><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">declare_ra()</a></code> from the <a href="randomizr.declaredesign.org"><code>randomizr</code></a> package is the easiest path forward. The technical details can be found <a href="articles/technical-notes.html#horvitz_thompson-notes">here</a> and in the linked references.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Complete random assignment declaration</span>
 crs_decl &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">declare_ra</a></span>(
   <span class="dt">N =</span> <span class="kw">nrow</span>(dat),
@@ -518,7 +525,7 @@ ht_comp &lt;-<span class="st"> </span><span class="kw"><a href="../reference/hor
 <th align="right">p</th>
 <th align="right">ci_lower</th>
 <th align="right">ci_upper</th>
-<th align="right">df</th>
+<th align="left">df</th>
 <th align="left">outcome</th>
 </tr></thead>
 <tbody><tr class="odd">
@@ -526,12 +533,13 @@ ht_comp &lt;-<span class="st"> </span><span class="kw"><a href="../reference/hor
 <td align="right">0.16</td>
 <td align="right">0.2</td>
 <td align="right">0.44</td>
-<td align="right">-0.25</td>
+<td align="right">-0.24</td>
 <td align="right">0.56</td>
-<td align="right">98</td>
+<td align="left">NA</td>
 <td align="left">y</td>
 </tr></tbody>
 </table>
+<p>We can also easily estimate treatment effects from a cluster randomized experiment. Letting <code>horvitz_thompson</code> know that the design is clustered means it uses a collapsed estimator for the variance described in <span class="citation">Aronow and Middleton (<a href="#ref-aronowmiddleton2013">2013</a>)</span>, which is preferred for clustered designs.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Clustered random assignment declaration</span>
 crs_clust_decl &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">declare_ra</a></span>(
   <span class="dt">N =</span> <span class="kw">nrow</span>(dat),
@@ -554,62 +562,34 @@ ht_clust &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ho
 <th align="right">p</th>
 <th align="right">ci_lower</th>
 <th align="right">ci_upper</th>
-<th align="right">df</th>
+<th align="left">df</th>
 <th align="left">outcome</th>
 </tr></thead>
 <tbody><tr class="odd">
 <td align="left">z_clust</td>
 <td align="right">0.82</td>
-<td align="right">0.13</td>
+<td align="right">0.25</td>
 <td align="right">0</td>
-<td align="right">0.55</td>
-<td align="right">1.1</td>
-<td align="right">98</td>
+<td align="right">0.33</td>
+<td align="right">1.3</td>
+<td align="left">NA</td>
 <td align="left">y_clust</td>
 </tr></tbody>
 </table>
-<p>There are two main variance estimators we provide, a conservative estimator using Young’s inequality (<code>se_type = "youngs"</code>), described by <span class="citation">Aronow and Middleton (<a href="#ref-aronowmiddleton2013">2013</a>)</span>, and an estimator that assumes constant treatment effects (<code>se_type = "constant"</code>). The default is the conservative estimator.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ht_constant &lt;-<span class="st"> </span><span class="kw"><a href="../reference/horvitz_thompson.html">horvitz_thompson</a></span>(
-  y_clust <span class="op">~</span><span class="st"> </span>z_clust,
-  <span class="dt">data =</span> dat,
-  <span class="dt">declaration =</span> crs_clust_decl,
-  <span class="dt">se_type =</span> <span class="st">"constant"</span>
+<p>You can also build the condition probability matrix (<code>condition_prob_mat =</code>) that <code><a href="../reference/horvitz_thompson.html">horvitz_thompson()</a></code> needs from a declaration from the <a href="randomizr.declaredesign.org"><code>randomizr</code></a> package—using <code>declaration_to_conditional_pr_mat()</code>—or from a matrix of permutations of the treatment vector—using <code>permutations_to_conditional_pr_mat()</code>. <strong>This is largely intended for use by experienced users. Note, that if one passes a <code>condition_prob_mat</code> that indicates clustering, but not the clusters, then the collapsed estimator will not be used and the variance will be incorrect.</strong></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># arbitrary permutation matrix</span>
+possible_treats &lt;-<span class="st"> </span><span class="kw">cbind</span>(
+  <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>),
+  <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>),
+  <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>)
 )
-<span class="kw"><a href="../reference/tidy.html">tidy</a></span>(ht_constant)</code></pre></div>
-<table class="table">
-<thead><tr class="header">
-<th align="left">coefficient_name</th>
-<th align="right">est</th>
-<th align="right">se</th>
-<th align="right">p</th>
-<th align="right">ci_lower</th>
-<th align="right">ci_upper</th>
-<th align="right">df</th>
-<th align="left">outcome</th>
-</tr></thead>
-<tbody><tr class="odd">
-<td align="left">z_clust</td>
-<td align="right">0.82</td>
-<td align="right">0.17</td>
-<td align="right">0</td>
-<td align="right">0.48</td>
-<td align="right">1.1</td>
-<td align="right">98</td>
-<td align="left">y_clust</td>
-</tr></tbody>
-</table>
-<p>You can also build the condition probability matrix (<code>condition_prob_mat =</code>) that <code><a href="../reference/horvitz_thompson.html">horvitz_thompson()</a></code> needs yourself. This matrix is an 2N by 2N matrix, where the first N rows and N columns (the upper-left corner) are the joint probability of each unit being in the control condition with every other unit being in the control condition. The upper right N by N matrix is the joint probability of each unit being in the control condition with every other unit being in the treated condition. The second N rows are the same, with the joint probability of each unit being in the treated condition first with each unit being in the control (first N columns) and then with each unit being in the treated as well (second N columns).</p>
-<p>We also provide helper functions to build this matrix from a set of possible permutations of the treatment vector.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Generate 500 arbitrary permutations</span>
-permutes &lt;-<span class="st"> </span><span class="kw">matrix</span>(
-  <span class="kw">rbinom</span>(<span class="kw">nrow</span>(dat) <span class="op">*</span><span class="st"> </span><span class="dv">500</span>, <span class="dt">size =</span> <span class="dv">1</span>, <span class="dt">prob =</span> <span class="fl">0.5</span>),
-  <span class="dt">nrow =</span> <span class="kw">nrow</span>(dat)
-)
-<span class="kw">dim</span>(permutes)
-permutes[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="op">:</span><span class="dv">2</span>]
+arb_pr_mat &lt;-<span class="st"> </span><span class="kw"><a href="../reference/permutations_to_condition_pr_mat.html">permutations_to_condition_pr_mat</a></span>(possible_treats)
 
-<span class="co"># Get condition probability matrix</span>
-arb_pr_mat &lt;-<span class="st"> </span><span class="kw"><a href="../reference/permutations_to_condition_pr_mat.html">permutations_to_condition_pr_mat</a></span>(permutes)
+<span class="co"># Simulating a column to be realized treatment</span>
+dat &lt;-<span class="st"> </span><span class="kw">data.frame</span>(
+  <span class="dt">z =</span> possible_treats[, <span class="kw">sample</span>(<span class="kw">ncol</span>(possible_treats), <span class="dt">size =</span> <span class="dv">1</span>)],
+  <span class="dt">y =</span> <span class="kw">rnorm</span>(<span class="kw">nrow</span>(possible_treats))
+)
 
 ht_arb &lt;-<span class="st"> </span><span class="kw"><a href="../reference/horvitz_thompson.html">horvitz_thompson</a></span>(
   y <span class="op">~</span><span class="st"> </span>z,
@@ -625,17 +605,17 @@ ht_arb &lt;-<span class="st"> </span><span class="kw"><a href="../reference/horv
 <th align="right">p</th>
 <th align="right">ci_lower</th>
 <th align="right">ci_upper</th>
-<th align="right">df</th>
+<th align="left">df</th>
 <th align="left">outcome</th>
 </tr></thead>
 <tbody><tr class="odd">
 <td align="left">z</td>
-<td align="right">0.16</td>
-<td align="right">0.24</td>
-<td align="right">0.52</td>
-<td align="right">-0.32</td>
-<td align="right">0.63</td>
-<td align="right">98</td>
+<td align="right">-0.82</td>
+<td align="right">0.84</td>
+<td align="right">0.33</td>
+<td align="right">-2.5</td>
+<td align="right">0.83</td>
+<td align="left">NA</td>
 <td align="left">y</td>
 </tr></tbody>
 </table>
@@ -652,7 +632,7 @@ ht_arb &lt;-<span class="st"> </span><span class="kw"><a href="../reference/horv
 <p>Freedman, David A. 2008. “On Regression Adjustments in Experiments with Several Treatments.” <em>The Annals of Applied Statistics</em>. JSTOR, 176–96. <a href="https://doi.org/10.1214/07-AOAS143" class="uri">https://doi.org/10.1214/07-AOAS143</a>.</p>
 </div>
 <div id="ref-lin2013">
-<p>Lin, Winston, and others. 2013. “Agnostic Notes on Regression Adjustments to Experimental Data: Reexamining Freedman’s Critique.” <em>The Annals of Applied Statistics</em> 7 (1). Institute of Mathematical Statistics: 295–318. <a href="https://doi.org/10.1214/12-AOAS583" class="uri">https://doi.org/10.1214/12-AOAS583</a>.</p>
+<p>Lin, Winston. 2013. “Agnostic Notes on Regression Adjustments to Experimental Data: Reexamining Freedman’s Critique.” <em>The Annals of Applied Statistics</em> 7 (1). Institute of Mathematical Statistics: 295–318. <a href="https://doi.org/10.1214/12-AOAS583" class="uri">https://doi.org/10.1214/12-AOAS583</a>.</p>
 </div>
 <div id="ref-pustejovskytipton2016">
 <p>Pustejovsky, James E, and Elizabeth Tipton. 2016. “Small Sample Methods for Cluster-Robust Variance Estimation and Hypothesis Testing in Fixed Effects Models.” <em>Journal of Business &amp; Economic Statistics</em>. Taylor &amp; Francis. <a href="https://doi.org/10.1080/07350015.2016.1247004" class="uri">https://doi.org/10.1080/07350015.2016.1247004</a>.</p>

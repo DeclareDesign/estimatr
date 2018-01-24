@@ -1,6 +1,6 @@
 Package: estimatr
 Type: Package
-Title: Fast Estimators for Social Scientists
+Title: Fast Estimators for Design-Based Inference
 Version: 0.2.0
 Date: 2017-12-18
 Authors@R: c(person("Graeme", "Blair", email = "graeme.blair@ucla.edu", role = c("aut", "cre")),

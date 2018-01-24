@@ -1,19 +1,23 @@
-#' Builds a condition probaability matrix for Horvitz-Thompson estimation from randomizr declaration
+#' Builds condition probability matrices for Horvitz-Thompson estimation from
+#' \pkg{randomizr} declaration
 #'
-#' @param declaration An object of class 'ra_declaration' that contains the experimental design
+#' @param declaration An object of class \code{"ra_declaration"}, generated
+#' by the \code{\link[randomizr]{declare_ra}} function in \pkg{randomizr}. This
+#' object contains the experimental design that will be represented in a
 #'
-#' @details This function takes a 'ra_declaration' from the
-#' \code{\link[randomizr]{declare_ra}} function in \pkg{randomizr} and returns
-#'  a 2n*2n matrix that can be used to fully specify the design for
-#'  \code{\link{horvitz_thompson}} estimation. This is done by passing this
-#'  matrix to the \code{condition_pr_mat} argument of
-#'  \code{\link{horvitz_thompson}}.
+#' @details This function takes a \code{"ra_declaration"}, generated
+#' by the \code{\link[randomizr]{declare_ra}} function in \pkg{randomizr} and
+#' returns a 2n*2n matrix that can be used to fully specify the design for
+#' \code{\link{horvitz_thompson}} estimation. This is done by passing this
+#' matrix to the \code{condition_pr_mat} argument of
+#' \code{\link{horvitz_thompson}}.
 #'
 #' Currently, this function can learn the condition probability matrix for a
 #' wide variety of randomizations: simple, complete, simple clustered, complete
 #' clustered, blocked, block-clustered.
 #'
-#' This matrix is made up of four-submatrices, each of which corresponds to the
+#' A condition probability matrix is made up of four submatrices, each of which
+#' corresponds to the
 #' joint and marginal probability that each observation is in one of the two
 #' treatment conditions.
 #'
@@ -42,41 +46,48 @@
 #' of each unit being in condition 2 together,
 #' Pr(Z_i = Condition2, Z_j = Condition2).
 #'
+#' @return a numeric 2n*2n matrix of marginal and joint condition treatment
+#' probabilities to be passed to the \code{condition_pr_mat} argument of
+#' \code{\link{horvitz_thompson}}. See details.
+#'
+#' @seealso \code{\link{permutations_to_condition_pr_mat}}
+#'
 #' @examples
 #'
-#' # Learn condition probability matrix from complete clustered design
+#' # Learn condition probability matrix from complete blocked design
 #' library(randomizr)
 #' n <- 100
 #' dat <- data.frame(
-#'   clusts = sample(letters[1:10], size = n, replace = TRUE),
+#'   blocks = sample(letters[1:10], size = n, replace = TRUE),
 #'   y = rnorm(n)
 #' )
 #'
-#' # Declare complete clustered randomization
-#' cl_declaration <- declare_ra(clusters = dat$clusts, prob = 0.4, simple = FALSE)
+#' # Declare complete blocked randomization
+#' bl_declaration <- declare_ra(blocks = dat$blocks, prob = 0.4, simple = FALSE)
 #' # Get probabilities
-#' clust_pr_mat <- declaration_to_condition_pr_mat(cl_declaration)
+#' block_pr_mat <- declaration_to_condition_pr_mat(bl_declaration)
 #' # Do randomiztion
-#' dat$z <- cl_declaration$ra_function()
+#' dat$z <- bl_declaration$ra_function()
 #'
-#' horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_pr_mat)
+#' horvitz_thompson(y ~ z, data = dat, condition_pr_mat = block_pr_mat)
 #'
 #' # When you pass a declaration to horvitz_thompson, this function is called
-#' horvitz_thompson(y ~ z, data = dat, declaration = cl_declaration)
+#'
+#' # Equivalent to above call
+#' horvitz_thompson(y ~ z, data = dat, declaration = bl_declaration)
 #'
 #' @export
 declaration_to_condition_pr_mat <- function(declaration) {
-
-  if (class(declaration) != 'ra_declaration') {
+  if (class(declaration) != "ra_declaration") {
     stop("'declaration' must be an object of class 'ra_declaration'")
   }
 
-  # if (ncol(declaration$probabilities_matrix) > 2) {
-  #   stop(
-  #     "'declaration' must have been generated with a binary treatment ",
-  #     "variable when `declaration_to_condition_pr_mat` is called directly"
-  #   )
-  # }
+  if (ncol(declaration$probabilities_matrix) > 2) {
+    stop(
+      "`declaration` must have only two arms when passed directly to ",
+      "declaration_to_condition_pr_mat()"
+    )
+  }
 
   p1 <- declaration$probabilities_matrix[, 1]
   p2 <- declaration$probabilities_matrix[, 2]
@@ -87,106 +98,43 @@ declaration_to_condition_pr_mat <- function(declaration) {
   n <- nrow(declaration$probabilities_matrix)
 
   if (declaration$ra_type == "simple") {
-
     v <- c(p1, p2)
     condition_pr_matrix <- tcrossprod(v)
     diag(condition_pr_matrix) <- v
-    condition_pr_matrix[cbind(n+1:n, 1:n)] <- 0
-    condition_pr_matrix[cbind(1:n, n+1:n)] <- 0
-
+    condition_pr_matrix[cbind(n + 1:n, 1:n)] <- 0
+    condition_pr_matrix[cbind(1:n, n + 1:n)] <- 0
   } else if (declaration$ra_type == "complete") {
-
     if (length(unique(p2)) > 1) {
-      stop("Treatment probabilities must be fixed for complete randomized designs")
+      stop(
+        "Treatment probabilities must be fixed for complete randomized designs"
+      )
     }
-
-    # On average the number of treated units may not be an integer
-    # if (treated_remainder != 0) {
-    #   stop(
-    #     "Can't use 'declaration' with complete randomization when the number ",
-    #     "of treated units is not fixed across randomizations (i.e. when the ",
-    #     "number of total units is 3 and the probability of treatment is 0.5, ",
-    #     "meaning there can be either 1 or 2 treated units. Instead, simulate ",
-    #     "many treatment vectors using randomizr and pass those permutations ",
-    #     "to `permutations_to_condition_pr_mat`."
-    #   )
-    # }
 
     condition_pr_matrix <-
       gen_pr_matrix_complete(
         pr = p2[1],
         n_total = n
       )
-
   } else if (declaration$ra_type == "clustered") {
-
-    if (length(declaration_call) == 0) {
-      warning("Assuming cluster randomization is complete. To have declare_ra work with simple random assignment of clusters, upgrade to the newest version of randomizr on GitHub.")
-    }
-
     condition_pr_matrix <- gen_pr_matrix_cluster(
       clusters = declaration$clusters,
       treat_probs = p2,
       simple = simple
     )
-
-  } else if (declaration$ra_type %in% c("blocked", "blocked_and_clustered")) {
-
-    # Assume complete randomization
-    condition_pr_matrix <- matrix(NA, nrow = 2*n, ncol = 2*n)
-
-    # Split by block and get complete randomized values within each block
-    id_dat <- data.frame(p1 = p1, p2 = p2, ids = 1:n)
-
-    if (declaration$ra_type == "blocked_and_clustered") {
-      id_dat$clusters <- declaration$clusters
-    }
-
-    block_dat <- split(
-      id_dat,
-      declaration$block
+  } else if (declaration$ra_type == "blocked") {
+    condition_pr_matrix <- gen_pr_matrix_block(
+      blocks = declaration$blocks,
+      clusters = NULL,
+      p1 = p1,
+      p2 = p2
     )
-
-    n_blocks <- length(block_dat)
-
-    for (i in 1:n_blocks) {
-
-      ids <- c(block_dat[[i]]$ids, n + block_dat[[i]]$ids)
-
-      if (declaration$ra_type == "blocked") {
-
-        if (length(unique(block_dat[[i]]$p2)) > 1) {
-          stop("Treatment probabilities must be fixed within blocks for block randomized designs")
-        }
-
-        condition_pr_matrix[ids, ids] <-
-          gen_pr_matrix_complete(
-            pr = block_dat[[i]]$p2[1],
-            n_total = length(block_dat[[i]]$p2)
-          )
-
-      } else if (declaration$ra_type == "blocked_and_clustered") {
-        # Has to be complete randomization of clusters
-        condition_pr_matrix[ids, ids] <-
-          gen_pr_matrix_cluster(
-            clusters = block_dat[[i]]$clusters,
-            treat_probs = block_dat[[i]]$p2,
-            simple = FALSE
-          )
-      }
-
-      for (j in 1:n_blocks) {
-        if (i != j) {
-          condition_pr_matrix[
-            ids,
-            c(block_dat[[j]]$ids, n + block_dat[[j]]$ids)
-          ] <- tcrossprod(
-            c(block_dat[[i]]$p1, block_dat[[i]]$p2),
-            c(block_dat[[j]]$p1, block_dat[[j]]$p2)
-          )
-        }
-      }
-    }
+  } else if (declaration$ra_type == "blocked_and_clustered") {
+    condition_pr_matrix <- gen_pr_matrix_block(
+      blocks = declaration$blocks,
+      clusters = declaration$clusters,
+      p1 = p1,
+      p2 = p2
+    )
   } else if (declaration$ra_type == "custom") {
     # Use permutation matrix
     return(permutations_to_condition_pr_mat(declaration$permutation_matrix))
@@ -197,18 +145,76 @@ declaration_to_condition_pr_mat <- function(declaration) {
     c(paste0("0_", 1:n), paste0("1_", 1:n))
 
   return(condition_pr_matrix)
-
 }
+
+#' Builds condition probability matrices for Horvitz-Thompson estimation from
+#' permutation matrix
+#'
+#' @param permutations A matrix where the rows are units and the columns are
+#' different treatment permutations; treated units must be represented with a
+#' 1 and control units with a 0
+#'
+#' @details This function takes a matrix of permutations, for example from
+#' the \code{\link[randomizr]{obtain_permutation_matrix}} function in
+#' \pkg{randomizr} or through simulation and returns a 2n*2n matrix that can
+#' be used to fully specify the design for \code{\link{horvitz_thompson}}
+#' estimation. You can read more about these matrices in the documentation for
+#' the \code{\link{declaration_to_condition_pr_mat}} function.
+#'
+#' This is done by passing this matrix to the \code{condition_pr_mat} argument
+#' of
+#'
+#' @seealso  \code{\link[randomizr]{declare_ra}},
+#' \code{\link{declaration_to_condition_pr_mat}}
+#'
+#' @return a numeric 2n*2n matrix of marginal and joint condition treatment
+#' probabilities to be passed to the \code{condition_pr_mat} argument of
+#' \code{\link{horvitz_thompson}}.
+#'
+#' @examples
+#'
+#' # Complete randomization
+#' perms <- replicate(1000, sample(rep(0:1, each = 50)))
+#' comp_pr_mat <- permutations_to_condition_pr_mat(perms)
+#'
+#' # Arbitrary randomization
+#' possible_treats <- cbind(
+#'   c(1, 1, 0, 1, 0, 0, 0, 1, 1, 0),
+#'   c(0, 1, 1, 0, 1, 1, 0, 1, 0, 1),
+#'   c(1, 0, 1, 1, 1, 1, 1, 0, 0, 0)
+#' )
+#' arb_pr_mat <- permutations_to_condition_pr_mat(possible_treats)
+#' # Simulating a column to be realized treatment
+#' z <- possible_treats[, sample(ncol(possible_treats), size = 1)]
+#' y <- rnorm(nrow(possible_treats))
+#' horvitz_thompson(y ~ z, condition_pr_mat = arb_pr_mat)
+#'
+#' @export
+permutations_to_condition_pr_mat <- function(permutations) {
+  N <- nrow(permutations)
+
+  if (!all(permutations %in% c(0, 1))) {
+    stop("Matrix of `permutations` must be comprised of only 0s and 1s")
+  }
+
+  condition_pr_matrix <- tcrossprod(rbind(1 - permutations, permutations)) / ncol(permutations)
+
+  colnames(condition_pr_matrix) <- rownames(condition_pr_matrix) <-
+    c(paste0("0_", 1:N), paste0("1_", 1:N))
+
+  return(condition_pr_matrix)
+}
+
 
 #' Generate condition probability matrix given clusters and probabilities
 #'
 #' @param clusters A vector of clusters
-#' @param treat_probs A vector of treatment (condition) probabilities
-#' @param simple A boolean for whether the assignment is a random sample assignment (TRUE, default) or complete random assignment (FALSE)
+#' @param treat_probs A vector of treatment (condition 2) probabilities
+#' @param simple A boolean for whether the assignment is a random sample
+#' assignment (TRUE, default) or complete random assignment (FALSE)
 #'
 #' @export
 gen_pr_matrix_cluster <- function(clusters, treat_probs, simple) {
-
   n <- length(clusters)
   cluster_lists <- split(1:n, clusters)
   n_clust <- length(cluster_lists)
@@ -218,14 +224,16 @@ gen_pr_matrix_cluster <- function(clusters, treat_probs, simple) {
   cluster_marginal_probs <-
     treat_probs[unique_first_in_cl]
 
-
   # Container mats
   # Get cluster condition_pr_matrices
   # Complete random sampling
   if (is.null(simple) || !simple) {
-
     if (length(unique(cluster_marginal_probs)) > 1) {
-      stop("Treatment probabilities must be fixed for complete (clustered) randomized clustered designs")
+      stop(
+        "Treatment probabilities cannot vary within blocks for ",
+        "block-clustered randomized designs and cannot vary within the whole ",
+        "sample for complete cluster randomized designs"
+      )
     }
 
     prs <- gen_joint_pr_complete(cluster_marginal_probs[1], n_clust)
@@ -247,9 +255,10 @@ gen_pr_matrix_cluster <- function(clusters, treat_probs, simple) {
     }
 
     condition_pr_matrix <-
-      rbind(cbind(mat_00, mat_10),
-            cbind(mat_10, mat_11))
-
+      rbind(
+        cbind(mat_00, mat_10),
+        cbind(mat_10, mat_11)
+      )
   } else if (simple) { # cluster, simple randomized
 
     # container mats
@@ -269,74 +278,133 @@ gen_pr_matrix_cluster <- function(clusters, treat_probs, simple) {
 
           mat_10[cluster_lists[[i]], cluster_lists[[j]]] <-
             0
-
         } else {
           mat_11[cluster_lists[[i]], cluster_lists[[j]]] <-
             cluster_marginal_probs[i] *
-            cluster_marginal_probs[j]
+              cluster_marginal_probs[j]
 
           mat_00[cluster_lists[[i]], cluster_lists[[j]]] <-
             (1 - cluster_marginal_probs[i]) *
-            (1 - cluster_marginal_probs[j])
+              (1 - cluster_marginal_probs[j])
 
           mat_01[cluster_lists[[i]], cluster_lists[[j]]] <-
             (1 - cluster_marginal_probs[i]) *
-            cluster_marginal_probs[j]
+              cluster_marginal_probs[j]
 
           mat_10[cluster_lists[[i]], cluster_lists[[j]]] <-
             cluster_marginal_probs[i] *
-            (1 - cluster_marginal_probs[j])
-
+              (1 - cluster_marginal_probs[j])
         }
       }
     }
 
     condition_pr_matrix <-
-      rbind(cbind(mat_00, mat_01),
-            cbind(mat_10, mat_11))
+      rbind(
+        cbind(mat_00, mat_01),
+        cbind(mat_10, mat_11)
+      )
   }
 
   return(condition_pr_matrix)
 }
 
-#' Builds a condition probaability matrix for Horvitz-Thompson estimation from treatment permutation matrix
-#'
-#' @param permutations A matrix where the rows are units and the columns are different treatment permutations; treated units must be represented with a 1 and control units with a 0
-#'
-#' @details This function takes a matrix of permutations, for example from from the \code{\link[randomizr]{declare_ra}} function in \pkg{randomizr} and returns a 2n*2n matrix that can be used to fully specify the design for \code{\link{horvitz_thompson}} estimation. This is done by passing this matrix to the \code{condition_pr_mat} argument of \code{\link{horvitz_thompson}}.
-#'
-#' @export
-permutations_to_condition_pr_mat <- function(permutations) {
 
-  N <- nrow(permutations)
+gen_pr_matrix_block <- function(blocks, clusters, p2 = NULL, p1 = NULL, t = NULL, condition2 = NULL) {
+  n <- length(blocks)
+  # Assume complete randomization
+  condition_pr_matrix <- matrix(NA, nrow = 2 * n, ncol = 2 * n)
 
-  if (!all(permutations %in% c(0, 1))) {
-    stop("Permutations matrix must only have 0s and 1s in it.")
+  # Split by block and get complete randomized values within each block
+  id_dat <- data.frame(ids = 1:n)
+  if (!is.null(p2)) {
+    id_dat$p2 <- p2
+  }
+  if (!is.null(p1)) {
+    id_dat$p1 <- p1
+  }
+  if (!is.null(t)) {
+    id_dat$t <- t
   }
 
-  condition_pr_matrix <- tcrossprod(rbind(1- permutations, permutations)) / ncol(permutations)
+  if (is.null(t) && is.null(p2) && is.null(p1)) {
+    stop("Must specify one of `t`, `p2`, or `p1`.")
+  }
 
-  colnames(condition_pr_matrix) <- rownames(condition_pr_matrix) <-
-    c(paste0("0_", 1:N), paste0("1_", 1:N))
+  clustered <- !is.null(clusters)
+  if (clustered) {
+    id_dat$clusters <- clusters
+  }
+
+  block_dat <- split(
+    id_dat,
+    blocks
+  )
+
+  n_blocks <- length(block_dat)
+
+  for (i in 1:n_blocks) {
+    ids <- c(block_dat[[i]]$ids, n + block_dat[[i]]$ids)
+
+    if (clustered) {
+      if (is.null(block_dat[[i]]$p2)) {
+        # learn prs
+        cluster_treats <- get_cluster_treats(block_dat[[i]], condition2)
+        block_dat[[i]]$p2 <- mean(cluster_treats$treat_clust)
+      }
+
+      if (is.null(block_dat[[i]]$p1)) {
+        block_dat[[i]]$p1 <- 1 - block_dat[[i]]$p2
+      }
+
+      # Has to be complete randomization of clusters
+      condition_pr_matrix[ids, ids] <-
+        gen_pr_matrix_cluster(
+          clusters = block_dat[[i]]$clusters,
+          treat_probs = block_dat[[i]]$p2,
+          simple = FALSE
+        )
+    } else {
+      if (length(unique(block_dat[[i]]$p2)) > 1) {
+        stop(
+          "Treatment probabilities must be fixed within blocks for block ",
+          "randomized designs"
+        )
+      }
+
+      if (is.null(block_dat[[i]]$p2)) {
+        # learn prs
+        block_dat[[i]]$p2 <- mean(block_dat[[i]]$t)
+      }
+
+      if (is.null(block_dat[[i]]$p1)) {
+        block_dat[[i]]$p1 <- 1 - block_dat[[i]]$p2
+      }
+
+      condition_pr_matrix[ids, ids] <-
+        gen_pr_matrix_complete(
+          pr = block_dat[[i]]$p2[1],
+          n_total = length(block_dat[[i]]$p2)
+        )
+    }
+
+
+    for (j in 1:n_blocks) {
+      if (i != j) {
+        condition_pr_matrix[
+          ids,
+          c(block_dat[[j]]$ids, n + block_dat[[j]]$ids)
+        ] <- tcrossprod(
+          c(block_dat[[i]]$p1, block_dat[[i]]$p2),
+          c(block_dat[[j]]$p1, block_dat[[j]]$p2)
+        )
+      }
+    }
+  }
 
   return(condition_pr_matrix)
-
-}
-
-# Helper functions based on Stack Overflow answer by user Ujjwal
-# https://stackoverflow.com/questions/26377199/convert-a-matrix-in-r-into-a-upper-triangular-lower-triangular-matrix-with-those
-copy_upper_to_lower_triangle <- function(mat) {
-  mat[lower.tri(mat, diag = F)] <- t(mat)[lower.tri(mat)]
-  return(mat)
-}
-
-copy_lower_to_upper_triangle <- function(mat) {
-  mat[upper.tri(mat, diag = F)] <- t(mat)[upper.tri(mat)]
-  return(mat)
 }
 
 gen_pr_matrix_complete <- function(pr, n_total) {
-
   prs <- gen_joint_pr_complete(pr, n_total)
 
   pr00_mat <- matrix(prs[["00"]], nrow = n_total, ncol = n_total)
@@ -352,11 +420,9 @@ gen_pr_matrix_complete <- function(pr, n_total) {
   )
 
   return(pr_mat)
-
 }
 
 gen_joint_pr_complete <- function(pr, n_total) {
-
   n_treated <- pr * n_total
   remainder <- n_treated %% 1
 
@@ -366,30 +432,50 @@ gen_joint_pr_complete <- function(pr, n_total) {
   prs <- list()
 
   prs[["11"]] <-
-    remainder *                         # pr(M)
-    ((n_treated_floor + 1) / n_total) *       # pr(j = 1 | M)
-    (n_treated_floor / (n_total - 1)) +       # pr(i = 1 | j = 1, M)
-    (1 - remainder) *                   # pr(M')
-    (n_treated_floor / n_total) *             # pr(j = 1 | M')
-    ((n_treated_floor - 1) / (n_total - 1))   # pr(i = 1 | j = 1, M')
+    remainder * # pr(M)
+    ((n_treated_floor + 1) / n_total) * # pr(j = 1 | M)
+    (n_treated_floor / (n_total - 1)) + # pr(i = 1 | j = 1, M)
+    (1 - remainder) * # pr(M')
+      (n_treated_floor / n_total) * # pr(j = 1 | M')
+      ((n_treated_floor - 1) / (n_total - 1)) # pr(i = 1 | j = 1, M')
 
 
   prs[["10"]] <-
-    remainder *                         # pr(M)
-    ((n_control - 1) / n_total) *       # pr(j = 0 | M)
+    remainder * # pr(M)
+    ((n_control - 1) / n_total) * # pr(j = 0 | M)
     ((n_treated_floor + 1) / (n_total - 1)) + # pr(i = 1 | j = 0, M)
-    (1 - remainder) *                   # pr(M')
-    (n_control / n_total) *             # pr(j = 0 | M')
-    (n_treated_floor / (n_total - 1))         # pr(i = 1 | j = 0, M')
+    (1 - remainder) * # pr(M')
+      (n_control / n_total) * # pr(j = 0 | M')
+      (n_treated_floor / (n_total - 1)) # pr(i = 1 | j = 0, M')
 
   prs[["00"]] <-
-    remainder *                         # pr(M)
-    ((n_control - 1) / n_total) *       # pr(j = 0 | M)
+    remainder * # pr(M)
+    ((n_control - 1) / n_total) * # pr(j = 0 | M)
     ((n_control - 2) / (n_total - 1)) + # pr(i = 0 | j = 0, M)
-    (1 - remainder) *                   # pr(M')
-    (n_control / n_total) *             # pr(j = 0 | M')
-    ((n_control - 1) / (n_total - 1))   # pr(i = 0 | j = 0, M')
+    (1 - remainder) * # pr(M')
+      (n_control / n_total) * # pr(j = 0 | M')
+      ((n_control - 1) / (n_total - 1)) # pr(i = 0 | j = 0, M')
 
   return(prs)
+}
 
+
+get_cluster_treats <- function(data, condition2) {
+  cluster_dat <- split(
+    data$t,
+    data$clusters
+  )
+
+  n_clust <- length(cluster_dat)
+  treat_clust <- numeric(n_clust)
+
+  for (i in seq_along(cluster_dat)) {
+    if (length(unique(cluster_dat[[i]])) > 1) {
+      stop("Treatment condition must be constant within `cluster`")
+    }
+
+    treat_clust[i] <- as.numeric(cluster_dat[[i]][1] == condition2)
+  }
+
+  return(list(n_clust = n_clust, treat_clust = treat_clust))
 }

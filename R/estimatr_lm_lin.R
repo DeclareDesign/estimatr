@@ -21,21 +21,16 @@
 #' "HC0", "HC1" (or "stata", the equivalent), "HC2" (default), "HC3", or
 #' "classical". With clustering: "CR0", "CR2" (default), or "stata" are
 #' permissible.
-#' @param ci A boolean for whether to compute and return pvalues and confidence
+#' @param ci A boolean for whether to compute and return p-values and confidence
 #' intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
-#' @param coefficient_name a character or character vector that indicates which
-#' coefficients should be reported. If left unspecified, returns all
-#' coefficients. Especially for models with clustering where only one
-#' coefficient is of interest, specifying a coefficient of interest may
-#' result in improvements in speed
 #' @param return_vcov a boolean for whether to return the variance-covariance
 #' matrix for later usage, TRUE by default.
 #' @param try_cholesky a boolean for whether to try using a Cholesky
 #' decomposition to solve LS instead of a QR decomposition, FALSE by default.
 #' Using a Cholesky decomposition may result in speed gains, but should only
 #' be used if users are sure their model is full-rank (i.e. there is no
-#' perfect multi-collinearity)
+#' perfect multi-collinearity).
 #'
 #' @details
 #'
@@ -79,6 +74,8 @@
 #' }
 #' We also return \code{terms} and \code{contrasts}, used by \code{predict}.
 #'
+#' @seealso \code{\link{lm_robust}}
+#'
 #' @examples
 #' library(fabricatr)
 #' library(randomizr)
@@ -102,7 +99,10 @@
 #' lm_lin(y ~ z, covariates = ~ x + x2, data = dat)
 #'
 #' # Also centers data AFTER evaluating any functions in formula
-#' lm_lin(y ~ z, covariates = ~ x + log(x3), data = dat)
+#' lmlin_out2 <- lm_lin(y ~ z, covariates = ~ x + log(x3), data = dat)
+#' lmlin_out2$scaled_center["log(x3)"]
+#' mean(log(dat$x3))
+#'
 #'
 #' # Works easily with clusters
 #' dat$clusterID <- rep(1:20, each = 2)
@@ -115,7 +115,8 @@
 #' lm_lin(y ~ z_multi, covariates = ~ x, data = dat)
 #'
 #' @references
-# ’ Lin, Winston. 2013. “Agnostic Notes on Regression Adjustments to Experimental Data: Reexamining Freedman’s Critique.” The Annals of Applied Statistics 7 (1). Institute of Mathematical Statistics: 295–318. \url{https://doi.org/10.1214/12-AOAS583}.
+#' Freedman, David A. 2008. "On Regression Adjustments in Experiments with Several Treatments." The Annals of Applied Statistics. JSTOR, 176-96. \url{https://doi.org/10.1214/07-AOAS143}.
+#' Lin, Winston. 2013. "Agnostic Notes on Regression Adjustments to Experimental Data: Reexamining Freedman's Critique." The Annals of Applied Statistics 7 (1). Institute of Mathematical Statistics: 295-318. \url{https://doi.org/10.1214/12-AOAS583}.
 #'
 #' @export
 lm_lin <- function(formula,
@@ -127,7 +128,6 @@ lm_lin <- function(formula,
                    se_type = NULL,
                    ci = TRUE,
                    alpha = .05,
-                   coefficient_name = NULL,
                    return_vcov = TRUE,
                    try_cholesky = FALSE) {
 
@@ -285,7 +285,6 @@ lm_lin <- function(formula,
       ci = ci,
       se_type = se_type,
       alpha = alpha,
-      coefficient_name = coefficient_name,
       return_vcov = return_vcov,
       try_cholesky = try_cholesky
     )

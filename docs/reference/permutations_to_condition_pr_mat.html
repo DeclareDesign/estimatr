@@ -6,7 +6,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Build condition probaability matrix for Horvitz-Thompson estimation from treatment permutations — permutations_to_condition_pr_mat • estimatr</title>
+<title>Builds condition probability matrices for Horvitz-Thompson estimation from
+permutation matrix — permutations_to_condition_pr_mat • estimatr</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -58,6 +59,9 @@
   <a href="../articles/technical-notes.html">Technical Notes</a>
 </li>
 <li>
+  <a href="../articles/benchmarking-estimatr.html">Speed Comparisons</a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li>
@@ -104,11 +108,13 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Build condition probaability matrix for Horvitz-Thompson estimation from treatment permutations</h1>
+    <h1>Builds condition probability matrices for Horvitz-Thompson estimation from
+permutation matrix</h1>
     </div>
 
     
-    <p>Build condition probaability matrix for Horvitz-Thompson estimation from treatment permutations</p>
+    <p>Builds condition probability matrices for Horvitz-Thompson estimation from
+permutation matrix</p>
     
 
     <pre class="usage"><span class='fu'>permutations_to_condition_pr_mat</span>(<span class='no'>permutations</span>)</pre>
@@ -118,17 +124,70 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>permutations</th>
-      <td><p>A matrix where the rows are units and the columns are different treatment permutations; treated units must be represented with a 1 and control units with a 0</p></td>
+      <td><p>A matrix where the rows are units and the columns are
+different treatment permutations; treated units must be represented with a
+1 and control units with a 0</p></td>
     </tr>
     </table>
     
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
+    <p>a numeric 2n*2n matrix of marginal and joint condition treatment
+probabilities to be passed to the <code>condition_pr_mat</code> argument of
+<code><a href='horvitz_thompson.html'>horvitz_thompson</a></code>.</p>
+    
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>This function takes a matrix of permutations, for example from
+the <code><a href='http://www.rdocumentation.org/packages/randomizr/topics/obtain_permutation_matrix'>obtain_permutation_matrix</a></code> function in
+<span class="pkg">randomizr</span> or through simulation and returns a 2n*2n matrix that can
+be used to fully specify the design for <code><a href='horvitz_thompson.html'>horvitz_thompson</a></code>
+estimation. You can read more about these matrices in the documentation for
+the <code><a href='declaration_to_condition_pr_mat.html'>declaration_to_condition_pr_mat</a></code> function.</p>
+<p>This is done by passing this matrix to the <code>condition_pr_mat</code> argument
+of</p>
+    
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+
+    <p><code><a href='http://www.rdocumentation.org/packages/randomizr/topics/declare_ra'>declare_ra</a></code>,
+<code><a href='declaration_to_condition_pr_mat.html'>declaration_to_condition_pr_mat</a></code></p>
+    
+
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'>
+<span class='co'># Complete randomization</span>
+<span class='no'>perms</span> <span class='kw'>&lt;-</span> <span class='fu'>replicate</span>(<span class='fl'>1000</span>, <span class='fu'>sample</span>(<span class='fu'>rep</span>(<span class='fl'>0</span>:<span class='fl'>1</span>, <span class='kw'>each</span> <span class='kw'>=</span> <span class='fl'>50</span>)))
+<span class='no'>comp_pr_mat</span> <span class='kw'>&lt;-</span> <span class='fu'>permutations_to_condition_pr_mat</span>(<span class='no'>perms</span>)
+
+<span class='co'># Arbitrary randomization</span>
+<span class='no'>possible_treats</span> <span class='kw'>&lt;-</span> <span class='fu'>cbind</span>(
+  <span class='fu'>c</span>(<span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>),
+  <span class='fu'>c</span>(<span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>),
+  <span class='fu'>c</span>(<span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>)
+)
+<span class='no'>arb_pr_mat</span> <span class='kw'>&lt;-</span> <span class='fu'>permutations_to_condition_pr_mat</span>(<span class='no'>possible_treats</span>)
+<span class='co'># Simulating a column to be realized treatment</span>
+<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='no'>possible_treats</span>[, <span class='fu'>sample</span>(<span class='fu'>ncol</span>(<span class='no'>possible_treats</span>), <span class='kw'>size</span> <span class='kw'>=</span> <span class='fl'>1</span>)]
+<span class='no'>y</span> <span class='kw'>&lt;-</span> <span class='fu'>rnorm</span>(<span class='fu'>nrow</span>(<span class='no'>possible_treats</span>))
+<span class='fu'><a href='horvitz_thompson.html'>horvitz_thompson</a></span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>arb_pr_mat</span>)</div><div class='output co'>#&gt;   coefficient_name        est        se         p  ci_lower  ci_upper df
+#&gt; 1                z -0.1973111 0.3617087 0.5854116 -0.906247 0.5116249 NA
+#&gt;   outcome
+#&gt; 1       y</div><div class='input'>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-                </ul>
+      
+      <li><a href="#value">Value</a></li>
+
+      <li><a href="#details">Details</a></li>
+
+      <li><a href="#see-also">See also</a></li>
+      
+      <li><a href="#examples">Examples</a></li>
+    </ul>
 
   </div>
 </div>
