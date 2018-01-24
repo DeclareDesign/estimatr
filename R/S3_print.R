@@ -23,7 +23,7 @@ print.summary.lm_robust <-
     digits = max(3L, getOption("digits") - 3L),
     ...) {
 
-    cat("\nCall:\n", paste(deparse(x$call), sep = "\n", collapse = "\n"),
+    cat("\nCall:\n", paste(deparse(x$call, nlines = 5), sep = "\n", collapse = "\n"),
         "\n\n", sep = "")
     if (x$weighted) {
       cat("Weighted, ")
