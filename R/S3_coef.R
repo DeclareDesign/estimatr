@@ -30,8 +30,7 @@ coef.difference_in_means <-
   function(
            object,
            ...) {
-    coefs <- object$est
-    names(coefs) <- object$coefficient_name
+    coefs <- object$coefficients
 
     return(coefs)
   }
@@ -46,8 +45,7 @@ coef.horvitz_thompson <-
   function(
            object,
            ...) {
-    coefs <- object$est
-    names(coefs) <- object$coefficient_name
+    coefs <- object$coefficients
 
     return(coefs)
   }

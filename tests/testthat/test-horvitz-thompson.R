@@ -17,11 +17,11 @@ test_that("Horvitz-Thompson matches d-i-m under certain conditions", {
       y ~ z,
       condition_prs = ps,
       data = dat
-    )$est,
+    )$coefficients,
     difference_in_means(
       y ~ z,
       data = dat
-    )$est
+    )$coefficients
   )
 })
 
@@ -71,8 +71,8 @@ test_that("Horvitz-Thompson works in simple case", {
   )
 
   expect_equal(
-    tidy(ht_simp)[, c("est", "se")],
-    tidy(ht_rev)[, c("est", "se")] * c(-1, 1)
+    tidy(ht_simp)[, c("coefficients", "se")],
+    tidy(ht_rev)[, c("coefficients", "se")] * c(-1, 1)
   )
 
   # Simple designs needn't use condition matrix as joint prs are product of marginals
@@ -381,7 +381,7 @@ test_that("Works without variation in treatment", {
     data = dat
   )
 
-  expect_equivalent(ht_const_1$est, mean(dat$y))
+  expect_equivalent(ht_const_1$coefficients, mean(dat$y))
   expect_equal(ht_const_1$se, 1 / (nrow(dat)) * sqrt(sum(dat$y ^ 2)))
 
 
@@ -396,7 +396,7 @@ test_that("Works without variation in treatment", {
     condition_prs = ps
   )
 
-  expect_equivalent(ht_const$est, mean(dat$y / dat$ps))
+  expect_equivalent(ht_const$coefficients, mean(dat$y / dat$ps))
   expect_equal(ht_const$se, 1 / (nrow(dat)) * sqrt(sum((dat$y / dat$ps) ^ 2)))
 
   ## Blocks and all are treated
@@ -409,7 +409,7 @@ test_that("Works without variation in treatment", {
   )
 
   # with blocks SE is different because not simple any more
-  expect_equivalent(ht_block$est, mean(dat$y / dat$ps))
+  expect_equivalent(ht_block$coefficients, mean(dat$y / dat$ps))
   # expect_equal(ht_block$se, 1/(nrow(dat)) * sqrt(sum((dat$y / dat$ps)^2)))
 
   ## Blocks and some are treated!
@@ -447,8 +447,8 @@ test_that("Works without variation in treatment", {
 
   # This is only true because condition prs are 0.5
   expect_identical(
-    tidy(ht_zero)[c("est", "se")],
-    tidy(ht_rev)[c("est", "se")] * c(-1, 1)
+    tidy(ht_zero)[c("coefficients", "se")],
+    tidy(ht_rev)[c("coefficients", "se")] * c(-1, 1)
   )
 })
 

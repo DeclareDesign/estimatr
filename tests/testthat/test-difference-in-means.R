@@ -78,8 +78,8 @@ test_that("DIM Blocked", {
   dim_reverse <- difference_in_means(Y ~ Z, condition1 = 1, condition2 = 0, blocks = block, data = dat)
 
   expect_equal(
-    tidy(dim_normal)[c("est", "se")],
-    tidy(dim_reverse)[c("est", "se")] * c(-1, 1)
+    tidy(dim_normal)[c("coefficients", "se")],
+    tidy(dim_reverse)[c("coefficients", "se")] * c(-1, 1)
   )
 
   difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = dat)
@@ -402,7 +402,7 @@ test_that("DIM unbiased", {
       dat$Z <- x
       dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
       dim <- difference_in_means(Y ~ Z, data = dat)
-      dim$est
+      dim$coefficients
     }
   )
 
@@ -430,7 +430,7 @@ test_that("DIM unbiased", {
         clusters = cluster,
         data = dat
       )
-      dim$est
+      dim$coefficients
     }
   )
 
@@ -459,7 +459,7 @@ test_that("DIM unbiased", {
         blocks = blocks,
         data = dat
       )
-      dim$est
+      dim$coefficients
     }
   )
 
@@ -488,7 +488,7 @@ test_that("DIM unbiased", {
         blocks = blocks,
         data = dat
       )
-      dim$est
+      dim$coefficients
     }
   )
 
@@ -519,7 +519,7 @@ test_that("DIM unbiased", {
         clusters = clusters,
         data = dat
       )
-      dim$est
+      dim$coefficients
     }
   )
 

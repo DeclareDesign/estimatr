@@ -65,10 +65,10 @@
 #'
 #' An object of class \code{"lm_robust"} is a list containing at least the
 #' following components:
-#'   \item{est}{the estimated coefficients}
+#'   \item{coefficients}{the estimated coefficients}
 #'   \item{se}{the estimated standard errors}
 #'   \item{df}{the estimated degrees of freedom}
-#'   \item{p}{the p-values from two-sided t-test using \code{est}, \code{se}, and \code{df}}
+#'   \item{p}{the p-values from two-sided t-test using \code{coefficients}, \code{se}, and \code{df}}
 #'   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{coefficient_name}{a character vector of coefficient names}
@@ -108,12 +108,10 @@
 #' # Can `tidy()` or `summary()` the data to easily get output as a data.frame
 #' tidy(lmro)
 #' summary(lmro)
-#' # Can also get coefficients three
-#' lmro$est,
-#' coef(lmro),
-#' tidy(lmro)$est,
-#' check.attributes = FALSE
-#' )
+#' # Can also get coefficients three ways
+#' lmro$coefficients
+#' coef(lmro)
+#' tidy(lmro)$coefficients
 #'
 #' # Can recover classical standard errors
 #' lmclassic <- lm_robust(y ~ x + z, data = dat, se_type = "classical")
@@ -158,6 +156,13 @@
 #' # One can also choose to set the significance level for different CIs
 #' lm_robust(y ~ x + z, data = dat, alpha = 0.1)
 #'
+#' \dontrun{
+#'   # Can also use `margins` package if you have it installed to get
+#'   # marignal effects
+#'   library(margins)
+#'   lmrout <- lm_robust(y ~ x + z, data = dat)
+#'   summary(margins(lmrout))
+#' }
 #'
 #' @export
 lm_robust <- function(formula,

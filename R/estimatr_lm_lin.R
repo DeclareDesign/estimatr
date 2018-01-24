@@ -53,10 +53,10 @@
 #'
 #' An object of class \code{"lm_robust"} is a list containing at least the
 #' following components:
-#'   \item{est}{the estimated coefficients}
+#'   \item{coefficients}{the estimated coefficients}
 #'   \item{se}{the estimated standard errors}
 #'   \item{df}{the estimated degrees of freedom}
-#'   \item{p}{the p-values from the t-test using \code{est}, \code{se}, and \code{df}}
+#'   \item{p}{the p-values from the t-test using \code{coefficients}, \code{se}, and \code{df}}
 #'   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{coefficient_name}{a character vector of coefficient names}

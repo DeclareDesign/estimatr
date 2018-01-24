@@ -101,7 +101,7 @@ tidy_data_frame <- function(object, digits = NULL) {
   return_cols <-
     c(
       "coefficient_name",
-      "est",
+      "coefficients",
       "se",
       "p",
       "ci_lower",

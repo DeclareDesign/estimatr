@@ -211,12 +211,14 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
      // Much of the code is also a translation/adaptation from the R in that package
      if (type == "CR2") {
 
-       Eigen::VectorXd eiunweight;
+       Eigen::VectorXd cr2_eis;
        if (weighted) {
          // Instead of having X and Xt be weighted by sqrt(W), this has them weighted by W
          X.array().colwise() *= weights;
          // Unweighted residuals
-         eiunweight = y.array() / weights - (Xoriginal * beta_hat).array();
+         cr2_eis = y.array() / weights - (Xoriginal * beta_hat).array();
+       } else {
+         cr2_eis = ei;
        }
 
        Eigen::MatrixXd tutX(J, r);
@@ -312,13 +314,13 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
              H3s.block(0, p_pos, r, r) = MEU * Omega_ct;
            }
 
-           // t(eiunweight) %*% (I - P_ss)^{-1/2} %*% Xj
+           // t(cr2_eis) %*% (I - P_ss)^{-1/2} %*% Xj
            // each ro  w is the contribution of the cluster to the meat
            // Below use  t(tutX) %*% tutX to sum contributions across clusters
 
            // Rcout << "At_WX_inv: " << At_WX_inv << std::endl;
-           // Rcout << "eiunweight: " << eiunweight.segment(start_pos, len).transpose() << std::endl;
-           tutX.row(j) = eiunweight.segment(start_pos, len).transpose() * At_WX_inv;
+           // Rcout << "cr2_eis: " << cr2_eis.segment(start_pos, len).transpose() << std::endl;
+           tutX.row(j) = cr2_eis.segment(start_pos, len).transpose() * At_WX_inv;
 
            if (i < n) {
              current_cluster = clusters(i);
@@ -396,7 +398,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
             // Rcout << start_pos << std::endl;
             // Rcout << len << std::endl << std::endl;
             // Rcout <<  X.transpose().block(0, start_pos, r, len) << std::endl << std::endl;
-            // Rcout << "XteetX: " << AtA(eiunweight.segment(start_pos, len).transpose() * X.block(start_pos, 0, len, r)) << std::endl;
+            // Rcout << "XteetX: " << AtA(ei.segment(start_pos, len).transpose() * X.block(start_pos, 0, len, r)) << std::endl;
             XteetX += AtA(ei.segment(start_pos, len).transpose() * X.block(start_pos, 0, len, r));
 
             if (i < n) {

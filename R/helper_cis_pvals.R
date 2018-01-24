@@ -19,14 +19,14 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
 
       return_frame$p <- with(
         return_frame,
-        2 * pt(abs(est / se), df = dof, lower.tail = FALSE)
+        2 * pt(abs(coefficients / se), df = dof, lower.tail = FALSE)
       )
 
       crit_se <- with(return_frame, qt(1 - alpha / 2, df = dof) * se)
     } else {
       return_frame$p <- with(
         return_frame,
-        2 * pnorm(abs(est / se), lower.tail = FALSE)
+        2 * pnorm(abs(coefficients / se), lower.tail = FALSE)
       )
 
       crit_se <- with(return_frame, qnorm(1 - alpha / 2) * se)
@@ -34,8 +34,8 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
       return_frame$df <- NA
     }
 
-    return_frame$ci_lower <- with(return_frame, est - crit_se)
-    return_frame$ci_upper <- with(return_frame, est + crit_se)
+    return_frame$ci_lower <- with(return_frame, coefficients - crit_se)
+    return_frame$ci_upper <- with(return_frame, coefficients + crit_se)
 
     return(as.list(return_frame[, !(names(return_frame) == "dof")]))
   } else {

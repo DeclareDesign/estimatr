@@ -113,12 +113,12 @@ lm_robust_fit <- function(y,
 
 
   return_frame <- data.frame(
-    est = as.vector(fit$beta_hat),
+    coefficients = setNames(as.vector(fit$beta_hat), variable_names),
     se = NA,
     df = NA
   )
 
-  est_exists <- !is.na(return_frame$est)
+  est_exists <- !is.na(return_frame$coefficients)
 
   N <- nrow(X)
   rank <- sum(est_exists)
@@ -156,11 +156,10 @@ lm_robust_fit <- function(y,
 
   return_list[["weighted"]] <- !is.null(weights)
   if (return_list[["weighted"]]) {
-    yreweighted <- y * weights * weight_mean
     return_list[["tot_var"]] <- ifelse(
       has_int,
       # everything correct except for this
-      sum((yreweighted - mean(yreweighted))^2),
+      sum(weights^2*(y/weights - weighted.mean(y/weights, weights^2))^2)*weight_mean,
       sum(y^2 * weight_mean)
     )
     return_list[["res_var"]] <- sum(fit$residuals ^ 2 * weight_mean) / (N - rank)

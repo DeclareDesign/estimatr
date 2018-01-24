@@ -63,8 +63,8 @@ confint.horvitz_thompson <-
 ## internal method that builds confidence intervals and labels the matrix to be returned
 get_ci_mat <- function(object, level) {
   if (!is.null(level)) {
-    ci_lower <- object$est - qt(1 - level / 2, df = object$df) * object$se
-    ci_upper <- object$est + qt(1 - level / 2, df = object$df) * object$se
+    ci_lower <- object$coefficients - qt(1 - level / 2, df = object$df) * object$se
+    ci_upper <- object$coefficients + qt(1 - level / 2, df = object$df) * object$se
     cis <- cbind(ci_lower, ci_upper)
   } else {
     cis <- cbind(object$ci_lower, object$ci_upper)

@@ -64,10 +64,10 @@
 #'
 #' An object of class \code{"difference_in_means"} is a list containing at
 #' least the following components:
-#'   \item{est}{the estimated coefficients}
+#'   \item{coefficients}{the estimated coefficients}
 #'   \item{se}{the estimated standard errors}
 #'   \item{df}{the estimated degrees of freedom}
-#'   \item{p}{the p-values from the t-test using \code{est}, \code{se}, and \code{df}}
+#'   \item{p}{the p-values from the t-test using \code{coefficients}, \code{se}, and \code{df}}
 #'   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{coefficient_name}{a character vector of coefficient names}
@@ -262,7 +262,7 @@ difference_in_means <-
       N_overall <- with(block_estimates, sum(N))
 
       # Blocked design, (Gerber Green 2012, p73, eq3.10)
-      diff <- with(block_estimates, sum(est * N / N_overall))
+      diff <- with(block_estimates, sum(coefficients * N / N_overall))
 
       df <- NA
       n_blocks <- nrow(block_estimates)
@@ -274,7 +274,7 @@ difference_in_means <-
           se <-
             with(
               block_estimates,
-              sqrt((1 / (n_blocks * (n_blocks - 1))) * sum((est - diff) ^ 2))
+              sqrt((1 / (n_blocks * (n_blocks - 1))) * sum((coefficients - diff) ^ 2))
             )
         } else {
           design <- "Matched-pair clustered"
@@ -284,7 +284,7 @@ difference_in_means <-
               block_estimates,
               sqrt(
                 (n_blocks / ((n_blocks - 1) * N_overall ^ 2)) *
-                  sum((N * est - (N_overall * diff) / n_blocks) ^ 2)
+                  sum((N * coefficients - (N_overall * diff) / n_blocks) ^ 2)
               )
             )
         }
@@ -309,7 +309,7 @@ difference_in_means <-
       }
 
       return_frame <- data.frame(
-        est = diff,
+        coefficients = diff,
         se = se,
         df = df,
         N = N_overall
@@ -406,7 +406,7 @@ difference_in_means_internal <-
         has_int = TRUE
       )
 
-      diff <- cr2_out$est[2]
+      diff <- cr2_out$coefficients[2]
       se <- cr2_out$se[2]
       df <- cr2_out$df[2]
     } else {
@@ -454,7 +454,7 @@ difference_in_means_internal <-
           has_int = TRUE
         )
 
-        diff <- w_hc2_out$est[2]
+        diff <- w_hc2_out$coefficients[2]
         se <- w_hc2_out$se[2]
         df <- w_hc2_out$df[2]
       }
@@ -462,7 +462,7 @@ difference_in_means_internal <-
 
     return_frame <-
       data.frame(
-        est = diff,
+        coefficients = diff,
         se = se,
         N = N,
         df = df

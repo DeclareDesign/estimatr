@@ -120,10 +120,10 @@
 #' An object of class \code{"horvitz_thompson"} is a list containing at
 #' least the following components:
 #'
-#'   \item{est}{the estimated coefficients}
+#'   \item{coefficients}{the estimated coefficients}
 #'   \item{se}{the estimated standard errors}
 #'   \item{df}{the estimated degrees of freedom}
-#'   \item{p}{the p-values from the t-test using \code{est}, \code{se}, and \code{df}}
+#'   \item{p}{the p-values from the t-test using \code{coefficients}, \code{se}, and \code{df}}
 #'   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{coefficient_name}{a character vector of coefficient names}
@@ -561,12 +561,12 @@ horvitz_thompson <-
 
       n_blocks <- nrow(block_estimates)
 
-      diff <- with(block_estimates, sum(est * N / N_overall))
+      diff <- with(block_estimates, sum(coefficients * N / N_overall))
 
       se <- with(block_estimates, sqrt(sum(se ^ 2 * (N / N_overall) ^ 2)))
 
       return_frame <- data.frame(
-        est = diff,
+        coefficients = diff,
         se = se,
         N = N_overall
       )
@@ -765,7 +765,7 @@ horvitz_thompson_internal <-
 
     return_frame <-
       data.frame(
-        est = diff,
+        coefficients = diff,
         se = se,
         N = N
       )

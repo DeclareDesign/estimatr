@@ -84,7 +84,7 @@ test_that("Test LM Lin", {
   )
 
   expect_equivalent(
-    lm_lin_out$est,
+    lm_lin_out$coefficients,
     lm(Y ~ Z + Z * X1_bar + Z * X2_bar, data = dat)$coefficients
   )
 
@@ -291,7 +291,7 @@ test_that("Test LM Lin", {
 
   lm_lin(Y ~ treat, ~ treat2 + X1, data = dat) # somewhat odd behavior
   expect_equivalent(
-    is.na(lm_lin(Y ~ treat, ~ X1_2 + X1, data = dat)$est),
+    is.na(lm_lin(Y ~ treat, ~ X1_2 + X1, data = dat)$coefficients),
     c(FALSE, FALSE, FALSE, TRUE, FALSE, TRUE)
   )
 

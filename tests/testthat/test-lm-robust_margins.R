@@ -72,12 +72,22 @@ test_that("lm robust + weights can work with margins",{
 
 test_that("lm robust + cluster can work with margins",{
 
-  skip("Doesn't work yet")
-  # works with github version!
+  # works but throws a lot of warnings
   x <- lm(mpg ~ cyl * hp + wt, data = mtcars)
   x2 <- lm_robust(mpg ~ cyl * hp + wt, data = mtcars, clusters = am)
-  expect_identical(marginal_effects(x), marginal_effects(x2))
-  summary(margins(x2, vce = "delta"))
+
+  lmc <- round(summary(margins(x, vce = "delta"))[, mv], 8)
+
+  expect_warning(
+    lmr <- round(summary(margins(x2, vce = "delta"))[, mv], 8),
+    "cluster"
+  )
+
+  # With rounding
+  expect_equal(lmc[, 1], lmr[, 1])
+  expect_true(
+    !any(lmc[, 2] == lmr[, 2])
+  )
 
 })
 
@@ -98,6 +108,7 @@ test_that("lm lin can work with margins",{
     round(lml_sum[, 4], 5),
     round(lmo_sum[, 4], 5)
   )
+
 
 })
 

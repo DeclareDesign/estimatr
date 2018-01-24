@@ -162,7 +162,7 @@ test_that("lm cluster se", {
     # Stata is the same as CR0 but with finite sample
     expect_equivalent(
       lm_cr0$se ^ 2,
-      lm_stata$se ^ 2 * (N - length(lm_stata$est)) * (length(unique(dat$J)) - 1) / ((N - 1) * length(unique(dat$J)))
+      lm_stata$se ^ 2 * (N - length(lm_stata$coefficients)) * (length(unique(dat$J)) - 1) / ((N - 1) * length(unique(dat$J)))
     )
 
     expect_false(all(lm_cr0$se == lm_stata$se))
@@ -290,12 +290,12 @@ test_that("Clustered SEs work with clusters of size 1", {
     )
 
   expect_equivalent(
-    as.matrix(tidy(lm_cr2)[, c("est", "se", "df")]),
+    as.matrix(tidy(lm_cr2)[, c("coefficients", "se", "df")]),
     cbind(lmo$coefficients, bmo$se, bmo$dof)
   )
 
   expect_equivalent(
-    as.matrix(tidy(lm_stata)[, c("est", "se")]),
+    as.matrix(tidy(lm_stata)[, c("coefficients", "se")]),
     cbind(lmo$coefficients, bmo$se.Stata)
   )
 })
