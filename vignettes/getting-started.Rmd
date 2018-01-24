@@ -74,9 +74,9 @@ knitr::kable(head(dat))
 
 ## `lm_robust`
 
-The `estimatr` package provides a function to quickly fit linear models with the most common variance estimators and degrees of freedom corrections used in social science. You can easily return heteroskedastic standard errors, clustered standard errors, and classical standard errors.
+The `estimatr` package provides `lm_robust()` to quickly fit linear models with the most common variance estimators and degrees of freedom corrections used in social science. You can easily estimate heteroskedastic standard errors, clustered standard errors, and classical standard errors.
 
-Usage largely mimics `lm()`, although it defaults to using Eicker-Huber-White robust standard errors, specifically 'HC2' standard errors. More about the exact specifications used can be found in the [technical notes](#lm_robust-notes).
+Usage largely mimics `lm()`, although it defaults to using Eicker-Huber-White robust standard errors, specifically "HC2" standard errors. More about the exact specifications used can be found in the [technical notes](articles/technical-notes.html#lm_robust-notes) and more about the estimator can be found on its reference page: `lm_robust()`.
 
 ```{r, lm_robust, results="hide"}
 res <- lm_robust(y ~ z + x, data = dat)
@@ -136,9 +136,9 @@ knitr::kable(tidy(res_lin))
 
 ## `difference_in_means`
 
-While estimating differences in means may seem straightforward, we provide a function that appropriately adjusts estimates for experimental design, whether it be blocking, clustering, matched pairs or a more complicated design. Usage is similar to usage in regression functions and here are a few short examples; more can be seen on the function reference page [`difference_in_means`](#difference_in_means).
+While estimating differences in means may seem straightforward, we provide a function that appropriately adjusts estimates for experimental design, whether it be blocking, clustering, matched pairs or a more complicated design. Usage is similar to usage in regression functions and here are a few short examples; more can be seen on the function reference page: `difference_in_means()`.
 
-Technical details are available [here](#lm_robust-notes).
+Technical details are available [here](articles/technical-notes.html#lm_robust-notes).
 
 ```{r echo=TRUE, results="hide"}
 # Simple version
@@ -167,7 +167,7 @@ Users can see more examples
 
 ## `horvitz_thompson`
 
-Horvitz-Thompson estimators are useful when estimating treatment effects without bias when there is a clustered design with unequal size clusters or when the treatment assignment process is arbitrarily complex. Horvitz-Thompson estimators require information about the treatment (and control) probabilities for each unit, and the joint treatment and control probabilities of every pair of units. For designs that are not arbitrarily complex, passing your randomization scheme using `declare_ra()` from the [`randomizr`](randomizr.declaredesign.org) package is the easiest path forward. The technical details can be found [here](#horvitz_thompson-notes) and in the linked references.
+Horvitz-Thompson estimators are useful when estimating treatment effects without bias when there is a clustered design with unequal size clusters or when the treatment assignment process is arbitrarily complex. Horvitz-Thompson estimators require information about the treatment (and control) probabilities for each unit, and the joint treatment and control probabilities of every pair of units. For designs that are not arbitrarily complex, passing your randomization scheme using `declare_ra()` from the [`randomizr`](randomizr.declaredesign.org) package is the easiest path forward. The technical details can be found [here](articles/technical-notes.html#horvitz_thompson-notes) and in the linked references.
 
 ```{r, results="hide"}
 # Complete random assignment declaration

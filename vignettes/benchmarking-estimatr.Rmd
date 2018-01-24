@@ -1,12 +1,11 @@
 ---
-title: 'Benchmarking estimatr'
+title: "Benchmarking estimatr"
 author: "Luke Sonnet"
 output:
   html_document:
     df_print: paged
-link-citations: yes
 vignette: |
-  %\VignetteIndexEntry{Benchmarking estimatr} 
+  %\VignetteIndexEntry{Benchmarking estimatr}
   %\VignetteEngine{knitr::knitr}
   \usepackage[utf8]{inputenc}
 ---
@@ -35,7 +34,7 @@ margins in the smallest datasets with classical standard errors, where
 speed is hardly a factor. When it comes to the biggest gains, using
 `lm_robust()` to get HC2 or Stata-like cluster-robust standard errors
 will roughly halve your waiting time. If you want CR2 standard errors,
-\`lm\_robust() can reduce your run time by a factor of 10!
+`lm_robust()` can reduce your run time by a factor of 10!
 
 <table>
 <thead>
@@ -54,19 +53,19 @@ will roughly halve your waiting time. If you want CR2 standard errors,
 <td>500</td>
 <td>5</td>
 <td><code>estimatr::lm_robust()</code></td>
-<td>2.1</td>
-<td><strong>2.4</strong></td>
-<td><strong>2.2</strong></td>
-<td><strong>3.9</strong></td>
+<td>1.9</td>
+<td><strong>2.3</strong></td>
+<td><strong>2</strong></td>
+<td><strong>6.5</strong></td>
 </tr>
 <tr class="even">
 <td></td>
 <td></td>
 <td>base + sandwich/clubSandwich</td>
-<td><strong>1.8</strong></td>
-<td>5.1</td>
-<td>4.8</td>
-<td>44.4</td>
+<td><strong>1.7</strong></td>
+<td>5.2</td>
+<td>4.4</td>
+<td>66</td>
 </tr>
 <tr class="odd">
 <td></td>
@@ -81,19 +80,19 @@ will roughly halve your waiting time. If you want CR2 standard errors,
 <td>5000</td>
 <td>5</td>
 <td><code>estimatr::lm_robust()</code></td>
-<td><strong>5.2</strong></td>
-<td><strong>9</strong></td>
+<td><strong>4.6</strong></td>
 <td><strong>7.9</strong></td>
-<td><strong>150</strong></td>
+<td><strong>7.8</strong></td>
+<td><strong>173</strong></td>
 </tr>
 <tr class="odd">
 <td></td>
 <td></td>
 <td>base + sandwich/clubSandwich</td>
-<td><strong>5.2</strong></td>
-<td>25</td>
-<td>22.8</td>
-<td>1882</td>
+<td><strong>4.6</strong></td>
+<td>22.4</td>
+<td>21.7</td>
+<td>2268</td>
 </tr>
 <tr class="even">
 <td></td>
@@ -108,19 +107,19 @@ will roughly halve your waiting time. If you want CR2 standard errors,
 <td>500</td>
 <td>50</td>
 <td><code>estimatr::lm_robust()</code></td>
-<td><strong>6.2</strong></td>
-<td><strong>10</strong></td>
-<td><strong>8</strong></td>
-<td><strong>56</strong></td>
+<td><strong>5.8</strong></td>
+<td><strong>8.2</strong></td>
+<td><strong>8.2</strong></td>
+<td><strong>612</strong></td>
 </tr>
 <tr class="even">
 <td></td>
 <td></td>
 <td>base + sandwich/clubSandwich</td>
-<td>7.5</td>
-<td>22</td>
-<td>29</td>
-<td>162</td>
+<td>6.7</td>
+<td>20.2</td>
+<td>29.2</td>
+<td>160</td>
 </tr>
 <tr class="odd">
 <td></td>
@@ -135,19 +134,19 @@ will roughly halve your waiting time. If you want CR2 standard errors,
 <td>5000</td>
 <td>50</td>
 <td><code>estimatr::lm_robust()</code></td>
-<td><strong>30</strong></td>
-<td><strong>44</strong></td>
-<td><strong>44</strong></td>
-<td><strong>2755</strong></td>
+<td><strong>26</strong></td>
+<td><strong>42</strong></td>
+<td><strong>55</strong></td>
+<td><strong>2504</strong></td>
 </tr>
 <tr class="odd">
 <td></td>
 <td></td>
 <td>base + sandwich/clubSandwich</td>
-<td>38</td>
-<td>181</td>
-<td>216</td>
-<td>11893</td>
+<td>32</td>
+<td>114</td>
+<td>253</td>
+<td>10166</td>
 </tr>
 </tbody>
 </table>
@@ -157,7 +156,7 @@ the CR2 case, which was taken on a sample of 50 runs, using the
 `microbenchmark` package. This benchmarking was done on a 2017 MacBook
 Air, with a 1.8 GHz Intel Core i5 CPU and 8 GB of memory.
 
-To see the exact specifications specifications, see below.
+To see the exact comparisons, see below.
 
     library(estimatr)
     library(microbenchmark)
@@ -182,14 +181,7 @@ function (from which we borrow much of our algorithm), and
 RcppArmadillo's `fastLm()` function.
 
     library(RcppEigen)
-    #> Warning: package 'RcppEigen' was built under R version 3.4.3
     library(RcppArmadillo)
-    #> Warning: package 'RcppArmadillo' was built under R version 3.4.3
-    #> 
-    #> Attaching package: 'RcppArmadillo'
-    #> The following objects are masked from 'package:RcppEigen':
-    #> 
-    #>     fastLm, fastLmPure
 
     test_base <- lapply(data_list, function(dat) {
       mbo <- summary(microbenchmark(
@@ -223,31 +215,221 @@ of each estimator for each of the different data sets.
 <tbody>
 <tr class="odd">
 <td align="left">lm_robust</td>
-<td align="right">1.9</td>
-<td align="right">5.5</td>
-<td align="right">6.6</td>
-<td align="right">28</td>
+<td align="right">2</td>
+<td align="right">5</td>
+<td align="right">6</td>
+<td align="right">26</td>
 </tr>
 <tr class="even">
 <td align="left">base</td>
-<td align="right">1.7</td>
-<td align="right">5.1</td>
-<td align="right">7.9</td>
-<td align="right">34</td>
+<td align="right">2</td>
+<td align="right">5</td>
+<td align="right">7</td>
+<td align="right">32</td>
 </tr>
 <tr class="odd">
 <td align="left">RcppEigen</td>
-<td align="right">1.4</td>
-<td align="right">5.8</td>
-<td align="right">6.2</td>
-<td align="right">35</td>
+<td align="right">1</td>
+<td align="right">5</td>
+<td align="right">6</td>
+<td align="right">32</td>
 </tr>
 <tr class="even">
 <td align="left">RcppArmadillo</td>
-<td align="right">1.8</td>
-<td align="right">6.9</td>
-<td align="right">11.3</td>
-<td align="right">65</td>
+<td align="right">2</td>
+<td align="right">6</td>
+<td align="right">10</td>
+<td align="right">54</td>
 </tr>
 </tbody>
 </table>
+
+However, the real speed gains come with robust standard errors. Let's
+compare `lm_robust` to getting "HC2" standard errors and doing inference
+using them from the `coeftest` and `sandwich` packages.
+
+    library(sandwich)
+    library(lmtest)
+
+    test_rob <- lapply(data_list, function(dat) {
+      mbo <- summary(microbenchmark(
+        'lm_robust' = lm_robust(y ~ ., data = dat, se_type = "HC2"),
+        'lm + coeftest + sandwich' = {
+          lmo <- lm(y ~ ., data = dat)
+          coeftest(lmo, vcov = vcovHC(lmo, type = "HC2"))
+        },
+        times = 200L
+      ),
+      unit = "ms")
+      return(mbo[, c("expr", "median")])
+    })
+
+<table>
+<thead>
+<tr class="header">
+<th align="left">Estimator</th>
+<th align="right">N=500, P=5</th>
+<th align="right">N=500, P=50</th>
+<th align="right">N=5000, P=5</th>
+<th align="right">N=500, P=50</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">lm_robust</td>
+<td align="right">2</td>
+<td align="right">8</td>
+<td align="right">8</td>
+<td align="right">42</td>
+</tr>
+<tr class="even">
+<td align="left">lm + coeftest + sandwich</td>
+<td align="right">5</td>
+<td align="right">22</td>
+<td align="right">20</td>
+<td align="right">115</td>
+</tr>
+</tbody>
+</table>
+
+What about with Stata's clustered standard errors using `tapply` and
+`sandwich`?
+
+    # Commonly used function attributed mostly to M. Arai replicating Stata 
+    # clustered SEs in R using sandwich and lmtest packages
+    cluster_robust_se <- function(model, cluster){
+      M <- length(unique(cluster))
+      N <- length(cluster)
+      K <- model$rank
+      dfc <- (M/(M - 1)) * ((N - 1)/(N - K))
+      uj <- apply(estfun(model), 2, function(x) tapply(x, cluster, sum));
+      rcse.cov <- dfc * sandwich(model, meat = crossprod(uj)/N)
+      rcse.se <- coeftest(model, rcse.cov)
+      return(list(rcse.cov, rcse.se))
+    }
+
+    test_cl <- lapply(data_list, function(dat) {
+      cluster <- sample(nrow(dat)/5, size = nrow(dat), replace = TRUE)
+      mbo <- summary(microbenchmark(
+        'lm_robust' = lm_robust(
+          y ~ ., 
+          data = dat, 
+          clusters = cluster, 
+          se_type = "stata"
+        ),
+        'lm + coeftest + sandwich' = {
+          lmo <- lm(y ~ ., data = dat)
+          cluster_robust_se(lmo, cluster)
+        },
+        times = 200L
+      ),
+      unit = "ms")
+      return(mbo[, c("expr", "median")])
+    })
+
+<table>
+<thead>
+<tr class="header">
+<th align="left">Estimator</th>
+<th align="right">N=500, P=5</th>
+<th align="right">N=500, P=50</th>
+<th align="right">N=5000, P=5</th>
+<th align="right">N=500, P=50</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">lm_robust</td>
+<td align="right">2</td>
+<td align="right">8</td>
+<td align="right">8</td>
+<td align="right">55</td>
+</tr>
+<tr class="even">
+<td align="left">lm + coeftest + sandwich</td>
+<td align="right">4</td>
+<td align="right">22</td>
+<td align="right">29</td>
+<td align="right">254</td>
+</tr>
+</tbody>
+</table>
+
+The original authors who came up with a generalized version of the CR2
+errors and accompanying Satterthwaite-like corrected degrees of freedom
+have their own package,
+[`clubSandwich`](https://github.com/jepusto/clubSandwich), that provides
+estimators for many methods. We show here how much faster our
+implementation is for simple linear regression.
+
+    library(clubSandwich)
+
+    test_cr2 <- lapply(data_list, function(dat) {
+      cluster <- sample(nrow(dat)/5, size = nrow(dat), replace = TRUE)
+      mbo <- summary(microbenchmark(
+        'lm_robust' = lm_robust(
+          y ~ ., 
+          data = dat,
+          clusters = cluster, 
+          se_type = "CR2"
+        ),
+        'lm + clubSandwich' = {
+          lmo <- lm(y ~ ., data = dat)
+          coef_test(lmo, vcov = vcovCR(lmo, cluster = cluster, type = "CR2"))
+        },
+        times = 50L
+      ),
+      unit = "ms")
+      return(mbo[, c("expr", "median")])
+    })
+
+    knitr::kable(create_tab(test_cr2), col.names = col_names)
+
+<table>
+<thead>
+<tr class="header">
+<th align="left">Estimator</th>
+<th align="right">N=500, P=5</th>
+<th align="right">N=500, P=50</th>
+<th align="right">N=5000, P=5</th>
+<th align="right">N=500, P=50</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">lm_robust</td>
+<td align="right">6</td>
+<td align="right">173</td>
+<td align="right">62</td>
+<td align="right">2504</td>
+</tr>
+<tr class="even">
+<td align="left">lm + clubSandwich</td>
+<td align="right">66</td>
+<td align="right">2268</td>
+<td align="right">160</td>
+<td align="right">10166</td>
+</tr>
+</tbody>
+</table>
+
+    sessionInfo()
+    #> R version 3.4.1 (2017-06-30)
+    #> Platform: x86_64-apple-darwin15.6.0 (64-bit)
+    #> Running under: macOS High Sierra 10.13.2
+    #> 
+    #> Matrix products: default
+    #> BLAS: /Library/Frameworks/R.framework/Versions/3.4/Resources/lib/libRblas.0.dylib
+    #> LAPACK: /Library/Frameworks/R.framework/Versions/3.4/Resources/lib/libRlapack.dylib
+    #> 
+    #> locale:
+    #> [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+    #> 
+    #> attached base packages:
+    #> [1] stats     graphics  grDevices utils     datasets  methods   base     
+    #> 
+    #> loaded via a namespace (and not attached):
+    #>  [1] compiler_3.4.1  backports_1.1.2 magrittr_1.5    rprojroot_1.3-2
+    #>  [5] tools_3.4.1     htmltools_0.3.6 yaml_2.1.16     Rcpp_0.12.15   
+    #>  [9] stringi_1.1.6   rmarkdown_1.8   highr_0.6       knitr_1.18     
+    #> [13] stringr_1.2.0   digest_0.6.14   evaluate_0.10.1

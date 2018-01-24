@@ -69,7 +69,7 @@ Weighted:
 \widehat{\beta} =\XtWXinv\X^{\top}\W\y
 \]
 
-The transformed data are then used in the analysis below, where $\XtXinv$ is now $\XtWXinv$ and $\X$ is now $\X \sqrt[W]$, where $\sqrt[.]$ is an operator that takes the square root of the diagonal elements of the matrix it operates upon.
+The transformed data are then used in the analysis below, where $\XtXinv$ is now $\XtWXinv$ and $\X$ is now $\X \mathrm{sqrt}[W]$, where $\mathrm{sqrt}[.]$ is an operator that applies a square root to the coefficients of some matrix.
 
 We should note that this transformation yields the same standard errors as specifying weights using `aweight` in Stata for the "classical", "HC0", and "HC1" ("stata") variance estimators. Furthermore, in the clustered case, our weighted estimator for the "stata" cluster-robust variance also matches Stata. Thus Stata's main robust standard error estimators, "HC1" and their clustered estimator, match our package when weights are applied. Nonetheless, Stata uses a slightly different Hat matrix and thus the "HC2" and "HC3" estimates diverge between our package and Stata when weights are applied.
 
@@ -309,7 +309,7 @@ $$
 
 ### Confidence intervals and hypothesis testing
 
-Theory on hypothesis testing with the Horvitz-Thompson estimator is yet to be developed. We rely on a normal approximation of the samplig distribution and construct confidence intervals in the following way:
+Theory on hypothesis testing with the Horvitz-Thompson estimator is yet to be developed. We rely on a normal approximation and construct confidence intervals in the following way:
 \[
 \mathrm{CI}^{1-\alpha} = \left(\widehat{\tau} + z_{\alpha/2} \sqrt{\widehat{\V}[\widehat{\tau}]}, \widehat{\tau} + z_{1 - \alpha/2} \sqrt{\widehat{\V}[\widehat{\tau}]}\right)
 \]
