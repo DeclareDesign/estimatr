@@ -132,5 +132,5 @@ lm_lin(y ~ z_multi, covariates = ~ x, data = dat)
 
 }
 \references{
-
+Lin, Winston. 2013. “Agnostic Notes on Regression Adjustments to Experimental Data: Reexamining Freedman’s Critique.” The Annals of Applied Statistics 7 (1). Institute of Mathematical Statistics: 295–318. \url{https://doi.org/10.1214/12-AOAS583}.
 }

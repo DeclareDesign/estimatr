@@ -76,7 +76,7 @@ and more
 }
 \details{
 This function implements a difference-in-means estimator, with
-support for blocked, clustered, matched-pairs, blocked-clustered, and
+support for blocked, clustered, matched-pairs, block-clustered, and
 matched-pair clustered designs. One specifies their design by passing
 the blocks and clusters in their data and this function chooses which
 estimator is most appropriate.
@@ -159,7 +159,7 @@ difference_in_means(
 
 # Specifying weights will result in estimation via `lm_robust`
 dat$w <- runif(nrow(dat))
-difference_in_means(Y ~ Z, weights = w, data = dat)
-lm_robust(Y ~ Z, weights = w, data = dat)
+difference_in_means(Y ~ Z_simp, weights = w, data = dat)
+lm_robust(Y ~ Z_simp, weights = w, data = dat)
 
 }

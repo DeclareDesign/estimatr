@@ -140,8 +140,8 @@
 #'
 #' # Specifying weights will result in estimation via `lm_robust`
 #' dat$w <- runif(nrow(dat))
-#' difference_in_means(Y ~ Z, weights = w, data = dat)
-#' lm_robust(Y ~ Z, weights = w, data = dat)
+#' difference_in_means(Y ~ Z_simp, weights = w, data = dat)
+#' lm_robust(Y ~ Z_simp, weights = w, data = dat)
 #'
 #' @export
 difference_in_means <-

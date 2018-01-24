@@ -40,6 +40,8 @@ horvitz_thompson(formula, data, condition_prs, blocks, clusters,
 \item{condition1}{values of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.}
 
 \item{condition2}{values of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.}
+
+\item{return_condition_pr_mat}{a boolean for whether to return the condition probability matrix}
 }
 \description{
 Horvitz-Thompson estimator of treatment effects
@@ -58,6 +60,8 @@ set.seed(42)
 n <- 10
 dat <- data.frame(y = rnorm(n))
 
+library(randomizr)
+
 #----------
 # Simple random assignment
 #----------
@@ -70,7 +74,7 @@ horvitz_thompson(y ~ z, data = dat, condition_prs = p)
 horvitz_thompson(y ~ z, data = dat, condition_prs = p, se_type = "constant")
 
 # Also can use randomizr to pass a declaration
-srs_declaration <- randomizr::declare_ra(N = nrow(dat), prob = 0.5, simple = TRUE)
+srs_declaration <- declare_ra(N = nrow(dat), prob = 0.5, simple = TRUE)
 horvitz_thompson(y ~ z, data = dat, declaration = srs_declaration)
 
 #----------
@@ -79,7 +83,7 @@ horvitz_thompson(y ~ z, data = dat, declaration = srs_declaration)
 
 dat$z <- sample(rep(0:1, each = n/2))
 # Can use a declaration
-crs_declaration <- randomizr::declare_ra(N = nrow(dat), prob = 0.5, simple = FALSE)
+crs_declaration <- declare_ra(N = nrow(dat), prob = 0.5, simple = FALSE)
 horvitz_thompson(y ~ z, data = dat, declaration = crs_declaration)
 # Can precompute condition_pr_mat and pass it
 # (faster for multiple runs with same condition probability matrix)
@@ -104,8 +108,8 @@ horvitz_thompson(y ~ z, data = dat, condition_pr_mat = arb_pr_mat)
 # Clustered treatment, complete random assigment
 # Simulating data
 dat$cl <- rep(1:4, times = c(2, 2, 3, 3))
-clust_crs_decl <- randomizr::declare_ra(N = nrow(dat), clusters = dat$cl, prob = 0.5)
-dat$z <- randomizr::conduct_ra(clust_crs_decl)
+clust_crs_decl <- declare_ra(N = nrow(dat), clusters = dat$cl, prob = 0.5)
+dat$z <- conduct_ra(clust_crs_decl)
 # Regular SE using Young's inequality
 horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl)
 # SE using collapsed cluster totals and Young's inequality
