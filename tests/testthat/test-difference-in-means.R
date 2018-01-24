@@ -105,17 +105,10 @@ test_that("DIM same as t.test", {
 
 test_that("DIM Weighted", {
 
-  dat <- data.frame(Y = rnorm(100),
-                   Z = rbinom(100, 1, .5),
-                   weights = runif(100),
-                   weights2 = 1)
-
-  difference_in_means(Y ~ Z, alpha = .10, weights = weights, data = dat)
-
-  expect_equal(
-    difference_in_means(Y ~ Z, alpha = .10, weights = weights2, data = dat),
-    difference_in_means(Y ~ Z, alpha = .10, data = dat)
-  )
+  n <- 100
+  dat <- data.frame(y = rnorm(n), z = 0:1, w = 1)
+  difference_in_means(y ~ z, weights = w, data = dat)
+  difference_in_means(y ~ z, data = dat)
 
 })
 
@@ -479,7 +472,8 @@ test_that("DIM unbiased", {
 
 test_that("DIM matches lm_robust under certain conditions", {
 
-  dat <- data.frame(Y = rnorm(400))
+  n <- 400
+  dat <- data.frame(Y = rnorm(n))
   ## DIM and lm_robust agree without clustering except for DoF because DIM uses Satterthwaite approx
   dat$z <- c(0, 1)
   lm_o <- lm_robust(Y ~ z, data = dat)
@@ -526,4 +520,39 @@ test_that("DIM matches lm_robust under certain conditions", {
     tidy(dim_blcl_o)
   )
 
+  # With weights now, identical to lm_robust, HC2 by force! except for matched pairs which fails
+  dat$w <- runif(nrow(dat))
+
+  # simple W
+  expect_equivalent(
+    tidy(lm_robust(Y ~ z, data = dat, weights = w))[2, ],
+    tidy(difference_in_means(Y ~ z, data = dat, weights = w))
+  )
+
+  # blocked W
+  expect_equivalent(
+    tidy(lm_lin(Y ~ z_blocked, ~ factor(bl), weights = w, data = dat))[2, ],
+    tidy(difference_in_means(Y ~ z_blocked, data = dat, blocks = bl, weights = w))
+  )
+
+  # blocked-clustered W (goes to CR2)
+  # DF different in clustered case
+  expect_equivalent(
+    tidy(lm_lin(Y ~ z_blocked, ~ factor(bl), clusters = cl, weights = w, data = dat))[2, 1:3],
+    tidy(difference_in_means(Y ~ z_blocked, data = dat, clusters = cl, blocks = bl, weights = w))[, 1:3]
+  )
+
+  # Clustered W
+  expect_equivalent(
+    tidy(lm_robust(Y ~ z_clustered, clusters = cl_diff_size, weights = w, data = dat))[2, 1:3],
+    tidy(difference_in_means(Y ~ z_clustered, data = dat, clusters = cl_diff_size, weights = w))[, 1:3]
+  )
+
+  # errors with matched pairs
+  dat$mps <- rep(1:(n/2), each = 2)
+  dat$z_mps <- rep(0:1, times = (n/2))
+  expect_error(
+    difference_in_means(Y ~ z_mps, data = dat, weights = w, blocks = mps),
+    "Cannot use weights with matched pairs design at the moment"
+  )
 })

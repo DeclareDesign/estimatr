@@ -114,6 +114,15 @@ difference_in_means <-
     data$weights <- model_data$weights
     data$block <- model_data$block
 
+    if (!is.null(data$weights) && length(unique(data$weights)) == 1
+        && is.null(data$cluster) && is.null(data$block)) {
+      message(
+        "Constant `weights` passed to `difference_in_means` will ",
+        "unnecessarily trigger `lm_robust()` and the Welch-Satterthwaite ",
+        "approximation will not be used for the degrees of freedom."
+      )
+    }
+
     rm(model_data)
 
     # parse condition names
@@ -369,43 +378,33 @@ difference_in_means_internal <-
 
       } else {
 
-        # TODO: Figure out if any of this is right (it isn't!)
-
-        w2 <- data$weights[data$t == condition2]
-        w1 <- data$weights[data$t == condition1]
-
-        mean2 <- weighted.mean(Y2, w2)
-        mean1 <- weighted.mean(Y1, w1)
-        diff <-  mean2 - mean1
-
-        var2 <- weighted_var_internal(w2, Y2, mean2)
-        var1 <- weighted_var_internal(w1, Y1, mean1)
-
-        se <- sqrt(var2 + var1)
-
-        # TODO: check welch approximation with weights
-        df <- se^4 /
-          (
-            (var2^2 / (N2-1)) +
-              (var1^2 / (N1-1))
+        if (pair_matched) {
+          stop(
+            "Cannot use weights with matched pairs design at the moment"
           )
+        }
 
         X <- cbind(1, t = as.numeric(data$t == condition2))
 
         # print("Using lm_robust")
         # TODO currently lm_robust_fit does too much, need to refactor it
         # if it will be used here in the long run
-        # w_out <- lm_robust_fit(
-        #   y = data$y,
-        #   X = cbind(1, t = as.numeric(data$t == condition2)),
-        #   cluster = data$cluster,
-        #   se_type = "CR2",
-        #   weights = data$weights,
-        #   ci = TRUE,
-        #   try_cholesky = TRUE,
-        #   alpha = alpha,
-        #   return_vcov = FALSE
-        # )
+        w_hc2_out <- lm_robust_fit(
+          y = data$y,
+          X = cbind(1, t = as.numeric(data$t == condition2)),
+          se_type = "HC2",
+          weights = data$weights,
+          cluster = NULL,
+          ci = TRUE,
+          try_cholesky = TRUE,
+          alpha = alpha,
+          return_vcov = FALSE
+        )
+
+        diff <- w_hc2_out$est[2]
+        se <- w_hc2_out$se[2]
+        df <- w_hc2_out$df[2]
+
       }
 
     }

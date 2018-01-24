@@ -60,11 +60,19 @@ The default estimators have been selected for efficiency in large samples and lo
 
 Our algorithm solves the least squares problem using a rank-revealing QR factorization with column pivoting that eliminates the need to invert $\XtXinv$ explicitly and behaves much like the default `lm` function in R. However, when $\X$ is rank deficient, there are certain conditions under which the Eigen QR decomposition drops different coefficients from the output than the default `lm` function. In general, users should avoid specifing models with rank-deficiencies. In fact, if users are certain their data are not rank deficient, they can improve the speed of `lm_robust` by setting `try_cholesky = TRUE`. This replaces the QR factorization with a Cholesky factorization that is only guaranteed to work $\X$ is of full rank.
 
-```{r dropthis, include=FALSE, eval=FALSE}
+#### Weights
+
+If weights are included we transform the data and then proceed as normal, following advice from @romanowolf2017 that this weighted estimator has attractive properties. We do so by first scaling all of the weights so that they sum to one. Then we multiply each row of the design matrix $\X$ by the square root each unit's weight, $\mathbf{x}_i \sqrt{w_i}$, and then do the same to the outcome, $\mathbf{y}_i \sqrt{w_i}$. This results in our coefficients being estimated as follows, where $\W$ is a diagonal matrix with the scaled weights on the diagonal.
+
 Weighted:
 \[
 \widehat{\beta} =\XtWXinv\X^{\top}\W\y
 \]
+
+The transformed data are then used in the analysis below, where $\XtXinv$ is now $\XtWXinv$ and $\X$ is now $\X \sqrt[W]$, where $\sqrt[.]$ is an operator that takes the square root of the diagonal elements of the matrix it operates upon.
+
+We should note that this transformation yields the same standard errors as specifying weights using `aweight` in Stata for the "classical", "HC0", and "HC1" ("stata") variance estimators. Furthermore, in the clustered case, our weighted estimator for the "stata" cluster-robust variance also matches Stata. Thus Stata's main robust standard error estimators, "HC1" and their clustered estimator, match our package when weights are applied. Nonetheless, Stata uses a slightly different Hat matrix and thus the "HC2" and "HC3" estimates diverge between our package and Stata when weights are applied.
+
 ```
 
 ### Variance
@@ -182,6 +190,10 @@ where $z_i$ is the treatment variable, $y_i$ is the outcome, and $N$ is the tota
 \widehat{\tau} = \sum^J_{j=1} \frac{N_j}{N} \widehat{\tau_j}
 \]
 where $J$ is the number of blocks, $N_j$ is the size of those blocks, and $\widehat{\tau_j}$ is the estimated difference-in-means in block $j$.
+
+#### Weighting
+
+If the user specifies weights, inference is done entirely by `lm_robust` for now. This may change in the future, anf got now we still rely on the degrees of freedom from the below table. Lastly, specifying weights with a matched-pairs estimator in `difference_in_means` is not supported at the moment.
 
 ### Variance and Degrees of Freedom
 
