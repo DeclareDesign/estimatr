@@ -2,54 +2,138 @@
 % Please edit documentation in R/estimatr_horvitz_thompson.R
 \name{horvitz_thompson}
 \alias{horvitz_thompson}
-\title{Horvitz-Thompson estimator of treatment effects}
+\title{Horvitz-Thompson estimator for unbiased treatment effects}
 \usage{
-horvitz_thompson(formula, data, condition_prs, blocks, clusters,
-  simple = NULL, condition_pr_mat = NULL, declaration = NULL, subset,
-  se_type = c("youngs", "constant"), collapsed = FALSE, ci = TRUE,
-  alpha = 0.05, condition1 = NULL, condition2 = NULL,
-  return_condition_pr_mat = FALSE)
+horvitz_thompson(formula, data, blocks, clusters, simple = NULL,
+  condition_prs, condition_pr_mat = NULL, declaration = NULL, subset,
+  condition1 = NULL, condition2 = NULL, se_type = c("youngs", "constant"),
+  ci = TRUE, alpha = 0.05, return_condition_pr_mat = FALSE)
 }
 \arguments{
-\item{formula}{An object of class "formula", such as Y ~ Z}
+\item{formula}{an object of class formula, as in \code{\link{lm}}, such as
+\code{Y ~ Z} with only one variable on the right-hand side, the treatment.}
 
 \item{data}{A data.frame.}
 
-\item{condition_prs}{An optional bare (unquoted) name of the variable with the condition 2 (treatment) probabilities.}
+\item{blocks}{An optional bare (unquoted) name of the block variable. Use
+for blocked designs only. See details.}
 
-\item{blocks}{An optional bare (unquoted) name of the block variable. Use for blocked designs only.}
+\item{clusters}{An optional bare (unquoted) name of the variable that
+corresponds to the clusters in the data; used for cluster randomized
+designs. For blocked designs, clusters must be within blocks.}
 
-\item{clusters}{An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.}
+\item{simple}{An optional boolean for whether the randomization is simple
+(TRUE) or complete (FALSE). This is ignored if \code{blocks} are specified,
+as all blocked designs use complete randomization, or either
+\code{declaration} or \code{condition_pr_mat} are passed. Otherwise, it
+defaults to \code{TRUE}.}
 
-\item{simple}{An optional boolean for whether the randomization is simple (TRUE) or complete (FALSE). This is ignored if \code{blocks} are specified, as all blocked designs use complete randomization, or either \code{declaration} or \code{condition_pr_mat} are passed. Otherwise, it defaults to \code{TRUE}.}
+\item{condition_prs}{An optional bare (unquoted) name of the variable with
+the condition 2 (treatment) probabilities. See details.}
 
-\item{condition_pr_mat}{An optional 2n * 2n matrix of marginal and joint probabilities of all units in condition1 and condition2. Takes precedent over any other means of specifying the design as it can encapsulate everything relevant about the design. See details.}
+\item{condition_pr_mat}{An optional 2n * 2n matrix of marginal and joint
+probabilities of all units in condition1 and condition2. See details.}
 
-\item{declaration}{An object of class \code{"ra_declaration"}, from the \code{\link{randomizr}} package that is an alternative way of specifying the design. Cannot be used along with any of \code{condition_prs}, \code{blocks}, \code{clusters}, or \code{condition_pr_mat}. See details.}
+\item{declaration}{An object of class \code{"ra_declaration"}, from
+the \code{\link[randomizr]{declare_ra}} function in the \code{randomizr}
+package. This is the third way that one can specify a design for this
+estimator. Cannot be used along with any of \code{condition_prs},
+\code{blocks}, \code{clusters}, or \code{condition_pr_mat}. See details.}
 
-\item{subset}{An optional bare (unquoted) expression specifying a subset of observations to be used.}
+\item{subset}{An optional bare (unquoted) expression specifying a subset of
+observations to be used.}
 
-\item{se_type}{can be one of \code{c("youngs", "constant")} and correspond's to estimating the standard errors using Young's inequality (default, conservative), or the constant effects assumption.}
+\item{condition1}{value in the treatment vector of the condition
+to be the control. Effects are
+estimated with \code{condition1} as the control and \code{condition2} as the
+treatment. If unspecified, \code{condition1} is the "first" condition and
+\code{condition2} is the "second" according to levels if the treatment is a
+factor or according to a sortif it is a numeric or character variable (i.e
+if unspecified and the treatment is 0s and 1s, \code{condition1} will by
+default be 0 and \code{condition2} will be 1). See the examples for more.}
 
-\item{collapsed}{A boolean used to collapse clusters to their cluster totals for variance estimation, FALSE by default.}
+\item{condition2}{value in the treatment vector of the condition to be the
+treatment. See \code{condition1}.}
 
-\item{ci}{A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.}
+\item{se_type}{can be one of \code{c("youngs", "constant")} and corresponds
+the estimator of the standard errors. Default estimator uses Young's
+inequality (and is conservative) while the other uses a constant treatment
+effects assumption and only works for simple randomized designs at the
+moment.}
+
+\item{ci}{A boolean for whether to compute and return pvalues and confidence
+intervals, TRUE by default.}
 
 \item{alpha}{The significance level, 0.05 by default.}
 
-\item{condition1}{values of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.}
-
-\item{condition2}{values of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.}
-
-\item{return_condition_pr_mat}{a boolean for whether to return the condition probability matrix}
+\item{return_condition_pr_mat}{a boolean for whether to return the condition
+probability matrix. Returns NULL if the design is simple randomization}
 }
 \description{
-Horvitz-Thompson estimator of treatment effects
+These Horvitz-Thompson estimators are unbiased for
+any design as long as the randomization scheme is known.
 }
 \details{
-This function implements the Horvitz-Thompson estimator for treatment effects. This estimator is useful for estimating unbiased treatment effects given any randomization scheme as long as the randomization scheme is well known. See the \href{http://estimatr.declaredesign.org/articles/technical-notes.html}{technical notes} for more information and references.
+This function implements the Horvitz-Thompson estimator for
+treatment effects. This estimator is useful for estimating unbiased
+treatment effects given any randomization scheme as long as the
+randomization scheme is known.
 
-Horvitz-Thompson relies on knowledge of the probability each unit was in condition2, in condition1, and the joint probability with every other unit for all combinations of treatment conditions. This design information can be passed to the \code{horvitz_thompson} function in three ways.
+In short, the Horvitz-Thompson estimator essentially reweights each unit
+by the probability of it being in its observed condition. Pivotal to the
+estimation of treatment effects using this estimator are the marginal
+condition probabilities (i.e. the probability that any one unit is in
+a particular treatment condition). Pivotal to the variance of this estimate,
+whenever the design is more complicated than simple randomization, as in
+the case of blocked, clustered, or complete randomization, are the
+joint condition probabilities (i.e. the probabilities that any two units
+have a particular set of treatment conditions, either the same or
+different). The estimator we provide here considers the case with two
+treatment conditions.
+
+Users interested in more details can see the
+\href{http://estimatr.declaredesign.org/articles/technical-notes.html}{technical notes}
+for more information and references, or see the references below.
+
+There are three distinct ways that users can specify the design to the
+function. The preferred way is to use
+the \code{\link[randomizr]{declare_ra}} function in the \code{randomizr}
+package. This function takes several arguments, including blocks, clusters,
+treatment probabilities, whether randomization is simple or not, and more.
+Passing the outcome of that function, an object of class
+\code{"ra_declaration"} to the \code{declaration} argument in this function,
+will lead to a call of the \code{\link{declaration_to_condition_pr_mat}}
+function which generates the condition probability matrix needed to
+estimate treatment effects and standard errors. We provide many examples
+below of how this could be done.
+
+The second way is to pass the names of vectors in your \code{data} to
+\code{condition_prs}, \code{blocks}, and \code{clusters}. You can further
+specify whether the randomization was simple or complete using the \code{simple}
+argument. Note that if \code{blocks} are specified the randomization is
+always treated as complete. From these vectors, the function learns how to
+build the condition probability matrix that is used in estimation.
+
+In the case
+where \code{condition_prs} is specified, this function assumes those
+probabilities are the marginal probability that each unit is in condition2
+and then uses the other arguments (\code{blocks}, \code{clusters},
+\code{simple}) to learn the rest of the design. If users do not pass
+\code{condition_prs}, this function learns the probability of being in
+condition2 from the data. That is, none of these arguments are specified,
+we assume that there was a simple randomization where the probability
+of each unit being in condition2 was the average of all units in condition2.
+Similarly, we learn the block-level probability of treatment within
+\code{blocks} by looking at the mean number of units in condition2 if
+\code{condition_prs} is not specified.
+
+The third way is to pass a \code{condition_pr_mat} directly. One can
+see more about this object in the documentation for
+\code{\link{declaration_to_condition_pr_mat}} and
+\code{\link{permutations_to_condition_pr_mat}}. Essentially, this 2n * 2n
+matrix allows users to specify marginal and joint marginal probabilities
+of units being in conditions 1 and 2 of arbitrary complexity. Users should
+only use this option if they are certain they know what they are doing.
 }
 \examples{
 
@@ -78,7 +162,7 @@ srs_declaration <- declare_ra(N = nrow(dat), prob = 0.5, simple = TRUE)
 horvitz_thompson(y ~ z, data = dat, declaration = srs_declaration)
 
 #----------
-# Complete random assignemtn
+# Complete random assignment
 #----------
 
 dat$z <- sample(rep(0:1, each = n/2))
@@ -105,14 +189,30 @@ arb_pr_mat <- permutations_to_condition_pr_mat(possible_treats)
 dat$z <- possible_treats[, sample(ncol(possible_treats), size = 1)]
 horvitz_thompson(y ~ z, data = dat, condition_pr_mat = arb_pr_mat)
 
+#----------
 # Clustered treatment, complete random assigment
+#-----------
 # Simulating data
 dat$cl <- rep(1:4, times = c(2, 2, 3, 3))
+dat$prob <- 0.5
 clust_crs_decl <- declare_ra(N = nrow(dat), clusters = dat$cl, prob = 0.5)
 dat$z <- conduct_ra(clust_crs_decl)
-# Regular SE using Young's inequality
-horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl)
-# SE using collapsed cluster totals and Young's inequality
-horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, collapsed = TRUE)
+# Easiest to specify using declaration
+ht_cl <- horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl)
+# Also can pass the condition probability and the clusters
+ht_cl_manual <- horvitz_thompson(
+  y ~ z,
+  data = dat,
+  clusters = cl,
+  condition_prs = prob,
+  simple = FALSE
+)
+ht_cl
+ht_cl_manual
 
+}
+\references{
+Aronow, Peter M, and Joel A Middleton. 2013. "A Class of Unbiased Estimators of the Average Treatment Effect in Randomized Experiments." Journal of Causal Inference 1 (1): 135-54. \url{https://doi.org/10.1515/jci-2012-0009}.
+Aronow, Peter M, and Cyrus Samii. 2017. "Estimating Average Causal Effects Under Interference Between Units." Annals of Applied Statistics, forthcoming. \url{https://arxiv.org/abs/1305.6156v3}.
+Middleton, Joel A, and Peter M Aronow. 2015. "Unbiased Estimation of the Average Treatment Effect in Cluster-Randomized Experiments." Statistics, Politics and Policy 6 (1-2): 39-75. \url{https://doi.org/10.1515/spp-2013-0002}.
 }

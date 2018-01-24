@@ -246,7 +246,7 @@ where $J$ is the number of blocks, $N_j$ is the size of those blocks, and $\wide
 Currently we provide variance estimates that rely on two separate assumptions:
 
 * `"youngs"` which implements a conservative variance estimate using Young's inequality, described in equation 35 on page 147 of @aronowmiddleton2013 and in @aronowsamii2017 on pages 11-15.
-* `"constant"` which assumes constant treatment effects across all units but is less conservative
+* `"constant"` which assumes constant treatment effects across all units but is less conservative. Only works for simple randomized designs.
 
 For complicated designs, including clustered designs, the following variance estimator's are sufficient as they incorporate the design through the marginal and joint condition probabilities. However, there is also an estimator proposed in equation 35 on page 147 of @aronowmiddleton2013 using collapsed cluster totals. Users can use this estimator by setting `collapsed = TRUE`.
 
@@ -278,7 +278,7 @@ $$
 \end{aligned}
 $$
 
-For clustered designs, users can use the followint collpased estimator by setting `collapsed = TRUE`. Here, $M$ is the total number of clusters, $y_k$ is the total of the outcomes $y_i$ for all $i$ units in cluster $k$, $\pi_zk$ is the marginal probability of cluster $k$ being in condition $z \in \{0, 1\}$, and $z_k$ and $\pi_{zkwl}$ are defined analogously.
+For clustered designs, we use the following collpased estimator by setting `collapsed = TRUE`. Here, $M$ is the total number of clusters, $y_k$ is the total of the outcomes $y_i$ for all $i$ units in cluster $k$, $\pi_zk$ is the marginal probability of cluster $k$ being in condition $z \in \{0, 1\}$, and $z_k$ and $\pi_{zkwl}$ are defined analogously. Warning! If one passes `condition_pr_mat` to `horvitz_thompson` for a clustered design, but not `clusters`, the function will not use the collapsed estimator the the variance estimate will be innacurate.
 
 $$
 \begin{aligned}
@@ -291,7 +291,7 @@ $$
 
 **Constant effects**
 
-Alternatively, one can assume constant treatment effects and, under that assumption, estimate the variance that is consistent under that assumption but less conservative.
+Alternatively, one can assume constant treatment effects and, under that assumption, estimate the variance that is consistent under that assumption but less conservative. Again, this estimator is only implemented for the simple randomized case.
 
 * $y_{zi}$ is the potential outcome for condition $z$ for unit $i$. This is either observed if $z_i = z$ or estimated using the constant effects assumption if $z_i \neq z$, where $z_i$ is the condition for unit $i$. To be precise $y_{1i} = z_i y_{i} + (1 - z_i) (y_{i} + \widehat{\tau})$ and  $y_{0i} = z_i (y_{i} - \widehat{\tau}) + (1 - z_i) y_{i}$, where $\widehat{\tau}$ is the estimated treatment effect.
 
@@ -311,7 +311,6 @@ Theory on hypothesis testing with the Horvitz-Thompson estimator is yet to be de
 \mathrm{CI}^{1-\alpha} = \left(\widehat{\tau} + z_{\alpha/2} \sqrt{\widehat{\V}[\widehat{\tau}]}, \widehat{\tau} + z_{1 - \alpha/2} \sqrt{\widehat{\V}[\widehat{\tau}]}\right)
 \]
 
-The associated p-values for a two-sided null hypothesis test where the null is that the coefficient is 0 uses a t-distribution with the aforementioned significance level $\alpha$ and degrees of freedom $df$.
-
+The associated p-values for a two-sided null hypothesis test where the null is that the coefficient is 0 uses a normal distribution with the aforementioned significance level $\alpha$.
 
 # References

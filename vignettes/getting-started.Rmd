@@ -163,7 +163,7 @@ knitr::kable(tidy(res_dim_cl))
 
 ## `horvitz_thompson`
 
-Horvitz-Thompson estimators are useful when estimating treatment effects without bias when there is a clustered design with unequal size clusters or when the treatment assignment process is arbitrarily complex. Horvitz-Thompson estimators require information about the treatment (and control) probabilities for each unit, and the joint treatment and control probabilities of every pair of units. For designs that are not arbitrarily complex, passing your randomization scheme using `randomizr::declare_ra()` is the easiest path forward.
+Horvitz-Thompson estimators are useful when estimating treatment effects without bias when there is a clustered design with unequal size clusters or when the treatment assignment process is arbitrarily complex. Horvitz-Thompson estimators require information about the treatment (and control) probabilities for each unit, and the joint treatment and control probabilities of every pair of units. For designs that are not arbitrarily complex, passing your randomization scheme using `declare_ra()` from the `randomizr` package is the easiest path forward.
 
 ```{r, results="hide"}
 # Complete random assignment declaration
@@ -183,6 +183,8 @@ tidy(ht_comp)
 ```{r, echo=FALSE}
 knitr::kable(tidy(ht_comp))
 ```
+
+We can also easily estimate treatment effects from a cluster randomized experiment. Letting `horvitz_thompson` know that the design is clustered means it uses a collapsed estimator for the variance described in @aronowmiddleton2013, which is preferred for clustered designs.
 
 ```{r, results = "hide"}
 # Clustered random assignment declaration
@@ -206,7 +208,7 @@ knitr::kable(tidy(ht_clust))
 
 You can also build the condition probability matrix (`condition_prob_mat = `) that `horvitz_thompson()` needs yourself. This matrix is an 2N by 2N matrix, where the first N rows and N columns (the upper-left corner) are the joint probability of each unit being in the control condition with every other unit being in the control condition. The upper right N by N matrix is the joint probability of each unit being in the control condition with every other unit being in the treated condition. The second N rows are the same, with the joint probability of each unit being in the treated condition first with each unit being in the control (first N columns) and then with each unit being in the treated as well (second N columns).
 
-We also provide helper functions to build this matrix from a set of possible permutations of the treatment vector.
+We also provide helper functions to build this matrix from a set of possible permutations  of the treatment vector (`permutations_to_conditional_pr_mat()`) or from a declaration from `declare_ra` (`declaration_to_conditional_pr_mat()`). **This is largely intended for use by experienced users. Note, that if one passes a `condition_prob_mat` that indicates clustering, but not the clusters, then the collapsed estimator will not be used and the variance will be incorrect.**
 
 ```{r, results="hide"}
 # Generate 500 arbitrary permutations

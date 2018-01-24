@@ -4,12 +4,14 @@
 \alias{difference_in_means}
 \title{Design-based difference-in-means estimator}
 \usage{
-difference_in_means(formula, blocks, clusters, condition1 = NULL,
-  condition2 = NULL, data, weights, subset, ci = TRUE, alpha = 0.05)
+difference_in_means(formula, data, blocks, clusters, weights, subset,
+  condition1 = NULL, condition2 = NULL, ci = TRUE, alpha = 0.05)
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}, such as
 \code{Y ~ Z} with only one variable on the right-hand side, the treatment.}
+
+\item{data}{A \code{data.frame}.}
 
 \item{blocks}{An optional bare (unquoted) name of the block variable. Use
 for blocked designs only.}
@@ -17,6 +19,12 @@ for blocked designs only.}
 \item{clusters}{An optional bare (unquoted) name of the variable that
 corresponds to the clusters in the data; used for cluster randomized
 designs. For blocked designs, clusters must nest within blocks.}
+
+\item{weights}{the bare (unquoted) names of the weights variable in the
+supplied data.}
+
+\item{subset}{An optional bare (unquoted) expression specifying a subset of
+observations to be used.}
 
 \item{condition1}{value in the treatment vector of the condition
 to be the control. Effects are
@@ -29,14 +37,6 @@ default be 0 and \code{condition2} will be 1). See the examples for more.}
 
 \item{condition2}{value in the treatment vector of the condition to be the
 treatment. See \code{condition1}.}
-
-\item{data}{A \code{data.frame}.}
-
-\item{weights}{the bare (unquoted) names of the weights variable in the
-supplied data.}
-
-\item{subset}{An optional bare (unquoted) expression specifying a subset of
-observations to be used.}
 
 \item{ci}{A boolean for whether to compute and return pvalues and
 confidence intervals, TRUE by default.}
@@ -162,4 +162,8 @@ dat$w <- runif(nrow(dat))
 difference_in_means(Y ~ Z_simp, weights = w, data = dat)
 lm_robust(Y ~ Z_simp, weights = w, data = dat)
 
+}
+\references{
+Gerber, Alan S, and Donald P Green. 2012. Field Experiments: Design, Analysis, and Interpretation. New York: W.W. Norton.
+Imai, Kosuke, Gary King, Clayton Nall, and others. 2009. "The Essential Role of Pair Matching in Cluster-Randomized Experiments, with Application to the Mexican Universal Health Insurance Evaluation." Statistical Science 24 (1). Institute of Mathematical Statistics: 29-53. \url{https://doi.org/10.1214/08-STS274}.
 }

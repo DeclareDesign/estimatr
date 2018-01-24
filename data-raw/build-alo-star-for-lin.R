@@ -4,7 +4,7 @@
 # Full citation:
 # Angrist, Joshua, Daniel Lang, and Philip Oreopoulos. 2009. "Incentives and
 # Services for College Achievement: Evidence from a Randomized Trial." American
-# Economic Journal: Applied Economics 1(1): 136–63.
+# Economic Journal: Applied Economics 1(1): 136-63.
 
 # wd should be package root
 

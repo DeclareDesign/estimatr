@@ -7,19 +7,16 @@
 #'
 #' @param formula an object of class formula, as in \code{\link{lm}}, such as
 #' \code{Y ~ Z} with only one variable on the right-hand side, the treatment.
+#' @param data A \code{data.frame}.
 #' @param blocks An optional bare (unquoted) name of the block variable. Use
 #' for blocked designs only.
 #' @param clusters An optional bare (unquoted) name of the variable that
 #' corresponds to the clusters in the data; used for cluster randomized
 #' designs. For blocked designs, clusters must nest within blocks.
-#' @param data A \code{data.frame}.
 #' @param weights the bare (unquoted) names of the weights variable in the
 #' supplied data.
 #' @param subset An optional bare (unquoted) expression specifying a subset of
 #' observations to be used.
-#' @param ci A boolean for whether to compute and return pvalues and
-#' confidence intervals, TRUE by default.
-#' @param alpha The significance level, 0.05 by default.
 #' @param condition1 value in the treatment vector of the condition
 #' to be the control. Effects are
 #' estimated with \code{condition1} as the control and \code{condition2} as the
@@ -30,7 +27,9 @@
 #' default be 0 and \code{condition2} will be 1). See the examples for more.
 #' @param condition2 value in the treatment vector of the condition to be the
 #' treatment. See \code{condition1}.
-#'
+#' @param ci A boolean for whether to compute and return pvalues and
+#' confidence intervals, TRUE by default.
+#' @param alpha The significance level, 0.05 by default.
 #'
 #' @details This function implements a difference-in-means estimator, with
 #' support for blocked, clustered, matched-pairs, block-clustered, and
@@ -77,6 +76,10 @@
 #'   \item{outcome}{the name of the outcome variable}
 #'   \item{design}{the name of the design learned from the arguments passed}
 #' }
+#'
+#' @references
+#' Gerber, Alan S, and Donald P Green. 2012. Field Experiments: Design, Analysis, and Interpretation. New York: W.W. Norton.
+#' Imai, Kosuke, Gary King, Clayton Nall, and others. 2009. "The Essential Role of Pair Matching in Cluster-Randomized Experiments, with Application to the Mexican Universal Health Insurance Evaluation." Statistical Science 24 (1). Institute of Mathematical Statistics: 29-53. \url{https://doi.org/10.1214/08-STS274}.
 #'
 #' @examples
 #'
@@ -146,13 +149,13 @@
 #' @export
 difference_in_means <-
   function(formula,
+           data,
            blocks,
            clusters,
-           condition1 = NULL,
-           condition2 = NULL,
-           data,
            weights,
            subset,
+           condition1 = NULL,
+           condition2 = NULL,
            ci = TRUE,
            alpha = .05) {
     if (length(all.vars(formula[[3]])) > 1) {

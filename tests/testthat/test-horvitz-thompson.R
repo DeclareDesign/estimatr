@@ -114,14 +114,6 @@ test_that("Horvitz-Thompson works with clustered data", {
 
   # Regular SE using Young's inequality
   ht_crs_decl <- horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl)
-  # Also can just pass probability matrix
-  clust_crs_mat <- declaration_to_condition_pr_mat(clust_crs_decl)
-  ht_crs_mat <- horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_crs_mat)
-
-  expect_identical(
-    ht_crs_decl,
-    ht_crs_mat
-  )
 
   expect_equal(
     ht_crs_decl$df,
@@ -130,34 +122,8 @@ test_that("Horvitz-Thompson works with clustered data", {
 
   # Can infer probabilities as well
   expect_equal(
-    ht_crs_mat,
+    ht_crs_decl,
     horvitz_thompson(y ~ z, data = dat, clusters = cl, simple = F)
-  )
-
-  # Also should be same with collapsed totals
-  # IS NOT
-  # expect_identical(
-  #   horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, collapsed = T),
-  #   horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_pr_mat = clust_crs_mat, collapsed = T)
-  # )
-  #
-  # ht_coll <- horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, collapsed = T, return_condition_pr_mat = T)
-  # ht_reg <- horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, collapsed = F, return_condition_pr_mat = T)
-  # ht_coll
-  # ht_reg
-  # ht_coll$condition_pr_mat
-  # ht_reg$condition_pr_mat
-
-  # expect_identical(
-  #   horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, collapsed = T),
-  #   horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, collapsed = F)
-  # )
-
-
-  # Have to specify clusters for collapsed estimator if you don't pass declaration
-  expect_error(
-    horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_crs_mat, collapsed = T),
-    "collapsed estimator only works"
   )
 
   # And constant effects error for non-simple designs
@@ -175,12 +141,22 @@ test_that("Horvitz-Thompson works with clustered data", {
   # With declaration
   # Regular SE using Young's inequality
   ht_srs_decl <- horvitz_thompson(y ~ z, data = dat, declaration = clust_srs_decl)
-  # Also can just pass probability matrix
-  clust_srs_mat <- declaration_to_condition_pr_mat(clust_srs_decl)
 
+  # Not the same because second doesn't know it's clustered!
+  # Just passing mat
+  clust_srs_mat <- declaration_to_condition_pr_mat(clust_srs_decl)
+  expect_is(
+    all.equal(
+      ht_srs_decl,
+      horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_srs_mat)
+    ),
+    "character"
+  )
+
+  # works if I also pass cluster
   expect_identical(
     ht_srs_decl,
-    horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_srs_mat)
+    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_pr_mat = clust_srs_mat)
   )
 
   # should work with just a column if SRS!
@@ -188,20 +164,6 @@ test_that("Horvitz-Thompson works with clustered data", {
   expect_identical(
     ht_srs_decl,
     horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = ps)
-  )
-
-  # Also should be same with collapsed totals
-  # matrix approach
-  ht_cl_srs_collapsed <- horvitz_thompson(y ~ z, data = dat, declaration = clust_srs_decl, collapsed = T)
-  expect_identical(
-    ht_cl_srs_collapsed,
-    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_pr_mat = clust_srs_mat, collapsed = T)
-  )
-
-  # condition var name approach
-  expect_identical(
-    ht_cl_srs_collapsed,
-    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = ps, collapsed = T)
   )
 
   # And constant effects

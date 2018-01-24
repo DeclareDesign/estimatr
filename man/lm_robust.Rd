@@ -86,7 +86,10 @@ type of standard error entails, users can see the
 \href{http://estimatr.declaredesign.org/articles/technical-notes.html}{technical notes in this vignette}.
 The default estimators for the non-clustered and clustered case have been
 chosen for desirable similarities to randomization estimators, performance
-in small samples, or some combination of both.
+in small samples, or some combination of both. The default for the case
+without clusters is the HC2 estimator and the default with clusters is the
+analogous CR2 estimator. Users can easily replicate Stata standard errors in
+the clustered or non-clustered case by setting \code{se_type = "stata"}.
 
 The function estimates the coefficients and standard errors in C++, using
 the \code{RcppEigen} package. By default, we estimate the coefficients
@@ -163,4 +166,11 @@ lm_robust(y ~ x, data = dat, subset = z == 1)
 lm_robust(y ~ x + z, data = dat, alpha = 0.1)
 
 
+}
+\references{
+Abadie, Alberto, Susan Athey, Guido W Imbens, and Jeffrey Wooldridge. 2017. "A Class of Unbiased Estimators of the Average Treatment Effect in Randomized Experiments." arXiv Pre-Print. \url{https://arxiv.org/abs/1710.02926v2}.
+Bell, Robert M, and Daniel F McCaffrey. 2002. "Bias Reduction in Standard Errors for Linear Regression with Multi-Stage Samples." Survey Methodology 28 (2): 169-82.
+MacKinnon, James, and Halbert White. 1985. "Some Heteroskedasticity-Consistent Covariance Matrix Estimators with Improved Finite Sample Properties." Journal of Econometrics 29 (3): 305-25. \url{https://doi.org/10.1016/0304-4076(85)90158-7}.
+Pustejovsky, James E, and Elizabeth Tipton. 2016. "Small Sample Methods for Cluster-Robust Variance Estimation and Hypothesis Testing in Fixed Effects Models." Journal of Business & Economic Statistics. Taylor & Francis. \url{https://doi.org/10.1080/07350015.2016.1247004}.
+Samii, Cyrus, and Peter M Aronow. 2012. "On Equivalencies Between Design-Based and Regression-Based Variance Estimators for Randomized Experiments." Statistics and Probability Letters 82 (2). \url{https://doi.org/10.1016/j.spl.2011.10.024}.
 }
