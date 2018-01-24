@@ -27,7 +27,8 @@ summary.difference_in_means <-
     ...
   ) {
 
-    return(list(coefficients = summarize_tidy(object)))
+    return(list(coefficients = summarize_tidy(object),
+                design = object$design))
 
   }
 

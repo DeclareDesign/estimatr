@@ -115,7 +115,10 @@ tidy(lmlin_out)
 lm_lin(y ~ z, covariates = ~ x + x2, data = dat)
 
 # Also centers data AFTER evaluating any functions in formula
-lm_lin(y ~ z, covariates = ~ x + log(x3), data = dat)
+lmlin_out2 <- lm_lin(y ~ z, covariates = ~ x + log(x3), data = dat)
+lmlin_out2$scaled_center["log(x3)"]
+mean(log(dat$x3))
+
 
 # Works easily with clusters
 dat$clusterID <- rep(1:20, each = 2)

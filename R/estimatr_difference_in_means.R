@@ -1,81 +1,149 @@
-#' Built-in Estimators: Difference-in-means
+#' Design-based difference-in-means estimator
 #'
-#' @param formula An object of class "formula", such as Y ~ Z
-#' @param blocks An optional bare (unquoted) name of the block variable. Use for blocked designs only.
-#' @param clusters An optional bare (unquoted) name of the variable that corresponds to the clusters in the data; used for cluster randomized designs. For blocked designs, clusters must be within blocks.
-#' @param data A data.frame.
-#' @param weights An optional bare (unquoted) name of the weights variable.
-#' @param subset An optional bare (unquoted) expression specifying a subset of observations to be used.
-#' @param ci A boolean for whether to compute and return pvalues and confidence intervals, TRUE by default.
+#' @description This difference-in-means estimator selects the appropriate
+#' point estimator, standard errors, and degrees of freedom for a variety of
+#' designs, including clustered randomization, matched-pairs randomization,
+#' and more
+#'
+#' @param formula an object of class formula, as in \code{\link{lm}}, such as
+#' \code{Y ~ Z} with only one variable on the right-hand side, the treatment.
+#' @param blocks An optional bare (unquoted) name of the block variable. Use
+#' for blocked designs only.
+#' @param clusters An optional bare (unquoted) name of the variable that
+#' corresponds to the clusters in the data; used for cluster randomized
+#' designs. For blocked designs, clusters must nest within blocks.
+#' @param data A \code{data.frame}.
+#' @param weights the bare (unquoted) names of the weights variable in the
+#' supplied data.
+#' @param subset An optional bare (unquoted) expression specifying a subset of
+#' observations to be used.
+#' @param ci A boolean for whether to compute and return pvalues and
+#' confidence intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
-#' @param condition1 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
-#' @param condition2 names of the conditions to be compared. Effects are estimated with condition1 as control and condition2 as treatment. If unspecified, condition1 is the "first" condition and condition2 is the "second" according to r defaults.
+#' @param condition1 value in the treatment vector of the condition
+#' to be the control. Effects are
+#' estimated with \code{condition1} as the control and \code{condition2} as the
+#' treatment. If unspecified, \code{condition1} is the "first" condition and
+#' \code{condition2} is the "second" according to levels if the treatment is a
+#' factor or according to a sortif it is a numeric or character variable (i.e
+#' if unspecified and the treatment is 0s and 1s, \code{condition1} will by
+#' default be 0 and \code{condition2} will be 1). See the examples for more.
+#' @param condition2 value in the treatment vector of the condition to be the
+#' treatment. See \code{condition1}.
 #'
 #'
-#' @details This function implements difference-in-means estimation, with and without blocking. Standard errors are estimated as the square root of the sum of the within-group variances, divided by their respective sample sizes (Equation 3.6 in Gerber and Green 2012). If blocked, the difference in means estimate is taken in each block, then averaged together according to block size.
+#' @details This function implements a difference-in-means estimator, with
+#' support for blocked, clustered, matched-pairs, block-clustered, and
+#' matched-pair clustered designs. One specifies their design by passing
+#' the blocks and clusters in their data and this function chooses which
+#' estimator is most appropriate.
 #'
-#' @export
+#' If you pass only \code{blocks}, if all blocks are of size two, we will
+#' infer that the design is a matched-pairs design. If they are all size four
+#' or larger, we will infer that it is a regular blocked design. If you pass
+#' both \code{blocks} and \code{clusters}, we will similarly
+#' infer whether it is a matched-pairs clustered design or a block-clustered
+#' design the number of clusters per block. If the user passes only
+#' \code{clusters}, we will infer that the design was cluster-randomized. If
+#' the user specifies neither the \code{blocks} nor the \code{clusters},
+#' a regular Welch's t-test will be performed.
+#'
+#' Importantly, if the user specifies weights, the estimation is handed off
+#' to \code{\link{lm_robust}} with the appropriate robust standard errors
+#' as weighted difference-in-means estimators are not implemented here.
+#' More details of the about each of the estimators can be found in the
+#' \href{estimatr.declaredesign.org/articles/technical-notes.html}{technical notes}.
+#'
+#' @return \code{difference_in_means} returns an object of class
+#' \code{"difference_in_means"}.
+#'
+#' The functions \code{summary} and \code{\link{tidy}} can be used to get
+#' the results as a \code{data.frame}. To get useful data out of the return,
+#' you can use these data frames, you can use the resulting list directly, or
+#' you can use the generic accessor functions \code{coef}, and\code{confint}.
+#'
+#' An object of class \code{"difference_in_means"} is a list containing at
+#' least the following components:
+#' \describe{
+#'   \item{est}{the estimated coefficients}
+#'   \item{se}{the estimated standard errors}
+#'   \item{df}{the estimated degrees of freedom}
+#'   \item{p}{the p-values from the t-test using \code{est}, \code{se}, and \code{df}}
+#'   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
+#'   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
+#'   \item{coefficient_name}{a character vector of coefficient names}
+#'   \item{alpha}{the significance level specified by the user}
+#'   \item{N}{the number of observations used}
+#'   \item{outcome}{the name of the outcome variable}
+#'   \item{design}{the name of the design learned from the arguments passed}
+#' }
 #'
 #' @examples
 #'
-#'  library(fabricatr)
-#'  library(randomizr)
-#'  # Get appropriate standard errors for simple designs
-#'  dat <- fabricate(
-#'    N = 100,
-#'    Y = rnorm(100),
-#'    Z_simp = simple_ra(N, prob = 0.4),
-#'  )
+#' library(fabricatr)
+#' library(randomizr)
+#' # Get appropriate standard errors for simple designs
+#' dat <- fabricate(
+#'   N = 100,
+#'   Y = rnorm(100),
+#'   Z_simp = simple_ra(N, prob = 0.4),
+#' )
 #'
-#'  table(dat$Z_simp)
-#'  difference_in_means(Y ~ Z_simp, data = dat)
+#' table(dat$Z_simp)
+#' difference_in_means(Y ~ Z_simp, data = dat)
 #'
-#'  # Accurates estimates and standard errors for clustered designs
-#'  dat$clust <- sample(20, size = nrow(dat), replace = TRUE)
-#'  dat$Z_clust <- cluster_ra(dat$clust, prob = 0.6)
+#' # Accurates estimates and standard errors for clustered designs
+#' dat$clust <- sample(20, size = nrow(dat), replace = TRUE)
+#' dat$Z_clust <- cluster_ra(dat$clust, prob = 0.6)
 #'
-#'  table(dat$Z_clust, dat$clust)
-#'  difference_in_means(Y ~ Z_clust, clusters = clust, data = dat)
+#' table(dat$Z_clust, dat$clust)
+#' summary(difference_in_means(Y ~ Z_clust, clusters = clust, data = dat))
 #'
-#'  # Accurate estimates and standard errors for blocked designs
-#'  dat$block <- rep(1:10, each = 10)
-#'  dat$Z_block <- block_ra(dat$block, prob = 0.5)
+#' # Accurate estimates and standard errors for blocked designs
+#' dat$block <- rep(1:10, each = 10)
+#' dat$Z_block <- block_ra(dat$block, prob = 0.5)
 #'
-#'  table(dat$Z_block, dat$block)
-#'  difference_in_means(Y ~ Z_block, blocks = block, data = dat)
+#' table(dat$Z_block, dat$block)
+#' difference_in_means(Y ~ Z_block, blocks = block, data = dat)
 #'
-#'  # Matched-pair estimates and standard errors are also accurate
-#'  # Specified same as blocked design, function learns that
-#'  # it is matched pair from size of blocks!
-#'  dat$pairs <- rep(1:50, each = 2)
-#'  dat$Z_pairs <- block_ra(dat$pairs, prob = 0.5)
+#' # Matched-pair estimates and standard errors are also accurate
+#' # Specified same as blocked design, function learns that
+#' # it is matched pair from size of blocks!
+#' dat$pairs <- rep(1:50, each = 2)
+#' dat$Z_pairs <- block_ra(dat$pairs, prob = 0.5)
 #'
-#'  table(dat$pairs, dat$Z_pairs)
-#'  difference_in_means(Y ~ Z_pairs, blocks = pairs, data = dat)
+#' table(dat$pairs, dat$Z_pairs)
+#' difference_in_means(Y ~ Z_pairs, blocks = pairs, data = dat)
 #'
-#'  # Also works with multi-valued treatments if users specify
-#'  # comparison of interest
-#'  dat$Z_multi <- simple_ra(
-#'    nrow(dat),
-#'    condition_names = c("Treatment 2", "Treatment 1", "Control"),
-#'    prob_each = c(0.4, 0.4, 0.2)
-#'  )
+#' # Also works with multi-valued treatments if users specify
+#' # comparison of interest
+#' dat$Z_multi <- simple_ra(
+#'   nrow(dat),
+#'   condition_names = c("Treatment 2", "Treatment 1", "Control"),
+#'   prob_each = c(0.4, 0.4, 0.2)
+#' )
 #'
-#'  # Only need to specify which condition is treated "condition2" and
-#'  # which is control "condition1"
-#'  difference_in_means(
-#'    Y ~ Z_multi,
-#'    condition1 = "Treatment 2",
-#'    condition2 = "Control",
-#'    data = dat
-#'  )
-#'  difference_in_means(
-#'    Y ~ Z_multi,
-#'    condition1 = "Treatment 1",
-#'    condition2 = "Control",
-#'    data = dat
-#'  )
+#' # Only need to specify which condition is treated "condition2" and
+#' # which is control "condition1"
+#' difference_in_means(
+#'   Y ~ Z_multi,
+#'   condition1 = "Treatment 2",
+#'   condition2 = "Control",
+#'   data = dat
+#' )
+#' difference_in_means(
+#'   Y ~ Z_multi,
+#'   condition1 = "Treatment 1",
+#'   condition2 = "Control",
+#'   data = dat
+#' )
 #'
+#' # Specifying weights will result in estimation via `lm_robust`
+#' dat$w <- runif(nrow(dat))
+#' difference_in_means(Y ~ Z, weights = w, data = dat)
+#' lm_robust(Y ~ Z, weights = w, data = dat)
+#'
+#' @export
 difference_in_means <-
   function(formula,
            blocks,
@@ -87,7 +155,6 @@ difference_in_means <-
            subset,
            ci = TRUE,
            alpha = .05) {
-
     if (length(all.vars(formula[[3]])) > 1) {
       stop(
         "'formula' must have only one variable on the right-hand side: the ",
@@ -108,14 +175,16 @@ difference_in_means <-
       )
     ))
 
-    data <- data.frame(y = model_data$outcome,
-                       t = model_data$original_treatment)
+    data <- data.frame(
+      y = model_data$outcome,
+      t = model_data$original_treatment
+    )
     data$cluster <- model_data$cluster
     data$weights <- model_data$weights
     data$block <- model_data$block
 
     if (!is.null(data$weights) && length(unique(data$weights)) == 1
-        && is.null(data$cluster) && is.null(data$block)) {
+    && is.null(data$cluster) && is.null(data$block)) {
       message(
         "Constant `weights` passed to `difference_in_means` will ",
         "unnecessarily trigger `lm_robust()` and the Welch-Satterthwaite ",
@@ -137,14 +206,19 @@ difference_in_means <-
       condition1 <- condition_names[[1]]
     }
 
-    if (is.null(data$block)){
-
+    if (is.null(data$block)) {
       return_frame <- difference_in_means_internal(
         condition1 = condition1,
         condition2 = condition2,
         data = data,
         alpha = alpha
       )
+
+      if (is.null(data$cluster)) {
+        design <- "Standard"
+      } else {
+        design <- "Clustered"
+      }
 
       # For clustered cases Gerber & Green suggest footnote 20 on ch 3
       # Instead we use CR2 in lm_robust
@@ -153,9 +227,7 @@ difference_in_means <-
       #   return_frame$df <- with(return_frame,
       #                           N - 2)
       # }
-
     } else {
-
       pair_matched <- FALSE
 
       # When learning whether it is matched pairs, should only use relevant conditions
@@ -194,50 +266,50 @@ difference_in_means <-
       N_overall <- with(block_estimates, sum(N))
 
       # Blocked design, (Gerber Green 2012, p73, eq3.10)
-      diff <- with(block_estimates, sum(est * N/N_overall))
+      diff <- with(block_estimates, sum(est * N / N_overall))
 
       df <- NA
       n_blocks <- nrow(block_estimates)
 
       if (pair_matched) {
-
         if (is.null(data$cluster)) {
+          design <- "Matched-pair"
           # Pair matched, unit randomized (Gerber Green 2012, p77, eq3.16)
           se <-
             with(
               block_estimates,
-              sqrt( (1 / (n_blocks * (n_blocks - 1))) * sum((est - diff)^2) )
+              sqrt((1 / (n_blocks * (n_blocks - 1))) * sum((est - diff) ^ 2))
             )
-
         } else {
+          design <- "Matched-pair clustered"
           # Pair matched, cluster randomized (Imai, King, Nall 2009, p36, eq6)
           se <-
             with(
               block_estimates,
               sqrt(
-                ( n_blocks / ((n_blocks - 1) * N_overall^2) ) *
-                  sum( (N * est - (N_overall * diff)/n_blocks)^2 )
+                (n_blocks / ((n_blocks - 1) * N_overall ^ 2)) *
+                  sum((N * est - (N_overall * diff) / n_blocks) ^ 2)
               )
             )
         }
 
         # For pair matched, cluster randomized Imai et al. 2009 recommend (p. 37)
         df <- n_blocks - 1
-
       } else {
         # Block randomized (Gerber and Green 2012, p. 74, footnote 17)
-        se <- with(block_estimates, sqrt(sum(se^2 * (N/N_overall)^2)))
+        se <- with(block_estimates, sqrt(sum(se ^ 2 * (N / N_overall) ^ 2)))
 
 
         ## we don't know if this is correct!
         ## matches lm_lin, two estimates per block
         if (is.null(data$cluster)) {
+          design <- "Blocked"
           df <- N_overall - 2 * n_blocks
         } else {
+          design <- "Block-clustered"
           # Also matches lm_lin for even sized clusters, should be conservative
           df <- sum(clust_per_block) - 2 * n_blocks
         }
-
       }
 
       return_frame <- data.frame(
@@ -246,39 +318,29 @@ difference_in_means <-
         df = df,
         N = N_overall
       )
+    }
 
+    if (!is.null(data$weights)) {
+      design <- paste0(design, " (weighted)")
     }
 
     return_list <- add_cis_pvals(return_frame, alpha, ci)
 
-    #print(c("Pair Matched? ", pair_matched))
+    # print(c("Pair Matched? ", pair_matched))
 
-    return_list <- dim_like_return(return_list,
-                                   alpha = alpha,
-                                   formula = formula,
-                                   conditions = list(condition1, condition2))
+    return_list <- dim_like_return(
+      return_list,
+      alpha = alpha,
+      formula = formula,
+      conditions = list(condition1, condition2)
+    )
+
+    return_list[["design"]] <- design
 
     attr(return_list, "class") <- "difference_in_means"
 
     return(return_list)
-
   }
-
-
-
-weighted_var_internal <- function(w, x, xWbar){
-  wbar <- mean(w)
-  n <- length(w)
-  return(
-    n / ((n - 1) * sum(w) ^ 2) *
-      (
-        sum((w * x - wbar * xWbar) ^ 2)
-        - 2 * xWbar * sum((w - wbar) * (w * x - wbar * xWbar))
-        + xWbar ^ 2 * sum((w - wbar) ^ 2)
-      )
-  )
-}
-
 
 
 difference_in_means_internal <-
@@ -291,7 +353,6 @@ difference_in_means_internal <-
     # Check that treatment status is uniform within cluster, checked here
     # so that the treatment vector t doesn't have to be built anywhere else
     if (!is.null(data$cluster)) {
-
       if (is.factor(data$cluster)) {
         data$cluster <- droplevels(data$cluster)
       }
@@ -351,11 +412,8 @@ difference_in_means_internal <-
       diff <- cr2_out$est[2]
       se <- cr2_out$se[2]
       df <- cr2_out$df[2]
-
     } else {
-
       if (is.null(data$weights)) {
-
         diff <- mean(Y2) - mean(Y1)
 
         if (pair_matched) {
@@ -368,16 +426,13 @@ difference_in_means_internal <-
 
           se <- sqrt(var_Y2 / N2 + var_Y1 / N1)
 
-          df <- se^4 /
+          df <- se ^ 4 /
             (
-              (var_Y2 / N2)^2 / (N2 - 1) +
-                (var_Y1 / N1)^2 / (N1 - 1)
+              (var_Y2 / N2) ^ 2 / (N2 - 1) +
+                (var_Y1 / N1) ^ 2 / (N1 - 1)
             )
-
         }
-
       } else {
-
         if (pair_matched) {
           stop(
             "Cannot use weights with matched pairs design at the moment"
@@ -404,9 +459,7 @@ difference_in_means_internal <-
         diff <- w_hc2_out$est[2]
         se <- w_hc2_out$se[2]
         df <- w_hc2_out$df[2]
-
       }
-
     }
 
     return_frame <-
@@ -418,5 +471,18 @@ difference_in_means_internal <-
       )
 
     return(return_frame)
-
   }
+
+# Old weighted variance function
+# weighted_var_internal <- function(w, x, xWbar) {
+#   wbar <- mean(w)
+#   n <- length(w)
+#   return(
+#     n / ((n - 1) * sum(w) ^ 2) *
+#       (
+#         sum((w * x - wbar * xWbar) ^ 2)
+#         - 2 * xWbar * sum((w - wbar) * (w * x - wbar * xWbar))
+#           + xWbar ^ 2 * sum((w - wbar) ^ 2)
+#       )
+#   )
+# }

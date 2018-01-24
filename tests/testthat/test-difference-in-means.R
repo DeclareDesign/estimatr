@@ -9,7 +9,12 @@ test_that("DIM", {
   difference_in_means(Y ~ Z, condition1 = 1, condition2 = 2, data = dat)
   difference_in_means(Y ~ Z, condition1 = 2, condition2 = 1, data = dat)
   difference_in_means(Y ~ Z, condition1 = 3, condition2 = 1, data = dat)
-  difference_in_means(Y ~ Z, condition1 = 3, condition2 = 2, data = dat)
+  dimo <- difference_in_means(Y ~ Z, condition1 = 3, condition2 = 2, data = dat)
+
+  expect_equal(
+    dimo$design,
+    "Standard"
+  )
 
 })
 
@@ -83,6 +88,12 @@ test_that("DIM Blocked", {
   difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = dat)
   difference_in_means(Y ~ Z, alpha = .10, blocks = block, data = dat)
 
+  expect_equal(
+    dim_normal$design,
+    "Blocked"
+  )
+
+
 })
 
 test_that("DIM same as t.test", {
@@ -106,9 +117,22 @@ test_that("DIM same as t.test", {
 test_that("DIM Weighted", {
 
   n <- 100
-  dat <- data.frame(y = rnorm(n), z = 0:1, w = 1)
-  difference_in_means(y ~ z, weights = w, data = dat)
+  dat <- data.frame(y = rnorm(n), z = 0:1, w = 1, bl = rep(1:10, each = 10))
+  dimw <- difference_in_means(y ~ z, weights = w, data = dat)
   difference_in_means(y ~ z, data = dat)
+
+  dimbw <- difference_in_means(y ~ z, weights = w, blocks = bl, data = dat)
+  difference_in_means(y ~ z, blocks = bl, data = dat)
+
+  expect_equal(
+    dimw$design,
+    "Standard (weighted)"
+  )
+
+  expect_equal(
+    dimbw$design,
+    "Blocked (weighted)"
+  )
 
 })
 
@@ -128,6 +152,10 @@ test_that("DIM Clustered", {
 
   expect_true(dim_05$ci_lower < dim_10$ci_lower)
 
+  expect_equal(
+    dim_10$design,
+    "Clustered"
+  )
 
 })
 
@@ -145,7 +173,12 @@ test_that("DIM Pair Matched", {
   )
 
   dat$Z <- rep(0:1, 50)
-  difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = dat)
+  dim_mp <- difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = dat)
+
+  expect_equal(
+    dim_mp$design,
+    "Matched-pair"
+  )
 
 })
 
@@ -181,7 +214,7 @@ test_that("DIM Matched Pair Cluster Randomization", {
   )
 
   dat$Z <- rep(rep(0:1, each = 2), 25)
-  difference_in_means(
+  dim_mpc <- difference_in_means(
     Y ~ Z,
     alpha = .05,
     blocks = block,
@@ -189,6 +222,10 @@ test_that("DIM Matched Pair Cluster Randomization", {
     data = dat
   )
 
+  expect_equal(
+    dim_mpc$design,
+    "Matched-pair clustered"
+  )
 
 })
 
@@ -199,19 +236,19 @@ test_that("DIM Matched Pair Cluster Randomization = Matched Pair when cluster si
                    Z = rep(c(0,0,1,1), times = 25))
 
   expect_equal(
-    difference_in_means(
+    tidy(difference_in_means(
       Y ~ Z,
       alpha = .05,
       blocks = block,
       clusters = cluster,
       data = dat
-    ),
-    difference_in_means(
+    )),
+    tidy(difference_in_means(
       Y ~ Z,
       alpha = .05,
       blocks = block,
       data = dat
-    )
+    ))
   )
 
 })
@@ -523,6 +560,8 @@ test_that("DIM matches lm_robust under certain conditions", {
   # With weights now, identical to lm_robust, HC2 by force! except for matched pairs which fails
   dat$w <- runif(nrow(dat))
 
+
+
   # simple W
   expect_equivalent(
     tidy(lm_robust(Y ~ z, data = dat, weights = w))[2, ],
@@ -537,15 +576,39 @@ test_that("DIM matches lm_robust under certain conditions", {
 
   # blocked-clustered W (goes to CR2)
   # DF different in clustered case
+  dim_bl_cl_w <- difference_in_means(
+    Y ~ z_blocked,
+    data = dat,
+    clusters = cl,
+    blocks = bl,
+    weights = w
+  )
+
   expect_equivalent(
     tidy(lm_lin(Y ~ z_blocked, ~ factor(bl), clusters = cl, weights = w, data = dat))[2, 1:3],
-    tidy(difference_in_means(Y ~ z_blocked, data = dat, clusters = cl, blocks = bl, weights = w))[, 1:3]
+    tidy(dim_bl_cl_w)[, 1:3]
+  )
+
+  expect_equal(
+    dim_bl_cl_w$design,
+    "Block-clustered (weighted)"
   )
 
   # Clustered W
+  dim_cl_w <- difference_in_means(
+    Y ~ z_clustered,
+    data = dat,
+    clusters = cl_diff_size,
+    weights = w
+  )
+
   expect_equivalent(
     tidy(lm_robust(Y ~ z_clustered, clusters = cl_diff_size, weights = w, data = dat))[2, 1:3],
-    tidy(difference_in_means(Y ~ z_clustered, data = dat, clusters = cl_diff_size, weights = w))[, 1:3]
+    tidy(dim_cl_w)[, 1:3]
+  )
+  expect_equal(
+    dim_cl_w$design,
+    "Clustered (weighted)"
   )
 
   # errors with matched pairs

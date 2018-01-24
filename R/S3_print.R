@@ -27,6 +27,7 @@ print.difference_in_means <-
     ...
   ) {
 
+    print(paste0("Design: ", x$design))
     print(tidy(x, ...))
 
   }
