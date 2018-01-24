@@ -69,6 +69,30 @@ intervals, TRUE by default.}
 \item{return_condition_pr_mat}{a boolean for whether to return the condition
 probability matrix. Returns NULL if the design is simple randomization}
 }
+\value{
+\code{horvitz_thompson} returns an object of class
+\code{"horvitz_thompson"}.
+
+The functions \code{summary} and \code{\link{tidy}} can be used to get
+the results as a \code{data.frame}. To get useful data out of the return,
+you can use these data frames, you can use the resulting list directly, or
+you can use the generic accessor functions \code{coef}, and\code{confint}.
+
+An object of class \code{"horvitz_thompson"} is a list containing at
+least the following components:
+
+  \item{est}{the estimated coefficients}
+  \item{se}{the estimated standard errors}
+  \item{df}{the estimated degrees of freedom}
+  \item{p}{the p-values from the t-test using \code{est}, \code{se}, and \code{df}}
+  \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
+  \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
+  \item{coefficient_name}{a character vector of coefficient names}
+  \item{alpha}{the significance level specified by the user}
+  \item{N}{the number of observations used}
+  \item{outcome}{the name of the outcome variable}
+  \item{condition_pr_mat}{the condition probability matrix if \code{return_condition_pr_mat} is TRUE}
+}
 \description{
 These Horvitz-Thompson estimators are unbiased for
 any design as long as the randomization scheme is known.
@@ -134,28 +158,6 @@ see more about this object in the documentation for
 matrix allows users to specify marginal and joint marginal probabilities
 of units being in conditions 1 and 2 of arbitrary complexity. Users should
 only use this option if they are certain they know what they are doing.
-
- @return \code{horvitz_thompson} returns an object of class
-\code{"horvitz_thompson"}.
-
-The functions \code{summary} and \code{\link{tidy}} can be used to get
-the results as a \code{data.frame}. To get useful data out of the return,
-you can use these data frames, you can use the resulting list directly, or
-you can use the generic accessor functions \code{coef}, and\code{confint}.
-
-An object of class \code{"horvitz_thompson"} is a list containing at
-least the following components:
-  \item{est}{the estimated coefficients}
-  \item{se}{the estimated standard errors}
-  \item{df}{the estimated degrees of freedom}
-  \item{p}{the p-values from the t-test using \code{est}, \code{se}, and \code{df}}
-  \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
-  \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
-  \item{coefficient_name}{a character vector of coefficient names}
-  \item{alpha}{the significance level specified by the user}
-  \item{N}{the number of observations used}
-  \item{outcome}{the name of the outcome variable}
-  \item{condition_pr_mat}{the condition probability matrix if \code{return_condition_pr_mat} is TRUE}
 }
 \examples{
 

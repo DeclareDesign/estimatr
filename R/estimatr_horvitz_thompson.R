@@ -109,7 +109,7 @@
 #' of units being in conditions 1 and 2 of arbitrary complexity. Users should
 #' only use this option if they are certain they know what they are doing.
 #'
-#'  @return \code{horvitz_thompson} returns an object of class
+#' @return \code{horvitz_thompson} returns an object of class
 #' \code{"horvitz_thompson"}.
 #'
 #' The functions \code{summary} and \code{\link{tidy}} can be used to get
@@ -119,6 +119,7 @@
 #'
 #' An object of class \code{"horvitz_thompson"} is a list containing at
 #' least the following components:
+#'
 #'   \item{est}{the estimated coefficients}
 #'   \item{se}{the estimated standard errors}
 #'   \item{df}{the estimated degrees of freedom}
