@@ -55,7 +55,6 @@
 #'
 #' An object of class \code{"lm_robust"} is a list containing at least the
 #' following components:
-#' \describe{
 #'   \item{est}{the estimated coefficients}
 #'   \item{se}{the estimated standard errors}
 #'   \item{df}{the estimated degrees of freedom}
@@ -71,7 +70,7 @@
 #'   \item{vcov}{the fitted variance covariance matrix}
 #'   \item{weighted}{whether or not weights were applied}
 #'   \item{scaled_center}{the means of each of the covariates used for centering them}
-#' }
+#'   \item{call}{the original function call}
 #' We also return \code{terms} and \code{contrasts}, used by \code{predict}.
 #'
 #' @seealso \code{\link{lm_robust}}
@@ -116,6 +115,7 @@
 #'
 #' @references
 #' Freedman, David A. 2008. "On Regression Adjustments in Experiments with Several Treatments." The Annals of Applied Statistics. JSTOR, 176-96. \url{https://doi.org/10.1214/07-AOAS143}.
+#'
 #' Lin, Winston. 2013. "Agnostic Notes on Regression Adjustments to Experimental Data: Reexamining Freedman's Critique." The Annals of Applied Statistics 7 (1). Institute of Mathematical Statistics: 295-318. \url{https://doi.org/10.1214/12-AOAS583}.
 #'
 #' @export
@@ -297,6 +297,9 @@ lm_lin <- function(formula,
 
   return_list[["scaled_center"]] <- attr(demeaned_covars, "scaled:center")
   setNames(return_list[["scaled_center"]], original_covar_names)
+
+  return_list[["call"]] <- match.call()
+
 
   return(return_list)
 }

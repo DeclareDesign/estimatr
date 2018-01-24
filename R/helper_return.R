@@ -4,6 +4,9 @@ lm_return <- function(return_list, model_data, formula) {
   return_list[["terms"]] <- model_data$terms
   return_list[["weights"]] <- model_data$weights
   return_list[["outcome"]] <- deparse(formula[[2]])
+  # duplicate column with new name for margins
+  return_list[["coefficients"]] <- return_list[["est"]]
+  names(return_list[["coefficients"]]) <- return_list[["coefficient_name"]]
 
   return(return_list)
 }

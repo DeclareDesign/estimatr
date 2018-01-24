@@ -11,8 +11,7 @@ coef.lm_robust <-
            object,
            parm = NULL,
            ...) {
-    coefs <- object$est
-    names(coefs) <- object$coefficient_name
+    coefs <- object$coefficients
 
     if (!is.null(parm)) {
       coefs <- coefs[parm]
