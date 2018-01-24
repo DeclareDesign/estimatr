@@ -134,6 +134,28 @@ see more about this object in the documentation for
 matrix allows users to specify marginal and joint marginal probabilities
 of units being in conditions 1 and 2 of arbitrary complexity. Users should
 only use this option if they are certain they know what they are doing.
+
+ @return \code{horvitz_thompson} returns an object of class
+\code{"horvitz_thompson"}.
+
+The functions \code{summary} and \code{\link{tidy}} can be used to get
+the results as a \code{data.frame}. To get useful data out of the return,
+you can use these data frames, you can use the resulting list directly, or
+you can use the generic accessor functions \code{coef}, and\code{confint}.
+
+An object of class \code{"horvitz_thompson"} is a list containing at
+least the following components:
+  \item{est}{the estimated coefficients}
+  \item{se}{the estimated standard errors}
+  \item{df}{the estimated degrees of freedom}
+  \item{p}{the p-values from the t-test using \code{est}, \code{se}, and \code{df}}
+  \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
+  \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
+  \item{coefficient_name}{a character vector of coefficient names}
+  \item{alpha}{the significance level specified by the user}
+  \item{N}{the number of observations used}
+  \item{outcome}{the name of the outcome variable}
+  \item{condition_pr_mat}{the condition probability matrix if \code{return_condition_pr_mat} is TRUE}
 }
 \examples{
 
@@ -213,7 +235,9 @@ ht_cl_manual
 }
 \references{
 Aronow, Peter M, and Joel A Middleton. 2013. "A Class of Unbiased Estimators of the Average Treatment Effect in Randomized Experiments." Journal of Causal Inference 1 (1): 135-54. \url{https://doi.org/10.1515/jci-2012-0009}.
+
 Aronow, Peter M, and Cyrus Samii. 2017. "Estimating Average Causal Effects Under Interference Between Units." Annals of Applied Statistics, forthcoming. \url{https://arxiv.org/abs/1305.6156v3}.
+
 Middleton, Joel A, and Peter M Aronow. 2015. "Unbiased Estimation of the Average Treatment Effect in Cluster-Randomized Experiments." Statistics, Politics and Policy 6 (1-2): 39-75. \url{https://doi.org/10.1515/spp-2013-0002}.
 }
 \seealso{

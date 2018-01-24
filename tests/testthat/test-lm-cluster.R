@@ -204,13 +204,17 @@ test_that("lm cluster se with missingness", {
     "missingness in the cluster"
   )
 
+  estimatr_cluster_sub <- lm_robust(
+    Y ~ Z + X,
+    clusters = J,
+    data = dat[-c(23, 63), ]
+  )
+
+  estimatr_cluster_out[["call"]] <- NULL
+  estimatr_cluster_sub[["call"]] <- NULL
   expect_identical(
     estimatr_cluster_out,
-    lm_robust(
-      Y ~ Z + X,
-      clusters = J,
-      data = dat[-c(23, 63), ]
-    )
+    estimatr_cluster_sub
   )
 })
 
@@ -223,34 +227,44 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
     W = runif(100)
   )
 
+  lmr <- lm_robust(Y~Z, data = dat, weights = W)
+  lmrq <- lm_robust(Y~Z, data = dat, weights = "W")
+  lmr[["call"]] <- NULL
+  lmrq[["call"]] <- NULL
   expect_identical(
-    lm_robust(Y~Z, data = dat, weights = W),
-    lm_robust(Y~Z, data = dat, weights = "W")
+    lmr,
+    lmrq
   )
 
   # works with char
   dat$J <- as.character(dat$J)
 
+  lmrc <- lm_robust(Y~Z, data = dat, clusters = J)
+  lmrcq <- lm_robust(Y~Z, data = dat, clusters = "J")
+  lmrc[["call"]] <- NULL
+  lmrcq[["call"]] <- NULL
   expect_identical(
-    lm_robust(Y~Z, data = dat, clusters = J),
-    lm_robust(Y~Z, data = dat, clusters = "J")
+    lmrc,
+    lmrcq
   )
 
 
   # works with num
-  dat$J <- as.numeric(dat$J)
+  dat$J_num <- as.numeric(dat$J)
 
-  expect_identical(
-    lm_robust(Y~Z, data = dat, clusters = J),
-    lm_robust(Y~Z, data = dat, clusters = "J")
+  lmrc_qnum <- lm_robust(Y~Z, data = dat, clusters = "J_num")
+  lmrc_qnum[["call"]] <- NULL
+  expect_equal(
+    lmrc,
+    lmrc_qnum
   )
 
 
   # works with factor
   dat$J_fac <- as.factor(dat$J)
   expect_equivalent(
-    lm_robust(Y~Z, data = dat, clusters = J_fac),
-    lm_robust(Y~Z, data = dat, clusters = J)
+    rmcall(lm_robust(Y~Z, data = dat, clusters = J_fac)),
+    rmcall(lm_robust(Y~Z, data = dat, clusters = J))
   )
 
   # works with being cast in the call

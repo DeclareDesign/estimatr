@@ -54,7 +54,6 @@ you can use the generic accessor functions \code{coef}, and\code{confint}.
 
 An object of class \code{"difference_in_means"} is a list containing at
 least the following components:
-\describe{
   \item{est}{the estimated coefficients}
   \item{se}{the estimated standard errors}
   \item{df}{the estimated degrees of freedom}
@@ -66,7 +65,6 @@ least the following components:
   \item{N}{the number of observations used}
   \item{outcome}{the name of the outcome variable}
   \item{design}{the name of the design learned from the arguments passed}
-}
 }
 \description{
 This difference-in-means estimator selects the appropriate
@@ -166,5 +164,6 @@ lm_robust(Y ~ Z_simp, weights = w, data = dat)
 }
 \references{
 Gerber, Alan S, and Donald P Green. 2012. Field Experiments: Design, Analysis, and Interpretation. New York: W.W. Norton.
+
 Imai, Kosuke, Gary King, Clayton Nall. 2009. "The Essential Role of Pair Matching in Cluster-Randomized Experiments, with Application to the Mexican Universal Health Insurance Evaluation." Statistical Science 24 (1). Institute of Mathematical Statistics: 29-53. \url{https://doi.org/10.1214/08-STS274}.
 }

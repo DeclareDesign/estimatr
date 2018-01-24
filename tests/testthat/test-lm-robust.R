@@ -16,11 +16,12 @@ test_that("lm robust se", {
     "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3',"
   )
 
-  lm_robust(Y ~ Z + X, data = dat, subset = W > 0.5)
   # Works with subset
+  lmsub <- lm_robust(Y ~ Z + X, data = dat, subset = W > 0.5)
+  lmbool <- lm_robust(Y ~ Z + X, data = dat[dat$W > 0.5, ])
   expect_identical(
-    lm_robust(Y ~ Z + X, data = dat, subset = W > 0.5),
-    lm_robust(Y ~ Z + X, data = dat[dat$W > 0.5, ])
+    rmcall(lmsub),
+    rmcall(lmbool)
   )
 
   lm_robust(Y ~ Z, weights = W, data = dat)
@@ -39,8 +40,8 @@ test_that("lm robust se", {
 
     # Stata is the same as HC1
     expect_identical(
-      lm_hc1,
-      lm_stata
+      rmcall(lm_hc1),
+      rmcall(lm_stata)
     )
 
     expect_false(all(lm_hc0$se == lm_hc1$se))
@@ -80,8 +81,8 @@ test_that("lm robust works with missingness", {
   dat$X[23] <- NA
 
   expect_identical(
-    lm_robust(Y ~ Z + X, data = dat),
-    lm_robust(Y ~ Z + X, data = dat[-23, ])
+    rmcall(lm_robust(Y ~ Z + X, data = dat)),
+    rmcall(lm_robust(Y ~ Z + X, data = dat[-23, ]))
   )
   lm_robust(Y ~ Z + X, data = dat)
   lm_robust(Y ~ Z * X, data = dat)
@@ -118,8 +119,8 @@ test_that("lm_robust doesn't include aux variables when . is used", {
   clust <- rep(1:5, each = 2)
 
   expect_identical(
-    lm_robust(y ~ ., clusters = clust, data = dat),
-    lm_robust(y ~ x, clusters = clust, data = dat)
+    rmcall(lm_robust(y ~ ., clusters = clust, data = dat)),
+    rmcall(lm_robust(y ~ x, clusters = clust, data = dat))
   )
 })
 
@@ -160,8 +161,8 @@ test_that("lm robust works with weights", {
   )
 
   expect_identical(
-    estimatr_miss_out,
-    lm_robust(Y ~ Z * X, weights = W, data = dat[-39, ])
+    rmcall(estimatr_miss_out),
+    rmcall(lm_robust(Y ~ Z * X, weights = W, data = dat[-39, ]))
   )
 
   # Compare to lm output

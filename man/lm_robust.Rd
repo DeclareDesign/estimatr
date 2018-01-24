@@ -51,7 +51,6 @@ you can use the generic accessor functions \code{coef}, \code{vcov},
 
 An object of class \code{"lm_robust"} is a list containing at least the
 following components:
-\describe{
   \item{est}{the estimated coefficients}
   \item{se}{the estimated standard errors}
   \item{df}{the estimated degrees of freedom}
@@ -66,7 +65,7 @@ following components:
   \item{rank}{the rank of the fitted model}
   \item{vcov}{the fitted variance covariance matrix}
   \item{weighted}{whether or not weights were applied}
-}
+  \item{call}{the original function call}
 We also return \code{terms} and \code{contrasts}, used by \code{predict}.
 }
 \description{
@@ -169,8 +168,11 @@ lm_robust(y ~ x + z, data = dat, alpha = 0.1)
 }
 \references{
 Abadie, Alberto, Susan Athey, Guido W Imbens, and Jeffrey Wooldridge. 2017. "A Class of Unbiased Estimators of the Average Treatment Effect in Randomized Experiments." arXiv Pre-Print. \url{https://arxiv.org/abs/1710.02926v2}.
+
 Bell, Robert M, and Daniel F McCaffrey. 2002. "Bias Reduction in Standard Errors for Linear Regression with Multi-Stage Samples." Survey Methodology 28 (2): 169-82.
 MacKinnon, James, and Halbert White. 1985. "Some Heteroskedasticity-Consistent Covariance Matrix Estimators with Improved Finite Sample Properties." Journal of Econometrics 29 (3): 305-25. \url{https://doi.org/10.1016/0304-4076(85)90158-7}.
+
 Pustejovsky, James E, and Elizabeth Tipton. 2016. "Small Sample Methods for Cluster-Robust Variance Estimation and Hypothesis Testing in Fixed Effects Models." Journal of Business & Economic Statistics. Taylor & Francis. \url{https://doi.org/10.1080/07350015.2016.1247004}.
+
 Samii, Cyrus, and Peter M Aronow. 2012. "On Equivalencies Between Design-Based and Regression-Based Variance Estimators for Randomized Experiments." Statistics and Probability Letters 82 (2). \url{https://doi.org/10.1016/j.spl.2011.10.024}.
 }
