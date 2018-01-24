@@ -30,7 +30,7 @@ corresponds to the clusters in the data.}
 "classical". With clustering: "CR0", "CR2" (default), or "stata" are
 permissible.}
 
-\item{ci}{A boolean for whether to compute and return pvalues and confidence
+\item{ci}{A boolean for whether to compute and return p-values and confidence
 intervals, TRUE by default.}
 
 \item{alpha}{The significance level, 0.05 by default.}

@@ -38,7 +38,7 @@ default be 0 and \code{condition2} will be 1). See the examples for more.}
 \item{condition2}{value in the treatment vector of the condition to be the
 treatment. See \code{condition1}.}
 
-\item{ci}{A boolean for whether to compute and return pvalues and
+\item{ci}{A boolean for whether to compute and return p-values and
 confidence intervals, TRUE by default.}
 
 \item{alpha}{The significance level, 0.05 by default.}
@@ -71,8 +71,9 @@ least the following components:
 \description{
 This difference-in-means estimator selects the appropriate
 point estimator, standard errors, and degrees of freedom for a variety of
-designs, including clustered randomization, matched-pairs randomization,
-and more
+designs: unit randomized, cluster randomized, block randomized,
+block-cluster randomized, matched-pairs, and matched-pair cluster
+randomized designs
 }
 \details{
 This function implements a difference-in-means estimator, with
@@ -165,5 +166,5 @@ lm_robust(Y ~ Z_simp, weights = w, data = dat)
 }
 \references{
 Gerber, Alan S, and Donald P Green. 2012. Field Experiments: Design, Analysis, and Interpretation. New York: W.W. Norton.
-Imai, Kosuke, Gary King, Clayton Nall, and others. 2009. "The Essential Role of Pair Matching in Cluster-Randomized Experiments, with Application to the Mexican Universal Health Insurance Evaluation." Statistical Science 24 (1). Institute of Mathematical Statistics: 29-53. \url{https://doi.org/10.1214/08-STS274}.
+Imai, Kosuke, Gary King, Clayton Nall. 2009. "The Essential Role of Pair Matching in Cluster-Randomized Experiments, with Application to the Mexican Universal Health Insurance Evaluation." Statistical Science 24 (1). Institute of Mathematical Statistics: 29-53. \url{https://doi.org/10.1214/08-STS274}.
 }

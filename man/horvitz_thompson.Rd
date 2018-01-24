@@ -61,7 +61,7 @@ inequality (and is conservative) while the other uses a constant treatment
 effects assumption and only works for simple randomized designs at the
 moment.}
 
-\item{ci}{A boolean for whether to compute and return pvalues and confidence
+\item{ci}{A boolean for whether to compute and return p-values and confidence
 intervals, TRUE by default.}
 
 \item{alpha}{The significance level, 0.05 by default.}

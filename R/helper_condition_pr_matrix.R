@@ -185,8 +185,9 @@ declaration_to_condition_pr_mat <- function(declaration) {
 #' )
 #' arb_pr_mat <- permutations_to_condition_pr_mat(possible_treats)
 #' # Simulating a column to be realized treatment
-#' dat$z <- possible_treats[, sample(ncol(possible_treats), size = 1)]
-#' horvitz_thompson(y ~ z, data = dat, condition_pr_mat = arb_pr_mat)
+#' z <- possible_treats[, sample(ncol(possible_treats), size = 1)]
+#' y <- rnorm(nrow(possible_treats))
+#' horvitz_thompson(y ~ z, condition_pr_mat = arb_pr_mat)
 #'
 #' @export
 permutations_to_condition_pr_mat <- function(permutations) {

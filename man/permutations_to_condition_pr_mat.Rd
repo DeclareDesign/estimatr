@@ -23,7 +23,7 @@ permutation matrix
 }
 \details{
 This function takes a matrix of permutations, for example from
-the \code{\link[randomizr]{obtain_permutations_matrix}} function in
+the \code{\link[randomizr]{obtain_permutation_matrix}} function in
 \pkg{randomizr} or through simulation and returns a 2n*2n matrix that can
 be used to fully specify the design for \code{\link{horvitz_thompson}}
 estimation. You can read more about these matrices in the documentation for
@@ -35,7 +35,7 @@ of
 \examples{
 
 # Complete randomization
-perms <- replicate(1000, sample(rep(0:1), each = 50))
+perms <- replicate(1000, sample(rep(0:1, each = 50)))
 comp_pr_mat <- permutations_to_condition_pr_mat(perms)
 
 # Arbitrary randomization
@@ -46,8 +46,9 @@ possible_treats <- cbind(
 )
 arb_pr_mat <- permutations_to_condition_pr_mat(possible_treats)
 # Simulating a column to be realized treatment
-dat$z <- possible_treats[, sample(ncol(possible_treats), size = 1)]
-horvitz_thompson(y ~ z, data = dat, condition_pr_mat = arb_pr_mat)
+z <- possible_treats[, sample(ncol(possible_treats), size = 1)]
+y <- rnorm(nrow(possible_treats))
+horvitz_thompson(y ~ z, condition_pr_mat = arb_pr_mat)
 
 }
 \seealso{

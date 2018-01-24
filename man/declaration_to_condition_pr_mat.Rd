@@ -33,7 +33,7 @@ Currently, this function can learn the condition probability matrix for a
 wide variety of randomizations: simple, complete, simple clustered, complete
 clustered, blocked, block-clustered.
 
-A condition probability matrix is made up of four-submatrices, each of which
+A condition probability matrix is made up of four submatrices, each of which
 corresponds to the
 joint and marginal probability that each observation is in one of the two
 treatment conditions.
