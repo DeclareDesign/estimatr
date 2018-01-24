@@ -35,6 +35,7 @@ r_packages:
 - drat
 - git2r
 - broom
+- texreg
 after_success:
 - test $TRAVIS_OS_NAME == "linux" && Rscript -e 'covr::coveralls()'
 - test $TRAVIS_OS_NAME == "osx" && Rscript -e "devtools::build(binary = TRUE, args = c('--preclean'))"
