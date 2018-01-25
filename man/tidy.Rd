@@ -33,6 +33,4 @@ name of the outcome variable
 }
 \description{
 Tidy the result of an estimator into a data.frame
-
-tidy on a NULL input
 }

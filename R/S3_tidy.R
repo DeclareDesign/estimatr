@@ -10,7 +10,6 @@ tidy <- function(object, ...) {
 }
 
 
-#' tidy on a NULL input
 #' @rdname tidy
 #'
 #' @param object An object returned by one of the estimators
