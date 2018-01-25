@@ -19,3 +19,4 @@ update_repo.R
 ^tests/testthat/run-stata-models\.do$
 ^tests/testthat/test-broom\.R$
 ^estimatr_.*\.tar\.gz$
+^tests/testthat/test-texreg\.R$
