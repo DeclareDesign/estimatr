@@ -88,7 +88,7 @@ predict.lm_robust <- function(object,
         X[
           ,
           names(object$scaled_center),
-          drop = F
+          drop = FALSE
         ],
         center = object$scaled_center,
         scale = FALSE
@@ -100,7 +100,7 @@ predict.lm_robust <- function(object,
     interacted_covars <- X[, treat_name] * demeaned_covars
 
     X <- cbind(
-      X[, attr(X, "assign") <= 1, drop = F],
+      X[, attr(X, "assign") <= 1, drop = FALSE],
       demeaned_covars,
       interacted_covars
     )

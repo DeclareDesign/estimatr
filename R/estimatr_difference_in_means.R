@@ -237,7 +237,8 @@ difference_in_means <-
 
     data <- data.frame(
       y = model_data$outcome,
-      t = model_data$original_treatment
+      t = model_data$original_treatment,
+      stringsAsFactors = FALSE
     )
     data$cluster <- model_data$cluster
     data$weights <- model_data$weights
@@ -369,7 +370,8 @@ difference_in_means <-
         coefficients = diff,
         se = se,
         df = df,
-        N = N_overall
+        N = N_overall,
+        stringsAsFactors = FALSE
       )
     }
 
@@ -522,7 +524,8 @@ difference_in_means_internal <-
         coefficients = diff,
         se = se,
         N = N,
-        df = df
+        df = df,
+        stringsAsFactors = FALSE
       )
 
     return(return_frame)

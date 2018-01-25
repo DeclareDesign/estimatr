@@ -126,7 +126,7 @@ test_that("Horvitz-Thompson works with clustered data", {
   # Can infer probabilities as well
   expect_equal(
     ht_crs_decl,
-    horvitz_thompson(y ~ z, data = dat, clusters = cl, simple = F)
+    horvitz_thompson(y ~ z, data = dat, clusters = cl, simple = FALSE)
   )
 
   # And constant effects error for non-simple designs
@@ -298,7 +298,7 @@ test_that("Horvitz-Thompson properly checks arguments and data", {
     cl = rep(1:4, each = 2),
     bl = rep(1:2, each = 4)
   )
-  decl <- randomizr::declare_ra(N = n, prob = 0.4, simple = F)
+  decl <- randomizr::declare_ra(N = n, prob = 0.4, simple = FALSE)
 
   # default is mean(ps)
   expect_identical(

@@ -115,7 +115,8 @@ lm_robust_fit <- function(y,
   return_frame <- data.frame(
     coefficients = setNames(as.vector(fit$beta_hat), variable_names),
     se = NA,
-    df = NA
+    df = NA,
+    stringsAsFactors = FALSE
   )
 
   est_exists <- !is.na(return_frame$coefficients)

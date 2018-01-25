@@ -362,7 +362,8 @@ horvitz_thompson <-
 
     data <- data.frame(
       y = model_data$outcome,
-      t = model_data$original_treatment
+      t = model_data$original_treatment,
+      stringsAsFactors = FALSE
     )
 
     # Parse conditions
@@ -676,16 +677,16 @@ horvitz_thompson_internal <-
             sum(Y1 ^ 2) +
             ht_var_partial(
               Y2,
-              condition_pr_mat[(k + t2), (k + t2), drop = F]
+              condition_pr_mat[(k + t2), (k + t2), drop = FALSE]
             ) +
             ht_var_partial(
               Y1,
-              condition_pr_mat[t1, t1, drop = F]
+              condition_pr_mat[t1, t1, drop = FALSE]
             ) -
             2 * ht_covar_partial(
               Y2,
               Y1,
-              condition_pr_mat[(k + t2), t1, drop = F],
+              condition_pr_mat[(k + t2), t1, drop = FALSE],
               ps2,
               ps1
             )
@@ -747,16 +748,16 @@ horvitz_thompson_internal <-
             sum(Y1 ^ 2) +
             ht_var_partial(
               Y2,
-              condition_pr_mat[(N + t2), (N + t2), drop = F]
+              condition_pr_mat[(N + t2), (N + t2), drop = FALSE]
             ) +
             ht_var_partial(
               Y1,
-              condition_pr_mat[t1, t1, drop = F]
+              condition_pr_mat[t1, t1, drop = FALSE]
             ) -
             2 * ht_covar_partial(
               Y2,
               Y1,
-              condition_pr_mat[(N + t2), t1, drop = F],
+              condition_pr_mat[(N + t2), t1, drop = FALSE],
               ps2,
               ps1
             )
@@ -782,7 +783,8 @@ horvitz_thompson_internal <-
       data.frame(
         coefficients = diff,
         se = se,
-        N = N
+        N = N,
+        stringsAsFactors = FALSE
       )
 
     return(return_frame)

@@ -322,7 +322,7 @@ gen_pr_matrix_block <- function(blocks, clusters, p2 = NULL, p1 = NULL, t = NULL
   condition_pr_matrix <- matrix(NA, nrow = 2 * n, ncol = 2 * n)
 
   # Split by block and get complete randomized values within each block
-  id_dat <- data.frame(ids = 1:n)
+  id_dat <- data.frame(ids = 1:n, stringsAsFactors = FALSE)
   if (!is.null(p2)) {
     id_dat$p2 <- p2
   }
