@@ -8,7 +8,7 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
     if (ttest) {
       if (any(return_frame$df <= 0, na.rm = TRUE)) {
         warning(
-          "Some degrees of freedom have been estimated as negative or zero; ",
+          "Some degrees of freedom have been estimated as negative or zero\n",
           "p-values and confidence intervals may not be calculated"
         )
 

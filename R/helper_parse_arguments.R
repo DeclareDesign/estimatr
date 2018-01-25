@@ -17,8 +17,8 @@ parse_conditions <- function(treatment, condition1, condition2, estimator) {
   if (n_conditions > 2) {
     if (is.null(condition1) || is.null(condition2)) {
       stop(
-        "Treatment has > 2 values; must specify both 'condition1' and ",
-        "'condition2' or use a treatment with only 2 values."
+        "Treatment has > 2 values; must specify both `condition1` and ",
+        "`condition2` or use a treatment with only 2 values"
       )
     } else {
       conditions[1:2] <- c(condition1, condition2)
@@ -38,7 +38,7 @@ parse_conditions <- function(treatment, condition1, condition2, estimator) {
     if (estimator != "horvitz_thompson") {
       stop(
         "Must have more than one value in treatment unless using Horvitz-",
-        "Thompson estimator."
+        "Thompson estimator"
       )
     }
 
@@ -62,7 +62,7 @@ check_clusters_blocks <- function(data) {
 
     # Check that clusters nest within blocks
     if (any(!one_block_per_clust)) {
-      stop("All clusters must be contained within blocks")
+      stop("All `clusters` must be contained within `blocks`")
     }
 
     # get number of clusters per block

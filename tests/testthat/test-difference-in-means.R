@@ -35,7 +35,7 @@ test_that("DIM arguments parsed correctly", {
   dat$bad_cl <- rep(1:10, times = 10)
   expect_error(
     difference_in_means(Y ~ Z, blocks = bl, clusters = bad_cl, data = dat),
-    "All clusters must be contained within blocks"
+    "All `clusters` must be contained within `blocks`"
   )
 
   dat$bad_bl <- c(1, rep(2:10, length.out = 99))

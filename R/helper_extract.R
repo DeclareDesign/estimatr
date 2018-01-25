@@ -1,11 +1,18 @@
 # This code modified from
 # https://github.com/leifeld/texreg/blob/master/R/extract.R (no LICENSE)
-#' Extract model data for texreg output
+#' Extract model data for \pkg{texreg} package
 #'
 #' @description Prepares an \code{"lm_robust"} object for the \pkg{texreg}
-#' package.
+#' package. This is largely a clone of the \code{\link[texreg]{extract.lm}}
+#' method.
 #'
 #' @param model an object of class \code{\link{lm_robust}}
+#' @param include.ci logical. Defaults to TRUE
+#' @param include.rsquared logical. Defaults to TRUE
+#' @param include.adjrs logical. Defaults to TRUE
+#' @param include.nobs logical. Defaults to TRUE
+#' @param include.fstatistic logical. Defaults to TRUE
+#' @param include.rmse logical. Defaults to TRUE
 #'
 #'
 extract.lm_robust <- function(model, include.ci = TRUE, include.rsquared = TRUE, include.adjrs = TRUE,

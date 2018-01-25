@@ -43,25 +43,29 @@ clean_model_data <- function(formula,
     # Todo generalize to all extra components
     if (!is.null(why_omit[["(cluster)"]])) {
       warning(
-        "Some observations have missingness in the cluster variable but not in the outcome or covariates. These observations have been dropped."
+        "Some observations have missingness in the cluster variable but not ",
+        "in the outcome or covariates. These observations have been dropped."
       )
     }
 
     if (!is.null(why_omit[["(condition_pr)"]])) {
       warning(
-        "Some observations have missingness in the condition_pr variable but not in the outcome or covariates. These observations have been dropped."
+        "Some observations have missingness in the condition_pr variable but ",
+        "not in the outcome or covariates. These observations have been dropped."
       )
     }
 
     if (!is.null(why_omit[["(block)"]])) {
       warning(
-        "Some observations have missingness in the block variable but not in the outcome or covariates. These observations have been dropped."
+        "Some observations have missingness in the block variable but not in ",
+        "the outcome or covariates. These observations have been dropped."
       )
     }
 
     if (!is.null(why_omit[["(weights)"]])) {
       warning(
-        "Some observations have missingness in the weights variable but not in the outcome or covariates. These observations have been dropped."
+        "Some observations have missingness in the weights variable but not in ",
+        "the outcome or covariates. These observations have been dropped."
       )
     }
   })
