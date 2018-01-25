@@ -48,7 +48,7 @@ The current estimators we provide are:
 
 I first create some sample data to demonstrate how to use each of these estimators.
 
-```{r echo=TRUE, results="hide"}
+```{r echo=TRUE, results="hide", warning=FALSE}
 library(estimatr)
 
 # Example dataset to be used throughout built using fabricatr and randomizr

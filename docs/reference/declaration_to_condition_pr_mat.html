@@ -126,7 +126,8 @@
       <th>declaration</th>
       <td><p>An object of class <code>"ra_declaration"</code>, generated
 by the <code><a href='http://www.rdocumentation.org/packages/randomizr/topics/declare_ra'>declare_ra</a></code> function in <span class="pkg">randomizr</span>. This
-object contains the experimental design that will be represented in a</p></td>
+object contains the experimental design that will be represented in a
+condition probability matrix</p></td>
     </tr>
     </table>
     
@@ -195,17 +196,13 @@ Pr(Z_i = Condition2, Z_j = Condition2).</p>
 <span class='co'># Do randomiztion</span>
 <span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='no'>bl_declaration</span>$<span class='fu'>ra_function</span>()
 
-<span class='fu'><a href='horvitz_thompson.html'>horvitz_thompson</a></span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>block_pr_mat</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p   ci_lower  ci_upper df
-#&gt; 1                z 0.0789944 0.2167921 0.7155754 -0.3459104 0.5038992 NA
-#&gt;   outcome
-#&gt; 1       y</div><div class='input'>
+<span class='fu'><a href='horvitz_thompson.html'>horvitz_thompson</a></span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>block_pr_mat</span>)</div><div class='output co'>#&gt;    Estimate Std. Error  Pr(&gt;|t|)   CI Lower  CI Upper DF
+#&gt; z 0.0789944  0.2167921 0.7155754 -0.3459104 0.5038992 NA</div><div class='input'>
 <span class='co'># When you pass a declaration to horvitz_thompson, this function is called</span>
 
 <span class='co'># Equivalent to above call</span>
-<span class='fu'><a href='horvitz_thompson.html'>horvitz_thompson</a></span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>bl_declaration</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p   ci_lower  ci_upper df
-#&gt; 1                z 0.0789944 0.2167921 0.7155754 -0.3459104 0.5038992 NA
-#&gt;   outcome
-#&gt; 1       y</div><div class='input'>
+<span class='fu'><a href='horvitz_thompson.html'>horvitz_thompson</a></span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>bl_declaration</span>)</div><div class='output co'>#&gt;    Estimate Std. Error  Pr(&gt;|t|)   CI Lower  CI Upper DF
+#&gt; z 0.0789944  0.2167921 0.7155754 -0.3459104 0.5038992 NA</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

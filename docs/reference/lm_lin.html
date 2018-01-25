@@ -113,8 +113,7 @@
     
     <p>This function is a wrapper for <code><a href='lm_robust.html'>lm_robust</a></code> that
 is useful for estimating treatment effects with pre-treatment covariate
-data. This implements the method described by Lin (2013) to reduce the bias
-of such estimation</p>
+data. This implements the method described by Lin (2013).</p>
     
 
     <pre class="usage"><span class='fu'>lm_lin</span>(<span class='no'>formula</span>, <span class='no'>covariates</span>, <span class='no'>data</span>, <span class='no'>weights</span>, <span class='no'>subset</span>, <span class='no'>clusters</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
@@ -154,14 +153,15 @@ corresponds to the clusters in the data.</p></td>
     </tr>
     <tr>
       <th>se_type</th>
-      <td><p>The sort of standard error sought. Without clustering:
-"HC0", "HC1" (or "stata", the equivalent), "HC2" (default), "HC3", or
-"classical". With clustering: "CR0", "CR2" (default), or "stata" are
+      <td><p>The sort of standard error sought. If `clusters` is
+not specified the options are "HC0", "HC1" (or "stata", the equivalent),
+"HC2" (default), "HC3", or  "classical". If `clusters` is specified the
+options are "CR0", "CR2" (default), or "stata" are
 permissible.</p></td>
     </tr>
     <tr>
       <th>ci</th>
-      <td><p>A boolean for whether to compute and return p-values and confidence
+      <td><p>logical. Whether to compute and return p-values and confidence
 intervals, TRUE by default.</p></td>
     </tr>
     <tr>
@@ -170,49 +170,61 @@ intervals, TRUE by default.</p></td>
     </tr>
     <tr>
       <th>return_vcov</th>
-      <td><p>a boolean for whether to return the variance-covariance
+      <td><p>logical. Whether to return the variance-covariance
 matrix for later usage, TRUE by default.</p></td>
     </tr>
     <tr>
       <th>try_cholesky</th>
-      <td><p>a boolean for whether to try using a Cholesky
-decomposition to solve LS instead of a QR decomposition, FALSE by default.
-Using a Cholesky decomposition may result in speed gains, but should only
-be used if users are sure their model is full-rank (i.e. there is no
-perfect multi-collinearity).</p></td>
+      <td><p>logical. Whether to try using a Cholesky
+decomposition to solve least squares instead of a QR decomposition,
+FALSE by default. Using a Cholesky decomposition may result in speed gains, but should only
+be used if users are sure their model is full-rank (i.e., there is no
+perfect multi-collinearity)</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p><code>lm_lin</code> returns an object of class <code>"lm_robust"</code>.</p>
-<p>The functions <code>summary</code> and <code><a href='tidy.html'>tidy</a></code> can be used to get
-the results as a <code>data.frame</code>. To get useful data out of the return,
+    <p>An object of class <code>"lm_robust"</code>.</p>
+<p>The post-estimation commands functions <code>summary</code> and <code><a href='tidy.html'>tidy</a></code>
+return results in a <code>data.frame</code>. To get useful data out of the return,
 you can use these data frames, you can use the resulting list directly, or
 you can use the generic accessor functions <code>coef</code>, <code>vcov</code>,
-<code>confint</code>, and <code>predict</code>.</p>
+<code>confint</code>, and <code>predict</code>. Marginal effects and uncertainty about
+them can be gotten by passing this object to
+<code><a href='http://www.rdocumentation.org/packages/margins/topics/margins'>margins</a></code> from the <span class="pkg">margins</span>.</p>
+<p>Users who want to print the results in TeX of HTML can use the
+<code><a href='http://www.rdocumentation.org/packages/texreg/topics/extract'>extract</a></code> function and the <span class="pkg">texreg</span> package.</p>
 <p>An object of class <code>"lm_robust"</code> is a list containing at least the
-following components:</p><dl class='dl-horizontal'>
-  <dt>est</dt><dd><p>the estimated coefficients</p></dd>
+following components:</p>
+<dt>coefficients</dt><dd><p>the estimated coefficients</p></dd>
   <dt>se</dt><dd><p>the estimated standard errors</p></dd>
   <dt>df</dt><dd><p>the estimated degrees of freedom</p></dd>
-  <dt>p</dt><dd><p>the p-values from the t-test using <code>est</code>, <code>se</code>, and <code>df</code></p></dd>
+  <dt>p</dt><dd><p>the p-values from a two-sided t-test using <code>coefficients</code>, <code>se</code>, and <code>df</code></p></dd>
   <dt>ci_lower</dt><dd><p>the lower bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
   <dt>ci_upper</dt><dd><p>the upper bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
   <dt>coefficient_name</dt><dd><p>a character vector of coefficient names</p></dd>
   <dt>alpha</dt><dd><p>the significance level specified by the user</p></dd>
-  <dt>res_var</dt><dd><p>the residual variance, used for uncertainty when using <code>predict</code></p></dd>
+  <dt>res_var</dt><dd><p>the residual variance</p></dd>
   <dt>N</dt><dd><p>the number of observations used</p></dd>
   <dt>k</dt><dd><p>the number of columns in the design matrix (includes linearly dependent columns!)</p></dd>
   <dt>rank</dt><dd><p>the rank of the fitted model</p></dd>
   <dt>vcov</dt><dd><p>the fitted variance covariance matrix</p></dd>
+  <dt>r.squared</dt><dd><p>The \(R^2\),
+  $$R^2 = 1 - Sum(e[i]^2) / Sum((y[i] - y^*)^2),$$ where \(y^*\)
+  is the mean of \(y[i]\) if there is an intercept and zero otherwise,
+  and \(e[i]\) is the ith residual.</p></dd>
+  <dt>adj.r.squared</dt><dd><p>The \(R^2\) but penalized for having more parameters, <code>rank</code></p></dd>
   <dt>weighted</dt><dd><p>whether or not weights were applied</p></dd>
-  <dt>scaled_center</dt><dd><p>the means of each of the covariates used for centering them</p></dd>
-</dl><p>We also return <code>terms</code> and <code>contrasts</code>, used by <code>predict</code>.</p>
+  <dt>call</dt><dd><p>the original function call</p></dd>
+We also return terms and contrasts, used by predict,
+and scaled_centerthe means of each of the covariates used for centering them
+
     
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>This function is simply a wrapper for <code><a href='lm_robust.html'>lm_robust</a></code>. This method
+    <p>This function is simply a wrapper for <code><a href='lm_robust.html'>lm_robust</a></code> and implements
+the Lin estimator (see the reference below). This method
 pre-processes the data by taking the covariates specified in the
 <code>`covariates`</code> argument, centering them by subtracting from each covariate
 its mean, and interacting them with the treatment. If the treatment has
@@ -223,14 +235,12 @@ in the
 and the
 <a href='http://estimatr.declaredesign.org/articles/technical-notes.html'>technical notes</a>.</p>
     
-    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
-
-    <p>Freedman, David A. 2008. "On Regression Adjustments in Experiments with Several Treatments." The Annals of Applied Statistics. JSTOR, 176-96. <a href='https://doi.org/10.1214/07-AOAS143'>https://doi.org/10.1214/07-AOAS143</a>.
-Lin, Winston. 2013. "Agnostic Notes on Regression Adjustments to Experimental Data: Reexamining Freedman's Critique." The Annals of Applied Statistics 7 (1). Institute of Mathematical Statistics: 295-318. <a href='https://doi.org/10.1214/12-AOAS583'>https://doi.org/10.1214/12-AOAS583</a>.</p>
-    
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <p><code><a href='lm_robust.html'>lm_robust</a></code></p>
+<p>#' @references
+Freedman, David A. 2008. "On Regression Adjustments in Experiments with Several Treatments." The Annals of Applied Statistics. JSTOR, 176-96. <a href='https://doi.org/10.1214/07-AOAS143'>https://doi.org/10.1214/07-AOAS143</a>.</p>
+<p>Lin, Winston. 2013. "Agnostic Notes on Regression Adjustments to Experimental Data: Reexamining Freedman's Critique." The Annals of Applied Statistics 7 (1). Institute of Mathematical Statistics: 295-318. <a href='https://doi.org/10.1214/12-AOAS583'>https://doi.org/10.1214/12-AOAS583</a>.</p>
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
@@ -245,71 +255,88 @@ Lin, Winston. 2013. "Agnostic Notes on Regression Adjustments to Experimental Da
   <span class='kw'>y1</span> <span class='kw'>=</span> <span class='fu'>rnorm</span>(<span class='no'>N</span>) + <span class='no'>x</span> + <span class='fl'>0.35</span>
 )
 
-<span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/simple_ra'>simple_ra</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>))
+<span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/complete_ra'>complete_ra</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>))
 <span class='no'>dat</span>$<span class='no'>y</span> <span class='kw'>&lt;-</span> <span class='fu'>ifelse</span>(<span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>==</span> <span class='fl'>1</span>, <span class='no'>dat</span>$<span class='no'>y1</span>, <span class='no'>dat</span>$<span class='no'>y0</span>)
 
-<span class='co'># Same specification as `lm_robust()` with one additional argument</span>
+<span class='co'># Same specification as lm_robust() with one additional argument</span>
 <span class='no'>lmlin_out</span> <span class='kw'>&lt;-</span> <span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>covariates</span> <span class='kw'>=</span> ~ <span class='no'>x</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)
-<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmlin_out</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se            p   ci_lower  ci_upper df
-#&gt; 1      (Intercept) 2.1475300 0.2618931 9.377889e-10  1.6163862 2.6786738 36
-#&gt; 2                z 0.3077413 0.3411292 3.729868e-01 -0.3841008 0.9995834 36
-#&gt; 3            x_bar 0.9654595 0.2206322 9.929515e-05  0.5179966 1.4129224 36
-#&gt; 4          z:x_bar 0.1292807 0.3346727 7.015556e-01 -0.5494670 0.8080284 36
+<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmlin_out</span>)</div><div class='output co'>#&gt;   coefficient_name coefficients        se            p   ci_lower  ci_upper df
+#&gt; 1      (Intercept)    1.8269388 0.2543331 1.890148e-08  1.3111275 2.3427502 36
+#&gt; 2                z    0.8431161 0.3380445 1.735734e-02  0.1575302 1.5287021 36
+#&gt; 3            x_bar    0.8616826 0.2580414 1.963654e-03  0.3383503 1.3850148 36
+#&gt; 4          z:x_bar    0.1255669 0.3445306 7.176483e-01 -0.5731736 0.8243074 36
 #&gt;   outcome
 #&gt; 1       y
 #&gt; 2       y
 #&gt; 3       y
 #&gt; 4       y</div><div class='input'>
 <span class='co'># Works with multiple pre-treatment covariates</span>
-<span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>covariates</span> <span class='kw'>=</span> ~ <span class='no'>x</span> + <span class='no'>x2</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;   coefficient_name         est        se            p   ci_lower  ci_upper df
-#&gt; 1      (Intercept)  2.17068526 0.2705310 2.368917e-09  1.6209000 2.7204705 34
-#&gt; 2                z  0.26577482 0.3476341 4.498286e-01 -0.4407027 0.9722523 34
-#&gt; 3            x_bar  1.03176130 0.1941414 6.707867e-06  0.6372185 1.4263040 34
-#&gt; 4           x2_bar -0.20659553 0.2389648 3.933480e-01 -0.6922304 0.2790393 34
-#&gt; 5          z:x_bar  0.08278470 0.3118637 7.922646e-01 -0.5509987 0.7165681 34
-#&gt; 6         z:x2_bar  0.06558611 0.2731794 8.117065e-01 -0.4895811 0.6207534 34
-#&gt;   outcome
-#&gt; 1       y
-#&gt; 2       y
-#&gt; 3       y
-#&gt; 4       y
-#&gt; 5       y
-#&gt; 6       y</div><div class='input'>
+<span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>covariates</span> <span class='kw'>=</span> ~ <span class='no'>x</span> + <span class='no'>x2</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;                Estimate Std. Error     Pr(&gt;|t|)   CI Lower  CI Upper DF
+#&gt; (Intercept)  1.79962363  0.2376886 8.557005e-09  1.3165823 2.2826650 34
+#&gt; z            0.92376708  0.3195841 6.655097e-03  0.2742941 1.5732401 34
+#&gt; x_bar        0.92380934  0.2770725 2.075764e-03  0.3607303 1.4868883 34
+#&gt; x2_bar      -0.12902605  0.1927653 5.077970e-01 -0.5207722 0.2627202 34
+#&gt; z:x_bar      0.07918477  0.3519194 8.233198e-01 -0.6360015 0.7943711 34
+#&gt; z:x2_bar    -0.13573956  0.2631839 6.093603e-01 -0.6705935 0.3991144 34</div><div class='input'>
 <span class='co'># Also centers data AFTER evaluating any functions in formula</span>
 <span class='no'>lmlin_out2</span> <span class='kw'>&lt;-</span> <span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>covariates</span> <span class='kw'>=</span> ~ <span class='no'>x</span> + <span class='fu'>log</span>(<span class='no'>x3</span>), <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)
 <span class='no'>lmlin_out2</span>$<span class='no'>scaled_center</span>[<span class='st'>"log(x3)"</span>]</div><div class='output co'>#&gt;    log(x3) 
 #&gt; -0.9732079 </div><div class='input'><span class='fu'>mean</span>(<span class='fu'>log</span>(<span class='no'>dat</span>$<span class='no'>x3</span>))</div><div class='output co'>#&gt; [1] -0.9732079</div><div class='input'>
-
 <span class='co'># Works easily with clusters</span>
 <span class='no'>dat</span>$<span class='no'>clusterID</span> <span class='kw'>&lt;-</span> <span class='fu'>rep</span>(<span class='fl'>1</span>:<span class='fl'>20</span>, <span class='kw'>each</span> <span class='kw'>=</span> <span class='fl'>2</span>)
 <span class='no'>dat</span>$<span class='no'>z_clust</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/cluster_ra'>cluster_ra</a></span>(<span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>clusterID</span>)
 
-<span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z_clust</span>, <span class='kw'>covariates</span> <span class='kw'>=</span> ~ <span class='no'>x</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>clusterID</span>)</div><div class='output co'>#&gt;   coefficient_name        est        se            p   ci_lower  ci_upper
-#&gt; 1      (Intercept) 2.28937959 0.2450574 2.299263e-05  1.7165491 2.8622101
-#&gt; 2          z_clust 0.06334119 0.3547253 8.605812e-01 -0.6902927 0.8169751
-#&gt; 3            x_bar 0.87149505 0.1797028 5.324095e-03  0.4024771 1.3405130
-#&gt; 4    z_clust:x_bar 0.23905610 0.2672557 3.948223e-01 -0.3674290 0.8455412
-#&gt;          df outcome
-#&gt; 1  7.423751       y
-#&gt; 2 15.580257       y
-#&gt; 3  4.760539       y
-#&gt; 4  8.817709       y</div><div class='input'>
+<span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z_clust</span>, <span class='kw'>covariates</span> <span class='kw'>=</span> ~ <span class='no'>x</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>clusterID</span>)</div><div class='output co'>#&gt;                 Estimate Std. Error     Pr(&gt;|t|)   CI Lower  CI Upper        DF
+#&gt; (Intercept)   2.06567229  0.1469872 4.202422e-07  1.7291873 2.4021572  8.351636
+#&gt; z_clust       0.36590730  0.3293214 2.821635e-01 -0.3294847 1.0612993 16.814419
+#&gt; x_bar         0.92669657  0.1452804 1.395332e-03  0.5533746 1.3000185  5.005936
+#&gt; z_clust:x_bar 0.02454839  0.2962328 9.358290e-01 -0.6489844 0.6980812  8.710723</div><div class='input'>
 <span class='co'># Works with multi-valued treatments</span>
 <span class='no'>dat</span>$<span class='no'>z_multi</span> <span class='kw'>&lt;-</span> <span class='fu'>sample</span>(<span class='fl'>1</span>:<span class='fl'>3</span>, <span class='kw'>size</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>), <span class='kw'>replace</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
-<span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z_multi</span>, <span class='kw'>covariates</span> <span class='kw'>=</span> ~ <span class='no'>x</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;   coefficient_name        est        se            p   ci_lower  ci_upper df
-#&gt; 1      (Intercept)  2.4901921 0.2029913 4.876519e-14  2.0776642 2.9027199 34
-#&gt; 2         z_multi2 -0.4751601 0.3458558 1.784735e-01 -1.1780236 0.2277035 34
-#&gt; 3         z_multi3  0.1126915 0.4781834 8.151058e-01 -0.8590941 1.0844771 34
-#&gt; 4            x_bar  0.7706609 0.4792864 1.170977e-01 -0.2033662 1.7446880 34
-#&gt; 5   z_multi2:x_bar  0.2616373 0.5400056 6.311318e-01 -0.8357862 1.3590607 34
-#&gt; 6   z_multi3:x_bar  0.2105992 0.6112720 7.325726e-01 -1.0316549 1.4528534 34
-#&gt;   outcome
-#&gt; 1       y
-#&gt; 2       y
-#&gt; 3       y
-#&gt; 4       y
-#&gt; 5       y
-#&gt; 6       y</div><div class='input'>
+<span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z_multi</span>, <span class='kw'>covariates</span> <span class='kw'>=</span> ~ <span class='no'>x</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;                   Estimate Std. Error     Pr(&gt;|t|)   CI Lower  CI Upper DF
+#&gt; (Intercept)     2.45470820  0.2131209 2.775987e-13  2.0215943 2.8878221 34
+#&gt; z_multi2       -0.38865454  0.3778223 3.108974e-01 -1.1564818 0.3791727 34
+#&gt; z_multi3       -0.25508609  0.5184909 6.258965e-01 -1.3087863 0.7986141 34
+#&gt; x_bar           0.87410782  0.1339753 1.809979e-07  0.6018373 1.1463783 34
+#&gt; z_multi2:x_bar -0.02728243  0.3084666 9.300416e-01 -0.6541620 0.5995972 34
+#&gt; z_multi3:x_bar  0.15613744  0.4997146 7.566044e-01 -0.8594047 1.1716796 34</div><div class='input'>
+<span class='co'># Stratified estimator with blocks</span>
+<span class='no'>dat</span>$<span class='no'>blockID</span> <span class='kw'>&lt;-</span> <span class='fu'>rep</span>(<span class='fl'>1</span>:<span class='fl'>5</span>, <span class='kw'>each</span> <span class='kw'>=</span> <span class='fl'>8</span>)
+<span class='no'>dat</span>$<span class='no'>z_block</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/block_ra'>block_ra</a></span>(<span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>blockID</span>)
+
+<span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z_block</span>, ~ <span class='fu'>factor</span>(<span class='no'>blockID</span>), <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;                                 Estimate Std. Error     Pr(&gt;|t|)   CI Lower
+#&gt; (Intercept)                   2.15370744  0.2826364 1.691145e-08  1.5764869
+#&gt; z_block                       0.18652698  0.4752187 6.974581e-01 -0.7839991
+#&gt; factor(blockID)2_bar         -0.93462363  1.0579586 3.840334e-01 -3.0952634
+#&gt; factor(blockID)3_bar         -1.21216762  0.7837649 1.324460e-01 -2.8128292
+#&gt; factor(blockID)4_bar         -0.03740077  0.7917444 9.626363e-01 -1.6543585
+#&gt; factor(blockID)5_bar         -0.16664690  0.6395678 7.962107e-01 -1.4728186
+#&gt; z_block:factor(blockID)2_bar  0.01735174  1.6629417 9.917438e-01 -3.3788283
+#&gt; z_block:factor(blockID)3_bar  1.74361108  1.5011288 2.545836e-01 -1.3221029
+#&gt; z_block:factor(blockID)4_bar  1.20744160  1.3967845 3.942038e-01 -1.6451729
+#&gt; z_block:factor(blockID)5_bar  0.20422731  1.3114802 8.772947e-01 -2.4741727
+#&gt;                               CI Upper DF
+#&gt; (Intercept)                  2.7309280 30
+#&gt; z_block                      1.1570531 30
+#&gt; factor(blockID)2_bar         1.2260161 30
+#&gt; factor(blockID)3_bar         0.3884939 30
+#&gt; factor(blockID)4_bar         1.5795569 30
+#&gt; factor(blockID)5_bar         1.1395248 30
+#&gt; z_block:factor(blockID)2_bar 3.4135318 30
+#&gt; z_block:factor(blockID)3_bar 4.8093251 30
+#&gt; z_block:factor(blockID)4_bar 4.0600561 30
+#&gt; z_block:factor(blockID)5_bar 2.8826273 30</div><div class='input'>
+</div><span class='co'># NOT RUN {</span>
+  <span class='co'># Can also use 'margins' package if you have it installed to get</span>
+  <span class='co'># marginal effects</span>
+  <span class='fu'>library</span>(<span class='no'>margins</span>)
+  <span class='no'>lmlout</span> <span class='kw'>&lt;-</span> <span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z_block</span>, ~ <span class='no'>x</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)
+  <span class='fu'>summary</span>(<span class='fu'><a href='http://www.rdocumentation.org/packages/margins/topics/margins'>margins</a></span>(<span class='no'>lmlout</span>))
+
+  <span class='co'># Can output results using 'texreg'</span>
+  <span class='fu'>library</span>(<span class='no'>texreg</span>)
+  <span class='no'>texregobj</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/texreg/topics/extract'>extract</a></span>(<span class='no'>lmlout</span>)
+<span class='co'># }</span><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -320,8 +347,6 @@ Lin, Winston. 2013. "Agnostic Notes on Regression Adjustments to Experimental Da
       <li><a href="#value">Value</a></li>
 
       <li><a href="#details">Details</a></li>
-
-      <li><a href="#references">References</a></li>
 
       <li><a href="#see-also">See also</a></li>
       

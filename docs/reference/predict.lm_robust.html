@@ -132,7 +132,7 @@
     </tr>
     <tr>
       <th>se.fit</th>
-      <td><p>a boolean for whether standard errors are required, default = FALSE</p></td>
+      <td><p>logical. Whether standard errors are required, default = FALSE</p></td>
     </tr>
     <tr>
       <th>interval</th>
@@ -144,15 +144,19 @@
     </tr>
     <tr>
       <th>na.action</th>
-      <td><p>function determining what should be done with missing values in newdata. The default is to predict NA.</p></td>
+      <td><p>function determining what should be done with missing
+values in newdata. The default is to predict NA.</p></td>
     </tr>
     <tr>
       <th>pred.var</th>
-      <td><p>the variance(s) for future observations to be assumed for prediction intervals.</p></td>
+      <td><p>the variance(s) for future observations to be assumed for
+prediction intervals.</p></td>
     </tr>
     <tr>
       <th>weights</th>
-      <td><p>variance weights for prediction. This can be a numeric vector or a bare (unquoted) name of the weights variable in the supplied newdata.</p></td>
+      <td><p>variance weights for prediction. This can be a numeric
+vector or a bare (unquoted) name of the weights variable in the supplied
+newdata.</p></td>
     </tr>
     <tr>
       <th>...</th>
@@ -162,11 +166,24 @@
     
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>predict.lm_robust produces predicted values, obtained by evaluating the regression function in the frame newdata for fits from <code>lm_robust</code> and <code>lm_lin</code>. If the logical se.fit is TRUE, standard errors of the predictions are calculated. Setting intervals specifies computation of confidence or prediction (tolerance) intervals at the specified level, sometimes referred to as narrow vs. wide intervals.</p>
-<p>The equation used for the standard error of a prediction given a row of data x is:
+    <p>Produces predicted values, obtained by evaluating the regression
+function in the frame `newdata`` for fits from <code>lm_robust</code> and
+<code>lm_lin</code>. If the logical se.fit is TRUE, standard errors of the
+predictions are calculated. Setting intervals specifies computation of
+confidence or prediction (tolerance) intervals at the specified level,
+sometimes referred to as narrow vs. wide intervals.</p>
+<p>The equation used for the standard error of a prediction given a row of
+data \(x\) is:
     \(\sqrt(x \Sigma x')\),</p>
-<p>where \(\Sigma\) is the estimated variance-covariance matrix from <code>lm_robust</code>.</p>
-<p>The prediction intervals are for a single observation at each case in newdata with error variance(s) pred.var. The the default is to assume that future observations have the same error variance as those used for fitting, which is gotten from the fit lm_robust object. If weights is supplied, the inverse of this is used as a scale factor. If the fit was weighted, the default is to assume constant prediction variance, with a warning.</p>
+<p>where \(\Sigma\) is the estimated variance-covariance matrix from
+<code>lm_robust</code>.</p>
+<p>The prediction intervals are for a single observation at each case in
+`newdata` with error variance(s) `pred.var`. The the default is to assume
+that future observations have the same error variance as those used for
+fitting, which is gotten from the fit <code><a href='lm_robust.html'>lm_robust</a></code> object. If
+weights is supplied, the inverse of this is used as a scale factor. If the
+fit was weighted, the default is to assume constant prediction variance,
+with a warning.</p>
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>

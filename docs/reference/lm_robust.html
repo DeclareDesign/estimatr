@@ -146,14 +146,15 @@ corresponds to the clusters in the data.</p></td>
     </tr>
     <tr>
       <th>se_type</th>
-      <td><p>The sort of standard error sought. Without clustering:
-"HC0", "HC1" (or "stata", the equivalent), "HC2" (default), "HC3", or
-"classical". With clustering: "CR0", "CR2" (default), or "stata". are
+      <td><p>The sort of standard error sought. If `clusters` is
+not specified the options are "HC0", "HC1" (or "stata", the equivalent),
+ "HC2" (default), "HC3", or
+"classical". If `clusters` is specified the options are "CR0", "CR2" (default), or "stata" are
 permissible.</p></td>
     </tr>
     <tr>
       <th>ci</th>
-      <td><p>A boolean for whether to compute and return p-values and confidence
+      <td><p>logical. Whether to compute and return p-values and confidence
 intervals, TRUE by default.</p></td>
     </tr>
     <tr>
@@ -162,77 +163,89 @@ intervals, TRUE by default.</p></td>
     </tr>
     <tr>
       <th>return_vcov</th>
-      <td><p>a boolean for whether to return the variance-covariance
+      <td><p>logical. Whether to return the variance-covariance
 matrix for later usage, TRUE by default.</p></td>
     </tr>
     <tr>
       <th>try_cholesky</th>
-      <td><p>a boolean for whether to try using a Cholesky
-decomposition to solve LS instead of a QR decomposition, FALSE by default.
-Using a Cholesky decomposition may result in speed gains, but should only
-be used if users are sure their model is full-rank (i.e. there is no
+      <td><p>logical. Whether to try using a Cholesky
+decomposition to solve least squares instead of a QR decomposition,
+FALSE by default. Using a Cholesky decomposition may result in speed gains, but should only
+be used if users are sure their model is full-rank (i.e., there is no
 perfect multi-collinearity)</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p><code>lm_robust</code> returns an object of class <code>"lm_robust"</code>.</p>
-<p>The functions <code>summary</code> and <code><a href='tidy.html'>tidy</a></code> can be used to get
-the results as a <code>data.frame</code>. To get useful data out of the return,
+    <p>An object of class <code>"lm_robust"</code>.</p>
+<p>The post-estimation commands functions <code>summary</code> and <code><a href='tidy.html'>tidy</a></code>
+return results in a <code>data.frame</code>. To get useful data out of the return,
 you can use these data frames, you can use the resulting list directly, or
 you can use the generic accessor functions <code>coef</code>, <code>vcov</code>,
-<code>confint</code>, and <code>predict</code>.</p>
+<code>confint</code>, and <code>predict</code>. Marginal effects and uncertainty about
+them can be gotten by passing this object to
+<code><a href='http://www.rdocumentation.org/packages/margins/topics/margins'>margins</a></code> from the <span class="pkg">margins</span>.</p>
+<p>Users who want to print the results in TeX of HTML can use the
+<code><a href='http://www.rdocumentation.org/packages/texreg/topics/extract'>extract</a></code> function and the <span class="pkg">texreg</span> package.</p>
 <p>An object of class <code>"lm_robust"</code> is a list containing at least the
-following components:</p><dl class='dl-horizontal'>
-  <dt>est</dt><dd><p>the estimated coefficients</p></dd>
+following components:</p>
+<dt>coefficients</dt><dd><p>the estimated coefficients</p></dd>
   <dt>se</dt><dd><p>the estimated standard errors</p></dd>
   <dt>df</dt><dd><p>the estimated degrees of freedom</p></dd>
-  <dt>p</dt><dd><p>the p-values from the t-test using <code>est</code>, <code>se</code>, and <code>df</code></p></dd>
+  <dt>p</dt><dd><p>the p-values from a two-sided t-test using <code>coefficients</code>, <code>se</code>, and <code>df</code></p></dd>
   <dt>ci_lower</dt><dd><p>the lower bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
   <dt>ci_upper</dt><dd><p>the upper bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
   <dt>coefficient_name</dt><dd><p>a character vector of coefficient names</p></dd>
   <dt>alpha</dt><dd><p>the significance level specified by the user</p></dd>
-  <dt>res_var</dt><dd><p>the residual variance, used for uncertainty when using <code>predict</code></p></dd>
+  <dt>res_var</dt><dd><p>the residual variance</p></dd>
   <dt>N</dt><dd><p>the number of observations used</p></dd>
   <dt>k</dt><dd><p>the number of columns in the design matrix (includes linearly dependent columns!)</p></dd>
   <dt>rank</dt><dd><p>the rank of the fitted model</p></dd>
   <dt>vcov</dt><dd><p>the fitted variance covariance matrix</p></dd>
+  <dt>r.squared</dt><dd><p>The \(R^2\),
+  $$R^2 = 1 - Sum(e[i]^2) / Sum((y[i] - y^*)^2),$$ where \(y^*\)
+  is the mean of \(y[i]\) if there is an intercept and zero otherwise,
+  and \(e[i]\) is the ith residual.</p></dd>
+  <dt>adj.r.squared</dt><dd><p>The \(R^2\) but penalized for having more parameters, <code>rank</code></p></dd>
   <dt>weighted</dt><dd><p>whether or not weights were applied</p></dd>
-</dl><p>We also return <code>terms</code> and <code>contrasts</code>, used by <code>predict</code>.</p>
+  <dt>call</dt><dd><p>the original function call</p></dd>
+We also return terms and contrasts, used by predict.
+
     
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>This function does linear regression and provides a variety of standard
-errors. It takes formulae and data much in the same was as <code>lm</code>
+    <p>This function performs linear regression and provides a variety of standard
+errors. It takes a formula and data much in the same was as <code>lm</code>
 does, and all auxiliary variables, such as clusters and weights, can be
 passed either as quoted names of columns, as bare column names, or
 as a self-contained vector. Examples of usage can be seen below and in the
 <a href='http://estimatr.declaredesign.org/articles/getting-started.html'>Getting Started vignette</a>.</p>
-<p>To see what the exact equations and computations each different
-type of standard error entails, users can see the
-<a href='http://estimatr.declaredesign.org/articles/technical-notes.html'>technical notes in this vignette</a>.
-The default estimators for the non-clustered and clustered case have been
-chosen for desirable similarities to randomization estimators, performance
-in small samples, or some combination of both. The default for the case
+<p>The technical notes in
+<a href='http://estimatr.declaredesign.org/articles/technical-notes.html'>this vignette</a>
+specify the exact estimators used by this function.
+The default variance estimators have been chosen largely in accordance with the
+procedures in
+<a href='https://github.com/acoppock/Green-Lab-SOP/blob/master/Green_Lab_SOP.pdf'>this manual</a>.
+The default for the case
 without clusters is the HC2 estimator and the default with clusters is the
 analogous CR2 estimator. Users can easily replicate Stata standard errors in
-the clustered or non-clustered case by setting <code>se_type = "stata"</code>.</p>
+the clustered or non-clustered case by setting <code>`se_type` = "stata"</code>.</p>
 <p>The function estimates the coefficients and standard errors in C++, using
 the <code>RcppEigen</code> package. By default, we estimate the coefficients
 using Column-Pivoting QR decomposition from the Eigen C++ library, although
-users could get faster solutions by setting <code>try_cholesky = TRUE</code> to
+users could get faster solutions by setting <code>`try_cholesky` = TRUE</code> to
 use a Cholesky decomposition instead. This will likely result in quicker
 solutions, but the algorithm does not reliably detect when there are linear
 dependencies in the model and may fail silently if they exist.</p>
     
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
-    <p>Abadie, Alberto, Susan Athey, Guido W Imbens, and Jeffrey Wooldridge. 2017. "A Class of Unbiased Estimators of the Average Treatment Effect in Randomized Experiments." arXiv Pre-Print. <a href='https://arxiv.org/abs/1710.02926v2'>https://arxiv.org/abs/1710.02926v2</a>.
-Bell, Robert M, and Daniel F McCaffrey. 2002. "Bias Reduction in Standard Errors for Linear Regression with Multi-Stage Samples." Survey Methodology 28 (2): 169-82.
-MacKinnon, James, and Halbert White. 1985. "Some Heteroskedasticity-Consistent Covariance Matrix Estimators with Improved Finite Sample Properties." Journal of Econometrics 29 (3): 305-25. <a href='https://doi.org/10.1016/0304-4076(85)90158-7'>https://doi.org/10.1016/0304-4076(85)90158-7</a>.
-Pustejovsky, James E, and Elizabeth Tipton. 2016. "Small Sample Methods for Cluster-Robust Variance Estimation and Hypothesis Testing in Fixed Effects Models." Journal of Business &amp; Economic Statistics. Taylor &amp; Francis. <a href='https://doi.org/10.1080/07350015.2016.1247004'>https://doi.org/10.1080/07350015.2016.1247004</a>.
-Samii, Cyrus, and Peter M Aronow. 2012. "On Equivalencies Between Design-Based and Regression-Based Variance Estimators for Randomized Experiments." Statistics and Probability Letters 82 (2). <a href='https://doi.org/10.1016/j.spl.2011.10.024'>https://doi.org/10.1016/j.spl.2011.10.024</a>.</p>
+    <p>Abadie, Alberto, Susan Athey, Guido W Imbens, and Jeffrey Wooldridge. 2017. "A Class of Unbiased Estimators of the Average Treatment Effect in Randomized Experiments." arXiv Pre-Print. <a href='https://arxiv.org/abs/1710.02926v2'>https://arxiv.org/abs/1710.02926v2</a>.</p>
+<p>Bell, Robert M, and Daniel F McCaffrey. 2002. "Bias Reduction in Standard Errors for Linear Regression with Multi-Stage Samples." Survey Methodology 28 (2): 169-82.</p>
+<p>MacKinnon, James, and Halbert White. 1985. "Some Heteroskedasticity-Consistent Covariance Matrix Estimators with Improved Finite Sample Properties." Journal of Econometrics 29 (3): 305-25. <a href='https://doi.org/10.1016/0304-4076(85)90158-7'>https://doi.org/10.1016/0304-4076(85)90158-7</a>.</p>
+<p>Pustejovsky, James E, and Elizabeth Tipton. 2016. "Small Sample Methods for Cluster-Robust Variance Estimation and Hypothesis Testing in Fixed Effects Models." Journal of Business &amp; Economic Statistics. Taylor &amp; Francis. <a href='https://doi.org/10.1080/07350015.2016.1247004'>https://doi.org/10.1080/07350015.2016.1247004</a>.</p>
+<p>Samii, Cyrus, and Peter M Aronow. 2012. "On Equivalencies Between Design-Based and Regression-Based Variance Estimators for Randomized Experiments." Statistics and Probability Letters 82 (2). <a href='https://doi.org/10.1016/j.spl.2011.10.024'>https://doi.org/10.1016/j.spl.2011.10.024</a>.</p>
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
@@ -244,45 +257,55 @@ Samii, Cyrus, and Peter M Aronow. 2012. "On Equivalencies Between Design-Based a
   <span class='kw'>z</span> <span class='kw'>=</span> <span class='fu'>rbinom</span>(<span class='no'>N</span>, <span class='fl'>1</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.4</span>)
 )
 
-<span class='co'># Default is to use HC2 robust standard errors</span>
+<span class='co'># Default variance estimator is HC2 robust standard errors</span>
 <span class='no'>lmro</span> <span class='kw'>&lt;-</span> <span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span> + <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)
 
-<span class='co'># Can `tidy()` or `summary()` the data to easily get output as a data.frame</span>
-<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmro</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se            p   ci_lower ci_upper df
-#&gt; 1      (Intercept) 3.8270190 0.4251936 7.460320e-11  2.9654951 4.688543 37
-#&gt; 2                x 0.5218375 0.3070137 9.757698e-02 -0.1002313 1.143906 37
-#&gt; 3                z 1.0450491 0.7799145 1.884321e-01 -0.5352077 2.625306 37
+<span class='co'># Can tidy() the data in to a data.frame</span>
+<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmro</span>)</div><div class='output co'>#&gt;   coefficient_name coefficients        se            p   ci_lower  ci_upper df
+#&gt; 1      (Intercept)   3.67846151 0.3826625 1.331206e-11  2.9031137 4.4538094 37
+#&gt; 2                x   0.01582338 0.3657818 9.657276e-01 -0.7253210 0.7569677 37
+#&gt; 3                z   0.58982078 0.6245145 3.510682e-01 -0.6755657 1.8552073 37
 #&gt;   outcome
 #&gt; 1       y
 #&gt; 2       y
-#&gt; 3       y</div><div class='input'><span class='fu'>summary</span>(<span class='no'>lmro</span>)</div><div class='output co'>#&gt; $coefficients
-#&gt;              Estimate Std. Error     Pr(&gt;|t|)   ci_lower ci_upper df
-#&gt; (Intercept) 3.8270190  0.4251936 7.460320e-11  2.9654951 4.688543 37
-#&gt; x           0.5218375  0.3070137 9.757698e-02 -0.1002313 1.143906 37
-#&gt; z           1.0450491  0.7799145 1.884321e-01 -0.5352077 2.625306 37
-#&gt; </div><div class='input'><span class='co'># Can also get coefficients many ways</span>
-<span class='fu'>all.equal</span>(
-  <span class='no'>lmro</span>$<span class='no'>est</span>,
-  <span class='fu'>coef</span>(<span class='no'>lmro</span>),
-  <span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmro</span>)$<span class='no'>est</span>,
-  <span class='kw'>check.attributes</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
-)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'>
+#&gt; 3       y</div><div class='input'><span class='co'># Can use summary() to get more statistics</span>
+<span class='fu'>summary</span>(<span class='no'>lmro</span>)</div><div class='output co'>#&gt; 
+#&gt; Call:
+#&gt; lm_robust(formula = y ~ x + z, data = dat)
+#&gt; 
+#&gt; Standard error type =  HC2 
+#&gt; 
+#&gt; Coefficients:
+#&gt;             Estimate Std. Error  Pr(&gt;|t|) CI Lower CI Upper DF
+#&gt; (Intercept)  3.67846     0.3827 1.331e-11   2.9031    4.454 37
+#&gt; x            0.01582     0.3658 9.657e-01  -0.7253    0.757 37
+#&gt; z            0.58982     0.6245 3.511e-01  -0.6756    1.855 37
+#&gt; 
+#&gt; Multiple R-squared:  0.02422 ,	Adjusted R-squared:  -0.02852 
+#&gt; F-statistic: 0.4592 on 2 and 37 DF,  p-value: 0.6353</div><div class='input'><span class='co'># Can also get coefficients three ways</span>
+<span class='no'>lmro</span>$<span class='no'>coefficients</span></div><div class='output co'>#&gt; (Intercept)           x           z 
+#&gt;  3.67846151  0.01582338  0.58982078 </div><div class='input'><span class='fu'>coef</span>(<span class='no'>lmro</span>)</div><div class='output co'>#&gt; (Intercept)           x           z 
+#&gt;  3.67846151  0.01582338  0.58982078 </div><div class='input'><span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmro</span>)$<span class='no'>coefficients</span></div><div class='output co'>#&gt; [1] 3.67846151 0.01582338 0.58982078</div><div class='input'><span class='co'># Can also get confidence intervals from object or with new 1 - `alpha`</span>
+<span class='no'>lmro</span>$<span class='no'>ci_lower</span></div><div class='output co'>#&gt; [1]  2.9031137 -0.7253210 -0.6755657</div><div class='input'><span class='fu'>confint</span>(<span class='no'>lmro</span>, <span class='kw'>level</span> <span class='kw'>=</span> <span class='fl'>0.8</span>)</div><div class='output co'>#&gt;                   10 %      90 %
+#&gt; (Intercept)  3.1791427 4.1777803
+#&gt; x           -0.4614686 0.4931154
+#&gt; z           -0.2250796 1.4047212</div><div class='input'>
 <span class='co'># Can recover classical standard errors</span>
 <span class='no'>lmclassic</span> <span class='kw'>&lt;-</span> <span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span> + <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"classical"</span>)
-<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmclassic</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se            p   ci_lower ci_upper df
-#&gt; 1      (Intercept) 3.8270190 0.4265135 8.078071e-11  2.9628206 4.691217 37
-#&gt; 2                x 0.5218375 0.3374516 1.305178e-01 -0.1619043 1.205579 37
-#&gt; 3                z 1.0450491 0.7434457 1.681603e-01 -0.4613150 2.551413 37
+<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmclassic</span>)</div><div class='output co'>#&gt;   coefficient_name coefficients        se            p   ci_lower  ci_upper df
+#&gt; 1      (Intercept)   3.67846151 0.3765766 8.661954e-12  2.9154448 4.4414782 37
+#&gt; 2                x   0.01582338 0.3044257 9.588260e-01 -0.6010018 0.6326485 37
+#&gt; 3                z   0.58982078 0.6160405 3.445607e-01 -0.6583959 1.8380374 37
 #&gt;   outcome
 #&gt; 1       y
 #&gt; 2       y
 #&gt; 3       y</div><div class='input'>
 <span class='co'># Can easily match Stata's robust standard errors</span>
 <span class='no'>lmstata</span> <span class='kw'>&lt;-</span> <span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span> + <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"stata"</span>)
-<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmstata</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se            p    ci_lower ci_upper df
-#&gt; 1      (Intercept) 3.8270190 0.4244077 7.113848e-11  2.96708743 4.686951 37
-#&gt; 2                x 0.5218375 0.3006726 9.096321e-02 -0.08738304 1.131058 37
-#&gt; 3                z 1.0450491 0.7728504 1.845187e-01 -0.52089458 2.610993 37
+<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmstata</span>)</div><div class='output co'>#&gt;   coefficient_name coefficients        se            p   ci_lower ci_upper df
+#&gt; 1      (Intercept)   3.67846151 0.3810271 1.187262e-11  2.9064274 4.450496 37
+#&gt; 2                x   0.01582338 0.3529490 9.644824e-01 -0.6993193 0.730966 37
+#&gt; 3                z   0.58982078 0.6220572 3.491911e-01 -0.6705869 1.850228 37
 #&gt;   outcome
 #&gt; 1       y
 #&gt; 2       y
@@ -291,45 +314,34 @@ Samii, Cyrus, and Peter M Aronow. 2012. "On Equivalencies Between Design-Based a
 <span class='no'>dat</span>$<span class='no'>clusterID</span> <span class='kw'>&lt;-</span> <span class='fu'>sample</span>(<span class='fl'>1</span>:<span class='fl'>10</span>, <span class='kw'>size</span> <span class='kw'>=</span> <span class='fl'>40</span>, <span class='kw'>replace</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
 
 <span class='no'>lmclust</span> <span class='kw'>&lt;-</span> <span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span> + <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>clusterID</span>)
-<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmclust</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se            p   ci_lower ci_upper
-#&gt; 1      (Intercept) 3.8270190 0.5179284 0.0001989159  2.5876424 5.066396
-#&gt; 2                x 0.5218375 0.3331261 0.1841796068 -0.3628153 1.406490
-#&gt; 3                z 1.0450491 0.7274699 0.2145028268 -0.8675556 2.957654
+<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmclust</span>)</div><div class='output co'>#&gt;   coefficient_name coefficients        se            p  ci_lower ci_upper
+#&gt; 1      (Intercept)   3.67846151 0.3667644 2.540429e-05  2.806069 4.550854
+#&gt; 2                x   0.01582338 0.4242528 9.716757e-01 -1.071038 1.102685
+#&gt; 3                z   0.58982078 0.6651378 4.094710e-01 -1.039309 2.218951
 #&gt;         df outcome
-#&gt; 1 6.613231       y
-#&gt; 2 4.516445       y
-#&gt; 3 4.654117       y</div><div class='input'>
+#&gt; 1 6.802426       y
+#&gt; 2 5.057445       y
+#&gt; 3 5.975842       y</div><div class='input'>
 <span class='co'># Can also match Stata's clustered standard errors</span>
 <span class='fu'>lm_robust</span>(
   <span class='no'>y</span> ~ <span class='no'>x</span> + <span class='no'>z</span>,
   <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>,
   <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>clusterID</span>,
   <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"stata"</span>
-)</div><div class='output co'>#&gt;   coefficient_name       est        se            p   ci_lower ci_upper df
-#&gt; 1      (Intercept) 3.8270190 0.5062160 6.545973e-05  2.6596829 4.994355  8
-#&gt; 2                x 0.5218375 0.3181514 1.395898e-01 -0.2118208 1.255496  8
-#&gt; 3                z 1.0450491 0.7148910 1.819272e-01 -0.6034924 2.693591  8
-#&gt;   outcome
-#&gt; 1       y
-#&gt; 2       y
-#&gt; 3       y</div><div class='input'>
+)</div><div class='output co'>#&gt;               Estimate Std. Error     Pr(&gt;|t|)   CI Lower  CI Upper DF
+#&gt; (Intercept) 3.67846151  0.3650948 3.361353e-06  2.8525597 4.5043633  9
+#&gt; x           0.01582338  0.4053142 9.697110e-01 -0.9010611 0.9327078  9
+#&gt; z           0.58982078  0.6425863 3.826179e-01 -0.8638104 2.0434520  9</div><div class='input'>
 <span class='co'># Works just as LM does with functions in the formula</span>
 <span class='no'>dat</span>$<span class='no'>blockID</span> <span class='kw'>&lt;-</span> <span class='fu'>rep</span>(<span class='fu'>c</span>(<span class='st'>"A"</span>, <span class='st'>"B"</span>, <span class='st'>"C"</span>, <span class='st'>"D"</span>), <span class='kw'>each</span> <span class='kw'>=</span> <span class='fl'>10</span>)
 
-<span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span> + <span class='no'>z</span> + <span class='fu'>factor</span>(<span class='no'>blockID</span>), <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;   coefficient_name        est        se            p    ci_lower ci_upper df
-#&gt; 1      (Intercept)  3.6054786 0.7517428 3.151803e-05  2.07775335 5.133204 34
-#&gt; 2                x  0.4637445 0.2704874 9.554453e-02 -0.08595212 1.013441 34
-#&gt; 3                z  1.1270102 0.7640929 1.494227e-01 -0.42581336 2.679834 34
-#&gt; 4 factor(blockID)B  0.8725286 0.9039197 3.412245e-01 -0.96445717 2.709514 34
-#&gt; 5 factor(blockID)C  0.1950133 1.0867954 8.586583e-01 -2.01362069 2.403647 34
-#&gt; 6 factor(blockID)D -0.3534448 0.9467730 7.112314e-01 -2.27751896 1.570629 34
-#&gt;   outcome
-#&gt; 1       y
-#&gt; 2       y
-#&gt; 3       y
-#&gt; 4       y
-#&gt; 5       y
-#&gt; 6       y</div><div class='input'>
+<span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span> + <span class='no'>z</span> + <span class='fu'>factor</span>(<span class='no'>blockID</span>), <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;                     Estimate Std. Error     Pr(&gt;|t|)   CI Lower  CI Upper DF
+#&gt; (Intercept)       3.28425607  0.4883760 1.001618e-07  2.2917566 4.2767556 34
+#&gt; x                 0.02454756  0.3350361 9.420219e-01 -0.6563278 0.7054229 34
+#&gt; z                 0.55472639  0.7157915 4.437063e-01 -0.8999370 2.0093898 34
+#&gt; factor(blockID)B  1.09053563  0.9200820 2.441333e-01 -0.7792959 2.9603672 34
+#&gt; factor(blockID)C -0.06185656  0.8560830 9.428221e-01 -1.8016265 1.6779134 34
+#&gt; factor(blockID)D  0.59999985  0.8081074 4.628984e-01 -1.0422720 2.2422716 34</div><div class='input'>
 <span class='co'># Weights are also easily specified</span>
 <span class='no'>dat</span>$<span class='no'>w</span> <span class='kw'>&lt;-</span> <span class='fu'>runif</span>(<span class='fl'>40</span>)
 
@@ -338,31 +350,30 @@ Samii, Cyrus, and Peter M Aronow. 2012. "On Equivalencies Between Design-Based a
   <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>,
   <span class='kw'>weights</span> <span class='kw'>=</span> <span class='no'>w</span>,
   <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>clusterID</span>
-)</div><div class='output co'>#&gt;   coefficient_name      est        se            p   ci_lower ci_upper       df
-#&gt; 1      (Intercept) 3.378684 0.4139408 0.0001004981  2.3913906 4.365977 6.715198
-#&gt; 2                x 0.391359 0.3201016 0.2941650911 -0.5299752 1.312693 3.668474
-#&gt; 3                z 1.398680 0.9435062 0.1999072886 -1.0470808 3.844441 4.864887
-#&gt;   outcome
-#&gt; 1       y
-#&gt; 2       y
-#&gt; 3       y</div><div class='input'>
+)</div><div class='output co'>#&gt;                 Estimate Std. Error     Pr(&gt;|t|)  CI Lower CI Upper       DF
+#&gt; (Intercept)  3.547433364  0.4040461 0.0002226048  2.529323 4.565544 5.357866
+#&gt; x           -0.002655767  0.3956012 0.9949295325 -1.052716 1.047404 4.522808
+#&gt; z            0.696123507  0.7074789 0.3711587223 -1.133237 2.525484 4.904283</div><div class='input'>
 <span class='co'># Subsetting works just as in `lm()`</span>
-<span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>subset</span> <span class='kw'>=</span> <span class='no'>z</span> <span class='kw'>==</span> <span class='fl'>1</span>)</div><div class='output co'>#&gt;   coefficient_name      est        se            p   ci_lower ci_upper df
-#&gt; 1      (Intercept) 4.941398 0.6493330 1.819289e-05  3.4945938 6.388202 10
-#&gt; 2                x 1.455851 0.7717047 8.856539e-02 -0.2636144 3.175316 10
-#&gt;   outcome
-#&gt; 1       y
-#&gt; 2       y</div><div class='input'>
+<span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>subset</span> <span class='kw'>=</span> <span class='no'>z</span> <span class='kw'>==</span> <span class='fl'>1</span>)</div><div class='output co'>#&gt;              Estimate Std. Error     Pr(&gt;|t|)  CI Lower CI Upper DF
+#&gt; (Intercept) 4.2882796  0.5267980 1.847702e-06  3.150202 5.426357 13
+#&gt; x           0.2116763  0.6905727 7.640608e-01 -1.280215 1.703568 13</div><div class='input'>
 <span class='co'># One can also choose to set the significance level for different CIs</span>
-<span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span> + <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.1</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se            p     ci_lower ci_upper df
-#&gt; 1      (Intercept) 3.8270190 0.4251936 7.460320e-11  3.109677710 4.544360 37
-#&gt; 2                x 0.5218375 0.3070137 9.757698e-02  0.003876662 1.039798 37
-#&gt; 3                z 1.0450491 0.7799145 1.884321e-01 -0.270739622 2.360838 37
-#&gt;   outcome
-#&gt; 1       y
-#&gt; 2       y
-#&gt; 3       y</div><div class='input'>
+<span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span> + <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.1</span>)</div><div class='output co'>#&gt;               Estimate Std. Error     Pr(&gt;|t|)   CI Lower  CI Upper DF
+#&gt; (Intercept) 3.67846151  0.3826625 1.331206e-11  3.0328741 4.3240490 37
+#&gt; x           0.01582338  0.3657818 9.657276e-01 -0.6012848 0.6329315 37
+#&gt; z           0.58982078  0.6245145 3.510682e-01 -0.4637936 1.6434351 37</div><div class='input'>
+</div><span class='co'># NOT RUN {</span>
+  <span class='co'># Can also use 'margins' package if you have it installed to get</span>
+  <span class='co'># marginal effects</span>
+  <span class='fu'>library</span>(<span class='no'>margins</span>)
+  <span class='no'>lmrout</span> <span class='kw'>&lt;-</span> <span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span> + <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)
+  <span class='fu'>summary</span>(<span class='fu'><a href='http://www.rdocumentation.org/packages/margins/topics/margins'>margins</a></span>(<span class='no'>lmrout</span>))
 
+  <span class='co'># Can output results using 'texreg'</span>
+  <span class='fu'>library</span>(<span class='no'>texreg</span>)
+  <span class='no'>texregobj</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/texreg/topics/extract'>extract</a></span>(<span class='no'>lmrout</span>)
+<span class='co'># }</span><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

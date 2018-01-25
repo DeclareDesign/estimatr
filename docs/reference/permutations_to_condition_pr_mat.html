@@ -169,10 +169,8 @@ of</p>
 <span class='co'># Simulating a column to be realized treatment</span>
 <span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='no'>possible_treats</span>[, <span class='fu'>sample</span>(<span class='fu'>ncol</span>(<span class='no'>possible_treats</span>), <span class='kw'>size</span> <span class='kw'>=</span> <span class='fl'>1</span>)]
 <span class='no'>y</span> <span class='kw'>&lt;-</span> <span class='fu'>rnorm</span>(<span class='fu'>nrow</span>(<span class='no'>possible_treats</span>))
-<span class='fu'><a href='horvitz_thompson.html'>horvitz_thompson</a></span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>arb_pr_mat</span>)</div><div class='output co'>#&gt;   coefficient_name        est        se         p  ci_lower  ci_upper df
-#&gt; 1                z -0.1973111 0.3617087 0.5854116 -0.906247 0.5116249 NA
-#&gt;   outcome
-#&gt; 1       y</div><div class='input'>
+<span class='fu'><a href='horvitz_thompson.html'>horvitz_thompson</a></span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>arb_pr_mat</span>)</div><div class='output co'>#&gt;    Estimate Std. Error  Pr(&gt;|t|)   CI Lower CI Upper DF
+#&gt; z 0.7251274  0.8486023 0.3928301 -0.9381026 2.388357 NA</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
