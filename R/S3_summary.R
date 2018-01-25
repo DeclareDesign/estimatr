@@ -22,7 +22,7 @@ summary.lm_robust <-
 
     class(return_list) <- "summary.lm_robust"
 
-    print(return_list)
+    return_list
   }
 
 
