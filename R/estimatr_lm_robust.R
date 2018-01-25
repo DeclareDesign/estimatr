@@ -123,6 +123,9 @@
 #' lmro$coefficients
 #' coef(lmro)
 #' tidy(lmro)$coefficients
+#' # Can also get confidence intervals from object or with new 1 - `alpha`
+#' lmro$ci_lower
+#' confint(lmro, level = 0.8)
 #'
 #' # Can recover classical standard errors
 #' lmclassic <- lm_robust(y ~ x + z, data = dat, se_type = "classical")

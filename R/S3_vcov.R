@@ -1,30 +1,17 @@
-#' Return estimated variance covariance matrix of \code{\link{lm_robust}}
-#'
-#' @param object An object of class \code{\link{lm_robust}}
-#' @param ... extra arguments, unused
-#'
 #' @export
 vcov.lm_robust <-
   function(object, ...) {
     return(vcov_simple(object))
   }
 
-#' Return estimated variance covariance matrix of \code{\link{difference_in_means}}
-#'
-#' @param object An object of class \code{\link{difference_in_means}}
-#' @param ... extra arguments, unused
-#'
+
 #' @export
 vcov.difference_in_means <-
   function(object, ...) {
     stop("vcov not supported for difference_in_means")
   }
 
-#' Return estimated variance covariance matrix of \code{\link{horvitz_thompson}}
-#'
-#' @param object An object of class \code{\link{horvitz_thompson}}
-#' @param ... extra arguments, unused
-#'
+
 #' @export
 vcov.horvitz_thompson <-
   function(object, ...) {
