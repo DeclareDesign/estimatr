@@ -3,6 +3,7 @@
 context("S3 - tidy and broom compatability")
 
 test_that("estimatr::tidy works loaded before or after after broom", {
+  detach("package:texreg", unload = TRUE)
 
   model2 <- lm_robust(extra~group, sleep, clusters = "ID")
 
@@ -14,7 +15,7 @@ test_that("estimatr::tidy works loaded before or after after broom", {
   library(texreg)
 
   expect_is(
-    extract(model2),
+    extract(model2, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE),
     "texreg"
   )
 

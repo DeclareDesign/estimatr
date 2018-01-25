@@ -169,6 +169,7 @@
 #'   summary(margins(lmrout))
 #'
 #'   # Can output results using 'texreg'
+#'   library(texreg)
 #'   texobj <- extract(lmrout)
 #'
 #' }
