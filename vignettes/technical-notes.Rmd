@@ -273,7 +273,7 @@ $$
 \end{aligned}
 $$
 
-If we further simplify to the case where there is simple random assignment, and there is absolutely no dependence among units (i.e. $\pi_{ziwj} = \pi_{zi}\pi_{wj} \;\;\forall\;\;z,w,i,j$), we get:
+If we further simplify to the case where there is simple random assignment, and there is absolutely no dependence among units (i.e., $\pi_{ziwj} = \pi_{zi}\pi_{wj} \;\;\forall\;\;z,w,i,j$), we get:
 
 $$
 \begin{aligned}

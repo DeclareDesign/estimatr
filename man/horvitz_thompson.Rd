@@ -71,8 +71,7 @@ probability matrix. Returns NULL if the design is simple randomization,
 FALSE by default.}
 }
 \value{
-\code{horvitz_thompson} returns an object of class
-\code{"horvitz_thompson"}.
+Returns an object of class \code{"horvitz_thompson"}.
 
 The functions \code{summary} and \code{\link{tidy}} can be used to get
 the results as a \code{data.frame}. To get useful data out of the return,
