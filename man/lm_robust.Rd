@@ -77,8 +77,7 @@ following components:
   \item{adj.r.squared}{The \eqn{R^2} but penalized for having more parameters, \code{rank}}
   \item{weighted}{whether or not weights were applied}
   \item{call}{the original function call}
-We also return \code{terms} and \code{contrasts}, used by \code{predict},
-and \code{scaled_center}{the means of each of the covariates used for centering them}
+We also return \code{terms} and \code{contrasts}, used by \code{predict}.
 }
 \description{
 This formula fits a linear model, provides a variety of

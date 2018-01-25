@@ -45,10 +45,10 @@
 #' and the
 #' \href{http://estimatr.declaredesign.org/articles/technical-notes.html}{technical notes}.
 #'
-#' @return \code{lm_lin} returns an object of class \code{"lm_robust"}.
+#' @return An object of class \code{"lm_robust"}.
 #'
-#' The functions \code{summary} and \code{\link{tidy}} can be used to get
-#' the results as a \code{data.frame}. To get useful data out of the return,
+#' The post-estimation commands functions \code{summary} and \code{\link{tidy}}
+#' return results in a \code{data.frame}. To get useful data out of the return,
 #' you can use these data frames, you can use the resulting list directly, or
 #' you can use the generic accessor functions \code{coef}, \code{vcov},
 #' \code{confint}, and \code{predict}. Marginal effects and uncertainty about

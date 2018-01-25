@@ -22,11 +22,11 @@ lm_robust_fit(y, X, weights, cluster, ci, se_type, alpha, return_vcov,
 
 \item{alpha}{numeric denoting the test size for confidence intervals}
 
-\item{return_vcov}{a boolean for whether to return the vcov matrix for later usage}
+\item{return_vcov}{logical, whether to return the vcov matrix for later usage}
 
-\item{try_cholesky}{a boolean for whether to try using a cholesky decomposition to solve LS instead of a QR decomposition}
+\item{try_cholesky}{logical, whether to try using a cholesky decomposition to solve LS instead of a QR decomposition}
 
-\item{has_int}{a boolean for whether the model has an intercept}
+\item{has_int}{logical, whether the model has an intercept, used for \eqn{R^2}}
 }
 \description{
 Internal method that creates linear fits
