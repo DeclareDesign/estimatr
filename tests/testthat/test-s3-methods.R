@@ -171,11 +171,6 @@ test_that("coef and confint work", {
     cbind(lmo$ci_lower, lmo$ci_upper)
   )
 
-  expect_equivalent(
-    coef(lmo, parm = "x"),
-    lmo$coefficients["x"]
-  )
-
   lm2o <- lm_robust(y ~ x + z, data = dat)
   expect_equivalent(
     coef(lm2o)[2],

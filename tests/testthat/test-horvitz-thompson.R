@@ -165,14 +165,17 @@ test_that("Horvitz-Thompson works with clustered data", {
   )
 
   # Can infer from number of treated clusters per block the treatment pr
-  dat$cl_new <- c(1, 2, 3, 4, 5, 5, 6, 6)
-  dat$bl <- rep(1:2, each = 4)
+  clbl_dat <- data.frame(
+    cl_new = cl_new <- c(1, 2, 3, 4, 5, 5, 6, 6, 7, 7, 8, 8),
+    bl = rep(1:3, each = 4),
+    y = rnorm(12)
+  )
   # pr = 0.25 in first, 0.5 in second
-  blcl_ra <- randomizr::declare_ra(blocks = dat$bl, clusters = dat$cl_new, m = c(1, 2))
-  dat$z_clbl <- blcl_ra$ra_function()
-  expect_identical(
-    horvitz_thompson(y ~ z_clbl, data = dat, declaration = blcl_ra),
-    horvitz_thompson(y ~ z_clbl, data = dat, blocks = bl, clusters = cl_new)
+  blcl_ra <- randomizr::declare_ra(blocks = bl, clusters = cl_new, m = c(1, 2, 1))
+  clbl_dat$z_clbl <- blcl_ra$ra_function()
+  expect_equivalent(
+    horvitz_thompson(y ~ z_clbl, data = clbl_dat, declaration = blcl_ra),
+    horvitz_thompson(y ~ z_clbl, data = clbl_dat, blocks = bl, clusters = cl_new)
   )
 
   # should work with just a column if SRS!
@@ -203,7 +206,7 @@ test_that("Horvitz-Thompson works with clustered data", {
   dat$p_wrong[1] <- 1.5
   expect_error(
     horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = p_wrong),
-    "`condition_pr` must be a vector of positive values no greater than"
+    "`condition_prs` must be a vector of positive values no greater than 1"
   )
 
   # or treatment varying within a cluster

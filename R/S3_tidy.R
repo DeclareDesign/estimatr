@@ -13,9 +13,6 @@ tidy <- function(object, ...) {
 #' tidy on a NULL input
 #' @rdname tidy
 #'
-#' @description tidy on a NULL input returns an empty data frame, which means it can be
-#' combined with other data frames (treated as "empty")
-#'
 #' @param object An object returned by one of the estimators
 #' @param ... extra arguments (not used)
 #'
