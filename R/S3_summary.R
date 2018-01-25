@@ -12,6 +12,7 @@ summary.lm_robust <-
         "r.squared",
         "adj.r.squared",
         "fstatistic",
+        "res_var",
         "weighted",
         "se_type"
       )]

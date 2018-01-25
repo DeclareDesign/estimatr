@@ -14,4 +14,10 @@ test_that("texreg extension works", {
     "texreg"
   )
 
+  # juicin the stats
+  expect_error(
+    .onLoad("lm_robust", "lm_robust"),
+    NA
+  )
+
 })

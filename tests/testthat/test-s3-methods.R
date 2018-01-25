@@ -226,6 +226,13 @@ test_that("coef and confint work", {
   lmro <- lm_robust(y ~ z + z2 + x, data = dat)
   confint(lmro)
   coef(lmro)
+  capture.output(
+    expect_equal(
+      nobs(lmro),
+      nobs(summary(lmro))
+    )
+  )
+
 })
 
 test_that("predict works", {
