@@ -61,7 +61,12 @@
 #' return results in a \code{data.frame}. To get useful data out of the return,
 #' you can use these data frames, you can use the resulting list directly, or
 #' you can use the generic accessor functions \code{coef}, \code{vcov},
-#' \code{confint}, and \code{predict}.
+#' \code{confint}, and \code{predict}. Marginal effects and uncertainty about
+#' them can be gotten by passing this object to
+#' \code{\link[margins]{margins}} from the \pkg{margins}.
+#'
+#' Users who want to print the results in TeX of HTML can use the
+#' \code{\link{extract}} function and the \pkg{texreg} package.
 #'
 #' An object of class \code{"lm_robust"} is a list containing at least the
 #' following components:
@@ -157,11 +162,15 @@
 #' lm_robust(y ~ x + z, data = dat, alpha = 0.1)
 #'
 #' \dontrun{
-#'   # Can also use `margins` package if you have it installed to get
+#'   # Can also use 'margins' package if you have it installed to get
 #'   # marignal effects
 #'   library(margins)
 #'   lmrout <- lm_robust(y ~ x + z, data = dat)
 #'   summary(margins(lmrout))
+#'
+#'   # Can output results using 'texreg'
+#'   texobj <- extract(lmrout)
+#'
 #' }
 #'
 #' @export
