@@ -357,7 +357,7 @@ test_that("DIM works with character args", {
     dim_quote
   )
 
-  expect_identical(
+  expect_equivalent(
     difference_in_means(
       Y ~ Z,
       alpha = .05,

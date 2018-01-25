@@ -107,7 +107,7 @@ clean_model_data <- function(formula,
 
     if (any(ret[["condition_pr"]] <= 0 | ret[["condition_pr"]] > 1)) {
       stop(
-        "`condition_pr` must be a vector of positive values no greater than 1"
+        "`condition_prs` must be a vector of positive values no greater than 1"
       )
     }
   }

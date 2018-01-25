@@ -350,7 +350,7 @@ gen_pr_matrix_block <- function(blocks, clusters, p2 = NULL, p1 = NULL, t = NULL
 
   n_blocks <- length(block_dat)
 
-  for (i in 1:n_blocks) {
+  for (i in seq_along(block_dat)) {
     ids <- c(block_dat[[i]]$ids, n + block_dat[[i]]$ids)
 
     if (clustered) {
@@ -394,20 +394,24 @@ gen_pr_matrix_block <- function(blocks, clusters, p2 = NULL, p1 = NULL, t = NULL
           n_total = length(block_dat[[i]]$p2)
         )
     }
+  }
 
+  for (i in seq_along(block_dat)) {
+    ids <- c(block_dat[[i]]$ids, n + block_dat[[i]]$ids)
 
-    for (j in 1:n_blocks) {
+    for (j in seq_along(block_dat)) {
       if (i != j) {
         condition_pr_matrix[
           ids,
           c(block_dat[[j]]$ids, n + block_dat[[j]]$ids)
-        ] <- tcrossprod(
-          c(block_dat[[i]]$p1, block_dat[[i]]$p2),
-          c(block_dat[[j]]$p1, block_dat[[j]]$p2)
-        )
+          ] <- tcrossprod(
+            c(block_dat[[i]]$p1, block_dat[[i]]$p2),
+            c(block_dat[[j]]$p1, block_dat[[j]]$p2)
+          )
       }
     }
   }
+
 
   return(condition_pr_matrix)
 }
