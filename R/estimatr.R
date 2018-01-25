@@ -7,5 +7,6 @@
 #' vcov model.frame.default model.response complete.cases terms reformulate
 #' update model.extract setNames delete.response .checkMFClasses model.frame
 #' model.matrix na.pass nobs coef pf
+#' @importFrom methods setGeneric setMethod isGeneric className
 #' @name estimatr
 NULL

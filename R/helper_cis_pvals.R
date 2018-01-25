@@ -38,7 +38,7 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
     return_frame$ci_upper <- with(return_frame, coefficients + crit_se)
 
     if (is.data.frame(return_frame)) {
-      return_frame <- return_frame[, !(names(return_frame) == "dof")]
+      return_frame <- return_frame[, !(names(return_frame) == "dof"), drop = FALSE]
     }
 
     return(as.list(return_frame))

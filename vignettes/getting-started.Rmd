@@ -59,7 +59,7 @@ dat <- fabricate(
   x = runif(N, 0, 1),             # pre-treatment covariate
   y0 = rnorm(N, mean = x),        # control potential outcome
   y1 = y0 + 0.35,                 # treatment potential outcome
-  z = randomizr::complete_ra(N),  # complete random assignment to treatment
+  z = complete_ra(N),             # complete random assignment to treatment
   y = ifelse(z, y1, y0),          # observed outcome
 
   # We will also consider clustered data

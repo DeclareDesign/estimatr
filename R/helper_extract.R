@@ -13,7 +13,7 @@
 #' @param include.nobs logical. Defaults to TRUE
 #' @param include.fstatistic logical. Defaults to TRUE
 #' @param include.rmse logical. Defaults to TRUE
-#'
+#' @param ... unused
 #'
 extract.lm_robust <- function(model, include.ci = TRUE, include.rsquared = TRUE, include.adjrs = TRUE,
                        include.nobs = TRUE, include.fstatistic = FALSE, include.rmse = TRUE, ...) {

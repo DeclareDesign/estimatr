@@ -57,7 +57,7 @@ them can be gotten by passing this object to
 \code{\link[margins]{margins}} from the \pkg{margins}.
 
 Users who want to print the results in TeX of HTML can use the
-\code{\link{extract}} function and the \pkg{texreg} package.
+\code{\link[texreg]{extract}} function and the \pkg{texreg} package.
 
 An object of class \code{"lm_robust"} is a list containing at least the
 following components:
@@ -159,7 +159,7 @@ lm_lin(y ~ z_block, ~ factor(blockID), data = dat)
 
 }
 \seealso{
-\code{\link{lm_robust}}, \code{\link{summary.lm_robust}}
+\code{\link{lm_robust}}
 
 #' @references
 Freedman, David A. 2008. "On Regression Adjustments in Experiments with Several Treatments." The Annals of Applied Statistics. JSTOR, 176-96. \url{https://doi.org/10.1214/07-AOAS143}.

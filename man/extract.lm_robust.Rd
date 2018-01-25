@@ -22,6 +22,8 @@ extract.lm_robust(model, include.ci = TRUE, include.rsquared = TRUE,
 \item{include.fstatistic}{logical. Defaults to TRUE}
 
 \item{include.rmse}{logical. Defaults to TRUE}
+
+\item{...}{unused}
 }
 \description{
 Prepares an \code{"lm_robust"} object for the \pkg{texreg}

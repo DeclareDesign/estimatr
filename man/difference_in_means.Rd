@@ -223,5 +223,5 @@ Gerber, Alan S, and Donald P Green. 2012. Field Experiments: Design, Analysis, a
 Imai, Kosuke, Gary King, Clayton Nall. 2009. "The Essential Role of Pair Matching in Cluster-Randomized Experiments, with Application to the Mexican Universal Health Insurance Evaluation." Statistical Science 24 (1). Institute of Mathematical Statistics: 29-53. \url{https://doi.org/10.1214/08-STS274}.
 }
 \seealso{
-\code{\link{summary.lm_robust}}, \code{\link{lm_lin}}
+\code{\link{lm_lin}}
 }

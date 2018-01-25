@@ -14,7 +14,9 @@ URL: http://estimatr.declaredesign.org, https://github.com/DeclareDesign/estimat
 BugReports: https://github.com/DeclareDesign/estimatr/issues
 License: MIT + file LICENSE
 Depends: R (>= 3.3.0)
-Imports: Rcpp (>= 0.12.10)
+Imports: 
+    Rcpp (>= 0.12.10),
+    methods
 LinkingTo: Rcpp, RcppEigen
 RoxygenNote: 6.0.1
 LazyData: true
@@ -25,7 +27,8 @@ Suggests:
     fabricatr,
     randomizr (>= 0.8),
     knitr,
-    rmarkdown
+    rmarkdown,
+    margins
 Enhances: broom, texreg
 VignetteBuilder: knitr
 Additional_repositories: http://r.declaredesign.org

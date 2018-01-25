@@ -76,7 +76,7 @@
 #'   \item{outcome}{the name of the outcome variable}
 #'   \item{design}{the name of the design learned from the arguments passed}
 #'
-#' @seealso \code{\link{summary.lm_robust}}, \code{\link{lm_lin}}
+#' @seealso \code{\link{lm_lin}}
 #'
 #' @references
 #' Gerber, Alan S, and Donald P Green. 2012. Field Experiments: Design, Analysis, and Interpretation. New York: W.W. Norton.

@@ -66,7 +66,7 @@
 #' \code{\link[margins]{margins}} from the \pkg{margins}.
 #'
 #' Users who want to print the results in TeX of HTML can use the
-#' \code{\link{extract}} function and the \pkg{texreg} package.
+#' \code{\link[texreg]{extract}} function and the \pkg{texreg} package.
 #'
 #' An object of class \code{"lm_robust"} is a list containing at least the
 #' following components:

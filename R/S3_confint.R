@@ -8,7 +8,7 @@ confint.lm_robust <-
     cis <- get_ci_mat(object, level)
 
     if (!is.null(parm)) {
-      cis <- cis[parm, , drop = F]
+      cis <- cis[parm, , drop = FALSE]
     }
 
     return(cis)
@@ -42,7 +42,10 @@ confint.horvitz_thompson <-
 ## internal method that builds confidence intervals and labels the matrix to be returned
 get_ci_mat <- function(object, level, ttest = TRUE) {
   if (!is.null(level)) {
-    object <- add_cis_pvals(object, alpha = level, ci = TRUE, ttest = ttest)
+    if (!is.null(object[["alpha"]])) {
+      object[["alpha"]] <- NULL
+    }
+    object <- add_cis_pvals(object, alpha = 1 - level, ci = TRUE, ttest = ttest)
     cis <- cbind(object$ci_lower, object$ci_upper)
   } else {
     cis <- cbind(object$ci_lower, object$ci_upper)
