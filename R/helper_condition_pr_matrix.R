@@ -4,6 +4,7 @@
 #' @param declaration An object of class \code{"ra_declaration"}, generated
 #' by the \code{\link[randomizr]{declare_ra}} function in \pkg{randomizr}. This
 #' object contains the experimental design that will be represented in a
+#' condition probability matrix
 #'
 #' @details This function takes a \code{"ra_declaration"}, generated
 #' by the \code{\link[randomizr]{declare_ra}} function in \pkg{randomizr} and
@@ -213,6 +214,12 @@ permutations_to_condition_pr_mat <- function(permutations) {
 #' @param simple A boolean for whether the assignment is a random sample
 #' assignment (TRUE, default) or complete random assignment (FALSE)
 #'
+#' @return a numeric 2n*2n matrix of marginal and joint condition treatment
+#' probabilities to be passed to the \code{condition_pr_mat} argument of
+#' \code{\link{horvitz_thompson}}.
+#'
+#' @seealso \code{\link{declaration_to_condition_pr_mat}}
+#'
 #' @export
 gen_pr_matrix_cluster <- function(clusters, treat_probs, simple) {
   n <- length(clusters)
@@ -259,7 +266,6 @@ gen_pr_matrix_cluster <- function(clusters, treat_probs, simple) {
         cbind(mat_00, mat_10),
         cbind(mat_10, mat_11)
       )
-
   } else if (simple) { # cluster, simple randomized
 
     # container mats
@@ -348,7 +354,6 @@ gen_pr_matrix_block <- function(blocks, clusters, p2 = NULL, p1 = NULL, t = NULL
     ids <- c(block_dat[[i]]$ids, n + block_dat[[i]]$ids)
 
     if (clustered) {
-
       if (is.null(block_dat[[i]]$p2)) {
         # learn prs
         cluster_treats <- get_cluster_treats(block_dat[[i]], condition2)
@@ -464,7 +469,6 @@ gen_joint_pr_complete <- function(pr, n_total) {
 
 
 get_cluster_treats <- function(data, condition2) {
-
   cluster_dat <- split(
     data$t,
     data$clusters,
@@ -476,7 +480,7 @@ get_cluster_treats <- function(data, condition2) {
 
   for (i in seq_along(cluster_dat)) {
     if (length(unique(cluster_dat[[i]])) > 1) {
-      stop("Treatment condition must be constant within `cluster`")
+      stop("Treatment condition must be constant within `clusters`")
     }
 
     treat_clust[i] <- as.numeric(cluster_dat[[i]][1] == condition2)

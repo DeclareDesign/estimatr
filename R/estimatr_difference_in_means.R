@@ -54,13 +54,13 @@
 #' More details of the about each of the estimators can be found in the
 #' \href{estimatr.declaredesign.org/articles/technical-notes.html}{technical notes}.
 #'
-#' @return \code{difference_in_means} returns an object of class
-#' \code{"difference_in_means"}.
+#' @return Returns an object of class \code{"difference_in_means"}.
 #'
-#' The functions \code{summary} and \code{\link{tidy}} can be used to get
-#' the results as a \code{data.frame}. To get useful data out of the return,
+#' The post-estimation commands functions \code{summary} and \code{\link{tidy}}
+#' return results in a \code{data.frame}. To get useful data out of the return,
 #' you can use these data frames, you can use the resulting list directly, or
-#' you can use the generic accessor functions \code{coef}, and\code{confint}.
+#' you can use the generic accessor functions \code{coef} and
+#' \code{confint}.
 #'
 #' An object of class \code{"difference_in_means"} is a list containing at
 #' least the following components:

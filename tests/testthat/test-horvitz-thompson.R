@@ -212,7 +212,7 @@ test_that("Horvitz-Thompson works with clustered data", {
   table(dat$z_wrong, dat$cl)
   expect_error(
     horvitz_thompson(y ~ z_wrong, data = dat, clusters = cl, condition_prs = ps),
-    "Treatment condition must be constant within `cluster`"
+    "Treatment condition must be constant within `clusters`"
   )
 })
 
@@ -308,12 +308,12 @@ test_that("Horvitz-Thompson properly checks arguments and data", {
 
   expect_error(
     horvitz_thompson(y ~ z, data = dat, condition_prs = ps, declaration = decl),
-    "Cannot use declaration with any of"
+    "Cannot use `declaration` with any of"
   )
 
   expect_error(
     horvitz_thompson(y ~ z, data = dat, condition_pr_mat = declaration_to_condition_pr_mat(decl), declaration = decl),
-    "Cannot use declaration with any of"
+    "Cannot use `declaration` with any of"
   )
 
   expect_error(

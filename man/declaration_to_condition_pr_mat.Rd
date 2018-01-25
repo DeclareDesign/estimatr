@@ -10,7 +10,8 @@ declaration_to_condition_pr_mat(declaration)
 \arguments{
 \item{declaration}{An object of class \code{"ra_declaration"}, generated
 by the \code{\link[randomizr]{declare_ra}} function in \pkg{randomizr}. This
-object contains the experimental design that will be represented in a}
+object contains the experimental design that will be represented in a
+condition probability matrix}
 }
 \value{
 a numeric 2n*2n matrix of marginal and joint condition treatment

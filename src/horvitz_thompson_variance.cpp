@@ -5,6 +5,7 @@
 using namespace Rcpp;
 
 // These functions help compute the variance for the Horvitz-Thompson estimators
+// TODO use symmetry and matrices to improve speed
 
 // [[Rcpp::export]]
 double ht_covar_partial(const Eigen::VectorXd & y1,
