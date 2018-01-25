@@ -22,7 +22,7 @@ for blocked designs only. See details.}
 corresponds to the clusters in the data; used for cluster randomized
 designs. For blocked designs, clusters must be within blocks.}
 
-\item{simple}{An optional boolean for whether the randomization is simple
+\item{simple}{logical, optional. Whether the randomization is simple
 (TRUE) or complete (FALSE). This is ignored if \code{blocks} are specified,
 as all blocked designs use complete randomization, or either
 \code{declaration} or \code{condition_pr_mat} are passed. Otherwise, it
@@ -61,22 +61,23 @@ inequality (and is conservative) while the other uses a constant treatment
 effects assumption and only works for simple randomized designs at the
 moment.}
 
-\item{ci}{A boolean for whether to compute and return p-values and confidence
-intervals, TRUE by default.}
+\item{ci}{logical. Whether to compute and return p-values and
+confidence intervals, TRUE by default.}
 
 \item{alpha}{The significance level, 0.05 by default.}
 
-\item{return_condition_pr_mat}{a boolean for whether to return the condition
-probability matrix. Returns NULL if the design is simple randomization}
+\item{return_condition_pr_mat}{logical. Whether to return the condition
+probability matrix. Returns NULL if the design is simple randomization,
+FALSE by default.}
 }
 \value{
-\code{horvitz_thompson} returns an object of class
-\code{"horvitz_thompson"}.
+Returns an object of class \code{"horvitz_thompson"}.
 
-The functions \code{summary} and \code{\link{tidy}} can be used to get
-the results as a \code{data.frame}. To get useful data out of the return,
+The post-estimation commands functions \code{summary} and \code{\link{tidy}}
+return results in a \code{data.frame}. To get useful data out of the return,
 you can use these data frames, you can use the resulting list directly, or
-you can use the generic accessor functions \code{coef}, and\code{confint}.
+you can use the generic accessor functions \code{coef} and
+\code{confint}.
 
 An object of class \code{"horvitz_thompson"} is a list containing at
 least the following components:
@@ -84,7 +85,7 @@ least the following components:
   \item{coefficients}{the estimated coefficients}
   \item{se}{the estimated standard errors}
   \item{df}{the estimated degrees of freedom}
-  \item{p}{the p-values from the t-test using \code{coefficients}, \code{se}, and \code{df}}
+  \item{p}{the p-values from from a two-sided z-test using \code{coefficients}, \code{se}, and \code{df}}
   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
   \item{coefficient_name}{a character vector of coefficient names}
@@ -99,18 +100,18 @@ which the randomization scheme is known
 }
 \details{
 This function implements the Horvitz-Thompson estimator for
-treatment effects. This estimator is useful for estimating unbiased
+treatment effects for two-armed trials. This estimator is useful for estimating unbiased
 treatment effects given any randomization scheme as long as the
 randomization scheme is known.
 
 In short, the Horvitz-Thompson estimator essentially reweights each unit
 by the probability of it being in its observed condition. Pivotal to the
 estimation of treatment effects using this estimator are the marginal
-condition probabilities (i.e. the probability that any one unit is in
-a particular treatment condition). Pivotal to the variance of this estimate,
-whenever the design is more complicated than simple randomization, as in
-the case of blocked, clustered, or complete randomization, are the
-joint condition probabilities (i.e. the probabilities that any two units
+condition probabilities (i.e., the probability that any one unit is in
+a particular treatment condition). Pivotal to the estimating the variance
+variance whenever the design is more complicated than simple randomization,
+are the
+joint condition probabilities (i.e., the probabilities that any two units
 have a particular set of treatment conditions, either the same or
 different). The estimator we provide here considers the case with two
 treatment conditions.
@@ -171,7 +172,7 @@ dat <- data.frame(y = rnorm(n))
 library(randomizr)
 
 #----------
-# Simple random assignment
+# 1. Simple random assignment
 #----------
 dat$p <- 0.5
 dat$z <- rbinom(n, size = 1, prob = dat$p)
@@ -186,7 +187,7 @@ srs_declaration <- declare_ra(N = nrow(dat), prob = 0.5, simple = TRUE)
 horvitz_thompson(y ~ z, data = dat, declaration = srs_declaration)
 
 #----------
-# Complete random assignment
+# 2. Complete random assignment
 #----------
 
 dat$z <- sample(rep(0:1, each = n/2))
@@ -199,22 +200,7 @@ crs_pr_mat <- declaration_to_condition_pr_mat(crs_declaration)
 horvitz_thompson(y ~ z, data = dat, condition_pr_mat = crs_pr_mat)
 
 #----------
-# More complicated assignment
-#----------
-
-# arbitrary permutation matrix
-possible_treats <- cbind(
-  c(1, 1, 0, 1, 0, 0, 0, 1, 1, 0),
-  c(0, 1, 1, 0, 1, 1, 0, 1, 0, 1),
-  c(1, 0, 1, 1, 1, 1, 1, 0, 0, 0)
-)
-arb_pr_mat <- permutations_to_condition_pr_mat(possible_treats)
-# Simulating a column to be realized treatment
-dat$z <- possible_treats[, sample(ncol(possible_treats), size = 1)]
-horvitz_thompson(y ~ z, data = dat, condition_pr_mat = arb_pr_mat)
-
-#----------
-# Clustered treatment, complete random assigment
+# 3. Clustered treatment, complete random assigment
 #-----------
 # Simulating data
 dat$cl <- rep(1:4, times = c(2, 2, 3, 3))
@@ -233,6 +219,23 @@ ht_cl_manual <- horvitz_thompson(
 )
 ht_cl
 ht_cl_manual
+
+# Blcoked estimators specified similarly
+
+#----------
+# More complicated assignment
+#----------
+
+# arbitrary permutation matrix
+possible_treats <- cbind(
+  c(1, 1, 0, 1, 0, 0, 0, 1, 1, 0),
+  c(0, 1, 1, 0, 1, 1, 0, 1, 0, 1),
+  c(1, 0, 1, 1, 1, 1, 1, 0, 0, 0)
+)
+arb_pr_mat <- permutations_to_condition_pr_mat(possible_treats)
+# Simulating a column to be realized treatment
+dat$z <- possible_treats[, sample(ncol(possible_treats), size = 1)]
+horvitz_thompson(y ~ z, data = dat, condition_pr_mat = arb_pr_mat)
 
 }
 \references{

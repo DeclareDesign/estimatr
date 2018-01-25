@@ -13,7 +13,7 @@
 #' @param clusters An optional bare (unquoted) name of the variable that
 #' corresponds to the clusters in the data; used for cluster randomized
 #' designs. For blocked designs, clusters must be within blocks.
-#' @param simple An optional boolean for whether the randomization is simple
+#' @param simple logical, optional. Whether the randomization is simple
 #' (TRUE) or complete (FALSE). This is ignored if \code{blocks} are specified,
 #' as all blocked designs use complete randomization, or either
 #' \code{declaration} or \code{condition_pr_mat} are passed. Otherwise, it
@@ -42,25 +42,26 @@
 #' default be 0 and \code{condition2} will be 1). See the examples for more.
 #' @param condition2 value in the treatment vector of the condition to be the
 #' treatment. See \code{condition1}.
-#' @param ci A boolean for whether to compute and return p-values and confidence
-#' intervals, TRUE by default.
+#' @param ci logical. Whether to compute and return p-values and
+#' confidence intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
-#' @param return_condition_pr_mat a boolean for whether to return the condition
-#' probability matrix. Returns NULL if the design is simple randomization
+#' @param return_condition_pr_mat logical. Whether to return the condition
+#' probability matrix. Returns NULL if the design is simple randomization,
+#' FALSE by default.
 #'
 #' @details This function implements the Horvitz-Thompson estimator for
-#' treatment effects. This estimator is useful for estimating unbiased
+#' treatment effects for two-armed trials. This estimator is useful for estimating unbiased
 #' treatment effects given any randomization scheme as long as the
 #' randomization scheme is known.
 #'
 #' In short, the Horvitz-Thompson estimator essentially reweights each unit
 #' by the probability of it being in its observed condition. Pivotal to the
 #' estimation of treatment effects using this estimator are the marginal
-#' condition probabilities (i.e. the probability that any one unit is in
-#' a particular treatment condition). Pivotal to the variance of this estimate,
-#' whenever the design is more complicated than simple randomization, as in
-#' the case of blocked, clustered, or complete randomization, are the
-#' joint condition probabilities (i.e. the probabilities that any two units
+#' condition probabilities (i.e., the probability that any one unit is in
+#' a particular treatment condition). Pivotal to the estimating the variance
+#' variance whenever the design is more complicated than simple randomization,
+#' are the
+#' joint condition probabilities (i.e., the probabilities that any two units
 #' have a particular set of treatment conditions, either the same or
 #' different). The estimator we provide here considers the case with two
 #' treatment conditions.
@@ -109,13 +110,13 @@
 #' of units being in conditions 1 and 2 of arbitrary complexity. Users should
 #' only use this option if they are certain they know what they are doing.
 #'
-#' @return \code{horvitz_thompson} returns an object of class
-#' \code{"horvitz_thompson"}.
+#' @return Returns an object of class \code{"horvitz_thompson"}.
 #'
-#' The functions \code{summary} and \code{\link{tidy}} can be used to get
-#' the results as a \code{data.frame}. To get useful data out of the return,
+#' The post-estimation commands functions \code{summary} and \code{\link{tidy}}
+#' return results in a \code{data.frame}. To get useful data out of the return,
 #' you can use these data frames, you can use the resulting list directly, or
-#' you can use the generic accessor functions \code{coef}, and\code{confint}.
+#' you can use the generic accessor functions \code{coef} and
+#' \code{confint}.
 #'
 #' An object of class \code{"horvitz_thompson"} is a list containing at
 #' least the following components:
@@ -123,7 +124,7 @@
 #'   \item{coefficients}{the estimated coefficients}
 #'   \item{se}{the estimated standard errors}
 #'   \item{df}{the estimated degrees of freedom}
-#'   \item{p}{the p-values from the t-test using \code{coefficients}, \code{se}, and \code{df}}
+#'   \item{p}{the p-values from from a two-sided z-test using \code{coefficients}, \code{se}, and \code{df}}
 #'   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{coefficient_name}{a character vector of coefficient names}
@@ -154,7 +155,7 @@
 #' library(randomizr)
 #'
 #' #----------
-#' # Simple random assignment
+#' # 1. Simple random assignment
 #' #----------
 #' dat$p <- 0.5
 #' dat$z <- rbinom(n, size = 1, prob = dat$p)
@@ -169,7 +170,7 @@
 #' horvitz_thompson(y ~ z, data = dat, declaration = srs_declaration)
 #'
 #' #----------
-#' # Complete random assignment
+#' # 2. Complete random assignment
 #' #----------
 #'
 #' dat$z <- sample(rep(0:1, each = n/2))
@@ -182,22 +183,7 @@
 #' horvitz_thompson(y ~ z, data = dat, condition_pr_mat = crs_pr_mat)
 #'
 #' #----------
-#' # More complicated assignment
-#' #----------
-#'
-#' # arbitrary permutation matrix
-#' possible_treats <- cbind(
-#'   c(1, 1, 0, 1, 0, 0, 0, 1, 1, 0),
-#'   c(0, 1, 1, 0, 1, 1, 0, 1, 0, 1),
-#'   c(1, 0, 1, 1, 1, 1, 1, 0, 0, 0)
-#' )
-#' arb_pr_mat <- permutations_to_condition_pr_mat(possible_treats)
-#' # Simulating a column to be realized treatment
-#' dat$z <- possible_treats[, sample(ncol(possible_treats), size = 1)]
-#' horvitz_thompson(y ~ z, data = dat, condition_pr_mat = arb_pr_mat)
-#'
-#' #----------
-#' # Clustered treatment, complete random assigment
+#' # 3. Clustered treatment, complete random assigment
 #' #-----------
 #' # Simulating data
 #' dat$cl <- rep(1:4, times = c(2, 2, 3, 3))
@@ -216,6 +202,23 @@
 #' )
 #' ht_cl
 #' ht_cl_manual
+#'
+#' # Blcoked estimators specified similarly
+#'
+#' #----------
+#' # More complicated assignment
+#' #----------
+#'
+#' # arbitrary permutation matrix
+#' possible_treats <- cbind(
+#'   c(1, 1, 0, 1, 0, 0, 0, 1, 1, 0),
+#'   c(0, 1, 1, 0, 1, 1, 0, 1, 0, 1),
+#'   c(1, 0, 1, 1, 1, 1, 1, 0, 0, 0)
+#' )
+#' arb_pr_mat <- permutations_to_condition_pr_mat(possible_treats)
+#' # Simulating a column to be realized treatment
+#' dat$z <- possible_treats[, sample(ncol(possible_treats), size = 1)]
+#' horvitz_thompson(y ~ z, data = dat, condition_pr_mat = arb_pr_mat)
 #'
 #' @export
 horvitz_thompson <-
@@ -241,7 +244,7 @@ horvitz_thompson <-
     if (length(all.vars(formula[[3]])) > 1) {
       stop(
         "'formula' must have only one variable on the right-hand side: the ",
-        "treatment variable."
+        "treatment variable"
       )
     }
 
@@ -255,7 +258,7 @@ horvitz_thompson <-
       if (ncol(declaration$probabilities_matrix) > 2) {
         stop(
           "Cannot use horvitz_thompson() with a `declaration` with more than ",
-          "two treatment arms for now."
+          "two treatment arms for now"
         )
       }
 
@@ -263,12 +266,18 @@ horvitz_thompson <-
         !missing(condition_prs) |
         !missing(blocks) |
         !is.null(condition_pr_mat)) {
-        stop("Cannot use declaration with any of clusters, condition_prs, blocks, condition_pr_mat.")
+        stop(
+          "Cannot use `declaration` with any of `clusters`, `condition_prs`, ",
+          "`blocks`, `condition_pr_mat`"
+        )
       }
 
       # Declaration can only be used if it is the same length as the data being passed
       if (nrow(declaration$probabilities_matrix) != nrow(data)) {
-        stop("Cannot use declaration if declaration 'N' is different than the rows in data.")
+        stop(
+          "Cannot use `declaration` if the number of observations in the ",
+          "`declaration` 'N' is different than the rows in data"
+        )
       }
 
       # Add clusters, blocks, and treatment probabilities to data so they can be cleaned with clean_model_data
@@ -277,7 +286,10 @@ horvitz_thompson <-
           data[[".clusters_ddinternal"]] <- declaration$clusters
           clusters <- ".clusters_ddinternal"
         } else {
-          stop("estimatr stores clusters from declarations in a variable called .clusters_ddinternal in your data. Please remove it and try again.")
+          stop(
+            "Can't have a variable called '.clusters_ddinternal' in your `data`",
+            "as we use that name for clusters from `declaration` objects."
+          )
         }
       }
 
@@ -286,7 +298,10 @@ horvitz_thompson <-
           data[[".blocks_ddinternal"]] <- declaration$blocks
           blocks <- ".blocks_ddinternal"
         } else {
-          stop("estimatr stores blocks from declarations in a variable called .blocks_ddinternal in your data. Please remove it and try again.")
+          stop(
+            "Can't have a variable called '.blocks_ddinternal' in your `data`",
+            "as we use that name for blocks from `declaration` objects."
+          )
         }
       }
 
@@ -316,9 +331,8 @@ horvitz_thompson <-
         condition_prs <- ".treatment_prob_ddinternal"
       } else {
         stop(
-          "Cannot have a variable in your `data` called ",
-          "'.treatment_prob_ddinternal' as this function uses that to store ",
-          "the treatment probabilities.\nPlease remove/rename it and try again"
+          "Can't have a variable called '.treatment_prob_ddinternal' in your `data`",
+          "as we use that name for treatment probabilites."
         )
       }
     }
@@ -341,14 +355,15 @@ horvitz_thompson <-
     if (!is.null(condition_pr_mat) && (2 * length(model_data$outcome) != nrow(condition_pr_mat))) {
       stop(
         "After cleaning the data, it has ", length(model_data$outcome), " ",
-        "while condition_pr_mat has ", nrow(condition_pr_mat), ". ",
-        "condition_pr_mat should have twice the rows"
+        "while `condition_pr_mat` has ", nrow(condition_pr_mat), ". ",
+        "`condition_pr_mat` should have twice the rows"
       )
     }
 
     data <- data.frame(
       y = model_data$outcome,
-      t = model_data$original_treatment
+      t = model_data$original_treatment,
+      stringsAsFactors = FALSE
     )
 
     # Parse conditions
@@ -407,7 +422,7 @@ horvitz_thompson <-
 
             message(
               "Assuming simple random assignment with probability of treatment ",
-              "equal to the mean number of obs in condition2, which is roughly ",
+              "equal to the mean number of obs in `condition2`, which is roughly ",
               round(pr_treat, 3)
             )
 
@@ -418,7 +433,7 @@ horvitz_thompson <-
           if (is.null(data$condition_probabilities)) {
             pr_treat <- mean(data$t == condition2)
             message(
-              "Learning probability of complete random assignment from data ",
+              "Learning probability of complete random assignment from data with",
               "prob = ", round(pr_treat, 3)
             )
             condition_pr_mat <- gen_pr_matrix_complete(
@@ -452,7 +467,7 @@ horvitz_thompson <-
           pr_treat <- mean(cluster_treats$treat_clust)
           message(
             "`condition_prs` not found, estimating probability of treatment ",
-            "to be constant at mean of clusters in condition2 at: ", pr_treat
+            "to be constant at mean of clusters in `condition2` at prob =", pr_treat
           )
 
           # Some redundancy in following fn
@@ -488,7 +503,8 @@ horvitz_thompson <-
           condition_pr_mat <- gen_pr_matrix_block(
             blocks = data$blocks,
             clusters = data$clusters,
-            t = data$t
+            t = data$t,
+            condition2 = condition2
           )
         } else {
           condition_pr_mat <- gen_pr_matrix_block(
@@ -661,16 +677,16 @@ horvitz_thompson_internal <-
             sum(Y1 ^ 2) +
             ht_var_partial(
               Y2,
-              condition_pr_mat[(k + t2), (k + t2), drop = F]
+              condition_pr_mat[(k + t2), (k + t2), drop = FALSE]
             ) +
             ht_var_partial(
               Y1,
-              condition_pr_mat[t1, t1, drop = F]
+              condition_pr_mat[t1, t1, drop = FALSE]
             ) -
             2 * ht_covar_partial(
               Y2,
               Y1,
-              condition_pr_mat[(k + t2), t1, drop = F],
+              condition_pr_mat[(k + t2), t1, drop = FALSE],
               ps2,
               ps1
             )
@@ -732,16 +748,16 @@ horvitz_thompson_internal <-
             sum(Y1 ^ 2) +
             ht_var_partial(
               Y2,
-              condition_pr_mat[(N + t2), (N + t2), drop = F]
+              condition_pr_mat[(N + t2), (N + t2), drop = FALSE]
             ) +
             ht_var_partial(
               Y1,
-              condition_pr_mat[t1, t1, drop = F]
+              condition_pr_mat[t1, t1, drop = FALSE]
             ) -
             2 * ht_covar_partial(
               Y2,
               Y1,
-              condition_pr_mat[(N + t2), t1, drop = F],
+              condition_pr_mat[(N + t2), t1, drop = FALSE],
               ps2,
               ps1
             )
@@ -767,7 +783,8 @@ horvitz_thompson_internal <-
       data.frame(
         coefficients = diff,
         se = se,
-        N = N
+        N = N,
+        stringsAsFactors = FALSE
       )
 
     return(return_frame)

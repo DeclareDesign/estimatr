@@ -38,26 +38,26 @@ default be 0 and \code{condition2} will be 1). See the examples for more.}
 \item{condition2}{value in the treatment vector of the condition to be the
 treatment. See \code{condition1}.}
 
-\item{ci}{A boolean for whether to compute and return p-values and
+\item{ci}{logical. Whether to compute and return p-values and
 confidence intervals, TRUE by default.}
 
 \item{alpha}{The significance level, 0.05 by default.}
 }
 \value{
-\code{difference_in_means} returns an object of class
-\code{"difference_in_means"}.
+Returns an object of class \code{"difference_in_means"}.
 
-The functions \code{summary} and \code{\link{tidy}} can be used to get
-the results as a \code{data.frame}. To get useful data out of the return,
+The post-estimation commands functions \code{summary} and \code{\link{tidy}}
+return results in a \code{data.frame}. To get useful data out of the return,
 you can use these data frames, you can use the resulting list directly, or
-you can use the generic accessor functions \code{coef}, and\code{confint}.
+you can use the generic accessor functions \code{coef} and
+\code{confint}.
 
 An object of class \code{"difference_in_means"} is a list containing at
 least the following components:
   \item{coefficients}{the estimated coefficients}
   \item{se}{the estimated standard errors}
   \item{df}{the estimated degrees of freedom}
-  \item{p}{the p-values from the t-test using \code{coefficients}, \code{se}, and \code{df}}
+  \item{p}{the p-values from a two-sided t-test using \code{coefficients}, \code{se}, and \code{df}}
   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
   \item{coefficient_name}{a character vector of coefficient names}
@@ -100,7 +100,11 @@ More details of the about each of the estimators can be found in the
 
 library(fabricatr)
 library(randomizr)
-# Get appropriate standard errors for simple designs
+# Get appropriate standard errors for unit-randomized designs
+
+# ----------
+# 1. Unit randomized
+# ----------
 dat <- fabricate(
   N = 100,
   Y = rnorm(100),
@@ -110,6 +114,9 @@ dat <- fabricate(
 table(dat$Z_comp)
 difference_in_means(Y ~ Z_comp, data = dat)
 
+# ----------
+# 2. Cluster randomized
+# ----------
 # Accurates estimates and standard errors for clustered designs
 dat$clust <- sample(20, size = nrow(dat), replace = TRUE)
 dat$Z_clust <- cluster_ra(dat$clust, prob = 0.6)
@@ -117,13 +124,37 @@ dat$Z_clust <- cluster_ra(dat$clust, prob = 0.6)
 table(dat$Z_clust, dat$clust)
 summary(difference_in_means(Y ~ Z_clust, clusters = clust, data = dat))
 
-# Accurate estimates and standard errors for blocked designs
+# ----------
+# 3. Block randomized
+# ----------
 dat$block <- rep(1:10, each = 10)
 dat$Z_block <- block_ra(dat$block, prob = 0.5)
 
 table(dat$Z_block, dat$block)
 difference_in_means(Y ~ Z_block, blocks = block, data = dat)
 
+# ----------
+# 4. Block cluster randomized
+# ----------
+# Learns this design if there are two clusters per block
+dat$small_clust <- rep(1:50, each = 2)
+dat$big_blocks <- rep(1:5, each = 10)
+
+dat$Z_blcl <- block_and_cluster_ra(
+  blocks = dat$big_blocks,
+  clusters = dat$small_clust
+ )
+
+difference_in_means(
+  Y ~ Z_blcl,
+  blocks = big_blocks,
+  clusters = small_clust,
+  data = dat
+ )
+
+# ----------
+# 5. Matched-pairs
+# ----------
 # Matched-pair estimates and standard errors are also accurate
 # Specified same as blocked design, function learns that
 # it is matched pair from size of blocks!
@@ -133,6 +164,30 @@ dat$Z_pairs <- block_ra(dat$pairs, prob = 0.5)
 table(dat$pairs, dat$Z_pairs)
 difference_in_means(Y ~ Z_pairs, blocks = pairs, data = dat)
 
+# ----------
+# 6. Matched-pair cluster randomized
+# ----------
+# Learns this design if there are two clusters per block
+dat$small_clust <- rep(1:50, each = 2)
+dat$cluster_pairs <- rep(1:25, each = 4)
+table(dat$cluster_pairs, dat$small_clust)
+
+dat$Z_mpcl <- block_and_cluster_ra(
+  blocks = dat$cluster_pairs,
+  clusters = dat$small_clust
+ )
+
+difference_in_means(
+  Y ~ Z_mpcl,
+  blocks = cluster_pairs,
+  clusters = small_clust,
+  data = dat
+ )
+
+# ----------
+# Other examples
+# ----------
+
 # Also works with multi-valued treatments if users specify
 # comparison of interest
 dat$Z_multi <- simple_ra(
@@ -141,8 +196,8 @@ dat$Z_multi <- simple_ra(
   prob_each = c(0.4, 0.4, 0.2)
 )
 
-# Only need to specify which condition is treated "condition2" and
-# which is control "condition1"
+# Only need to specify which condition is treated `condition2` and
+# which is control `condition1`
 difference_in_means(
   Y ~ Z_multi,
   condition1 = "Treatment 2",
@@ -156,7 +211,7 @@ difference_in_means(
   data = dat
 )
 
-# Specifying weights will result in estimation via `lm_robust`
+# Specifying weights will result in estimation via lm_robust()
 dat$w <- runif(nrow(dat))
 difference_in_means(Y ~ Z_comp, weights = w, data = dat)
 lm_robust(Y ~ Z_comp, weights = w, data = dat)
@@ -166,4 +221,7 @@ lm_robust(Y ~ Z_comp, weights = w, data = dat)
 Gerber, Alan S, and Donald P Green. 2012. Field Experiments: Design, Analysis, and Interpretation. New York: W.W. Norton.
 
 Imai, Kosuke, Gary King, Clayton Nall. 2009. "The Essential Role of Pair Matching in Cluster-Randomized Experiments, with Application to the Mexican Universal Health Insurance Evaluation." Statistical Science 24 (1). Institute of Mathematical Statistics: 29-53. \url{https://doi.org/10.1214/08-STS274}.
+}
+\seealso{
+\code{\link{lm_lin}}
 }

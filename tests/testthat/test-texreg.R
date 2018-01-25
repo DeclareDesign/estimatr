@@ -1,22 +1,23 @@
-# This file is ignored by .Rbuildignore to keep from suggesting broom
+# This file is ignored by .Rbuildignore to keep from suggesting texreg
 
-context("S3 - tidy and broom compatability")
+context("S3 - texreg builds")
 
-test_that("estimatr::tidy works loaded before or after after broom", {
-  detach("package:estimatr", unload = TRUE)
+test_that("texreg extension works", {
 
   model2 <- lm_robust(extra~group, sleep, clusters = "ID")
 
-  expect_error(
-    extract(model2),
-    "'texreg'"
-  )
-
   library(texreg)
 
+  capture.output(treg <- extract(model2, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE))
   expect_is(
-    extract(model2),
+    treg,
     "texreg"
+  )
+
+  # juicin the stats
+  expect_error(
+    .onLoad("lm_robust", "lm_robust"),
+    NA
   )
 
 })

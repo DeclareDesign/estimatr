@@ -111,8 +111,8 @@
     </div>
 
     
-    <p>This difference-in-means estimator selects the appropriate
-point estimator, standard errors, and degrees of freedom for a variety of
+    <p>Difference-in-means estimators that selects the appropriate
+point estimate, standard errors, and degrees of freedom for a variety of
 designs: unit randomized, cluster randomized, block randomized,
 block-cluster randomized, matched-pairs, and matched-pair cluster
 randomized designs</p>
@@ -172,7 +172,7 @@ treatment. See <code>condition1</code>.</p></td>
     </tr>
     <tr>
       <th>ci</th>
-      <td><p>A boolean for whether to compute and return p-values and
+      <td><p>logical. Whether to compute and return p-values and
 confidence intervals, TRUE by default.</p></td>
     </tr>
     <tr>
@@ -183,18 +183,18 @@ confidence intervals, TRUE by default.</p></td>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p><code>difference_in_means</code> returns an object of class
-<code>"difference_in_means"</code>.</p>
-<p>The functions <code>summary</code> and <code><a href='tidy.html'>tidy</a></code> can be used to get
-the results as a <code>data.frame</code>. To get useful data out of the return,
+    <p>Returns an object of class <code>"difference_in_means"</code>.</p>
+<p>The post-estimation commands functions <code>summary</code> and <code><a href='tidy.html'>tidy</a></code>
+return results in a <code>data.frame</code>. To get useful data out of the return,
 you can use these data frames, you can use the resulting list directly, or
-you can use the generic accessor functions <code>coef</code>, and<code>confint</code>.</p>
+you can use the generic accessor functions <code>coef</code> and
+<code>confint</code>.</p>
 <p>An object of class <code>"difference_in_means"</code> is a list containing at
-least the following components:</p><dl class='dl-horizontal'>
-  <dt>est</dt><dd><p>the estimated coefficients</p></dd>
+least the following components:</p>
+<dt>coefficients</dt><dd><p>the estimated coefficients</p></dd>
   <dt>se</dt><dd><p>the estimated standard errors</p></dd>
   <dt>df</dt><dd><p>the estimated degrees of freedom</p></dd>
-  <dt>p</dt><dd><p>the p-values from the t-test using <code>est</code>, <code>se</code>, and <code>df</code></p></dd>
+  <dt>p</dt><dd><p>the p-values from a two-sided t-test using <code>coefficients</code>, <code>se</code>, and <code>df</code></p></dd>
   <dt>ci_lower</dt><dd><p>the lower bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
   <dt>ci_upper</dt><dd><p>the upper bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
   <dt>coefficient_name</dt><dd><p>a character vector of coefficient names</p></dd>
@@ -202,7 +202,6 @@ least the following components:</p><dl class='dl-horizontal'>
   <dt>N</dt><dd><p>the number of observations used</p></dd>
   <dt>outcome</dt><dd><p>the name of the outcome variable</p></dd>
   <dt>design</dt><dd><p>the name of the design learned from the arguments passed</p></dd>
-</dl>
 
     
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
@@ -229,54 +228,86 @@ More details of the about each of the estimators can be found in the
     
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
-    <p>Gerber, Alan S, and Donald P Green. 2012. Field Experiments: Design, Analysis, and Interpretation. New York: W.W. Norton.
-Imai, Kosuke, Gary King, Clayton Nall. 2009. "The Essential Role of Pair Matching in Cluster-Randomized Experiments, with Application to the Mexican Universal Health Insurance Evaluation." Statistical Science 24 (1). Institute of Mathematical Statistics: 29-53. <a href='https://doi.org/10.1214/08-STS274'>https://doi.org/10.1214/08-STS274</a>.</p>
+    <p>Gerber, Alan S, and Donald P Green. 2012. Field Experiments: Design, Analysis, and Interpretation. New York: W.W. Norton.</p>
+<p>Imai, Kosuke, Gary King, Clayton Nall. 2009. "The Essential Role of Pair Matching in Cluster-Randomized Experiments, with Application to the Mexican Universal Health Insurance Evaluation." Statistical Science 24 (1). Institute of Mathematical Statistics: 29-53. <a href='https://doi.org/10.1214/08-STS274'>https://doi.org/10.1214/08-STS274</a>.</p>
+    
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+
+    <p><code><a href='lm_lin.html'>lm_lin</a></code></p>
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'>
 <span class='fu'>library</span>(<span class='no'>fabricatr</span>)
 <span class='fu'>library</span>(<span class='no'>randomizr</span>)
-<span class='co'># Get appropriate standard errors for simple designs</span>
+<span class='co'># Get appropriate standard errors for unit-randomized designs</span>
+
+<span class='co'># ----------</span>
+<span class='co'># 1. Unit randomized</span>
+<span class='co'># ----------</span>
 <span class='no'>dat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/fabricatr/topics/fabricate'>fabricate</a></span>(
   <span class='kw'>N</span> <span class='kw'>=</span> <span class='fl'>100</span>,
   <span class='kw'>Y</span> <span class='kw'>=</span> <span class='fu'>rnorm</span>(<span class='fl'>100</span>),
-  <span class='kw'>Z_simp</span> <span class='kw'>=</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/simple_ra'>simple_ra</a></span>(<span class='no'>N</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.4</span>),
+  <span class='kw'>Z_comp</span> <span class='kw'>=</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/complete_ra'>complete_ra</a></span>(<span class='no'>N</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.4</span>),
 )
 
-<span class='fu'>table</span>(<span class='no'>dat</span>$<span class='no'>Z_simp</span>)</div><div class='output co'>#&gt; 
+<span class='fu'>table</span>(<span class='no'>dat</span>$<span class='no'>Z_comp</span>)</div><div class='output co'>#&gt; 
 #&gt;  0  1 
-#&gt; 51 49 </div><div class='input'><span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_simp</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt; [1] "Design: Standard"
-#&gt;   coefficient_name       est        se        p   ci_lower  ci_upper       df
-#&gt; 1           Z_simp -0.110078 0.2005905 0.584412 -0.5081456 0.2879895 97.95751
-#&gt;   outcome
-#&gt; 1       Y</div><div class='input'>
+#&gt; 60 40 </div><div class='input'><span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_comp</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt; Design:  Standard 
+#&gt;         Estimate Std. Error    Pr(&gt;|t|) CI Lower  CI Upper       DF
+#&gt; Z_comp 0.5269925  0.1916177 0.007165561 0.146443 0.9075419 92.36197</div><div class='input'>
+<span class='co'># ----------</span>
+<span class='co'># 2. Cluster randomized</span>
+<span class='co'># ----------</span>
 <span class='co'># Accurates estimates and standard errors for clustered designs</span>
 <span class='no'>dat</span>$<span class='no'>clust</span> <span class='kw'>&lt;-</span> <span class='fu'>sample</span>(<span class='fl'>20</span>, <span class='kw'>size</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>), <span class='kw'>replace</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
 <span class='no'>dat</span>$<span class='no'>Z_clust</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/cluster_ra'>cluster_ra</a></span>(<span class='no'>dat</span>$<span class='no'>clust</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.6</span>)
 
 <span class='fu'>table</span>(<span class='no'>dat</span>$<span class='no'>Z_clust</span>, <span class='no'>dat</span>$<span class='no'>clust</span>)</div><div class='output co'>#&gt;    
 #&gt;     1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
-#&gt;   0 3 5 7 0 0 0 0 8 5  0  0  0  0  0  2  0  0  6  0  6
-#&gt;   1 0 0 0 7 7 6 2 0 0  4  6  1  8  3  0  3  6  0  5  0</div><div class='input'><span class='fu'>summary</span>(<span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_clust</span>, <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>clust</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>))</div><div class='output co'>#&gt; $coefficients
-#&gt;           Estimate Std. Error  Pr(&gt;|t|)   ci_lower  ci_upper       df
-#&gt; Z_clust 0.09426617  0.2147297 0.6676325 -0.3680591 0.5565915 13.44919
+#&gt;   0 3 5 0 0 0 0 3 8 0  0  0  1  8  3  0  3  0  0  0  0
+#&gt;   1 0 0 7 7 6 6 0 0 5  4  6  0  0  0  2  0  6  6  5  6</div><div class='input'><span class='fu'>summary</span>(<span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_clust</span>, <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>clust</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>))</div><div class='output co'>#&gt; $coefficients
+#&gt;          Estimate Std. Error  Pr(&gt;|t|)   CI Lower  CI Upper       DF
+#&gt; Z_clust 0.1785997  0.1428684 0.2386559 -0.1380717 0.4952711 10.40191
 #&gt; 
 #&gt; $design
 #&gt; [1] "Clustered"
 #&gt; </div><div class='input'>
-<span class='co'># Accurate estimates and standard errors for blocked designs</span>
+<span class='co'># ----------</span>
+<span class='co'># 3. Block randomized</span>
+<span class='co'># ----------</span>
 <span class='no'>dat</span>$<span class='no'>block</span> <span class='kw'>&lt;-</span> <span class='fu'>rep</span>(<span class='fl'>1</span>:<span class='fl'>10</span>, <span class='kw'>each</span> <span class='kw'>=</span> <span class='fl'>10</span>)
 <span class='no'>dat</span>$<span class='no'>Z_block</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/block_ra'>block_ra</a></span>(<span class='no'>dat</span>$<span class='no'>block</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.5</span>)
 
 <span class='fu'>table</span>(<span class='no'>dat</span>$<span class='no'>Z_block</span>, <span class='no'>dat</span>$<span class='no'>block</span>)</div><div class='output co'>#&gt;    
 #&gt;     1 2 3 4 5 6 7 8 9 10
 #&gt;   0 5 5 5 5 5 5 5 5 5  5
-#&gt;   1 5 5 5 5 5 5 5 5 5  5</div><div class='input'><span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_block</span>, <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>block</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt; [1] "Design: Blocked"
-#&gt;   coefficient_name       est        se         p   ci_lower  ci_upper df
-#&gt; 1          Z_block -0.075066 0.2077237 0.7187723 -0.4884493 0.3383173 80
-#&gt;   outcome
-#&gt; 1       Y</div><div class='input'>
+#&gt;   1 5 5 5 5 5 5 5 5 5  5</div><div class='input'><span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_block</span>, <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>block</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt; Design:  Blocked 
+#&gt;          Estimate Std. Error  Pr(&gt;|t|)   CI Lower  CI Upper DF
+#&gt; Z_block 0.1544723  0.1981429 0.4379262 -0.2398445 0.5487892 80</div><div class='input'>
+<span class='co'># ----------</span>
+<span class='co'># 4. Block cluster randomized</span>
+<span class='co'># ----------</span>
+<span class='co'># Learns this design if there are two clusters per block</span>
+<span class='no'>dat</span>$<span class='no'>small_clust</span> <span class='kw'>&lt;-</span> <span class='fu'>rep</span>(<span class='fl'>1</span>:<span class='fl'>50</span>, <span class='kw'>each</span> <span class='kw'>=</span> <span class='fl'>2</span>)
+<span class='no'>dat</span>$<span class='no'>big_blocks</span> <span class='kw'>&lt;-</span> <span class='fu'>rep</span>(<span class='fl'>1</span>:<span class='fl'>5</span>, <span class='kw'>each</span> <span class='kw'>=</span> <span class='fl'>10</span>)
+
+<span class='no'>dat</span>$<span class='no'>Z_blcl</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/block_and_cluster_ra'>block_and_cluster_ra</a></span>(
+  <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>big_blocks</span>,
+  <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>small_clust</span>
+ )
+
+<span class='fu'>difference_in_means</span>(
+  <span class='no'>Y</span> ~ <span class='no'>Z_blcl</span>,
+  <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>big_blocks</span>,
+  <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>small_clust</span>,
+  <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>
+ )</div><div class='output co'>#&gt; Design:  Block-clustered 
+#&gt;         Estimate Std. Error  Pr(&gt;|t|)   CI Lower  CI Upper DF
+#&gt; Z_blcl 0.1279928  0.1896988 0.5037378 -0.2554028 0.5113883 40</div><div class='input'>
+<span class='co'># ----------</span>
+<span class='co'># 5. Matched-pairs</span>
+<span class='co'># ----------</span>
 <span class='co'># Matched-pair estimates and standard errors are also accurate</span>
 <span class='co'># Specified same as blocked design, function learns that</span>
 <span class='co'># it is matched pair from size of blocks!</span>
@@ -334,11 +365,77 @@ Imai, Kosuke, Gary King, Clayton Nall. 2009. "The Essential Role of Pair Matchin
 #&gt;   47 1 1
 #&gt;   48 1 1
 #&gt;   49 1 1
-#&gt;   50 1 1</div><div class='input'><span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_pairs</span>, <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>pairs</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt; [1] "Design: Matched-pair"
-#&gt;   coefficient_name       est        se         p   ci_lower  ci_upper df
-#&gt; 1          Z_pairs 0.1279107 0.2035161 0.5325926 -0.2810702 0.5368916 49
-#&gt;   outcome
-#&gt; 1       Y</div><div class='input'>
+#&gt;   50 1 1</div><div class='input'><span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_pairs</span>, <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>pairs</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt; Design:  Matched-pair 
+#&gt;           Estimate Std. Error  Pr(&gt;|t|)   CI Lower  CI Upper DF
+#&gt; Z_pairs -0.1179601  0.2036387 0.5650663 -0.5271874 0.2912672 49</div><div class='input'>
+<span class='co'># ----------</span>
+<span class='co'># 6. Matched-pair cluster randomized</span>
+<span class='co'># ----------</span>
+<span class='co'># Learns this design if there are two clusters per block</span>
+<span class='no'>dat</span>$<span class='no'>small_clust</span> <span class='kw'>&lt;-</span> <span class='fu'>rep</span>(<span class='fl'>1</span>:<span class='fl'>50</span>, <span class='kw'>each</span> <span class='kw'>=</span> <span class='fl'>2</span>)
+<span class='no'>dat</span>$<span class='no'>cluster_pairs</span> <span class='kw'>&lt;-</span> <span class='fu'>rep</span>(<span class='fl'>1</span>:<span class='fl'>25</span>, <span class='kw'>each</span> <span class='kw'>=</span> <span class='fl'>4</span>)
+<span class='fu'>table</span>(<span class='no'>dat</span>$<span class='no'>cluster_pairs</span>, <span class='no'>dat</span>$<span class='no'>small_clust</span>)</div><div class='output co'>#&gt;     
+#&gt;      1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28
+#&gt;   1  2 2 0 0 0 0 0 0 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   2  0 0 2 2 0 0 0 0 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   3  0 0 0 0 2 2 0 0 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   4  0 0 0 0 0 0 2 2 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   5  0 0 0 0 0 0 0 0 2  2  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   6  0 0 0 0 0 0 0 0 0  0  2  2  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   7  0 0 0 0 0 0 0 0 0  0  0  0  2  2  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   8  0 0 0 0 0 0 0 0 0  0  0  0  0  0  2  2  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   9  0 0 0 0 0 0 0 0 0  0  0  0  0  0  0  0  2  2  0  0  0  0  0  0  0  0  0  0
+#&gt;   10 0 0 0 0 0 0 0 0 0  0  0  0  0  0  0  0  0  0  2  2  0  0  0  0  0  0  0  0
+#&gt;   11 0 0 0 0 0 0 0 0 0  0  0  0  0  0  0  0  0  0  0  0  2  2  0  0  0  0  0  0
+#&gt;   12 0 0 0 0 0 0 0 0 0  0  0  0  0  0  0  0  0  0  0  0  0  0  2  2  0  0  0  0
+#&gt;   13 0 0 0 0 0 0 0 0 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  2  2  0  0
+#&gt;   14 0 0 0 0 0 0 0 0 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  2  2
+#&gt;   15 0 0 0 0 0 0 0 0 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   16 0 0 0 0 0 0 0 0 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   17 0 0 0 0 0 0 0 0 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   18 0 0 0 0 0 0 0 0 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   19 0 0 0 0 0 0 0 0 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   20 0 0 0 0 0 0 0 0 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;     
+#&gt;      29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50
+#&gt;   1   0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   2   0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   3   0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   4   0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   5   0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   6   0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   7   0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   8   0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   9   0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   10  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   11  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   12  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   13  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   14  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   15  2  2  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   16  0  0  2  2  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   17  0  0  0  0  2  2  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   18  0  0  0  0  0  0  2  2  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   19  0  0  0  0  0  0  0  0  2  2  0  0  0  0  0  0  0  0  0  0  0  0
+#&gt;   20  0  0  0  0  0  0  0  0  0  0  2  2  0  0  0  0  0  0  0  0  0  0
+#&gt;  [ reached getOption("max.print") -- omitted 5 rows ]</div><div class='input'>
+<span class='no'>dat</span>$<span class='no'>Z_mpcl</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/block_and_cluster_ra'>block_and_cluster_ra</a></span>(
+  <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>cluster_pairs</span>,
+  <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>small_clust</span>
+ )
+
+<span class='fu'>difference_in_means</span>(
+  <span class='no'>Y</span> ~ <span class='no'>Z_mpcl</span>,
+  <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>cluster_pairs</span>,
+  <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>small_clust</span>,
+  <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>
+ )</div><div class='output co'>#&gt; Design:  Matched-pair clustered 
+#&gt;          Estimate Std. Error  Pr(&gt;|t|)   CI Lower  CI Upper DF
+#&gt; Z_mpcl -0.1279652  0.2265555 0.5774316 -0.5955528 0.3396223 24</div><div class='input'>
+<span class='co'># ----------</span>
+<span class='co'># Other examples</span>
+<span class='co'># ----------</span>
+
 <span class='co'># Also works with multi-valued treatments if users specify</span>
 <span class='co'># comparison of interest</span>
 <span class='no'>dat</span>$<span class='no'>Z_multi</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/simple_ra'>simple_ra</a></span>(
@@ -347,39 +444,30 @@ Imai, Kosuke, Gary King, Clayton Nall. 2009. "The Essential Role of Pair Matchin
   <span class='kw'>prob_each</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='fl'>0.4</span>, <span class='fl'>0.4</span>, <span class='fl'>0.2</span>)
 )
 
-<span class='co'># Only need to specify which condition is treated "condition2" and</span>
-<span class='co'># which is control "condition1"</span>
+<span class='co'># Only need to specify which condition is treated `condition2` and</span>
+<span class='co'># which is control `condition1`</span>
 <span class='fu'>difference_in_means</span>(
   <span class='no'>Y</span> ~ <span class='no'>Z_multi</span>,
   <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='st'>"Treatment 2"</span>,
   <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='st'>"Control"</span>,
   <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>
-)</div><div class='output co'>#&gt; [1] "Design: Standard"
-#&gt;   coefficient_name         est        se        p   ci_lower  ci_upper       df
-#&gt; 1   Z_multiControl -0.02186428 0.3002911 0.942377 -0.6317747 0.5880462 34.54505
-#&gt;   outcome
-#&gt; 1       Y</div><div class='input'><span class='fu'>difference_in_means</span>(
+)</div><div class='output co'>#&gt; Design:  Standard 
+#&gt;                 Estimate Std. Error  Pr(&gt;|t|)   CI Lower  CI Upper       DF
+#&gt; Z_multiControl 0.3103231  0.2711429 0.2633809 -0.2484358 0.8690819 24.71253</div><div class='input'><span class='fu'>difference_in_means</span>(
   <span class='no'>Y</span> ~ <span class='no'>Z_multi</span>,
   <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='st'>"Treatment 1"</span>,
   <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='st'>"Control"</span>,
   <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>
-)</div><div class='output co'>#&gt; [1] "Design: Standard"
-#&gt;   coefficient_name       est        se         p   ci_lower  ci_upper       df
-#&gt; 1   Z_multiControl 0.2074861 0.2972427 0.4900263 -0.3971726 0.8121447 33.12422
-#&gt;   outcome
-#&gt; 1       Y</div><div class='input'>
-<span class='co'># Specifying weights will result in estimation via `lm_robust`</span>
+)</div><div class='output co'>#&gt; Design:  Standard 
+#&gt;                  Estimate Std. Error  Pr(&gt;|t|)   CI Lower CI Upper       DF
+#&gt; Z_multiControl -0.1947389  0.2768227 0.4878912 -0.7632268 0.373749 26.50704</div><div class='input'>
+<span class='co'># Specifying weights will result in estimation via lm_robust()</span>
 <span class='no'>dat</span>$<span class='no'>w</span> <span class='kw'>&lt;-</span> <span class='fu'>runif</span>(<span class='fu'>nrow</span>(<span class='no'>dat</span>))
-<span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_simp</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='no'>w</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt; [1] "Design: Standard (weighted)"
-#&gt;   coefficient_name         est       se         p   ci_lower  ci_upper df
-#&gt; 1           Z_simp -0.08534263 0.225205 0.7055409 -0.5322546 0.3615694 98
-#&gt;   outcome
-#&gt; 1       Y</div><div class='input'><span class='fu'><a href='lm_robust.html'>lm_robust</a></span>(<span class='no'>Y</span> ~ <span class='no'>Z_simp</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='no'>w</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;   coefficient_name         est        se         p   ci_lower  ci_upper df
-#&gt; 1      (Intercept)  0.02889963 0.1598783 0.8569291 -0.2883737 0.3461729 98
-#&gt; 2           Z_simp -0.08534263 0.2252050 0.7055409 -0.5322546 0.3615694 98
-#&gt;   outcome
-#&gt; 1       Y
-#&gt; 2       Y</div><div class='input'>
+<span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_comp</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='no'>w</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt; Design:  Standard (weighted) 
+#&gt;        Estimate Std. Error   Pr(&gt;|t|)   CI Lower CI Upper DF
+#&gt; Z_comp  0.55154  0.2334929 0.02014712 0.08818091 1.014899 98</div><div class='input'><span class='fu'><a href='lm_robust.html'>lm_robust</a></span>(<span class='no'>Y</span> ~ <span class='no'>Z_comp</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='no'>w</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;               Estimate Std. Error   Pr(&gt;|t|)    CI Lower   CI Upper DF
+#&gt; (Intercept) -0.2571984  0.1695720 0.13254878 -0.59370845 0.07931161 98
+#&gt; Z_comp       0.5515400  0.2334929 0.02014712  0.08818091 1.01489900 98</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -392,6 +480,8 @@ Imai, Kosuke, Gary King, Clayton Nall. 2009. "The Essential Role of Pair Matchin
       <li><a href="#details">Details</a></li>
 
       <li><a href="#references">References</a></li>
+
+      <li><a href="#see-also">See also</a></li>
       
       <li><a href="#examples">Examples</a></li>
     </ul>

@@ -32,8 +32,6 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
   Eigen::MatrixXd XtX_inv, R_inv, Vcov_hat;
   Eigen::VectorXd beta_out(Eigen::VectorXd::Constant(p, ::NA_REAL));
 
-  // Much of the OLS solution code is inspired by or copied directly from the fastLm function from RcppEigen
-  // https://cran.r-project.org/web/packages/RcppEigen/vignettes/RcppEigen-Introduction.pdf
   try {
     if (try_cholesky) {
       const Eigen::LLT<Eigen::MatrixXd> llt(Xfullt*Xfull);
@@ -112,6 +110,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
   // TODO See whether beta was not fit (i.e. dependent columns of X)
   //Eigen::ArrayBase<Derived> = beta_out.array().isNaN();
 
+  // Two copies of the data because both weighted and unweighted needed for CR2
   Eigen::MatrixXd Xoriginal(n, r);
   Eigen::MatrixXd Xoriginalfull(n, p);
   Eigen::MatrixXd X(n, r);
@@ -122,7 +121,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
     weights = Rcpp::as<Eigen::Map<Eigen::ArrayXd> >(weight);
     Xoriginalfull = Rcpp::as<Eigen::Map<Eigen::MatrixXd> >(Xunweighted);
   }
-  // Reshape objects if rank-deficient
+  // Reorder objects if rank-deficient
   if (r < p) {
     // Rcout << "Rank-deficient!" << std::endl;
     // Rcout << "beta_out:" << beta_out << std::endl;
@@ -184,11 +183,14 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
 
       } else if (type == "HC1") {
 
-        Vcov_hat = (double)n / ((double)n - (double)r) * XtX_inv * (X.transpose() * ei2.matrix().asDiagonal()) * X * XtX_inv;
+        Vcov_hat =
+          (double)n / ((double)n - (double)r) *
+          XtX_inv * (X.transpose() * ei2.matrix().asDiagonal()) * X * XtX_inv;
+
       } else if (type == "HC2") {
         Eigen::ArrayXd hii(n);
 
-        for(int i = 0; i < n; i++){
+        for (int i = 0; i < n; i++) {
           Eigen::VectorXd Xi = X.row(i);
           hii(i) = ei2(i) / (1.0 - (Xi.transpose() * XtX_inv * Xi));
         }
@@ -196,7 +198,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
       } else if (type == "HC3") {
         Eigen::ArrayXd hii(n);
 
-        for(int i = 0; i < n; i++){
+        for (int i = 0; i < n; i++) {
           Eigen::VectorXd Xi = X.row(i);
           hii(i) = ei2(i) / (std::pow(1.0 - Xi.transpose() * XtX_inv * Xi, 2));
         }
@@ -207,8 +209,9 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
 
      Eigen::Map<Eigen::ArrayXi> clusters = Rcpp::as<Eigen::Map<Eigen::ArrayXi> >(cluster);
 
-     // Following code implements the clubSandwich package CR2 estimatr found here: https://github.com/jepusto/clubSandwich
-     // Much of the code is also a translation/adaptation from the R in that package
+     // Following code implements the clubSandwich package CR2 estimatr found here:
+     // https://github.com/jepusto/clubSandwich
+     // Much of the code is also a translation/adaptation from the R code in that package
      if (type == "CR2") {
 
        Eigen::VectorXd cr2_eis;
@@ -258,6 +261,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
 
            // Rcout <<  X.transpose().block(0, start_pos, r, len) << std::endl << std::endl;
 
+           // TODO H should be symmetric, shouldn't need to transpose
            Eigen::MatrixXd H = Xoriginal.block(start_pos, 0, len, r) * XtX_inv * X.block(start_pos, 0, len, r).transpose();
 
            // Rcout << "H: " << H << std::endl;
@@ -274,7 +278,8 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
            // Rcout << "MUWTWUM: " << MUWTWUM << std::endl;
 
            Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> At_WX(
-               (Eigen::MatrixXd::Identity(len, len) - H) - H + Xoriginal.block(start_pos, 0, len, r) * MUWTWUM * Xoriginal.block(start_pos, 0, len, r).transpose()
+               (Eigen::MatrixXd::Identity(len, len) - H) - H +
+                 Xoriginal.block(start_pos, 0, len, r) * MUWTWUM * Xoriginal.block(start_pos, 0, len, r).transpose()
            );
 
            Eigen::VectorXd eigvals = At_WX.eigenvalues();
@@ -291,7 +296,8 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
 
            // TODO mimic tol in arma implementation
            //Eigen::MatrixXd At_WX_inv = At_WX.operatorInverseSqrt() * X.block(start_pos, 0, len, r);
-           Eigen::MatrixXd At_WX_inv = ((At_WX.eigenvectors() * eigvals.asDiagonal()) * At_WX.eigenvectors().transpose())
+           Eigen::MatrixXd At_WX_inv =
+             ((At_WX.eigenvectors() * eigvals.asDiagonal()) * At_WX.eigenvectors().transpose())
              * X.block(start_pos, 0, len, r);
 
            if (ci) {
@@ -342,15 +348,13 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
        // Rcout << "tutX: " << std::endl << tutX << std::endl;
 
        Vcov_hat = XtX_inv * (tutX.transpose() * tutX) * XtX_inv;
-//
-//        Rcout << "H1s" << std::endl << std::endl;
-//
-//        Rcout << H1s << std::endl << std::endl;
-//
-//        Rcout << "H2s" << std::endl << std::endl;
-//        Rcout << H2s << std::endl << std::endl;
-//        Rcout << "H3s" << std::endl << std::endl;
-//        Rcout << H3s << std::endl << std::endl;
+
+       // Rcout << "H1s" << std::endl << std::endl;
+       // Rcout << H1s << std::endl << std::endl;
+       // Rcout << "H2s" << std::endl << std::endl;
+       // Rcout << H2s << std::endl << std::endl;
+       // Rcout << "H3s" << std::endl << std::endl;
+       // Rcout << H3s << std::endl << std::endl;
 
        if (ci) {
          dof.fill(-99);
@@ -426,7 +430,9 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
         // Rcout << "sandwich: " << (XtX_inv * XteetX * XtX_inv) << std::endl;
 
         if (type == "stata") {
-          Vcov_hat = (((double)J * (n - 1)) / (((double)J - 1) * (n - r))) * (XtX_inv * XteetX * XtX_inv);
+          Vcov_hat =
+            (((double)J * (n - 1)) / (((double)J - 1) * (n - r))) *
+            (XtX_inv * XteetX * XtX_inv);
         } else {
           Vcov_hat = XtX_inv * XteetX * XtX_inv;
         }

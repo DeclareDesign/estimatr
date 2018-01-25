@@ -13,17 +13,21 @@
 
 \item{newdata}{a data frame in which to look for variables with which to predict}
 
-\item{se.fit}{a boolean for whether standard errors are required, default = FALSE}
+\item{se.fit}{logical. Whether standard errors are required, default = FALSE}
 
 \item{interval}{type of interval calculation. Can be abbreviated, default = none}
 
 \item{alpha}{numeric denoting the test size for confidence intervals}
 
-\item{na.action}{function determining what should be done with missing values in newdata. The default is to predict NA.}
+\item{na.action}{function determining what should be done with missing
+values in newdata. The default is to predict NA.}
 
-\item{pred.var}{the variance(s) for future observations to be assumed for prediction intervals.}
+\item{pred.var}{the variance(s) for future observations to be assumed for
+prediction intervals.}
 
-\item{weights}{variance weights for prediction. This can be a numeric vector or a bare (unquoted) name of the weights variable in the supplied newdata.}
+\item{weights}{variance weights for prediction. This can be a numeric
+vector or a bare (unquoted) name of the weights variable in the supplied
+newdata.}
 
 \item{...}{other arguments, unused}
 }
@@ -31,15 +35,28 @@
 Predict method for \code{\link{lm_robust}} object
 }
 \details{
-predict.lm_robust produces predicted values, obtained by evaluating the regression function in the frame newdata for fits from \code{lm_robust} and \code{lm_lin}. If the logical se.fit is TRUE, standard errors of the predictions are calculated. Setting intervals specifies computation of confidence or prediction (tolerance) intervals at the specified level, sometimes referred to as narrow vs. wide intervals.
+Produces predicted values, obtained by evaluating the regression
+function in the frame `newdata`` for fits from \code{lm_robust} and
+\code{lm_lin}. If the logical se.fit is TRUE, standard errors of the
+predictions are calculated. Setting intervals specifies computation of
+confidence or prediction (tolerance) intervals at the specified level,
+sometimes referred to as narrow vs. wide intervals.
 
-The equation used for the standard error of a prediction given a row of data x is:
+The equation used for the standard error of a prediction given a row of
+data \eqn{x} is:
 
 \eqn{\sqrt(x \Sigma x')},
 
-where \eqn{\Sigma} is the estimated variance-covariance matrix from \code{lm_robust}.
+where \eqn{\Sigma} is the estimated variance-covariance matrix from
+\code{lm_robust}.
 
-The prediction intervals are for a single observation at each case in newdata with error variance(s) pred.var. The the default is to assume that future observations have the same error variance as those used for fitting, which is gotten from the fit lm_robust object. If weights is supplied, the inverse of this is used as a scale factor. If the fit was weighted, the default is to assume constant prediction variance, with a warning.
+The prediction intervals are for a single observation at each case in
+`newdata` with error variance(s) `pred.var`. The the default is to assume
+that future observations have the same error variance as those used for
+fitting, which is gotten from the fit \code{\link{lm_robust}} object. If
+weights is supplied, the inverse of this is used as a scale factor. If the
+fit was weighted, the default is to assume constant prediction variance,
+with a warning.
 }
 \examples{
 

@@ -7,7 +7,7 @@ estimatr: Fast Estimators for Design-Based Inference
 
 Technical papers and textbooks demand complex estimation strategies that are often difficult to implement, even for scientists who are expert coders. The result is slow code copied and pasted from the internet, where the result is taken on faith.
 
-**estimatr** provides a small set of commonly-used estimators (methods for estimating quantities of interest like treatment effects or regression parameters), using `C++` for speed, and implemented in `R` with simple, accessible syntax. We include two functions that implement means estimators, [`difference_in_means()`](reference/difference_in_means.html) and [`horvitz_thompson()`](reference/horvitz_thompson.html). In addition, we include two functions for linear regression estimators, [`lm_robust()`](reference/lm_robust.html) and [`lm_lin()`](reference/lm_lin.html). In each case, scientists can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs.
+**estimatr** provides a small set of commonly-used estimators (methods for estimating quantities of interest like treatment effects or regression parameters), using `C++` for speed, and implemented in `R` with simple, accessible syntax. We include two functions that implement means estimators, [`difference_in_means()`](http://estimatr.declaredesign.org/reference/difference_in_means.html) and [`horvitz_thompson()`](http://estimatr.declaredesign.org/reference/horvitz_thompson.html). In addition, we include two functions for linear regression estimators, [`lm_robust()`](http://estimatr.declaredesign.org/reference/lm_robust.html) and [`lm_lin()`](http://estimatr.declaredesign.org/reference/lm_lin.html). In each case, scientists can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs. The [Getting Started Guide](http://estimatr.declaredesign.org/articles/getting-started.html) describes each estimator provided by **estimatr** and how it can be used in your analysis.
 
 Fast estimators also enable fast simulation of research designs to learn about their properties (see [DeclareDesign](http://declaredesign.org)).
 
@@ -30,33 +30,46 @@ library(estimatr)
 # sample data from cluster-randomized experiment
 library(fabricatr)
 library(randomizr)
-set.seed(42)
 dat <- fabricate(
   N = 100,
   y = rnorm(N),
-  cluster = sample(letters[1:10], size = N, replace = TRUE),
-  z = cluster_ra(cluster)
+  clusterID = sample(letters[1:10], size = N, replace = TRUE),
+  z = cluster_ra(clusterID)
 )
 
 # robust standard errors
-res_rob <- lm_robust(y ~ z, data = sample_dat)
+res_rob <- lm_robust(y ~ z, data = dat)
 
 # cluster robust standard errors
-res_cl <- lm_robust(y ~ z, data = sample_dat, clusters = my_cluster_var)
+res_cl <- lm_robust(y ~ z, data = dat, clusters = clusterID)
+summary(res_cl)
+#> 
+#> Call:
+#> lm_robust(formula = y ~ z, data = dat, clusters = clusterID)
+#> 
+#> Standard error type =  CR2 
+#> 
+#> Coefficients:
+#>             Estimate Std. Error Pr(>|t|) CI Lower CI Upper   DF
+#> (Intercept)   -0.180      0.200    0.428   -0.777    0.417 3.38
+#> z              0.424      0.236    0.118   -0.142    0.990 6.54
+#> 
+#> Multiple R-squared:  0.0419 ,    Adjusted R-squared:  0.0321 
+#> F-statistic: 4.28 on 1 and 98 DF,  p-value: 0.0411
 
-# matched-pair design
+# matched-pair design learned from blocks argument
 data(sleep)
 res_dim <- difference_in_means(extra ~ group, data = sleep, blocks = ID)
 ```
 
-The [Getting Started Guide](http://estimatr.declaredesign.org/articles/getting-started.html) describes each estimator provided by **estimatr** and how it can be used in your analysis. The [Technical Notes](http://estimatr.declaredesign.org/articles/technical-notes.html) provide more information about what each estimator is doing under the hood.
+The [Getting Started Guide](http://estimatr.declaredesign.org/articles/getting-started.html) has more examples and uses, as do the reference pages. The [Technical Notes](http://estimatr.declaredesign.org/articles/technical-notes.html) provide more information about what each estimator is doing under the hood
 
 ### Fast to use
 
-Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using `lm()` and the `sandwich` package to get HC2 standard errors. More speed comparisons [here](http://estimatr.declaredesign.org/articles/benchmarking%20estimatr.html).
+Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using `lm()` and the `sandwich` package to get HC2 standard errors. More speed comparisons are available [here](http://estimatr.declaredesign.org/articles/benchmarking%20estimatr.html).
 
 ``` r
-# example code.
+# example code
 # estimatr
 lm_robust(y ~ x1 + x2 + x3 + x4, data = dat)
 

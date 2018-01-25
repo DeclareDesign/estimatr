@@ -188,9 +188,9 @@ test_that("coef and confint work", {
   )
 
   expect_equivalent(
-    confint(lmo, parm = "x", level = 0.15),
+    confint(lmo, parm = "x", level = 0.90),
     with(
-      lm_robust(y ~ x, data = dat, alpha = 0.15),
+      lm_robust(y ~ x, data = dat, alpha = 0.10),
       cbind(ci_lower[2], ci_upper[2])
     )
   )
@@ -226,6 +226,13 @@ test_that("coef and confint work", {
   lmro <- lm_robust(y ~ z + z2 + x, data = dat)
   confint(lmro)
   coef(lmro)
+  capture.output(
+    expect_equal(
+      nobs(lmro),
+      nobs(summary(lmro))
+    )
+  )
+
 })
 
 test_that("predict works", {

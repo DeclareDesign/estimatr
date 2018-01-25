@@ -8,7 +8,7 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
     if (ttest) {
       if (any(return_frame$df <= 0, na.rm = TRUE)) {
         warning(
-          "Some degrees of freedom have been estimated as negative or zero; ",
+          "Some degrees of freedom have been estimated as negative or zero\n",
           "p-values and confidence intervals may not be calculated"
         )
 
@@ -37,7 +37,11 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
     return_frame$ci_lower <- with(return_frame, coefficients - crit_se)
     return_frame$ci_upper <- with(return_frame, coefficients + crit_se)
 
-    return(as.list(return_frame[, !(names(return_frame) == "dof")]))
+    if (is.data.frame(return_frame)) {
+      return_frame <- return_frame[, !(names(return_frame) == "dof"), drop = FALSE]
+    }
+
+    return(as.list(return_frame))
   } else {
     return_frame$p <- NA
     return_frame$ci_lower <- NA

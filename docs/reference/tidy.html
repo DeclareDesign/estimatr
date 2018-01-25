@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Tidy the result of a estimator into a data.frame — tidy • estimatr</title>
+<title>Tidy the result of an estimator into a data.frame — tidy • estimatr</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -107,31 +107,50 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Tidy the result of a estimator into a data.frame</h1>
+    <h1>Tidy the result of an estimator into a data.frame</h1>
     </div>
 
     
-    <p>Tidy the result of a estimator into a data.frame</p>
+    <p>Tidy the result of an estimator into a data.frame</p>
+<p>tidy on a NULL input returns an empty data frame, which means it can be
+combined with other data frames (treated as "empty")</p>
     
 
-    <pre class="usage"><span class='fu'>tidy</span>(<span class='no'>object</span>, <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>tidy</span>(<span class='no'>object</span>, <span class='no'>...</span>)
+
+<span class='co'># S3 method for NULL</span>
+<span class='fu'>tidy</span>(<span class='no'>object</span>, <span class='no'>...</span>)
+
+<span class='co'># S3 method for default</span>
+<span class='fu'>tidy</span>(<span class='no'>object</span>, <span class='no'>...</span>)
+
+<span class='co'># S3 method for lm_robust</span>
+<span class='fu'>tidy</span>(<span class='no'>object</span>, <span class='no'>...</span>)
+
+<span class='co'># S3 method for difference_in_means</span>
+<span class='fu'>tidy</span>(<span class='no'>object</span>, <span class='no'>...</span>)
+
+<span class='co'># S3 method for horvitz_thompson</span>
+<span class='fu'>tidy</span>(<span class='no'>object</span>, <span class='no'>...</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>object</th>
-      <td><p>An object to be converted into a tidy data.frame</p></td>
+      <td><p>An object returned by one of the estimators</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>extra arguments</p></td>
+      <td><p>extra arguments (not used)</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>a data.frame</p>
+    <p>A data.frame with with coefficient names, estimates, standard
+errors, confidence intervals, p-values, degrees of freedom, and the
+name of the outcome variable</p>
     
 
   </div>

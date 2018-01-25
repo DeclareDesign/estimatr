@@ -4,6 +4,7 @@
 #' @param declaration An object of class \code{"ra_declaration"}, generated
 #' by the \code{\link[randomizr]{declare_ra}} function in \pkg{randomizr}. This
 #' object contains the experimental design that will be represented in a
+#' condition probability matrix
 #'
 #' @details This function takes a \code{"ra_declaration"}, generated
 #' by the \code{\link[randomizr]{declare_ra}} function in \pkg{randomizr} and
@@ -213,10 +214,16 @@ permutations_to_condition_pr_mat <- function(permutations) {
 #' @param simple A boolean for whether the assignment is a random sample
 #' assignment (TRUE, default) or complete random assignment (FALSE)
 #'
+#' @return a numeric 2n*2n matrix of marginal and joint condition treatment
+#' probabilities to be passed to the \code{condition_pr_mat} argument of
+#' \code{\link{horvitz_thompson}}.
+#'
+#' @seealso \code{\link{declaration_to_condition_pr_mat}}
+#'
 #' @export
 gen_pr_matrix_cluster <- function(clusters, treat_probs, simple) {
   n <- length(clusters)
-  cluster_lists <- split(1:n, clusters)
+  cluster_lists <- split(1:n, clusters, drop = TRUE)
   n_clust <- length(cluster_lists)
 
   unique_first_in_cl <- !duplicated(clusters)
@@ -315,7 +322,7 @@ gen_pr_matrix_block <- function(blocks, clusters, p2 = NULL, p1 = NULL, t = NULL
   condition_pr_matrix <- matrix(NA, nrow = 2 * n, ncol = 2 * n)
 
   # Split by block and get complete randomized values within each block
-  id_dat <- data.frame(ids = 1:n)
+  id_dat <- data.frame(ids = 1:n, stringsAsFactors = FALSE)
   if (!is.null(p2)) {
     id_dat$p2 <- p2
   }
@@ -327,7 +334,7 @@ gen_pr_matrix_block <- function(blocks, clusters, p2 = NULL, p1 = NULL, t = NULL
   }
 
   if (is.null(t) && is.null(p2) && is.null(p1)) {
-    stop("Must specify one of `t`, `p2`, or `p1`.")
+    stop("Must specify one of `t`, `p2`, or `p1`")
   }
 
   clustered <- !is.null(clusters)
@@ -337,7 +344,8 @@ gen_pr_matrix_block <- function(blocks, clusters, p2 = NULL, p1 = NULL, t = NULL
 
   block_dat <- split(
     id_dat,
-    blocks
+    blocks,
+    drop = TRUE
   )
 
   n_blocks <- length(block_dat)
@@ -463,7 +471,8 @@ gen_joint_pr_complete <- function(pr, n_total) {
 get_cluster_treats <- function(data, condition2) {
   cluster_dat <- split(
     data$t,
-    data$clusters
+    data$clusters,
+    drop = TRUE
   )
 
   n_clust <- length(cluster_dat)
@@ -471,7 +480,7 @@ get_cluster_treats <- function(data, condition2) {
 
   for (i in seq_along(cluster_dat)) {
     if (length(unique(cluster_dat[[i]])) > 1) {
-      stop("Treatment condition must be constant within `cluster`")
+      stop("Treatment condition must be constant within `clusters`")
     }
 
     treat_clust[i] <- as.numeric(cluster_dat[[i]][1] == condition2)

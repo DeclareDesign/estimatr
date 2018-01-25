@@ -8,8 +8,10 @@ link-citations: yes
 bibliography: estimatr.bib
 vignette: |
   %\VignetteIndexEntry{Getting started using estimatr} 
-  %\VignetteEngine{knitr::knitr}
   \usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::knitr}
+editor_options: 
+  chunk_output_type: console
 ---
 
 \newcommand{\X}{\mathbf{X}}
@@ -31,7 +33,7 @@ knitr::opts_chunk$set(
 options(digits = 2)
 ```
 
-**estimatr** is a package in R dedicated to providing [fast](articles/benchmarking-estimatr.html) estimators for social scientists. Estimators are statistical methods for estimating quantities of interest like treatment effects or regression parameters. Many of the estimators included with the R programming language or popular R packages are slow and have default settings that lead to statistically inappropriate estimates. Certain estimators that reflect cutting-edge advances in statistics are not yet implemented in R packages for convenient use. **estimatr** is designed to solve these problems and provide estimators tuned for design-based inference.
+**estimatr** is a package in R dedicated to providing [fast](http://estimatr.declaredesign.org/articles/benchmarking-estimatr.html) estimators that take into consideration designs often used by social scientists. Estimators are statistical methods for estimating quantities of interest like treatment effects or regression parameters. Many of the estimators included with the R programming language or popular R packages are slow and have default settings that lead to statistically inappropriate estimates. Certain estimators that reflect cutting-edge advances in statistics are not yet implemented in R packages for convenient use. **estimatr** is designed to solve these problems and provide estimators tuned for design-based inference.
 
 The most up-to-date version of this vignette can be found on the [DeclareDesign website here](http://estimatr.declaredesign.org/articles/getting-started.html).
 
@@ -39,14 +41,14 @@ The most up-to-date version of this vignette can be found on the [DeclareDesign 
 
 The current estimators we provide are:
 
-* [`lm_robust`](#lm_robust) - for fitting linear models with heteroskedasticity/cluster robust standard errors
+* [`lm_robust`](#lm_robust) - for fitting linear models with heteroskedasticity/cluster-robust standard errors
 * [`lm_lin`](#lm_lin) - a wrapper for `lm_robust()` to simplify interacting centered pre-treatment covariates with a treatment variable
-* [`difference_in_means`](#difference_in_means) - for estimating differences in means with appropriate standard errors for simple, cluster randomized, block randomized, matched-pair designs and more
+* [`difference_in_means`](#difference_in_means) - for estimating differences in means with appropriate standard errors for unit-randomized, cluster-randomized, block-randomized, matched-pair randomized, and matched-pair clustered designs
 * [`horvitz_thompson`](#horvitz_thompson) - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs
 
-To demonstrate basic usage of each of the estimators, I will first create some sample data.
+I first create some sample data to demonstrate how to use each of these estimators.
 
-```{r echo=TRUE, results="hide"}
+```{r echo=TRUE, results="hide", warning=FALSE}
 library(estimatr)
 
 # Example dataset to be used throughout built using fabricatr and randomizr
@@ -57,7 +59,7 @@ dat <- fabricate(
   x = runif(N, 0, 1),             # pre-treatment covariate
   y0 = rnorm(N, mean = x),        # control potential outcome
   y1 = y0 + 0.35,                 # treatment potential outcome
-  z = randomizr::complete_ra(N),  # complete random assignment to treatment
+  z = complete_ra(N),             # complete random assignment to treatment
   y = ifelse(z, y1, y0),          # observed outcome
 
   # We will also consider clustered data
@@ -76,18 +78,22 @@ knitr::kable(head(dat))
 
 The `estimatr` package provides `lm_robust()` to quickly fit linear models with the most common variance estimators and degrees of freedom corrections used in social science. You can easily estimate heteroskedastic standard errors, clustered standard errors, and classical standard errors.
 
-Usage largely mimics `lm()`, although it defaults to using Eicker-Huber-White robust standard errors, specifically "HC2" standard errors. More about the exact specifications used can be found in the [technical notes](articles/technical-notes.html#lm_robust-notes) and more about the estimator can be found on its reference page: `lm_robust()`.
+Usage largely mimics `lm()`, although it defaults to using Eicker-Huber-White robust standard errors, specifically "HC2" standard errors. More about the exact specifications used can be found in the [technical notes](http://estimatr.declaredesign.org/articles/technical-notes.html#lm_robust-notes) and more about the estimator can be found on its reference page: `lm_robust()`.
 
-```{r, lm_robust, results="hide"}
+```{r, lm_robust}
 res <- lm_robust(y ~ z + x, data = dat)
 summary(res)
-tidy(res) # summary(res) is very similar
+```
+
+Users can also easily get the output as a data.frame by using `tidy()`.
+```{r, results="hide"}
+tidy(res)
 ```
 ```{r, echo=FALSE}
 knitr::kable(tidy(res))
 ```
 
-It is straightforward to do cluster-robust inference, by passing the name of your cluster variable to the `clusters =` argument. Note that `lm_robust()` is much quicker if your cluster variable is a factor!
+It is straightforward to do cluster-robust inference, by passing the name of your cluster variable to the `clusters =` argument. The default variance estimator with clusters is dubbed 'CR2' because it is analogous to 'HC2' for the clustered case, and utilizes recent advances proposed by @pustejovskytipton2016 to correct hypotheses tests for small samples and work with commonly specified fixed effects and weights. Note that `lm_robust()` is quicker if your cluster variable is a factor!
 
 ```{r, echo=TRUE, results="hide"}
 res_cl <- lm_robust(
@@ -101,9 +107,8 @@ tidy(res_cl)
 knitr::kable(tidy(res_cl))
 ```
 
-The default variance estimator with clusters is dubbed 'CR2' because it is analogous to 'HC2' for the clustered case, and utilizes recent advances proposed by @pustejovskytipton2016 to correct hypotheses tests for small samples and work with commonly specified fixed effects and weights.
-
 Researchers can also replicate Stata's standard errors by using the `se_type =` argument both with and without clusters:
+
 ```{r echo=TRUE, results="hide"}
 res_stata <- lm_robust(
   y_clust ~ z_clust + x,
@@ -117,11 +122,30 @@ tidy(res_stata)
 knitr::kable(tidy(res_stata))
 ```
 
+Furthermore, users can take advantage of the [`margins`](https://github.com/leeper/margins) package to get marginal effects, average marginal effects and their standard errors, and more.
+
+```{r margins, echo=TRUE}
+library(margins)
+
+res_int <- lm_robust(y ~ x * z, data = dat)
+mar_int <- margins(res_int, vce = "delta")
+summary(mar_int)
+```
+
+Users who want their regression output in LaTeX or HTML can use the [`texreg`](https://github.com/leifeld/texreg) package, which we extend here to work with our linear regression estimators.
+
+```{r texreg, echo=TRUE, eval=FALSE}
+library(texreg)
+
+tex_int <- extract(res_int)
+texreg(tex_int, file = "ex.tex")
+```
+
 ## `lm_lin`
 
-Adjusting for pre-treatment covariates when using regression to estimate treatment effects is common practice across scientific disciplines. However, @freedman2008 demonstrated that pre-treatment covariate adjustment biases estimates of average treatment effects. In response, @lin2013 proposed an alternative estimator that would reduce this bias and improve precision. @lin2013 proposes centering all pre-treatment covariates, interacting them with the treatment variable, and regressing the outcome on the treatment, the centered pre-treatment covariates, and all of the interaction terms. This can require a bit of pre-processing.
+Adjusting for pre-treatment covariates when using regression to estimate treatment effects is common practice across scientific disciplines. However, @freedman2008 demonstrated that pre-treatment covariate adjustment biases estimates of average treatment effects. In response, @lin2013 proposed an alternative estimator that would reduce this bias and improve precision. @lin2013 proposes centering all pre-treatment covariates, interacting them with the treatment variable, and regressing the outcome on the treatment, the centered pre-treatment covariates, and all of the interaction terms. This can require a non-trivial amount of data pre-processing.
 
-To facilitate this, we provide a wrapper that can does this whole process for you in an estimator we dub `lm_lin()`. This function is a wrapper for `lm_robust()`, and all arguments that work for `lm_robust()` work here. The only difference is in the second argument `covariates`, where one specifies a right-sided formula with all of your pre-treatment covariates. Below is an example, and more can be seen on the function reference page [`lm_lin`](#lm_lin) and some formal notation can be seen in the [technical notes](#lm_lin-notes).
+To facilitate this, we provide a wrapper that processes the data and estimates the model. We dub this estimator the Lin estimator and it can be accessed using `lm_lin()`. This function is a wrapper for `lm_robust()`, and all arguments that work for `lm_robust()` work here. The only difference is in the second argument `covariates`, where one specifies a right-sided formula with all of your pre-treatment covariates. Below is an example, and more can be seen on the function reference page [`lm_lin`](#lm_lin) and some formal notation can be seen in the [technical notes](http://estimatr.declaredesign.org/articles/technical-notes.html#lm_lin-notes).
 
 ```{r echo=TRUE, results="hide"}
 res_lin <- lm_lin(
@@ -135,11 +159,11 @@ tidy(res_lin)
 knitr::kable(tidy(res_lin))
 ```
 
+The output of a `lm_lin()` call can be used with the same methods as `lm_robust()`, including the [`margins`](https://github.com/leeper/margins) package.
+
 ## `difference_in_means`
 
-While estimating differences in means may seem straightforward, we provide a function that appropriately adjusts estimates for experimental design, whether it be blocking, clustering, matched pairs or a more complicated design. Usage is similar to usage in regression functions and here are a few short examples; more can be seen on the function reference page: `difference_in_means()`.
-
-Technical details are available [here](articles/technical-notes.html#lm_robust-notes).
+While estimating differences in means may seem straightforward, we provide a function that appropriately adjusts estimates for experimental design. We provide support for unit-randomized, cluster-randomized, block-randomized, matched-pair randomized, and matched-pair clustered designs. Usage is similar to usage in regression functions. More examples can be seen on the function reference page, `difference_in_means()`, and the actual estimators used can be found in the [technical notes](articles/technical-notes.html#lm_robust-notes).
 
 ```{r echo=TRUE, results="hide"}
 # Simple version
@@ -164,11 +188,18 @@ res_dim_cl <- difference_in_means(
 knitr::kable(tidy(res_dim_cl))
 ```
 
-Users can see more examples 
+You can check which design was learned and which kind of estimator used by examining the `design` in the output.
+```{r mp}
+data(sleep)
+res_mps <- difference_in_means(extra ~ group, data = sleep, blocks = ID)
+res_mps$design
+```
 
 ## `horvitz_thompson`
 
-Horvitz-Thompson estimators are useful when estimating treatment effects without bias when there is a clustered design with unequal size clusters or when the treatment assignment process is arbitrarily complex. Horvitz-Thompson estimators require information about the treatment (and control) probabilities for each unit, and the joint treatment and control probabilities of every pair of units. For designs that are not arbitrarily complex, passing your randomization scheme using `declare_ra()` from the [`randomizr`](randomizr.declaredesign.org) package is the easiest path forward. The technical details can be found [here](articles/technical-notes.html#horvitz_thompson-notes) and in the linked references.
+Horvitz-Thompson estimators can be used to estimate unbiased treatment effects when the randomization is known. This is particularly useful when there are clusters of different sizes being randomized into treatment or when the treatment assignment is complex and there are dependencies across units in the probability of being treated. Horvitz-Thompson estimators require information about the probability each unit is in treatment and control, as well as the joint probability each unit is in the treatment, in the control, and in opposite treatment conditions.
+
+The estimator we implement here, `horvitz_thompson()` estimates treatment effects for two-armed trials. The easiest way to specify your design and recover the full set of joint and marginal probabilities is to declare your randomization scheme by using [`declare_ra()`](http://randomizr.declaredesign.org/reference/declare_ra.html) from the [`randomizr`](randomizr.declaredesign.org) package. I show some examples of how to do that below. Again, the technical details for this estimator can be found [here](http://estimatr.declaredesign.org/articles/technical-notes.html#horvitz_thompson-notes) and in references in those notes.
 
 ```{r, results="hide"}
 # Complete random assignment declaration
@@ -189,7 +220,7 @@ tidy(ht_comp)
 knitr::kable(tidy(ht_comp))
 ```
 
-We can also easily estimate treatment effects from a cluster randomized experiment. Letting `horvitz_thompson` know that the design is clustered means it uses a collapsed estimator for the variance described in @aronowmiddleton2013, which is preferred for clustered designs.
+We can also easily estimate treatment effects from a cluster randomized experiment. Letting `horvitz_thompson` know that the design is clustered means it uses a collapsed estimator for the variance, described in @aronowmiddleton2013.
 
 ```{r, results = "hide"}
 # Clustered random assignment declaration
@@ -211,7 +242,7 @@ tidy(ht_clust)
 knitr::kable(tidy(ht_clust))
 ```
 
-You can also build the condition probability matrix (`condition_prob_mat = `) that `horvitz_thompson()` needs from a declaration from the [`randomizr`](randomizr.declaredesign.org) package---using `declaration_to_conditional_pr_mat()`---or from a matrix of permutations of the treatment vector---using `permutations_to_conditional_pr_mat()`. **This is largely intended for use by experienced users. Note, that if one passes a `condition_prob_mat` that indicates clustering, but not the clusters, then the collapsed estimator will not be used and the variance will be incorrect.**
+You can also build the condition probability matrix (`condition_prob_mat = `) that `horvitz_thompson()` needs from a declaration from the [`randomizr`](randomizr.declaredesign.org) package---using `declaration_to_conditional_pr_mat()`---or from a matrix of permutations of the treatment vector---using `permutations_to_conditional_pr_mat()`. **This is largely intended for use by experienced users. Note, that if one passes a `condition_prob_mat` that indicates clustering, but does not specify the `clusters` argument, then the collapsed estimator will not be used.**
 
 ```{r, results="hide"}
 # arbitrary permutation matrix

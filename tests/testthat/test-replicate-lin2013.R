@@ -105,7 +105,7 @@ if (rep_table_3) {
         nrow = length(ses),
         ncol = 3
       )
-    for (j in 1:length(ses)) {
+    for (j in seq_along(ses)) {
       unadj <- lm_robust(
         GPA_year1 ~ sfsp,
         data = samp_dat,

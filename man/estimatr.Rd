@@ -4,7 +4,7 @@
 \name{estimatr}
 \alias{estimatr}
 \alias{estimatr-package}
-\title{estimatr package}
+\title{estimatr}
 \description{
-Some stuff about what this package is
+estimatr
 }

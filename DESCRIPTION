@@ -9,13 +9,14 @@ Authors@R: c(person("Graeme", "Blair", email = "graeme.blair@ucla.edu", role = c
              person("Macartan", "Humphreys", email = "macartan@gmail.com", role = c("aut")),
              person("Luke", "Sonnet", email = "luke.sonnet@gmail.com", role = c("aut")),
              person("Neal", "Fultz", email = "nfultz@gmail.com", role = c("ctb")))
-Description: Quickly estimate common models in social science research with robust standard errors.
+Description: Fast procedures for small set of commonly-used, design-appropriate estimators with robust standard errors and confidence intervals. Includes estimators for linear regression, Lin regression for improving precision with pre-treatment covariates, differences-in-means, and Horvitz-Thompson estimation.
 URL: http://estimatr.declaredesign.org, https://github.com/DeclareDesign/estimatr
 BugReports: https://github.com/DeclareDesign/estimatr/issues
 License: MIT + file LICENSE
-Encoding: UTF-8
 Depends: R (>= 3.3.0)
-Imports: Rcpp (>= 0.12.10)
+Imports: 
+    Rcpp (>= 0.12.10),
+    methods
 LinkingTo: Rcpp, RcppEigen
 RoxygenNote: 6.0.1
 LazyData: true
@@ -26,7 +27,8 @@ Suggests:
     fabricatr,
     randomizr (>= 0.8),
     knitr,
-    rmarkdown
+    rmarkdown,
+    margins
 Enhances: broom, texreg
 VignetteBuilder: knitr
 Additional_repositories: http://r.declaredesign.org

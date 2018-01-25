@@ -218,4 +218,10 @@ test_that("condition_pr_matrix behaves as expected", {
     declaration_to_condition_pr_mat(comp),
     "Treatment probabilities must be fixed for complete randomized designs"
   )
+
+  # error in internal function
+  expect_error(
+    estimatr:::gen_pr_matrix_block(c(1, 2), c(1, 2)),
+    "Must specify one of `t`, `p2`, or `p1`"
+  )
 })

@@ -13,18 +13,7 @@
 #  A copy of the GNU General Public License is available at
 #  https://www.R-project.org/Licenses/
 
-
-#' Extra logging on na.omit handler
-#'
-#' @param object a data.frame
-#' @param ... unused
-#'
-#' @return a normal \code{omit} object, with the extra attribute \code{why_omit},
-#' which contains the leftmost column containing an NA for each row that was dropped, by
-#' column name, if any were dropped.
-#'
 #' @export
-#' @seealso \code{\link{na.omit}}
 na.omit_detailed.data.frame <- function(object, ...) {
   n <- length(object)
   omit <- logical(nrow(object))

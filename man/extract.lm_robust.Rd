@@ -2,7 +2,7 @@
 % Please edit documentation in R/helper_extract.R
 \name{extract.lm_robust}
 \alias{extract.lm_robust}
-\title{Extract model data for texreg output}
+\title{Extract model data for \pkg{texreg} package}
 \usage{
 extract.lm_robust(model, include.ci = TRUE, include.rsquared = TRUE,
   include.adjrs = TRUE, include.nobs = TRUE, include.fstatistic = FALSE,
@@ -10,8 +10,23 @@ extract.lm_robust(model, include.ci = TRUE, include.rsquared = TRUE,
 }
 \arguments{
 \item{model}{an object of class \code{\link{lm_robust}}}
+
+\item{include.ci}{logical. Defaults to TRUE}
+
+\item{include.rsquared}{logical. Defaults to TRUE}
+
+\item{include.adjrs}{logical. Defaults to TRUE}
+
+\item{include.nobs}{logical. Defaults to TRUE}
+
+\item{include.fstatistic}{logical. Defaults to TRUE}
+
+\item{include.rmse}{logical. Defaults to TRUE}
+
+\item{...}{unused}
 }
 \description{
 Prepares an \code{"lm_robust"} object for the \pkg{texreg}
-package.
+package. This is largely a clone of the \code{\link[texreg]{extract.lm}}
+method.
 }

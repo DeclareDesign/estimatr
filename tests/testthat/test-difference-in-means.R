@@ -35,20 +35,20 @@ test_that("DIM arguments parsed correctly", {
   dat$bad_cl <- rep(1:10, times = 10)
   expect_error(
     difference_in_means(Y ~ Z, blocks = bl, clusters = bad_cl, data = dat),
-    "All clusters must be contained within blocks"
+    "All `clusters` must be contained within `blocks`"
   )
 
   dat$bad_bl <- c(1, rep(2:10, length.out = 99))
   expect_error(
     difference_in_means(Y ~ Z, blocks = bad_bl, data = dat),
-    "All blocks must have multiple units"
+    "All `blocks` must have multiple units"
   )
 
   dat$bad_mp <- rep(1:50, each = 2)
   dat$bad_mp[dat$bad_mp == 50] <- 49
   expect_error(
     difference_in_means(Y ~ Z, blocks = bad_mp, data = dat),
-    "Blocks must either all have two units"
+    "`blocks` must either all have two units/`clusters`"
   )
 
   expect_error(
@@ -62,7 +62,7 @@ test_that("DIM arguments parsed correctly", {
   y <- rnorm(8)
   expect_error(
     difference_in_means(y ~ z, blocks = bl),
-    "Each block must have at least two treated"
+    "Must have least two treated/control"
   )
 })
 
@@ -637,6 +637,6 @@ test_that("DIM matches lm_robust under certain conditions", {
   dat$z_mps <- rep(0:1, times = (n / 2))
   expect_error(
     difference_in_means(Y ~ z_mps, data = dat, weights = w, blocks = mps),
-    "Cannot use weights with matched pairs design at the moment"
+    "Cannot use `weights` with matched pairs design at the moment"
   )
 })

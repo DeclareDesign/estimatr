@@ -92,18 +92,18 @@
     
     
 <div class="contents">
-<p>This document provides the technical notes defining what each of the main functions in this package is estimating. The most up-to-date version of this can be found on the <a href="http://estimatr.declaredesign.org/articles/technical-notes.html">DeclareDesign website here</a>.</p>
+<p>This document provides the technical notes for each of the estimators in <code>estimatr</code>. The most up-to-date version of this can be found on the <a href="http://estimatr.declaredesign.org/articles/technical-notes.html">DeclareDesign website here</a>.</p>
 <div id="estimators" class="section level1">
 <h1 class="hasAnchor">
 <a href="#estimators" class="anchor"></a>Estimators</h1>
 <p>The current estimators we provide are:</p>
 <ul>
 <li>
-<a href="#lm_robust-notes"><code>lm_robust</code></a> - for fitting linear models with heteroskedasticity/cluster robust standard errors</li>
+<a href="#lm_robust-notes"><code>lm_robust</code></a> - for fitting linear models with heteroskedasticity/cluster-robust standard errors</li>
 <li>
-<a href="#lm_lin-notes"><code>lm_lin</code></a> - a wrapper for <code>lm_robust</code> to simplify interacting centered pre-treatment covariates with a treatment variable</li>
+<a href="#lm_lin-notes"><code>lm_lin</code></a> - a wrapper for <code><a href="../reference/lm_robust.html">lm_robust()</a></code> to simplify interacting centered pre-treatment covariates with a treatment variable</li>
 <li>
-<a href="#difference_in_means-notes"><code>difference_in_means</code></a> - for estimating differences in means with appropriate standard errors for simple, cluster randomized, block randomized, matched-pair designs and more</li>
+<a href="#difference_in_means-notes"><code>difference_in_means</code></a> - for estimating differences in means with appropriate standard errors for unit-randomized, cluster-randomized, block-randomized, matched-pair randomized, and matched-pair clustered designs</li>
 <li>
 <a href="#horvitz_thompson-notes"><code>horvitz_thompson</code></a> - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs</li>
 </ul>
@@ -111,21 +111,21 @@
 <h2 class="hasAnchor">
 <a href="#lm_robust-notes" class="anchor"></a><code>lm_robust</code> notes</h2>
 <p>The <a href="#lm_robust"><code>lm_robust</code></a> method uses the C++ library <a href="https://eigen.tuxfamily.org/">Eigen</a>, via the <a href="https://github.com/RcppCore/RcppEigen"><code>RcppEigen</code></a> package, to estimate the coefficients, variance-covariance matrix, and, in some cases, the degrees of freedom of linear models.</p>
-<p>The default estimators have been selected for efficiency in large samples and low bias in small samples, selected from the literature that demonstrates their properties analytically or via simulation. This section outlines the various kinds of variance estimators one can employ within <code>lm_robust</code>.</p>
+<p>The default estimators have been selected for efficiency in large samples and low bias in small samples as well as for their similarities to design-based randomization estimators <span class="citation">(Samii and Aronow <a href="#ref-samiiaronow2012">2012</a>)</span>. This section outlines the various kinds of variance estimators one can employ within <code>lm_robust</code>.</p>
 <div id="coefficient-estimates" class="section level3">
 <h3 class="hasAnchor">
 <a href="#coefficient-estimates" class="anchor"></a>Coefficient estimates</h3>
 <p><span class="math display">\[
 \widehat{\beta} ={({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}{\mathbf{X}}^{\top}{\mathbf{y}}\]</span></p>
-<p>Our algorithm solves the least squares problem using a rank-revealing QR factorization with column pivoting that eliminates the need to invert <span class="math inline">\({({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}\)</span> explicitly and behaves much like the default <code>lm</code> function in R. However, when <span class="math inline">\({\mathbf{X}}\)</span> is rank deficient, there are certain conditions under which the Eigen QR decomposition drops different coefficients from the output than the default <code>lm</code> function. In general, users should avoid specifing models with rank-deficiencies. In fact, if users are certain their data are not rank deficient, they can improve the speed of <code>lm_robust</code> by setting <code>try_cholesky = TRUE</code>. This replaces the QR factorization with a Cholesky factorization that is only guaranteed to work <span class="math inline">\({\mathbf{X}}\)</span> is of full rank.</p>
+<p>Our algorithm solves the least squares problem using a rank-revealing column-pivoting QR factorization that eliminates the need to invert <span class="math inline">\({({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}\)</span> explicitly and behaves much like the default <code>lm</code> function in R. However, when <span class="math inline">\({\mathbf{X}}\)</span> is rank deficient, there are certain conditions under which the QR factorization algorithm we use, from the Eigen C++ library, drops different coefficients from the output than the default <code>lm</code> function. In general, users should avoid specifing models with rank-deficiencies. In fact, if users are certain their data are not rank deficient, they can improve the speed of <code>lm_robust</code> by setting <code>try_cholesky = TRUE</code>. This replaces the QR factorization with a Cholesky factorization that is only guaranteed to work <span class="math inline">\({\mathbf{X}}\)</span> is of full rank.</p>
 <div id="weights" class="section level4">
 <h4 class="hasAnchor">
 <a href="#weights" class="anchor"></a>Weights</h4>
-<p>If weights are included we transform the data and then proceed as normal, following advice from <span class="citation">Romano and Wolf (<a href="#ref-romanowolf2017">2017</a>)</span> that this weighted estimator has attractive properties. We do so by first scaling all of the weights so that they sum to one. Then we multiply each row of the design matrix <span class="math inline">\({\mathbf{X}}\)</span> by the square root each unit’s weight, <span class="math inline">\(\mathbf{x}_i \sqrt{w_i}\)</span>, and then do the same to the outcome, <span class="math inline">\(\mathbf{y}_i \sqrt{w_i}\)</span>. This results in our coefficients being estimated as follows, where <span class="math inline">\({\mathbf{W}}\)</span> is a diagonal matrix with the scaled weights on the diagonal.</p>
+<p>If weights are included, we transform the data as below and then proceed as normal, following advice from <span class="citation">Romano and Wolf (<a href="#ref-romanowolf2017">2017</a>)</span> that this weighted estimator has attractive properties. We do so by first scaling all of the weights so that they sum to one. Then we multiply each row of the design matrix <span class="math inline">\({\mathbf{X}}\)</span> by the square root each unit’s weight, <span class="math inline">\(\mathbf{x}_i \sqrt{w_i}\)</span>, and then do the same to the outcome, <span class="math inline">\(\mathbf{y}_i \sqrt{w_i}\)</span>. This results in our coefficients being estimated as follows, where <span class="math inline">\({\mathbf{W}}\)</span> is a diagonal matrix with the scaled weights on the diagonal.</p>
 <p>Weighted: <span class="math display">\[
 \widehat{\beta} ={({\mathbf{X}}^{\top}{\mathbf{W}}{\mathbf{X}})^{-1}}{\mathbf{X}}^{\top}{\mathbf{W}}{\mathbf{y}}\]</span></p>
 <p>The transformed data are then used in the analysis below, where <span class="math inline">\({({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}\)</span> is now <span class="math inline">\({({\mathbf{X}}^{\top}{\mathbf{W}}{\mathbf{X}})^{-1}}\)</span> and <span class="math inline">\({\mathbf{X}}\)</span> is now <span class="math inline">\({\mathbf{X}}\mathrm{sqrt}[W]\)</span>, where <span class="math inline">\(\mathrm{sqrt}[.]\)</span> is an operator that applies a square root to the coefficients of some matrix.</p>
-<p>We should note that this transformation yields the same standard errors as specifying weights using <code>aweight</code> in Stata for the “classical”, “HC0”, and “HC1” (“stata”) variance estimators. Furthermore, in the clustered case, our weighted estimator for the “stata” cluster-robust variance also matches Stata. Thus Stata’s main robust standard error estimators, “HC1” and their clustered estimator, match our package when weights are applied. Nonetheless, Stata uses a slightly different Hat matrix and thus the “HC2” and “HC3” estimates diverge between our package and Stata when weights are applied.</p>
+<p>We should note that this transformation yields the same standard errors as specifying weights using <code>aweight</code> in Stata for the “classical”, “HC0”, and “HC1” (“stata”) variance estimators. Furthermore, in the clustered case, our weighted estimator for the “stata” cluster-robust variance also matches Stata. Thus Stata’s main robust standard error estimators, “HC1” and their clustered estimator, match our package when weights are applied. Nonetheless, Stata uses a slightly different Hat matrix and thus “HC2” and “HC3” estimates in Stata when weights are specified may differ from our estimates.</p>
 <p>```</p>
 </div>
 </div>
@@ -169,7 +169,7 @@
 </td>
 <td><span class="math inline">\(\frac{N}{N-K}{({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}{\mathbf{X}}^{\top}\mathrm{diag}\left[e_i^2\right]{\mathbf{X}}{({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}\)</span></td>
 <td>N - K</td>
-<td>Often called the Eicker-Huber-White (or some similar variant) variance</td>
+<td>Often called the Eicker-Huber-White variance (or similar)</td>
 </tr>
 <tr class="even">
 <td>
@@ -202,7 +202,7 @@
 <div id="cluster-robust-variance-and-degrees-of-freedom" class="section level4">
 <h4 class="hasAnchor">
 <a href="#cluster-robust-variance-and-degrees-of-freedom" class="anchor"></a>Cluster-Robust Variance and Degrees of Freedom</h4>
-<p>For cluster-robust inference, we provide several estimators that are essentially analogs of the heteroskedastic-consistent variance estimators for the clustered case. Our default is the CR2 variance estimator, analogous to HC2 standard errors, and perform quite well in small samples without sacrificing much in the way of efficiency in larger samples. This estimator was originally proposed in <span class="citation">Bell and McCaffrey (<a href="#ref-bellmccaffrey2002">2002</a>)</span>, although we implement a generalized version of the algorithm outlined in <span class="citation">Pustejovsky and Tipton (<a href="#ref-pustejovskytipton2016">2016</a>)</span>; these authors provide an R package for CR2 variance estimation, <a href="https://github.com/jepusto/clubSandwich">clubSandwich</a>, which allows for some more complicated estimators and methods. For a good overview of the different cluster robust variance estimators and simulations of their accuracy in small samples, again users can see <span class="citation">Imbens and Kolesar (<a href="#ref-imbenskolesar2016">2016</a>)</span>. For an overview of when to use cluster-robust estimators, especially in an experimental setting, see <span class="citation">Abadie et al. (<a href="#ref-abadieetal2017">2017</a>)</span>.</p>
+<p>For cluster-robust inference, we provide several estimators that are essentially analogs of the heteroskedastic-consistent variance estimators for the clustered case. Our default is the CR2 variance estimator, analogous to HC2 standard errors, and perform quite well in small samples without sacrificing much in the way of efficiency in larger samples. This estimator was originally proposed in <span class="citation">Bell and McCaffrey (<a href="#ref-bellmccaffrey2002">2002</a>)</span>, although we implement a generalized version of the algorithm outlined in <span class="citation">Pustejovsky and Tipton (<a href="#ref-pustejovskytipton2016">2016</a>)</span>; these authors provide an R package for CR2 variance estimation, <a href="https://github.com/jepusto/clubSandwich">clubSandwich</a>, that applies these standard errors to a wide variety of models. For a good overview of the different cluster-robust variance estimators and simulations of their accuracy in small samples, again users can see <span class="citation">Imbens and Kolesar (<a href="#ref-imbenskolesar2016">2016</a>)</span>. For an overview of when to use cluster-robust estimators, especially in an experimental setting, see <span class="citation">Abadie et al. (<a href="#ref-abadieetal2017">2017</a>)</span>.</p>
 <table class="table">
 <colgroup>
 <col width="4%">
@@ -275,7 +275,7 @@
 <p><span class="math display">\[
 \mathrm{CI}^{1-\alpha} = \left(\widehat{\beta_k} + t^{df}_{\alpha/2} \sqrt{\widehat{{\mathbb{V}}}_k}, \widehat{\beta_k} + t^{df}_{1 - \alpha/2} \sqrt{\widehat{{\mathbb{V}}}_k}\right)
 \]</span></p>
-<p>The associated p-values for a two-sided null hypothesis test where the null is that the coefficient is 0 uses a t-distribution with the aforementioned significance level <span class="math inline">\(\alpha\)</span> and degrees of freedom <span class="math inline">\(df\)</span>.</p>
+<p>We also provide two-sided p-values using a t-distribution with the aforementioned significance level <span class="math inline">\(\alpha\)</span> and degrees of freedom <span class="math inline">\(df\)</span>.</p>
 </div>
 </div>
 <div id="lm_lin-notes" class="section level2">
@@ -296,7 +296,7 @@ y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
 <div id="difference_in_means-notes" class="section level2">
 <h2 class="hasAnchor">
 <a href="#difference_in_means-notes" class="anchor"></a><code>difference_in_means</code> notes</h2>
-<p>There are six kinds of experimental designs for which our <a href="#difference_in_means"><code>difference_in_means</code></a> estimator can estimate treatment effects, provide estimates of uncertainty, construct confidence intervals, and provide p-values. The choices of estimators are pulled from the literature on appropriate inference given certain experimental designs or are somewhat conservative estimators. We list the different designs here along with how the software learns the design:</p>
+<p>There are six kinds of experimental designs for which our <a href="#difference_in_means"><code>difference_in_means</code></a> estimator can estimate treatment effects, standard errors, confidence intervals, and provide p-values. We list the different designs here along with how the software learns the design:</p>
 <ul>
 <li>Simple (both <code>clusters</code> and <code>blocks</code> are unused)</li>
 <li>Clustered (<code>clusters</code> is specified while <code>blocks</code> is not)</li>
@@ -308,7 +308,7 @@ y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
 <li>Matched-pairs (only <code>blocks</code> is specified and all blocks are size two)</li>
 <li>Matched-pair clustered design (both names are specified and each block only has two clusters)</li>
 </ul>
-<p>In addition, weights can be specified, although full documentation for weighted examples is forthcoming.</p>
+<p>For each design, our estimator is informed by the recent statistical literature on the analysis of experimental data.</p>
 <div id="estimates" class="section level3">
 <h3 class="hasAnchor">
 <a href="#estimates" class="anchor"></a>Estimates</h3>
@@ -321,7 +321,7 @@ y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
 <div id="weighting" class="section level4">
 <h4 class="hasAnchor">
 <a href="#weighting" class="anchor"></a>Weighting</h4>
-<p>If the user specifies weights, inference is done mostly by <code>lm_robust</code> for now. This may change in the future. Furthermore, there are three exceptions. First, we still compute the degrees of freedom as in the below table. Second, if the design is blocked, a weighted treatment effect and variance estimate are computed within each block using <code>lm_robust</code> and then combined as below. Third, specifying weights with a matched-pairs estimator in <code>difference_in_means</code> is not supported at the moment.</p>
+<p>If the user specifies weights, treatment effects (or block-level treatment effects) and their standard errors are estimated by <code>lm_robust</code>. There are three exceptions. First, we still compute the degrees of freedom as in the below table. Second, if the design is blocked, a weighted treatment effect and variance estimate are computed within each block using <code>lm_robust</code> and then combined as below. Third, specifying weights with a matched-pairs estimator in <code>difference_in_means</code> is not supported at the moment.</p>
 </div>
 </div>
 <div id="variance-and-degrees-of-freedom" class="section level3">
@@ -388,13 +388,14 @@ y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
 <p><span class="math display">\[
 \mathrm{CI}^{1-\alpha} = \left(\widehat{\tau} + t^{df}_{\alpha/2} \sqrt{\widehat{{\mathbb{V}}}[\widehat{\tau}]},\widehat{\tau}] + t^{df}_{1 - \alpha/2} \sqrt{\widehat{{\mathbb{V}}}[\widehat{\tau}]}\right)
 \]</span></p>
-<p>The associated p-values for a two-sided null hypothesis test where the null is that the coefficient is 0 uses a t-distribution with the aforementioned significance level <span class="math inline">\(\alpha\)</span> and degrees of freedom <span class="math inline">\(df\)</span>.</p>
+<p>We also provide two-sided p-values using a t-distribution with the aforementioned significance level <span class="math inline">\(\alpha\)</span> and degrees of freedom <span class="math inline">\(df\)</span>.</p>
 </div>
 </div>
 <div id="horvitz_thompson-notes" class="section level2">
 <h2 class="hasAnchor">
 <a href="#horvitz_thompson-notes" class="anchor"></a><code>horvitz_thompson</code> notes</h2>
-<p>The Horvitz-Thompson estimator is well suited for estimating unbiased treatment effects for experimental designs of arbitrary complexity and where the treatment assignment process was complicated as long as it is known. Importantly, regression or difference-in-means with cluster randomization can be biased under certain conditions. Users can see a description of the estimator and it’s properties in <span class="citation">Aronow and Middleton (<a href="#ref-aronowmiddleton2013">2013</a>)</span>, <span class="citation">Middleton and Aronow (<a href="#ref-middletonaronow2015">2015</a>)</span>, and aronowsamii2017.</p>
+<p>We provide Horvitz-Thompson estimators for two-armed trials and can be used to estimate unbiased treatment effects when the randomization is known. Horvitz-Thompson estimators require information about the probability each unit is in treatment and control, as well as the joint probability each unit is in the treatment, in the control, and in opposite treatment conditions.</p>
+<p>The estimator we implement here, <code><a href="../reference/horvitz_thompson.html">horvitz_thompson()</a></code>, can be told the design of an experiment in several ways, and the reference page is a good place to see some of those examples. Users can see a description of the estimator and its properties in <span class="citation">Aronow and Middleton (<a href="#ref-aronowmiddleton2013">2013</a>)</span>, <span class="citation">Middleton and Aronow (<a href="#ref-middletonaronow2015">2015</a>)</span>, and aronowsamii2017.</p>
 <p>Some definitions used below:</p>
 <ul>
 <li>
@@ -426,7 +427,7 @@ y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
 <li>
 <code>"youngs"</code> which implements a conservative variance estimate using Young’s inequality, described in equation 35 on page 147 of <span class="citation">Aronow and Middleton (<a href="#ref-aronowmiddleton2013">2013</a>)</span> and in <span class="citation">Aronow and Samii (<a href="#ref-aronowsamii2017">2017</a>)</span> on pages 11-15.</li>
 <li>
-<code>"constant"</code> which assumes constant treatment effects across all units but is less conservative. Only works for simple randomized designs.</li>
+<code>"constant"</code> which assumes constant treatment effects across all units but is less conservative. We only provide this estimator for simple randomized experiments.</li>
 </ul>
 <p><strong>Young’s inequality</strong></p>
 <p>For designs that that are not clustered we use the following variance:</p>
@@ -446,7 +447,7 @@ y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
   \Bigg]
 \end{aligned}
 \]</span></p>
-<p>If we further simplify to the case where there is simple random assignment, and there is absolutely no dependence among units (i.e. <span class="math inline">\(\pi_{ziwj} = \pi_{zi}\pi_{wj} \;\;\forall\;\;z,w,i,j\)</span>), we get:</p>
+<p>If we further simplify to the case where there is simple random assignment, and there is absolutely no dependence among units (i.e., <span class="math inline">\(\pi_{ziwj} = \pi_{zi}\pi_{wj} \;\;\forall\;\;z,w,i,j\)</span>), we get:</p>
 <p><span class="math display">\[
 \begin{aligned}
   \widehat{{\mathbb{V}}}_{Y}[\widehat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[&amp; z_i \left(\frac{y_i}{\pi_{1i}}\right)^2 + (1 - z_i) \left(\frac{y_i}{\pi_{0i}}\right)^2\Bigg]
@@ -483,7 +484,7 @@ y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
 <p>Theory on hypothesis testing with the Horvitz-Thompson estimator is yet to be developed. We rely on a normal approximation and construct confidence intervals in the following way: <span class="math display">\[
 \mathrm{CI}^{1-\alpha} = \left(\widehat{\tau} + z_{\alpha/2} \sqrt{\widehat{{\mathbb{V}}}[\widehat{\tau}]}, \widehat{\tau} + z_{1 - \alpha/2} \sqrt{\widehat{{\mathbb{V}}}[\widehat{\tau}]}\right)
 \]</span></p>
-<p>The associated p-values for a two-sided null hypothesis test where the null is that the coefficient is 0 uses a normal distribution with the aforementioned significance level <span class="math inline">\(\alpha\)</span>.</p>
+<p>The associated p-values for a two-sided null hypothesis test are computed using a normal disribution and the aforementioned significance level <span class="math inline">\(\alpha\)</span>.</p>
 </div>
 </div>
 </div>

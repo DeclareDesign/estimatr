@@ -20,11 +20,6 @@ coef.lm_robust <-
     return(coefs)
   }
 
-#' Extract estimate from \code{\link{difference_in_means}}
-#'
-#' @param object an object of class \code{\link{difference_in_means}}
-#' @param ... other arguments, unused
-#'
 #' @export
 coef.difference_in_means <-
   function(
@@ -35,11 +30,6 @@ coef.difference_in_means <-
     return(coefs)
   }
 
-#' Extract estimate from \code{\link{horvitz_thompson}}
-#'
-#' @param object an object of class \code{\link{horvitz_thompson}}
-#' @param ... other arguments, unused
-#'
 #' @export
 coef.horvitz_thompson <-
   function(

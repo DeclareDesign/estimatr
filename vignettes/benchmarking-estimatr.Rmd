@@ -27,14 +27,14 @@ Linear regression
 I test our speed in estimating coefficients, standard errors, and doing
 inference on four different datasets (500 and 5000 observations; 5 and
 50 covariates) and across several different specifications. Below I
-preview the results comparing `lm_robust()` to a commonly used competing
-package, mostly the `sandwich` package and base R. In the two largest
-datasets, our method is almost always faster, and is only slower by tiny
-margins in the smallest datasets with classical standard errors, where
-speed is hardly a factor. When it comes to the biggest gains, using
-`lm_robust()` to get HC2 or Stata-like cluster-robust standard errors
-will roughly halve your waiting time. If you want CR2 standard errors,
-`lm_robust()` can reduce your run time by a factor of 10!
+preview the results comparing `lm_robust()` to base R for fitting
+coefficients and a commonly used package for robust standard errors,
+such as the `sandwich` package. In the two largest datasets, our method
+is almost always faster and at worst is the same as base R, and only
+with classical standard errors. When it comes to the biggest gains,
+using `lm_robust()` to get HC2 or Stata-like cluster-robust standard
+errors will roughly halve your waiting time. If you want CR2 standard
+errors, `lm_robust()` can reduce your run time by a factor of 10!
 
 <table>
 <thead>
@@ -56,7 +56,7 @@ will roughly halve your waiting time. If you want CR2 standard errors,
 <td>1.9</td>
 <td><strong>2.3</strong></td>
 <td><strong>2</strong></td>
-<td><strong>6.5</strong></td>
+<td><strong>6</strong></td>
 </tr>
 <tr class="even">
 <td></td>
@@ -83,7 +83,7 @@ will roughly halve your waiting time. If you want CR2 standard errors,
 <td><strong>4.6</strong></td>
 <td><strong>7.9</strong></td>
 <td><strong>7.8</strong></td>
-<td><strong>173</strong></td>
+<td><strong>172</strong></td>
 </tr>
 <tr class="odd">
 <td></td>
@@ -110,7 +110,7 @@ will roughly halve your waiting time. If you want CR2 standard errors,
 <td><strong>5.8</strong></td>
 <td><strong>8.2</strong></td>
 <td><strong>8.2</strong></td>
-<td><strong>612</strong></td>
+<td><strong>62</strong></td>
 </tr>
 <tr class="even">
 <td></td>
@@ -134,8 +134,8 @@ will roughly halve your waiting time. If you want CR2 standard errors,
 <td>5000</td>
 <td>50</td>
 <td><code>estimatr::lm_robust()</code></td>
-<td><strong>26</strong></td>
-<td><strong>42</strong></td>
+<td><strong>26.3</strong></td>
+<td><strong>41.9</strong></td>
 <td><strong>55</strong></td>
 <td><strong>2504</strong></td>
 </tr>
@@ -143,9 +143,9 @@ will roughly halve your waiting time. If you want CR2 standard errors,
 <td></td>
 <td></td>
 <td>base + sandwich/clubSandwich</td>
-<td>32</td>
-<td>114</td>
-<td>253</td>
+<td>32.2</td>
+<td>114.8</td>
+<td>253.8</td>
 <td>10166</td>
 </tr>
 </tbody>
@@ -160,7 +160,6 @@ To see the exact comparisons, see below.
 
     library(estimatr)
     library(microbenchmark)
-
     # Create some data sets of different sizes for testing below
     set.seed(42)
     data_size <- expand.grid(list(ns = c(500, 5000), ps = c(5, 50)))
@@ -413,14 +412,16 @@ implementation is for simple linear regression.
 </tbody>
 </table>
 
+    print(test_cr2[[4]]$median)
+    #> [1]  2504 10166
     sessionInfo()
-    #> R version 3.4.1 (2017-06-30)
-    #> Platform: x86_64-apple-darwin15.6.0 (64-bit)
-    #> Running under: macOS High Sierra 10.13.2
+    #> R version 3.4.3 (2017-11-30)
+    #> Platform: x86_64-apple-darwin14.5.0 (64-bit)
+    #> Running under: OS X Yosemite 10.10.5
     #> 
     #> Matrix products: default
-    #> BLAS: /Library/Frameworks/R.framework/Versions/3.4/Resources/lib/libRblas.0.dylib
-    #> LAPACK: /Library/Frameworks/R.framework/Versions/3.4/Resources/lib/libRlapack.dylib
+    #> BLAS: /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib
+    #> LAPACK: /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libLAPACK.dylib
     #> 
     #> locale:
     #> [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -429,7 +430,7 @@ implementation is for simple linear regression.
     #> [1] stats     graphics  grDevices utils     datasets  methods   base     
     #> 
     #> loaded via a namespace (and not attached):
-    #>  [1] compiler_3.4.1  backports_1.1.2 magrittr_1.5    rprojroot_1.3-2
-    #>  [5] tools_3.4.1     htmltools_0.3.6 yaml_2.1.16     Rcpp_0.12.15   
-    #>  [9] stringi_1.1.6   rmarkdown_1.8   highr_0.6       knitr_1.18     
+    #>  [1] compiler_3.4.3  backports_1.1.2 magrittr_1.5    rprojroot_1.3-2
+    #>  [5] tools_3.4.3     htmltools_0.3.6 yaml_2.1.15     Rcpp_0.12.15   
+    #>  [9] stringi_1.1.6   rmarkdown_1.8   highr_0.6       knitr_1.17     
     #> [13] stringr_1.2.0   digest_0.6.14   evaluate_0.10.1

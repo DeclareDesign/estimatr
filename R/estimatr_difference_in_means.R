@@ -28,7 +28,7 @@
 #' default be 0 and \code{condition2} will be 1). See the examples for more.
 #' @param condition2 value in the treatment vector of the condition to be the
 #' treatment. See \code{condition1}.
-#' @param ci A boolean for whether to compute and return p-values and
+#' @param ci logical. Whether to compute and return p-values and
 #' confidence intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
 #'
@@ -54,20 +54,20 @@
 #' More details of the about each of the estimators can be found in the
 #' \href{estimatr.declaredesign.org/articles/technical-notes.html}{technical notes}.
 #'
-#' @return \code{difference_in_means} returns an object of class
-#' \code{"difference_in_means"}.
+#' @return Returns an object of class \code{"difference_in_means"}.
 #'
-#' The functions \code{summary} and \code{\link{tidy}} can be used to get
-#' the results as a \code{data.frame}. To get useful data out of the return,
+#' The post-estimation commands functions \code{summary} and \code{\link{tidy}}
+#' return results in a \code{data.frame}. To get useful data out of the return,
 #' you can use these data frames, you can use the resulting list directly, or
-#' you can use the generic accessor functions \code{coef}, and\code{confint}.
+#' you can use the generic accessor functions \code{coef} and
+#' \code{confint}.
 #'
 #' An object of class \code{"difference_in_means"} is a list containing at
 #' least the following components:
 #'   \item{coefficients}{the estimated coefficients}
 #'   \item{se}{the estimated standard errors}
 #'   \item{df}{the estimated degrees of freedom}
-#'   \item{p}{the p-values from the t-test using \code{coefficients}, \code{se}, and \code{df}}
+#'   \item{p}{the p-values from a two-sided t-test using \code{coefficients}, \code{se}, and \code{df}}
 #'   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{coefficient_name}{a character vector of coefficient names}
@@ -75,6 +75,8 @@
 #'   \item{N}{the number of observations used}
 #'   \item{outcome}{the name of the outcome variable}
 #'   \item{design}{the name of the design learned from the arguments passed}
+#'
+#' @seealso \code{\link{lm_lin}}
 #'
 #' @references
 #' Gerber, Alan S, and Donald P Green. 2012. Field Experiments: Design, Analysis, and Interpretation. New York: W.W. Norton.
@@ -85,7 +87,11 @@
 #'
 #' library(fabricatr)
 #' library(randomizr)
-#' # Get appropriate standard errors for simple designs
+#' # Get appropriate standard errors for unit-randomized designs
+#'
+#' # ----------
+#' # 1. Unit randomized
+#' # ----------
 #' dat <- fabricate(
 #'   N = 100,
 #'   Y = rnorm(100),
@@ -95,6 +101,9 @@
 #' table(dat$Z_comp)
 #' difference_in_means(Y ~ Z_comp, data = dat)
 #'
+#' # ----------
+#' # 2. Cluster randomized
+#' # ----------
 #' # Accurates estimates and standard errors for clustered designs
 #' dat$clust <- sample(20, size = nrow(dat), replace = TRUE)
 #' dat$Z_clust <- cluster_ra(dat$clust, prob = 0.6)
@@ -102,13 +111,37 @@
 #' table(dat$Z_clust, dat$clust)
 #' summary(difference_in_means(Y ~ Z_clust, clusters = clust, data = dat))
 #'
-#' # Accurate estimates and standard errors for blocked designs
+#' # ----------
+#' # 3. Block randomized
+#' # ----------
 #' dat$block <- rep(1:10, each = 10)
 #' dat$Z_block <- block_ra(dat$block, prob = 0.5)
 #'
 #' table(dat$Z_block, dat$block)
 #' difference_in_means(Y ~ Z_block, blocks = block, data = dat)
 #'
+#' # ----------
+#' # 4. Block cluster randomized
+#' # ----------
+#' # Learns this design if there are two clusters per block
+#' dat$small_clust <- rep(1:50, each = 2)
+#' dat$big_blocks <- rep(1:5, each = 10)
+#'
+#' dat$Z_blcl <- block_and_cluster_ra(
+#'   blocks = dat$big_blocks,
+#'   clusters = dat$small_clust
+#'  )
+#'
+#' difference_in_means(
+#'   Y ~ Z_blcl,
+#'   blocks = big_blocks,
+#'   clusters = small_clust,
+#'   data = dat
+#'  )
+#'
+#' # ----------
+#' # 5. Matched-pairs
+#' # ----------
 #' # Matched-pair estimates and standard errors are also accurate
 #' # Specified same as blocked design, function learns that
 #' # it is matched pair from size of blocks!
@@ -118,6 +151,30 @@
 #' table(dat$pairs, dat$Z_pairs)
 #' difference_in_means(Y ~ Z_pairs, blocks = pairs, data = dat)
 #'
+#' # ----------
+#' # 6. Matched-pair cluster randomized
+#' # ----------
+#' # Learns this design if there are two clusters per block
+#' dat$small_clust <- rep(1:50, each = 2)
+#' dat$cluster_pairs <- rep(1:25, each = 4)
+#' table(dat$cluster_pairs, dat$small_clust)
+#'
+#' dat$Z_mpcl <- block_and_cluster_ra(
+#'   blocks = dat$cluster_pairs,
+#'   clusters = dat$small_clust
+#'  )
+#'
+#' difference_in_means(
+#'   Y ~ Z_mpcl,
+#'   blocks = cluster_pairs,
+#'   clusters = small_clust,
+#'   data = dat
+#'  )
+#'
+#' # ----------
+#' # Other examples
+#' # ----------
+#'
 #' # Also works with multi-valued treatments if users specify
 #' # comparison of interest
 #' dat$Z_multi <- simple_ra(
@@ -126,8 +183,8 @@
 #'   prob_each = c(0.4, 0.4, 0.2)
 #' )
 #'
-#' # Only need to specify which condition is treated "condition2" and
-#' # which is control "condition1"
+#' # Only need to specify which condition is treated `condition2` and
+#' # which is control `condition1`
 #' difference_in_means(
 #'   Y ~ Z_multi,
 #'   condition1 = "Treatment 2",
@@ -141,7 +198,7 @@
 #'   data = dat
 #' )
 #'
-#' # Specifying weights will result in estimation via `lm_robust`
+#' # Specifying weights will result in estimation via lm_robust()
 #' dat$w <- runif(nrow(dat))
 #' difference_in_means(Y ~ Z_comp, weights = w, data = dat)
 #' lm_robust(Y ~ Z_comp, weights = w, data = dat)
@@ -180,7 +237,8 @@ difference_in_means <-
 
     data <- data.frame(
       y = model_data$outcome,
-      t = model_data$original_treatment
+      t = model_data$original_treatment,
+      stringsAsFactors = FALSE
     )
     data$cluster <- model_data$cluster
     data$weights <- model_data$weights
@@ -222,7 +280,6 @@ difference_in_means <-
       } else {
         design <- "Clustered"
       }
-
     } else {
       pair_matched <- FALSE
 
@@ -233,12 +290,13 @@ difference_in_means <-
 
       # Check if design is pair matched
       if (any(clust_per_block == 1)) {
-        stop("All blocks must have multiple units (or clusters)")
+        stop("All `blocks` must have multiple units (or `clusters`)")
       } else if (all(clust_per_block == 2)) {
         pair_matched <- TRUE
       } else if (any(clust_per_block == 2) & any(clust_per_block > 2)) {
         stop(
-          "Blocks must either all have two units/clusters (i.e. a matched pairs design) or all have ",
+          "`blocks` must either all have two units/`clusters` (i.e., a ",
+          "matched pairs design) or all have ",
           "more than two units. You cannot mix blocks of size two with ",
           "blocks of a larger size. In order to estimate treatment effects with ",
           "this design, use inverse propensity score weights with lm_robust()"
@@ -312,7 +370,8 @@ difference_in_means <-
         coefficients = diff,
         se = se,
         df = df,
-        N = N_overall
+        N = N_overall,
+        stringsAsFactors = FALSE
       )
     }
 
@@ -374,8 +433,8 @@ difference_in_means_internal <-
     ## Check to make sure multiple in each group if pair matched is false
     if (!pair_matched & (N2 == 1 | N1 == 1)) {
       stop(
-        "Each block must have at least two treated/control units if design is not ",
-        "pair-matched (i.e. every block is of size two). Only one treated or ",
+        "Must have least two treated/control units in each block if design is not ",
+        "pair-matched (i.e., every block is of size two). Only one treated or ",
         "control unit in a block makes standard errors impossible to calculate"
       )
     }
@@ -432,7 +491,7 @@ difference_in_means_internal <-
       } else {
         if (pair_matched) {
           stop(
-            "Cannot use weights with matched pairs design at the moment"
+            "Cannot use `weights` with matched pairs design at the moment"
           )
         }
 
@@ -465,7 +524,8 @@ difference_in_means_internal <-
         coefficients = diff,
         se = se,
         N = N,
-        df = df
+        df = df,
+        stringsAsFactors = FALSE
       )
 
     return(return_frame)

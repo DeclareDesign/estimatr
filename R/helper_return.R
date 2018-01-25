@@ -10,7 +10,6 @@ lm_return <- function(return_list, model_data, formula) {
 }
 
 dim_like_return <- function(return_list, alpha, formula, conditions) {
-
   return_list[["alpha"]] <- alpha
 
   # get "max" condition to account for case with only 1 condition

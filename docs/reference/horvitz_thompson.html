@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Horvitz-Thompson estimator for unbiased treatment effects — horvitz_thompson • estimatr</title>
+<title>Horvitz-Thompson estimator for two-armed trials — horvitz_thompson • estimatr</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -107,12 +107,12 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Horvitz-Thompson estimator for unbiased treatment effects</h1>
+    <h1>Horvitz-Thompson estimator for two-armed trials</h1>
     </div>
 
     
-    <p>These Horvitz-Thompson estimators are unbiased for
-any design as long as the randomization scheme is known.</p>
+    <p>Horvitz-Thompson estimators that are unbiased for designs in
+which the randomization scheme is known</p>
     
 
     <pre class="usage"><span class='fu'>horvitz_thompson</span>(<span class='no'>formula</span>, <span class='no'>data</span>, <span class='no'>blocks</span>, <span class='no'>clusters</span>, <span class='kw'>simple</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
@@ -145,7 +145,7 @@ designs. For blocked designs, clusters must be within blocks.</p></td>
     </tr>
     <tr>
       <th>simple</th>
-      <td><p>An optional boolean for whether the randomization is simple
+      <td><p>logical, optional. Whether the randomization is simple
 (TRUE) or complete (FALSE). This is ignored if <code>blocks</code> are specified,
 as all blocked designs use complete randomization, or either
 <code>declaration</code> or <code>condition_pr_mat</code> are passed. Otherwise, it
@@ -200,8 +200,8 @@ moment.</p></td>
     </tr>
     <tr>
       <th>ci</th>
-      <td><p>A boolean for whether to compute and return p-values and confidence
-intervals, TRUE by default.</p></td>
+      <td><p>logical. Whether to compute and return p-values and
+confidence intervals, TRUE by default.</p></td>
     </tr>
     <tr>
       <th>alpha</th>
@@ -209,25 +209,50 @@ intervals, TRUE by default.</p></td>
     </tr>
     <tr>
       <th>return_condition_pr_mat</th>
-      <td><p>a boolean for whether to return the condition
-probability matrix. Returns NULL if the design is simple randomization</p></td>
+      <td><p>logical. Whether to return the condition
+probability matrix. Returns NULL if the design is simple randomization,
+FALSE by default.</p></td>
     </tr>
     </table>
+    
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>Returns an object of class <code>"horvitz_thompson"</code>.</p>
+<p>The post-estimation commands functions <code>summary</code> and <code><a href='tidy.html'>tidy</a></code>
+return results in a <code>data.frame</code>. To get useful data out of the return,
+you can use these data frames, you can use the resulting list directly, or
+you can use the generic accessor functions <code>coef</code> and
+<code>confint</code>.</p>
+<p>An object of class <code>"horvitz_thompson"</code> is a list containing at
+least the following components:</p>
+<p></p>
+<dt>coefficients</dt><dd><p>the estimated coefficients</p></dd>
+  <dt>se</dt><dd><p>the estimated standard errors</p></dd>
+  <dt>df</dt><dd><p>the estimated degrees of freedom</p></dd>
+  <dt>p</dt><dd><p>the p-values from from a two-sided z-test using <code>coefficients</code>, <code>se</code>, and <code>df</code></p></dd>
+  <dt>ci_lower</dt><dd><p>the lower bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
+  <dt>ci_upper</dt><dd><p>the upper bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
+  <dt>coefficient_name</dt><dd><p>a character vector of coefficient names</p></dd>
+  <dt>alpha</dt><dd><p>the significance level specified by the user</p></dd>
+  <dt>N</dt><dd><p>the number of observations used</p></dd>
+  <dt>outcome</dt><dd><p>the name of the outcome variable</p></dd>
+  <dt>condition_pr_mat</dt><dd><p>the condition probability matrix if <code>return_condition_pr_mat</code> is TRUE</p></dd>
+
     
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>This function implements the Horvitz-Thompson estimator for
-treatment effects. This estimator is useful for estimating unbiased
+treatment effects for two-armed trials. This estimator is useful for estimating unbiased
 treatment effects given any randomization scheme as long as the
 randomization scheme is known.</p>
 <p>In short, the Horvitz-Thompson estimator essentially reweights each unit
 by the probability of it being in its observed condition. Pivotal to the
 estimation of treatment effects using this estimator are the marginal
-condition probabilities (i.e. the probability that any one unit is in
-a particular treatment condition). Pivotal to the variance of this estimate,
-whenever the design is more complicated than simple randomization, as in
-the case of blocked, clustered, or complete randomization, are the
-joint condition probabilities (i.e. the probabilities that any two units
+condition probabilities (i.e., the probability that any one unit is in
+a particular treatment condition). Pivotal to the estimating the variance
+variance whenever the design is more complicated than simple randomization,
+are the
+joint condition probabilities (i.e., the probabilities that any two units
 have a particular set of treatment conditions, either the same or
 different). The estimator we provide here considers the case with two
 treatment conditions.</p>
@@ -273,9 +298,9 @@ only use this option if they are certain they know what they are doing.</p>
     
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
-    <p>Aronow, Peter M, and Joel A Middleton. 2013. "A Class of Unbiased Estimators of the Average Treatment Effect in Randomized Experiments." Journal of Causal Inference 1 (1): 135-54. <a href='https://doi.org/10.1515/jci-2012-0009'>https://doi.org/10.1515/jci-2012-0009</a>.
-Aronow, Peter M, and Cyrus Samii. 2017. "Estimating Average Causal Effects Under Interference Between Units." Annals of Applied Statistics, forthcoming. <a href='https://arxiv.org/abs/1305.6156v3'>https://arxiv.org/abs/1305.6156v3</a>.
-Middleton, Joel A, and Peter M Aronow. 2015. "Unbiased Estimation of the Average Treatment Effect in Cluster-Randomized Experiments." Statistics, Politics and Policy 6 (1-2): 39-75. <a href='https://doi.org/10.1515/spp-2013-0002'>https://doi.org/10.1515/spp-2013-0002</a>.</p>
+    <p>Aronow, Peter M, and Joel A Middleton. 2013. "A Class of Unbiased Estimators of the Average Treatment Effect in Randomized Experiments." Journal of Causal Inference 1 (1): 135-54. <a href='https://doi.org/10.1515/jci-2012-0009'>https://doi.org/10.1515/jci-2012-0009</a>.</p>
+<p>Aronow, Peter M, and Cyrus Samii. 2017. "Estimating Average Causal Effects Under Interference Between Units." Annals of Applied Statistics, forthcoming. <a href='https://arxiv.org/abs/1305.6156v3'>https://arxiv.org/abs/1305.6156v3</a>.</p>
+<p>Middleton, Joel A, and Peter M Aronow. 2015. "Unbiased Estimation of the Average Treatment Effect in Cluster-Randomized Experiments." Statistics, Politics and Policy 6 (1-2): 39-75. <a href='https://doi.org/10.1515/spp-2013-0002'>https://doi.org/10.1515/spp-2013-0002</a>.</p>
     
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
@@ -294,50 +319,35 @@ Middleton, Joel A, and Peter M Aronow. 2015. "Unbiased Estimation of the Average
 <span class='fu'>library</span>(<span class='no'>randomizr</span>)
 
 <span class='co'>#----------</span>
-<span class='co'># Simple random assignment</span>
+<span class='co'># 1. Simple random assignment</span>
 <span class='co'>#----------</span>
 <span class='no'>dat</span>$<span class='no'>p</span> <span class='kw'>&lt;-</span> <span class='fl'>0.5</span>
 <span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='fu'>rbinom</span>(<span class='no'>n</span>, <span class='kw'>size</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>p</span>)
 
 <span class='co'># If you only pass condition_prs, we assume simple random sampling</span>
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_prs</span> <span class='kw'>=</span> <span class='no'>p</span>)</div><div class='output co'>#&gt;   coefficient_name        est       se        p  ci_lower  ci_upper df outcome
-#&gt; 1                z -0.2532128 0.609167 0.677651 -1.447158 0.9407325 NA       y</div><div class='input'><span class='co'># Assume constant effects instead</span>
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_prs</span> <span class='kw'>=</span> <span class='no'>p</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"constant"</span>)</div><div class='output co'>#&gt;   coefficient_name        est        se         p  ci_lower ci_upper df outcome
-#&gt; 1                z -0.2532128 0.6038814 0.6749904 -1.436799 0.930373 NA       y</div><div class='input'>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_prs</span> <span class='kw'>=</span> <span class='no'>p</span>)</div><div class='output co'>#&gt;     Estimate Std. Error Pr(&gt;|t|)  CI Lower  CI Upper DF
+#&gt; z -0.2532128   0.609167 0.677651 -1.447158 0.9407325 NA</div><div class='input'><span class='co'># Assume constant effects instead</span>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_prs</span> <span class='kw'>=</span> <span class='no'>p</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"constant"</span>)</div><div class='output co'>#&gt;     Estimate Std. Error  Pr(&gt;|t|)  CI Lower CI Upper DF
+#&gt; z -0.2532128  0.6038814 0.6749904 -1.436799 0.930373 NA</div><div class='input'>
 <span class='co'># Also can use randomizr to pass a declaration</span>
 <span class='no'>srs_declaration</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/declare_ra'>declare_ra</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>), <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.5</span>, <span class='kw'>simple</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>srs_declaration</span>)</div><div class='output co'>#&gt;   coefficient_name        est       se        p  ci_lower  ci_upper df outcome
-#&gt; 1                z -0.2532128 0.609167 0.677651 -1.447158 0.9407325 NA       y</div><div class='input'>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>srs_declaration</span>)</div><div class='output co'>#&gt;     Estimate Std. Error Pr(&gt;|t|)  CI Lower  CI Upper DF
+#&gt; z -0.2532128   0.609167 0.677651 -1.447158 0.9407325 NA</div><div class='input'>
 <span class='co'>#----------</span>
-<span class='co'># Complete random assignment</span>
+<span class='co'># 2. Complete random assignment</span>
 <span class='co'>#----------</span>
 
 <span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='fu'>sample</span>(<span class='fu'>rep</span>(<span class='fl'>0</span>:<span class='fl'>1</span>, <span class='kw'>each</span> <span class='kw'>=</span> <span class='no'>n</span>/<span class='fl'>2</span>))
 <span class='co'># Can use a declaration</span>
 <span class='no'>crs_declaration</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/declare_ra'>declare_ra</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>), <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.5</span>, <span class='kw'>simple</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>crs_declaration</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p  ci_lower  ci_upper df outcome
-#&gt; 1                z -0.247794 0.5309541 0.6407175 -1.288445 0.7928568 NA       y</div><div class='input'><span class='co'># Can precompute condition_pr_mat and pass it</span>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>crs_declaration</span>)</div><div class='output co'>#&gt;    Estimate Std. Error  Pr(&gt;|t|)  CI Lower  CI Upper DF
+#&gt; z -0.247794  0.5309541 0.6407175 -1.288445 0.7928568 NA</div><div class='input'><span class='co'># Can precompute condition_pr_mat and pass it</span>
 <span class='co'># (faster for multiple runs with same condition probability matrix)</span>
 <span class='no'>crs_pr_mat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='declaration_to_condition_pr_mat.html'>declaration_to_condition_pr_mat</a></span>(<span class='no'>crs_declaration</span>)
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>crs_pr_mat</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p  ci_lower  ci_upper df outcome
-#&gt; 1                z -0.247794 0.5309541 0.6407175 -1.288445 0.7928568 NA       y</div><div class='input'>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>crs_pr_mat</span>)</div><div class='output co'>#&gt;    Estimate Std. Error  Pr(&gt;|t|)  CI Lower  CI Upper DF
+#&gt; z -0.247794  0.5309541 0.6407175 -1.288445 0.7928568 NA</div><div class='input'>
 <span class='co'>#----------</span>
-<span class='co'># More complicated assignment</span>
-<span class='co'>#----------</span>
-
-<span class='co'># arbitrary permutation matrix</span>
-<span class='no'>possible_treats</span> <span class='kw'>&lt;-</span> <span class='fu'>cbind</span>(
-  <span class='fu'>c</span>(<span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>),
-  <span class='fu'>c</span>(<span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>),
-  <span class='fu'>c</span>(<span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>)
-)
-<span class='no'>arb_pr_mat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='permutations_to_condition_pr_mat.html'>permutations_to_condition_pr_mat</a></span>(<span class='no'>possible_treats</span>)
-<span class='co'># Simulating a column to be realized treatment</span>
-<span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='no'>possible_treats</span>[, <span class='fu'>sample</span>(<span class='fu'>ncol</span>(<span class='no'>possible_treats</span>), <span class='kw'>size</span> <span class='kw'>=</span> <span class='fl'>1</span>)]
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>arb_pr_mat</span>)</div><div class='output co'>#&gt;   coefficient_name       est        se         p  ci_lower  ci_upper df outcome
-#&gt; 1                z -1.149165 0.8082948 0.1551089 -2.733394 0.4350635 NA       y</div><div class='input'>
-<span class='co'>#----------</span>
-<span class='co'># Clustered treatment, complete random assigment</span>
+<span class='co'># 3. Clustered treatment, complete random assigment</span>
 <span class='co'>#-----------</span>
 <span class='co'># Simulating data</span>
 <span class='no'>dat</span>$<span class='no'>cl</span> <span class='kw'>&lt;-</span> <span class='fu'>rep</span>(<span class='fl'>1</span>:<span class='fl'>4</span>, <span class='kw'>times</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='fl'>2</span>, <span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>3</span>))
@@ -353,13 +363,26 @@ Middleton, Joel A, and Peter M Aronow. 2015. "Unbiased Estimation of the Average
   <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>cl</span>,
   <span class='kw'>condition_prs</span> <span class='kw'>=</span> <span class='no'>prob</span>,
   <span class='kw'>simple</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
-)</div><div class='output co'>#&gt; <span class='message'>`simple = FALSE, using complete cluster randomization</span></div><div class='input'><span class='no'>ht_cl</span></div><div class='output co'>#&gt;   coefficient_name        est        se         p   ci_lower  ci_upper df
-#&gt; 1                z 0.02766919 0.2311512 0.9047194 -0.4253788 0.4807172 NA
-#&gt;   outcome
-#&gt; 1       y</div><div class='input'><span class='no'>ht_cl_manual</span></div><div class='output co'>#&gt;   coefficient_name        est        se         p   ci_lower  ci_upper df
-#&gt; 1                z 0.02766919 0.2311512 0.9047194 -0.4253788 0.4807172 NA
-#&gt;   outcome
-#&gt; 1       y</div><div class='input'>
+)</div><div class='output co'>#&gt; <span class='message'>`simple = FALSE, using complete cluster randomization</span></div><div class='input'><span class='no'>ht_cl</span></div><div class='output co'>#&gt;   Estimate Std. Error   Pr(&gt;|t|)    CI Lower  CI Upper DF
+#&gt; z 0.373693   0.189923 0.04911381 0.001450693 0.7459353 NA</div><div class='input'><span class='no'>ht_cl_manual</span></div><div class='output co'>#&gt;   Estimate Std. Error   Pr(&gt;|t|)    CI Lower  CI Upper DF
+#&gt; z 0.373693   0.189923 0.04911381 0.001450693 0.7459353 NA</div><div class='input'>
+<span class='co'># Blcoked estimators specified similarly</span>
+
+<span class='co'>#----------</span>
+<span class='co'># More complicated assignment</span>
+<span class='co'>#----------</span>
+
+<span class='co'># arbitrary permutation matrix</span>
+<span class='no'>possible_treats</span> <span class='kw'>&lt;-</span> <span class='fu'>cbind</span>(
+  <span class='fu'>c</span>(<span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>),
+  <span class='fu'>c</span>(<span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>),
+  <span class='fu'>c</span>(<span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>)
+)
+<span class='no'>arb_pr_mat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='permutations_to_condition_pr_mat.html'>permutations_to_condition_pr_mat</a></span>(<span class='no'>possible_treats</span>)
+<span class='co'># Simulating a column to be realized treatment</span>
+<span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='no'>possible_treats</span>[, <span class='fu'>sample</span>(<span class='fu'>ncol</span>(<span class='no'>possible_treats</span>), <span class='kw'>size</span> <span class='kw'>=</span> <span class='fl'>1</span>)]
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>arb_pr_mat</span>)</div><div class='output co'>#&gt;    Estimate Std. Error  Pr(&gt;|t|)   CI Lower CI Upper DF
+#&gt; z 0.7576713  0.7715048 0.3260656 -0.7544502 2.269793 NA</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -367,6 +390,8 @@ Middleton, Joel A, and Peter M Aronow. 2015. "Unbiased Estimation of the Average
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
       
+      <li><a href="#value">Value</a></li>
+
       <li><a href="#details">Details</a></li>
 
       <li><a href="#references">References</a></li>

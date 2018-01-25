@@ -1,12 +1,8 @@
 # some code taken from the "broom" package
 # https://github.com/tidyverse/broom
 
-#' Tidy the result of a estimator into a data.frame
-#'
-#' @param object An object to be converted into a tidy data.frame
-#' @param ... extra arguments
-#'
-#' @return a data.frame
+#' Tidy the result of an estimator into a data.frame
+#' @rdname tidy
 #'
 #' @export
 tidy <- function(object, ...) {
@@ -15,28 +11,20 @@ tidy <- function(object, ...) {
 
 
 #' tidy on a NULL input
+#' @rdname tidy
 #'
-#' tidy on a NULL input returns an empty data frame, which means it can be
+#' @description tidy on a NULL input returns an empty data frame, which means it can be
 #' combined with other data frames (treated as "empty")
 #'
-#' @param object A value NULL
+#' @param object An object returned by one of the estimators
 #' @param ... extra arguments (not used)
-#'
-#' @return An empty data.frame
 #'
 #' @export
 tidy.NULL <- function(object, ...) {
   data.frame()
 }
 
-
-#' Default tidying method
-#'
-#' In order to be consistent with the broom package, the default tidy
-#' method just tries to cast the object as a data frame
-#'
-#' @param object an object to be tidied
-#' @param ... extra arguments (not used)
+#' @rdname tidy
 #'
 #' @export
 tidy.default <- function(object, ...) {
@@ -48,13 +36,12 @@ tidy.default <- function(object, ...) {
   as.data.frame(object)
 }
 
-#' Tidying \code{\link{lm_robust}} output to a data.frame
-#'
-#' @param object a \code{\link{lm_robust}} object to be tidied
-#' @param ... extra arguments (not used)
+
+#' @rdname tidy
 #'
 #' @return A data.frame with with coefficient names, estimates, standard
-#' errors, confidence intervals, p-values, and degrees of freedom
+#' errors, confidence intervals, p-values, degrees of freedom, and the
+#' name of the outcome variable
 #'
 #' @export tidy.lm_robust
 #' @export
@@ -66,13 +53,8 @@ tidy.lm_robust <- function(object, ...) {
   return(return_frame)
 }
 
-#' Tidying \code{\link{difference_in_means}} output to a data.frame
-#'
-#' @param object a \code{\link{difference_in_means}} object to be tidied
-#' @param ... extra arguments (not used)
-#'
-#' @return A data.frame with with coefficient names, estimates, standard
-#' errors, confidence intervals, p-values, degrees of freedom
+
+#' @rdname tidy
 #'
 #' @export tidy.difference_in_means
 #' @export
@@ -81,13 +63,8 @@ tidy.difference_in_means <- function(object, ...) {
   return(return_frame)
 }
 
-#' Tidying \code{\link{horvitz_thompson}} output to a data.frame
-#'
-#' @param object a \code{\link{horvitz_thompson}} object to be tidied
-#' @param ... extra arguments (not used)
-#'
-#' @return A data.frame with with coefficient names, estimates, standard
-#' errors, confidence intervals, p-values, degrees of freedom
+
+#' @rdname tidy
 #'
 #' @export tidy.horvitz_thompson
 #' @export

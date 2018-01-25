@@ -28,7 +28,7 @@ test_that("lm robust can work with margins",{
 
   # Close enough with HC2?
   expect_true(
-    max(lm_sum_marg[, mv] - lmr_sum_marg[, mv]) < 2e-06
+    max(lm_sum_marg[, mv] - lmr_sum_marg[, mv]) < 2e-05
   )
 
   # Close with classical
@@ -36,7 +36,7 @@ test_that("lm robust can work with margins",{
   lmrc <- summary(margins(lmr_class, vce = "delta"))
   lmc <- summary(margins(x, vce = "delta"))
   expect_true(
-    max(lmc[, mv] - lmrc[, mv]) < 2e-06
+    max(lmc[, mv] - lmrc[, mv]) < 2e-05
   )
 
   # Works with other vce

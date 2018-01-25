@@ -14,6 +14,14 @@ gen_pr_matrix_cluster(clusters, treat_probs, simple)
 \item{simple}{A boolean for whether the assignment is a random sample
 assignment (TRUE, default) or complete random assignment (FALSE)}
 }
+\value{
+a numeric 2n*2n matrix of marginal and joint condition treatment
+probabilities to be passed to the \code{condition_pr_mat} argument of
+\code{\link{horvitz_thompson}}.
+}
 \description{
 Generate condition probability matrix given clusters and probabilities
+}
+\seealso{
+\code{\link{declaration_to_condition_pr_mat}}
 }

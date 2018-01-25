@@ -177,9 +177,10 @@ test_that("Condition arguments behave as expected", {
   expect_error(
     difference_in_means(
       y ~ z,
-      condition = 1,
+      condition2 = 1,
       data = dat
-    )
+    ),
+    "`condition1` and `condition2` must be values found in the treatment"
   )
 
   dat$z <- 1
