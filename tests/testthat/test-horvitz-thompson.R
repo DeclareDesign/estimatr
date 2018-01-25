@@ -164,12 +164,24 @@ test_that("Horvitz-Thompson works with clustered data", {
     horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_pr_mat = clust_srs_mat)
   )
 
+  # Can infer from number of treated clusters per block the treatment pr
+  dat$cl_new <- c(1, 2, 3, 4, 5, 5, 6, 6)
+  dat$bl <- rep(1:2, each = 4)
+  # pr = 0.25 in first, 0.5 in second
+  blcl_ra <- randomizr::declare_ra(blocks = dat$bl, clusters = dat$cl_new, m = c(1, 2))
+  dat$z_clbl <- blcl_ra$ra_function()
+  expect_identical(
+    horvitz_thompson(y ~ z_clbl, data = dat, declaration = blcl_ra),
+    horvitz_thompson(y ~ z_clbl, data = dat, blocks = bl, clusters = cl_new)
+  )
+
   # should work with just a column if SRS!
   dat$ps <- 0.4
   expect_identical(
     ht_srs_decl,
     horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = ps)
   )
+
 
   # And constant effects
   # Only work for simple for now
@@ -381,6 +393,18 @@ test_that("Works without variation in treatment", {
     data = dat
   )
 
+  ht_const_cond1 <- horvitz_thompson(
+    y ~ z_const,
+    data = dat,
+    condition2 = 1
+  )
+
+  expect_equivalent(
+    ht_const_1,
+    ht_const_cond1
+  )
+
+
   expect_equivalent(ht_const_1$coefficients, mean(dat$y))
   expect_equal(ht_const_1$se, 1 / (nrow(dat)) * sqrt(sum(dat$y ^ 2)))
 
@@ -450,6 +474,21 @@ test_that("Works without variation in treatment", {
     tidy(ht_zero)[c("coefficients", "se")],
     tidy(ht_rev)[c("coefficients", "se")] * c(-1, 1)
   )
+
+  # Some weird specifications that hit unusual parts of the variance
+  cpm <- diag(0.5, nrow = 4, ncol = 4)
+  y <- rnorm(2)
+  t <- c(0, 1)
+  expect_error(
+    horvitz_thompson(y ~ t, condition_pr_mat = cpm),
+    NA
+  )
+  t <- c(1, 1)
+  expect_error(
+    horvitz_thompson(y ~ t, condition_pr_mat = cpm),
+    NA
+  )
+
 })
 
 test_that("multi-valued treatments not allowed in declaration", {

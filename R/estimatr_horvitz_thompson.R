@@ -488,7 +488,8 @@ horvitz_thompson <-
           condition_pr_mat <- gen_pr_matrix_block(
             blocks = data$blocks,
             clusters = data$clusters,
-            t = data$t
+            t = data$t,
+            condition2 = condition2
           )
         } else {
           condition_pr_mat <- gen_pr_matrix_block(

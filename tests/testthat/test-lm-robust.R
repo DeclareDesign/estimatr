@@ -140,6 +140,10 @@ test_that("lm robust works with weights", {
     NA
   )
 
+  expect_true(
+    any(grepl("Weighted", capture.output(summary(estimatr_out))))
+  )
+
   # Compare to lm output
   lm_out <- lm(Y ~ Z * X, weights = W, data = dat)
   lmo_hc2 <- cbind(
@@ -271,6 +275,13 @@ test_that("lm robust works with rank-deficient X", {
   expect_equivalent(
     tidy(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat)),
     tidy(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat, weights = w))
+  )
+
+  expect_true(
+    any(grepl(
+      "not defined because the design matrix is rank deficient",
+      capture.output(summary(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat)))
+    ))
   )
 })
 

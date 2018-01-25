@@ -1,7 +1,7 @@
 
-R version 3.4.3 (2017-11-30) -- "Kite-Eating Tree"
+R version 3.4.1 (2017-06-30) -- "Single Candle"
 Copyright (C) 2017 The R Foundation for Statistical Computing
-Platform: x86_64-apple-darwin14.5.0 (64-bit)
+Platform: x86_64-apple-darwin15.6.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -17,10 +17,10 @@ Type 'q()' to quit R.
 
 > library(estimatr)
 > lm_robust(extra~group, sleep)
-  coefficient_name  est        se          p   ci_lower ci_upper df outcome
-1      (Intercept) 0.75 0.5657345 0.20151554 -0.4385641 1.938564 18   extra
-2           group2 1.58 0.8490910 0.07918671 -0.2038740 3.363874 18   extra
+            Estimate Std. Error   Pr(>|t|)   CI Lower CI Upper DF
+(Intercept)     0.75  0.5657345 0.20151554 -0.4385641 1.938564 18
+group2          1.58  0.8490910 0.07918671 -0.2038740 3.363874 18
 > 
 > proc.time()
    user  system elapsed 
-  0.390   0.057   1.086 
+  0.819   0.090   1.010 

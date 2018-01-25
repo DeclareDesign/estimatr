@@ -216,7 +216,7 @@ permutations_to_condition_pr_mat <- function(permutations) {
 #' @export
 gen_pr_matrix_cluster <- function(clusters, treat_probs, simple) {
   n <- length(clusters)
-  cluster_lists <- split(1:n, clusters)
+  cluster_lists <- split(1:n, clusters, drop = TRUE)
   n_clust <- length(cluster_lists)
 
   unique_first_in_cl <- !duplicated(clusters)
@@ -259,6 +259,7 @@ gen_pr_matrix_cluster <- function(clusters, treat_probs, simple) {
         cbind(mat_00, mat_10),
         cbind(mat_10, mat_11)
       )
+
   } else if (simple) { # cluster, simple randomized
 
     # container mats
@@ -327,7 +328,7 @@ gen_pr_matrix_block <- function(blocks, clusters, p2 = NULL, p1 = NULL, t = NULL
   }
 
   if (is.null(t) && is.null(p2) && is.null(p1)) {
-    stop("Must specify one of `t`, `p2`, or `p1`.")
+    stop("Must specify one of `t`, `p2`, or `p1`")
   }
 
   clustered <- !is.null(clusters)
@@ -337,7 +338,8 @@ gen_pr_matrix_block <- function(blocks, clusters, p2 = NULL, p1 = NULL, t = NULL
 
   block_dat <- split(
     id_dat,
-    blocks
+    blocks,
+    drop = TRUE
   )
 
   n_blocks <- length(block_dat)
@@ -346,6 +348,7 @@ gen_pr_matrix_block <- function(blocks, clusters, p2 = NULL, p1 = NULL, t = NULL
     ids <- c(block_dat[[i]]$ids, n + block_dat[[i]]$ids)
 
     if (clustered) {
+
       if (is.null(block_dat[[i]]$p2)) {
         # learn prs
         cluster_treats <- get_cluster_treats(block_dat[[i]], condition2)
@@ -461,9 +464,11 @@ gen_joint_pr_complete <- function(pr, n_total) {
 
 
 get_cluster_treats <- function(data, condition2) {
+
   cluster_dat <- split(
     data$t,
-    data$clusters
+    data$clusters,
+    drop = TRUE
   )
 
   n_clust <- length(cluster_dat)
