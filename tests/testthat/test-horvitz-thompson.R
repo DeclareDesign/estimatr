@@ -206,7 +206,7 @@ test_that("Horvitz-Thompson works with clustered data", {
   dat$p_wrong[1] <- 1.5
   expect_error(
     horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = p_wrong),
-    "`condition_prs` must be a vector of positive values no greater than"
+    "`condition_prs` must be a vector of positive values no greater than 1"
   )
 
   # or treatment varying within a cluster
