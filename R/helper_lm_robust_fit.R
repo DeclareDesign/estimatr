@@ -7,9 +7,9 @@
 #' @param ci boolean that when T returns confidence intervals and p-values
 #' @param se_type character denoting which kind of SEs to return
 #' @param alpha numeric denoting the test size for confidence intervals
-#' @param return_vcov a boolean for whether to return the vcov matrix for later usage
-#' @param try_cholesky a boolean for whether to try using a cholesky decomposition to solve LS instead of a QR decomposition
-#' @param has_int a boolean for whether the model has an intercept
+#' @param return_vcov logical, whether to return the vcov matrix for later usage
+#' @param try_cholesky logical, whether to try using a cholesky decomposition to solve LS instead of a QR decomposition
+#' @param has_int logical, whether the model has an intercept, used for \eqn{R^2}
 #'
 #' @export
 #'
@@ -147,6 +147,7 @@ lm_robust_fit <- function(y,
   # ----------
   # Build return object
   # ----------
+
   return_list <- add_cis_pvals(return_frame, alpha, ci && se_type != "none")
 
   return_list[["coefficient_name"]] <- variable_names
@@ -159,12 +160,12 @@ lm_robust_fit <- function(y,
     return_list[["tot_var"]] <- ifelse(
       has_int,
       # everything correct except for this
-      sum(weights^2*(y/weights - weighted.mean(y/weights, weights^2))^2)*weight_mean,
-      sum(y^2 * weight_mean)
+      sum(weights ^ 2 * (y / weights - weighted.mean(y / weights, weights ^ 2)) ^ 2) * weight_mean,
+      sum(y ^ 2 * weight_mean)
     )
     return_list[["res_var"]] <- sum(fit$residuals ^ 2 * weight_mean) / (N - rank)
   } else {
-    return_list[["tot_var"]] <- ifelse(has_int, sum((y - mean(y))^2), sum(y^2))
+    return_list[["tot_var"]] <- ifelse(has_int, sum((y - mean(y)) ^ 2), sum(y ^ 2))
     return_list[["res_var"]] <- ifelse(fit$res_var < 0, NA, fit$res_var)
   }
 
@@ -180,11 +181,11 @@ lm_robust_fit <- function(y,
     1 - (
       (1 - return_list[["r.squared"]]) *
         ((N - has_int) / return_list[["df.residual"]])
-      )
+    )
 
   return_list[["fstatistic"]] <- c(
     value = (return_list[["r.squared"]] * return_list[["df.residual"]])
-             / ((1 - return_list[["r.squared"]]) * (rank - has_int)),
+    / ((1 - return_list[["r.squared"]]) * (rank - has_int)),
     numdf = rank - has_int,
     dendf = return_list[["df.residual"]]
   )

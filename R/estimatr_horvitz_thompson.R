@@ -13,7 +13,7 @@
 #' @param clusters An optional bare (unquoted) name of the variable that
 #' corresponds to the clusters in the data; used for cluster randomized
 #' designs. For blocked designs, clusters must be within blocks.
-#' @param simple An optional boolean for whether the randomization is simple
+#' @param simple logical, optional. Whether the randomization is simple
 #' (TRUE) or complete (FALSE). This is ignored if \code{blocks} are specified,
 #' as all blocked designs use complete randomization, or either
 #' \code{declaration} or \code{condition_pr_mat} are passed. Otherwise, it
@@ -42,11 +42,12 @@
 #' default be 0 and \code{condition2} will be 1). See the examples for more.
 #' @param condition2 value in the treatment vector of the condition to be the
 #' treatment. See \code{condition1}.
-#' @param ci A boolean for whether to compute and return p-values and confidence
-#' intervals, TRUE by default.
+#' @param ci logical. Whether to compute and return p-values and
+#' confidence intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
-#' @param return_condition_pr_mat a boolean for whether to return the condition
-#' probability matrix. Returns NULL if the design is simple randomization
+#' @param return_condition_pr_mat logical. Whether to return the condition
+#' probability matrix. Returns NULL if the design is simple randomization,
+#' FALSE by default.
 #'
 #' @details This function implements the Horvitz-Thompson estimator for
 #' treatment effects. This estimator is useful for estimating unbiased
@@ -56,11 +57,11 @@
 #' In short, the Horvitz-Thompson estimator essentially reweights each unit
 #' by the probability of it being in its observed condition. Pivotal to the
 #' estimation of treatment effects using this estimator are the marginal
-#' condition probabilities (i.e. the probability that any one unit is in
+#' condition probabilities (i.e., the probability that any one unit is in
 #' a particular treatment condition). Pivotal to the variance of this estimate,
 #' whenever the design is more complicated than simple randomization, as in
 #' the case of blocked, clustered, or complete randomization, are the
-#' joint condition probabilities (i.e. the probabilities that any two units
+#' joint condition probabilities (i.e., the probabilities that any two units
 #' have a particular set of treatment conditions, either the same or
 #' different). The estimator we provide here considers the case with two
 #' treatment conditions.
@@ -123,7 +124,7 @@
 #'   \item{coefficients}{the estimated coefficients}
 #'   \item{se}{the estimated standard errors}
 #'   \item{df}{the estimated degrees of freedom}
-#'   \item{p}{the p-values from the t-test using \code{coefficients}, \code{se}, and \code{df}}
+#'   \item{p}{the p-values from from a two-sided z-test using \code{coefficients}, \code{se}, and \code{df}}
 #'   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{coefficient_name}{a character vector of coefficient names}

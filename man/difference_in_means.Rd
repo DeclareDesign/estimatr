@@ -38,7 +38,7 @@ default be 0 and \code{condition2} will be 1). See the examples for more.}
 \item{condition2}{value in the treatment vector of the condition to be the
 treatment. See \code{condition1}.}
 
-\item{ci}{A boolean for whether to compute and return p-values and
+\item{ci}{logical. Whether to compute and return p-values and
 confidence intervals, TRUE by default.}
 
 \item{alpha}{The significance level, 0.05 by default.}
@@ -57,7 +57,7 @@ least the following components:
   \item{coefficients}{the estimated coefficients}
   \item{se}{the estimated standard errors}
   \item{df}{the estimated degrees of freedom}
-  \item{p}{the p-values from the t-test using \code{coefficients}, \code{se}, and \code{df}}
+  \item{p}{the p-values from a two-sided t-test using \code{coefficients}, \code{se}, and \code{df}}
   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
   \item{coefficient_name}{a character vector of coefficient names}
@@ -166,4 +166,7 @@ lm_robust(Y ~ Z_comp, weights = w, data = dat)
 Gerber, Alan S, and Donald P Green. 2012. Field Experiments: Design, Analysis, and Interpretation. New York: W.W. Norton.
 
 Imai, Kosuke, Gary King, Clayton Nall. 2009. "The Essential Role of Pair Matching in Cluster-Randomized Experiments, with Application to the Mexican Universal Health Insurance Evaluation." Statistical Science 24 (1). Institute of Mathematical Statistics: 29-53. \url{https://doi.org/10.1214/08-STS274}.
+}
+\seealso{
+\code{\link{summary.lm_robust}}, \code{\link{lm_lin}}
 }

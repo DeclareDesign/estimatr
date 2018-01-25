@@ -35,7 +35,7 @@ intervals, TRUE by default.}
 \item{return_vcov}{logical. Whether to return the variance-covariance
 matrix for later usage, TRUE by default.}
 
-\item{try_cholesky}{a boolean for whether to try using a Cholesky
+\item{try_cholesky}{logical. Whether to try using a Cholesky
 decomposition to solve least squares instead of a QR decomposition,
 FALSE by default. Using a Cholesky decomposition may result in speed gains, but should only
 be used if users are sure their model is full-rank (i.e., there is no
@@ -60,19 +60,25 @@ following components:
   \item{coefficients}{the estimated coefficients}
   \item{se}{the estimated standard errors}
   \item{df}{the estimated degrees of freedom}
-  \item{p}{the p-values from two-sided t-test using \code{coefficients}, \code{se}, and \code{df}}
+  \item{p}{the p-values from a two-sided t-test using \code{coefficients}, \code{se}, and \code{df}}
   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
   \item{coefficient_name}{a character vector of coefficient names}
   \item{alpha}{the significance level specified by the user}
-  \item{res_var}{the residual variance, used for uncertainty when using \code{predict}}
+  \item{res_var}{the residual variance}
   \item{N}{the number of observations used}
   \item{k}{the number of columns in the design matrix (includes linearly dependent columns!)}
   \item{rank}{the rank of the fitted model}
   \item{vcov}{the fitted variance covariance matrix}
+  \item{r.squared}{The \eqn{R^2},
+  \deqn{R^2 = 1 - Sum(e[i]^2) / Sum((y[i] - y^*)^2),} where \eqn{y^*}
+  is the mean of \eqn{y[i]} if there is an intercept and zero otherwise,
+  and \eqn{e[i]} is the ith residual.}
+  \item{adj.r.squared}{The \eqn{R^2} but penalized for having more parameters, \code{rank}}
   \item{weighted}{whether or not weights were applied}
   \item{call}{the original function call}
-We also return \code{terms} and \code{contrasts}, used by \code{predict}.
+We also return \code{terms} and \code{contrasts}, used by \code{predict},
+and \code{scaled_center}{the means of each of the covariates used for centering them}
 }
 \description{
 This formula fits a linear model, provides a variety of
@@ -95,12 +101,12 @@ procedures in
 The default for the case
 without clusters is the HC2 estimator and the default with clusters is the
 analogous CR2 estimator. Users can easily replicate Stata standard errors in
-the clustered or non-clustered case by setting \code{se_type = "stata"}.
+the clustered or non-clustered case by setting \code{`se_type` = "stata"}.
 
 The function estimates the coefficients and standard errors in C++, using
 the \code{RcppEigen} package. By default, we estimate the coefficients
 using Column-Pivoting QR decomposition from the Eigen C++ library, although
-users could get faster solutions by setting \code{try_cholesky = TRUE} to
+users could get faster solutions by setting \code{`try_cholesky` = TRUE} to
 use a Cholesky decomposition instead. This will likely result in quicker
 solutions, but the algorithm does not reliably detect when there are linear
 dependencies in the model and may fail silently if they exist.
@@ -117,8 +123,9 @@ dat <- fabricate(
 # Default variance estimator is HC2 robust standard errors
 lmro <- lm_robust(y ~ x + z, data = dat)
 
-# Can `tidy()` or `summary()` the data to easily get output as a data.frame
+# Can tidy() the data in to a data.frame
 tidy(lmro)
+# Can use summary() to get more statistics
 summary(lmro)
 # Can also get coefficients three ways
 lmro$coefficients
@@ -170,15 +177,14 @@ lm_robust(y ~ x + z, data = dat, alpha = 0.1)
 
 \dontrun{
   # Can also use 'margins' package if you have it installed to get
-  # marignal effects
+  # marginal effects
   library(margins)
   lmrout <- lm_robust(y ~ x + z, data = dat)
   summary(margins(lmrout))
 
   # Can output results using 'texreg'
   library(texreg)
-  texobj <- extract(lmrout)
-
+  texregobj <- extract(lmrout)
 }
 
 }

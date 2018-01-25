@@ -28,7 +28,7 @@
 #' default be 0 and \code{condition2} will be 1). See the examples for more.
 #' @param condition2 value in the treatment vector of the condition to be the
 #' treatment. See \code{condition1}.
-#' @param ci A boolean for whether to compute and return p-values and
+#' @param ci logical. Whether to compute and return p-values and
 #' confidence intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
 #'
@@ -67,7 +67,7 @@
 #'   \item{coefficients}{the estimated coefficients}
 #'   \item{se}{the estimated standard errors}
 #'   \item{df}{the estimated degrees of freedom}
-#'   \item{p}{the p-values from the t-test using \code{coefficients}, \code{se}, and \code{df}}
+#'   \item{p}{the p-values from a two-sided t-test using \code{coefficients}, \code{se}, and \code{df}}
 #'   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{coefficient_name}{a character vector of coefficient names}
@@ -75,6 +75,8 @@
 #'   \item{N}{the number of observations used}
 #'   \item{outcome}{the name of the outcome variable}
 #'   \item{design}{the name of the design learned from the arguments passed}
+#'
+#' @seealso \code{\link{summary.lm_robust}}, \code{\link{lm_lin}}
 #'
 #' @references
 #' Gerber, Alan S, and Donald P Green. 2012. Field Experiments: Design, Analysis, and Interpretation. New York: W.W. Norton.
