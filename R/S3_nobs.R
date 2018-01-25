@@ -11,3 +11,12 @@ nobs.lm_robust <-
 
     return(object$N)
   }
+
+#' @export
+nobs.summary.lm_robust <-
+  function(
+    object,
+    ...) {
+
+    return(object$N)
+  }

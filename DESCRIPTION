@@ -26,6 +26,6 @@ Suggests:
     randomizr (>= 0.8),
     knitr,
     rmarkdown
-Enhances: broom
+Enhances: broom, texreg
 VignetteBuilder: knitr
 Additional_repositories: http://r.declaredesign.org
