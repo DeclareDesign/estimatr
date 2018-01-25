@@ -191,7 +191,7 @@ knitr::kable(tidy(res_dim_cl))
 You can check which design was learned and which kind of estimator used by examining the `design` in the output.
 ```{r mp}
 data(sleep)
-res_mps <- difference_in_means(extra ~ group, blocks = ID)
+res_mps <- difference_in_means(extra ~ group, data = sleep, blocks = ID)
 res_mps$design
 ```
 
