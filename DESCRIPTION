@@ -31,3 +31,4 @@ Suggests:
     margins
 Enhances: broom, texreg
 VignetteBuilder: knitr
+Additional_repositories: http://r.declaredesign.org

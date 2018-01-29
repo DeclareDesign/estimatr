@@ -36,7 +36,6 @@ library(estimatr)
 # sample data from cluster-randomized experiment
 library(fabricatr)
 library(randomizr)
-#> Warning: package 'randomizr' was built under R version 3.4.3
 dat <- fabricate(
   N = 100,
   y = rnorm(N),
