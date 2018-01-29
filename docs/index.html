@@ -99,9 +99,11 @@
 <div id="installing-estimatr" class="section level3">
 <h3 class="hasAnchor">
 <a href="#installing-estimatr" class="anchor"></a>Installing estimatr</h3>
-<p>If you would like to use the current development release of <strong>estimatr</strong>, please ensure that you are running version 3.3 or later of R and run the following code:</p>
+<p>To install the latest stable release of <strong>estimatr</strong>, please ensure that you are running version 3.3 or later of R and run the following code:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">install.packages</span>(<span class="st">"estimatr"</span>)</code></pre></div>
+<p>If you would like to use the latest development release of <strong>estimatr</strong>, please ensure that you are running version 3.3 or later of R and run the following code:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">install.packages</span>(<span class="st">"estimatr"</span>, <span class="dt">dependencies =</span> <span class="ot">TRUE</span>,
-  <span class="dt">repos =</span> <span class="kw">c</span>(<span class="st">"http://R.declaredesign.org"</span>, <span class="st">"https://cloud.r-project.org"</span>))</code></pre></div>
+                 <span class="dt">repos =</span> <span class="kw">c</span>(<span class="st">"http://r.declaredesign.org"</span>, <span class="st">"https://cloud.r-project.org"</span>))</code></pre></div>
 </div>
 <div id="easy-to-use" class="section level3">
 <h3 class="hasAnchor">
@@ -112,6 +114,7 @@
 <span class="co"># sample data from cluster-randomized experiment</span>
 <span class="kw">library</span>(fabricatr)
 <span class="kw">library</span>(randomizr)
+<span class="co">#&gt; Warning: package 'randomizr' was built under R version 3.4.3</span>
 dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/fabricatr/topics/fabricate">fabricate</a></span>(
   <span class="dt">N =</span> <span class="dv">100</span>,
   <span class="dt">y =</span> <span class="kw">rnorm</span>(N),
