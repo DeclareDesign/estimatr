@@ -3,7 +3,7 @@
 estimatr: Fast Estimators for Design-Based Inference
 ====================================================
 
-[![Travis-CI Build Status](https://travis-ci.org/DeclareDesign/estimatr.svg?branch=master)](https://travis-ci.org/DeclareDesign/estimatr) [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/DeclareDesign/estimatr?branch=master&svg=true)](https://ci.appveyor.com/project/DeclareDesign/estimatr) [![Coverage Status](https://coveralls.io/repos/github/DeclareDesign/estimatr/badge.svg?branch=master)](https://coveralls.io/github/DeclareDesign/estimatr?branch=master)
+[![CRAN Status](https://www.r-pkg.org/badges/version/estimatr)](cran.r-project.org/package=estimatr) [![Travis-CI Build Status](https://travis-ci.org/DeclareDesign/estimatr.svg?branch=master)](https://travis-ci.org/DeclareDesign/estimatr) [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/DeclareDesign/estimatr?branch=master&svg=true)](https://ci.appveyor.com/project/DeclareDesign/estimatr) [![Coverage Status](https://coveralls.io/repos/github/DeclareDesign/estimatr/badge.svg?branch=master)](https://coveralls.io/github/DeclareDesign/estimatr?branch=master)
 
 Technical papers and textbooks demand complex estimation strategies that are often difficult to implement, even for scientists who are expert coders. The result is slow code copied and pasted from the internet, where the result is taken on faith.
 
@@ -13,11 +13,17 @@ Fast estimators also enable fast simulation of research designs to learn about t
 
 ### Installing estimatr
 
-If you would like to use the current development release of **estimatr**, please ensure that you are running version 3.3 or later of R and run the following code:
+To install the latest stable release of **estimatr**, please ensure that you are running version 3.3 or later of R and run the following code:
+
+``` r
+install.packages("estimatr")
+```
+
+If you would like to use the latest development release of **estimatr**, please ensure that you are running version 3.3 or later of R and run the following code:
 
 ``` r
 install.packages("estimatr", dependencies = TRUE,
-  repos = c("http://R.declaredesign.org", "https://cloud.r-project.org"))
+                 repos = c("http://r.declaredesign.org", "https://cloud.r-project.org"))
 ```
 
 ### Easy to use
