@@ -9,20 +9,10 @@ bibliography: estimatr.bib
 vignette: |
   %\VignetteIndexEntry{Getting started using estimatr} 
   \usepackage[utf8]{inputenc}
-  %\VignetteEngine{knitr::knitr}
+  %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
   chunk_output_type: console
 ---
-
-\newcommand{\X}{\mathbf{X}}
-\newcommand{\Pb}{\mathbf{P}}
-\newcommand{\Gb}{\mathbf{G}}
-\newcommand{\XtXinv}{(\X^{\top}\X)^{-1}}
-\newcommand{\x}{\mathbf{x}}
-\newcommand{\y}{\mathbf{y}}
-\newcommand{\E}{\mathbb{E}}
-\newcommand{\e}{\mathbf{e}}
-\newcommand{\V}{\mathbb{V}}
 
 ```{r, echo = FALSE}
 set.seed(42)
