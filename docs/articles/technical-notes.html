@@ -116,17 +116,18 @@
 <h3 class="hasAnchor">
 <a href="#coefficient-estimates" class="anchor"></a>Coefficient estimates</h3>
 <p><span class="math display">\[
-\widehat{\beta} ={({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}{\mathbf{X}}^{\top}{\mathbf{y}}\]</span></p>
-<p>Our algorithm solves the least squares problem using a rank-revealing column-pivoting QR factorization that eliminates the need to invert <span class="math inline">\({({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}\)</span> explicitly and behaves much like the default <code>lm</code> function in R. However, when <span class="math inline">\({\mathbf{X}}\)</span> is rank deficient, there are certain conditions under which the QR factorization algorithm we use, from the Eigen C++ library, drops different coefficients from the output than the default <code>lm</code> function. In general, users should avoid specifing models with rank-deficiencies. In fact, if users are certain their data are not rank deficient, they can improve the speed of <code>lm_robust</code> by setting <code>try_cholesky = TRUE</code>. This replaces the QR factorization with a Cholesky factorization that is only guaranteed to work <span class="math inline">\({\mathbf{X}}\)</span> is of full rank.</p>
+\widehat{\beta} =(\mathbf{X}^{\top}\mathbf{X})^{-1}\mathbf{X}^{\top}\mathbf{y}
+\]</span></p>
+<p>Our algorithm solves the least squares problem using a rank-revealing column-pivoting QR factorization that eliminates the need to invert <span class="math inline">\((\mathbf{X}^{\top}\mathbf{X})^{-1}\)</span> explicitly and behaves much like the default <code>lm</code> function in R. However, when <span class="math inline">\(\mathbf{X}\)</span> is rank deficient, there are certain conditions under which the QR factorization algorithm we use, from the Eigen C++ library, drops different coefficients from the output than the default <code>lm</code> function. In general, users should avoid specifing models with rank-deficiencies. In fact, if users are certain their data are not rank deficient, they can improve the speed of <code>lm_robust</code> by setting <code>try_cholesky = TRUE</code>. This replaces the QR factorization with a Cholesky factorization that is only guaranteed to work <span class="math inline">\(\mathbf{X}\)</span> is of full rank.</p>
 <div id="weights" class="section level4">
 <h4 class="hasAnchor">
 <a href="#weights" class="anchor"></a>Weights</h4>
-<p>If weights are included, we transform the data as below and then proceed as normal, following advice from <span class="citation">Romano and Wolf (<a href="#ref-romanowolf2017">2017</a>)</span> that this weighted estimator has attractive properties. We do so by first scaling all of the weights so that they sum to one. Then we multiply each row of the design matrix <span class="math inline">\({\mathbf{X}}\)</span> by the square root each unit’s weight, <span class="math inline">\(\mathbf{x}_i \sqrt{w_i}\)</span>, and then do the same to the outcome, <span class="math inline">\(\mathbf{y}_i \sqrt{w_i}\)</span>. This results in our coefficients being estimated as follows, where <span class="math inline">\({\mathbf{W}}\)</span> is a diagonal matrix with the scaled weights on the diagonal.</p>
+<p>If weights are included, we transform the data as below and then proceed as normal, following advice from <span class="citation">Romano and Wolf (<a href="#ref-romanowolf2017">2017</a>)</span> that this weighted estimator has attractive properties. We do so by first scaling all of the weights so that they sum to one. Then we multiply each row of the design matrix <span class="math inline">\(\mathbf{X}\)</span> by the square root each unit’s weight, <span class="math inline">\(\mathbf{x}_i \sqrt{w_i}\)</span>, and then do the same to the outcome, <span class="math inline">\(\mathbf{y}_i \sqrt{w_i}\)</span>. This results in our coefficients being estimated as follows, where <span class="math inline">\(\mathbf{W}\)</span> is a diagonal matrix with the scaled weights on the diagonal.</p>
 <p>Weighted: <span class="math display">\[
-\widehat{\beta} ={({\mathbf{X}}^{\top}{\mathbf{W}}{\mathbf{X}})^{-1}}{\mathbf{X}}^{\top}{\mathbf{W}}{\mathbf{y}}\]</span></p>
-<p>The transformed data are then used in the analysis below, where <span class="math inline">\({({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}\)</span> is now <span class="math inline">\({({\mathbf{X}}^{\top}{\mathbf{W}}{\mathbf{X}})^{-1}}\)</span> and <span class="math inline">\({\mathbf{X}}\)</span> is now <span class="math inline">\({\mathbf{X}}\mathrm{sqrt}[W]\)</span>, where <span class="math inline">\(\mathrm{sqrt}[.]\)</span> is an operator that applies a square root to the coefficients of some matrix.</p>
+\widehat{\beta} =(\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1}\mathbf{X}^{\top}\mathbf{W}\mathbf{y}
+\]</span></p>
+<p>The transformed data are then used in the analysis below, where <span class="math inline">\((\mathbf{X}^{\top}\mathbf{X})^{-1}\)</span> is now <span class="math inline">\((\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1}\)</span> and <span class="math inline">\(\mathbf{X}\)</span> is now <span class="math inline">\(\mathbf{X} \mathrm{sqrt}[W]\)</span>, where <span class="math inline">\(\mathrm{sqrt}[.]\)</span> is an operator that applies a square root to the coefficients of some matrix.</p>
 <p>We should note that this transformation yields the same standard errors as specifying weights using <code>aweight</code> in Stata for the “classical”, “HC0”, and “HC1” (“stata”) variance estimators. Furthermore, in the clustered case, our weighted estimator for the “stata” cluster-robust variance also matches Stata. Thus Stata’s main robust standard error estimators, “HC1” and their clustered estimator, match our package when weights are applied. Nonetheless, Stata uses a slightly different Hat matrix and thus “HC2” and “HC3” estimates in Stata when weights are specified may differ from our estimates.</p>
-<p>```</p>
 </div>
 </div>
 <div id="variance" class="section level3">
@@ -146,20 +147,20 @@
 </colgroup>
 <thead><tr class="header">
 <th><code>se_type =</code></th>
-<th>Variance Estimator (<span class="math inline">\(\widehat{{\mathbb{V}}}[\widehat{\beta}]\)</span>)</th>
+<th>Variance Estimator (<span class="math inline">\(\widehat{\mathbb{V}}[\widehat{\beta}]\)</span>)</th>
 <th>Degrees of Freedom</th>
 <th>Notes</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
 <td><code>"classical"</code></td>
-<td><span class="math inline">\(\frac{{\mathbf{e}}^\top{\mathbf{e}}}{N-K} {({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}\)</span></td>
+<td><span class="math inline">\(\frac{\mathbf{e}^\top\mathbf{e}}{N-K} (\mathbf{X}^{\top}\mathbf{X})^{-1}\)</span></td>
 <td>N - K</td>
 <td></td>
 </tr>
 <tr class="even">
 <td><code>"HC0"</code></td>
-<td><span class="math inline">\({({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}{\mathbf{X}}^{\top}\mathrm{diag}\left[e_i^2\right]{\mathbf{X}}{({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}\)</span></td>
+<td><span class="math inline">\((\mathbf{X}^{\top}\mathbf{X})^{-1}\mathbf{X}^{\top}\mathrm{diag}\left[e_i^2\right]\mathbf{X}(\mathbf{X}^{\top}\mathbf{X})^{-1}\)</span></td>
 <td>N - K</td>
 <td></td>
 </tr>
@@ -167,20 +168,20 @@
 <td>
 <code>"HC1"</code>, <code>"stata"</code>
 </td>
-<td><span class="math inline">\(\frac{N}{N-K}{({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}{\mathbf{X}}^{\top}\mathrm{diag}\left[e_i^2\right]{\mathbf{X}}{({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}\)</span></td>
+<td><span class="math inline">\(\frac{N}{N-K}(\mathbf{X}^{\top}\mathbf{X})^{-1}\mathbf{X}^{\top}\mathrm{diag}\left[e_i^2\right]\mathbf{X}(\mathbf{X}^{\top}\mathbf{X})^{-1}\)</span></td>
 <td>N - K</td>
 <td>Often called the Eicker-Huber-White variance (or similar)</td>
 </tr>
 <tr class="even">
 <td>
 <code>"HC2"</code> (default)</td>
-<td><span class="math inline">\({({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}{\mathbf{X}}^{\top}\mathrm{diag}\left[\frac{e_i^2}{1-h_{ii}}\right]{\mathbf{X}}{({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}\)</span></td>
+<td><span class="math inline">\((\mathbf{X}^{\top}\mathbf{X})^{-1}\mathbf{X}^{\top}\mathrm{diag}\left[\frac{e_i^2}{1-h_{ii}}\right]\mathbf{X}(\mathbf{X}^{\top}\mathbf{X})^{-1}\)</span></td>
 <td>N - K</td>
 <td></td>
 </tr>
 <tr class="odd">
 <td><code>"HC3"</code></td>
-<td><span class="math inline">\({({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}{\mathbf{X}}{\top}\mathrm{diag}\left[\frac{e_i^2}{(1-h_{ii})^2}\right]{\mathbf{X}}{({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}\)</span></td>
+<td><span class="math inline">\((\mathbf{X}^{\top}\mathbf{X})^{-1}\mathbf{X}{\top}\mathrm{diag}\left[\frac{e_i^2}{(1-h_{ii})^2}\right]\mathbf{X}(\mathbf{X}^{\top}\mathbf{X})^{-1}\)</span></td>
 <td>N - K</td>
 <td></td>
 </tr>
@@ -188,9 +189,9 @@
 </table>
 <ul>
 <li>
-<span class="math inline">\({\mathbf{x}}_i\)</span> is the <span class="math inline">\(i\)</span>th row of <span class="math inline">\({\mathbf{X}}\)</span>.</li>
-<li><span class="math inline">\(h_{ii} = {\mathbf{x}}_i{({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}{\mathbf{x}}^{\top}_i\)</span></li>
-<li><span class="math inline">\(e_i = y_i - {\mathbf{x}}_i\widehat{\beta}\)</span></li>
+<span class="math inline">\(\mathbf{x}_i\)</span> is the <span class="math inline">\(i\)</span>th row of <span class="math inline">\(\mathbf{X}\)</span>.</li>
+<li><span class="math inline">\(h_{ii} = \mathbf{x}_i(\mathbf{X}^{\top}\mathbf{X})^{-1}\mathbf{x}^{\top}_i\)</span></li>
+<li><span class="math inline">\(e_i = y_i - \mathbf{x}_i\widehat{\beta}\)</span></li>
 <li>
 <span class="math inline">\(\mathrm{diag}[.]\)</span> is an operator that creates a diagonal matrix from a vector</li>
 <li>
@@ -212,27 +213,27 @@
 </colgroup>
 <thead><tr class="header">
 <th><code>se_type =</code></th>
-<th>Variance Estimator (<span class="math inline">\(\widehat{{\mathbb{V}}}[\widehat{\beta}]\)</span>)</th>
+<th>Variance Estimator (<span class="math inline">\(\widehat{\mathbb{V}}[\widehat{\beta}]\)</span>)</th>
 <th>Degrees of Freedom</th>
 <th>Notes</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
 <td><code>"CR0"</code></td>
-<td><span class="math inline">\({({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}\sum^S_{s=1} \left[{\mathbf{X}}^\top_s {\mathbf{e}}_s{\mathbf{e}}^\top_s {\mathbf{X}}_s \right] {({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}\)</span></td>
+<td><span class="math inline">\((\mathbf{X}^{\top}\mathbf{X})^{-1} \sum^S_{s=1} \left[\mathbf{X}^\top_s \mathbf{e}_s\mathbf{e}^\top_s \mathbf{X}_s \right] (\mathbf{X}^{\top}\mathbf{X})^{-1}\)</span></td>
 <td><span class="math inline">\(S - 1\)</span></td>
 <td></td>
 </tr>
 <tr class="even">
 <td><code>"stata"</code></td>
-<td><span class="math inline">\(\frac{N-1}{N-K}\frac{S}{S-1} {({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}\sum^S_{s=1} \left[{\mathbf{X}}^\top_s {\mathbf{e}}_s{\mathbf{e}}^\top_s {\mathbf{X}}_s \right] {({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}\)</span></td>
+<td><span class="math inline">\(\frac{N-1}{N-K}\frac{S}{S-1} (\mathbf{X}^{\top}\mathbf{X})^{-1} \sum^S_{s=1} \left[\mathbf{X}^\top_s \mathbf{e}_s\mathbf{e}^\top_s \mathbf{X}_s \right] (\mathbf{X}^{\top}\mathbf{X})^{-1}\)</span></td>
 <td><span class="math inline">\(S - 1\)</span></td>
 <td>The Stata variance estimator is the same as the CR0 estimate but with a special finite-sample correction.</td>
 </tr>
 <tr class="odd">
 <td>
 <code>"CR2"</code> (default)</td>
-<td><span class="math inline">\({({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}\sum^S_{s=1} \left[{\mathbf{X}}^\top_s {\mathbf{A}}_s {\mathbf{e}}_s{\mathbf{e}}^\top_s {\mathbf{A}}^\top_s {\mathbf{X}}_s \right] {({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}\)</span></td>
+<td><span class="math inline">\((\mathbf{X}^{\top}\mathbf{X})^{-1} \sum^S_{s=1} \left[\mathbf{X}^\top_s \mathbf{A}_s \mathbf{e}_s\mathbf{e}^\top_s \mathbf{A}^\top_s \mathbf{X}_s \right] (\mathbf{X}^{\top}\mathbf{X})^{-1}\)</span></td>
 <td><span class="math inline">\(\frac{\left(\sum^S_{i = 1} \mathbf{p}^\top_i \mathbf{p}_i \right)^2}{\sum^S_{i=1}\sum^S_{j=1} \left(\mathbf{p}^\top_i \mathbf{p}_j \right)^2}\)</span></td>
 <td>These estimates of the variance and degrees of freedom come from <span class="citation">Pustejovsky and Tipton (<a href="#ref-pustejovskytipton2016">2016</a>)</span>, which is an extension to certain models with a particular set of dummy variables of the method proposed by <span class="citation">Bell and McCaffrey (<a href="#ref-bellmccaffrey2002">2002</a>)</span>. Note that the degrees of freedom can vary for each coefficient. See below for more complete notation.</td>
 </tr>
@@ -242,38 +243,38 @@
 <li>
 <span class="math inline">\(S\)</span> is the number of clusters</li>
 <li>
-<span class="math inline">\({\mathbf{X}}_s\)</span> is the rows of <span class="math inline">\({\mathbf{X}}\)</span> that belong to cluster <span class="math inline">\(s\)</span>
+<span class="math inline">\(\mathbf{X}_s\)</span> is the rows of <span class="math inline">\(\mathbf{X}\)</span> that belong to cluster <span class="math inline">\(s\)</span>
 </li>
 <li>
 <span class="math inline">\(I_n\)</span> is an identity matrix of size <span class="math inline">\(n\times n\)</span>
 </li>
 <li>
-<span class="math inline">\({\mathbf{e}}_s\)</span> is the elements of the residual matrix <span class="math inline">\({\mathbf{e}}\)</span> in cluster <span class="math inline">\(s\)</span>, or <span class="math inline">\({\mathbf{e}}_s = {\mathbf{y}}_s - {\mathbf{X}}_s \widehat{\beta}\)</span>
+<span class="math inline">\(\mathbf{e}_s\)</span> is the elements of the residual matrix <span class="math inline">\(\mathbf{e}\)</span> in cluster <span class="math inline">\(s\)</span>, or <span class="math inline">\(\mathbf{e}_s = \mathbf{y}_s - \mathbf{X}_s \widehat{\beta}\)</span>
 </li>
 <li>
-<span class="math inline">\({\mathbf{A}}_s\)</span> and <span class="math inline">\(\mathbf{p}\)</span> are defined in the notes below</li>
+<span class="math inline">\(\mathbf{A}_s\)</span> and <span class="math inline">\(\mathbf{p}\)</span> are defined in the notes below</li>
 </ul>
 <p><strong>Further notes on CR2:</strong> The variance estimator we implement is shown in equations (4) and (5) in <span class="citation">Pustejovsky and Tipton (<a href="#ref-pustejovskytipton2016">2016</a>)</span> and equation (11), where we set <span class="math inline">\(\mathbf{\Phi}\)</span> to be <span class="math inline">\(I\)</span>, following <span class="citation">Bell and McCaffrey (<a href="#ref-bellmccaffrey2002">2002</a>)</span>. Furthernote that the <span class="citation">Pustejovsky and Tipton (<a href="#ref-pustejovskytipton2016">2016</a>)</span> CR2 estimator and the <span class="citation">Bell and McCaffrey (<a href="#ref-bellmccaffrey2002">2002</a>)</span> estimator are identical when <span class="math inline">\(\mathbf{B_s}\)</span> is full rank. It could be rank-deficient if there were dummy variables, or fixed effects, that were also your clusters. In this case, the original <span class="citation">Bell and McCaffrey (<a href="#ref-bellmccaffrey2002">2002</a>)</span> estimator could not be computed. You can see the simpler <span class="citation">Bell and McCaffrey (<a href="#ref-bellmccaffrey2002">2002</a>)</span> estimator written up plainly on page 709 of <span class="citation">Imbens and Kolesar (<a href="#ref-imbenskolesar2016">2016</a>)</span> along with the degrees of freedom denoted as <span class="math inline">\(K_{BM}\)</span>.</p>
-<p>In the CR2 variance calculation, we get <span class="math inline">\({\mathbf{A}}_s\)</span> as follows:</p>
+<p>In the CR2 variance calculation, we get <span class="math inline">\(\mathbf{A}_s\)</span> as follows:</p>
 <p><span class="math display">\[
 \begin{aligned}
-{\mathbf{H}}&amp;= {\mathbf{X}}{({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}{\mathbf{X}}^\top \\ 
-\mathbf{B}_s &amp;= (I_{N} - {\mathbf{H}})_s (I_{N} - {\mathbf{H}})^\top_s \\
-{\mathbf{A}}_s &amp;= \mathbf{B}^{+1/2}_s
+\mathbf{H} &amp;= \mathbf{X}(\mathbf{X}^{\top}\mathbf{X})^{-1}\mathbf{X}^\top \\\\\\ 
+\mathbf{B}_s &amp;= (I_{N} - \mathbf{H})_s (I_{N} - \mathbf{H})^\top_s \\\\\\
+\mathbf{A}_s &amp;= \mathbf{B}^{+1/2}_s
 \end{aligned}
 \]</span></p>
-<p>where <span class="math inline">\(\mathbf{B}^{+1/2}_s\)</span> is the symmetric square root of the Moore–Penrose inverse of <span class="math inline">\(\mathbf{B}_s\)</span> and <span class="math inline">\((I - {\mathbf{H}})_s\)</span> are the <span class="math inline">\(N_s\)</span> columns that correspond to cluster <span class="math inline">\(s\)</span>. To get the corresponding degrees of freedom, note that</p>
+<p>where <span class="math inline">\(\mathbf{B}^{+1/2}_s\)</span> is the symmetric square root of the Moore–Penrose inverse of <span class="math inline">\(\mathbf{B}_s\)</span> and <span class="math inline">\((I - \mathbf{H})_s\)</span> are the <span class="math inline">\(N_s\)</span> columns that correspond to cluster <span class="math inline">\(s\)</span>. To get the corresponding degrees of freedom, note that</p>
 <p><span class="math display">\[
-\mathbf{p}_s = (I_N - {\mathbf{H}})^\top_s {\mathbf{A}}_s {\mathbf{X}}_s {({\mathbf{X}}^{\top}{\mathbf{X}})^{-1}}\mathbf{z}_{k}
+\mathbf{p}_s = (I_N - \mathbf{H})^\top_s \mathbf{A}_s \mathbf{X}_s (\mathbf{X}^{\top}\mathbf{X})^{-1} \mathbf{z}_{k}
 \]</span> where <span class="math inline">\(\mathbf{z}_{k}\)</span> is a vector of length <span class="math inline">\(K\)</span>, the number of coefficients, where the <span class="math inline">\(k\)</span>th element is 1 and all other elements are 0. The <span class="math inline">\(k\)</span> signifies the coefficient for which we are computing the degrees of freedom.</p>
 </div>
 </div>
 <div id="confidence-intervals-and-hypothesis-testing" class="section level3">
 <h3 class="hasAnchor">
 <a href="#confidence-intervals-and-hypothesis-testing" class="anchor"></a>Confidence intervals and hypothesis testing</h3>
-<p>If <span class="math inline">\(\widehat{{\mathbb{V}}}_k\)</span> is the <span class="math inline">\(k\)</span>th diagonal element of <span class="math inline">\(\widehat{{\mathbb{V}}}\)</span>, we build confidence intervals using the user specified <span class="math inline">\(\alpha\)</span> as:</p>
+<p>If <span class="math inline">\(\widehat{\mathbb{V}}_k\)</span> is the <span class="math inline">\(k\)</span>th diagonal element of <span class="math inline">\(\widehat{\mathbb{V}}\)</span>, we build confidence intervals using the user specified <span class="math inline">\(\alpha\)</span> as:</p>
 <p><span class="math display">\[
-\mathrm{CI}^{1-\alpha} = \left(\widehat{\beta_k} + t^{df}_{\alpha/2} \sqrt{\widehat{{\mathbb{V}}}_k}, \widehat{\beta_k} + t^{df}_{1 - \alpha/2} \sqrt{\widehat{{\mathbb{V}}}_k}\right)
+\mathrm{CI}^{1-\alpha} = \left(\widehat{\beta_k} + t^{df}_{\alpha/2} \sqrt{\widehat{\mathbb{V}}_k}, \widehat{\beta_k} + t^{df}_{1 - \alpha/2} \sqrt{\widehat{\mathbb{V}}_k}\right)
 \]</span></p>
 <p>We also provide two-sided p-values using a t-distribution with the aforementioned significance level <span class="math inline">\(\alpha\)</span> and degrees of freedom <span class="math inline">\(df\)</span>.</p>
 </div>
@@ -284,13 +285,13 @@
 <p>The <a href="#lm_lin"><code>lm_lin</code></a> estimator is a data pre-processor for <code>lm_robust</code> that implements the regression method for covariate adjustment suggested by <span class="citation">Lin (<a href="#ref-lin2013">2013</a>)</span>.</p>
 <p>This estimator works by taking the outcome and treatment variable as the main formula (<code>formula</code>) and takes a right-sided formula of all pre-treatment covariates (<code>covariates</code>). These pre-treatment covariates are then centered to be mean zero and interacted with the treatment variable before being added to the formula and passed to <code>lm_robust</code>. In other words, instead of fitting a simple model adjusting for pre-treatment covariates such as</p>
 <p><span class="math display">\[
-y_i = \tau z_i + \mathbf{\beta}^\top {\mathbf{x}}_i + \epsilon_i
+y_i = \tau z_i + \mathbf{\beta}^\top \mathbf{x}_i + \epsilon_i
 \]</span></p>
 <p>with the following model</p>
 <p><span class="math display">\[
-y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamma}^\top \widetilde{{\mathbf{x}}}_i z_i + \epsilon_i
+y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{\mathbf{x}}_i  + \mathbf{\gamma}^\top \widetilde{\mathbf{x}}_i z_i + \epsilon_i
 \]</span></p>
-<p>where <span class="math inline">\(\widetilde{{\mathbf{x}}}_i\)</span> is a vector of pre-treatment covariates for unit <span class="math inline">\(i\)</span> that have been centered to have mean zero and <span class="math inline">\(z_i\)</span> is an indicator for the treatment group. <span class="citation">Lin (<a href="#ref-lin2013">2013</a>)</span> proposed this estimator in response to the critique by <span class="citation">Freedman (<a href="#ref-freedman2008">2008</a>)</span> that using regression to adjust for pre-treatment covariates could bias estimates of treatment effects.</p>
+<p>where <span class="math inline">\(\widetilde{\mathbf{x}}_i\)</span> is a vector of pre-treatment covariates for unit <span class="math inline">\(i\)</span> that have been centered to have mean zero and <span class="math inline">\(z_i\)</span> is an indicator for the treatment group. <span class="citation">Lin (<a href="#ref-lin2013">2013</a>)</span> proposed this estimator in response to the critique by <span class="citation">Freedman (<a href="#ref-freedman2008">2008</a>)</span> that using regression to adjust for pre-treatment covariates could bias estimates of treatment effects.</p>
 <p>The estimator <code>lm_lin</code> also works for multi-valued treatments by creating a full set of dummies for each treatment level and interacting each with the centered pre-treatment covariates. The rest of the options for the function and corresponding estimation is identical to <a href="#lm_robust"><code>lm_robust</code></a>.</p>
 </div>
 <div id="difference_in_means-notes" class="section level2">
@@ -336,7 +337,7 @@ y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
 </colgroup>
 <thead><tr class="header">
 <th>Design type</th>
-<th>Variance <span class="math inline">\(\widehat{{\mathbb{V}}}[\widehat{\tau}]\)</span>
+<th>Variance <span class="math inline">\(\widehat{\mathbb{V}}[\widehat{\tau}]\)</span>
 </th>
 <th>Degrees of Freedom</th>
 <th>Notes</th>
@@ -344,15 +345,15 @@ y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
 <tbody>
 <tr class="odd">
 <td>No blocks or clusters (standard)</td>
-<td><span class="math inline">\(\frac{\widehat{{\mathbb{V}}}[y_{i,0}]}{N_0} + \frac{\widehat{{\mathbb{V}}}[y_{i,1}]}{N_1}\)</span></td>
-<td><span class="math inline">\(\widehat{{\mathbb{V}}}[\widehat{\tau}]^2 \left(\frac{(\widehat{{\mathbb{V}}}[y_{i,1}]/ N_1)^2}{N_1 - 1} + \frac{(\widehat{{\mathbb{V}}}[y_{i,0}]/ N_0)^2}{N_0 - 1}\right)\)</span></td>
-<td>Where <span class="math inline">\(\widehat{{\mathbb{V}}}[y_{i,k}]\)</span> is the Bessel-corrected variance of all units where <span class="math inline">\(z_i = k\)</span> and <span class="math inline">\(N_k\)</span> is the number of units in condition <span class="math inline">\(k\)</span>. This is equivalent to the variance and Welch–Satterthwaite approximation of the degrees of freedom used by R’s <code>t.test</code>.</td>
+<td><span class="math inline">\(\frac{\widehat{\mathbb{V}}[y_{i,0}]}{N_0} + \frac{\widehat{\mathbb{V}}[y_{i,1}]}{N_1}\)</span></td>
+<td><span class="math inline">\(\widehat{\mathbb{V}}[\widehat{\tau}]^2 \left(\frac{(\widehat{\mathbb{V}}[y_{i,1}]/ N_1)^2}{N_1 - 1} + \frac{(\widehat{\mathbb{V}}[y_{i,0}]/ N_0)^2}{N_0 - 1}\right)\)</span></td>
+<td>Where <span class="math inline">\(\widehat{\mathbb{V}}[y_{i,k}]\)</span> is the Bessel-corrected variance of all units where <span class="math inline">\(z_i = k\)</span> and <span class="math inline">\(N_k\)</span> is the number of units in condition <span class="math inline">\(k\)</span>. This is equivalent to the variance and Welch–Satterthwaite approximation of the degrees of freedom used by R’s <code>t.test</code>.</td>
 </tr>
 <tr class="even">
 <td>Blocked</td>
-<td><span class="math inline">\(\sum^J_{j=1} \left(\frac{N_j}{N}\right)^2 \widehat{{\mathbb{V}}}[\widehat{\tau_j}]\)</span></td>
+<td><span class="math inline">\(\sum^J_{j=1} \left(\frac{N_j}{N}\right)^2 \widehat{\mathbb{V}}[\widehat{\tau_j}]\)</span></td>
 <td><span class="math inline">\(N - 2 * J\)</span></td>
-<td>Where <span class="math inline">\(\widehat{{\mathbb{V}}}[\widehat{\tau_j}]\)</span> is the variance of the estimated difference-in-means in block <span class="math inline">\(j\)</span>. See footnote 17 on page 74 of <span class="citation">(Gerber and Green <a href="#ref-gerbergreen2012">2012</a>)</span> for a reference. The degrees of freedom are equivalent to a regression with a full set of block specific treatment effects.</td>
+<td>Where <span class="math inline">\(\widehat{\mathbb{V}}[\widehat{\tau_j}]\)</span> is the variance of the estimated difference-in-means in block <span class="math inline">\(j\)</span>. See footnote 17 on page 74 of <span class="citation">(Gerber and Green <a href="#ref-gerbergreen2012">2012</a>)</span> for a reference. The degrees of freedom are equivalent to a regression with a full set of block specific treatment effects.</td>
 </tr>
 <tr class="odd">
 <td>Clusters</td>
@@ -362,9 +363,9 @@ y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
 </tr>
 <tr class="even">
 <td>Blocked and clustered</td>
-<td><span class="math inline">\(\sum^J_{j=1} \left(\frac{N_j}{N}\right)^2 \widehat{{\mathbb{V}}}[\widehat{\tau_j}]\)</span></td>
+<td><span class="math inline">\(\sum^J_{j=1} \left(\frac{N_j}{N}\right)^2 \widehat{\mathbb{V}}[\widehat{\tau_j}]\)</span></td>
 <td><span class="math inline">\(S - 2 * J\)</span></td>
-<td>Where <span class="math inline">\(\widehat{{\mathbb{V}}}[\widehat{\tau_j}]\)</span> is the variance of the estimated difference-in-means in block <span class="math inline">\(j\)</span> and S is the number of clusters. See footnote 17 on page 74 of <span class="citation">Gerber and Green (<a href="#ref-gerbergreen2012">2012</a>)</span> for a reference. The degrees of freedom are equivalent to a regression on data collapsed by cluster with a full set of block specific treatment effects.</td>
+<td>Where <span class="math inline">\(\widehat{\mathbb{V}}[\widehat{\tau_j}]\)</span> is the variance of the estimated difference-in-means in block <span class="math inline">\(j\)</span> and S is the number of clusters. See footnote 17 on page 74 of <span class="citation">Gerber and Green (<a href="#ref-gerbergreen2012">2012</a>)</span> for a reference. The degrees of freedom are equivalent to a regression on data collapsed by cluster with a full set of block specific treatment effects.</td>
 </tr>
 <tr class="odd">
 <td>Matched pairs</td>
@@ -386,7 +387,7 @@ y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
 <a href="#confidence-intervals-and-hypothesis-testing-1" class="anchor"></a>Confidence intervals and hypothesis testing</h3>
 <p>We build confidence intervals using the user specified <span class="math inline">\(\alpha\)</span> as:</p>
 <p><span class="math display">\[
-\mathrm{CI}^{1-\alpha} = \left(\widehat{\tau} + t^{df}_{\alpha/2} \sqrt{\widehat{{\mathbb{V}}}[\widehat{\tau}]},\widehat{\tau}] + t^{df}_{1 - \alpha/2} \sqrt{\widehat{{\mathbb{V}}}[\widehat{\tau}]}\right)
+\mathrm{CI}^{1-\alpha} = \left(\widehat{\tau} + t^{df}_{\alpha/2} \sqrt{\widehat{\mathbb{V}}[\widehat{\tau}]},\widehat{\tau}] + t^{df}_{1 - \alpha/2} \sqrt{\widehat{\mathbb{V}}[\widehat{\tau}]}\right)
 \]</span></p>
 <p>We also provide two-sided p-values using a t-distribution with the aforementioned significance level <span class="math inline">\(\alpha\)</span> and degrees of freedom <span class="math inline">\(df\)</span>.</p>
 </div>
@@ -433,8 +434,8 @@ y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
 <p>For designs that that are not clustered we use the following variance:</p>
 <p><span class="math display">\[
 \begin{aligned}
-  \widehat{{\mathbb{V}}}_{Y}[\widehat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[&amp; z_i \left(\frac{y_i}{\pi_{1i}}\right)^2 + (1 - z_i) \left(\frac{y_i}{\pi_{0i}}\right)^2 + \sum_{j \neq i} \bigg(\frac{z_i z_j}{\pi_{1i1j} + \epsilon_{1i1j}}(\pi_{1i1j} - \pi_{1i}\pi_{1j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{1j}} \\
-  &amp; + \frac{(1-z_i) (1-z_j)}{\pi_{0i0j} + \epsilon_{0i0j}}(\pi_{0i0j} - \pi_{0i}\pi_{0j})\frac{y_i}{\pi_{0i}}\frac{y_j}{\pi_{0j}} - 2 \frac{z_i (1-z_j)}{\pi_{1i0j} + \epsilon_{1i0j}}(\pi_{1i0j} - \pi_{1i}\pi_{0j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{0j}} \\
+  \widehat{\mathbb{V}}_{Y}[\widehat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[&amp; z_i \left(\frac{y_i}{\pi_{1i}}\right)^2 + (1 - z_i) \left(\frac{y_i}{\pi_{0i}}\right)^2 + \sum_{j \neq i} \bigg(\frac{z_i z_j}{\pi_{1i1j} + \epsilon_{1i1j}}(\pi_{1i1j} - \pi_{1i}\pi_{1j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{1j}} \\\\\\
+  &amp; + \frac{(1-z_i) (1-z_j)}{\pi_{0i0j} + \epsilon_{0i0j}}(\pi_{0i0j} - \pi_{0i}\pi_{0j})\frac{y_i}{\pi_{0i}}\frac{y_j}{\pi_{0j}} - 2 \frac{z_i (1-z_j)}{\pi_{1i0j} + \epsilon_{1i0j}}(\pi_{1i0j} - \pi_{1i}\pi_{0j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{0j}} \\\\\\
   &amp; + \sum_{\forall j \colon \pi_{1i1j} = 0} \left( z_i \frac{y^2_i}{2\pi_{1i}} + z_j \frac{y^2_j}{\pi_{1j}}\right) + \sum_{\forall j \colon \pi_{0i0j} = 0} \left( (1-z_i) \frac{y^2_i}{2\pi_{0i}} + (1-z_j) \frac{y^2_j}{\pi_{0j}}\right)
   \Bigg]
 \end{aligned}
@@ -442,7 +443,7 @@ y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
 <p>There are some simplifications of the above for simpler designs that follow algebraically from the above. For example, if there are no two units for which the joint probability of being in either condition is 0, which is the case for most experiments that are not matched-pair experiments, then we get:</p>
 <p><span class="math display">\[
 \begin{aligned}
-  \widehat{{\mathbb{V}}}_{Y}[\widehat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[&amp; z_i \left(\frac{y_i}{\pi_{1i}}\right)^2 + (1 - z_i) \left(\frac{y_i}{\pi_{0i}}\right)^2 + \sum_{j \neq i} \bigg(\frac{z_i z_j}{\pi_{1i1j}}(\pi_{1i1j} - \pi_{1i}\pi_{1j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{1j}} \\
+  \widehat{\mathbb{V}}_{Y}[\widehat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[&amp; z_i \left(\frac{y_i}{\pi_{1i}}\right)^2 + (1 - z_i) \left(\frac{y_i}{\pi_{0i}}\right)^2 + \sum_{j \neq i} \bigg(\frac{z_i z_j}{\pi_{1i1j}}(\pi_{1i1j} - \pi_{1i}\pi_{1j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{1j}} \\\\\\
   &amp; + \frac{(1-z_i) (1-z_j)}{\pi_{0i0j}}(\pi_{0i0j} - \pi_{0i}\pi_{0j})\frac{y_i}{\pi_{0i}}\frac{y_j}{\pi_{0j}} - 2 \frac{z_i (1-z_j)}{\pi_{1i0j}}(\pi_{1i0j} - \pi_{1i}\pi_{0j})\frac{y_i}{\pi_{1i}}\frac{y_j}{\pi_{0j}}
   \Bigg]
 \end{aligned}
@@ -450,15 +451,15 @@ y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
 <p>If we further simplify to the case where there is simple random assignment, and there is absolutely no dependence among units (i.e., <span class="math inline">\(\pi_{ziwj} = \pi_{zi}\pi_{wj} \;\;\forall\;\;z,w,i,j\)</span>), we get:</p>
 <p><span class="math display">\[
 \begin{aligned}
-  \widehat{{\mathbb{V}}}_{Y}[\widehat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[&amp; z_i \left(\frac{y_i}{\pi_{1i}}\right)^2 + (1 - z_i) \left(\frac{y_i}{\pi_{0i}}\right)^2\Bigg]
+  \widehat{\mathbb{V}}_{Y}[\widehat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[&amp; z_i \left(\frac{y_i}{\pi_{1i}}\right)^2 + (1 - z_i) \left(\frac{y_i}{\pi_{0i}}\right)^2\Bigg]
 \end{aligned}
 \]</span></p>
 <p><strong>Clustered designs</strong></p>
 <p>For clustered designs, we use the following collpased estimator by setting <code>collapsed = TRUE</code>. Here, <span class="math inline">\(M\)</span> is the total number of clusters, <span class="math inline">\(y_k\)</span> is the total of the outcomes <span class="math inline">\(y_i\)</span> for all <span class="math inline">\(i\)</span> units in cluster <span class="math inline">\(k\)</span>, <span class="math inline">\(\pi_zk\)</span> is the marginal probability of cluster <span class="math inline">\(k\)</span> being in condition <span class="math inline">\(z \in \{0, 1\}\)</span>, and <span class="math inline">\(z_k\)</span> and <span class="math inline">\(\pi_{zkwl}\)</span> are defined analogously. Warning! If one passes <code>condition_pr_mat</code> to <code>horvitz_thompson</code> for a clustered design, but not <code>clusters</code>, the function will not use the collapsed estimator the the variance estimate will be innacurate.</p>
 <p><span class="math display">\[
 \begin{aligned}
-  \widehat{{\mathbb{V}}}_{Y}[\widehat{\tau}] = \frac{1}{N^2} \sum^M_{k=1} \Bigg[&amp; z_k \left(\frac{y_k}{\pi_{1k}}\right)^2 + (1 - z_k) \left(\frac{y_k}{\pi_{0k}}\right)^2 + \sum_{l \neq k} \bigg(\frac{z_k z_l}{\pi_{1k1l} + \epsilon_{1k1l}}(\pi_{1k1l} - \pi_{1k}\pi_{1l})\frac{y_k}{\pi_{1k}}\frac{y_l}{\pi_{1l}} \\
-  &amp; + \frac{(1-z_k) (1-z_l)}{\pi_{0k0l} + \epsilon_{0k0l}}(\pi_{0k0l} - \pi_{0k}\pi_{0l})\frac{y_k}{\pi_{0k}}\frac{y_l}{\pi_{0l}} - 2 \frac{z_k (1-z_l)}{\pi_{1k0l} + \epsilon_{1k0l}}(\pi_{1k0l} - \pi_{1k}\pi_{0l})\frac{y_k}{\pi_{1k}}\frac{y_l}{\pi_{0l}} \\
+  \widehat{\mathbb{V}}_{Y}[\widehat{\tau}] = \frac{1}{N^2} \sum^M_{k=1} \Bigg[&amp; z_k \left(\frac{y_k}{\pi_{1k}}\right)^2 + (1 - z_k) \left(\frac{y_k}{\pi_{0k}}\right)^2 + \sum_{l \neq k} \bigg(\frac{z_k z_l}{\pi_{1k1l} + \epsilon_{1k1l}}(\pi_{1k1l} - \pi_{1k}\pi_{1l})\frac{y_k}{\pi_{1k}}\frac{y_l}{\pi_{1l}} \\\\\\
+  &amp; + \frac{(1-z_k) (1-z_l)}{\pi_{0k0l} + \epsilon_{0k0l}}(\pi_{0k0l} - \pi_{0k}\pi_{0l})\frac{y_k}{\pi_{0k}}\frac{y_l}{\pi_{0l}} - 2 \frac{z_k (1-z_l)}{\pi_{1k0l} + \epsilon_{1k0l}}(\pi_{1k0l} - \pi_{1k}\pi_{0l})\frac{y_k}{\pi_{1k}}\frac{y_l}{\pi_{0l}} \\\\\\
   &amp; + \sum_{\forall l \colon \pi_{1k1l} = 0} \left( z_k \frac{y^2_k}{2\pi_{1k}} + z_l \frac{y^2_l}{\pi_{1l}}\right) + \sum_{\forall l \colon \pi_{0k0l} = 0} \left( (1-z_k) \frac{y^2_k}{2\pi_{0k}} + (1-z_l) \frac{y^2_l}{\pi_{0l}}\right)
   \Bigg]
 \end{aligned}
@@ -471,8 +472,8 @@ y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
 </ul>
 <p><span class="math display">\[
 \begin{aligned}
-    \widehat{{\mathbb{V}}}_{C}[\widehat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[&amp; (1 - \pi_{0i}) \pi_{0i} \left(\frac{y_{0i}}{\pi_{0i}}\right)^2 + (1 - \pi_{1i}) \pi_{1i} \left(\frac{y_{1i}}{\pi_{1i}}\right)^2 - 2 y_{1i} y_{0i} \\
-    &amp; + \sum_{j \neq i} \Big( (\pi_{0i0j} - \pi_{0i} \pi_{0j}) \frac{y_{0i}}{\pi_{0i}} \frac{y_{0j}}{\pi_{0j}} + (\pi_{1i1j} - \pi_{1i} \pi_{1j}) \frac{y_{1i}}{\pi_{1i}} \frac{y_{1j}}{\pi_{1j}} \\
+    \widehat{\mathbb{V}}_{C}[\widehat{\tau}] = \frac{1}{N^2} \sum^N_{i=1} \Bigg[&amp; (1 - \pi_{0i}) \pi_{0i} \left(\frac{y_{0i}}{\pi_{0i}}\right)^2 + (1 - \pi_{1i}) \pi_{1i} \left(\frac{y_{1i}}{\pi_{1i}}\right)^2 - 2 y_{1i} y_{0i} \\\\\\
+    &amp; + \sum_{j \neq i} \Big( (\pi_{0i0j} - \pi_{0i} \pi_{0j}) \frac{y_{0i}}{\pi_{0i}} \frac{y_{0j}}{\pi_{0j}} + (\pi_{1i1j} - \pi_{1i} \pi_{1j}) \frac{y_{1i}}{\pi_{1i}} \frac{y_{1j}}{\pi_{1j}} \\\\\\
     &amp;- 2 (\pi_{1i0j} - \pi_{1i} \pi_{0j}) \frac{y_{1i}}{\pi_{1i}} \frac{y_{0j}}{\pi_{0j}}
   \Big)\Bigg]
 \end{aligned}
@@ -482,7 +483,7 @@ y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{{\mathbf{x}}}_i  + \mathbf{\gamm
 <h3 class="hasAnchor">
 <a href="#confidence-intervals-and-hypothesis-testing-2" class="anchor"></a>Confidence intervals and hypothesis testing</h3>
 <p>Theory on hypothesis testing with the Horvitz-Thompson estimator is yet to be developed. We rely on a normal approximation and construct confidence intervals in the following way: <span class="math display">\[
-\mathrm{CI}^{1-\alpha} = \left(\widehat{\tau} + z_{\alpha/2} \sqrt{\widehat{{\mathbb{V}}}[\widehat{\tau}]}, \widehat{\tau} + z_{1 - \alpha/2} \sqrt{\widehat{{\mathbb{V}}}[\widehat{\tau}]}\right)
+\mathrm{CI}^{1-\alpha} = \left(\widehat{\tau} + z_{\alpha/2} \sqrt{\widehat{\mathbb{V}}[\widehat{\tau}]}, \widehat{\tau} + z_{1 - \alpha/2} \sqrt{\widehat{\mathbb{V}}[\widehat{\tau}]}\right)
 \]</span></p>
 <p>The associated p-values for a two-sided null hypothesis test are computed using a normal disribution and the aforementioned significance level <span class="math inline">\(\alpha\)</span>.</p>
 </div>
