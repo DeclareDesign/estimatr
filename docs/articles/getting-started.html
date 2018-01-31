@@ -216,8 +216,8 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 </h2>
 <p>The <code>estimatr</code> package provides <code><a href="../reference/lm_robust.html">lm_robust()</a></code> to quickly fit linear models with the most common variance estimators and degrees of freedom corrections used in social science. You can easily estimate heteroskedastic standard errors, clustered standard errors, and classical standard errors.</p>
 <p>Usage largely mimics <code>lm()</code>, although it defaults to using Eicker-Huber-White robust standard errors, specifically “HC2” standard errors. More about the exact specifications used can be found in the <a href="http://estimatr.declaredesign.org/articles/technical-notes.html#lm_robust-notes">technical notes</a> and more about the estimator can be found on its reference page: <code><a href="../reference/lm_robust.html">lm_robust()</a></code>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>z <span class="op">+</span><span class="st"> </span>x, <span class="dt">data =</span> dat)
-<span class="kw">summary</span>(res)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">lmout &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>z <span class="op">+</span><span class="st"> </span>x, <span class="dt">data =</span> dat)
+<span class="kw">summary</span>(lmout)
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Call:</span>
 <span class="co">#&gt; lm_robust(formula = y ~ z + x, data = dat)</span>
@@ -233,7 +233,7 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 <span class="co">#&gt; Multiple R-squared:  0.182 , Adjusted R-squared:  0.165 </span>
 <span class="co">#&gt; F-statistic: 10.8 on 2 and 97 DF,  p-value: 5.83e-05</span></code></pre></div>
 <p>Users can also easily get the output as a data.frame by using <code><a href="../reference/tidy.html">tidy()</a></code>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/tidy.html">tidy</a></span>(res)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/tidy.html">tidy</a></span>(lmout)</code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">coefficient_name</th>
@@ -279,12 +279,62 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 </tbody>
 </table>
 <p>It is straightforward to do cluster-robust inference, by passing the name of your cluster variable to the <code>clusters =</code> argument. The default variance estimator with clusters is dubbed ‘CR2’ because it is analogous to ‘HC2’ for the clustered case, and utilizes recent advances proposed by <span class="citation">Pustejovsky and Tipton (<a href="#ref-pustejovskytipton2016">2016</a>)</span> to correct hypotheses tests for small samples and work with commonly specified fixed effects and weights. Note that <code><a href="../reference/lm_robust.html">lm_robust()</a></code> is quicker if your cluster variable is a factor!</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res_cl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Standard estimator with clustered assignment 'z_clust'</span>
+lmout &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(
+  y_clust <span class="op">~</span><span class="st"> </span>z_clust <span class="op">+</span><span class="st"> </span>x,
+  <span class="dt">data =</span> dat
+)</code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left">coefficient_name</th>
+<th align="right">coefficients</th>
+<th align="right">se</th>
+<th align="right">p</th>
+<th align="right">ci_lower</th>
+<th align="right">ci_upper</th>
+<th align="right">df</th>
+<th align="left">outcome</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">-0.48</td>
+<td align="right">0.21</td>
+<td align="right">0.02</td>
+<td align="right">-0.89</td>
+<td align="right">-0.07</td>
+<td align="right">97</td>
+<td align="left">y_clust</td>
+</tr>
+<tr class="even">
+<td align="left">z_clust</td>
+<td align="right">0.81</td>
+<td align="right">0.18</td>
+<td align="right">0.00</td>
+<td align="right">0.46</td>
+<td align="right">1.17</td>
+<td align="right">97</td>
+<td align="left">y_clust</td>
+</tr>
+<tr class="odd">
+<td align="left">x</td>
+<td align="right">1.43</td>
+<td align="right">0.29</td>
+<td align="right">0.00</td>
+<td align="right">0.86</td>
+<td align="right">2.00</td>
+<td align="right">97</td>
+<td align="left">y_clust</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># With clustered standard errors</span>
+lmout_cl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(
   y_clust <span class="op">~</span><span class="st"> </span>z_clust <span class="op">+</span><span class="st"> </span>x,
   <span class="dt">data =</span> dat,
   <span class="dt">clusters =</span> clust
 )
-<span class="kw"><a href="../reference/tidy.html">tidy</a></span>(res_cl)</code></pre></div>
+<span class="kw"><a href="../reference/tidy.html">tidy</a></span>(lmout_cl)</code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">coefficient_name</th>
@@ -330,13 +380,13 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 </tbody>
 </table>
 <p>Researchers can also replicate Stata’s standard errors by using the <code>se_type =</code> argument both with and without clusters:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res_stata &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">lmout_stata &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(
   y_clust <span class="op">~</span><span class="st"> </span>z_clust <span class="op">+</span><span class="st"> </span>x,
   <span class="dt">data =</span> dat,
   <span class="dt">clusters =</span> clust,
   <span class="dt">se_type =</span> <span class="st">"stata"</span>
 )
-<span class="kw"><a href="../reference/tidy.html">tidy</a></span>(res_stata)</code></pre></div>
+<span class="kw"><a href="../reference/tidy.html">tidy</a></span>(lmout_stata)</code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">coefficient_name</th>
@@ -384,13 +434,13 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 <p>Furthermore, users can take advantage of the <a href="https://github.com/leeper/margins"><code>margins</code></a> package to get marginal effects, average marginal effects and their standard errors, and more.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(margins)
 
-res_int &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>x <span class="op">*</span><span class="st"> </span>z, <span class="dt">data =</span> dat)
-mar_int &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/margins/topics/margins">margins</a></span>(res_int, <span class="dt">vce =</span> <span class="st">"delta"</span>)
+lmout_int &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>x <span class="op">*</span><span class="st"> </span>z, <span class="dt">data =</span> dat)
+mar_int &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/margins/topics/margins">margins</a></span>(lmout_int, <span class="dt">vce =</span> <span class="st">"delta"</span>)
 <span class="kw">summary</span>(mar_int)
 <span class="co">#&gt;  factor    AME     SE      z      p   lower  upper</span>
 <span class="co">#&gt;       x 1.4319 0.2894 4.9468 0.0000  0.8645 1.9992</span>
 <span class="co">#&gt;       z 0.2355 0.1864 1.2633 0.2065 -0.1298 0.6008</span></code></pre></div>
-<p>Users who want their regression output in LaTeX or HTML can use the <a href="https://github.com/leifeld/texreg"><code>texreg</code></a> package, which we extend here to work with our linear regression estimators.</p>
+<p>Users who want their regression output in LaTeX or HTML can use the <a href="https://github.com/leifeld/texreg"><code>texreg</code></a> package, which we extend for the output of both the <code><a href="../reference/lm_robust.html">lm_robust()</a></code> and <code><a href="../reference/lm_lin.html">lm_lin()</a></code> functions.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(texreg)
 
 tex_int &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/texreg/topics/extract">extract</a></span>(res_int)
@@ -402,12 +452,12 @@ tex_int &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocu
 </h2>
 <p>Adjusting for pre-treatment covariates when using regression to estimate treatment effects is common practice across scientific disciplines. However, <span class="citation">Freedman (<a href="#ref-freedman2008">2008</a>)</span> demonstrated that pre-treatment covariate adjustment biases estimates of average treatment effects. In response, <span class="citation">Lin (<a href="#ref-lin2013">2013</a>)</span> proposed an alternative estimator that would reduce this bias and improve precision. <span class="citation">Lin (<a href="#ref-lin2013">2013</a>)</span> proposes centering all pre-treatment covariates, interacting them with the treatment variable, and regressing the outcome on the treatment, the centered pre-treatment covariates, and all of the interaction terms. This can require a non-trivial amount of data pre-processing.</p>
 <p>To facilitate this, we provide a wrapper that processes the data and estimates the model. We dub this estimator the Lin estimator and it can be accessed using <code><a href="../reference/lm_lin.html">lm_lin()</a></code>. This function is a wrapper for <code><a href="../reference/lm_robust.html">lm_robust()</a></code>, and all arguments that work for <code><a href="../reference/lm_robust.html">lm_robust()</a></code> work here. The only difference is in the second argument <code>covariates</code>, where one specifies a right-sided formula with all of your pre-treatment covariates. Below is an example, and more can be seen on the function reference page <a href="#lm_lin"><code>lm_lin</code></a> and some formal notation can be seen in the <a href="http://estimatr.declaredesign.org/articles/technical-notes.html#lm_lin-notes">technical notes</a>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res_lin &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_lin.html">lm_lin</a></span>(
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">lml_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_lin.html">lm_lin</a></span>(
   y <span class="op">~</span><span class="st"> </span>z,
   <span class="dt">covariates =</span> <span class="op">~</span><span class="st"> </span>x,
   <span class="dt">data =</span> dat
 )
-<span class="kw"><a href="../reference/tidy.html">tidy</a></span>(res_lin)</code></pre></div>
+<span class="kw"><a href="../reference/tidy.html">tidy</a></span>(lml_out)</code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">coefficient_name</th>
@@ -468,13 +518,13 @@ tex_int &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocu
 <h2 class="hasAnchor">
 <a href="#difference_in_means" class="anchor"></a><code>difference_in_means</code>
 </h2>
-<p>While estimating differences in means may seem straightforward, we provide a function that appropriately adjusts estimates for experimental design. We provide support for unit-randomized, cluster-randomized, block-randomized, matched-pair randomized, and matched-pair clustered designs. Usage is similar to usage in regression functions. More examples can be seen on the function reference page, <code><a href="../reference/difference_in_means.html">difference_in_means()</a></code>, and the actual estimators used can be found in the <a href="articles/technical-notes.html#lm_robust-notes">technical notes</a>.</p>
+<p>While estimating differences in means may seem straightforward, it can become more complicated in designs with blocks or clusters. In these cases, estimators need to average over within-block effects and estimates of variance have to appropriately adjust for features of a design. We provide support for unit-randomized, cluster-randomized, block-randomized, matched-pair randomized, and matched-pair clustered designs. Usage is similar to usage in regression functions. More examples can be seen on the function reference page, <code><a href="../reference/difference_in_means.html">difference_in_means()</a></code>, and the actual estimators used can be found in the <a href="articles/technical-notes.html#lm_robust-notes">technical notes</a>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Simple version</span>
-res_dim &lt;-<span class="st"> </span><span class="kw"><a href="../reference/difference_in_means.html">difference_in_means</a></span>(
+dim_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/difference_in_means.html">difference_in_means</a></span>(
   y <span class="op">~</span><span class="st"> </span>z,
   <span class="dt">data =</span> dat
 )
-<span class="kw"><a href="../reference/tidy.html">tidy</a></span>(res_dim)</code></pre></div>
+<span class="kw"><a href="../reference/tidy.html">tidy</a></span>(dim_out)</code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">coefficient_name</th>
@@ -498,11 +548,12 @@ res_dim &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dif
 </tr></tbody>
 </table>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Clustered version</span>
-res_dim_cl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/difference_in_means.html">difference_in_means</a></span>(
+dim_out_cl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/difference_in_means.html">difference_in_means</a></span>(
   y_clust <span class="op">~</span><span class="st"> </span>z_clust,
   <span class="dt">data =</span> dat,
   <span class="dt">clusters =</span> clust
-)</code></pre></div>
+)
+<span class="kw"><a href="../reference/tidy.html">tidy</a></span>(dim_out_cl)</code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">coefficient_name</th>
@@ -527,8 +578,8 @@ res_dim_cl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 </table>
 <p>You can check which design was learned and which kind of estimator used by examining the <code>design</code> in the output.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(sleep)
-res_mps &lt;-<span class="st"> </span><span class="kw"><a href="../reference/difference_in_means.html">difference_in_means</a></span>(extra <span class="op">~</span><span class="st"> </span>group, <span class="dt">data =</span> sleep, <span class="dt">blocks =</span> ID)
-res_mps<span class="op">$</span>design
+dim_mps &lt;-<span class="st"> </span><span class="kw"><a href="../reference/difference_in_means.html">difference_in_means</a></span>(extra <span class="op">~</span><span class="st"> </span>group, <span class="dt">data =</span> sleep, <span class="dt">blocks =</span> ID)
+dim_mps<span class="op">$</span>design
 <span class="co">#&gt; [1] "Matched-pair"</span></code></pre></div>
 </div>
 <div id="horvitz_thompson" class="section level2">
