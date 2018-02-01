@@ -24,12 +24,14 @@ environment:
 
 build_script:
   - travis-tool.sh install_deps
+  - travis-tool.sh install_github DeclareDesign/DDtools
+
 
 test_script:
   - travis-tool.sh run_tests
 
 on_success:
-  - if NOT DEFINED APPVEYOR_PULL_REQUEST_NUMBER (if %APPVEYOR_REPO_BRANCH% == master ( travis-tool.sh install_github DeclareDesign/DDtools && Rscript -e "DDtools::update_drat()" ) )
+  - Rscript -e DDtools::after_build
 
 on_failure:
   - 7z a failure.zip *.Rcheck\*
