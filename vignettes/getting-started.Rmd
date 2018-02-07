@@ -133,8 +133,8 @@ mar_int <- margins(lmout_int, vce = "delta")
 summary(mar_int)
 
 library(prediction)
-prediction(mar_int)
-prediction(mar_int, at = list(x = c(-0.5, 0.5)))
+prediction(lmout_int)
+prediction(lmout_int, at = list(x = c(-0.5, 0.5)))
 ```
 
 Users who want their regression output in LaTeX or HTML can use the [`texreg`](https://github.com/leifeld/texreg) package, which we extend for the output of both the `lm_robust()` and `lm_lin()` functions.
