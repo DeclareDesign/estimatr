@@ -270,7 +270,7 @@ lm_lin <- function(formula,
   original_covar_names <- colnames(demeaned_covars)
 
   # Change name of centered covariates to end in bar
-  colnames(demeaned_covars) <- paste0(colnames(demeaned_covars), "_bar")
+  colnames(demeaned_covars) <- paste0(colnames(demeaned_covars), "_c")
 
   n_treat_cols <- ncol(treatment)
   n_covars <- ncol(demeaned_covars)

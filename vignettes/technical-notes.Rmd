@@ -1,10 +1,10 @@
 ---
 title: "Technical notes for estimatr"
 author: "Luke Sonnet"
-link-citations: yes
 output:
   html_document:
     df_print: paged
+link-citations: yes
 bibliography: estimatr.bib
 vignette: |
   %\VignetteIndexEntry{Technical notes for estimatr}
@@ -139,10 +139,10 @@ y_i = \tau z_i + \mathbf{\beta}^\top \mathbf{x}_i + \epsilon_i
 with the following model
 
 \[
-y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{\mathbf{x}}_i  + \mathbf{\gamma}^\top \widetilde{\mathbf{x}}_i z_i + \epsilon_i
+y_i = \tau z_i + \mathbf{\beta}^\top \mathbf{x}^c_i  + \mathbf{\gamma}^\top \mathbf{x}^c_i z_i + \epsilon_i
 \]
 
-where $\widetilde{\mathbf{x}}_i$ is a vector of pre-treatment covariates for unit $i$ that have been centered to have mean zero and $z_i$ is an indicator for the treatment group. @lin2013 proposed this estimator in response to the critique by @freedman2008 that using regression to adjust for pre-treatment covariates could bias estimates of treatment effects.
+where $\mathbf{x}^c_i$ is a vector of pre-treatment covariates for unit $i$ that have been centered to have mean zero and $z_i$ is an indicator for the treatment group. @lin2013 proposed this estimator in response to the critique by @freedman2008 that using regression to adjust for pre-treatment covariates could bias estimates of treatment effects.
 
 The estimator `lm_lin` also works for multi-valued treatments by creating a full set of dummies for each treatment level and interacting each with the centered pre-treatment covariates. The rest of the options for the function and corresponding estimation is identical to [`lm_robust`](#lm_robust).
 

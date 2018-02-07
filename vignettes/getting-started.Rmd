@@ -1,5 +1,5 @@
 ---
-title: 'Getting started using estimatr'
+title: "Getting started using estimatr"
 author: "Luke Sonnet"
 output:
   html_document:

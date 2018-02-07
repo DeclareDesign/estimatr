@@ -73,10 +73,10 @@ test_that("Test LM Lin", {
     NA
   )
 
-  dat$X1_bar <- dat$X1 - mean(dat$X1)
-  dat$X2_bar <- dat$X2 - mean(dat$X2)
+  dat$X1_c <- dat$X1 - mean(dat$X1)
+  dat$X2_c <- dat$X2 - mean(dat$X2)
 
-  lm_rob_out <- lm_robust(Y ~ Z + Z * X1_bar + Z * X2_bar, data = dat)
+  lm_rob_out <- lm_robust(Y ~ Z + Z * X1_c + Z * X2_c, data = dat)
 
   expect_identical(
     tidy(lm_lin_out),
@@ -85,7 +85,7 @@ test_that("Test LM Lin", {
 
   expect_equivalent(
     lm_lin_out$coefficients,
-    lm(Y ~ Z + Z * X1_bar + Z * X2_bar, data = dat)$coefficients
+    lm(Y ~ Z + Z * X1_c + Z * X2_c, data = dat)$coefficients
   )
 
 
@@ -127,7 +127,7 @@ test_that("Test LM Lin", {
       tidy(fact_mult_out)[, -1]
     )
 
-    rob_fact_mult_out <- lm_robust(Y ~ factor(Z_mult) * X1_bar + factor(Z_mult) * X2_bar, data = dat)
+    rob_fact_mult_out <- lm_robust(Y ~ factor(Z_mult) * X1_c + factor(Z_mult) * X2_c, data = dat)
 
     expect_identical(
       tidy(fact_mult_out),
@@ -148,8 +148,8 @@ test_that("Test LM Lin", {
 
   ## Works with missing data in treatment
   dat$Z[23] <- NA
-  dat$X1_bar <- dat$X1 - mean(dat$X1[-23])
-  dat$X2_bar <- dat$X2 - mean(dat$X2[-23])
+  dat$X1_c <- dat$X1 - mean(dat$X1[-23])
+  dat$X2_c <- dat$X2 - mean(dat$X2[-23])
 
   expect_equal(
     tidy(lm_lin(
@@ -158,7 +158,7 @@ test_that("Test LM Lin", {
       data = dat
     )),
     tidy(lm_robust(
-      Y ~ Z + Z * X1_bar + Z * X2_bar,
+      Y ~ Z + Z * X1_c + Z * X2_c,
       data = dat
     ))
   )
@@ -172,7 +172,7 @@ test_that("Test LM Lin", {
       clusters = cluster
     )),
     tidy(lm_robust(
-      Y ~ Z + Z * X1_bar + Z * X2_bar,
+      Y ~ Z + Z * X1_c + Z * X2_c,
       data = dat,
       clusters = cluster
     ))
@@ -180,8 +180,8 @@ test_that("Test LM Lin", {
 
   ## Test that it works with subset
   keep <- setdiff(which(dat$Y > 0), 23)
-  dat$X1_bar <- dat$X1 - mean(dat$X1[keep])
-  dat$X2_bar <- dat$X2 - mean(dat$X2[keep])
+  dat$X1_c <- dat$X1 - mean(dat$X1[keep])
+  dat$X2_c <- dat$X2 - mean(dat$X2[keep])
 
   expect_equal(
     tidy(lm_lin(
@@ -192,7 +192,7 @@ test_that("Test LM Lin", {
       subset = Y > 0
     )),
     tidy(lm_robust(
-      Y ~ Z + Z * X1_bar + Z * X2_bar,
+      Y ~ Z + Z * X1_c + Z * X2_c,
       data = dat,
       clusters = cluster,
       subset = Y > 0
@@ -208,8 +208,8 @@ test_that("Test LM Lin", {
     cluster = sample(1:10, size = 100, replace = T)
   )
 
-  dat$X1_bar <- dat$X1 - mean(dat$X1)
-  dat$X21_bar <- as.numeric(dat$X2 == 1) - mean(dat$X2 == 1)
+  dat$X1_c <- dat$X1 - mean(dat$X1)
+  dat$X21_c <- as.numeric(dat$X2 == 1) - mean(dat$X2 == 1)
 
   expect_equivalent(
     tidy(lm_lin(
@@ -219,7 +219,7 @@ test_that("Test LM Lin", {
       clusters = cluster
     )),
     tidy(lm_robust(
-      Y ~ treat + treat * X1_bar + treat * X21_bar,
+      Y ~ treat + treat * X1_c + treat * X21_c,
       data = dat,
       clusters = cluster
     ))
@@ -232,7 +232,7 @@ test_that("Test LM Lin", {
     replace = T
   ))
   ## for lm_robust
-  dat$X2_bar <-
+  dat$X2_c <-
     as.numeric(dat$X2 == "This is a level") - mean(dat$X2 == "This is a level")
 
   ## Names will differ
@@ -247,7 +247,7 @@ test_that("Test LM Lin", {
     )[, -1],
     tidy(
       lm_robust(
-        Y ~ treat + treat * X1_bar + treat * X2_bar,
+        Y ~ treat + treat * X1_c + treat * X2_c,
         data = dat,
         clusters = cluster
       )
@@ -256,8 +256,8 @@ test_that("Test LM Lin", {
 
   ## Works with missingness on cluster
   dat$cluster[40] <- NA
-  dat$X1_bar <- dat$X1 - mean(dat$X1[-40])
-  dat$X2_bar <-
+  dat$X1_c <- dat$X1 - mean(dat$X1[-40])
+  dat$X2_c <-
     as.numeric(dat$X2 == "This is a level") - mean(dat$X2[-40] == "This is a level")
 
   expect_warning(
@@ -272,7 +272,7 @@ test_that("Test LM Lin", {
 
   expect_warning(
     rob_out <- lm_robust(
-      Y ~ treat + treat * X1_bar + treat * X2_bar,
+      Y ~ treat + treat * X1_c + treat * X2_c,
       data = dat,
       clusters = cluster
     ),
@@ -308,6 +308,6 @@ test_that("Test LM Lin", {
   lmlo <- lm_lin(Y ~ z + 0, ~X1, data = dat)
   expect_equal(
     lmlo$coefficient_name,
-    c("z", "X1_bar", "z:X1_bar")
+    c("z", "X1_c", "z:X1_c")
   )
 })
