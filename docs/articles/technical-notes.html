@@ -289,9 +289,9 @@ y_i = \tau z_i + \mathbf{\beta}^\top \mathbf{x}_i + \epsilon_i
 \]</span></p>
 <p>with the following model</p>
 <p><span class="math display">\[
-y_i = \tau z_i + \mathbf{\beta}^\top \widetilde{\mathbf{x}}_i  + \mathbf{\gamma}^\top \widetilde{\mathbf{x}}_i z_i + \epsilon_i
+y_i = \tau z_i + \mathbf{\beta}^\top \mathbf{x}^c_i  + \mathbf{\gamma}^\top \mathbf{x}^c_i z_i + \epsilon_i
 \]</span></p>
-<p>where <span class="math inline">\(\widetilde{\mathbf{x}}_i\)</span> is a vector of pre-treatment covariates for unit <span class="math inline">\(i\)</span> that have been centered to have mean zero and <span class="math inline">\(z_i\)</span> is an indicator for the treatment group. <span class="citation">Lin (<a href="#ref-lin2013">2013</a>)</span> proposed this estimator in response to the critique by <span class="citation">Freedman (<a href="#ref-freedman2008">2008</a>)</span> that using regression to adjust for pre-treatment covariates could bias estimates of treatment effects.</p>
+<p>where <span class="math inline">\(\mathbf{x}^c_i\)</span> is a vector of pre-treatment covariates for unit <span class="math inline">\(i\)</span> that have been centered to have mean zero and <span class="math inline">\(z_i\)</span> is an indicator for the treatment group. <span class="citation">Lin (<a href="#ref-lin2013">2013</a>)</span> proposed this estimator in response to the critique by <span class="citation">Freedman (<a href="#ref-freedman2008">2008</a>)</span> that using regression to adjust for pre-treatment covariates could bias estimates of treatment effects.</p>
 <p>The estimator <code>lm_lin</code> also works for multi-valued treatments by creating a full set of dummies for each treatment level and interacting each with the centered pre-treatment covariates. The rest of the options for the function and corresponding estimation is identical to <a href="#lm_robust"><code>lm_robust</code></a>.</p>
 </div>
 <div id="difference_in_means-notes" class="section level2">

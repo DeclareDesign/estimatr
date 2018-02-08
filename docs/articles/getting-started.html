@@ -431,7 +431,7 @@ lmout_cl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm
 </tr>
 </tbody>
 </table>
-<p>Furthermore, users can take advantage of the <a href="https://github.com/leeper/margins"><code>margins</code></a> package to get marginal effects, average marginal effects and their standard errors, and more.</p>
+<p>Furthermore, users can take advantage of the <a href="https://github.com/leeper/margins"><code>margins</code></a> package to get marginal effects, average marginal effects and their standard errors, and more. Similarly, the <a href="https://github.com/leeper/prediction"><code>prediction</code></a> package from the same author also provides a suite of software for different kinds of predictions.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(margins)
 
 lmout_int &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>x <span class="op">*</span><span class="st"> </span>z, <span class="dt">data =</span> dat)
@@ -439,7 +439,18 @@ mar_int &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocu
 <span class="kw">summary</span>(mar_int)
 <span class="co">#&gt;  factor    AME     SE      z      p   lower  upper</span>
 <span class="co">#&gt;       x 1.4319 0.2894 4.9468 0.0000  0.8645 1.9992</span>
-<span class="co">#&gt;       z 0.2355 0.1864 1.2633 0.2065 -0.1298 0.6008</span></code></pre></div>
+<span class="co">#&gt;       z 0.2355 0.1864 1.2633 0.2065 -0.1298 0.6008</span>
+
+<span class="kw">library</span>(prediction)
+<span class="kw"><a href="http://www.rdocumentation.org/packages/margins/topics/reexports">prediction</a></span>(lmout_int)
+<span class="co">#&gt; Average prediction for 100 observations: 0.6742</span>
+<span class="kw"><a href="http://www.rdocumentation.org/packages/margins/topics/reexports">prediction</a></span>(lmout_int, <span class="dt">at =</span> <span class="kw">list</span>(<span class="dt">x =</span> <span class="kw">c</span>(<span class="op">-</span><span class="fl">0.5</span>, <span class="fl">0.5</span>)))
+<span class="co">#&gt; Warning in check_values(data, at): A 'at' value for 'x' is outside observed</span>
+<span class="co">#&gt; data range (0.000238896580412984,0.988891728920862)!</span>
+<span class="co">#&gt; Average predictions for 100 observations:</span>
+<span class="co">#&gt;  value   value</span>
+<span class="co">#&gt;   -0.5 -0.8006</span>
+<span class="co">#&gt;    0.5  0.6313</span></code></pre></div>
 <p>Users who want their regression output in LaTeX or HTML can use the <a href="https://github.com/leifeld/texreg"><code>texreg</code></a> package, which we extend for the output of both the <code><a href="../reference/lm_robust.html">lm_robust()</a></code> and <code><a href="../reference/lm_lin.html">lm_lin()</a></code> functions.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(texreg)
 
@@ -491,7 +502,7 @@ tex_int &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocu
 <td align="left">y</td>
 </tr>
 <tr class="odd">
-<td align="left">x_bar</td>
+<td align="left">x_c</td>
 <td align="right">1.72</td>
 <td align="right">0.47</td>
 <td align="right">0.00</td>
@@ -501,7 +512,7 @@ tex_int &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocu
 <td align="left">y</td>
 </tr>
 <tr class="even">
-<td align="left">z:x_bar</td>
+<td align="left">z:x_c</td>
 <td align="right">-0.58</td>
 <td align="right">0.58</td>
 <td align="right">0.32</td>
