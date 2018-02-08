@@ -28,7 +28,8 @@ Suggests:
     randomizr (>= 0.8),
     knitr,
     rmarkdown,
-    margins
+    margins,
+    prediction
 Enhances: broom, texreg
 VignetteBuilder: knitr
 Additional_repositories: http://r.declaredesign.org
