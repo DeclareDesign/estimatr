@@ -39,7 +39,7 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/technical-notes.html">Mathematical Notes</a>
+      <a href="../articles/mathematical-notes.html">Mathematical Notes</a>
     </li>
     <li>
       <a href="../articles/benchmarking-estimatr.html">Simulations - Speed Comparisons</a>
@@ -104,7 +104,7 @@
     
     
 <div class="contents">
-<p>This document exposes the properties of different variance estimators using <a href="declaredesign.org"><code>DeclareDesign</code></a> and <a href="estimatr.declaredesign.org"><code>estimatr</code></a>. More details about the variance estimators with references can be found in the <a href="http://estimatr.declaredesign.org/articles/technical-notes.html">technical notes</a>.</p>
+<p>This document exposes the properties of different variance estimators using <a href="declaredesign.org"><code>DeclareDesign</code></a> and <a href="http://estimatr.declaredesign.org"><code>estimatr</code></a>. More details about the variance estimators with references can be found in the <a href="http://estimatr.declaredesign.org/articles/mathematical-notes.html">mathematical notes</a>.</p>
 <div id="homoskedastic-errors-and-fixed-covariates" class="section level2">
 <h2 class="hasAnchor">
 <a href="#homoskedastic-errors-and-fixed-covariates" class="anchor"></a>Homoskedastic errors and fixed covariates</h2>
@@ -161,6 +161,7 @@ true_varb</code></pre></div>
   <span class="dt">coefficient_name =</span> <span class="st">"x"</span>
 )</code></pre></div>
 <p>Now, we want to test for a few results using Monte Carlo simulation. Our main goal is to show that our estimated variance is unbiased for the true variance (our estimand). We can do this by comparing the mean of our estimated variances to the true variance. We can also show that the standard error of our coefficient estimate is the same as the standard deviation of the sampling distribution as our coefficient and that the coverage of our 95 percent confidence intervals is indeed 95 percent.</p>
+<p>Let’s first set up the design and our diagnosands.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># First declare all the steps of our design, starting with our fixed data</span>
 classical_design &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_design">declare_design</a></span>(
   dat,
@@ -177,16 +178,11 @@ my_diagnosands &lt;-<span class="st"> </span><span class="kw"><a href="http://ww
   <span class="st">`</span><span class="dt">Coverage Rate</span><span class="st">`</span> =<span class="st"> </span><span class="kw">mean</span>(<span class="dv">1</span> <span class="op">&lt;=</span><span class="st"> </span>ci_upper <span class="op">&amp;</span><span class="st"> </span><span class="dv">1</span> <span class="op">&gt;=</span><span class="st"> </span>ci_lower),
   <span class="st">`</span><span class="dt">Mean of Estimated Variance</span><span class="st">`</span> =<span class="st"> </span><span class="kw">mean</span>(se<span class="op">^</span><span class="dv">2</span>),
   <span class="st">`</span><span class="dt">True Variance</span><span class="st">`</span> =<span class="st"> </span>estimand[<span class="dv">1</span>]
-)
-
-<span class="co"># Run 25000 simulations</span>
-<span class="kw">set.seed</span>(<span class="dv">25</span>)
-dig &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/diagnose_design">diagnose_design</a></span>(
-  classical_design, 
-  <span class="dt">sims =</span> <span class="dv">25000</span>, 
-  <span class="dt">diagnosands =</span> my_diagnosands, 
-  <span class="dt">parallel =</span> <span class="ot">TRUE</span>
 )</code></pre></div>
+<p>Now let’s run the simulations!</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Run 25000 simulations</span>
+<span class="kw">set.seed</span>(<span class="dv">42</span>)
+dig &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/diagnose_design">diagnose_design</a></span>(</code></pre></div>
 <p>Our diagnosands can help us see if there is any bias. Note that the standard error of the diagnosands is a useful tool that let’s us know whether our estimated bias, or any other diagnosand, is simply an artifact of simulation noise or if it appears to be precisely estimated via simulation.</p>
 <table class="table">
 <thead><tr class="header">
@@ -200,20 +196,20 @@ dig &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 </tr>
 <tr class="even">
 <td>Mean of Estimated Variance</td>
-<td align="right">0.07849</td>
+<td align="right">0.07831</td>
 </tr>
 <tr class="odd">
 <td>Bias of Estimated Variance</td>
-<td align="right">0.00017</td>
+<td align="right">-0.00001</td>
 </tr>
 <tr class="even">
 <td>se(Bias of Estimated Variance)</td>
-<td align="right">0.00010</td>
+<td align="right">0.00011</td>
 </tr>
 </tbody>
 </table>
 <p>As we can see the bias is very close to zero and because the standard error is not much smaller than the bias, we can be reasonably certain that the only reason the bias is not exactly zero is due to simulation error. We can also see this visually, using a density plot of estimated variances with a line for the true variance.</p>
-<p><img src="simulations-ols-variance_files/figure-html/unnamed-chunk-9-1.png" width="480"></p>
+<p><img src="simulations-ols-variance_files/figure-html/unnamed-chunk-10-1.png" width="480"></p>
 <p>We can also show that the standard error is unbiased for the standard deviation of the sampling distribution of <span class="math inline">\(\beta\)</span> and that the coverage is appropriate.</p>
 <table class="table">
 <thead><tr class="header">
@@ -223,19 +219,19 @@ dig &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 <tbody>
 <tr class="odd">
 <td>Bias of Standard Error</td>
-<td align="right">-0.00116</td>
+<td align="right">-0.00161</td>
 </tr>
 <tr class="even">
 <td>se(Bias of Standard Error)</td>
-<td align="right">0.00123</td>
+<td align="right">0.00140</td>
 </tr>
 <tr class="odd">
 <td>Coverage Rate</td>
-<td align="right">0.95164</td>
+<td align="right">0.94815</td>
 </tr>
 <tr class="even">
 <td>se(Coverage Rate)</td>
-<td align="right">0.00126</td>
+<td align="right">0.00164</td>
 </tr>
 </tbody>
 </table>
@@ -250,7 +246,7 @@ dig &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 )
 <span class="co"># Plot shows variance of errors increasing with x</span>
 <span class="kw">plot</span>(dat<span class="op">$</span>x, dat<span class="op">$</span>noise_var, <span class="dt">xlab =</span> <span class="st">"x"</span>, <span class="dt">ylab =</span> <span class="st">"sigmasq_i"</span>)</code></pre></div>
-<p><img src="simulations-ols-variance_files/figure-html/unnamed-chunk-11-1.png" width="384"></p>
+<p><img src="simulations-ols-variance_files/figure-html/unnamed-chunk-12-1.png" width="384"></p>
 <p>Note that the general form of the true variance with fixed covariates is:</p>
 <p><span class="math display">\[
 \mathbb{V}[\widehat{\beta}] = (\mathbf{X}^\top \mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Phi} \mathbf{X} (\mathbf{X}^\top \mathbf{X})^{-1},
@@ -315,14 +311,7 @@ fixed_dat_het_design_temp &lt;-<span class="st"> </span><span class="cf">functio
 }</code></pre></div>
 <p>So let’s use the same diagnosands as above to test the properties of our dataset with heteroskedasticity.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Create a design using our template and the data we have been using</span>
-het_design &lt;-<span class="st"> </span><span class="kw">fixed_dat_het_design_temp</span>(dat)
-
-dig_het &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/diagnose_design">diagnose_design</a></span>(
-  het_design,
-  <span class="dt">sims =</span> <span class="dv">10000</span>, 
-  <span class="dt">diagnosands =</span> my_diagnosands,
-  <span class="dt">parallel =</span> <span class="ot">TRUE</span>
-)</code></pre></div>
+het_design &lt;-<span class="st"> </span><span class="kw">fixed_dat_het_design_temp</span>(dat)</code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th></th>
@@ -337,38 +326,38 @@ dig_het &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocu
 </tr>
 <tr class="even">
 <td>Mean of Estimated Variance</td>
-<td align="right">0.11249</td>
-<td align="right">0.14624</td>
+<td align="right">0.11244</td>
+<td align="right">0.14489</td>
 </tr>
 <tr class="odd">
 <td>Bias of Estimated Variance</td>
-<td align="right">-0.03490</td>
-<td align="right">-0.00115</td>
+<td align="right">-0.03495</td>
+<td align="right">-0.00251</td>
 </tr>
 <tr class="even">
 <td>se(Bias of Estimated Variance)</td>
-<td align="right">0.00027</td>
-<td align="right">0.00072</td>
+<td align="right">0.00025</td>
+<td align="right">0.00058</td>
 </tr>
 <tr class="odd">
 <td>Bias of Standard Error</td>
-<td align="right">-0.04947</td>
-<td align="right">-0.01035</td>
+<td align="right">-0.05280</td>
+<td align="right">-0.01535</td>
 </tr>
 <tr class="even">
 <td>se(Bias of Standard Error)</td>
-<td align="right">0.00249</td>
-<td align="right">0.00254</td>
+<td align="right">0.00282</td>
+<td align="right">0.00286</td>
 </tr>
 <tr class="odd">
 <td>Coverage Rate</td>
-<td align="right">0.91670</td>
-<td align="right">0.93700</td>
+<td align="right">0.91820</td>
+<td align="right">0.93350</td>
 </tr>
 <tr class="even">
 <td>se(Coverage Rate)</td>
-<td align="right">0.00250</td>
-<td align="right">0.00217</td>
+<td align="right">0.00257</td>
+<td align="right">0.00223</td>
 </tr>
 </tbody>
 </table>
@@ -378,7 +367,7 @@ diags &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="
 
 <span class="kw">set.seed</span>(<span class="dv">42</span>)
 <span class="cf">for</span> (i <span class="cf">in</span> <span class="kw">seq_along</span>(Ns)) {
-  <span class="co"># Generate ONE fixed dataset</span>
+  <span class="co"># Generate ONE fixed dataset per N</span>
   dat &lt;-<span class="st"> </span><span class="kw">fabricate</span>(
     <span class="dt">N =</span> Ns[i],
     <span class="dt">x =</span> <span class="kw">rnorm</span>(N),
@@ -392,7 +381,6 @@ diags &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="
   )<span class="op">$</span>diagnosands
   diags[[i]]<span class="op">$</span>N &lt;-<span class="st"> </span>Ns[i]
 }</code></pre></div>
-<p><img src="simulations-ols-variance_files/figure-html/unnamed-chunk-17-1.png" width="480"></p>
 <p>As you can see, the HC2 variance tends to be conservative and is consistent, converging to the true value as the sample size increases, while the classical error is biased downwards even as the sample sizes increases.</p>
 </div>
 </div>

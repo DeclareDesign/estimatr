@@ -1,5 +1,5 @@
 ---
-title: "Technical notes for estimatr"
+title: "Mathematical notes for estimatr"
 author: "Luke Sonnet"
 output:
   html_document:
@@ -7,7 +7,7 @@ output:
 link-citations: yes
 bibliography: estimatr.bib
 vignette: |
-  %\VignetteIndexEntry{Technical notes for estimatr}
+  %\VignetteIndexEntry{Mathematical notes for estimatr}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
@@ -22,7 +22,7 @@ knitr::opts_chunk$set(
 options(digits = 2)
 ```
 
-This document provides the technical notes for each of the estimators in `estimatr`. The most up-to-date version of this can be found on the [DeclareDesign website here](http://estimatr.declaredesign.org/articles/technical-notes.html).
+This document provides the mathematical notes for each of the estimators in `estimatr`. The most up-to-date version of this can be found on the [DeclareDesign website here](http://estimatr.declaredesign.org/articles/mathematical-notes.html).
 
 # Estimators
 

@@ -68,7 +68,7 @@ knitr::kable(head(dat))
 
 The `estimatr` package provides `lm_robust()` to quickly fit linear models with the most common variance estimators and degrees of freedom corrections used in social science. You can easily estimate heteroskedastic standard errors, clustered standard errors, and classical standard errors.
 
-Usage largely mimics `lm()`, although it defaults to using Eicker-Huber-White robust standard errors, specifically "HC2" standard errors. More about the exact specifications used can be found in the [technical notes](http://estimatr.declaredesign.org/articles/technical-notes.html#lm_robust-notes) and more about the estimator can be found on its reference page: `lm_robust()`.
+Usage largely mimics `lm()`, although it defaults to using Eicker-Huber-White robust standard errors, specifically "HC2" standard errors. More about the exact specifications used can be found in the [mathematical notes](http://estimatr.declaredesign.org/articles/mathematical-notes.html#lm_robust-notes) and more about the estimator can be found on its reference page: `lm_robust()`.
 
 ```{r, lm_robust}
 lmout <- lm_robust(y ~ z + x, data = dat)
@@ -150,7 +150,7 @@ texreg(tex_int, file = "ex.tex")
 
 Adjusting for pre-treatment covariates when using regression to estimate treatment effects is common practice across scientific disciplines. However, @freedman2008 demonstrated that pre-treatment covariate adjustment biases estimates of average treatment effects. In response, @lin2013 proposed an alternative estimator that would reduce this bias and improve precision. @lin2013 proposes centering all pre-treatment covariates, interacting them with the treatment variable, and regressing the outcome on the treatment, the centered pre-treatment covariates, and all of the interaction terms. This can require a non-trivial amount of data pre-processing.
 
-To facilitate this, we provide a wrapper that processes the data and estimates the model. We dub this estimator the Lin estimator and it can be accessed using `lm_lin()`. This function is a wrapper for `lm_robust()`, and all arguments that work for `lm_robust()` work here. The only difference is in the second argument `covariates`, where one specifies a right-sided formula with all of your pre-treatment covariates. Below is an example, and more can be seen on the function reference page [`lm_lin`](#lm_lin) and some formal notation can be seen in the [technical notes](http://estimatr.declaredesign.org/articles/technical-notes.html#lm_lin-notes).
+To facilitate this, we provide a wrapper that processes the data and estimates the model. We dub this estimator the Lin estimator and it can be accessed using `lm_lin()`. This function is a wrapper for `lm_robust()`, and all arguments that work for `lm_robust()` work here. The only difference is in the second argument `covariates`, where one specifies a right-sided formula with all of your pre-treatment covariates. Below is an example, and more can be seen on the function reference page [`lm_lin`](#lm_lin) and some formal notation can be seen in the [mathematical notes](http://estimatr.declaredesign.org/articles/mathematical-notes.html#lm_lin-notes).
 
 ```{r echo=TRUE, results="hide"}
 lml_out <- lm_lin(
@@ -168,7 +168,7 @@ The output of a `lm_lin()` call can be used with the same methods as `lm_robust(
 
 ## `difference_in_means`
 
-While estimating differences in means may seem straightforward, it can become more complicated in designs with blocks or clusters. In these cases, estimators need to average over within-block effects and estimates of variance have to appropriately adjust for features of a design. We provide support for unit-randomized, cluster-randomized, block-randomized, matched-pair randomized, and matched-pair clustered designs. Usage is similar to usage in regression functions. More examples can be seen on the function reference page, `difference_in_means()`, and the actual estimators used can be found in the [technical notes](articles/technical-notes.html#lm_robust-notes).
+While estimating differences in means may seem straightforward, it can become more complicated in designs with blocks or clusters. In these cases, estimators need to average over within-block effects and estimates of variance have to appropriately adjust for features of a design. We provide support for unit-randomized, cluster-randomized, block-randomized, matched-pair randomized, and matched-pair clustered designs. Usage is similar to usage in regression functions. More examples can be seen on the function reference page, `difference_in_means()`, and the actual estimators used can be found in the [mathematical notes](http://estimatr.declaredesign.org/articles/mathematical-notes.html#lm_robust-notes).
 
 ```{r echo=TRUE, results="hide"}
 # Simple version
@@ -205,7 +205,7 @@ dim_mps$design
 
 Horvitz-Thompson estimators can be used to estimate unbiased treatment effects when the randomization is known. This is particularly useful when there are clusters of different sizes being randomized into treatment or when the treatment assignment is complex and there are dependencies across units in the probability of being treated. Horvitz-Thompson estimators require information about the probability each unit is in treatment and control, as well as the joint probability each unit is in the treatment, in the control, and in opposite treatment conditions.
 
-The estimator we implement here, `horvitz_thompson()` estimates treatment effects for two-armed trials. The easiest way to specify your design and recover the full set of joint and marginal probabilities is to declare your randomization scheme by using [`declare_ra()`](http://randomizr.declaredesign.org/reference/declare_ra.html) from the [`randomizr`](randomizr.declaredesign.org) package. I show some examples of how to do that below. Again, the technical details for this estimator can be found [here](http://estimatr.declaredesign.org/articles/technical-notes.html#horvitz_thompson-notes) and in references in those notes.
+The estimator we implement here, `horvitz_thompson()` estimates treatment effects for two-armed trials. The easiest way to specify your design and recover the full set of joint and marginal probabilities is to declare your randomization scheme by using [`declare_ra()`](http://randomizr.declaredesign.org/reference/declare_ra.html) from the [`randomizr`](http://randomizr.declaredesign.org) package. I show some examples of how to do that below. Again, the technical details for this estimator can be found [here](http://estimatr.declaredesign.org/articles/mathematical-notes.html#horvitz_thompson-notes) and in references in those notes.
 
 ```{r, results="hide"}
 # Complete random assignment declaration

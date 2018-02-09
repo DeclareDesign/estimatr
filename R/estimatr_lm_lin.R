@@ -43,7 +43,7 @@
 #' in the
 #' \href{http://estimatr.declaredesign.org/articles/getting-started.html}{Getting Started vignette}
 #' and the
-#' \href{http://estimatr.declaredesign.org/articles/technical-notes.html}{technical notes}.
+#' \href{http://estimatr.declaredesign.org/articles/mathematical-notes.html}{mathematical notes}.
 #'
 #' @return An object of class \code{"lm_robust"}.
 #'

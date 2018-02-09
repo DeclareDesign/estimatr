@@ -24,7 +24,7 @@ navbar:
   - text: Technical Notes
     menu:
       - text: Mathematical Notes
-        href: articles/technical-notes.html
+        href: articles/mathematical-notes.html
       - text: Simulations - Speed Comparisons
         href: articles/benchmarking-estimatr.html
       - text: Simulations - OLS and Variance

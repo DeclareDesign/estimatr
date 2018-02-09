@@ -16,9 +16,14 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+fname <- "simulations_ols_var.rda"
+rerun <- !file.exists(fname)
+if (!rerun) {
+  load(fname)
+} 
 ```
 
-This document exposes the properties of different variance estimators using [`DeclareDesign`](declaredesign.org) and [`estimatr`](estimatr.declaredesign.org). More details about the variance estimators with references can be found in the [technical notes](http://estimatr.declaredesign.org/articles/technical-notes.html).
+This document exposes the properties of different variance estimators using [`DeclareDesign`](declaredesign.org) and [`estimatr`](http://estimatr.declaredesign.org). More details about the variance estimators with references can be found in the [mathematical notes](http://estimatr.declaredesign.org/articles/mathematical-notes.html).
 
 ## Homoskedastic errors and fixed covariates
 
@@ -110,7 +115,9 @@ lmc <- declare_estimator(
 
 Now, we want to test for a few results using Monte Carlo simulation. Our main goal is to show that our estimated variance is unbiased for the true variance (our estimand). We can do this by comparing the mean of our estimated variances to the true variance. We can also show that the standard error of our coefficient estimate is the same as the standard deviation of the sampling distribution as our coefficient and that the coverage of our 95 percent confidence intervals is indeed 95 percent.
 
-```{r, cache = TRUE}
+Let's first set up the design and our diagnosands.
+
+```{r}
 # First declare all the steps of our design, starting with our fixed data
 classical_design <- declare_design(
   dat,
@@ -128,15 +135,19 @@ my_diagnosands <- declare_diagnosands(
   `Mean of Estimated Variance` = mean(se^2),
   `True Variance` = estimand[1]
 )
+```
 
+Now let's run the simulations!
+```{r, eval=rerun, echo=1:3}
 # Run 25000 simulations
-set.seed(25)
+set.seed(42)
 dig <- diagnose_design(
   classical_design, 
-  sims = 25000, 
+  sims = 20000, 
   diagnosands = my_diagnosands, 
   parallel = TRUE
 )
+dig$simulations <- data.frame(var = dig$simulations$se^2)
 ```
 
 Our diagnosands can help us see if there is any bias. Note that the standard error of the diagnosands is a useful tool that let's us know whether our estimated bias, or any other diagnosand, is simply an artifact of simulation noise or if it appears to be precisely estimated via simulation.
@@ -156,11 +167,10 @@ As we can see the bias is very close to zero and because the standard error is n
 
 ```{r, warning = FALSE, echo = FALSE, fig.width=5, fig.height=4}
 # Get cuts to add label for true variance
-sumvar <- summary(dig$simulations$se^2)
-ggplot(dig$simulations, aes(x = se^2)) +
+sumvar <- summary(dig$simulations$var)
+ggplot(dig$simulations, aes(x = var)) +
   geom_density() +
   geom_vline(xintercept = true_varb, size = 1, color = "red") +
-  geom_text(aes(x = true_varb, y = 0, label = "True Variance"), color = "red", vjust = -0.5, hjust = -0.1) +
   labs(x = "Estimated Variance") +
   theme_classic()
 ```
@@ -267,7 +277,7 @@ fixed_dat_het_design_temp <- function(dat) {
 
 So let's use the same diagnosands as above to test the properties of our dataset with heteroskedasticity.
 
-```{r, cache = TRUE}
+```{r, eval=rerun, echo=1:3}
 # Create a design using our template and the data we have been using
 het_design <- fixed_dat_het_design_temp(dat)
 
@@ -277,6 +287,7 @@ dig_het <- diagnose_design(
   diagnosands = my_diagnosands,
   parallel = TRUE
 )
+dig_het$simulations <- NULL
 ```
 
 ```{r, echo = FALSE}
@@ -297,13 +308,13 @@ knitr::kable(
 
 As you can see, the bias for the HC2 errors is much closer to zero, whereas the bias for the classical error is much larger, especially when compared to the standard error of the bias diagnosand. Let's look how the bias change as the sample size changes.
 
-```{r, cache = TRUE}
+```{r, eval=rerun}
 Ns <- c(100, 500, 1000, 2500, 5000)
 diags <- vector("list", length(Ns))
 
 set.seed(42)
 for (i in seq_along(Ns)) {
-  # Generate ONE fixed dataset
+  # Generate ONE fixed dataset per N
   dat <- fabricate(
     N = Ns[i],
     x = rnorm(N),
@@ -320,14 +331,18 @@ for (i in seq_along(Ns)) {
 ```
 ```{r, warning = FALSE, echo = FALSE, fig.width=5, fig.height=4}
 plotdf <- do.call(rbind, diags)
-ggplot(plotdf, aes(x = N, y = `Bias of Estimated Variance`, color = estimator_label)) +
-  geom_point() +
-  geom_hline(yintercept = 0, type = 2, color = "grey") +
-  labs(color = "Estimator") +
-  theme_classic()
+# ggplot(plotdf, aes(x = N, y = `Bias of Estimated Variance`, color = estimator_label)) +
+#   geom_point() +
+#   geom_hline(yintercept = 0, linetype = 2, color = "grey") +
+#   labs(color = "Estimator") +
+#   theme_classic()
 ```
 
 As you can see, the HC2 variance tends to be conservative and is consistent, converging to the true value as the sample size increases, while the classical error is biased downwards even as the sample sizes increases.
+
+```{r save-rds, eval=rerun, include = FALSE}
+save(dig, dig_het, diags, file = fname)
+```
 
 ```{r todo, eval = FALSE, include = FALSE}
 # Stochastic data
