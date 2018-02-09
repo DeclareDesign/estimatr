@@ -22,9 +22,13 @@ navbar:
   - text: Getting Started
     href: articles/getting-started.html
   - text: Technical Notes
-    href: articles/technical-notes.html
-  - text: Speed Comparisons
-    href: articles/benchmarking-estimatr.html
+    menu:
+      - text: Mathematical Notes
+        href: articles/technical-notes.html
+      - text: Simulations - Speed Comparisons
+        href: articles/benchmarking-estimatr.html
+      - text: Simulations - OLS and Variance
+        href: articles/simulations-ols-variance.html
   - text: Reference
     href: reference/index.html
   - text: Ask for Help
