@@ -29,6 +29,8 @@ navbar:
         href: articles/benchmarking-estimatr.html
       - text: Simulations - OLS and Variance
         href: articles/simulations-ols-variance.html
+      - text: Simulations - Debiasing Difference-in-Means
+        href: articles/simulations-debiasing-dim.html
   - text: Reference
     href: reference/index.html
   - text: Ask for Help

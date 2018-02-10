@@ -47,6 +47,9 @@
     <li>
       <a href="../articles/simulations-ols-variance.html">Simulations - OLS and Variance</a>
     </li>
+    <li>
+      <a href="../articles/simulations-debiasing-dim.html">Simulations - Debiasing Difference-in-Means</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -145,11 +148,11 @@
 <div id="variance" class="section level3">
 <h3 class="hasAnchor">
 <a href="#variance" class="anchor"></a>Variance</h3>
-<p>In addition to solving for OLS coefficients faster than <code>lm</code>, we provide a variety of robust variance estimators. Below we outline them for the non-clustered and clustered cases.</p>
+<p>In addition to solving for OLS coefficients faster than <code>lm</code>, we provide a variety of robust variance estimators. Below we outline them for the non-clustered and clustered cases. You can see some simulations about the unbiasedness of the classical variance estimators with homoskedasticity and the consistency of the HC2 estimators with heteroskedasticity in <a href="http://estimatr.declaredesign.org/articles/simulations-ols-variance.html">these simulations</a>.</p>
 <div id="heteroskedasticity-robust-variance-and-degrees-of-freedom" class="section level4">
 <h4 class="hasAnchor">
 <a href="#heteroskedasticity-robust-variance-and-degrees-of-freedom" class="anchor"></a>Heteroskedasticity-Robust Variance and Degrees of Freedom</h4>
-<p>The default variance estimator without clusters is the HC2 variance, first proposed by <span class="citation">MacKinnon and White (<a href="#ref-mackinnonwhite1985">1985</a>)</span>. This estimator has the advantage of being equivalent to a conservative randomization-based “Neyman” estimator of the variance <span class="citation">(Samii and Aronow <a href="#ref-samiiaronow2012">2012</a>)</span>. Furthermore, while it is somewhat less efficient than the HC1 variance estimator, the default in Stata, it tends to perform better in small samples.</p>
+<p>The default variance estimator without clusters is the HC2 variance, first proposed by <span class="citation">MacKinnon and White (<a href="#ref-mackinnonwhite1985">1985</a>)</span>. This estimator has the advantage of being equivalent to a conservative randomization-based “Neyman” estimator of the variance <span class="citation">(Samii and Aronow <a href="#ref-samiiaronow2012">2012</a>)</span>. Furthermore, while it is somewhat less efficient than the HC1 variance estimator, the default in Stata, it tends to perform better in small samples (evidence for that can be found in our simulations <a href="http://estimatr.declaredesign.org/articles/simulations-ols-variance.html#hc1-and-hc2-in-small-samples">here</a>).</p>
 <table style="width:100%;" class="table">
 <colgroup>
 <col width="14%">

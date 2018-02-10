@@ -21,4 +21,4 @@ update_repo.R
 ^estimatr_.*\.tar\.gz$
 ^tests/testthat/test-texreg\.R$
 ^cran-comments\.md$
-vignettes/simulations-ols-variance\.Rmd
+^vignettes/simulations-ols-variance\.Rmd$

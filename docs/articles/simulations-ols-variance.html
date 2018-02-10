@@ -47,6 +47,9 @@
     <li>
       <a href="../articles/simulations-ols-variance.html">Simulations - OLS and Variance</a>
     </li>
+    <li>
+      <a href="../articles/simulations-debiasing-dim.html">Simulations - Debiasing Difference-in-Means</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -104,10 +107,10 @@
     
     
 <div class="contents">
-<p>This document exposes the properties of different variance estimators using <a href="declaredesign.org"><code>DeclareDesign</code></a> and <a href="http://estimatr.declaredesign.org"><code>estimatr</code></a>. More details about the variance estimators with references can be found in the <a href="http://estimatr.declaredesign.org/articles/mathematical-notes.html">mathematical notes</a>.</p>
-<div id="homoskedastic-errors-and-fixed-covariates" class="section level2">
-<h2 class="hasAnchor">
-<a href="#homoskedastic-errors-and-fixed-covariates" class="anchor"></a>Homoskedastic errors and fixed covariates</h2>
+<p>This document exposes the properties of different variance estimators using <a href="http://declaredesign.org"><code>DeclareDesign</code></a> and <a href="http://estimatr.declaredesign.org"><code>estimatr</code></a>. More details about the variance estimators with references can be found in the <a href="http://estimatr.declaredesign.org/articles/mathematical-notes.html">mathematical notes</a>.</p>
+<div id="homoskedastic-errors" class="section level1">
+<h1 class="hasAnchor">
+<a href="#homoskedastic-errors" class="anchor"></a>Homoskedastic errors</h1>
 <p>Under simple conditions with homoskedasticity (i.e., all errors are drawn from a distribution with the same variance), the classical estimator of the variance of OLS should be unbiased. In this section I demonstrate this to be true using <a href="declaredesign.org"><code>DeclareDesign</code></a> and <a href="estimatr.declaredesign.org"><code>estimatr</code></a>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(DeclareDesign)
 <span class="kw">library</span>(ggplot2)</code></pre></div>
@@ -152,7 +155,7 @@ true_varb</code></pre></div>
 <p><span class="math display">\[
 \widehat{\mathbb{V}[\widehat{\beta}]} = \frac{\mathbf{e}^\top\mathbf{e}}{N - K} (\mathbf{X}^\top \mathbf{X})^{-1},
 \]</span></p>
-<p>where the residuals <span class="math inline">\(\mathbf{e} = \mathbf{y} - \mathbf{X}\widehat{\beta}\)</span>, <span class="math inline">\(N\)</span> is the number of observations, and <span class="math inline">\(K\)</span> is the number of regressors—two in our case. We can easily get this estimate of the variance by squaring the standard error we get out from <code>lm_robust</code> in <a href="estimatr.declaredesign.org"><code>estimatr</code></a>. Let’s tell <a href="declaredesign.org"><code>DeclareDesign</code></a> to use that estimator and get the coefficient on the <span class="math inline">\(\mathbf{x}_1\)</span> variable.</p>
+<p>where the residuals <span class="math inline">\(\mathbf{e} = \mathbf{y} - \mathbf{X}\widehat{\beta}\)</span>, <span class="math inline">\(N\)</span> is the number of observations, and <span class="math inline">\(K\)</span> is the number of regressors—two in our case. We can easily get this estimate of the variance by squaring the standard error we get out from <code>lm_robust</code> in <a href="http://estimatr.declaredesign.org"><code>estimatr</code></a>. Let’s tell <a href="http://declaredesign.org"><code>DeclareDesign</code></a> to use that estimator and get the coefficient on the <span class="math inline">\(\mathbf{x}_1\)</span> variable.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">lmc &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_estimator">declare_estimator</a></span>(
   y <span class="op">~</span><span class="st"> </span>x,
   <span class="dt">model =</span> estimatr<span class="op">::</span>lm_robust, 
@@ -236,9 +239,9 @@ dig &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 </tbody>
 </table>
 </div>
-<div id="heteroskedastic-errors-and-fixed-covariates" class="section level2">
-<h2 class="hasAnchor">
-<a href="#heteroskedastic-errors-and-fixed-covariates" class="anchor"></a>Heteroskedastic errors and fixed covariates</h2>
+<div id="heteroskedastic-errors" class="section level1">
+<h1 class="hasAnchor">
+<a href="#heteroskedastic-errors" class="anchor"></a>Heteroskedastic errors</h1>
 <p>Now let’s use the same fixed data set-up, but now let’s introduce heteroskedasticity. In this case, the variance of the errors is different across units (i.e. <span class="math inline">\(\sigma^2_i \neq \sigma^2_j\)</span> for some units <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>. If this variance of the errors is not independent of the regressors, the “classical” variance will be biased and inconsistent. Meanwhile, heteroskedastic-consistent variance estimators, such as the HC2 estimator, are consistent and normally less biased than the “classical” estimator. Let’s demonstrate this using <a href="declaredesign.org"><code>DeclareDesign</code></a>. First, let’s specify the variance of the errors to be strongly correlated with <span class="math inline">\(x\)</span>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dat &lt;-<span class="st"> </span><span class="kw">fabricate</span>(
   dat,
@@ -263,7 +266,8 @@ true_varb_het</code></pre></div>
 <span class="co"># that has x and noise_var. Then for that data, it creates</span>
 <span class="co"># a single design that you can then simulate many times to get</span>
 <span class="co"># the properties you are interested in</span>
-fixed_dat_het_design_temp &lt;-<span class="st"> </span><span class="cf">function</span>(dat) {
+<span class="co"># It also takes the two se_types you'd like to compare</span>
+fixed_dat_het_design_temp &lt;-<span class="st"> </span><span class="cf">function</span>(dat, se_types) {
   
   <span class="co"># Get true variance for this data</span>
   Xmat &lt;-<span class="st"> </span><span class="kw">with</span>(dat, <span class="kw">cbind</span>(<span class="dv">1</span>, x))
@@ -280,22 +284,22 @@ fixed_dat_het_design_temp &lt;-<span class="st"> </span><span class="cf">functio
   varb_het_estimand &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_estimand">declare_estimand</a></span>(<span class="dt">true_varb_het =</span> true_varb_het)
 
   <span class="co"># Now we declare the two estimators</span>
-  lmc &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_estimator">declare_estimator</a></span>(
+  lm1 &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_estimator">declare_estimator</a></span>(
     y <span class="op">~</span><span class="st"> </span>x,
     <span class="dt">model =</span> estimatr<span class="op">::</span>lm_robust,
-    <span class="dt">se_type =</span> <span class="st">"classical"</span>,
+    <span class="dt">se_type =</span> <span class="op">!!</span>se_types[<span class="dv">1</span>],
     <span class="dt">estimand =</span> varb_het_estimand,
     <span class="dt">coefficient_name =</span> <span class="st">"x"</span>,
-    <span class="dt">label =</span> <span class="st">"classical"</span>
+    <span class="dt">label =</span> se_types[<span class="dv">1</span>]
   )
   
-  lmr_hc2 &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_estimator">declare_estimator</a></span>(
+  lm2 &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_estimator">declare_estimator</a></span>(
     y <span class="op">~</span><span class="st"> </span>x, 
     <span class="dt">model =</span> estimatr<span class="op">::</span>lm_robust, 
-    <span class="dt">se_type =</span> <span class="st">"HC2"</span>,
+    <span class="dt">se_type =</span> <span class="op">!!</span>se_types[<span class="dv">2</span>],
     <span class="dt">estimand =</span> varb_het_estimand,
     <span class="dt">coefficient_name =</span> <span class="st">"x"</span>,
-    <span class="dt">label =</span> <span class="st">"HC2"</span>
+    <span class="dt">label =</span> se_types[<span class="dv">2</span>]
   )
   
   <span class="co"># We return the design so we can diagnose it</span>
@@ -304,14 +308,14 @@ fixed_dat_het_design_temp &lt;-<span class="st"> </span><span class="cf">functio
       dat,
       simp_pop,
       varb_het_estimand,
-      lmc, 
-      lmr_hc2
+      lm1, 
+      lm2
     )
   )
 }</code></pre></div>
 <p>So let’s use the same diagnosands as above to test the properties of our dataset with heteroskedasticity.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Create a design using our template and the data we have been using</span>
-het_design &lt;-<span class="st"> </span><span class="kw">fixed_dat_het_design_temp</span>(dat)</code></pre></div>
+het_design &lt;-<span class="st"> </span><span class="kw">fixed_dat_het_design_temp</span>(dat, <span class="dt">se_types =</span> <span class="kw">c</span>(<span class="st">"classical"</span>, <span class="st">"HC2"</span>))</code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th></th>
@@ -373,15 +377,45 @@ diags &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="
     <span class="dt">x =</span> <span class="kw">rnorm</span>(N),
     <span class="dt">noise_var =</span> <span class="dv">1</span> <span class="op">+</span><span class="st"> </span>(x <span class="op">-</span><span class="st"> </span><span class="kw">min</span>(x))<span class="op">^</span><span class="dv">2</span>
   )
-  des &lt;-<span class="st"> </span><span class="kw">fixed_dat_het_design_temp</span>(dat)
+  des &lt;-<span class="st"> </span><span class="kw">fixed_dat_het_design_temp</span>(dat, <span class="dt">se_types =</span> <span class="kw">c</span>(<span class="st">"classical"</span>, <span class="st">"HC2"</span>))
   diags[[i]] &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/diagnose_design">diagnose_design</a></span>(
     des,
     <span class="dt">sims =</span> <span class="dv">10000</span>, 
-    <span class="dt">diagnosands =</span> my_diagnosands
+    <span class="dt">diagnosands =</span> my_diagnosands,
+    <span class="dt">bootstrap =</span> <span class="ot">FALSE</span>
   )<span class="op">$</span>diagnosands
   diags[[i]]<span class="op">$</span>N &lt;-<span class="st"> </span>Ns[i]
 }</code></pre></div>
+<p><img src="simulations-ols-variance_files/figure-html/unnamed-chunk-18-1.png" width="480"></p>
 <p>As you can see, the HC2 variance tends to be conservative and is consistent, converging to the true value as the sample size increases, while the classical error is biased downwards even as the sample sizes increases.</p>
+<div id="hc1-and-hc2-in-small-samples" class="section level2">
+<h2 class="hasAnchor">
+<a href="#hc1-and-hc2-in-small-samples" class="anchor"></a>HC1 and HC2 in small samples</h2>
+<p>The default variance estimator in <code>estimatr</code> are HC2 errors, rather than HC1, which is Stata’s default. We do this for several reasons, one of which is HC2 outperforming HC1 in small sample sizes. Let’s test this by comparing HC2 and HC1 over some small sample sizes, and plot the bias of each estimator across 40 datasets per sample size.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">datasets &lt;-<span class="st"> </span><span class="dv">40</span>
+<span class="co"># Generate several fixed datasets per N</span>
+Ns &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="kw">c</span>(<span class="dv">15</span>, <span class="dv">25</span>, <span class="dv">50</span>), <span class="dt">each =</span> datasets)
+diags_hc &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="st">"list"</span>, <span class="kw">length</span>(Ns))
+
+<span class="kw">set.seed</span>(<span class="dv">42</span>)
+<span class="cf">for</span> (i <span class="cf">in</span> <span class="kw">seq_along</span>(Ns)) {
+  dat &lt;-<span class="st"> </span><span class="kw">fabricate</span>(
+    <span class="dt">N =</span> Ns[i],
+    <span class="dt">x =</span> <span class="kw">rnorm</span>(N),
+    <span class="dt">noise_var =</span> <span class="dv">1</span> <span class="op">+</span><span class="st"> </span>(x <span class="op">-</span><span class="st"> </span><span class="kw">min</span>(x))<span class="op">^</span><span class="dv">2</span>
+  )
+  des &lt;-<span class="st"> </span><span class="kw">fixed_dat_het_design_temp</span>(dat, <span class="dt">se_types =</span> <span class="kw">c</span>(<span class="st">"HC1"</span>, <span class="st">"HC2"</span>))
+  diags_hc[[i]] &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/diagnose_design">diagnose_design</a></span>(
+    des,
+    <span class="dt">sims =</span> <span class="dv">200</span>, 
+    <span class="dt">diagnosands =</span> my_diagnosands,
+    <span class="dt">bootstrap =</span> <span class="ot">FALSE</span>
+  )<span class="op">$</span>diagnosands
+  diags_hc[[i]]<span class="op">$</span>N &lt;-<span class="st"> </span>Ns[i]
+}</code></pre></div>
+<p><img src="simulations-ols-variance_files/figure-html/unnamed-chunk-19-1.png" width="480"></p>
+<p>In small datasets, HC1 variance estimates suffers from greater downward bias than HC2 variance estimates.</p>
+</div>
 </div>
 </div>
   </div>
@@ -391,8 +425,12 @@ diags &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-<li><a href="#homoskedastic-errors-and-fixed-covariates">Homoskedastic errors and fixed covariates</a></li>
-      <li><a href="#heteroskedastic-errors-and-fixed-covariates">Heteroskedastic errors and fixed covariates</a></li>
+<li><a href="#homoskedastic-errors">Homoskedastic errors</a></li>
+      <li>
+<a href="#heteroskedastic-errors">Heteroskedastic errors</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#hc1-and-hc2-in-small-samples">HC1 and HC2 in small samples</a></li>
+      </ul>
+</li>
       </ul>
 </div>
       </div>

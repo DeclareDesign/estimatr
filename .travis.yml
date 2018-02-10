@@ -12,7 +12,7 @@ matrix:
       r: oldrel
       after_success:
       - echo skipping source packaging on linux/oldrel
-      
+
     - os: linux
       r: devel
       after_success:
@@ -39,6 +39,7 @@ env:
 
 r_github_packages:
 - DeclareDesign/DDtools
+- DeclareDesign/DeclareDesign
 
 r_packages:
 - broom

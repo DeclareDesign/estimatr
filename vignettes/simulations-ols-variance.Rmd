@@ -16,16 +16,16 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE)
-fname <- "simulations_ols_var.rda"
+fname <- "simulations-ols-var.rda"
 rerun <- !file.exists(fname)
 if (!rerun) {
   load(fname)
 } 
 ```
 
-This document exposes the properties of different variance estimators using [`DeclareDesign`](declaredesign.org) and [`estimatr`](http://estimatr.declaredesign.org). More details about the variance estimators with references can be found in the [mathematical notes](http://estimatr.declaredesign.org/articles/mathematical-notes.html).
+This document exposes the properties of different variance estimators using [`DeclareDesign`](http://declaredesign.org) and [`estimatr`](http://estimatr.declaredesign.org). More details about the variance estimators with references can be found in the [mathematical notes](http://estimatr.declaredesign.org/articles/mathematical-notes.html).
 
-## Homoskedastic errors and fixed covariates
+# Homoskedastic errors
 
 Under simple conditions with homoskedasticity (i.e., all errors are drawn from a distribution with the same variance), the classical estimator of the variance of OLS should be unbiased. In this section I demonstrate this to be true using [`DeclareDesign`](declaredesign.org) and [`estimatr`](estimatr.declaredesign.org).
 
@@ -101,7 +101,7 @@ Our estimator for this estimand will be the classical OLS variance estimator, wh
 \widehat{\mathbb{V}[\widehat{\beta}]} = \frac{\mathbf{e}^\top\mathbf{e}}{N - K} (\mathbf{X}^\top \mathbf{X})^{-1},
 \]
 
-where the residuals $\mathbf{e} = \mathbf{y} - \mathbf{X}\widehat{\beta}$, $N$ is the number of observations, and $K$ is the number of regressors---two in our case. We can easily get this estimate of the variance by squaring the standard error we get out from `lm_robust` in [`estimatr`](estimatr.declaredesign.org). Let's tell [`DeclareDesign`](declaredesign.org) to use that estimator and get the coefficient on the $\mathbf{x}_1$ variable.
+where the residuals $\mathbf{e} = \mathbf{y} - \mathbf{X}\widehat{\beta}$, $N$ is the number of observations, and $K$ is the number of regressors---two in our case. We can easily get this estimate of the variance by squaring the standard error we get out from `lm_robust` in [`estimatr`](http://estimatr.declaredesign.org). Let's tell [`DeclareDesign`](http://declaredesign.org) to use that estimator and get the coefficient on the $\mathbf{x}_1$ variable.
 
 ```{r}
 lmc <- declare_estimator(
@@ -191,7 +191,7 @@ knitr::kable(
 )
 ```
 
-## Heteroskedastic errors and fixed covariates
+# Heteroskedastic errors
 
 Now let's use the same fixed data set-up, but now let's introduce heteroskedasticity. In this case, the variance of the errors is different across units (i.e. $\sigma^2_i \neq \sigma^2_j$ for some units $i$ and $j$. If this variance of the errors is not independent of the regressors, the "classical" variance will be biased and inconsistent. Meanwhile, heteroskedastic-consistent variance estimators, such as the HC2 estimator, are consistent and normally less biased than the "classical" estimator. Let's demonstrate this using [`DeclareDesign`](declaredesign.org). First, let's specify the variance of the errors to be strongly correlated with $x$.
 
@@ -227,7 +227,8 @@ Now let's use [`DeclareDesign`](declaredesign.org) to test whether HC2 is less b
 # that has x and noise_var. Then for that data, it creates
 # a single design that you can then simulate many times to get
 # the properties you are interested in
-fixed_dat_het_design_temp <- function(dat) {
+# It also takes the two se_types you'd like to compare
+fixed_dat_het_design_temp <- function(dat, se_types) {
   
   # Get true variance for this data
   Xmat <- with(dat, cbind(1, x))
@@ -244,22 +245,22 @@ fixed_dat_het_design_temp <- function(dat) {
   varb_het_estimand <- declare_estimand(true_varb_het = true_varb_het)
 
   # Now we declare the two estimators
-  lmc <- declare_estimator(
+  lm1 <- declare_estimator(
     y ~ x,
     model = estimatr::lm_robust,
-    se_type = "classical",
+    se_type = !!se_types[1],
     estimand = varb_het_estimand,
     coefficient_name = "x",
-    label = "classical"
+    label = se_types[1]
   )
   
-  lmr_hc2 <- declare_estimator(
+  lm2 <- declare_estimator(
     y ~ x, 
     model = estimatr::lm_robust, 
-    se_type = "HC2",
+    se_type = !!se_types[2],
     estimand = varb_het_estimand,
     coefficient_name = "x",
-    label = "HC2"
+    label = se_types[2]
   )
   
   # We return the design so we can diagnose it
@@ -268,8 +269,8 @@ fixed_dat_het_design_temp <- function(dat) {
       dat,
       simp_pop,
       varb_het_estimand,
-      lmc, 
-      lmr_hc2
+      lm1, 
+      lm2
     )
   )
 }
@@ -279,7 +280,7 @@ So let's use the same diagnosands as above to test the properties of our dataset
 
 ```{r, eval=rerun, echo=1:3}
 # Create a design using our template and the data we have been using
-het_design <- fixed_dat_het_design_temp(dat)
+het_design <- fixed_dat_het_design_temp(dat, se_types = c("classical", "HC2"))
 
 dig_het <- diagnose_design(
   het_design,
@@ -320,28 +321,68 @@ for (i in seq_along(Ns)) {
     x = rnorm(N),
     noise_var = 1 + (x - min(x))^2
   )
-  des <- fixed_dat_het_design_temp(dat)
+  des <- fixed_dat_het_design_temp(dat, se_types = c("classical", "HC2"))
   diags[[i]] <- diagnose_design(
     des,
     sims = 10000, 
-    diagnosands = my_diagnosands
+    diagnosands = my_diagnosands,
+    bootstrap = FALSE
   )$diagnosands
   diags[[i]]$N <- Ns[i]
 }
 ```
 ```{r, warning = FALSE, echo = FALSE, fig.width=5, fig.height=4}
 plotdf <- do.call(rbind, diags)
-# ggplot(plotdf, aes(x = N, y = `Bias of Estimated Variance`, color = estimator_label)) +
-#   geom_point() +
-#   geom_hline(yintercept = 0, linetype = 2, color = "grey") +
-#   labs(color = "Estimator") +
-#   theme_classic()
+ggplot(plotdf, aes(x = N, y = `Bias of Estimated Variance`, color = estimator_label)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = 2, color = "grey") +
+  labs(color = "Estimator") +
+  theme_classic()
 ```
 
 As you can see, the HC2 variance tends to be conservative and is consistent, converging to the true value as the sample size increases, while the classical error is biased downwards even as the sample sizes increases.
 
+## HC1 and HC2 in small samples
+
+The default variance estimator in `estimatr` are HC2 errors, rather than HC1, which is Stata's default. We do this for several reasons, one of which is HC2 outperforming HC1 in small sample sizes. Let's test this by comparing HC2 and HC1 over some small sample sizes, and plot the bias of each estimator across 40 datasets per sample size.
+
+```{r hc1-hc2, eval=rerun}
+datasets <- 40
+# Generate several fixed datasets per N
+Ns <- rep(c(15, 25, 50), each = datasets)
+diags_hc <- vector("list", length(Ns))
+
+set.seed(42)
+for (i in seq_along(Ns)) {
+  dat <- fabricate(
+    N = Ns[i],
+    x = rnorm(N),
+    noise_var = 1 + (x - min(x))^2
+  )
+  des <- fixed_dat_het_design_temp(dat, se_types = c("HC1", "HC2"))
+  diags_hc[[i]] <- diagnose_design(
+    des,
+    sims = 200, 
+    diagnosands = my_diagnosands,
+    bootstrap = FALSE
+  )$diagnosands
+  diags_hc[[i]]$N <- Ns[i]
+}
+```
+
+```{r, echo = FALSE, fig.height = 4, fig.width = 5}
+plotdf <- do.call(rbind, diags_hc)
+ggplot(plotdf, aes(x = factor(N), y = `Bias of Estimated Variance`,  group = interaction(N, estimator_label), color = estimator_label)) + 
+  geom_hline(yintercept = 0, linetype = 2, color = "grey") +
+  geom_boxplot() +
+  labs(x = "N", color = "Variance Estimator") + 
+  theme_classic()
+```
+
+In small datasets, HC1 variance estimates suffers from greater downward bias than HC2 variance estimates.
+
 ```{r save-rds, eval=rerun, include = FALSE}
-save(dig, dig_het, diags, file = fname)
+save(dig, dig_het, diags, diags_hc, file = fname)
 ```
 
 ```{r todo, eval = FALSE, include = FALSE}
