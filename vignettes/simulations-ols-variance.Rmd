@@ -15,7 +15,7 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE)
 fname <- "simulations-ols-var.rda"
 rerun <- !file.exists(fname)
 if (!rerun) {
@@ -25,14 +25,14 @@ if (!rerun) {
 
 This document exposes the properties of different variance estimators using [`DeclareDesign`](http://declaredesign.org) and [`estimatr`](http://estimatr.declaredesign.org). More details about the variance estimators with references can be found in the [mathematical notes](http://estimatr.declaredesign.org/articles/mathematical-notes.html).
 
-# Homoskedastic errors
-
-Under simple conditions with homoskedasticity (i.e., all errors are drawn from a distribution with the same variance), the classical estimator of the variance of OLS should be unbiased. In this section I demonstrate this to be true using [`DeclareDesign`](declaredesign.org) and [`estimatr`](estimatr.declaredesign.org).
-
 ```{r}
 library(DeclareDesign)
 library(ggplot2)
 ```
+
+# Homoskedastic errors
+
+Under simple conditions with homoskedasticity (i.e., all errors are drawn from a distribution with the same variance), the classical estimator of the variance of OLS should be unbiased. In this section I demonstrate this to be true using [`DeclareDesign`](declaredesign.org) and [`estimatr`](estimatr.declaredesign.org).
 
 First, let's take a simple set up:
 
@@ -113,7 +113,7 @@ lmc <- declare_estimator(
 )
 ```
 
-Now, we want to test for a few results using Monte Carlo simulation. Our main goal is to show that our estimated variance is unbiased for the true variance (our estimand). We can do this by comparing the mean of our estimated variances to the true variance. We can also show that the standard error of our coefficient estimate is the same as the standard deviation of the sampling distribution as our coefficient and that the coverage of our 95 percent confidence intervals is indeed 95 percent.
+Now, we want to test for a few results using Monte Carlo simulation. Our main goal is to show that our estimated variance is unbiased for the true variance (our estimand). We can do this by comparing the mean of our estimated variances across our Monto Carlo simulations to the true variance. We can also show that the standard error of our coefficient estimate is the same as the standard deviation of the sampling distribution of our coefficient. Lastly, we also measure the coverage of our 95 percent confidence intervals across simulations to test whether the they cover the true coefficient 95 percent of the time.
 
 Let's first set up the design and our diagnosands.
 
@@ -138,7 +138,7 @@ my_diagnosands <- declare_diagnosands(
 ```
 
 Now let's run the simulations!
-```{r, eval=rerun, echo=1:3}
+```{r, eval=rerun, echo=1:8}
 # Run 25000 simulations
 set.seed(42)
 dig <- diagnose_design(
@@ -150,7 +150,7 @@ dig <- diagnose_design(
 dig$simulations <- data.frame(var = dig$simulations$se^2)
 ```
 
-Our diagnosands can help us see if there is any bias. Note that the standard error of the diagnosands is a useful tool that let's us know whether our estimated bias, or any other diagnosand, is simply an artifact of simulation noise or if it appears to be precisely estimated via simulation.
+Our diagnosands can help us see if there is any bias. Note that the standard error of the diagnosands---denoted as `se(Diagnosand)`---is a useful tool that let's us know whether our estimated bias, or any other diagnosand, is simply an artifact of simulation noise or if it appears to be precisely estimated via simulation.
 
 ```{r, echo = FALSE}
 knitr::kable(
@@ -163,7 +163,7 @@ knitr::kable(
 )
 ```
 
-As we can see the bias is very close to zero and because the standard error is not much smaller than the bias, we can be reasonably certain that the only reason the bias is not exactly zero is due to simulation error. We can also see this visually, using a density plot of estimated variances with a line for the true variance.
+As we can see the bias is very close to zero. Because the standard error of the bias is much larger than the estimated bias, we can be reasonably certain that the only reason the bias is not exactly zero is due to simulation error. We can also see the unbiasedness visually, using a density plot of estimated variances with a line for the true variance.
 
 ```{r, warning = FALSE, echo = FALSE, fig.width=5, fig.height=4}
 # Get cuts to add label for true variance
@@ -193,7 +193,13 @@ knitr::kable(
 
 # Heteroskedastic errors
 
-Now let's use the same fixed data set-up, but now let's introduce heteroskedasticity. In this case, the variance of the errors is different across units (i.e. $\sigma^2_i \neq \sigma^2_j$ for some units $i$ and $j$. If this variance of the errors is not independent of the regressors, the "classical" variance will be biased and inconsistent. Meanwhile, heteroskedastic-consistent variance estimators, such as the HC2 estimator, are consistent and normally less biased than the "classical" estimator. Let's demonstrate this using [`DeclareDesign`](declaredesign.org). First, let's specify the variance of the errors to be strongly correlated with $x$.
+Let's use the same fixed data set-up, but introduce heteroskedasticity. In this case, the variance of the errors is different across units:
+
+\[
+\epsilon_i \sim N(0, \sigma_i^2),
+\]
+
+where $\sigma^2_i \neq \sigma^2_j$ for some units $i$ and $j$. If the variance of the errors is not independent of the regressors, the "classical" variance will be biased and inconsistent. Meanwhile, heteroskedastic-consistent variance estimators, such as the HC2 estimator, are consistent and normally less biased than the "classical" estimator. Let's demonstrate this using [`DeclareDesign`](declaredesign.org). First, let's specify the variance of the errors to be strongly correlated with $x$.
 
 ```{r, fig.width=4, fig.height=3}
 dat <- fabricate(
@@ -210,7 +216,18 @@ Note that the general form of the true variance with fixed covariates is:
 \mathbb{V}[\widehat{\beta}] = (\mathbf{X}^\top \mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Phi} \mathbf{X} (\mathbf{X}^\top \mathbf{X})^{-1},
 \]
 
-where $\mathbf{\Phi}$ is the variance covariance matrix of the errors, or $\mathbf{\Phi} = \mathbb{E}[\epsilon\epsilon^\top]$. In the above case with homoskedasticity, we assumed $\mathbf{\Phi} = \sigma^2 \mathbf{I}$ and were able to simplify. Now, as in the standard set up for heteroskedasticity, we set $\mathbf{\Phi}$ to be a diagonal matrix where `noise_var`, the variance for each unit's error, is on the diagonal. Using that error structure and the error for each unit, we can estimate the true variance.
+where $\mathbf{\Phi}$ is the variance covariance matrix of the errors, or $\mathbf{\Phi} = \mathbb{E}[\epsilon\epsilon^\top]$. In the above case with homoskedasticity, we assumed $\mathbf{\Phi} = \sigma^2 \mathbf{I}$ and were able to simplify. Now, as in the standard set up for heteroskedasticity, we set $\mathbf{\Phi}$ to be a diagonal matrix where `noise_var`, the variance for each unit's error, is on the diagonal, like so:
+
+\[
+\mathbf{\Phi} = \begin{bmatrix}
+\sigma_1^2 & 0 & \cdots & 0 \\
+0 & \sigma_2^2 & \cdots & 0 \\
+\vdots & \vdots & \ddots & \vdots \\
+0 & 0 & \cdots & \sigma_n^2
+\end{bmatrix}
+\]
+
+Using that error structure and the error for each unit, we can estimate the true variance.
 
 ```{r}
 Xmat <- with(dat, cbind(1, x))
@@ -220,7 +237,7 @@ true_varb_het <- varb[2, 2]
 true_varb_het
 ```
 
-Now let's use [`DeclareDesign`](declaredesign.org) to test whether HC2 is less biased in this example than classical standard errors. However, I will use another feature of [`DeclareDesign`](declaredesign.org) where I can create a design template. This allows me to easily pass different datasets (i.e., of different sizes) so that I can test the properties of the estimator across different datasets.
+Now let's use [`DeclareDesign`](declaredesign.org) to test whether HC2 is less biased in this example than classical standard errors. However, I will use another feature of [`DeclareDesign`](declaredesign.org) where I can create a design template. This allows me to easily pass different datasets (i.e., of different sizes) and variance estimators so that I can test the properties different estimators across different datasets.
 
 ```{r}
 # This creates a template that takes some fixed data
@@ -248,7 +265,7 @@ fixed_dat_het_design_temp <- function(dat, se_types) {
   lm1 <- declare_estimator(
     y ~ x,
     model = estimatr::lm_robust,
-    se_type = !!se_types[1],
+    se_type = !!se_types[1], # !! operater will reveal the value and pass it to estimatr
     estimand = varb_het_estimand,
     coefficient_name = "x",
     label = se_types[1]
@@ -276,7 +293,7 @@ fixed_dat_het_design_temp <- function(dat, se_types) {
 }
 ```
 
-So let's use the same diagnosands as above to test the properties of our dataset with heteroskedasticity.
+So let's use the same diagnosands as above to test the properties of our estimators with heteroskedasticity.
 
 ```{r, eval=rerun, echo=1:3}
 # Create a design using our template and the data we have been using
@@ -307,7 +324,7 @@ knitr::kable(
 )
 ```
 
-As you can see, the bias for the HC2 errors is much closer to zero, whereas the bias for the classical error is much larger, especially when compared to the standard error of the bias diagnosand. Let's look how the bias change as the sample size changes.
+As you can see, the bias for the HC2 errors is much closer to zero, whereas the bias for the classical error is much larger, especially when compared to the standard error of the bias diagnosand. How does this bias change as the sample size changes? As the HC2 variance estimate is consistent under heteroskedasticity, it should converge to zero.
 
 ```{r, eval=rerun}
 Ns <- c(100, 500, 1000, 2500, 5000)
@@ -340,11 +357,11 @@ ggplot(plotdf, aes(x = N, y = `Bias of Estimated Variance`, color = estimator_la
   theme_classic()
 ```
 
-As you can see, the HC2 variance tends to be conservative and is consistent, converging to the true value as the sample size increases, while the classical error is biased downwards even as the sample sizes increases.
+As you can see, the HC2 variance tends to be conservative---as the bias is positive---and is consistent, converging to the true value as the sample size increases. The classical error, while also converging, will never have zero bias and the bias is negative, underestimating the variance of the coefficients.
 
 ## HC1 and HC2 in small samples
 
-The default variance estimator in `estimatr` are HC2 errors, rather than HC1, which is Stata's default. We do this for several reasons, one of which is HC2 outperforming HC1 in small sample sizes. Let's test this by comparing HC2 and HC1 over some small sample sizes, and plot the bias of each estimator across 40 datasets per sample size.
+The default variance estimator in `estimatr` is the HC2, rather than HC1 estimator (Stata's default). We do this for several reasons, one of which is HC2 outperforming HC1 in small sample sizes. Let's test this by comparing HC2 and HC1 over some small sample sizes, and plot the bias of each estimator across 40 datasets per sample size.
 
 ```{r hc1-hc2, eval=rerun}
 datasets <- 40

@@ -33,11 +33,11 @@ library(DeclareDesign)
 
 # Blocked designs
 
-Blocking is a common strategy in experiments that helps improve the efficiency of estimators by ensuring that units with similar potential outcomes (if put in to blocks) will be represented in both treatment conditions.
+Blocking is a common strategy in experimental design used to improve the efficiency of estimators by ensuring that units with similar potential outcomes, when blocked, will be represented in both treatment conditions.
 
 ## Fixed probability of treatment
 
-Let's first consider an example where blocks predict the potential outcomes but where the probability of treatment is constant across blocks. In this case, estimating a simple difference-in-means without passing the information about the blocks will not bias the estimate, but it will not take advantage of the increased efficiency and the standard errors will be too large. Let's see that in an example.
+Let's first consider an example where blocks predict the potential outcomes but where the probability of treatment is constant across blocks. In this case, estimating a simple difference-in-means without passing the information about the blocks will not bias the estimate, but it will not take advantage of the increased efficiency blocking provides and the standard errors will be unnecessarily large. Let's see that in an example.
 
 First, let's set up our data and randomization scheme. In all of these analyses, our estimand will be the average treatment effect
 ```{r}
@@ -119,11 +119,11 @@ knitr::kable(
 )
 ```
 
-Both estimates are unbiased (and indeed are identical), and you can see that standard errors when accounting for blocking are much smaller (leading to better coverage and more efficient estimation). Note that the `"se"` rows in the table describe the uncertainty arising from the simulation and can help us know well estimated are our bias and variance.
+Both estimates are unbiased (and indeed are identical), and you can see that standard errors when accounting for blocking are much smaller (leading to better coverage and more efficient estimation). Note that the `"se"` rows in the table describe the uncertainty arising from the simulation and can help us know well we estimated our bias and variance using the simulation approach.
 
 ## Correlated potential outcomes and treatment probabilities
 
-However, not accounting for blocking becomes more problematic if the probability of treatment in each block is correlated with the treatment potential outcomes. Imagine, for example, that you are working with a partner who wants their intervention to both have a big effect and be amenable to rigorous analysis (in which case, congratulations). In this scenario, they may suspect certain types of units have higher treatment effects and want those units to be treated more often. In this case, if our blocks capture that variation in treatment effect, and blocks with higher treatment effects are treated more often, the naive estimator will overrepresent those treated units and upwardly bias the ATE. Accounting for blocking by estimating treatment effects within block and then weighting for the probability of treatment, which our `difference_in_means()` estimator does when blocks are specified, will eliminate this bias.
+However, not accounting for blocking becomes more problematic if the probability of treatment in each block is correlated with the potential outcomes. Imagine, for example, that you are working with a partner who wants their intervention to both have a big effect and be amenable to rigorous analysis (in which case, congratulations). In this scenario, they may suspect certain types of units have higher treatment effects and want those units to be treated more often. In this case, if blocks with higher treatment effects are treated more often, the naive estimator will overrepresent those treated units and upwardly bias the ATE. Accounting for blocking by estimating treatment effects within block and then weighting for the probability of treatment, which our `difference_in_means()` estimator does when blocks are specified, will eliminate this bias.
 
 ```{r}
 corr_blocks <- declare_population(
@@ -160,11 +160,11 @@ As you can see below, the probability of treatment is strongly correlated with t
 
 ```{r}
 dat <- draw_data(corr_bl_des)
-plot(factor(dat$m_treat), dat$Y_Z_1 - dat$Y_Z_0, 
-     ylab = "True treat. effect", xlab = "N treated in block")
+plot(factor(dat$m_treat / 8), dat$Y_Z_1 - dat$Y_Z_0, 
+     ylab = "True treat. effect", xlab = "Pr treatment in block")
 ```
 
-Let's simulate our data.
+Let's diagnose these estimators.
 
 ```{r, eval=rerun, echo = 1:7}
 set.seed(42)
@@ -190,11 +190,11 @@ knitr::kable(
 )
 ```
 
-As you can see, the bias and coverage are all wrong for the naive difference in means, while our corrected estimator has no bias and the coverage is at the nominal level.
+As you can see, the bias and coverage are all wrong for the naive difference in means, while our corrected estimator has no bias and the coverage is closer to the nominal level.
 
 # Clustered designs
 
-Another common design involves clustered treatment assignment, where units are can only be treated in groups. This often arises when treatments only can happen at the classroom, village, or some other aggregated level.
+Another common design involves clustered treatment assignment, where units are can only be treated in groups. This often arises when treatments only can happen at the classroom, village, or some other aggregated level, but you can observe outcomes at a lower level, such as a student in a classroom or a voter in a village.
 
 ## Clusters of the same size
 
@@ -222,6 +222,7 @@ clustered_assign <- declare_assignment(clusters = clusters, prob = 0.5)
 
 ate <- declare_estimand(ATE = mean(Y_Z_1 - Y_Z_0))
 
+# Specify our two estimators
 dim <- declare_estimator(Y ~ Z, label = "DIM")
 dim_cl <- declare_estimator(Y ~ Z, clusters = clusters, label = "DIM clustered")
 
@@ -278,7 +279,7 @@ As you can see, the estimates are the same but the coverage for the naive differ
 
 ## Clusters of different sizes
 
-When clusters are different sizes, and potential outcomes are correlated with cluster size, the difference-in-means estimator is biased, and cannot properly account for this problem. One solution is to use the Horvitz-Thompson estimator, which is actually a difference-in-totals estimator.
+When clusters are different sizes, and potential outcomes are correlated with cluster size, the difference-in-means estimator is no longer appropriate as it is biased. One solution is to use the Horvitz-Thompson estimator, which is actually a difference-in-totals estimator.
 
 In the below, I use simulation to show that the difference-in-means estimator cannot account for the correlation between cluster size and potential outcomes, while the Horvitz-Thompson estimator can. I will use simple random assignment for the clusters as this estimation is faster.
 
