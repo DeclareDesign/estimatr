@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Technical notes for estimatr • estimatr</title>
+<title>Mathematical notes for estimatr • estimatr</title>
 <!-- jquery --><script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script><!-- Font Awesome icons --><link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
 <!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
@@ -39,13 +39,16 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/technical-notes.html">Mathematical Notes</a>
+      <a href="../articles/mathematical-notes.html">Mathematical Notes</a>
     </li>
     <li>
       <a href="../articles/benchmarking-estimatr.html">Simulations - Speed Comparisons</a>
     </li>
     <li>
       <a href="../articles/simulations-ols-variance.html">Simulations - OLS and Variance</a>
+    </li>
+    <li>
+      <a href="../articles/simulations-debiasing-dim.html">Simulations - Debiasing Difference-in-Means</a>
     </li>
   </ul>
 </li>
@@ -96,7 +99,7 @@
       </header><div class="row">
   <div class="col-md-9">
     <div class="page-header toc-ignore">
-      <h1>Technical notes for estimatr</h1>
+      <h1>Mathematical notes for estimatr</h1>
                         <h4 class="author">Luke Sonnet</h4>
             
           </div>
@@ -104,7 +107,7 @@
     
     
 <div class="contents">
-<p>This document provides the technical notes for each of the estimators in <code>estimatr</code>. The most up-to-date version of this can be found on the <a href="http://estimatr.declaredesign.org/articles/technical-notes.html">DeclareDesign website here</a>.</p>
+<p>This document provides the mathematical notes for each of the estimators in <code>estimatr</code>. The most up-to-date version of this can be found on the <a href="http://estimatr.declaredesign.org/articles/mathematical-notes.html">DeclareDesign website here</a>.</p>
 <div id="estimators" class="section level1">
 <h1 class="hasAnchor">
 <a href="#estimators" class="anchor"></a>Estimators</h1>
@@ -145,11 +148,11 @@
 <div id="variance" class="section level3">
 <h3 class="hasAnchor">
 <a href="#variance" class="anchor"></a>Variance</h3>
-<p>In addition to solving for OLS coefficients faster than <code>lm</code>, we provide a variety of robust variance estimators. Below we outline them for the non-clustered and clustered cases.</p>
+<p>In addition to solving for OLS coefficients faster than <code>lm</code>, we provide a variety of robust variance estimators. Below we outline them for the non-clustered and clustered cases. You can see some simulations about the unbiasedness of the classical variance estimators with homoskedasticity and the consistency of the HC2 estimators with heteroskedasticity in <a href="http://estimatr.declaredesign.org/articles/simulations-ols-variance.html">these simulations</a>.</p>
 <div id="heteroskedasticity-robust-variance-and-degrees-of-freedom" class="section level4">
 <h4 class="hasAnchor">
 <a href="#heteroskedasticity-robust-variance-and-degrees-of-freedom" class="anchor"></a>Heteroskedasticity-Robust Variance and Degrees of Freedom</h4>
-<p>The default variance estimator without clusters is the HC2 variance, first proposed by <span class="citation">MacKinnon and White (<a href="#ref-mackinnonwhite1985">1985</a>)</span>. This estimator has the advantage of being equivalent to a conservative randomization-based “Neyman” estimator of the variance <span class="citation">(Samii and Aronow <a href="#ref-samiiaronow2012">2012</a>)</span>. Furthermore, while it is somewhat less efficient than the HC1 variance estimator, the default in Stata, it tends to perform better in small samples.</p>
+<p>The default variance estimator without clusters is the HC2 variance, first proposed by <span class="citation">MacKinnon and White (<a href="#ref-mackinnonwhite1985">1985</a>)</span>. This estimator has the advantage of being equivalent to a conservative randomization-based “Neyman” estimator of the variance <span class="citation">(Samii and Aronow <a href="#ref-samiiaronow2012">2012</a>)</span>. Furthermore, while it is somewhat less efficient than the HC1 variance estimator, the default in Stata, it tends to perform better in small samples (evidence for that can be found in our simulations <a href="http://estimatr.declaredesign.org/articles/simulations-ols-variance.html#hc1-and-hc2-in-small-samples">here</a>).</p>
 <table style="width:100%;" class="table">
 <colgroup>
 <col width="14%">

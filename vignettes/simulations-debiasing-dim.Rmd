@@ -1,0 +1,356 @@
+---
+title: "Simulations - Debiasing Difference-in-Means"
+author: "Luke Sonnet"
+output:
+  html_document:
+    df_print: paged
+link-citations: yes
+bibliography: estimatr.bib
+vignette: |
+  %\VignetteIndexEntry{Simulations - Debiasing Difference-in-Means} 
+  \usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, digits = 3, fig.width = 4, fig.height = 3)
+fname <- "simulations-debias-dim.rda"
+rerun <- !file.exists(fname)
+if (!rerun) {
+  load(fname)
+} 
+```
+
+This document shows how providing [`estimatr`](http://estimatr.declaredesign.org) with the appropriate blocks and clusters that define a research design can eliminate bias when estimating treatment effects using `difference_in_means()`. More details about the estimators with references can be found in the [mathematical notes](http://estimatr.declaredesign.org/articles/mathematical-notes.html).
+
+I am going to skip simple difference-in-means, and just straight to the case with blocks. Throughout I will use [`DeclareDesign`](http://declaredesign.org) to help diagnose the properties of the various estimators.
+
+```{r}
+library(DeclareDesign)
+```
+
+# Blocked designs
+
+Blocking is a common strategy in experimental design used to improve the efficiency of estimators by ensuring that units with similar potential outcomes, when blocked, will be represented in both treatment conditions.
+
+## Fixed probability of treatment
+
+Let's first consider an example where blocks predict the potential outcomes but where the probability of treatment is constant across blocks. In this case, estimating a simple difference-in-means without passing the information about the blocks will not bias the estimate, but it will not take advantage of the increased efficiency blocking provides and the standard errors will be unnecessarily large. Let's see that in an example.
+
+First, let's set up our data and randomization scheme. In all of these analyses, our estimand will be the average treatment effect
+```{r}
+# Define population with blocks of the same size, with some block-level shock
+simp_blocks <- declare_population(
+  blocks = add_level(
+    N = 40,
+    block_shock = runif(N, 0, 10)
+  ),
+  individual = add_level(
+    N = 8,
+    epsilon = rnorm(N)
+  )
+)
+# Block shocks influnce Y_Z_1, the treatment potential outcome
+blocked_pos <- declare_potential_outcomes(Y ~ Z * 0.5 * block_shock + epsilon)
+# Complete random assignment of half of units in each block
+blocked_assign <- declare_assignment(blocks = blocks, prob = 0.5)
+# Estimand is the ATE
+ate <- declare_estimand(ATE = mean(Y_Z_1 - Y_Z_0))
+```
+
+Now let's define our two estimators, one that doesn't account for blocking and one that does. The estimator that accounts for blocking essentially will compute treatment effects within blocks and then will take a weighted average across blocks. Details and references can be found in the [mathematical notes](http://estimatr.declaredesign.org/articles/mathematical-notes.html#difference_in_means-notes).
+
+```{r}
+dim <- declare_estimator(Y ~ Z, label = "DIM")
+dim_bl <- declare_estimator(Y ~ Z, blocks = blocks, label = "DIM blocked")
+
+# Our design
+simp_bl_des <- declare_design(
+  simp_blocks,
+  blocked_pos,
+  blocked_assign,
+  ate,
+  dim, 
+  dim_bl
+)
+
+# Our diagnosands of interest
+my_diagnosands <- declare_diagnosands(
+  `Bias` = mean(est - estimand),
+  `Coverage` =  mean(estimand <= ci_upper & estimand >= ci_lower),
+  `Mean of Estimated ATE` = mean(est),
+  `Mean of True ATE (Estimand)` = mean(estimand),
+  `Mean Standard Error` = mean(se)
+)
+```
+
+Let's get a sample dataset to show the relationship between treatment potential outcomes and blocks.
+
+```{r}
+dat <- draw_data(simp_bl_des)
+plot(dat$blocks, dat$Y_Z_1, 
+     ylab = "Y_Z_1 (treatment PO)", xlab = "Block ID")
+```
+
+As you can see, the blocks tend to have clustered treatment potential outcomes. Now let's compare the performance of the two estimators using our diagnosands of interest.
+
+```{r, eval=rerun, echo = 1:6}
+set.seed(42)
+simp_bl_dig <- diagnose_design(
+  simp_bl_des,
+  sims = 5000,
+  diagnosands = my_diagnosands
+)
+simp_bl_dig$simulations <- NULL
+```
+
+```{r, echo = FALSE}
+knitr::kable(
+  t(simp_bl_dig$diagnosands[, c(
+    "Mean of True ATE (Estimand)", "Mean of Estimated ATE",
+    "Bias", "se(Bias)",
+    "Coverage", "se(Coverage)",
+    "Mean Standard Error", "se(Mean Standard Error)"
+  )]),
+  col.names = c("Naive DIM", "Block DIM"),
+  digits = 3
+)
+```
+
+Both estimates are unbiased (and indeed are identical), and you can see that standard errors when accounting for blocking are much smaller (leading to better coverage and more efficient estimation). Note that the `"se"` rows in the table describe the uncertainty arising from the simulation and can help us know well we estimated our bias and variance using the simulation approach.
+
+## Correlated potential outcomes and treatment probabilities
+
+However, not accounting for blocking becomes more problematic if the probability of treatment in each block is correlated with the potential outcomes. Imagine, for example, that you are working with a partner who wants their intervention to both have a big effect and be amenable to rigorous analysis (in which case, congratulations). In this scenario, they may suspect certain types of units have higher treatment effects and want those units to be treated more often. In this case, if blocks with higher treatment effects are treated more often, the naive estimator will overrepresent those treated units and upwardly bias the ATE. Accounting for blocking by estimating treatment effects within block and then weighting for the probability of treatment, which our `difference_in_means()` estimator does when blocks are specified, will eliminate this bias.
+
+```{r}
+corr_blocks <- declare_population(
+  blocks = add_level(
+    N = 60,
+    block_shock = runif(N, 0, 10),
+    indivs_per_block = 8,
+    # if block shock is > 5, treat 6 units, otherwise treat 2
+    m_treat = ifelse(block_shock > 5, 6, 2)
+  ),
+  individual = add_level(
+    N = indivs_per_block,
+    epsilon = rnorm(N, sd = 3)
+  )
+)
+# Use same potential outcomes as above, but now treatment probability varies across blocks
+corr_blocked_assign <- declare_assignment(
+  blocks = blocks, 
+  # The next line will just get the number of treated for a block from
+  # the first unit in that block
+  block_m = m_treat[!duplicated(blocks)]
+)
+corr_bl_des <- declare_design(
+  corr_blocks,
+  blocked_pos,
+  corr_blocked_assign,
+  ate,
+  dim, 
+  dim_bl
+)
+```
+
+As you can see below, the probability of treatment is strongly correlated with the treatment effect.
+
+```{r}
+dat <- draw_data(corr_bl_des)
+plot(factor(dat$m_treat / 8), dat$Y_Z_1 - dat$Y_Z_0, 
+     ylab = "True treat. effect", xlab = "Pr treatment in block")
+```
+
+Let's diagnose these estimators.
+
+```{r, eval=rerun, echo = 1:7}
+set.seed(42)
+corr_bl_dig <- diagnose_design(
+  corr_bl_des,
+  sims = 5000,
+  diagnosands = my_diagnosands,
+  parallel = TRUE
+)
+corr_bl_dig$simulations <- NULL
+```
+
+```{r, echo = FALSE}
+knitr::kable(
+  t(corr_bl_dig$diagnosands[, c(
+    "Mean of True ATE (Estimand)", "Mean of Estimated ATE",
+    "Bias", "se(Bias)",
+    "Coverage", "se(Coverage)",
+    "Mean Standard Error", "se(Mean Standard Error)"
+  )]),
+  col.names = c("Naive DIM", "Block DIM"),
+  digits = 3
+)
+```
+
+As you can see, the bias and coverage are all wrong for the naive difference in means, while our corrected estimator has no bias and the coverage is closer to the nominal level.
+
+# Clustered designs
+
+Another common design involves clustered treatment assignment, where units are can only be treated in groups. This often arises when treatments only can happen at the classroom, village, or some other aggregated level, but you can observe outcomes at a lower level, such as a student in a classroom or a voter in a village.
+
+## Clusters of the same size
+
+With clustered designs, the naive difference-in-means estimate of the ATE will be unbiased. However, if the potential outcomes are correlated with cluster, than the naive standard error will underestimate the standard error. This is because the sampling variability of the estimated ATE is greater when certain clusters with similar potential outcomes will be in the same treatment status across runs. If you pass `clusters` to our difference-in-means estimator, we properly account for this increase in the sampling variability.
+
+Let's see this in action.
+
+```{r}
+# Define clustered data
+simp_clusts <- declare_population(
+  clusters = add_level(
+    N = 40,
+    clust_shock = runif(N, 0, 10)
+  ),
+  individual = add_level(
+    N = 8,
+    epsilon = rnorm(N)
+  )
+)
+# Treatment potential outcomes correlated with cluster shock
+clustered_POs <- declare_potential_outcomes(Y ~ Z * 0.2 * clust_shock + epsilon)
+
+# Clustered assignment to treatment
+clustered_assign <- declare_assignment(clusters = clusters, prob = 0.5)
+
+ate <- declare_estimand(ATE = mean(Y_Z_1 - Y_Z_0))
+
+# Specify our two estimators
+dim <- declare_estimator(Y ~ Z, label = "DIM")
+dim_cl <- declare_estimator(Y ~ Z, clusters = clusters, label = "DIM clustered")
+
+simp_cl_des <- declare_design(
+  simp_clusts,
+  clustered_POs,
+  clustered_assign,
+  ate,
+  dim,
+  dim_cl
+)
+```
+
+Let's look at an example of the data generated by this design. As you can see, treatment is clustered.
+
+```{r}
+dat <- draw_data(simp_cl_des)
+table(Z = dat$Z, clusters = dat$clusters)
+```
+
+Furthermore, treatment potential outcomes are correlated with cluster.
+
+```{r}
+plot(dat$clusters, dat$Y_Z_1,
+     ylab = "Y_Z_1 (treatment PO)", xlab = "Cluster ID")
+```
+
+Let's diagnose this design.
+
+```{r, eval=rerun, echo = 1:6}
+set.seed(42)
+simp_cl_dig <- diagnose_design(
+  simp_cl_des,
+  sims = 5000,
+  diagnosands = my_diagnosands
+)
+simp_cl_dig$simulations <- NULL
+```
+
+```{r, echo = FALSE}
+knitr::kable(
+  t(simp_cl_dig$diagnosands[, c(
+    "Mean of True ATE (Estimand)", "Mean of Estimated ATE",
+    "Bias", "se(Bias)",
+    "Coverage", "se(Coverage)",
+    "Mean Standard Error", "se(Mean Standard Error)"
+  )]),
+  col.names = c("Naive DIM", "Cluster DIM"),
+  digits = 3
+)
+```
+
+As you can see, the estimates are the same but the coverage for the naive difference-in-means is below the nominal level of 95 percent. The design-aware difference-in-means that accounts for clustering is conservative and in this case is a more appropriate estimator.
+
+## Clusters of different sizes
+
+When clusters are different sizes, and potential outcomes are correlated with cluster size, the difference-in-means estimator is no longer appropriate as it is biased. One solution is to use the Horvitz-Thompson estimator, which is actually a difference-in-totals estimator.
+
+In the below, I use simulation to show that the difference-in-means estimator cannot account for the correlation between cluster size and potential outcomes, while the Horvitz-Thompson estimator can. I will use simple random assignment for the clusters as this estimation is faster.
+
+```{r}
+# Correlated cluster size and potential outcomes
+diff_size_cls <- declare_population(
+  clusters = add_level(
+    N = 10,
+    clust_shock = runif(N, 0, 10),
+    indivs_per_clust = ceiling(clust_shock),
+    condition_pr = 0.5
+  ),
+  individual = add_level(
+    N = indivs_per_clust,
+    epsilon = rnorm(N, sd = 3)
+  )
+)
+clustered_POs <- declare_potential_outcomes(Y ~ Z * 0.4 * clust_shock + epsilon)
+
+ht_cl <- declare_estimator(
+  formula = Y ~ Z,
+  # Give your randomization declaration to HT and it sorts it out!
+  declaration = randomizr::declare_ra(clusters = with(data, clusters), prob = 0.5),
+  model = estimatr::horvitz_thompson,
+  label = "Horvitz-Thompson Clustered"
+)
+
+diff_cl_des <- declare_design(
+  diff_size_cls,
+  clustered_POs,
+  clustered_assign,
+  ate,
+  dim_cl,
+  ht_cl
+)
+```
+
+Now let's diagnose!
+
+```{r, eval=rerun, echo = 1:6}
+set.seed(41)
+diff_cl_dig <- diagnose_design(
+  diff_cl_des, 
+  sims = 50000, 
+  diagnosands = my_diagnosands
+)
+diff_cl_dig$simulations <- NULL
+```
+
+```{r, echo = FALSE}
+knitr::kable(
+  t(diff_cl_dig$diagnosands[, c(
+    "Mean of True ATE (Estimand)", "Mean of Estimated ATE",
+    "Bias", "se(Bias)",
+    "Coverage", "se(Coverage)",
+    "Mean Standard Error", "se(Mean Standard Error)"
+  )]),
+  col.names = c("Cluster DIM", "Clust. Horvitz-Thompson"),
+  digits = 3
+)
+```
+
+As you can see, the Horvitz-Thompson estimate is unbiased while the DIM is biased (observe how the standard error of the DIM bias is much smaller than the bias, while the Horvitz-Thompson bias is much smaller than the standard error of the bias).
+
+Unfortunately, the cost of this lower bias is much higher variance. If you look at the Mean Standard Error, you'll see that the standard error for the Horvitz-Thompson estimator is on average over 50 percent greater than the standard error for the biased difference-in-means estimator.
+
+```{r save-rds, eval=rerun, include = FALSE}
+save(simp_bl_dig, corr_bl_dig, simp_cl_dig, diff_cl_dig, file = fname)
+```
+
+
+```{r todo, include=FALSE, eval=FALSE}
+# Matched-pairs
+```

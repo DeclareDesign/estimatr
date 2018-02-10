@@ -31,11 +31,26 @@
 <li>
   <a href="../articles/getting-started.html">Getting Started</a>
 </li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Technical Notes
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
 <li>
-  <a href="../articles/technical-notes.html">Technical Notes</a>
-</li>
-<li>
-  <a href="../articles/benchmarking-estimatr.html">Speed Comparisons</a>
+      <a href="../articles/mathematical-notes.html">Mathematical Notes</a>
+    </li>
+    <li>
+      <a href="../articles/benchmarking-estimatr.html">Simulations - Speed Comparisons</a>
+    </li>
+    <li>
+      <a href="../articles/simulations-ols-variance.html">Simulations - OLS and Variance</a>
+    </li>
+    <li>
+      <a href="../articles/simulations-debiasing-dim.html">Simulations - Debiasing Difference-in-Means</a>
+    </li>
+  </ul>
 </li>
 <li>
   <a href="../reference/index.html">Reference</a>
@@ -215,7 +230,7 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 <a href="#lm_robust" class="anchor"></a><code>lm_robust</code>
 </h2>
 <p>The <code>estimatr</code> package provides <code><a href="../reference/lm_robust.html">lm_robust()</a></code> to quickly fit linear models with the most common variance estimators and degrees of freedom corrections used in social science. You can easily estimate heteroskedastic standard errors, clustered standard errors, and classical standard errors.</p>
-<p>Usage largely mimics <code>lm()</code>, although it defaults to using Eicker-Huber-White robust standard errors, specifically “HC2” standard errors. More about the exact specifications used can be found in the <a href="http://estimatr.declaredesign.org/articles/technical-notes.html#lm_robust-notes">technical notes</a> and more about the estimator can be found on its reference page: <code><a href="../reference/lm_robust.html">lm_robust()</a></code>.</p>
+<p>Usage largely mimics <code>lm()</code>, although it defaults to using Eicker-Huber-White robust standard errors, specifically “HC2” standard errors. More about the exact specifications used can be found in the <a href="http://estimatr.declaredesign.org/articles/mathematical-notes.html#lm_robust-notes">mathematical notes</a> and more about the estimator can be found on its reference page: <code><a href="../reference/lm_robust.html">lm_robust()</a></code>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">lmout &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>z <span class="op">+</span><span class="st"> </span>x, <span class="dt">data =</span> dat)
 <span class="kw">summary</span>(lmout)
 <span class="co">#&gt; </span>
@@ -462,7 +477,7 @@ tex_int &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocu
 <a href="#lm_lin" class="anchor"></a><code>lm_lin</code>
 </h2>
 <p>Adjusting for pre-treatment covariates when using regression to estimate treatment effects is common practice across scientific disciplines. However, <span class="citation">Freedman (<a href="#ref-freedman2008">2008</a>)</span> demonstrated that pre-treatment covariate adjustment biases estimates of average treatment effects. In response, <span class="citation">Lin (<a href="#ref-lin2013">2013</a>)</span> proposed an alternative estimator that would reduce this bias and improve precision. <span class="citation">Lin (<a href="#ref-lin2013">2013</a>)</span> proposes centering all pre-treatment covariates, interacting them with the treatment variable, and regressing the outcome on the treatment, the centered pre-treatment covariates, and all of the interaction terms. This can require a non-trivial amount of data pre-processing.</p>
-<p>To facilitate this, we provide a wrapper that processes the data and estimates the model. We dub this estimator the Lin estimator and it can be accessed using <code><a href="../reference/lm_lin.html">lm_lin()</a></code>. This function is a wrapper for <code><a href="../reference/lm_robust.html">lm_robust()</a></code>, and all arguments that work for <code><a href="../reference/lm_robust.html">lm_robust()</a></code> work here. The only difference is in the second argument <code>covariates</code>, where one specifies a right-sided formula with all of your pre-treatment covariates. Below is an example, and more can be seen on the function reference page <a href="#lm_lin"><code>lm_lin</code></a> and some formal notation can be seen in the <a href="http://estimatr.declaredesign.org/articles/technical-notes.html#lm_lin-notes">technical notes</a>.</p>
+<p>To facilitate this, we provide a wrapper that processes the data and estimates the model. We dub this estimator the Lin estimator and it can be accessed using <code><a href="../reference/lm_lin.html">lm_lin()</a></code>. This function is a wrapper for <code><a href="../reference/lm_robust.html">lm_robust()</a></code>, and all arguments that work for <code><a href="../reference/lm_robust.html">lm_robust()</a></code> work here. The only difference is in the second argument <code>covariates</code>, where one specifies a right-sided formula with all of your pre-treatment covariates. Below is an example, and more can be seen on the function reference page <a href="#lm_lin"><code>lm_lin</code></a> and some formal notation can be seen in the <a href="http://estimatr.declaredesign.org/articles/mathematical-notes.html#lm_lin-notes">mathematical notes</a>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">lml_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_lin.html">lm_lin</a></span>(
   y <span class="op">~</span><span class="st"> </span>z,
   <span class="dt">covariates =</span> <span class="op">~</span><span class="st"> </span>x,
@@ -529,7 +544,7 @@ tex_int &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocu
 <h2 class="hasAnchor">
 <a href="#difference_in_means" class="anchor"></a><code>difference_in_means</code>
 </h2>
-<p>While estimating differences in means may seem straightforward, it can become more complicated in designs with blocks or clusters. In these cases, estimators need to average over within-block effects and estimates of variance have to appropriately adjust for features of a design. We provide support for unit-randomized, cluster-randomized, block-randomized, matched-pair randomized, and matched-pair clustered designs. Usage is similar to usage in regression functions. More examples can be seen on the function reference page, <code><a href="../reference/difference_in_means.html">difference_in_means()</a></code>, and the actual estimators used can be found in the <a href="articles/technical-notes.html#lm_robust-notes">technical notes</a>.</p>
+<p>While estimating differences in means may seem straightforward, it can become more complicated in designs with blocks or clusters. In these cases, estimators need to average over within-block effects and estimates of variance have to appropriately adjust for features of a design. We provide support for unit-randomized, cluster-randomized, block-randomized, matched-pair randomized, and matched-pair clustered designs. Usage is similar to usage in regression functions. More examples can be seen on the function reference page, <code><a href="../reference/difference_in_means.html">difference_in_means()</a></code>, and the actual estimators used can be found in the <a href="http://estimatr.declaredesign.org/articles/mathematical-notes.html#lm_robust-notes">mathematical notes</a>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Simple version</span>
 dim_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/difference_in_means.html">difference_in_means</a></span>(
   y <span class="op">~</span><span class="st"> </span>z,
@@ -598,7 +613,7 @@ dim_mps<span class="op">$</span>design
 <a href="#horvitz_thompson" class="anchor"></a><code>horvitz_thompson</code>
 </h2>
 <p>Horvitz-Thompson estimators can be used to estimate unbiased treatment effects when the randomization is known. This is particularly useful when there are clusters of different sizes being randomized into treatment or when the treatment assignment is complex and there are dependencies across units in the probability of being treated. Horvitz-Thompson estimators require information about the probability each unit is in treatment and control, as well as the joint probability each unit is in the treatment, in the control, and in opposite treatment conditions.</p>
-<p>The estimator we implement here, <code><a href="../reference/horvitz_thompson.html">horvitz_thompson()</a></code> estimates treatment effects for two-armed trials. The easiest way to specify your design and recover the full set of joint and marginal probabilities is to declare your randomization scheme by using <a href="http://randomizr.declaredesign.org/reference/declare_ra.html"><code><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">declare_ra()</a></code></a> from the <a href="randomizr.declaredesign.org"><code>randomizr</code></a> package. I show some examples of how to do that below. Again, the technical details for this estimator can be found <a href="http://estimatr.declaredesign.org/articles/technical-notes.html#horvitz_thompson-notes">here</a> and in references in those notes.</p>
+<p>The estimator we implement here, <code><a href="../reference/horvitz_thompson.html">horvitz_thompson()</a></code> estimates treatment effects for two-armed trials. The easiest way to specify your design and recover the full set of joint and marginal probabilities is to declare your randomization scheme by using <a href="http://randomizr.declaredesign.org/reference/declare_ra.html"><code><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">declare_ra()</a></code></a> from the <a href="http://randomizr.declaredesign.org"><code>randomizr</code></a> package. I show some examples of how to do that below. Again, the technical details for this estimator can be found <a href="http://estimatr.declaredesign.org/articles/mathematical-notes.html#horvitz_thompson-notes">here</a> and in references in those notes.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Complete random assignment declaration</span>
 crs_decl &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">declare_ra</a></span>(
   <span class="dt">N =</span> <span class="kw">nrow</span>(dat),

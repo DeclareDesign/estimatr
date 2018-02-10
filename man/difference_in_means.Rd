@@ -94,7 +94,7 @@ Importantly, if the user specifies weights, the estimation is handed off
 to \code{\link{lm_robust}} with the appropriate robust standard errors
 as weighted difference-in-means estimators are not implemented here.
 More details of the about each of the estimators can be found in the
-\href{estimatr.declaredesign.org/articles/technical-notes.html}{technical notes}.
+\href{http://estimatr.declaredesign.org/articles/mathematical-notes.html}{mathematical notes}.
 }
 \examples{
 

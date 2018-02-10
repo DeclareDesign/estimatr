@@ -91,8 +91,8 @@ passed either as quoted names of columns, as bare column names, or
 as a self-contained vector. Examples of usage can be seen below and in the
 \href{http://estimatr.declaredesign.org/articles/getting-started.html}{Getting Started vignette}.
 
-The technical notes in
-\href{http://estimatr.declaredesign.org/articles/technical-notes.html}{this vignette}
+The mathematical notes in
+\href{http://estimatr.declaredesign.org/articles/mathematical-notes.html}{this vignette}
 specify the exact estimators used by this function.
 The default variance estimators have been chosen largely in accordance with the
 procedures in

@@ -52,7 +52,7 @@
 #' to \code{\link{lm_robust}} with the appropriate robust standard errors
 #' as weighted difference-in-means estimators are not implemented here.
 #' More details of the about each of the estimators can be found in the
-#' \href{estimatr.declaredesign.org/articles/technical-notes.html}{technical notes}.
+#' \href{http://estimatr.declaredesign.org/articles/mathematical-notes.html}{mathematical notes}.
 #'
 #' @return Returns an object of class \code{"difference_in_means"}.
 #'

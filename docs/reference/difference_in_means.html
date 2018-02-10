@@ -54,11 +54,26 @@
         <li>
   <a href="../articles/getting-started.html">Getting Started</a>
 </li>
-<li>
-  <a href="../articles/technical-notes.html">Technical Notes</a>
-</li>
-<li>
-  <a href="../articles/benchmarking-estimatr.html">Speed Comparisons</a>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Technical Notes
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/mathematical-notes.html">Mathematical Notes</a>
+    </li>
+    <li>
+      <a href="../articles/benchmarking-estimatr.html">Simulations - Speed Comparisons</a>
+    </li>
+    <li>
+      <a href="../articles/simulations-ols-variance.html">Simulations - OLS and Variance</a>
+    </li>
+    <li>
+      <a href="../articles/simulations-debiasing-dim.html">Simulations - Debiasing Difference-in-Means</a>
+    </li>
+  </ul>
 </li>
 <li>
   <a href="../reference/index.html">Reference</a>
@@ -224,7 +239,7 @@ a regular Welch's t-test will be performed.</p>
 to <code><a href='lm_robust.html'>lm_robust</a></code> with the appropriate robust standard errors
 as weighted difference-in-means estimators are not implemented here.
 More details of the about each of the estimators can be found in the
-<a href='estimatr.declaredesign.org/articles/technical-notes.html'>technical notes</a>.</p>
+<a href='http://estimatr.declaredesign.org/articles/mathematical-notes.html'>mathematical notes</a>.</p>
     
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
