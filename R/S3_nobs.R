@@ -1,17 +1,5 @@
 #' @export
-nobs.lm_robust <-
-  function(
-    object,
-    ...) {
-
-    return(object$N)
-  }
+nobs.lm_robust <- function(object, ...) object$N
 
 #' @export
-nobs.summary.lm_robust <-
-  function(
-    object,
-    ...) {
-
-    return(object$N)
-  }
+nobs.summary.lm_robust <- nobs.lm_robust

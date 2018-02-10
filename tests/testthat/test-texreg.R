@@ -3,10 +3,11 @@
 context("S3 - texreg builds")
 
 test_that("texreg extension works", {
+  skip_if_not_installed("texreg")
+  library(texreg)
 
   model2 <- lm_robust(extra~group, sleep, clusters = "ID")
 
-  library(texreg)
 
   capture.output(treg <- extract(model2, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE))
   expect_is(
@@ -14,10 +15,7 @@ test_that("texreg extension works", {
     "texreg"
   )
 
-  # juicin the stats
-  expect_error(
-    .onLoad("lm_robust", "lm_robust"),
-    NA
-  )
 
 })
+
+
