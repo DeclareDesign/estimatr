@@ -43,6 +43,7 @@ r_github_packages:
 
 r_packages:
 - broom
+- ggplot2
 - texreg
 
 after_success:
