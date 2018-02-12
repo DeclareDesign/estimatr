@@ -32,24 +32,23 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
   Eigen::MatrixXd XtX_inv, R_inv, Vcov_hat;
   Eigen::VectorXd beta_out(Eigen::VectorXd::Constant(p, ::NA_REAL));
 
-  try {
-    if (try_cholesky) {
-      const Eigen::LLT<Eigen::MatrixXd> llt(Xfullt*Xfull);
 
-      // Catch case where Xfull is rank-deficient
-      if(llt.info() == Eigen::NumericalIssue) {
-        throw std::runtime_error("Possibly non semi-positive definite matrix!");
-      } else {
-        beta_out = llt.solve(Xfull.adjoint() * y);
-        R_inv = llt.matrixL().solve(Eigen::MatrixXd::Identity(p, p));
-        XtX_inv = R_inv.transpose() * R_inv;
-      }
-    } else {
-      throw std::runtime_error("move to QR");
+  bool do_qr = try_cholesky;
+  if (try_cholesky) {
+    const Eigen::LLT<Eigen::MatrixXd> llt(Xfullt*Xfull);
+
+    // Catch case where Xfull is rank-deficient
+    if (llt.info() == Eigen::NumericalIssue) {
+      do_qr = true;
+    } else{
+      beta_out = llt.solve(Xfull.adjoint() * y);
+      R_inv = llt.matrixL().solve(Eigen::MatrixXd::Identity(p, p));
+      XtX_inv = R_inv.transpose() * R_inv;
     }
 
-  } catch (const std::exception& e) {
+  }
 
+  if (do_qr) {
     // Rcout << Xfull << std::endl;
 
     Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR(Xfull);

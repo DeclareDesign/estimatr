@@ -78,7 +78,7 @@ test_that("Test LM Lin", {
 
   lm_rob_out <- lm_robust(Y ~ Z + Z * X1_c + Z * X2_c, data = dat)
 
-  expect_identical(
+  expect_equal(
     tidy(lm_lin_out),
     tidy(lm_rob_out)
   )
@@ -122,20 +122,20 @@ test_that("Test LM Lin", {
       data = dat
     )
 
-    expect_identical(
+    expect_equal(
       tidy(mult_out)[, -1],
       tidy(fact_mult_out)[, -1]
     )
 
     rob_fact_mult_out <- lm_robust(Y ~ factor(Z_mult) * X1_c + factor(Z_mult) * X2_c, data = dat)
 
-    expect_identical(
+    expect_equal(
       tidy(fact_mult_out),
       tidy(rob_fact_mult_out)
     )
 
     # Also works with no intercept!
-    expect_identical(
+    expect_equal(
       tidy(noint_mult_out)[, -1],
       tidy(noint_fact_mult_out)[, -1]
     )
@@ -164,7 +164,7 @@ test_that("Test LM Lin", {
   )
 
   ## Test cluster passes through
-  expect_identical(
+  expect_equal(
     tidy(lm_lin(
       Y ~ Z,
       covariates = ~ X1 + X2,
