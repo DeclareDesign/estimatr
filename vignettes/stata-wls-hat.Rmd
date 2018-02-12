@@ -1,0 +1,163 @@
+---
+title: "How Stata's hat matrix differs with weights"
+author: "Luke Sonnet"
+output:
+  html_document:
+    df_print: paged
+link-citations: yes
+bibliography: estimatr.bib
+vignette: |
+  %\VignetteIndexEntry{How Stata's hat matrix differs with weights} 
+  \usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Researchers use linear regression with heteroskedasticity-robust standard errors. Many social scientists use either Stata or R. One would hope the two would always agree in their estimates. Unfortunately, estimating weighted least squares with HC2 or HC3 robust variance results in different answers across Stata and common approaches in R as well as Python.
+
+The discrepancy is due to differences in how the software estimates the "hat" matrix, on which both HC2 and HC3 variance estimators rely. The short story is that Stata estimates the hat matrix as
+
+\[
+\mathbf{H} = \mathbf{X} (\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1} \mathbf{X}^\top
+\]
+
+while the usual approaches in R, including  [`sandwich`](https://CRAN.R-project.org/package=sandwich) and [`estimatr`](estimatr.declaredesign.org), and Python (e.g. [`statsmodels`](http://www.statsmodels.org/stable/index.html)) estimate the following hat matrix
+
+\[
+\mathbf{H} = \mathbf{X} (\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{W}
+\]
+
+This results in differences when researches estimate HC2 and HC3 variance estimators. The HC1 standard errors, Stata's default, are the same across all packages. The rest of this document just walks through the set-up for the above and demonstrates some results from Stata, R, and Python.
+
+## Weighted least squares
+
+Let's briefly review WLS. Weights are used in linear regression often for two key problems; (1) to model and correct for heteroskedasticity, and (2) to deal with unequal sampling (or treatment) probabilities. In both cases, we take the standard model
+
+\[
+y_i = \mathbf{x}_i^\top \mathbf{\beta} + \epsilon_i,
+\]
+
+where $y_i$ is the $i$th unit's outcome, $\mathbf{x}_i$ is a column vector of covariates, $\mathbf{\beta}$ are the coefficients of interest, and $\epsilon$ is some error, and rescale the model by the square root of that unit's weight, $\sqrt{w_i}$. Our model then becomes
+
+\[
+\frac{y_i}{\sqrt{w_i}} = \frac{\mathbf{x}_i^\top}{\sqrt{w_i}} \mathbf{\beta} + \frac{\epsilon_i}{\sqrt{w_i}}.
+\]
+
+It can be shown that the solution for $\mathbf{\beta}$ is
+
+\[
+\widehat{\mathbf{\beta}} = (\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{W} \mathbf{y},
+\]
+
+where $\mathbf{W}$ is a diagonal matrix where each entry is $w_{i}$, $\mathbf{X}$ is the covariate matrix, and $\mathbf{y}$ is the outcome column vector. Note that all weights have been scaled to sum to 1 (i.e., $\sum_i w_{ii} = 1$). An easy way to get to compute $\widehat{\mathbf{\beta}}$ is to first weight both $\mathbf{X}$ and $\mathbf{y}$ by $\mathbf{W}^s$, which is simply the weight matrix but using instead the square root of the weights. Let's define these rescaled matrices as
+
+$$
+\begin{aligned}
+\widetilde{\mathbf{X}} &= \mathbf{X} \mathbf{W}^s \\
+\widetilde{\mathbf{y}} &= \mathbf{W}^s \mathbf{y} 
+\end{aligned}
+$$
+
+## Heteroskedastic-consistent variance estimators
+
+Turning to variance, the standard sandwich estimator is
+
+\[
+\mathbb{V}[\widehat{\mathbf{\beta}}] = (\mathbf{X}^{\top}\mathbf{X})^{-1} \mathbf{X}^\top \Omega \mathbf{X} (\mathbf{X}^{\top}\mathbf{X})^{-1} 
+\]
+
+where $\Omega$ represents $\mathbb{E}[\mathbf{\epsilon}\mathbf{\epsilon}^\top]$, the variance-covariance matrix of the disturbances. A nice review of the different variance estimators along with their properties can be found in @longervin2000  [[ungated]](http://www.indiana.edu/~jslsoc/files_research/testing_tests/hccm/99TAS.pdf). The HC2 and HC3 estimators, introduced by @mackinnonwhite1985, use the hat matrix as part of the estimation of $\Omega$. The standard hat matrix is written:
+
+\[
+\mathbf{H} = \mathbf{X} (\mathbf{X}^{\top}\mathbf{X})^{-1} \mathbf{X}^\top
+\]
+
+Where $h_{ii}$ are the diagonal elements of the hat matrix, the HC2 variance estimator is
+
+\[
+\mathbb{V}[\widehat{\mathbf{\beta}}]_{HC2} = (\mathbf{X}^{\top}\mathbf{X})^{-1} \mathbf{X}^\top \mathrm{diag}\left[\frac{e^2_i}{1 - h_{ii}}\right] \mathbf{X} (\mathbf{X}^{\top}\mathbf{X})^{-1}  ,
+\]
+
+where $e_i$ are the residuals. The HC3 estimator is very similar,
+
+\[
+\mathbb{V}[\widehat{\mathbf{\beta}}]_{HC2} = (\mathbf{X}^{\top}\mathbf{X})^{-1} \mathbf{X}^\top \mathrm{diag}\left[\frac{e^2_i}{1 - (h_{ii})^2}\right] \mathbf{X} (\mathbf{X}^{\top}\mathbf{X})^{-1} .
+\]
+
+Both rely on the hat matrix. Crucially, this is where Stata and the packages and modules in R and Python disagree. When weights are specified, Stata estimates the hat matrix as
+
+\[
+\mathbf{H}_{Stata} = \mathbf{X} (\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1} \mathbf{X}^\top,
+\]
+
+while the other software uses
+
+\[
+\mathbf{H}_{R} = \mathbf{X} (\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{W}.
+\]
+
+Thus the HC2 and HC3 estimator differ as the values of $h_{ii}$ are quite different. How different are these results? Let's use a little example using `mtcars` a dataset included with R.
+
+```{r}
+# Using estimatr
+library(estimatr)
+lm_robust(
+  mpg ~ hp, 
+  data = mtcars, 
+  weights = wt, 
+  se_type = "HC2"
+)
+```
+
+We can also see that Python's [`statsmodels`](http://www.statsmodels.org/stable/index.html) provides the same results as the methods in R (and in fact they note the difference in an [issue on GitHub](https://github.com/statsmodels/statsmodels/issues/1209)).
+```{python, python.reticulate=FALSE, eval = FALSE}
+import statsmodels.api as sm
+import pandas as pd
+dat = pd.read_csv('mtcars.csv')
+wls_mod = sm.WLS(dat['mpg'], sm.add_constant(dat['hp']), weights = dat['wt'])
+print(wls_mod.fit().HC2_se)
+#> const    2.162818
+#> hp       0.014457
+#> dtype: float64
+```
+
+If we do the same in Stata 13, we get the following output:
+
+```{stata, eval=FALSE}
+insheet using mtcars.csv
+reg mpg hp [aweight=wt], vce(hc2)
+```
+```
+Linear regression                                      Number of obs =      32
+                                                       F(  1,    30) =   19.08
+                                                       Prob > F      =  0.0001
+                                                       R-squared     =  0.5851
+                                                       Root MSE      =  3.6191
+
+------------------------------------------------------------------------------
+             |             Robust HC2
+         mpg |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+          hp |  -.0624941   .0143083    -4.37   0.000    -.0917155   -.0332727
+       _cons |   28.54865   2.155169    13.25   0.000      24.1472    32.95009
+------------------------------------------------------------------------------
+```
+
+Stata's standard errors are somewhat different. The only documentation of Stata's formula for the hat matrix can be found on the [statalist forum here](https://www.statalist.org/forums/forum/general-stata-discussion/general/329653-regress-postestimation-with-weights) and nowhere in the official documentation as far as I can tell.
+
+#### Which should we prefer?
+
+Just because Stata is not documenting their HC2 and HC3 estimator does not mean they're wrong. Also the differences tend to be minor. In fact, it is unclear which we should prefer given that there is not a strong literature supporting one or the other. However, there are several arguments to be made for $\matbf{H}_{R}$.
+
+1. It's the estimator you get when you weight your data by the square root of the weights ($\mathbf{X} \rightarrow \widetilde{\mathbf{X}}$ and $\mathbf{y} \rightarrow \widetilde{\mathbf{y}}$) and fit regular ordinary least squares. If one considers the weighted model as simply a rescaled version of the unweighted moded, then users should prefer $\mathbf{H}_{R}$.
+2. The diagonal of $\mathbf{H}_{R}$ are the weighted leverages [@livalliant2009], while $\mathbf{H}_{Stata}$ would need to be weighted again for the diagonal to recover the weighted leverage.
+
+## References

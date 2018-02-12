@@ -31,6 +31,8 @@ navbar:
         href: articles/simulations-ols-variance.html
       - text: Simulations - Debiasing Difference-in-Means
         href: articles/simulations-debiasing-dim.html
+      - text: How Stata's hat matrix differs with weights
+        href: articles/stata-wls-hat.html
   - text: Reference
     href: reference/index.html
   - text: Ask for Help
