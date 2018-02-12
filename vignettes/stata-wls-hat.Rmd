@@ -118,12 +118,15 @@ lm_robust(
 ```
 
 We can also see that Python's [`statsmodels`](http://www.statsmodels.org/stable/index.html) provides the same results as the methods in R (and in fact they note the difference in an [issue on GitHub](https://github.com/statsmodels/statsmodels/issues/1209)).
-```{python, python.reticulate=FALSE}
+```{python, python.reticulate=FALSE, eval = FALSE}
 import statsmodels.api as sm
 import pandas as pd
 dat = pd.read_csv('mtcars.csv')
 wls_mod = sm.WLS(dat['mpg'], sm.add_constant(dat['hp']), weights = dat['wt'])
 print(wls_mod.fit().HC2_se)
+#> const    2.162818
+#> hp       0.014457
+#> dtype: float64
 ```
 
 If we do the same in Stata 13, we get the following output:
