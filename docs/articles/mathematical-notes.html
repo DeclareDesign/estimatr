@@ -50,6 +50,9 @@
     <li>
       <a href="../articles/simulations-debiasing-dim.html">Simulations - Debiasing Difference-in-Means</a>
     </li>
+    <li>
+      <a href="../articles/stata-wls-hat.html">How Stata's hat matrix differs with weights</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -142,7 +145,7 @@
 \widehat{\beta} =(\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1}\mathbf{X}^{\top}\mathbf{W}\mathbf{y}
 \]</span></p>
 <p>The transformed data are then used in the analysis below, where <span class="math inline">\((\mathbf{X}^{\top}\mathbf{X})^{-1}\)</span> is now <span class="math inline">\((\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1}\)</span> and <span class="math inline">\(\mathbf{X}\)</span> is now <span class="math inline">\(\mathbf{X} \mathrm{sqrt}[W]\)</span>, where <span class="math inline">\(\mathrm{sqrt}[.]\)</span> is an operator that applies a square root to the coefficients of some matrix.</p>
-<p>We should note that this transformation yields the same standard errors as specifying weights using <code>aweight</code> in Stata for the “classical”, “HC0”, and “HC1” (“stata”) variance estimators. Furthermore, in the clustered case, our weighted estimator for the “stata” cluster-robust variance also matches Stata. Thus Stata’s main robust standard error estimators, “HC1” and their clustered estimator, match our package when weights are applied. Nonetheless, Stata uses a slightly different Hat matrix and thus “HC2” and “HC3” estimates in Stata when weights are specified may differ from our estimates.</p>
+<p>We should note that this transformation yields the same standard errors as specifying weights using <code>aweight</code> in Stata for the “classical”, “HC0”, and “HC1” (“stata”) variance estimators. Furthermore, in the clustered case, our weighted estimator for the “stata” cluster-robust variance also matches Stata. Thus Stata’s main robust standard error estimators, “HC1” and their clustered estimator, match our package when weights are applied. Nonetheless, Stata uses a slightly different Hat matrix and thus “HC2” and “HC3” estimates in Stata when weights are specified may differ from our estimates—<a href="http://estimatr.declaredesign.org/articles/stata-wls-hat.html">more on that here</a>.</p>
 </div>
 </div>
 <div id="variance" class="section level3">
