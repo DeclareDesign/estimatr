@@ -27,16 +27,20 @@ test_that("lm robust can work with margins",{
   lmr_sum_marg <- summary(margins::margins(lmr, vce = "delta"))
 
   # Close enough with HC2?
-  expect_true(
-    max(lm_sum_marg[, mv] - lmr_sum_marg[, mv]) < 2e-05
+  expect_equal(
+    lm_sum_marg[, mv],
+    lmr_sum_marg[, mv],
+    tolerance = 0.01
   )
 
   # Close with classical
   lmr_class <- lm_robust(mpg ~ cyl * hp + wt, data = mtcars, se_type = "classical")
   lmrc <- summary(margins(lmr_class, vce = "delta"))
   lmc <- summary(margins(x, vce = "delta"))
-  expect_true(
-    max(lmc[, mv] - lmrc[, mv]) < 2e-05
+  expect_equal(
+    lmc[, mv],
+    lmrc[, mv],
+    tolerance = 0.01
   )
 
   # Works with other vce
