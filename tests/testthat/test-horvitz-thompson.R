@@ -491,7 +491,6 @@ test_that("Works without variation in treatment", {
     horvitz_thompson(y ~ t, condition_pr_mat = cpm),
     NA
   )
-
 })
 
 test_that("multi-valued treatments not allowed in declaration", {

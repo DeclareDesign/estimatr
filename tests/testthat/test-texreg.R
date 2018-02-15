@@ -14,8 +14,4 @@ test_that("texreg extension works", {
     treg,
     "texreg"
   )
-
-
 })
-
-

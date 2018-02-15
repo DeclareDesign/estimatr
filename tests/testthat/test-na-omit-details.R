@@ -24,7 +24,6 @@ test_that("Row names are set correctly", {
 })
 
 test_that("Logic for nested dfs and lists holds", {
-
   df$X <- list(x = c(NA, 2:nrow(df)))
   df$Xmat <- matrix(rep(c(1, NA, 3:nrow(df)), 2), nrow(df))
 

@@ -227,7 +227,6 @@ test_that("coef and confint work", {
       nobs(summary(lmro))
     )
   )
-
 })
 
 test_that("predict works", {

@@ -9,12 +9,13 @@ print.lm_robust <-
 #' @export
 print.summary.lm_robust <-
   function(
-    x,
-    digits = max(3L, getOption("digits") - 3L),
-    ...) {
-
-    cat("\nCall:\n", paste(deparse(x$call, nlines = 5), sep = "\n", collapse = "\n"),
-        "\n\n", sep = "")
+           x,
+           digits = max(3L, getOption("digits") - 3L),
+           ...) {
+    cat(
+      "\nCall:\n", paste(deparse(x$call, nlines = 5), sep = "\n", collapse = "\n"),
+      "\n\n", sep = ""
+    )
     if (x$weighted) {
       cat("Weighted, ")
     }
@@ -22,8 +23,10 @@ print.summary.lm_robust <-
 
     if (x$rank < x$k) {
       singularities <- x$k - x$rank
-      cat("\nCoefficients: (", singularities, " not defined because the design matrix is rank deficient)\n",
-          sep = "")
+      cat(
+        "\nCoefficients: (", singularities, " not defined because the design matrix is rank deficient)\n",
+        sep = ""
+      )
     } else {
       cat("\nCoefficients:\n")
     }
@@ -31,11 +34,10 @@ print.summary.lm_robust <-
     print(x$coefficients, digits = digits)
 
     if (!is.null(x$fstatistic)) {
-
       cat(
         "\nMultiple R-squared: ", formatC(x$r.squared, digits = digits),
         ",\tAdjusted R-squared: ", formatC(x$adj.r.squared, digits = digits),
-        "\nF-statistic:", formatC(x$fstatistic[1L],digits = digits),
+        "\nF-statistic:", formatC(x$fstatistic[1L], digits = digits),
         "on", x$fstatistic[2L], "and", x$fstatistic[3L],
         "DF,  p-value:",
         format.pval(pf(
