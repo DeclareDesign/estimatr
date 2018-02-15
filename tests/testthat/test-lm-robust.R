@@ -68,6 +68,23 @@ test_that("lm robust se", {
   # No weights first
   test_lm_robust_variance(NULL)
   test_lm_robust_variance(dat$W)
+
+  # works with formula in a variable (always worked)
+  form <- Y ~ Z
+  lm_form <- lm_robust(form, data = dat)
+
+  # works with formula inside a function (didn't work before 0.4.0)
+  f <- function(data) {
+    form2 <- Y ~ Z
+    return(lm_robust(form2, data = data))
+  }
+  lm_f_form <- f(dat)
+
+  expect_equal(
+    rmcall(lm_form),
+    rmcall(lm_f_form)
+  )
+
 })
 
 test_that("lm robust works with missingness", {
