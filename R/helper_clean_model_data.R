@@ -81,7 +81,7 @@ clean_model_data <- function(formula,
   # so we can add a check that prevents slowing down large
   # lm_robust calls
   if (ncol(mf) < 6) {
-    ret[["original_treatment"]] <- mf[, colnames(mf) == all.vars(formula[[3]])[1]]
+    ret[["original_treatment"]] <- mf[, colnames(mf) == all.vars(terms(mf)[[3]])[1]]
   }
 
   if (!missing(weights)) {
