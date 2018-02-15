@@ -55,7 +55,7 @@ The function
 \[
 \epsilon_i \overset{i.i.d.}{\sim} N(0, \sigma^2),
 \]
-encodes the assumption of homoskedaticity. Because of these homoskedastic errors, we know that the true variance of the coefficients with fixed covariates is
+encodes the assumption of homoskedasticity. Because of these homoskedastic errors, we know that the true variance of the coefficients with fixed covariates is
 
 \[
 \mathbb{V}[\widehat{\beta}] = \sigma^2 (\mathbf{X}^\top \mathbf{X})^{-1},

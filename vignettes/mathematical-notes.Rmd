@@ -45,7 +45,7 @@ The default estimators have been selected for efficiency in large samples and lo
 \widehat{\beta} =(\mathbf{X}^{\top}\mathbf{X})^{-1}\mathbf{X}^{\top}\mathbf{y}
 \]
 
-Our algorithm solves the least squares problem using a rank-revealing column-pivoting QR factorization that eliminates the need to invert $(\mathbf{X}^{\top}\mathbf{X})^{-1}$ explicitly and behaves much like the default `lm` function in R. However, when $\mathbf{X}$ is rank deficient, there are certain conditions under which the QR factorization algorithm we use, from the Eigen C++ library, drops different coefficients from the output than the default `lm` function. In general, users should avoid specifing models with rank-deficiencies. In fact, if users are certain their data are not rank deficient, they can improve the speed of `lm_robust` by setting `try_cholesky = TRUE`. This replaces the QR factorization with a Cholesky factorization that is only guaranteed to work $\mathbf{X}$ is of full rank.
+Our algorithm solves the least squares problem using a rank-revealing column-pivoting QR factorization that eliminates the need to invert $(\mathbf{X}^{\top}\mathbf{X})^{-1}$ explicitly and behaves much like the default `lm` function in R. However, when $\mathbf{X}$ is rank deficient, there are certain conditions under which the QR factorization algorithm we use, from the Eigen C++ library, drops different coefficients from the output than the default `lm` function. In general, users should avoid specifying models with rank-deficiencies. In fact, if users are certain their data are not rank deficient, they can improve the speed of `lm_robust` by setting `try_cholesky = TRUE`. This replaces the QR factorization with a Cholesky factorization that is only guaranteed to work $\mathbf{X}$ is of full rank.
 
 #### Weights
 
@@ -97,7 +97,7 @@ For cluster-robust inference, we provide several estimators that are essentially
 * $\mathbf{e}_s$ is the elements of the residual matrix $\mathbf{e}$ in cluster $s$, or $\mathbf{e}_s = \mathbf{y}_s - \mathbf{X}_s \widehat{\beta}$
 * $\mathbf{A}_s$ and $\mathbf{p}$ are defined in the notes below
 
-**Further notes on CR2:** The variance estimator we implement is shown in equations (4) and (5) in @pustejovskytipton2016 and equation (11), where we set $\mathbf{\Phi}$ to be $I$, following @bellmccaffrey2002. Furthernote that the @pustejovskytipton2016 CR2 estimator and the  @bellmccaffrey2002 estimator are identical when $\mathbf{B_s}$ is full rank. It could be rank-deficient if there were dummy variables, or fixed effects, that were also your clusters. In this case, the original @bellmccaffrey2002 estimator could not be computed. You can see the simpler @bellmccaffrey2002 estimator written up plainly on page 709 of @imbenskolesar2016 along with the degrees of freedom denoted as $K_{BM}$.
+**Further notes on CR2:** The variance estimator we implement is shown in equations (4) and (5) in @pustejovskytipton2016 and equation (11), where we set $\mathbf{\Phi}$ to be $I$, following @bellmccaffrey2002. Further note that the @pustejovskytipton2016 CR2 estimator and the  @bellmccaffrey2002 estimator are identical when $\mathbf{B_s}$ is full rank. It could be rank-deficient if there were dummy variables, or fixed effects, that were also your clusters. In this case, the original @bellmccaffrey2002 estimator could not be computed. You can see the simpler @bellmccaffrey2002 estimator written up plainly on page 709 of @imbenskolesar2016 along with the degrees of freedom denoted as $K_{BM}$.
 
 In the CR2 variance calculation, we get $\mathbf{A}_s$ as follows:
 
@@ -268,7 +268,7 @@ $$
 
 **Clustered designs**
 
-For clustered designs, we use the following collpased estimator by setting `collapsed = TRUE`. Here, $M$ is the total number of clusters, $y_k$ is the total of the outcomes $y_i$ for all $i$ units in cluster $k$, $\pi_zk$ is the marginal probability of cluster $k$ being in condition $z \in \{0, 1\}$, and $z_k$ and $\pi_{zkwl}$ are defined analogously. Warning! If one passes `condition_pr_mat` to `horvitz_thompson` for a clustered design, but not `clusters`, the function will not use the collapsed estimator the the variance estimate will be innacurate.
+For clustered designs, we use the following collapsed estimator by setting `collapsed = TRUE`. Here, $M$ is the total number of clusters, $y_k$ is the total of the outcomes $y_i$ for all $i$ units in cluster $k$, $\pi_zk$ is the marginal probability of cluster $k$ being in condition $z \in \{0, 1\}$, and $z_k$ and $\pi_{zkwl}$ are defined analogously. Warning! If one passes `condition_pr_mat` to `horvitz_thompson` for a clustered design, but not `clusters`, the function will not use the collapsed estimator the the variance estimate will be inaccurate.
 
 $$
 \begin{aligned}
@@ -301,6 +301,6 @@ Theory on hypothesis testing with the Horvitz-Thompson estimator is yet to be de
 \mathrm{CI}^{1-\alpha} = \left(\widehat{\tau} + z_{\alpha/2} \sqrt{\widehat{\mathbb{V}}[\widehat{\tau}]}, \widehat{\tau} + z_{1 - \alpha/2} \sqrt{\widehat{\mathbb{V}}[\widehat{\tau}]}\right)
 \]
 
-The associated p-values for a two-sided null hypothesis test are computed using a normal disribution and the aforementioned significance level $\alpha$.
+The associated p-values for a two-sided null hypothesis test are computed using a normal distribution and the aforementioned significance level $\alpha$.
 
 # References
