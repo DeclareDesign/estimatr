@@ -1,3 +1,5 @@
+This submission fixes a small bug in the version submitted around 20 hours ago. The comments for that submission are maintained below:
+
 The package is being resubmitted in response to several problems and errors found in the CRAN checks.
 
 First, the package had tests ERROR on Solaris. These tests have been rewritten with greater tolerance and without reliance on small, fixed numeric values. Unfortunately, we were unable to check the new tests ourselves as the Solaris platform on r-hub was failing to compile RcppEigen.
