@@ -8,6 +8,7 @@ index.md
 appveyor.yml
 ^appveyor\.yml$
 CONDUCT.md
+^vignettes$
 ^docs$
 ^docs/templates/.*$
 deploy.sh
@@ -15,13 +16,10 @@ _pkgdown.yml
 update_repo.R
 ^data-raw$
 ^_pkgdown\.yml$
-^estimatr_.*\.tar\.gz$
 ^tests/testthat/mtcars\.csv$
 ^tests/testthat/run-stata-models\.do$
 ^tests/testthat/test-broom\.R$
+^estimatr_.*\.tar\.gz$
 ^tests/testthat/test-texreg\.R$
 ^cran-comments\.md$
-^vignettes/simulations-ols-variance\.Rmd$
-^vignettes/simulations-debiasing-dim\.Rmd$
-^vignettes/simulations.*\.rda$
-^vignettes/stata-wls-hat\.Rmd$
+

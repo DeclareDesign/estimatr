@@ -1,11 +1,9 @@
-This package 'Suggests' the fabricatr package which was recently added to CRAN. As a result, none of the binaries are available yet and causes errors in environments where packages must be installed from binary, such as R-release on win-builder.r-project.org.
+The package is being resubmitted in response to several problems and errors found in the CRAN checks.
 
-One other NOTE may arise about possible misspellings in DESCRIPTION:
+First, the package had tests ERROR on Solaris. These tests have been rewritten with greater tolerance and without reliance on small, fixed numeric values. Unfortunately, we were unable to check the new tests ourselves as the Solaris platform on r-hub was failing to compile RcppEigen.
 
-```
-Possibly mis-spelled words in DESCRIPTION:
-  Horvitz (12:285)
-  pre (12:233)
-```
+Second, there were tests that failed without long doubles enabled. These tests have been rewritten to only require equivalence and should pass.
 
-Horvitz-Thompson is the commonly used name of an estimator that we implement, and pre-treatment, in its hyphenated form, is a commonly used phrase in the statistical literature.
+Third, Valgrind was erroring regarding some uninitialized values. All of the tests now pass without valgrind errors on Linux system running CentOS release 6.9 and R 3.4.2. Unfortunately, some of the tests were quite slow and running R CMD check on the package with "--use-valgrind" was not possible on r-hub without a timeout.
+
+Other minor changes have been made, but this is largely just a patch for these issues which we were warned about. As we were told to resubmit by March 10, we wanted to try to resolve them ASAP and resubmit ASAP.
