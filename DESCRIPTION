@@ -27,9 +27,6 @@ Suggests:
     RcppEigen,
     fabricatr,
     randomizr (>= 0.8),
-    knitr,
-    rmarkdown,
     margins,
     prediction
 Enhances: broom, texreg
-VignetteBuilder: knitr

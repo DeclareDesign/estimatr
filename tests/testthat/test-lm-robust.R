@@ -286,17 +286,16 @@ test_that("lm robust works with rank-deficient X", {
 })
 
 test_that("r squared is right", {
-
   lmo <- summary(lm(mpg ~ hp, mtcars))
   lmow <- summary(lm(mpg ~ hp, mtcars, weights = wt))
-  lmon <- summary(lm(mpg ~ hp-1, mtcars))
-  lmown <- summary(lm(mpg ~ hp-1, mtcars, weights = wt))
+  lmon <- summary(lm(mpg ~ hp - 1, mtcars))
+  lmown <- summary(lm(mpg ~ hp - 1, mtcars, weights = wt))
 
   lmro <- lm_robust(mpg ~ hp, mtcars)
   lmrow <- lm_robust(mpg ~ hp, mtcars, weights = wt)
-  lmron <- lm_robust(mpg ~ hp-1, mtcars)
-  lmrown <- lm_robust(mpg ~ hp-1, mtcars, weights = wt)
-  lmrclust <- lm_robust(mpg ~ hp-1, mtcars, weights = wt, clusters = carb) # for good measure
+  lmron <- lm_robust(mpg ~ hp - 1, mtcars)
+  lmrown <- lm_robust(mpg ~ hp - 1, mtcars, weights = wt)
+  lmrclust <- lm_robust(mpg ~ hp - 1, mtcars, weights = wt, clusters = carb) # for good measure
 
   expect_equal(
     c(lmo$r.squared, lmo$adj.r.squared, lmo$fstatistic),
@@ -323,4 +322,3 @@ test_that("r squared is right", {
     c(lmrclust$r.squared, lmrclust$adj.r.squared, lmrclust$fstatistic)
   )
 })
-
