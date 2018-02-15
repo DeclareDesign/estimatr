@@ -7,3 +7,5 @@ Second, there were tests that failed without long doubles enabled. These tests h
 Third, Valgrind was erroring regarding some uninitialized values. All of the tests now pass without valgrind errors on Linux system running CentOS release 6.9 and R 3.4.2. Unfortunately, some of the tests were quite slow and running R CMD check on the package with "--use-valgrind" was not possible on r-hub without a timeout.
 
 Other minor changes have been made, but this is largely just a patch for these issues which we were warned about. As we were told to resubmit by March 10, we wanted to try to resolve them ASAP and resubmit ASAP.
+
+Also, as before, the NOTEs regarding misspellings in the DESCRIPTION file are false-positives.
