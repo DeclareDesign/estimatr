@@ -220,7 +220,7 @@ ht_cl_manual <- horvitz_thompson(
 ht_cl
 ht_cl_manual
 
-# Blcoked estimators specified similarly
+# Blocked estimators specified similarly
 
 #----------
 # More complicated assignment
