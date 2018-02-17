@@ -26,7 +26,7 @@ lm_robust_fit <- function(y,
                           Xfirst = 1) {
 
   ## allowable se_types with clustering
-  cl_se_types <- c("CR0", "CR2", "stata")
+  cl_se_types <- c("CR0", "CR2", "stata", "iv_stata")
   rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata", "iv_classical", "iv_HC0")
 
   ## Parse cluster variable
@@ -74,8 +74,13 @@ lm_robust_fit <- function(y,
 
   if (!is.null(cluster)) {
     cl_ord <- order(cluster)
-    y <- y[cl_ord]
-    X <- X[cl_ord, , drop = FALSE]
+    y <- as.matrix(y)[cl_ord, , drop = FALSE]
+    if (length(Xfirst) > 1) {
+      print('reorder xfirst')
+      Xfirst <- Xfirst[cl_ord, , drop = FALSE]
+    } else {
+      X <- X[cl_ord, , drop = FALSE]
+    }
     cluster <- cluster[cl_ord]
     J <- length(unique(cluster))
     if (!is.null(weights)) {
@@ -152,6 +157,7 @@ lm_robust_fit <- function(y,
   # Build return object
   # ----------
 
+  print(fit)
   return_list <- add_cis_pvals(return_frame, alpha, ci && se_type != "none")
 
   return_list[["coefficient_name"]] <- variable_names

@@ -172,7 +172,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
     fit = X * beta_hat;
     // Rcpp::Rcout << Xfirst << std::endl;
     // Rcpp::Rcout << beta_hat << std::endl;
-    if ((type == "iv_classical") | (type == "iv_HC0")) {
+    if ((type == "iv_classical") | (type == "iv_HC0") | (type == "iv_stata")) {
       ei = y - Xfirst * beta_hat;
     } else {
       ei = y - fit;
@@ -223,7 +223,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
         Vcov_hat = XtX_inv * (X.transpose() * hii.matrix().asDiagonal()) * X * XtX_inv;
       }
 
-    } else if ( (type == "stata") || (type == "CR2") || (type == "CR0") ) {
+    } else if ( (type == "stata") || (type == "iv_stata") || (type == "CR2") || (type == "CR0") ) {
 
       Eigen::Map<Eigen::ArrayXi> clusters = Rcpp::as<Eigen::Map<Eigen::ArrayXi> >(cluster);
 
@@ -239,7 +239,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
           // Unweighted residuals
           cr2_eis = y.array() / weights - (Xoriginal * beta_hat).array();
         } else {
-          cr2_eis = ei;
+          cr2_eis = ei.col(0);
         }
 
         Eigen::MatrixXd tutX(J, r);
@@ -405,7 +405,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
             }
           }
         }
-      } else if ((type == "stata") || (type == "CR0")) {
+      } else if ((type == "stata") || (type == "iv_stata") || (type == "CR0")) {
 
         Eigen::MatrixXd XteetX = Eigen::MatrixXd::Zero(r, r);
         double current_cluster = clusters(0);
