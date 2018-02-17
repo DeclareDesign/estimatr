@@ -172,7 +172,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
     fit = X * beta_hat;
     // Rcpp::Rcout << Xfirst << std::endl;
     // Rcpp::Rcout << beta_hat << std::endl;
-    if (type == "iv_classical") {
+    if ((type == "iv_classical") | (type == "iv_HC0")) {
       ei = y - Xfirst * beta_hat;
     } else {
       ei = y - fit;
@@ -188,13 +188,15 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
 
       Vcov_hat = s2 * XtX_inv;
 
-    } else if ( (type == "HC0") | (type == "HC1") | (type == "HC2") | (type == "HC3") ) {
+    } else if ( (type == "HC0") | (type == "iv_HC0") | (type == "HC1") | (type == "HC2") | (type == "HC3") ) {
 
       // hat values
-      Eigen::ArrayXd ei2 = ei.array().pow(2);
+      Eigen::ArrayXd ei2 = ei.col(0).array().pow(2);
 
-      if(type == "HC0"){
+      if ((type == "HC0") | (type == "iv_HC0")) {
 
+        // Rcpp::Rcout << "bread: " << std::endl << XtX_inv << std::endl;
+        // Rcpp::Rcout << "meat: " << std::endl <<  (X.transpose() * ei2.matrix().asDiagonal()) * X << std::endl;
         Vcov_hat = XtX_inv * (X.transpose() * ei2.matrix().asDiagonal()) * X * XtX_inv;
 
       } else if (type == "HC1") {

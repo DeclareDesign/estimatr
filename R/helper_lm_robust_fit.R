@@ -27,7 +27,7 @@ lm_robust_fit <- function(y,
 
   ## allowable se_types with clustering
   cl_se_types <- c("CR0", "CR2", "stata")
-  rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata", "iv_classical")
+  rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata", "iv_classical", "iv_HC0")
 
   ## Parse cluster variable
   if (!is.null(cluster)) {
