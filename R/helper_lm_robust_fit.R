@@ -76,7 +76,7 @@ lm_robust_fit <- function(y,
     cl_ord <- order(cluster)
     y <- as.matrix(y)[cl_ord, , drop = FALSE]
     if (length(Xfirst) > 1) {
-      print('reorder xfirst')
+      #print('reorder xfirst')
       Xfirst <- Xfirst[cl_ord, , drop = FALSE]
     } else {
       X <- X[cl_ord, , drop = FALSE]

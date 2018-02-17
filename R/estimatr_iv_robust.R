@@ -25,7 +25,7 @@ iv_robust <- function(formula,
   # -----------
   # First stage
   # -----------
-  print(model_data)
+  # print(model_data)
   first_return <-
     lm_robust_fit(
       y = model_data$design_matrix,
