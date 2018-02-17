@@ -22,11 +22,12 @@ lm_robust_fit <- function(y,
                           alpha,
                           return_vcov,
                           try_cholesky,
-                          has_int) {
+                          has_int,
+                          Xfirst = 1) {
 
   ## allowable se_types with clustering
   cl_se_types <- c("CR0", "CR2", "stata")
-  rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata")
+  rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata", "iv_classical")
 
   ## Parse cluster variable
   if (!is.null(cluster)) {
@@ -108,7 +109,9 @@ lm_robust_fit <- function(y,
       ci = ci,
       type = se_type,
       which_covs = which_covs,
-      try_cholesky = try_cholesky
+      try_cholesky = try_cholesky,
+      fit_resid = TRUE,
+      Xfirst = Xfirst
     )
 
 
@@ -155,6 +158,9 @@ lm_robust_fit <- function(y,
   return_list[["outcome"]] <- NA_character_
   return_list[["alpha"]] <- alpha
   return_list[["se_type"]] <- se_type
+
+  return_list[["fitted.values"]] <- fit$fit
+  return_list[["residuals"]] <- fit$residuals
 
   return_list[["weighted"]] <- !is.null(weights)
   if (return_list[["weighted"]]) {

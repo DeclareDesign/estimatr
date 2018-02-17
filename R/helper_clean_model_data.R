@@ -73,7 +73,8 @@ clean_model_data <- function(formula,
   # TODO when using . it adds weights and clusters to model!
   ret <- list(
     outcome = model.response(mf, type = "numeric"),
-    design_matrix = model.matrix.default(terms(mf), data = mf)
+    design_matrix = eval(model.matrix(terms(formula, rhs = 1), data = mf), where),
+    instrument_matrix = eval(model.matrix(terms(formula, rhs = 2), data = mf), where)
   )
 
   # Keep the original treatment vector for DiM and HT

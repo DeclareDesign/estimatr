@@ -15,7 +15,7 @@ Eigen::MatrixXd AtA(const Eigen::MatrixXd& A) {
 
 // [[Rcpp::export]]
 List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
-               const Eigen::Map<Eigen::VectorXd>& y,
+               const Eigen::Map<Eigen::MatrixXd>& y,
                const Rcpp::Nullable<Rcpp::NumericMatrix> & Xunweighted,
                const Rcpp::Nullable<Rcpp::NumericVector> & weight,
                const double & weight_mean,
@@ -24,15 +24,18 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
                const bool & ci,
                const String type,
                const std::vector<bool> & which_covs,
-               const bool& try_cholesky) {
+               const bool& try_cholesky,
+               const bool& fit_resid,
+               const Eigen::Map<Eigen::MatrixXd>& Xfirst) {
 
-  const int n(Xfull.rows()), p(Xfull.cols());
+  const int n(Xfull.rows()), p(Xfull.cols()), ny(y.cols());
   int r = p;
   Eigen::MatrixXd Xfullt(Xfull.transpose());
   Eigen::MatrixXd XtX_inv, R_inv, Vcov_hat;
-  Eigen::VectorXd beta_out(Eigen::VectorXd::Constant(p, ::NA_REAL));
+  Eigen::MatrixXd beta_out(Eigen::MatrixXd::Constant(p, ny, ::NA_REAL));
 
 
+  //Rcpp::Rcout << y << std::endl;
   bool do_qr = !try_cholesky;
   if (try_cholesky) {
     const Eigen::LLT<Eigen::MatrixXd> llt(Xfullt*Xfull);
@@ -61,12 +64,12 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
     // Rcout << "R_inv:" << std::endl;
     // Rcout << R_inv << std::endl;
 
-    Eigen::VectorXd effects(PQR.householderQ().adjoint() * y);
+    Eigen::MatrixXd effects(PQR.householderQ().adjoint() * y);
 
     // Rcout << "effects:" << std::endl;
     // Rcout << effects << std::endl;
 
-    beta_out.head(r) = R_inv * effects.head(r);
+    beta_out.topRows(r) = R_inv * effects.topRows(r);
     // Rcout << "beta_out:" << std::endl;
     // Rcout << beta_out << std::endl;
     beta_out = Pmat * beta_out;
@@ -113,7 +116,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
   Eigen::MatrixXd Xoriginal(n, r);
   Eigen::MatrixXd Xoriginalfull(n, p);
   Eigen::MatrixXd X(n, r);
-  Eigen::VectorXd beta_hat(r);
+  Eigen::MatrixXd beta_hat(r, ny);
   Eigen::ArrayXd weights(n);
   bool weighted = Xunweighted.isNotNull();
   if (weighted) {
@@ -127,17 +130,19 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
 
     int j = 0;
     for (int i = 0; i < p; i++) {
-      // Rcout << "isnan: " << std::isnan(beta_out(i)) << std::endl;
-      if (!std::isnan(beta_out(i))) {
-        // Rcout << "not NA: " << i << std::endl;
-        beta_hat(j) = beta_out(i);
-        X.col(j) = Xfull.col(i);
-        if (weighted) {
-          Xoriginal.col(j) = Xoriginalfull.col(i);
-        } else {
-          Xoriginal.col(j) = Xfull.col(i);
+      for (int ii = 0; ii < ny; ii++) {
+        // Rcout << "isnan: " << std::isnan(beta_out(i)) << std::endl;
+        if (!std::isnan(beta_out(i, ii))) {
+          // Rcout << "not NA: " << i << std::endl;
+          beta_hat(j, ii) = beta_out(i, ii);
+          X.col(j) = Xfull.col(i);
+          if (weighted) {
+            Xoriginal.col(j) = Xoriginalfull.col(i);
+          } else {
+            Xoriginal.col(j) = Xfull.col(i);
+          }
+          j++;
         }
-        j++;
       }
     }
   } else {
@@ -155,19 +160,31 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
   // Rcout << "beta_hat:" << beta_hat << std::endl << std::endl;
 
   Eigen::VectorXd dof = Eigen::VectorXd::Constant(r, -99.0);
-  Eigen::VectorXd ei = Eigen::VectorXd::Constant(n, -99.0);
+  Eigen::MatrixXd ei = Eigen::MatrixXd::Constant(n, ny, -99.0);
+  Eigen::MatrixXd fit = Eigen::MatrixXd::Constant(n, ny, -99.0);
+
   double s2 = -99.0;
 
   // Standard error calculations
-  if (type != "none"){
+  if ((type != "none") | fit_resid) {
 
     // residuals
-    ei = y - X * beta_hat;
-    s2 = ei.dot(ei)/(n - r);
+    fit = X * beta_hat;
+    // Rcpp::Rcout << Xfirst << std::endl;
+    // Rcpp::Rcout << beta_hat << std::endl;
+    if (type == "iv_classical") {
+      ei = y - Xfirst * beta_hat;
+    } else {
+      ei = y - fit;
+    }
+    if (ny == 1) {
+      s2 = ei.col(0).dot(ei.col(0))/(n - r);
+    }
 
     // Rcout << ei << std::endl;
+    // Rcout << s2 << std::endl;
 
-    if (type == "classical") {
+    if ((type == "classical") | (type == "iv_classical")) {
 
       Vcov_hat = s2 * XtX_inv;
 
@@ -402,7 +419,8 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
             // Rcout << len << std::endl << std::endl;
             // Rcout <<  X.transpose().block(0, start_pos, r, len) << std::endl << std::endl;
             // Rcout << "XteetX: " << AtA(ei.segment(start_pos, len).transpose() * X.block(start_pos, 0, len, r)) << std::endl;
-            XteetX += AtA(ei.segment(start_pos, len).transpose() * X.block(start_pos, 0, len, r));
+            // TODO fix for one outcome at a time
+            XteetX += AtA(ei.block(start_pos, 0, len, ny).transpose() * X.block(start_pos, 0, len, r));
 
             if (i < n) {
               current_cluster = clusters(i);
@@ -450,5 +468,6 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
                       _["dof"]= dof,
                       _["res_var"]= s2,
                       _["XtX_inv"]= XtX_inv,
+                      _["fitted"] = fit,
                       _["residuals"]= ei);
 }

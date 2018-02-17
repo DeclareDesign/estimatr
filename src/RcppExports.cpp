@@ -45,13 +45,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // lm_solver
-List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull, const Eigen::Map<Eigen::VectorXd>& y, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Rcpp::Nullable<Rcpp::NumericVector>& weight, const double& weight_mean, const Rcpp::Nullable<Rcpp::IntegerVector>& cluster, const int& J, const bool& ci, const String type, const std::vector<bool>& which_covs, const bool& try_cholesky);
-RcppExport SEXP _estimatr_lm_solver(SEXP XfullSEXP, SEXP ySEXP, SEXP XunweightedSEXP, SEXP weightSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP typeSEXP, SEXP which_covsSEXP, SEXP try_choleskySEXP) {
+List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull, const Eigen::Map<Eigen::MatrixXd>& y, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Rcpp::Nullable<Rcpp::NumericVector>& weight, const double& weight_mean, const Rcpp::Nullable<Rcpp::IntegerVector>& cluster, const int& J, const bool& ci, const String type, const std::vector<bool>& which_covs, const bool& try_cholesky, const bool& fit_resid, const Eigen::Map<Eigen::MatrixXd>& Xfirst);
+RcppExport SEXP _estimatr_lm_solver(SEXP XfullSEXP, SEXP ySEXP, SEXP XunweightedSEXP, SEXP weightSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP typeSEXP, SEXP which_covsSEXP, SEXP try_choleskySEXP, SEXP fit_residSEXP, SEXP XfirstSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd>& >::type Xfull(XfullSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd>& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type y(ySEXP);
     Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericMatrix>& >::type Xunweighted(XunweightedSEXP);
     Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericVector>& >::type weight(weightSEXP);
     Rcpp::traits::input_parameter< const double& >::type weight_mean(weight_meanSEXP);
@@ -61,7 +61,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const String >::type type(typeSEXP);
     Rcpp::traits::input_parameter< const std::vector<bool>& >::type which_covs(which_covsSEXP);
     Rcpp::traits::input_parameter< const bool& >::type try_cholesky(try_choleskySEXP);
-    rcpp_result_gen = Rcpp::wrap(lm_solver(Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, try_cholesky));
+    Rcpp::traits::input_parameter< const bool& >::type fit_resid(fit_residSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type Xfirst(XfirstSEXP);
+    rcpp_result_gen = Rcpp::wrap(lm_solver(Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, try_cholesky, fit_resid, Xfirst));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -70,7 +72,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_estimatr_ht_covar_partial", (DL_FUNC) &_estimatr_ht_covar_partial, 5},
     {"_estimatr_ht_var_partial", (DL_FUNC) &_estimatr_ht_var_partial, 2},
     {"_estimatr_AtA", (DL_FUNC) &_estimatr_AtA, 1},
-    {"_estimatr_lm_solver", (DL_FUNC) &_estimatr_lm_solver, 11},
+    {"_estimatr_lm_solver", (DL_FUNC) &_estimatr_lm_solver, 13},
     {NULL, NULL, 0}
 };
 

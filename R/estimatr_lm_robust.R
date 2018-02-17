@@ -204,6 +204,7 @@ lm_robust <- function(formula,
     )
   ))
 
+  #print(model_data)
   return_list <-
     lm_robust_fit(
       y = model_data$outcome,
