@@ -1,40 +1,30 @@
 # Internal method to process data
-clean_model_data <- function(formula,
-                             data,
-                             subset,
-                             weights,
-                             block,
-                             condition_pr,
-                             cluster,
-                             where) {
-  mf <- match.call()
-  mf <- mf[c(1, match(names(formals(sys.function())), names(mf), 0L))] # drop formals left missing
-  mf[[1]] <- quote(stats::model.frame)
-  mf[["where"]] <- NULL # drop the where argument
+clean_model_data <- function(data, datargs) {
+
+  for (da in names(datargs)) {
+    if (quo_is_missing(datargs[[da]])) {
+      datargs[[da]] <- NULL
+    } else {
+      if (is.character(quo_get_expr(datargs[[da]]))) {
+        datargs[[da]] <- quo_set_expr(
+          datargs[[da]],
+          sym(quo_get_expr(datargs[[da]]))
+        )
+      }
+    }
+  }
+
+  # Get expressions
+  mf <- lapply(datargs, quo_get_expr)
+  # if data exists, add it
+  if (!quo_is_missing(data)) {
+    mf[["data"]] <- expr(eval_tidy(data))
+  }
+
   mf[["na.action"]] <- quote(estimatr::na.omit_detailed.data.frame)
 
-  # Weights and clusters may be quoted...
-  # TODO helper function
-  if (!is.null(mf$weights) && is.character(mf[["weights"]])) {
-    mf[["weights"]] <- as.symbol(mf[["weights"]])
-  }
-
-  # Clusters...
-  if (!is.null(mf$cluster) && is.character(mf[["cluster"]])) {
-    mf[["cluster"]] <- as.symbol(mf[["cluster"]])
-  }
-
-  # Blocks...
-  if (!is.null(mf$block) && is.character(mf[["block"]])) {
-    mf[["block"]] <- as.symbol(mf[["block"]])
-  }
-
-  # condition_prs...
-  if (!is.null(mf$condition_pr) && is.character(mf[["condition_pr"]])) {
-    mf[["condition_pr"]] <- as.symbol(mf[["condition_pr"]])
-  }
-
-  mf <- eval(mf, where)
+  # Get model frame
+  mf <- do.call(stats::model.frame, mf)
 
   local({
     na.action <- attr(mf, "na.action")
@@ -72,16 +62,16 @@ clean_model_data <- function(formula,
 
 
   if (!is.null(attr(terms(mf), "Formula_without_dot"))) {
-    formula <- attr(terms(mf), "Formula_without_dot")
+    formula <- quo(attr(terms(mf), "Formula_without_dot"))
   }
 
   ret <- list(
     outcome = model.response(mf, type = "numeric"),
-    design_matrix = eval(model.matrix(terms(formula, rhs = 1), data = mf), where)
+    design_matrix = model.matrix(terms(eval_tidy(formula), rhs = 1), data = mf)
   )
 
   if (any(grepl("\\|", formula[[3]]))) {
-    ret[["instrument_matrix"]] <- eval(model.matrix(terms(formula, rhs = 2), data = mf), where)
+    ret[["instrument_matrix"]] <- model.matrix(terms(eval_tidy(formula), rhs = 2), data = mf)
   }
 
   # Keep the original treatment vector for DiM and HT
