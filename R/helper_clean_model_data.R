@@ -70,12 +70,19 @@ clean_model_data <- function(formula,
     }
   })
 
-  # TODO when using . it adds weights and clusters to model!
+
+  if (!is.null(attr(terms(mf), "Formula_without_dot"))) {
+    formula <- attr(terms(mf), "Formula_without_dot")
+  }
+
   ret <- list(
     outcome = model.response(mf, type = "numeric"),
-    design_matrix = eval(model.matrix(terms(formula, rhs = 1), data = mf), where),
-    instrument_matrix = eval(model.matrix(terms(formula, rhs = 2), data = mf), where)
+    design_matrix = eval(model.matrix(terms(formula, rhs = 1), data = mf), where)
   )
+
+  if (any(grepl("\\|", formula[[3]]))) {
+    ret[["instrument_matrix"]] <- eval(model.matrix(terms(formula, rhs = 2), data = mf), where)
+  }
 
   # Keep the original treatment vector for DiM and HT
   # They will never have a model frame larger than 6 covars

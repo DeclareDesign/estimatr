@@ -26,7 +26,7 @@ iv_robust <- function(formula,
   # First stage
   # -----------
   # print(model_data)
-  first_return <-
+  first_stage <-
     lm_robust_fit(
       y = model_data$design_matrix,
       X = model_data$instrument_matrix,
@@ -34,13 +34,12 @@ iv_robust <- function(formula,
       cluster = model_data$cluster,
       ci = FALSE,
       se_type = "none",
+      has_int = attr(model_data$terms, "intercept"),
       alpha = alpha,
       return_vcov = return_vcov,
-      try_cholesky = try_cholesky,
-      has_int = attr(model_data$terms, "intercept")
+      try_cholesky = try_cholesky
     )
 
-  # print(first_return)
   # ------
   # Second stage
   # ------
@@ -52,11 +51,11 @@ iv_robust <- function(formula,
       cluster = model_data$cluster,
       ci = FALSE,
       se_type = se_type,
+      has_int = attr(model_data$terms, "intercept"),
       alpha = alpha,
       return_vcov = return_vcov,
       try_cholesky = try_cholesky,
-      has_int = attr(model_data$terms, "intercept"),
-      Xfirst = model_data$design_matrix
+      X_first_stage = model_data$design_matrix
     )
 
   return_list <- lm_return(

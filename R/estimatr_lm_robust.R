@@ -195,7 +195,7 @@ lm_robust <- function(formula,
   where <- parent.frame()
   model_data <- eval(substitute(
     clean_model_data(
-      formula = formula,
+      formula = Formula::as.Formula(formula),
       data = data,
       subset = subset,
       cluster = clusters,
@@ -213,10 +213,10 @@ lm_robust <- function(formula,
       cluster = model_data$cluster,
       ci = ci,
       se_type = se_type,
+      has_int = attr(model_data$terms, "intercept"),
       alpha = alpha,
       return_vcov = return_vcov,
-      try_cholesky = try_cholesky,
-      has_int = attr(model_data$terms, "intercept")
+      try_cholesky = try_cholesky
     )
 
   return_list <- lm_return(

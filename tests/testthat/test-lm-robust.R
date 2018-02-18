@@ -135,7 +135,7 @@ test_that("lm_robust doesn't include aux variables when . is used", {
   # not in data.frame
   clust <- rep(1:5, each = 2)
 
-  expect_identical(
+  expect_equal(
     rmcall(lm_robust(y ~ ., clusters = clust, data = dat)),
     rmcall(lm_robust(y ~ x, clusters = clust, data = dat))
   )

@@ -4,8 +4,8 @@
 \alias{lm_robust_fit}
 \title{Internal method that creates linear fits}
 \usage{
-lm_robust_fit(y, X, weights, cluster, ci, se_type, alpha, return_vcov,
-  try_cholesky, has_int, Xfirst = 1)
+lm_robust_fit(y, X, weights, cluster, ci, se_type, has_int, alpha = 0.05,
+  return_vcov = FALSE, try_cholesky = FALSE, X_first_stage = NULL)
 }
 \arguments{
 \item{y}{numeric outcome vector}
@@ -20,13 +20,13 @@ lm_robust_fit(y, X, weights, cluster, ci, se_type, alpha, return_vcov,
 
 \item{se_type}{character denoting which kind of SEs to return}
 
+\item{has_int}{logical, whether the model has an intercept, used for \eqn{R^2}}
+
 \item{alpha}{numeric denoting the test size for confidence intervals}
 
 \item{return_vcov}{logical, whether to return the vcov matrix for later usage}
 
 \item{try_cholesky}{logical, whether to try using a cholesky decomposition to solve LS instead of a QR decomposition}
-
-\item{has_int}{logical, whether the model has an intercept, used for \eqn{R^2}}
 }
 \description{
 Internal method that creates linear fits

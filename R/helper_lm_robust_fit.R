@@ -19,18 +19,29 @@ lm_robust_fit <- function(y,
                           cluster,
                           ci,
                           se_type,
-                          alpha,
-                          return_vcov,
-                          try_cholesky,
-                          has_int,
-                          Xfirst = 1) {
+                          has_int, # TODO get this out of here
+                          alpha = 0.05,
+                          return_vcov = FALSE,
+                          try_cholesky = FALSE,
+                          X_first_stage = NULL) {
 
-  ## allowable se_types with clustering
-  cl_se_types <- c("CR0", "CR2", "stata", "iv_stata")
-  rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata", "iv_classical", "iv_HC0")
 
-  ## Parse cluster variable
-  if (!is.null(cluster)) {
+  weighted <- !is.null(weights)
+  iv <- !is.null(X_first_stage)
+  clustered <- !is.null(cluster)
+
+  # ----------
+  # Check se type
+  # ----------
+
+  # TODO what is implemented for IV?
+
+  # Allowable se_types with clustering
+  cl_se_types <- c("CR0", "CR2", "stata")
+  rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata")
+
+  # Parse cluster variable
+  if (clustered) {
 
     # set/check se_type
     if (is.null(se_type)) {
@@ -62,6 +73,10 @@ lm_robust_fit <- function(y,
     }
   }
 
+  # -----------
+  # Prep data for fitting
+  # -----------
+
   k <- ncol(X)
 
   if (is.null(colnames(X))) {
@@ -72,53 +87,49 @@ lm_robust_fit <- function(y,
   # Legacy, in case we want to only get some covs in the future
   which_covs <- rep(TRUE, ncol(X))
 
-  if (!is.null(cluster)) {
+
+
+  # Reorder if there are clusters
+  if (clustered) {
     cl_ord <- order(cluster)
     y <- as.matrix(y)[cl_ord, , drop = FALSE]
-    if (length(Xfirst) > 1) {
-      #print('reorder xfirst')
-      Xfirst <- Xfirst[cl_ord, , drop = FALSE]
-    } else {
-      X <- X[cl_ord, , drop = FALSE]
-    }
+    X <- X[cl_ord, , drop = FALSE]
     cluster <- cluster[cl_ord]
     J <- length(unique(cluster))
-    if (!is.null(weights)) {
+    if (weighted) {
       weights <- weights[cl_ord]
     }
   } else {
     J <- 1
   }
 
-  if (!is.null(weights)) {
+  # Weight if there are weights
+  if (weighted) {
     Xunweighted <- X
+    yunweighted <- y
     weight_mean <- mean(weights)
     weights <- sqrt(weights / weight_mean)
     X <- weights * X
     y <- weights * y
+    if (iv) {
+      X_first_stage_unweighted <- X_first_stage
+      X_first_stage <- weights * X_first_stage
+    }
   } else {
     weight_mean <- 1
     Xunweighted <- NULL
   }
 
+  # -----------
+  # Estimate coefficients
+  # -----------
 
   fit <-
     lm_solver(
-      Xfull = X,
+      X = X,
       y = y,
-      Xunweighted = Xunweighted,
-      weight = weights,
-      weight_mean = weight_mean,
-      cluster = cluster,
-      J = J,
-      ci = ci,
-      type = se_type,
-      which_covs = which_covs,
-      try_cholesky = try_cholesky,
-      fit_resid = TRUE,
-      Xfirst = Xfirst
+      try_cholesky = try_cholesky
     )
-
 
   return_frame <- data.frame(
     coefficients = setNames(as.vector(fit$beta_hat), variable_names),
@@ -128,12 +139,83 @@ lm_robust_fit <- function(y,
   )
 
   est_exists <- !is.na(return_frame$coefficients)
-
   N <- nrow(X)
   rank <- sum(est_exists)
 
+  # ----------
+  # Estimate variance
+  # ----------
+
   if (se_type != "none") {
-    return_frame$se[est_exists] <- sqrt(diag(fit$Vcov_hat))
+
+    if (rank < ncol(X)) {
+      X <- X[, est_exists, drop = FALSE]
+      if (weighted){
+        Xunweighted <- Xunweighted[, est_exists, drop = FALSE]
+      }
+      if (iv) {
+        X_first_stage <- X_first_stage[, est_exists, drop = FALSE]
+        if (weighted) {
+          X_first_stage_unweighted <- X_first_stage_unweighted[, est_exists, drop = FALSE]
+        }
+      }
+      fit$beta_hat <- fit$beta_hat[est_exists]
+    }
+
+    # compute fitted.values and residuals
+    # need unweighted for CR2, as well as X weighted by weights again
+    # so that instead of having X * sqrt(W) we have X * W
+    if (se_type == "CR2" && weighted) {
+      if (iv) {
+        fitted.values <- X_first_stage_unweighted %*% fit$beta_hat
+      } else {
+        fitted.values <- Xunweighted %*% fit$beta_hat
+      }
+      ei <- yunweighted - fitted.values
+      X <- weights * X
+    } else {
+      if (iv) {
+        fitted.values <- X_first_stage %*% fit$beta_hat
+      } else {
+        fitted.values <- X %*% fit$beta_hat
+      }
+      ei <- y - fitted.values
+    }
+
+    # TODO deal with multiple outcomes
+    if (se_type == "CR2") {
+      vcov_fit <- lm_variance_cr2(
+        X = X,
+        Xunweighted = Xunweighted,
+        XtX_inv = fit$XtX_inv,
+        beta_hat = fit$beta_hat,
+        ei = ei,
+        weight_mean = weight_mean,
+        clusters = cluster,
+        J = J,
+        ci = ci,
+        which_covs = which_covs[est_exists]
+      )
+
+      vcov_fit[["res_var"]] <-
+        sum((y - X %*% fit$beta_hat)^2) /
+        (N - rank)
+
+    } else {
+      vcov_fit <- lm_variance(
+        X = X,
+        XtX_inv = fit$XtX_inv,
+        beta_hat = fit$beta_hat,
+        ei = ei,
+        cluster = cluster,
+        J = J,
+        ci = ci,
+        type = se_type,
+        which_covs = which_covs[est_exists]
+      )
+    }
+
+    return_frame$se[est_exists] <- sqrt(diag(vcov_fit$Vcov_hat))
 
     if (ci) {
       if (se_type %in% cl_se_types) {
@@ -141,9 +223,9 @@ lm_robust_fit <- function(y,
         # Replace -99 with NA, easy way to flag that we didn't compute
         # the DoF because the user didn't ask for it
         return_frame$df[est_exists] <-
-          ifelse(fit$dof == -99,
-            NA,
-            fit$dof
+          ifelse(vcov_fit$dof == -99,
+                 NA,
+                 vcov_fit$dof
           )
       } else {
 
@@ -154,67 +236,70 @@ lm_robust_fit <- function(y,
   }
 
   # ----------
-  # Build return object
+  # Augment return object
   # ----------
 
-  print(fit)
+  #print(fit)
   return_list <- add_cis_pvals(return_frame, alpha, ci && se_type != "none")
 
   return_list[["coefficient_name"]] <- variable_names
   return_list[["outcome"]] <- NA_character_
   return_list[["alpha"]] <- alpha
   return_list[["se_type"]] <- se_type
+  return_list[["weighted"]] <- weighted
 
-  return_list[["fitted.values"]] <- fit$fit
-  return_list[["residuals"]] <- fit$residuals
-
-  return_list[["weighted"]] <- !is.null(weights)
-  if (return_list[["weighted"]]) {
-    return_list[["tot_var"]] <- ifelse(
-      has_int,
-      # everything correct except for this
-      sum(weights ^ 2 * (y / weights - weighted.mean(y / weights, weights ^ 2)) ^ 2) * weight_mean,
-      sum(y ^ 2 * weight_mean)
-    )
-    return_list[["res_var"]] <- sum(fit$residuals ^ 2 * weight_mean) / (N - rank)
-  } else {
-    return_list[["tot_var"]] <- ifelse(has_int, sum((y - mean(y)) ^ 2), sum(y ^ 2))
-    return_list[["res_var"]] <- ifelse(fit$res_var < 0, NA, fit$res_var)
-  }
+  # return_list[["fitted.values"]] <- fit$fit
+  # return_list[["residuals"]] <- fit$residuals
 
   return_list[["df.residual"]] <- N - rank
-  return_list[["r.squared"]] <-
-    1 - (
-      return_list[["df.residual"]] * return_list[["res_var"]] /
-        return_list[["tot_var"]]
-    )
-
-
-  return_list[["adj.r.squared"]] <-
-    1 - (
-      (1 - return_list[["r.squared"]]) *
-        ((N - has_int) / return_list[["df.residual"]])
-    )
-
-  return_list[["fstatistic"]] <- c(
-    value = (return_list[["r.squared"]] * return_list[["df.residual"]])
-    / ((1 - return_list[["r.squared"]]) * (rank - has_int)),
-    numdf = rank - has_int,
-    dendf = return_list[["df.residual"]]
-  )
 
   # return_list[["XtX_inv"]] <- fit$XtX_inv
   return_list[["N"]] <- N
   return_list[["k"]] <- k
   return_list[["rank"]] <- rank
 
-  if (return_vcov && se_type != "none") {
-    # return_list$residuals <- fit$residuals
-    return_list[["vcov"]] <- fit$Vcov_hat
-    dimnames(return_list[["vcov"]]) <- list(
-      return_list$coefficient_name[est_exists],
-      return_list$coefficient_name[est_exists]
+  if (se_type != "none") {
+
+    if (weighted) {
+      return_list[["tot_var"]] <- ifelse(
+        has_int,
+        sum(weights ^ 2 * (yunweighted - weighted.mean(yunweighted, weights ^ 2)) ^ 2) * weight_mean,
+        sum(y ^ 2 * weight_mean)
+      )
+      return_list[["res_var"]] <- sum(ei ^ 2 * weight_mean) / (N - rank)
+    } else {
+      return_list[["tot_var"]] <- ifelse(has_int, sum((y - mean(y)) ^ 2), sum(y ^ 2))
+      return_list[["res_var"]] <- ifelse(vcov_fit$res_var < 0, NA, vcov_fit$res_var)
+    }
+
+    return_list[["r.squared"]] <-
+      1 - (
+        return_list[["df.residual"]] * return_list[["res_var"]] /
+          return_list[["tot_var"]]
+      )
+
+
+    return_list[["adj.r.squared"]] <-
+      1 - (
+        (1 - return_list[["r.squared"]]) *
+          ((N - has_int) / return_list[["df.residual"]])
+      )
+
+    return_list[["fstatistic"]] <- c(
+      value = (return_list[["r.squared"]] * return_list[["df.residual"]])
+      / ((1 - return_list[["r.squared"]]) * (rank - has_int)),
+      numdf = rank - has_int,
+      dendf = return_list[["df.residual"]]
     )
+
+    if (return_vcov) {
+      # return_list$residuals <- fit$residuals
+      return_list[["vcov"]] <- vcov_fit$Vcov_hat
+      dimnames(return_list[["vcov"]]) <- list(
+        return_list$coefficient_name[est_exists],
+        return_list$coefficient_name[est_exists]
+      )
+    }
   }
 
   attr(return_list, "class") <- "lm_robust"

@@ -45,25 +45,54 @@ BEGIN_RCPP
 END_RCPP
 }
 // lm_solver
-List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull, const Eigen::Map<Eigen::MatrixXd>& y, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Rcpp::Nullable<Rcpp::NumericVector>& weight, const double& weight_mean, const Rcpp::Nullable<Rcpp::IntegerVector>& cluster, const int& J, const bool& ci, const String type, const std::vector<bool>& which_covs, const bool& try_cholesky, const bool& fit_resid, const Eigen::Map<Eigen::MatrixXd>& Xfirst);
-RcppExport SEXP _estimatr_lm_solver(SEXP XfullSEXP, SEXP ySEXP, SEXP XunweightedSEXP, SEXP weightSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP typeSEXP, SEXP which_covsSEXP, SEXP try_choleskySEXP, SEXP fit_residSEXP, SEXP XfirstSEXP) {
+List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X, const Eigen::Map<Eigen::MatrixXd>& y, const bool& try_cholesky);
+RcppExport SEXP _estimatr_lm_solver(SEXP XSEXP, SEXP ySEXP, SEXP try_choleskySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd>& >::type Xfull(XfullSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type X(XSEXP);
     Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type y(ySEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericMatrix>& >::type Xunweighted(XunweightedSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericVector>& >::type weight(weightSEXP);
-    Rcpp::traits::input_parameter< const double& >::type weight_mean(weight_meanSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type try_cholesky(try_choleskySEXP);
+    rcpp_result_gen = Rcpp::wrap(lm_solver(X, y, try_cholesky));
+    return rcpp_result_gen;
+END_RCPP
+}
+// lm_variance
+List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X, const Eigen::Map<Eigen::MatrixXd>& XtX_inv, const Eigen::Map<Eigen::VectorXd>& beta_hat, const Eigen::Map<Eigen::VectorXd>& ei, const Rcpp::Nullable<Rcpp::IntegerVector>& cluster, const int& J, const bool& ci, const String type, const std::vector<bool>& which_covs);
+RcppExport SEXP _estimatr_lm_variance(SEXP XSEXP, SEXP XtX_invSEXP, SEXP beta_hatSEXP, SEXP eiSEXP, SEXP clusterSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP typeSEXP, SEXP which_covsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type XtX_inv(XtX_invSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd>& >::type beta_hat(beta_hatSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd>& >::type ei(eiSEXP);
     Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::IntegerVector>& >::type cluster(clusterSEXP);
     Rcpp::traits::input_parameter< const int& >::type J(JSEXP);
     Rcpp::traits::input_parameter< const bool& >::type ci(ciSEXP);
     Rcpp::traits::input_parameter< const String >::type type(typeSEXP);
     Rcpp::traits::input_parameter< const std::vector<bool>& >::type which_covs(which_covsSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type try_cholesky(try_choleskySEXP);
-    Rcpp::traits::input_parameter< const bool& >::type fit_resid(fit_residSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type Xfirst(XfirstSEXP);
-    rcpp_result_gen = Rcpp::wrap(lm_solver(Xfull, y, Xunweighted, weight, weight_mean, cluster, J, ci, type, which_covs, try_cholesky, fit_resid, Xfirst));
+    rcpp_result_gen = Rcpp::wrap(lm_variance(X, XtX_inv, beta_hat, ei, cluster, J, ci, type, which_covs));
+    return rcpp_result_gen;
+END_RCPP
+}
+// lm_variance_cr2
+List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Eigen::Map<Eigen::MatrixXd>& XtX_inv, const Eigen::Map<Eigen::VectorXd>& beta_hat, const Eigen::Map<Eigen::VectorXd>& ei, const double weight_mean, const Eigen::Map<Eigen::ArrayXi>& clusters, const int& J, const bool& ci, const std::vector<bool>& which_covs);
+RcppExport SEXP _estimatr_lm_variance_cr2(SEXP XSEXP, SEXP XunweightedSEXP, SEXP XtX_invSEXP, SEXP beta_hatSEXP, SEXP eiSEXP, SEXP weight_meanSEXP, SEXP clustersSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP which_covsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericMatrix>& >::type Xunweighted(XunweightedSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type XtX_inv(XtX_invSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd>& >::type beta_hat(beta_hatSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd>& >::type ei(eiSEXP);
+    Rcpp::traits::input_parameter< const double >::type weight_mean(weight_meanSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXi>& >::type clusters(clustersSEXP);
+    Rcpp::traits::input_parameter< const int& >::type J(JSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type ci(ciSEXP);
+    Rcpp::traits::input_parameter< const std::vector<bool>& >::type which_covs(which_covsSEXP);
+    rcpp_result_gen = Rcpp::wrap(lm_variance_cr2(X, Xunweighted, XtX_inv, beta_hat, ei, weight_mean, clusters, J, ci, which_covs));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -72,7 +101,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_estimatr_ht_covar_partial", (DL_FUNC) &_estimatr_ht_covar_partial, 5},
     {"_estimatr_ht_var_partial", (DL_FUNC) &_estimatr_ht_var_partial, 2},
     {"_estimatr_AtA", (DL_FUNC) &_estimatr_AtA, 1},
-    {"_estimatr_lm_solver", (DL_FUNC) &_estimatr_lm_solver, 13},
+    {"_estimatr_lm_solver", (DL_FUNC) &_estimatr_lm_solver, 3},
+    {"_estimatr_lm_variance", (DL_FUNC) &_estimatr_lm_variance, 9},
+    {"_estimatr_lm_variance_cr2", (DL_FUNC) &_estimatr_lm_variance_cr2, 10},
     {NULL, NULL, 0}
 };
 
