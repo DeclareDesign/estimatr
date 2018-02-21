@@ -1,33 +1,24 @@
 # Internal method to process data
+#' @importFrom rlang f_rhs
 clean_model_data <- function(data, datargs) {
 
   # if data exists, evaluate it
-  if (!quo_is_missing(data)) {
-    data <- eval_tidy(data)
-  } else {
-    data <- NULL
+  if (quo_is_missing(data)) {
+    data <- quo(NULL)
   }
 
-  mfargs <- list()
-  for (da in names(datargs)) {
-    if (!quo_is_missing(datargs[[da]])) {
-      if (is.character(quo_get_expr(datargs[[da]]))) {
-        datargs[[da]] <- quo_set_expr(
-          datargs[[da]],
-          sym(quo_get_expr(datargs[[da]]))
-        )
-      }
-      mfargs[[da]] <- eval_tidy(datargs[[da]], data = data)
-    }
+  mfargs <- Filter(Negate(quo_is_missing), datargs)
+  for (da in setdiff(names(mfargs), names(formals(stats::model.frame)))) {
+    mfargs[[da]] <- f_rhs(mfargs[[da]]) # replace quo(w) with quote(w)
+    if(is.character(mfargs[[da]])) mfargs[[da]] <- sym(mfargs[[da]])
   }
 
-  mfargs[["formula"]] <- Formula::as.Formula(mfargs[["formula"]])
-  mfargs[["na.action"]] <- quote(estimatr::na.omit_detailed.data.frame)
+  mfargs[["formula"]] <- quo(Formula::as.Formula(!!mfargs[["formula"]]))
+  mfargs[["na.action"]] <- quo(estimatr::na.omit_detailed.data.frame)
   mfargs[["drop.unused.levels"]] <- TRUE
-  mfargs[["data"]] <- data
 
   # Get model frame
-  mf <- eval_tidy(quo((stats::model.frame)(!!!mfargs)))
+  mf <- eval_tidy(quo((stats::model.frame)(data=!!data, !!!mfargs)))
 
   local({
     na.action <- attr(mf, "na.action")
@@ -67,7 +58,7 @@ clean_model_data <- function(data, datargs) {
   if (!is.null(attr(terms(mf), "Formula_without_dot"))) {
     formula <- attr(terms(mf), "Formula_without_dot")
   } else {
-    formula <- mfargs[["formula"]]
+    formula <- eval_tidy(mfargs[["formula"]]) # unwrap quosure => a formula
   }
 
   ret <- list(
