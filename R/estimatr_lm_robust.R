@@ -14,7 +14,8 @@
 #' @param se_type The sort of standard error sought. If `clusters` is
 #' not specified the options are "HC0", "HC1" (or "stata", the equivalent),
 #'  "HC2" (default), "HC3", or
-#' "classical". If `clusters` is specified the options are "CR0", "CR2" (default), or "stata".
+#' "classical". If `clusters` is specified the options are "CR0", "CR2" (default), or "stata" are
+#' permissible.
 #' @param ci logical. Whether to compute and return p-values and confidence
 #' intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
@@ -192,20 +193,15 @@ lm_robust <- function(formula,
                       alpha = .05,
                       return_vcov = TRUE,
                       try_cholesky = FALSE) {
-
   datargs <- enquos(
     formula = formula,
     weights = weights,
     subset = subset,
-    clusters = clusters
+    cluster = clusters
   )
   data <- enquo(data)
-  model_data <- clean_model_data(
-    data = data,
-    datargs = datargs
-  )
+  model_data <- clean_model_data(data = data, datargs)
 
-  #print(model_data)
   return_list <-
     lm_robust_fit(
       y = model_data$outcome,
@@ -214,10 +210,10 @@ lm_robust <- function(formula,
       cluster = model_data$cluster,
       ci = ci,
       se_type = se_type,
-      has_int = attr(model_data$terms, "intercept"),
       alpha = alpha,
       return_vcov = return_vcov,
-      try_cholesky = try_cholesky
+      try_cholesky = try_cholesky,
+      has_int = attr(model_data$terms, "intercept")
     )
 
   return_list <- lm_return(

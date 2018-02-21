@@ -338,18 +338,15 @@ horvitz_thompson <-
     }
 
     ## Clean data
-    where <- parent.frame()
-    model_data <- eval(substitute(
-      clean_model_data(
-        formula = formula,
-        data = data,
-        subset = subset,
-        cluster = clusters,
-        condition_pr = condition_prs,
-        block = blocks,
-        where = where
-      )
-    ))
+    datargs <- enquos(
+      formula = formula,
+      subset = subset,
+      block = blocks,
+      cluster = clusters,
+      condition_pr = condition_prs
+    )
+    data <- enquo(data)
+    model_data <- clean_model_data(data = data, datargs)
 
     ## condition_pr_mat, if supplied, must be same length
     if (!is.null(condition_pr_mat) && (2 * length(model_data$outcome) != nrow(condition_pr_mat))) {

@@ -14,17 +14,22 @@ clean_model_data <- function(data, datargs) {
     }
   }
 
-  # Get expressions
-  mf <- lapply(datargs, quo_get_expr)
-  # if data exists, add it
+  # if data exists, evaluate it
   if (!quo_is_missing(data)) {
-    mf[["data"]] <- expr(eval_tidy(data))
+    data <- eval_tidy(data)
+  } else {
+    data <- NULL
   }
 
-  mf[["na.action"]] <- quote(estimatr::na.omit_detailed.data.frame)
+  # Evaluate data args in data if they exist, else in their original environments
+  mfargs <- lapply(datargs, eval_tidy, data = data)
+
+  mfargs[["na.action"]] <- quote(estimatr::na.omit_detailed.data.frame)
+  mfargs[["drop.unused.levels"]] <- TRUE
+  mfargs[["data"]] <- data
 
   # Get model frame
-  mf <- do.call(stats::model.frame, mf)
+  mf <- do.call(stats::model.frame, mfargs)
 
   local({
     na.action <- attr(mf, "na.action")
@@ -62,16 +67,18 @@ clean_model_data <- function(data, datargs) {
 
 
   if (!is.null(attr(terms(mf), "Formula_without_dot"))) {
-    formula <- quo(attr(terms(mf), "Formula_without_dot"))
+    formula <- attr(terms(mf), "Formula_without_dot")
+  } else {
+    formula <- mfargs[["formula"]]
   }
 
   ret <- list(
     outcome = model.response(mf, type = "numeric"),
-    design_matrix = model.matrix(terms(eval_tidy(formula), rhs = 1), data = mf)
+    design_matrix = model.matrix(terms(formula, rhs = 1), data = mf)
   )
 
   if (any(grepl("\\|", formula[[3]]))) {
-    ret[["instrument_matrix"]] <- model.matrix(terms(eval_tidy(formula), rhs = 2), data = mf)
+    ret[["instrument_matrix"]] <- model.matrix(terms(formula, rhs = 2), data = mf)
   }
 
   # Keep the original treatment vector for DiM and HT
@@ -82,25 +89,25 @@ clean_model_data <- function(data, datargs) {
     ret[["original_treatment"]] <- mf[, colnames(mf) == all.vars(terms(mf)[[3]])[1]]
   }
 
-  if (!missing(weights)) {
+  if (!is.null(mfargs$weights)) {
     ret[["weights"]] <- model.extract(mf, "weights")
     if (any(ret[["weights"]] < 0)) {
       stop("`weights` must not be negative")
     }
   }
 
-  if (!missing(cluster)) {
+  if (!is.null(mfargs$cluster)) {
     ret[["cluster"]] <- model.extract(mf, "cluster")
     if (!(class(ret[["cluster"]]) %in% c("factor", "integer"))) {
       ret[["cluster"]] <- as.factor(ret[["cluster"]])
     }
   }
 
-  if (!missing(block)) {
+  if (!is.null(mfargs$block)) {
     ret[["block"]] <- model.extract(mf, "block")
   }
 
-  if (!missing(condition_pr)) {
+  if (!is.null(mfargs$condition_pr)) {
     ret[["condition_pr"]] <- model.extract(mf, "condition_pr")
 
     if (any(ret[["condition_pr"]] <= 0 | ret[["condition_pr"]] > 1)) {

@@ -10,6 +10,8 @@ test_that("Condition arguments behave as expected", {
     ps = runif(n)
   )
 
+  horvitz_thompson(y ~ z, data = dat, subset = z <= 2, condition_prs = ps)
+
   # Subsetting and just selecting two conditions
   expect_identical(
     horvitz_thompson(y ~ z, data = dat, subset = z <= 2, condition_prs = ps),

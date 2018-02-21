@@ -212,7 +212,7 @@ test_that("lm cluster se with missingness", {
 
   estimatr_cluster_out[["call"]] <- NULL
   estimatr_cluster_sub[["call"]] <- NULL
-  expect_identical(
+  expect_equal(
     estimatr_cluster_out,
     estimatr_cluster_sub
   )
@@ -231,7 +231,7 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
   lmrq <- lm_robust(Y~Z, data = dat, weights = "W")
   lmr[["call"]] <- NULL
   lmrq[["call"]] <- NULL
-  expect_identical(
+  expect_equal(
     lmr,
     lmrq
   )
@@ -243,7 +243,7 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
   lmrcq <- lm_robust(Y~Z, data = dat, clusters = "J")
   lmrc[["call"]] <- NULL
   lmrcq[["call"]] <- NULL
-  expect_identical(
+  expect_equal(
     lmrc,
     lmrcq
   )

@@ -215,25 +215,22 @@ difference_in_means <-
            condition2 = NULL,
            ci = TRUE,
            alpha = .05) {
-    if (length(all.vars(formula[[3]])) > 1) {
+    if (length(all.vars(eval_tidy(formula)[[3]])) > 1) {
       stop(
         "'formula' must have only one variable on the right-hand side: the ",
         "treatment variable."
       )
     }
 
-    where <- parent.frame()
-    model_data <- eval(substitute(
-      clean_model_data(
-        formula = formula,
-        data = data,
-        subset = subset,
-        cluster = clusters,
-        block = blocks,
-        weights = weights,
-        where = where
-      )
-    ))
+    datargs <- enquos(
+      formula = formula,
+      weights = weights,
+      subset = subset,
+      block = blocks,
+      cluster = clusters
+    )
+    data <- enquo(data)
+    model_data <- clean_model_data(data = data, datargs)
 
     data <- data.frame(
       y = model_data$outcome,
