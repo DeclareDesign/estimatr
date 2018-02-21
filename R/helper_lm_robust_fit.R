@@ -88,7 +88,7 @@ lm_robust_fit <- function(y,
   # Legacy, in case we want to only get some covs in the future
   which_covs <- rep(TRUE, ncol(X))
 
-  # Reorder if there are clusters and you need the SE
+  # Reorder if there are clusters and you need the SE or to return the fit
   if (clustered && se_type != "none") {
     cl_ord <- order(cluster)
     y <- as.matrix(y)[cl_ord, , drop = FALSE]
@@ -246,12 +246,17 @@ lm_robust_fit <- function(y,
   return_list <- add_cis_pvals(return_frame, alpha, ci && se_type != "none")
 
   if (return_fit) {
-    if (se_type == "CR2" && weighted) {
+    if ((se_type == "CR2" && weighted) || iv) {
       # Have to get weighted fits as original fits were unweighted for
-      # variance estimation
+      # variance estimation or used wrong matrix for iv
       return_list[["fitted.values"]] <- y - X %*% fit$beta_hat
     } else {
       return_list[["fitted.values"]] <- fitted.values
+    }
+
+    # If we reordered to get SEs earlier, have to fix order
+    if (clustered && se_type != "none") {
+      return_list[["fitted.values"]] <- return_list[["fitted.values"]][order(cl_ord)]
     }
   }
 
