@@ -1,24 +1,59 @@
+# library(estimatr)
+# f <- function(w) {
+#   dat <- data.frame(x = rnorm(10), y = rnorm(10))
+#   lm_robust(y ~ x, data = dat, w = w)
+# }
+# f(NULL)
+# f(1:10)
+
+
 # Internal method to process data
 #' @importFrom rlang f_rhs
 clean_model_data <- function(data, datargs) {
 
   # if data exists, evaluate it
-  if (quo_is_missing(data)) {
-    data <- quo(NULL)
-  }
+  data <- if (quo_is_missing(data)) NULL else eval_tidy(data)
+
+  if(getOption("estimatr.debug.clean_model_data", FALSE)) browser()
 
   mfargs <- Filter(Negate(quo_is_missing), datargs)
-  for (da in setdiff(names(mfargs), names(formals(stats::model.frame)))) {
-    mfargs[[da]] <- f_rhs(mfargs[[da]]) # replace quo(w) with quote(w)
-    if(is.character(mfargs[[da]])) mfargs[[da]] <- sym(mfargs[[da]])
+
+
+  m_formula <- eval_tidy(mfargs[["formula"]])
+  m_formula_env <- environment(m_formula)
+
+  #subset is also non-standard
+  to_process <- setdiff( names(mfargs), setdiff( names(formals(stats::model.frame.default)),"subset") )
+
+  for (da in to_process) {
+    rhs <-  f_rhs(mfargs[[da]])
+    if(is.character(rhs)) {
+      mfargs[[da]] <- sym(rhs)
+      next
+    }
+
+    name <- paste0(".__", da)
+    mfargs[[da]] <- tryCatch({
+      x <- eval_tidy(mfargs[[da]], data = data) # throws error if it's a column, move on
+      m_formula_env[[name]] <- x
+      sym(name)
+    }, error = function(cond) rhs)
+    #  <- local({
+    #   zarg <- tryCatch( , error=function(cond) UQ(mfargs[[da]]))
+    #   quo(zarg)
+    # })
+    # if(is.character(mfargs[[da]])) mfargs[[da]] <- sym(mfargs[[da]])
   }
 
-  mfargs[["formula"]] <- quo(Formula::as.Formula(!!mfargs[["formula"]]))
-  mfargs[["na.action"]] <- quo(estimatr::na.omit_detailed.data.frame)
+
+
+
+  mfargs[["formula"]] <- Formula::as.Formula(m_formula)
+  mfargs[["na.action"]] <- quote(estimatr::na.omit_detailed.data.frame)
   mfargs[["drop.unused.levels"]] <- TRUE
 
   # Get model frame
-  mf <- eval_tidy(quo((stats::model.frame)(data=!!data, !!!mfargs)))
+  mf <- eval_tidy(quo((stats::model.frame)(!!!mfargs, data=data)))
 
   local({
     na.action <- attr(mf, "na.action")
