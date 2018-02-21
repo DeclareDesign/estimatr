@@ -24,7 +24,8 @@ corresponds to the clusters in the data.}
 \item{se_type}{The sort of standard error sought. If `clusters` is
 not specified the options are "HC0", "HC1" (or "stata", the equivalent),
  "HC2" (default), "HC3", or
-"classical". If `clusters` is specified the options are "CR0", "CR2" (default), or "stata".}
+"classical". If `clusters` is specified the options are "CR0", "CR2" (default), or "stata" are
+permissible.}
 
 \item{ci}{logical. Whether to compute and return p-values and confidence
 intervals, TRUE by default.}

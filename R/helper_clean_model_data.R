@@ -24,6 +24,7 @@ clean_model_data <- function(data, datargs) {
   # Evaluate data args in data if they exist, else in their original environments
   mfargs <- lapply(datargs, eval_tidy, data = data)
 
+  mfargs[["formula"]] <- Formula::as.Formula(mfargs[["formula"]])
   mfargs[["na.action"]] <- quote(estimatr::na.omit_detailed.data.frame)
   mfargs[["drop.unused.levels"]] <- TRUE
   mfargs[["data"]] <- data

@@ -8,6 +8,7 @@
 #' update model.extract setNames delete.response .checkMFClasses model.frame
 #' model.matrix na.pass nobs coef pf
 #' @importFrom methods setGeneric setMethod isGeneric className
-#' @import rlang
+#' @importFrom Formula as.Formula
+#' @importFrom rlang enquos enquo eval_tidy quo_get_expr quo_set_expr quo_is_missing sym
 #' @name estimatr
 NULL
