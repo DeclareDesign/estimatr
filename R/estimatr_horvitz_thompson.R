@@ -283,8 +283,8 @@ horvitz_thompson <-
       # Add clusters, blocks, and treatment probabilities to data so they can be cleaned with clean_model_data
       if (!is.null(declaration$clusters)) {
         if (is.null(data[[".clusters_ddinternal"]])) {
-          data[[".clusters_ddinternal"]] <- declaration$clusters
-          clusters <- ".clusters_ddinternal"
+          .clusters_ddinternal <- declaration$clusters
+          clusters <- quo(.clusters_ddinternal)
         } else {
           stop(
             "Can't have a variable called '.clusters_ddinternal' in your `data`",
@@ -295,8 +295,8 @@ horvitz_thompson <-
 
       if (!is.null(declaration$blocks)) {
         if (is.null(data[[".blocks_ddinternal"]])) {
-          data[[".blocks_ddinternal"]] <- declaration$blocks
-          blocks <- ".blocks_ddinternal"
+          .blocks_ddinternal <- declaration$blocks
+          blocks <- quo(.blocks_ddinternal)
         } else {
           stop(
             "Can't have a variable called '.blocks_ddinternal' in your `data`",
@@ -327,8 +327,8 @@ horvitz_thompson <-
           # assuming treatment is second column
           treatment_prob <- declaration$probabilities_matrix[, 2]
         }
-        data[[".treatment_prob_ddinternal"]] <- treatment_prob
-        condition_prs <- ".treatment_prob_ddinternal"
+        .treatment_prob_ddinternal <- treatment_prob
+        condition_prs <- quo(.treatment_prob_ddinternal)
       } else {
         stop(
           "Can't have a variable called '.treatment_prob_ddinternal' in your `data`",

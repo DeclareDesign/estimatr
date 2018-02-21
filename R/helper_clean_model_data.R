@@ -27,22 +27,12 @@ clean_model_data <- function(data, datargs) {
 
   for (da in to_process) {
     rhs <-  f_rhs(mfargs[[da]])
-    if(is.character(rhs)) {
-      mfargs[[da]] <- sym(rhs)
-      next
-    }
-
     name <- paste0(".__", da)
     mfargs[[da]] <- tryCatch({
       x <- eval_tidy(mfargs[[da]], data = data) # throws error if it's a column, move on
       m_formula_env[[name]] <- x
       sym(name)
     }, error = function(cond) rhs)
-    #  <- local({
-    #   zarg <- tryCatch( , error=function(cond) UQ(mfargs[[da]]))
-    #   quo(zarg)
-    # })
-    # if(is.character(mfargs[[da]])) mfargs[[da]] <- sym(mfargs[[da]])
   }
 
 
