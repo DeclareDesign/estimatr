@@ -1,19 +1,6 @@
 # Internal method to process data
 clean_model_data <- function(data, datargs) {
 
-  for (da in names(datargs)) {
-    if (quo_is_missing(datargs[[da]])) {
-      datargs[[da]] <- NULL
-    } else {
-      if (is.character(quo_get_expr(datargs[[da]]))) {
-        datargs[[da]] <- quo_set_expr(
-          datargs[[da]],
-          sym(quo_get_expr(datargs[[da]]))
-        )
-      }
-    }
-  }
-
   # if data exists, evaluate it
   if (!quo_is_missing(data)) {
     data <- eval_tidy(data)
@@ -21,8 +8,18 @@ clean_model_data <- function(data, datargs) {
     data <- NULL
   }
 
-  # Evaluate data args in data if they exist, else in their original environments
-  mfargs <- lapply(datargs, eval_tidy, data = data)
+  mfargs <- list()
+  for (da in names(datargs)) {
+    if (!quo_is_missing(datargs[[da]])) {
+      if (is.character(quo_get_expr(datargs[[da]]))) {
+        datargs[[da]] <- quo_set_expr(
+          datargs[[da]],
+          sym(quo_get_expr(datargs[[da]]))
+        )
+      }
+      mfargs[[da]] <- eval_tidy(datargs[[da]], data = data)
+    }
+  }
 
   mfargs[["formula"]] <- Formula::as.Formula(mfargs[["formula"]])
   mfargs[["na.action"]] <- quote(estimatr::na.omit_detailed.data.frame)
@@ -30,7 +27,7 @@ clean_model_data <- function(data, datargs) {
   mfargs[["data"]] <- data
 
   # Get model frame
-  mf <- do.call(stats::model.frame, mfargs)
+  mf <- eval_tidy(quo((stats::model.frame)(!!!mfargs)))
 
   local({
     na.action <- attr(mf, "na.action")

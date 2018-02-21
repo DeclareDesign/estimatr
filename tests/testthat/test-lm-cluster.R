@@ -248,7 +248,6 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
     lmrcq
   )
 
-
   # works with num
   dat$J_num <- as.numeric(dat$J)
 

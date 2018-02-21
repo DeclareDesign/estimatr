@@ -9,6 +9,6 @@
 #' model.matrix na.pass nobs coef pf
 #' @importFrom methods setGeneric setMethod isGeneric className
 #' @importFrom Formula as.Formula
-#' @importFrom rlang enquos enquo eval_tidy quo_get_expr quo_set_expr quo_is_missing sym
+#' @importFrom rlang enquos enquo eval_tidy quo_get_expr quo_set_expr quo_is_missing sym quo
 #' @name estimatr
 NULL
