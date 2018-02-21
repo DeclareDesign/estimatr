@@ -22,28 +22,26 @@ clean_model_data <- function(data, datargs) {
   m_formula <- eval_tidy(mfargs[["formula"]])
   m_formula_env <- environment(m_formula)
 
-  #subset is also non-standard
+  # For each ... that would go to model.fram .default, early eval, save to formula env, and point to it
+  # subset is also non-standard eval
   to_process <- setdiff( names(mfargs), setdiff( names(formals(stats::model.frame.default)),"subset") )
 
   for (da in to_process) {
-    rhs <-  f_rhs(mfargs[[da]])
     name <- paste0(".__", da)
-    mfargs[[da]] <- tryCatch({
-      x <- eval_tidy(mfargs[[da]], data = data) # throws error if it's a column, move on
-      m_formula_env[[name]] <- x
-      sym(name)
-    }, error = function(cond) rhs)
+    m_formula_env[[name]] <- eval_tidy(mfargs[[da]], data = data)
+    mfargs[[da]] <- sym(name)
   }
 
 
 
 
   mfargs[["formula"]] <- Formula::as.Formula(m_formula)
-  mfargs[["na.action"]] <- quote(estimatr::na.omit_detailed.data.frame)
-  mfargs[["drop.unused.levels"]] <- TRUE
 
   # Get model frame
-  mf <- eval_tidy(quo((stats::model.frame)(!!!mfargs, data=data)))
+  mf <- eval_tidy(quo((stats::model.frame)(!!!mfargs,
+                                           data=data,
+                                           na.action=estimatr::na.omit_detailed.data.frame,
+                                           drop.unused.levels=TRUE)))
 
   local({
     na.action <- attr(mf, "na.action")
