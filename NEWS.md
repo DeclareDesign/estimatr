@@ -1,4 +1,8 @@
-# estimatr 0.4.0 (GitHub version)
+# estimatr 0.5.0 (GitHub version)
+
+* No changes as of yet
+
+# estimatr 0.4.0 (CRAN version)
 
 * No changes as of yet
 
