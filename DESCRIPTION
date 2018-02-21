@@ -29,6 +29,7 @@ Suggests:
     fabricatr,
     randomizr (>= 0.8),
     margins,
-    prediction
+    prediction,
+    AER
 Enhances: broom, texreg
 Additional_repositories: http://r.declaredesign.org

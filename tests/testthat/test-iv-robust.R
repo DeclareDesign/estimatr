@@ -35,8 +35,9 @@ test_that("iv_robust matches AER + ivpack", {
     ivpackrob[, c(1, 2, 4)]
   )
 
-  # Clustered SEs are different than stata!
-  ivclusto <- iv_robust(y ~ x | z, data = dat, se_type = "CR0", clusters = clust)
+  # TODO "Stata" clustered SEs are actually the same as ivpack
+  # but Stata actually uses CR0, have to fix and discuss options
+  ivclusto <- iv_robust(y ~ x | z, data = dat, se_type = "stata", clusters = clust)
   ivpackclust <- cluster.robust.se(ivfit, dat$clust)
 
   # Our p-values are bigger (must be using less conservative DF, we use J - 1 which
