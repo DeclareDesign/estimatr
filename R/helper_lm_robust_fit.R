@@ -22,6 +22,7 @@ lm_robust_fit <- function(y,
                           has_int, # TODO get this out of here
                           alpha = 0.05,
                           return_vcov = FALSE,
+                          return_fit = TRUE,
                           try_cholesky = FALSE,
                           X_first_stage = NULL) {
 
@@ -69,7 +70,11 @@ lm_robust_fit <- function(y,
         "'classical' or 'none' with no `clusters`.\nYou passed: ", se_type
       )
     } else if (se_type == "stata") {
-      se_type <- "HC1"
+      if (iv) {
+        se_type <- "HC0"
+      } else {
+        se_type <- "HC1"
+      }
     }
   }
 
@@ -87,10 +92,8 @@ lm_robust_fit <- function(y,
   # Legacy, in case we want to only get some covs in the future
   which_covs <- rep(TRUE, ncol(X))
 
-
-
-  # Reorder if there are clusters
-  if (clustered) {
+  # Reorder if there are clusters and you need the SE
+  if (clustered && se_type != "none") {
     cl_ord <- order(cluster)
     y <- as.matrix(y)[cl_ord, , drop = FALSE]
     X <- X[cl_ord, , drop = FALSE]
@@ -98,6 +101,9 @@ lm_robust_fit <- function(y,
     J <- length(unique(cluster))
     if (weighted) {
       weights <- weights[cl_ord]
+    }
+    if (iv) {
+      X_first_stage <- X_first_stage[cl_ord, , drop = FALSE]
     }
   } else {
     J <- 1
@@ -146,7 +152,7 @@ lm_robust_fit <- function(y,
   # Estimate variance
   # ----------
 
-  if (se_type != "none") {
+  if (se_type != "none" || return_fit) {
 
     if (rank < ncol(X)) {
       X <- X[, est_exists, drop = FALSE]
@@ -201,7 +207,7 @@ lm_robust_fit <- function(y,
         sum((y - X %*% fit$beta_hat)^2) /
         (N - rank)
 
-    } else {
+    } else if (se_type != "none") {
       vcov_fit <- lm_variance(
         X = X,
         XtX_inv = fit$XtX_inv,
@@ -215,9 +221,11 @@ lm_robust_fit <- function(y,
       )
     }
 
-    return_frame$se[est_exists] <- sqrt(diag(vcov_fit$Vcov_hat))
+    if (se_type != "none") {
+      return_frame$se[est_exists] <- sqrt(diag(vcov_fit$Vcov_hat))
+    }
 
-    if (ci) {
+    if (ci && se_type != "none") {
       if (se_type %in% cl_se_types) {
 
         # Replace -99 with NA, easy way to flag that we didn't compute
@@ -239,8 +247,17 @@ lm_robust_fit <- function(y,
   # Augment return object
   # ----------
 
-  #print(fit)
   return_list <- add_cis_pvals(return_frame, alpha, ci && se_type != "none")
+
+  if (return_fit) {
+    if (se_type == "CR2" && weighted) {
+      # Have to get weighted fits as original fits were unweighted for
+      # variance estimation
+      return_list[["fitted.values"]] <- y - X %*% fit$beta_hat
+    } else {
+      return_list[["fitted.values"]] <- fitted.values
+    }
+  }
 
   return_list[["coefficient_name"]] <- variable_names
   return_list[["outcome"]] <- NA_character_

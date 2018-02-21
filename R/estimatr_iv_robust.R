@@ -11,7 +11,7 @@ iv_robust <- function(formula,
                       try_cholesky = FALSE) {
 
   datargs <- enquos(
-    formula = Formula::as.Formula(formula),
+    formula = formula,
     weights = weights,
     subset = subset,
     cluster = clusters
@@ -19,10 +19,12 @@ iv_robust <- function(formula,
   data <- enquo(data)
   model_data <- clean_model_data(data = data, datargs)
 
+  print(model_data)
+
   # -----------
   # First stage
   # -----------
-  # print(model_data)
+
   first_stage <-
     lm_robust_fit(
       y = model_data$design_matrix,
@@ -40,13 +42,15 @@ iv_robust <- function(formula,
   # ------
   # Second stage
   # ------
-  second_return <-
+  colnames(first_stage$fitted.values) <- colnames(model_data$design_matrix)
+
+  second_stage <-
     lm_robust_fit(
       y = model_data$outcome,
-      X = first_return$fit,
+      X = first_stage$fitted.values,
       weights = model_data$weights,
       cluster = model_data$cluster,
-      ci = FALSE,
+      ci = TRUE,
       se_type = se_type,
       has_int = attr(model_data$terms, "intercept"),
       alpha = alpha,
@@ -56,7 +60,7 @@ iv_robust <- function(formula,
     )
 
   return_list <- lm_return(
-    second_return,
+    second_stage,
     model_data = model_data,
     formula = formula
   )

@@ -5,7 +5,8 @@
 \title{Internal method that creates linear fits}
 \usage{
 lm_robust_fit(y, X, weights, cluster, ci, se_type, has_int, alpha = 0.05,
-  return_vcov = FALSE, try_cholesky = FALSE, X_first_stage = NULL)
+  return_vcov = FALSE, return_fit = TRUE, try_cholesky = FALSE,
+  X_first_stage = NULL)
 }
 \arguments{
 \item{y}{numeric outcome vector}

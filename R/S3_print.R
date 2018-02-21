@@ -19,7 +19,7 @@ print.summary.lm_robust <-
     if (x$weighted) {
       cat("Weighted, ")
     }
-    cat("Standard error type = ", x$se_type, "\n")
+    cat("Standard error type: ", x$se_type, "\n")
 
     if (x$rank < x$k) {
       singularities <- x$k - x$rank
