@@ -70,11 +70,7 @@ lm_robust_fit <- function(y,
         "'classical' or 'none' with no `clusters`.\nYou passed: ", se_type
       )
     } else if (se_type == "stata") {
-      if (iv) {
-        se_type <- "HC0"
-      } else {
-        se_type <- "HC1"
-      }
+      se_type <- "HC1" # In IV this is true with small option
     }
   }
 

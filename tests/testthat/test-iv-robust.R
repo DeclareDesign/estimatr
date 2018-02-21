@@ -26,7 +26,7 @@ test_that("iv_robust matches AER + ivpack", {
   # Same as stata if you specify `small` as a stata option
   # which applies the N / N-k finite sample correction
 
-  # Stata defaults to HC0 as well
+  # Stata defaults to HC0 as well, but does HC1 with `small`
   ivro <- iv_robust(y ~ x | z, data = dat, se_type = "HC0")
   ivpackrob <- robust.se(ivfit)
 
@@ -35,13 +35,12 @@ test_that("iv_robust matches AER + ivpack", {
     ivpackrob[, c(1, 2, 4)]
   )
 
-  # TODO "Stata" clustered SEs are actually the same as ivpack
-  # but Stata actually uses CR0, have to fix and discuss options
+  # "Stata" clustered SEs are CR0, but they are the same as below with `small`
   ivclusto <- iv_robust(y ~ x | z, data = dat, se_type = "stata", clusters = clust)
   ivpackclust <- cluster.robust.se(ivfit, dat$clust)
 
   # Our p-values are bigger (must be using less conservative DF, we use J - 1 which
-  # is what stata uses for clusters in OLS)
+  # is what stata uses for clusters w/ `small` and in OLS)
   expect_equivalent(
     as.matrix(tidy(ivclusto)[, c("coefficients", "se")]),
     ivpackclust[, c(1, 2)]

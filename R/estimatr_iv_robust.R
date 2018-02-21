@@ -19,8 +19,6 @@ iv_robust <- function(formula,
   data <- enquo(data)
   model_data <- clean_model_data(data = data, datargs)
 
-  print(model_data)
-
   # -----------
   # First stage
   # -----------
