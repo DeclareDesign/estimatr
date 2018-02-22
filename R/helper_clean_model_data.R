@@ -40,7 +40,7 @@ clean_model_data <- function(data, datargs) {
   # Get model frame
   mf <- eval_tidy(quo((stats::model.frame)(!!!mfargs,
                                            data=data,
-                                           na.action=estimatr::na.omit_detailed.data.frame,
+                                           na.action=na.omit_detailed.data.frame,
                                            drop.unused.levels=TRUE)))
 
   local({
