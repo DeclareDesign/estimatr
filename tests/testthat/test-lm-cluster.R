@@ -228,7 +228,7 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
   )
 
   lmr <- lm_robust(Y~Z, data = dat, weights = W)
-  lmrq <- lm_robust(Y~Z, data = dat, weights = "W")
+  lmrq <- lm_robust(Y~Z, data = dat, weights = W)
   lmr[["call"]] <- NULL
   lmrq[["call"]] <- NULL
   expect_equal(
@@ -240,7 +240,7 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
   dat$J <- as.character(dat$J)
 
   lmrc <- lm_robust(Y~Z, data = dat, clusters = J)
-  lmrcq <- lm_robust(Y~Z, data = dat, clusters = "J")
+  lmrcq <- lm_robust(Y~Z, data = dat, clusters = J)
   lmrc[["call"]] <- NULL
   lmrcq[["call"]] <- NULL
   expect_equal(
@@ -251,7 +251,7 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
   # works with num
   dat$J_num <- as.numeric(dat$J)
 
-  lmrc_qnum <- lm_robust(Y~Z, data = dat, clusters = "J_num")
+  lmrc_qnum <- lm_robust(Y~Z, data = dat, clusters = J_num)
   lmrc_qnum[["call"]] <- NULL
   expect_equal(
     lmrc,

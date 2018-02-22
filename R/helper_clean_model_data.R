@@ -1,24 +1,47 @@
+# library(estimatr)
+# f <- function(w) {
+#   dat <- data.frame(x = rnorm(10), y = rnorm(10))
+#   lm_robust(y ~ x, data = dat, w = w)
+# }
+# f(NULL)
+# f(1:10)
+
+
 # Internal method to process data
 #' @importFrom rlang f_rhs
 clean_model_data <- function(data, datargs) {
 
   # if data exists, evaluate it
-  if (quo_is_missing(data)) {
-    data <- quo(NULL)
-  }
+  data <- if (quo_is_missing(data)) NULL else eval_tidy(data)
+
+  if(getOption("estimatr.debug.clean_model_data", FALSE)) browser()
 
   mfargs <- Filter(Negate(quo_is_missing), datargs)
-  for (da in setdiff(names(mfargs), names(formals(stats::model.frame)))) {
-    mfargs[[da]] <- f_rhs(mfargs[[da]]) # replace quo(w) with quote(w)
-    if(is.character(mfargs[[da]])) mfargs[[da]] <- sym(mfargs[[da]])
+
+
+  m_formula <- eval_tidy(mfargs[["formula"]])
+  m_formula_env <- environment(m_formula)
+
+  # For each ... that would go to model.fram .default, early eval, save to formula env, and point to it
+  # subset is also non-standard eval
+  to_process <- setdiff( names(mfargs), setdiff( names(formals(stats::model.frame.default)),"subset") )
+
+  for (da in to_process) {
+    name <- sprintf(".__%s%%%d__", da, sample.int(.Machine$integer.max, 1))
+    m_formula_env[[name]] <- eval_tidy(mfargs[[da]], data = data)
+    mfargs[[da]] <- sym(name)
   }
 
-  mfargs[["formula"]] <- quo(Formula::as.Formula(!!mfargs[["formula"]]))
-  mfargs[["na.action"]] <- quo(estimatr::na.omit_detailed.data.frame)
-  mfargs[["drop.unused.levels"]] <- TRUE
+
+
+
+  mfargs[["formula"]] <- Formula::as.Formula(m_formula)
 
   # Get model frame
-  mf <- eval_tidy(quo((stats::model.frame)(data=!!data, !!!mfargs)))
+  mf <- eval_tidy(quo((stats::model.frame)(!!!mfargs,
+                                           data=data,
+                                           na.action=na.omit_detailed.data.frame,
+                                           drop.unused.levels=TRUE)))
 
   local({
     na.action <- attr(mf, "na.action")
