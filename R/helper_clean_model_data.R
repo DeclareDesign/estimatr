@@ -27,7 +27,7 @@ clean_model_data <- function(data, datargs) {
   to_process <- setdiff( names(mfargs), setdiff( names(formals(stats::model.frame.default)),"subset") )
 
   for (da in to_process) {
-    name <- paste0(".__", da)
+    name <- paste0(".__", da, "%", rnorm(1))
     m_formula_env[[name]] <- eval_tidy(mfargs[[da]], data = data)
     mfargs[[da]] <- sym(name)
   }
