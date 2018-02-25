@@ -139,11 +139,10 @@ prediction(lmout_int, at = list(x = c(-0.5, 0.5)))
 
 Users who want their regression output in LaTeX or HTML can use the [`texreg`](https://github.com/leifeld/texreg) package, which we extend for the output of both the `lm_robust()` and `lm_lin()` functions.
 
-```{r texreg, echo=TRUE, eval=FALSE}
+```{r texreg, echo=TRUE, results='hide', message=FALSE}
 library(texreg)
 
-tex_int <- extract(res_int)
-texreg(tex_int, file = "ex.tex")
+texreg(lmout)
 ```
 
 ## `lm_lin`

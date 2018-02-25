@@ -472,8 +472,7 @@ mar_int &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocu
 <p>Users who want their regression output in LaTeX or HTML can use the <a href="https://github.com/leifeld/texreg"><code>texreg</code></a> package, which we extend for the output of both the <code><a href="../reference/lm_robust.html">lm_robust()</a></code> and <code><a href="../reference/lm_lin.html">lm_lin()</a></code> functions.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(texreg)
 
-tex_int &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/texreg/topics/extract">extract</a></span>(res_int)
-<span class="kw"><a href="http://www.rdocumentation.org/packages/texreg/topics/texreg">texreg</a></span>(tex_int, <span class="dt">file =</span> <span class="st">"ex.tex"</span>)</code></pre></div>
+<span class="kw"><a href="http://www.rdocumentation.org/packages/texreg/topics/texreg">texreg</a></span>(lmout)</code></pre></div>
 </div>
 <div id="lm_lin" class="section level2">
 <h2 class="hasAnchor">

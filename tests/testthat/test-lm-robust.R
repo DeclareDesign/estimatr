@@ -11,6 +11,11 @@ test_that("lm robust se", {
   lm_robust(Y ~ Z + X, data = dat)
   lm_robust(Y ~ Z * X, data = dat)
 
+  expect_equivalent(
+    lm_robust(Y ~ 1, data = dat)$coefficients[1],
+    mean(dat$Y)
+  )
+
   expect_error(
     lm_robust(Y ~ Z + X, data = dat, se_type = "not_a_real_one"),
     "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3',"
@@ -85,6 +90,22 @@ test_that("lm robust se", {
     rmcall(lm_f_form)
   )
 
+  # Drops unused levels appropriately
+  dat$Z <- as.factor(sample(LETTERS[1:3], nrow(dat), replace = TRUE))
+  lmall <- lm_robust(Y ~ Z, data = dat)
+  lm1 <- lm_robust(Y ~ Z, data = dat[dat$Z %in% c("A", "B"), ])
+  lm2 <- lm_robust(Y ~ Z, data = dat, subset = Z %in% c("A", "B"))
+
+  expect_equal(
+    rmcall(lm1),
+    rmcall(lm2)
+  )
+
+  # pvals and cis diff because dof are diff
+  expect_equal(
+    tidy(lmall)[1:2, 1:3],
+    tidy(lm1)[, 1:3]
+  )
 })
 
 test_that("lm robust works with missingness", {

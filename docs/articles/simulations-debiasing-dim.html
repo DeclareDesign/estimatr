@@ -369,12 +369,12 @@ simp_cl_des &lt;-<span class="st"> </span><span class="kw"><a href="http://www.r
 <span class="kw">table</span>(<span class="dt">Z =</span> dat<span class="op">$</span>Z, <span class="dt">clusters =</span> dat<span class="op">$</span>clusters)</code></pre></div>
 <pre><code>##    clusters
 ## Z   01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23
-##   0  8  8  8  8  0  8  8  0  8  8  8  0  8  8  0  8  8  0  0  0  8  0  8
-##   1  0  0  0  0  8  0  0  8  0  0  0  8  0  0  8  0  0  8  8  8  0  8  0
+##   0  0  0  0  8  0  8  0  0  8  8  8  8  8  8  8  0  8  8  8  8  0  8  0
+##   1  8  8  8  0  8  0  8  8  0  0  0  0  0  0  0  8  0  0  0  0  8  0  8
 ##    clusters
 ## Z   24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40
-##   0  0  0  8  0  0  0  8  0  0  0  0  0  8  0  8  8  0
-##   1  8  8  0  8  8  8  0  8  8  8  8  8  0  8  0  0  8</code></pre>
+##   0  8  0  8  0  0  0  0  0  0  0  0  8  0  8  8  8  0
+##   1  0  8  0  8  8  8  8  8  8  8  8  0  8  0  0  0  8</code></pre>
 <p>Furthermore, treatment potential outcomes are correlated with cluster.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(dat<span class="op">$</span>clusters, dat<span class="op">$</span>Y_Z_<span class="dv">1</span>,
      <span class="dt">ylab =</span> <span class="st">"Y_Z_1 (treatment PO)"</span>, <span class="dt">xlab =</span> <span class="st">"Cluster ID"</span>)</code></pre></div>

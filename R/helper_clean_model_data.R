@@ -12,6 +12,7 @@ clean_model_data <- function(formula,
   mf[[1]] <- quote(stats::model.frame)
   mf[["where"]] <- NULL # drop the where argument
   mf[["na.action"]] <- quote(estimatr::na.omit_detailed.data.frame)
+  mf[["drop.unused.levels"]] <- TRUE
 
   # Weights and clusters may be quoted...
   # TODO helper function
@@ -80,7 +81,7 @@ clean_model_data <- function(formula,
   # They will never have a model frame larger than 6 covars
   # so we can add a check that prevents slowing down large
   # lm_robust calls
-  if (ncol(mf) < 6) {
+  if (ncol(mf) < 6 && length(all.vars(terms(mf)[[3]])) != 0) {
     ret[["original_treatment"]] <- mf[, colnames(mf) == all.vars(terms(mf)[[3]])[1]]
   }
 
