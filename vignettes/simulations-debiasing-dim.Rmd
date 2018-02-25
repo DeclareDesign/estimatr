@@ -21,6 +21,7 @@ rerun <- !file.exists(fname)
 if (!rerun) {
   load(fname)
 } 
+set.seed(42)
 ```
 
 This document shows how providing [`estimatr`](http://estimatr.declaredesign.org) with the appropriate blocks and clusters that define a research design can eliminate bias when estimating treatment effects using `difference_in_means()`. More details about the estimators with references can be found in the [mathematical notes](http://estimatr.declaredesign.org/articles/mathematical-notes.html).
