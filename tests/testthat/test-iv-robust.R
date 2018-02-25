@@ -1,5 +1,8 @@
 context("Estimator - iv_robust")
 
+skip_if_not_installed("AER")
+skip_if_not_installed("ivpack")
+
 N <- 20
 dat <- data.frame(
   y = rnorm(N),
@@ -9,7 +12,7 @@ dat <- data.frame(
   clust = sample(letters[1:3], size = N, replace = TRUE)
 )
 dat$z <- dat$x * 0.5 + rnorm(N)
-haven::write_dta(dat, path = "~/test.dta", version = 13)
+# haven::write_dta(dat, path = "~/test.dta", version = 13)
 
 library(AER)
 library(ivpack)

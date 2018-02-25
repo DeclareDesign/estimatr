@@ -27,7 +27,9 @@ extract.lm_robust <- function(model, include.ci = TRUE, include.rsquared = TRUE,
   if (include.ci) {
     cilow <- s$coefficients[, 4]
     ciupper <- s$coefficients[, 5]
-
+  } else {
+    cilow <- numeric()
+    cihigh <- numeric()
   }
 
   rs <- s$r.squared  #extract R-squared

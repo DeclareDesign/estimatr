@@ -258,15 +258,16 @@ test_that("lm robust works with large data", {
   )
 })
 
+set.seed(42)
+N <- 100
+dat <- data.frame(
+  Y = rbinom(N, 1, .5),
+  X1 = rnorm(N),
+  X2 = rnorm(N),
+  X3 = rnorm(N)
+)
+
 test_that("lm robust works with rank-deficient X", {
-  set.seed(42)
-  N <- 100
-  dat <- data.frame(
-    Y = rbinom(N, 1, .5),
-    X1 = rnorm(N),
-    X2 = rnorm(N),
-    X3 = rnorm(N)
-  )
 
   dat$Z1 <- dat$X1
   sum_lm <- summary(lm(Y ~ X1 + X2 + Z1 + X3, data = dat))
@@ -356,4 +357,14 @@ test_that("r squared is right", {
   #   c(lmown$r.squared, lmown$adj.r.squared, lmown$fstatistic),
   #   c(lmrclust$r.squared, lmrclust$adj.r.squared, lmrclust$fstatistic)
   # )
+})
+
+test_that("multiple outcomes", {
+
+  lmo <- lm(cbind(mpg, hp) ~ cyl, data = mtcars)
+  str(lmo)
+  summary(lmo)
+  mo <- lm_robust(cbind(mpg, hp) ~ cyl, data = mtcars, se_type = "none")
+
+
 })

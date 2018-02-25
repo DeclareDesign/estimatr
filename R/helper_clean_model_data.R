@@ -97,7 +97,7 @@ clean_model_data <- function(data, datargs) {
   # They will never have a model frame larger than 6 covars
   # so we can add a check that prevents slowing down large
   # lm_robust calls
-  if (ncol(mf) < 6) {
+  if (ncol(mf) < 6 && length(all.vars(terms(mf)[[3]])) != 0) {
     ret[["original_treatment"]] <- mf[, colnames(mf) == all.vars(terms(mf)[[3]])[1]]
   }
 

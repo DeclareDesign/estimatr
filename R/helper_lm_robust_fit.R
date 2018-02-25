@@ -133,14 +133,19 @@ lm_robust_fit <- function(y,
       try_cholesky = try_cholesky
     )
 
+  fit$beta_hat <- as.matrix(fit$beta_hat)
+  dimnames(fit$beta_hat) <- list(variable_names, colnames(y))
+  ny <- ncol(fit$beta_hat)
+
   return_frame <- data.frame(
-    coefficients = setNames(as.vector(fit$beta_hat), variable_names),
-    se = NA,
-    df = NA,
+    coefficients = fit$beta_hat,
+    se = matrix(NA, k, ny),
+    df = matrix(NA, k, ny),
     stringsAsFactors = FALSE
   )
+  vcovs <- vector("list", ny)
 
-  est_exists <- !is.na(return_frame$coefficients)
+  est_exists <- apply(return_frame$coefficients, 1, function(x) !any(is.na(x)))
   N <- nrow(X)
   rank <- sum(est_exists)
 
@@ -161,7 +166,8 @@ lm_robust_fit <- function(y,
           X_first_stage_unweighted <- X_first_stage_unweighted[, est_exists, drop = FALSE]
         }
       }
-      fit$beta_hat <- fit$beta_hat[est_exists]
+
+      fit$beta_hat <- fit$beta_hat[est_exists, ]
     }
 
     # compute fitted.values and residuals
@@ -173,7 +179,7 @@ lm_robust_fit <- function(y,
       } else {
         fitted.values <- Xunweighted %*% fit$beta_hat
       }
-      ei <- yunweighted - fitted.values
+      ei <- as.matrix(yunweighted - fitted.values)
       X <- weights * X
     } else {
       if (iv) {
@@ -181,60 +187,59 @@ lm_robust_fit <- function(y,
       } else {
         fitted.values <- X %*% fit$beta_hat
       }
-      ei <- y - fitted.values
-    }
-
-    # TODO deal with multiple outcomes
-    if (se_type == "CR2") {
-      vcov_fit <- lm_variance_cr2(
-        X = X,
-        Xunweighted = Xunweighted,
-        XtX_inv = fit$XtX_inv,
-        beta_hat = fit$beta_hat,
-        ei = ei,
-        weight_mean = weight_mean,
-        clusters = cluster,
-        J = J,
-        ci = ci,
-        which_covs = which_covs[est_exists]
-      )
-
-      vcov_fit[["res_var"]] <-
-        sum((y - X %*% fit$beta_hat)^2) /
-        (N - rank)
-
-    } else if (se_type != "none") {
-      vcov_fit <- lm_variance(
-        X = X,
-        XtX_inv = fit$XtX_inv,
-        beta_hat = fit$beta_hat,
-        ei = ei,
-        cluster = cluster,
-        J = J,
-        ci = ci,
-        type = se_type,
-        which_covs = which_covs[est_exists]
-      )
+      ei <- as.matrix(y - fitted.values)
     }
 
     if (se_type != "none") {
-      return_frame$se[est_exists] <- sqrt(diag(vcov_fit$Vcov_hat))
-    }
 
-    if (ci && se_type != "none") {
-      if (se_type %in% cl_se_types) {
-
-        # Replace -99 with NA, easy way to flag that we didn't compute
-        # the DoF because the user didn't ask for it
-        return_frame$df[est_exists] <-
-          ifelse(vcov_fit$dof == -99,
-                 NA,
-                 vcov_fit$dof
+      for (outcome in seq_len(ny)) {
+        if (se_type == "CR2") {
+          vcov_fit <- lm_variance_cr2(
+            X = X,
+            Xunweighted = Xunweighted,
+            XtX_inv = fit$XtX_inv,
+            beta_hat = fit$beta_hat[, outcome, drop = TRUE],
+            ei = ei[, outcome, drop = TRUE],
+            weight_mean = weight_mean,
+            clusters = cluster,
+            J = J,
+            ci = ci,
+            which_covs = which_covs[est_exists]
           )
-      } else {
+          vcov_fit[["res_var"]] <-
+            sum((y - X %*% fit$beta_hat)^2) /
+            (N - rank)
 
-        # TODO explicitly pass rank from RRQR/cholesky
-        return_frame$df[est_exists] <- N - rank
+        } else {
+          vcov_fit <- lm_variance(
+            X = X,
+            XtX_inv = fit$XtX_inv,
+            beta_hat = fit$beta_hat[, outcome, drop = TRUE],
+            ei = ei[, outcome, drop = TRUE],
+            cluster = cluster,
+            J = J,
+            ci = ci,
+            type = se_type,
+            which_covs = which_covs[est_exists]
+          )
+        }
+
+        return_frame$se[est_exists, outcome] <- sqrt(diag(vcov_fit$Vcov_hat))
+        vcovs[[outcome]] <- vcov_fit$Vcov_hat
+
+        if (ci) {
+          if (se_type %in% cl_se_types) {
+
+            # Replace -99 with NA, easy way to flag that we didn't compute
+            # the DoF because the user didn't ask for it
+            return_frame$df[est_exists, outcome] <-
+              ifelse(vcov_fit$dof == -99, NA, vcov_fit$dof)
+          } else {
+
+            # TODO explicitly pass rank from RRQR/cholesky
+            return_frame$df[est_exists, outcome] <- N - rank
+          }
+        }
       }
     }
   }
@@ -249,14 +254,14 @@ lm_robust_fit <- function(y,
     if ((se_type == "CR2" && weighted) || iv) {
       # Have to get weighted fits as original fits were unweighted for
       # variance estimation or used wrong matrix for iv
-      return_list[["fitted.values"]] <- y - X %*% fit$beta_hat
+      return_list[["fitted.values"]] <- as.matrix(y - X %*% fit$beta_hat)
     } else {
-      return_list[["fitted.values"]] <- fitted.values
+      return_list[["fitted.values"]] <- as.matrix(fitted.values)
     }
 
     # If we reordered to get SEs earlier, have to fix order
     if (clustered && se_type != "none") {
-      return_list[["fitted.values"]] <- return_list[["fitted.values"]][order(cl_ord)]
+      return_list[["fitted.values"]] <- return_list[["fitted.values"]][order(cl_ord), ]
     }
   }
 
@@ -312,7 +317,7 @@ lm_robust_fit <- function(y,
 
     if (return_vcov) {
       # return_list$residuals <- fit$residuals
-      return_list[["vcov"]] <- vcov_fit$Vcov_hat
+      return_list[["vcovs"]] <- vcovs$Vcov_hat
       dimnames(return_list[["vcov"]]) <- list(
         return_list$coefficient_name[est_exists],
         return_list$coefficient_name[est_exists]
