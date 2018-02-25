@@ -164,13 +164,13 @@ y_i = \mathbf{x}_i^\top \mathbf{\beta} + \epsilon_i,
 \]</span></p>
 <p>Both rely on the hat matrix. Crucially, this is where Stata and the packages and modules in R and Python disagree. When weights are specified, Stata estimates the hat matrix as</p>
 <p><span class="math display">\[
-\mathbf{H}_{R} = \mathbf{X} (\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1} \mathbf{X}^\top,
+\mathbf{H}_{Stata} = \mathbf{X} (\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1} \mathbf{X}^\top,
 \]</span></p>
 <p>while the other software uses</p>
 <p><span class="math display">\[
-\mathbf{H}_{Stata} = \mathbf{X} (\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{W}.
+\mathbf{H}_{R} = \mathbf{X} (\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{W}.
 \]</span></p>
-<p>Thus the HC2 and HC3 estimator differ as the values of $h_{ii} are quite different. How different are these results? Let’s use a little example using <code>mtcars</code> a dataset included with R.</p>
+<p>Thus the HC2 and HC3 estimator differ as the values of <span class="math inline">\(h_{ii}\)</span> are quite different. How different are these results? Let’s use a little example using <code>mtcars</code> a dataset included with R.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Using estimatr</span>
 <span class="kw">library</span>(estimatr)
 <span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(
@@ -211,7 +211,7 @@ reg mpg hp [aweight=wt], vce(hc2)</code></pre>
 <div id="which-should-we-prefer" class="section level4">
 <h4 class="hasAnchor">
 <a href="#which-should-we-prefer" class="anchor"></a>Which should we prefer?</h4>
-<p>Just because Stata is not documenting their HC2 and HC3 estimator does not mean they’re wrong. Also the differences tend to be minor. In fact, it is unclear which we should prefer given that there is not a strong literature supporting one or the other. However, there are several arguments to be made for <span class="math inline">\(H_{R}\)</span>.</p>
+<p>Just because Stata is not documenting their HC2 and HC3 estimator does not mean they’re wrong. Also the differences tend to be minor. In fact, it is unclear which we should prefer given that there is not a strong literature supporting one or the other. However, there are several arguments to be made for <span class="math inline">\(\matbf{H}_{R}\)</span>.</p>
 <ol style="list-style-type: decimal">
 <li>It’s the estimator you get when you weight your data by the square root of the weights (<span class="math inline">\(\mathbf{X} \rightarrow \widetilde{\mathbf{X}}\)</span> and <span class="math inline">\(\mathbf{y} \rightarrow \widetilde{\mathbf{y}}\)</span>) and fit regular ordinary least squares. If one considers the weighted model as simply a rescaled version of the unweighted moded, then users should prefer <span class="math inline">\(\mathbf{H}_{R}\)</span>.</li>
 <li>The diagonal of <span class="math inline">\(\mathbf{H}_{R}\)</span> are the weighted leverages <span class="citation">(Li and Valliant <a href="#ref-livalliant2009">2009</a>)</span>, while <span class="math inline">\(\mathbf{H}_{Stata}\)</span> would need to be weighted again for the diagonal to recover the weighted leverage.</li>

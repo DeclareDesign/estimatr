@@ -11,6 +11,11 @@ test_that("lm robust se", {
   lm_robust(Y ~ Z + X, data = dat)
   lm_robust(Y ~ Z * X, data = dat)
 
+  expect_equivalent(
+    lm_robust(Y ~ 1, data = dat)$coefficients[1],
+    mean(dat$Y)
+  )
+
   expect_error(
     lm_robust(Y ~ Z + X, data = dat, se_type = "not_a_real_one"),
     "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3',"
