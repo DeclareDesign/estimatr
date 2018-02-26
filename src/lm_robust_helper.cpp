@@ -111,7 +111,8 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
                  const int & J,
                  const bool & ci,
                  const String type,
-                 const std::vector<bool> & which_covs) {
+                 const std::vector<bool> & which_covs,
+                 const double & nb) {
 
   const int n(X.rows()), r(X.cols());
 
@@ -124,13 +125,13 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
 
   // Standard error calculations
   if (type == "classical") {
-    s2 = ei.dot(ei)/((double)n - (double)r);
+    s2 = ei.dot(ei)/((double)n - (double)r - nb);
     Vcov_hat = s2 * XtX_inv;
 
   } else if ( (type == "HC0") || (type == "HC1") || (type == "HC2") || (type == "HC3") ) {
 
     Eigen::ArrayXd ei2 = ei.array().pow(2);
-    s2 = ei2.sum()/((double)n - (double)r);
+    s2 = ei2.sum()/((double)n - (double)r - nb);
 
     if (type == "HC0") {
 

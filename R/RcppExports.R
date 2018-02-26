@@ -17,8 +17,8 @@ lm_solver <- function(X, y, try_cholesky) {
     .Call(`_estimatr_lm_solver`, X, y, try_cholesky)
 }
 
-lm_variance <- function(X, XtX_inv, beta_hat, ei, cluster, J, ci, type, which_covs) {
-    .Call(`_estimatr_lm_variance`, X, XtX_inv, beta_hat, ei, cluster, J, ci, type, which_covs)
+lm_variance <- function(X, XtX_inv, beta_hat, ei, cluster, J, ci, type, which_covs, nb) {
+    .Call(`_estimatr_lm_variance`, X, XtX_inv, beta_hat, ei, cluster, J, ci, type, which_covs, nb)
 }
 
 lm_variance_cr2 <- function(X, Xunweighted, XtX_inv, beta_hat, ei, weight_mean, clusters, J, ci, which_covs) {

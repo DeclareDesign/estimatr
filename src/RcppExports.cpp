@@ -58,8 +58,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // lm_variance
-List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X, const Eigen::Map<Eigen::MatrixXd>& XtX_inv, const Eigen::Map<Eigen::VectorXd>& beta_hat, const Eigen::Map<Eigen::VectorXd>& ei, const Rcpp::Nullable<Rcpp::IntegerVector>& cluster, const int& J, const bool& ci, const String type, const std::vector<bool>& which_covs);
-RcppExport SEXP _estimatr_lm_variance(SEXP XSEXP, SEXP XtX_invSEXP, SEXP beta_hatSEXP, SEXP eiSEXP, SEXP clusterSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP typeSEXP, SEXP which_covsSEXP) {
+List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X, const Eigen::Map<Eigen::MatrixXd>& XtX_inv, const Eigen::Map<Eigen::VectorXd>& beta_hat, const Eigen::Map<Eigen::VectorXd>& ei, const Rcpp::Nullable<Rcpp::IntegerVector>& cluster, const int& J, const bool& ci, const String type, const std::vector<bool>& which_covs, const double& nb);
+RcppExport SEXP _estimatr_lm_variance(SEXP XSEXP, SEXP XtX_invSEXP, SEXP beta_hatSEXP, SEXP eiSEXP, SEXP clusterSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP typeSEXP, SEXP which_covsSEXP, SEXP nbSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -72,7 +72,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const bool& >::type ci(ciSEXP);
     Rcpp::traits::input_parameter< const String >::type type(typeSEXP);
     Rcpp::traits::input_parameter< const std::vector<bool>& >::type which_covs(which_covsSEXP);
-    rcpp_result_gen = Rcpp::wrap(lm_variance(X, XtX_inv, beta_hat, ei, cluster, J, ci, type, which_covs));
+    Rcpp::traits::input_parameter< const double& >::type nb(nbSEXP);
+    rcpp_result_gen = Rcpp::wrap(lm_variance(X, XtX_inv, beta_hat, ei, cluster, J, ci, type, which_covs, nb));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -102,7 +103,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_estimatr_ht_var_partial", (DL_FUNC) &_estimatr_ht_var_partial, 2},
     {"_estimatr_AtA", (DL_FUNC) &_estimatr_AtA, 1},
     {"_estimatr_lm_solver", (DL_FUNC) &_estimatr_lm_solver, 3},
-    {"_estimatr_lm_variance", (DL_FUNC) &_estimatr_lm_variance, 9},
+    {"_estimatr_lm_variance", (DL_FUNC) &_estimatr_lm_variance, 10},
     {"_estimatr_lm_variance_cr2", (DL_FUNC) &_estimatr_lm_variance_cr2, 10},
     {NULL, NULL, 0}
 };

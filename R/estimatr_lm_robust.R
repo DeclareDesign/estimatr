@@ -191,7 +191,8 @@ lm_robust <- function(formula,
                       ci = TRUE,
                       alpha = .05,
                       return_vcov = TRUE,
-                      try_cholesky = FALSE) {
+                      try_cholesky = FALSE,
+                      Z = 4) {
   datargs <- enquos(
     formula = formula,
     weights = weights,
@@ -212,7 +213,8 @@ lm_robust <- function(formula,
       alpha = alpha,
       return_vcov = return_vcov,
       try_cholesky = try_cholesky,
-      has_int = attr(model_data$terms, "intercept")
+      has_int = attr(model_data$terms, "intercept"),
+      Z = Z
     )
 
   return_list <- lm_return(

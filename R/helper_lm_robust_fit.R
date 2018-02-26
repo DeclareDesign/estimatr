@@ -24,7 +24,8 @@ lm_robust_fit <- function(y,
                           return_vcov = FALSE,
                           return_fit = TRUE,
                           try_cholesky = FALSE,
-                          X_first_stage = NULL) {
+                          X_first_stage = NULL,
+                          Z = 4) {
 
 
   weighted <- !is.null(weights)
@@ -220,7 +221,8 @@ lm_robust_fit <- function(y,
             J = J,
             ci = ci,
             type = se_type,
-            which_covs = which_covs[est_exists]
+            which_covs = which_covs[est_exists],
+            nb = Z
           )
         }
 

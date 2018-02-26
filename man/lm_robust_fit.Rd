@@ -6,7 +6,7 @@
 \usage{
 lm_robust_fit(y, X, weights, cluster, ci, se_type, has_int, alpha = 0.05,
   return_vcov = FALSE, return_fit = TRUE, try_cholesky = FALSE,
-  X_first_stage = NULL)
+  X_first_stage = NULL, Z = 4)
 }
 \arguments{
 \item{y}{numeric outcome vector}
