@@ -3,7 +3,11 @@ lm_return <- function(return_list, model_data, formula) {
   return_list[["contrasts"]] <- attr(model_data$design_matrix, "contrasts")
   return_list[["terms"]] <- model_data$terms
   return_list[["weights"]] <- model_data$weights
-  return_list[["outcome"]] <- deparse(formula[[2]], nlines = 5)
+  if (is.matrix(model_data$outcome)) {
+    return_list[["outcome"]] <- colnames(model_data$outcome)
+  } else {
+    return_list[["outcome"]] <- deparse(formula[[2]], nlines = 5)
+  }
   names(return_list[["coefficients"]]) <- return_list[["coefficient_name"]]
 
   return(return_list)

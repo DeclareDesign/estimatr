@@ -21,12 +21,12 @@ lm_robust_fit <- function(y,
                           se_type,
                           has_int, # TODO get this out of here
                           alpha = 0.05,
-                          return_vcov = FALSE,
+                          return_vcov = TRUE,
                           return_fit = TRUE,
                           try_cholesky = FALSE,
                           X_first_stage = NULL) {
 
-
+  multivariate <- is.matrix(y)
   weighted <- !is.null(weights)
   iv <- !is.null(X_first_stage)
   clustered <- !is.null(cluster)
@@ -137,18 +137,27 @@ lm_robust_fit <- function(y,
   dimnames(fit$beta_hat) <- list(variable_names, colnames(y))
   ny <- ncol(fit$beta_hat)
 
-  return_frame <- data.frame(
-    coefficients = as.vector(fit$beta_hat),
-    se = NA,
-    df = NA,
-    stringsAsFactors = FALSE
-  )
-
   # Use first model to get linear dependencies
-  est_exists <- !is.na(return_frame$coefficients)
-  covs_used <- est_exists[1:k]
+  est_exists <- !is.na(fit$beta_hat)
+  covs_used <- est_exists[, 1]
   N <- nrow(X)
   rank <- sum(covs_used)
+
+  if (multivariate) {
+    return_list <- list(
+      coefficients = fit$beta_hat,
+      se = matrix(NA, k, ny),
+      df = matrix(NA, k, ny),
+      stringsAsFactors = FALSE
+    )
+  } else {
+    return_list <- list(
+      coefficients = as.vector(fit$beta_hat),
+      se = NA,
+      df = NA,
+      stringsAsFactors = FALSE
+    )
+  }
 
   # ----------
   # Estimate variance
@@ -223,11 +232,11 @@ lm_robust_fit <- function(y,
       }
       # print(est_exists)
       # print(vcov_fit)
-      return_frame$se[est_exists] <- sqrt(diag(vcov_fit$Vcov_hat))
+      return_list$se[est_exists] <- sqrt(diag(vcov_fit$Vcov_hat))
 
       if (ci) {
         # If any not computed in variance fn, replace with NA
-        return_frame$df[est_exists] <-
+        return_list$df[est_exists] <-
           ifelse(vcov_fit$dof == -99, NA, vcov_fit$dof)
       }
     }
@@ -236,8 +245,7 @@ lm_robust_fit <- function(y,
   # ----------
   # Augment return object
   # ----------
-
-  return_list <- add_cis_pvals(return_frame, alpha, ci && se_type != "none")
+  return_list <- add_cis_pvals(return_list, alpha, ci && se_type != "none")
 
   if (return_fit) {
     if ((se_type == "CR2" && weighted) || iv) {
@@ -290,7 +298,6 @@ lm_robust_fit <- function(y,
           return_list[["tot_var"]]
       )
 
-
     return_list[["adj.r.squared"]] <-
       1 - (
         (1 - return_list[["r.squared"]]) *
@@ -307,10 +314,21 @@ lm_robust_fit <- function(y,
     if (return_vcov) {
       # return_list$residuals <- fit$residuals
       return_list[["vcov"]] <- vcov_fit$Vcov_hat
-      dimnames(return_list[["vcov"]]) <- list(
-        return_list$coefficient_name[est_exists],
-        return_list$coefficient_name[est_exists]
-      )
+      if (multivariate) {
+        coef_names <- paste0(
+          rep(paste0(return_list[["outcome"]], ":"), each = rank),
+          rep(return_list$coefficient_name, times = ny)
+        )
+        dimnames(return_list[["vcov"]]) <- list(
+          coef_names,
+          coef_names
+        )
+      } else {
+        dimnames(return_list[["vcov"]]) <- list(
+          return_list$coefficient_name[est_exists],
+          return_list$coefficient_name[est_exists]
+        )
+      }
     }
   }
 

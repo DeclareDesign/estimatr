@@ -71,19 +71,27 @@ tidy.horvitz_thompson <- function(object, ...) {
 
 
 tidy_data_frame <- function(object, digits = NULL) {
-  return_cols <-
+
+  vec_cols <-
     c(
-      "coefficient_name",
       "coefficients",
       "se",
       "p",
       "ci_lower",
       "ci_upper",
-      "df",
-      "outcome"
+      "df"
     )
 
-  return_frame <- as.data.frame(object[return_cols], stringsAsFactors = FALSE)
+  tidy_mat <- do.call("cbind", lapply(vec_cols, function(x) {as.vector(object[[x]])}))
+  colnames(tidy_mat) <- vec_cols
+  return_frame <- data.frame(
+    coefficient_name = object[["coefficient_name"]],
+    tidy_mat,
+    stringsAsFactors = FALSE
+  )
+
+  return_frame$outcome <- rep(object[["outcome"]], each = length(object[["coefficient_name"]]))
+
   row.names(return_frame) <- NULL
   return(return_frame)
 }

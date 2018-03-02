@@ -4,7 +4,7 @@ test_that("lm robust se", {
   N <- 100
   dat <- data.frame(Y = rnorm(N), Z = rbinom(N, 1, .5), X = rnorm(N), W = runif(N))
 
-  lm_robust(Y ~ Z, data = dat)
+  tidy(lm_robust(Y ~ Z, data = dat))
 
   lm_robust(Y ~ Z, se_type = "none", data = dat)
 
@@ -367,9 +367,43 @@ test_that("r squared is right", {
 test_that("multiple outcomes", {
 
   lmo <- lm(cbind(mpg, hp) ~ cyl, data = mtcars)
-  #str(lmo)
-  #summary(lmo)
-  mo <- tidy(lm_robust(cbind(mpg, hp) ~ cyl, data = mtcars, se_type = "classical"))
-  #mo
+  lmro <- lm_robust(cbind(mpg, hp) ~ cyl, data = mtcars, se_type = "classical")
+  mo <- tidy(lmro)
+
+  expect_identical(
+    mo$coefficient_name,
+    c("(Intercept)", "cyl", "(Intercept)", "cyl")
+  )
+
+  expect_identical(
+    mo$coefficients,
+    lmo$coefficients
+  )
+
+  lmro$coefficients
+
+
+  expect_equal(
+    vcov(lmo),
+    vcov(lmro)
+  )
+
+  expect_equal(
+    sandwich::vcovHC(lmo, type = "HC0"),
+    vcov(lm_robust(cbind(mpg, hp) ~ cyl, data = mtcars, se_type = "HC0"))
+  )
+  expect_equal(
+    sandwich::vcovHC(lmo, type = "HC1"),
+    vcov(lm_robust(cbind(mpg, hp) ~ cyl, data = mtcars, se_type = "HC1"))
+  )
+  expect_equal(
+    sandwich::vcovHC(lmo, type = "HC2"),
+    vcov(lm_robust(cbind(mpg, hp) ~ cyl, data = mtcars, se_type = "HC2"))
+  )
+  expect_equal(
+    sandwich::vcovHC(lmo, type = "HC3"),
+    vcov(lm_robust(cbind(mpg, hp) ~ cyl, data = mtcars, se_type = "HC3"))
+  )
+
 
 })
