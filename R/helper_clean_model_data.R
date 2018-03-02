@@ -18,22 +18,21 @@ clean_model_data <- function(data, datargs) {
 
   mfargs <- Filter(Negate(quo_is_missing), datargs)
 
-
   m_formula <- eval_tidy(mfargs[["formula"]])
   m_formula_env <- environment(m_formula)
 
+  args_ignored <- c("subset", "se_type")
   # For each ... that would go to model.fram .default, early eval, save to formula env, and point to it
   # subset is also non-standard eval
-  to_process <- setdiff( names(mfargs), setdiff( names(formals(stats::model.frame.default)),"subset") )
+  to_process <- setdiff(
+    names(mfargs),
+    setdiff( names(formals(stats::model.frame.default)),args_ignored) )
 
   for (da in to_process) {
     name <- sprintf(".__%s%%%d__", da, sample.int(.Machine$integer.max, 1))
     m_formula_env[[name]] <- eval_tidy(mfargs[[da]], data = data)
     mfargs[[da]] <- sym(name)
   }
-
-
-
 
   mfargs[["formula"]] <- Formula::as.Formula(m_formula)
 

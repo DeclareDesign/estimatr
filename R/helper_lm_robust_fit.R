@@ -24,8 +24,7 @@ lm_robust_fit <- function(y,
                           return_vcov = FALSE,
                           return_fit = TRUE,
                           try_cholesky = FALSE,
-                          X_first_stage = NULL,
-                          Z = 4) {
+                          X_first_stage = NULL) {
 
 
   weighted <- !is.null(weights)
@@ -139,16 +138,17 @@ lm_robust_fit <- function(y,
   ny <- ncol(fit$beta_hat)
 
   return_frame <- data.frame(
-    coefficients = fit$beta_hat,
-    se = matrix(NA, k, ny),
-    df = matrix(NA, k, ny),
+    coefficients = as.vector(fit$beta_hat),
+    se = NA,
+    df = NA,
     stringsAsFactors = FALSE
   )
-  vcovs <- vector("list", ny)
 
-  est_exists <- apply(return_frame$coefficients, 1, function(x) !any(is.na(x)))
+  # Use first model to get linear dependencies
+  est_exists <- !is.na(return_frame$coefficients)
+  covs_used <- est_exists[1:k]
   N <- nrow(X)
-  rank <- sum(est_exists)
+  rank <- sum(covs_used)
 
   # ----------
   # Estimate variance
@@ -157,18 +157,18 @@ lm_robust_fit <- function(y,
   if (se_type != "none" || return_fit) {
 
     if (rank < ncol(X)) {
-      X <- X[, est_exists, drop = FALSE]
+      X <- X[, covs_used, drop = FALSE]
       if (weighted){
-        Xunweighted <- Xunweighted[, est_exists, drop = FALSE]
+        Xunweighted <- Xunweighted[, covs_used, drop = FALSE]
       }
       if (iv) {
-        X_first_stage <- X_first_stage[, est_exists, drop = FALSE]
+        X_first_stage <- X_first_stage[, covs_used, drop = FALSE]
         if (weighted) {
-          X_first_stage_unweighted <- X_first_stage_unweighted[, est_exists, drop = FALSE]
+          X_first_stage_unweighted <- X_first_stage_unweighted[, covs_used, drop = FALSE]
         }
       }
 
-      fit$beta_hat <- fit$beta_hat[est_exists, ]
+      fit$beta_hat <- fit$beta_hat[covs_used, ]
     }
 
     # compute fitted.values and residuals
@@ -193,55 +193,42 @@ lm_robust_fit <- function(y,
 
     if (se_type != "none") {
 
-      for (outcome in seq_len(ny)) {
-        if (se_type == "CR2") {
-          vcov_fit <- lm_variance_cr2(
-            X = X,
-            Xunweighted = Xunweighted,
-            XtX_inv = fit$XtX_inv,
-            beta_hat = fit$beta_hat[, outcome, drop = TRUE],
-            ei = ei[, outcome, drop = TRUE],
-            weight_mean = weight_mean,
-            clusters = cluster,
-            J = J,
-            ci = ci,
-            which_covs = which_covs[est_exists]
-          )
-          vcov_fit[["res_var"]] <-
-            sum((y - X %*% fit$beta_hat)^2) /
-            (N - rank)
+      if (se_type == "CR2") {
+        vcov_fit <- lm_variance_cr2(
+          X = X,
+          Xunweighted = Xunweighted,
+          XtX_inv = fit$XtX_inv,
+          ei = ei,
+          weight_mean = weight_mean,
+          clusters = cluster,
+          J = J,
+          ci = ci,
+          which_covs = which_covs[covs_used]
+        )
+        vcov_fit[["res_var"]] <-
+          sum((y - X %*% fit$beta_hat)^2) /
+          (N - rank)
 
-        } else {
-          vcov_fit <- lm_variance(
-            X = X,
-            XtX_inv = fit$XtX_inv,
-            beta_hat = fit$beta_hat[, outcome, drop = TRUE],
-            ei = ei[, outcome, drop = TRUE],
-            cluster = cluster,
-            J = J,
-            ci = ci,
-            type = se_type,
-            which_covs = which_covs[est_exists],
-            nb = Z
-          )
-        }
+      } else {
+        vcov_fit <- lm_variance(
+          X = X,
+          XtX_inv = fit$XtX_inv,
+          ei = ei,
+          cluster = cluster,
+          J = J,
+          ci = ci,
+          type = se_type,
+          which_covs = which_covs[covs_used]
+        )
+      }
+      # print(est_exists)
+      # print(vcov_fit)
+      return_frame$se[est_exists] <- sqrt(diag(vcov_fit$Vcov_hat))
 
-        return_frame$se[est_exists, outcome] <- sqrt(diag(vcov_fit$Vcov_hat))
-        vcovs[[outcome]] <- vcov_fit$Vcov_hat
-
-        if (ci) {
-          if (se_type %in% cl_se_types) {
-
-            # Replace -99 with NA, easy way to flag that we didn't compute
-            # the DoF because the user didn't ask for it
-            return_frame$df[est_exists, outcome] <-
-              ifelse(vcov_fit$dof == -99, NA, vcov_fit$dof)
-          } else {
-
-            # TODO explicitly pass rank from RRQR/cholesky
-            return_frame$df[est_exists, outcome] <- N - rank
-          }
-        }
+      if (ci) {
+        # If any not computed in variance fn, replace with NA
+        return_frame$df[est_exists] <-
+          ifelse(vcov_fit$dof == -99, NA, vcov_fit$dof)
       }
     }
   }
@@ -268,7 +255,7 @@ lm_robust_fit <- function(y,
   }
 
   return_list[["coefficient_name"]] <- variable_names
-  return_list[["outcome"]] <- NA_character_
+  return_list[["outcome"]] <- colnames(y)
   return_list[["alpha"]] <- alpha
   return_list[["se_type"]] <- se_type
   return_list[["weighted"]] <- weighted
@@ -319,7 +306,7 @@ lm_robust_fit <- function(y,
 
     if (return_vcov) {
       # return_list$residuals <- fit$residuals
-      return_list[["vcovs"]] <- vcovs$Vcov_hat
+      return_list[["vcov"]] <- vcov_fit$Vcov_hat
       dimnames(return_list[["vcov"]]) <- list(
         return_list$coefficient_name[est_exists],
         return_list$coefficient_name[est_exists]

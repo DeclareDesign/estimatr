@@ -5,8 +5,7 @@
 \title{Ordinary Least Squares with Robust Standard Errors}
 \usage{
 lm_robust(formula, data, weights, subset, clusters, se_type = NULL,
-  ci = TRUE, alpha = 0.05, return_vcov = TRUE, try_cholesky = FALSE,
-  Z = 4)
+  ci = TRUE, alpha = 0.05, return_vcov = TRUE, try_cholesky = FALSE)
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}}

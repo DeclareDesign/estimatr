@@ -367,9 +367,9 @@ test_that("r squared is right", {
 test_that("multiple outcomes", {
 
   lmo <- lm(cbind(mpg, hp) ~ cyl, data = mtcars)
-  str(lmo)
-  summary(lmo)
-  mo <- lm_robust(cbind(mpg, hp) ~ cyl, data = mtcars, se_type = "none")
-
+  #str(lmo)
+  #summary(lmo)
+  mo <- tidy(lm_robust(cbind(mpg, hp) ~ cyl, data = mtcars, se_type = "classical"))
+  #mo
 
 })

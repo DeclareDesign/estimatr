@@ -14,6 +14,18 @@ Eigen::MatrixXd AtA(const Eigen::MatrixXd& A) {
 }
 
 // [[Rcpp::export]]
+Eigen::MatrixXd Kr(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B) {
+  Eigen::MatrixXd AB(A.rows() * B.rows(), A.cols() * B.cols());
+
+  for (int i = 0; i < A.rows(); i++) {
+    for (int j = 0; j < A.cols(); j++) {
+      AB.block(i*B.rows(), j*B.cols(), B.rows(), B.cols()) = A(i, j) * B;
+    }
+  }
+  return AB;
+}
+
+// [[Rcpp::export]]
 List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
                const Eigen::Map<Eigen::MatrixXd>& y,
                const bool& try_cholesky) {
@@ -105,118 +117,150 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
 // [[Rcpp::export]]
 List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
                  const Eigen::Map<Eigen::MatrixXd>& XtX_inv,
-                 const Eigen::Map<Eigen::VectorXd>& beta_hat,
-                 const Eigen::Map<Eigen::VectorXd>& ei,
+                 const Eigen::Map<Eigen::MatrixXd>& ei,
                  const Rcpp::Nullable<Rcpp::IntegerVector> & cluster,
                  const int & J,
                  const bool & ci,
                  const String type,
-                 const std::vector<bool> & which_covs,
-                 const double & nb) {
+                 const std::vector<bool> & which_covs) {
 
-  const int n(X.rows()), r(X.cols());
+  const int n(X.rows()), r(X.cols()), ny(ei.cols());
+  const double clustered = ((type == "stata") || (type == "CR0"));
+  const int npars = r * ny;
+  int sandwich_size = n;
+  if (clustered) {
+    sandwich_size = J;
+  }
 
   // Rcout << "X:" << X << std::endl << std::endl;
-  // Rcout << "beta_hat:" << beta_hat << std::endl << std::endl;
-
+  // Rcout << "ny: " << ny << std::endl;
+  // Rcout << "ei: " << std::endl << ei << std::endl;
   Eigen::MatrixXd Vcov_hat;
-  Eigen::VectorXd dof = Eigen::VectorXd::Constant(r, -99.0);
-  double s2 = -99.0;
+  Eigen::VectorXd dof = Eigen::VectorXd::Constant(npars, -99.0);
+  Eigen::MatrixXd s2 = Eigen::MatrixXd::Constant(ny, ny, -99.0);
 
   // Standard error calculations
   if (type == "classical") {
-    s2 = ei.dot(ei)/((double)n - (double)r - nb);
-    Vcov_hat = s2 * XtX_inv;
+    // Classical
+    s2 = AtA(ei)/((double)n - (double)r);
+    Vcov_hat = Kr(s2, XtX_inv);
 
-  } else if ( (type == "HC0") || (type == "HC1") || (type == "HC2") || (type == "HC3") ) {
+    dof.fill(n - r);
 
-    Eigen::ArrayXd ei2 = ei.array().pow(2);
-    s2 = ei2.sum()/((double)n - (double)r - nb);
+  } else {
+    // Robust
+    Eigen::MatrixXd temp_omega = ei.array().pow(2);
 
-    if (type == "HC0") {
+    s2 = temp_omega.colwise().sum()/((double)n - (double)r);
 
-      // Rcpp::Rcout << "bread: " << std::endl << XtX_inv << std::endl;
-      // Rcpp::Rcout << "meat: " << std::endl <<  (X.transpose() * ei2.matrix().asDiagonal()) * X << std::endl;
-      Vcov_hat = XtX_inv * (X.transpose() * ei2.matrix().asDiagonal()) * X * XtX_inv;
+    dof.fill(n - r);
 
-    } else if (type == "HC1") {
-
-      Vcov_hat =
-        (double)n / ((double)n - (double)r) *
-        XtX_inv * (X.transpose() * ei2.matrix().asDiagonal()) * X * XtX_inv;
-
-    } else if (type == "HC2") {
-      Eigen::ArrayXd hii(n);
-
-      for (int i = 0; i < n; i++) {
-        Eigen::VectorXd Xi = X.row(i);
-        hii(i) = ei2(i) / (1.0 - (Xi.transpose() * XtX_inv * Xi));
-      }
-      Vcov_hat = XtX_inv * (X.transpose() * hii.matrix().asDiagonal()) * X * XtX_inv;
-    } else if (type == "HC3") {
-      Eigen::ArrayXd hii(n);
-
-      for (int i = 0; i < n; i++) {
-        Eigen::VectorXd Xi = X.row(i);
-        hii(i) = ei2(i) / (std::pow(1.0 - Xi.transpose() * XtX_inv * Xi, 2));
-      }
-      Vcov_hat = XtX_inv * (X.transpose() * hii.matrix().asDiagonal()) * X * XtX_inv;
+    Eigen::MatrixXd bread(npars, npars);
+    Eigen::MatrixXd half_meat(sandwich_size, npars);
+    if (ny == 1) {
+      bread = XtX_inv;
+    } else {
+      bread = Kr(Eigen::MatrixXd::Identity(ny, ny), XtX_inv);
     }
 
-  } else if ( (type == "stata") || (type == "CR0") ) {
+    if ( !clustered ) {
+      // Robust, no clusters
 
-    s2 = ei.dot(ei)/((double)n - (double)r);
+      if (type == "HC2") {
 
-    Eigen::Map<Eigen::ArrayXi> clusters = Rcpp::as<Eigen::Map<Eigen::ArrayXi> >(cluster);
-    Eigen::MatrixXd XteetX = Eigen::MatrixXd::Zero(r, r);
-    double current_cluster = clusters(0);
-    int start_pos = 0;
-    int len = 1;
-
-    // iterate over unique cluster values
-    for(int i = 1; i <= n; ++i){
-
-      if ((i == n) || (clusters(i) != current_cluster)) {
-        // Rcout << current_cluster << std::endl;
-        // Rcout << start_pos << std::endl;
-        // Rcout << len << std::endl << std::endl;
-        // Rcout <<  X.transpose().block(0, start_pos, r, len) << std::endl << std::endl;
-        // Rcout << "XteetX: " << AtA(ei.segment(start_pos, len).transpose() * X.block(start_pos, 0, len, r)) << std::endl;
-        // TODO fix for one outcome at a time
-        XteetX +=
-          AtA(ei.segment(start_pos, len).transpose() *
-          X.block(start_pos, 0, len, r));
-
-        if (i < n) {
-          current_cluster = clusters(i);
-          len = 1;
-          start_pos = i;
+        for (int i = 0; i < n; i++) {
+          Eigen::VectorXd Xi = X.row(i);
+          temp_omega.row(i) = temp_omega.row(i) / (1.0 - (Xi.transpose() * XtX_inv * Xi));
         }
 
-      } else {
-        len++;
-        continue;
+      } else if (type == "HC3") {
+
+        for (int i = 0; i < n; i++) {
+          Eigen::VectorXd Xi = X.row(i);
+          temp_omega.row(i) = temp_omega.row(i) / (std::pow(1.0 - Xi.transpose() * XtX_inv * Xi, 2));
+        }
+
+      }
+
+      // Rcout << "temp_omega: " << std::endl << temp_omega << std::endl;
+      for (int m = 0; m < ny; m++) {
+        half_meat.block(0, r*m, n, r) = X.array().colwise() * temp_omega.col(m).array().sqrt();
+      }
+
+    } else {
+      // Robust, clustered
+
+      dof.fill(J - 1);
+      Eigen::Map<Eigen::ArrayXi> clusters = Rcpp::as<Eigen::Map<Eigen::ArrayXi> >(cluster);
+
+      double current_cluster = clusters(0);
+      int clust_num = 0;
+      int start_pos = 0;
+      int len = 1;
+
+      // iterate over unique cluster values
+      for (int i = 1; i <= n; ++i){
+
+        if ((i == n) || (clusters(i) != current_cluster)) {
+          // Rcout << current_cluster << std::endl;
+          // Rcout << start_pos << std::endl;
+          // Rcout << len << std::endl << std::endl;
+          // Rcout <<  X.transpose().block(0, start_pos, r, len) << std::endl << std::endl;
+          // Rcout << "XteetX: " << AtA(ei.segment(start_pos, len).transpose() * X.block(start_pos, 0, len, r)) << std::endl;
+
+          if (ny > 1) {
+
+            // Stack residuals for this cluster from each model
+            Eigen::Map<const Eigen::MatrixXd> ei_long(ei.block(start_pos, 0, len, ny).data(), 1, len*ny);
+            // Rcout << "clust_num: " << clust_num << std::endl;
+            // Rcout << "ei_long:" << std::endl << ei_long << std::endl;
+            half_meat.block(clust_num, 0, 1, npars) =
+              ei_long *
+              Kr(Eigen::MatrixXd::Identity(ny, ny), X.block(start_pos, 0, len, r));
+
+          } else {
+            // Rcout << "clust_num: " << clust_num << std::endl;
+            // Rcout << "ei:" << std::endl << ei.block(start_pos, 0, len, 1).transpose() << std::endl;
+            half_meat.row(clust_num) =
+              ei.block(start_pos, 0, len, 1).transpose() *
+              X.block(start_pos, 0, len, r);
+          }
+
+
+          if (i < n) {
+            current_cluster = clusters(i);
+            len = 1;
+            start_pos = i;
+          }
+
+          clust_num++;
+
+        } else {
+          len++;
+          continue;
+        }
       }
     }
-    // Rcout << "XteetX: " << XteetX << std::endl;
-    //
-    // Rcout << "J: " << J << std::endl;
-    // Rcout << "n: " << n << std::endl;
-    // Rcout << "r: " << r << std::endl;
-    // Rcout << "corr: " << ((J * (n - 1)) / ((J - 1) * (n - r))) << std::endl;
-    // Rcout << "sandwich: " << (XtX_inv * XteetX * XtX_inv) << std::endl;
 
-    if (type == "stata") {
-      Vcov_hat =
-        (((double)J * (n - 1)) / (((double)J - 1) * (n - r))) *
-        (XtX_inv * XteetX * XtX_inv);
-    } else {
-      Vcov_hat = XtX_inv * XteetX * XtX_inv;
-    }
+    // Rcout << "bread: " << std::endl<< bread << std::endl;
+    // Rcout << "half_meat:" << std::endl << half_meat << std::endl;
+    Vcov_hat = bread * (half_meat.transpose() * half_meat) * bread;
 
-    dof.fill(J - 1);
+  }
 
-    //Rcpp::Rcout << 'here' << std::endl;
+  if (type == "HC1") {
+
+    Vcov_hat =
+      Vcov_hat *
+      (double)n / ((double)n - (double)r);
+
+  } else if (type == "stata") {
+
+    // Rcout << "correction: " << (((double)J * (n - 1)) / (((double)J - 1) * (n - r))) << std::endl;
+
+    Vcov_hat =
+      Vcov_hat *
+      (((double)J * (n - 1)) / (((double)J - 1) * (n - r)));
   }
 
   return List::create(_["Vcov_hat"]= Vcov_hat,
@@ -233,7 +277,6 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
 List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
                      const Rcpp::Nullable<Rcpp::NumericMatrix> & Xunweighted,
                      const Eigen::Map<Eigen::MatrixXd>& XtX_inv,
-                     const Eigen::Map<Eigen::VectorXd>& beta_hat,
                      const Eigen::Map<Eigen::VectorXd>& ei,
                      const double weight_mean,
                      const Eigen::Map<Eigen::ArrayXi>& clusters,
@@ -242,13 +285,14 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
                      const std::vector<bool> & which_covs) {
 
 
-  const int n(X.rows()), r(X.cols());
+  const int n(X.rows()), r(X.cols()), ny(ei.cols());
+  const int npars = r * ny;
 
   // Rcout << "X:" << X << std::endl << std::endl;
   // Rcout << "beta_hat:" << beta_hat << std::endl << std::endl;
 
   Eigen::MatrixXd Vcov_hat;
-  Eigen::VectorXd dof = Eigen::VectorXd::Constant(r, -99.0);
+  Eigen::VectorXd dof = Eigen::VectorXd::Constant(npars, -99.0);
 
   Eigen::MatrixXd Xoriginal(n, r);
   if (Xunweighted.isNotNull()) {
@@ -261,7 +305,7 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
   // https://github.com/jepusto/clubSandwich, using the R code as a template for
   // implementation
 
-  Eigen::MatrixXd tutX(J, r);
+  Eigen::MatrixXd half_meat(J, r);
 
   // used for the dof corrction
   Eigen::MatrixXd H1s(r, r*J);
@@ -281,7 +325,7 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
   // Rcout << "XtX_inv: " << XtX_inv.rows() << "x" << XtX_inv.cols() << std::endl;
 
   double current_cluster = clusters(0);
-  int j = 0;
+  int clust_num = 0;
   int start_pos = 0;
   int len = 1;
 
@@ -352,11 +396,11 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
           ME = XtX_inv * At_WX_inv.transpose();
         }
 
-        P_diags.col(j) = ME.array().pow(2).rowwise().sum();
+        P_diags.col(clust_num) = ME.array().pow(2).rowwise().sum();
 
         Eigen::MatrixXd MEU = ME * Xoriginal.block(start_pos, 0, len, r);
 
-        int p_pos = j*r;
+        int p_pos = clust_num*r;
         // Rcout << "p_pos: " << p_pos << std::endl;
         H1s.block(0, p_pos, r, r) = MEU * M_U_ct;
         H2s.block(0, p_pos, r, r) = ME * X.block(start_pos, 0, len, r) * M_U_ct;
@@ -369,13 +413,29 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
 
       // Rcout << "At_WX_inv: " << At_WX_inv << std::endl;
       // Rcout << "cr2_eis: " << cr2_eis.segment(start_pos, len).transpose() << std::endl;
-      tutX.row(j) = ei.segment(start_pos, len).transpose() * At_WX_inv;
+      if (ny > 1) {
+
+        // Stack residuals for this cluster from each model
+        Eigen::Map<const Eigen::MatrixXd> ei_long(ei.block(start_pos, 0, len, ny).data(), 1, len*ny);
+        // Rcout << "clust_num: " << clust_num << std::endl;
+        // Rcout << "ei_long:" << std::endl << ei_long << std::endl;
+        half_meat.block(clust_num, 0, 1, npars) =
+          ei_long *
+          Kr(Eigen::MatrixXd::Identity(ny, ny), At_WX_inv);
+
+      } else {
+        // Rcout << "clust_num: " << clust_num << std::endl;
+        // Rcout << "ei:" << std::endl << ei.block(start_pos, 0, len, 1).transpose() << std::endl;
+        half_meat.row(clust_num) =
+          ei.block(start_pos, 0, len, 1).transpose() *
+          At_WX_inv;
+      }
 
       if (i < n) {
         current_cluster = clusters(i);
         len = 1;
         start_pos = i;
-        j++;
+        clust_num++;
       }
 
 
@@ -390,7 +450,7 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
   // Rcout << "XtX_inv: " << std::endl << XtX_inv << std::endl;
   // Rcout << "tutX: " << std::endl << tutX << std::endl;
 
-  Vcov_hat = XtX_inv * (tutX.transpose() * tutX) * XtX_inv;
+  Vcov_hat = XtX_inv * (half_meat.transpose() * half_meat) * XtX_inv;
 
   // Rcout << "H1s" << std::endl << std::endl;
   // Rcout << H1s << std::endl << std::endl;
