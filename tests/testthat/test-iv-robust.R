@@ -9,10 +9,11 @@ dat <- data.frame(
   x = rnorm(N),
   x2 = rnorm(N),
   z2 = rnorm(N),
+  w = runif(N),
   clust = sample(letters[1:3], size = N, replace = TRUE)
 )
 dat$z <- dat$x * 0.5 + rnorm(N)
-# haven::write_dta(dat, path = "~/test.dta", version = 13)
+# xhaven::write_dta(dat, path = "~/test.dta", version = 13)
 
 library(AER)
 library(ivpack)
@@ -42,10 +43,22 @@ test_that("iv_robust matches AER + ivpack", {
   ivclusto <- iv_robust(y ~ x | z, data = dat, se_type = "stata", clusters = clust)
   ivpackclust <- cluster.robust.se(ivfit, dat$clust)
 
-  # Our p-values are bigger (must be using less conservative DF, we use J - 1 which
+  # Our p-values are bigger (ivpack is be using less conservative DF, we use J - 1 which
   # is what stata uses for clusters w/ `small` and in OLS)
   expect_equivalent(
     as.matrix(tidy(ivclusto)[, c("coefficients", "se")]),
     ivpackclust[, c(1, 2)]
   )
+
+  # CR2
+
+  # Weighting
+  # ivrw <- iv_robust(y ~ x | z, data = dat, weights = w)
+  # ivw <- ivreg(y ~ x | z, weights = w, data = dat)
+  # ivpackrobw <- robust.se(ivw)
+  #
+  # expect_equivalent(
+  #   as.matrix(tidy(ivrw)[, c("coefficients", "se", "p")]),
+  #   ivpackrobw[, c(1, 2, 4)]
+  # )
 })

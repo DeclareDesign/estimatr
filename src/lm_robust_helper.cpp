@@ -211,7 +211,8 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
           if (ny > 1) {
 
             // Stack residuals for this cluster from each model
-            Eigen::Map<const Eigen::MatrixXd> ei_long(ei.block(start_pos, 0, len, ny).data(), 1, len*ny);
+            Eigen::MatrixXd ei_block = ei.block(start_pos, 0, len, ny);
+            Eigen::Map<const Eigen::MatrixXd> ei_long(ei_block.data(), 1, len*ny);
             // Rcout << "clust_num: " << clust_num << std::endl;
             // Rcout << "ei_long:" << std::endl << ei_long << std::endl;
             half_meat.block(clust_num, 0, 1, npars) =
@@ -277,7 +278,7 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
 List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
                      const Rcpp::Nullable<Rcpp::NumericMatrix> & Xunweighted,
                      const Eigen::Map<Eigen::MatrixXd>& XtX_inv,
-                     const Eigen::Map<Eigen::VectorXd>& ei,
+                     const Eigen::Map<Eigen::MatrixXd>& ei,
                      const double weight_mean,
                      const Eigen::Map<Eigen::ArrayXi>& clusters,
                      const int & J,
@@ -305,7 +306,13 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
   // https://github.com/jepusto/clubSandwich, using the R code as a template for
   // implementation
 
-  Eigen::MatrixXd half_meat(J, r);
+  Eigen::MatrixXd bread(npars, npars);
+  Eigen::MatrixXd half_meat(J, npars);
+  if (ny == 1) {
+    bread = XtX_inv;
+  } else {
+    bread = Kr(Eigen::MatrixXd::Identity(ny, ny), XtX_inv);
+  }
 
   // used for the dof corrction
   Eigen::MatrixXd H1s(r, r*J);
@@ -328,6 +335,8 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
   int clust_num = 0;
   int start_pos = 0;
   int len = 1;
+
+  // Rcout << "ei: " << std::endl << ei << std::endl;
 
   // iterate over unique cluster values
   for(int i = 1; i <= n; ++i){
@@ -416,8 +425,11 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
       if (ny > 1) {
 
         // Stack residuals for this cluster from each model
-        Eigen::Map<const Eigen::MatrixXd> ei_long(ei.block(start_pos, 0, len, ny).data(), 1, len*ny);
+        // Rcout << "len: " << len << std::endl;
+        Eigen::MatrixXd ei_block = ei.block(start_pos, 0, len, ny);
+        Eigen::Map<const Eigen::MatrixXd> ei_long(ei_block.data(), 1, len*ny);
         // Rcout << "clust_num: " << clust_num << std::endl;
+        // Rcout << "ei.block" << ei.block(start_pos, 0, len, ny) << std::endl;
         // Rcout << "ei_long:" << std::endl << ei_long << std::endl;
         half_meat.block(clust_num, 0, 1, npars) =
           ei_long *
@@ -438,7 +450,6 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
         clust_num++;
       }
 
-
     } else {
       len++;
       continue;
@@ -447,10 +458,11 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
   }
 
 
-  // Rcout << "XtX_inv: " << std::endl << XtX_inv << std::endl;
-  // Rcout << "tutX: " << std::endl << tutX << std::endl;
+  // Rcout << "bread: " << std::endl << bread << std::endl;
+  // Rcout << "half_meat: " << std::endl << half_meat << std::endl;
+  // Rcout << "meat: " << std::endl << (half_meat.transpose() * half_meat) << std::endl;
 
-  Vcov_hat = XtX_inv * (half_meat.transpose() * half_meat) * XtX_inv;
+  Vcov_hat = bread * (half_meat.transpose() * half_meat) * bread;
 
   // Rcout << "H1s" << std::endl << std::endl;
   // Rcout << H1s << std::endl << std::endl;

@@ -43,8 +43,8 @@ r_github_packages:
 
 r_packages:
 - broom
-- ggplot2
 - texreg
+- clubSandwich
 
 after_success:
 - Rscript -e DDtools::after_build

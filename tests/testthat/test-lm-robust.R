@@ -370,18 +370,22 @@ test_that("multiple outcomes", {
   lmro <- lm_robust(cbind(mpg, hp) ~ cyl, data = mtcars, se_type = "classical")
   mo <- tidy(lmro)
 
+  v0 <- vcov(lm_robust(cbind(mpg, hp) ~ cyl, data = mtcars, se_type = "HC0"))
+
+  v1 <- vcov(lm_robust(cbind(mpg, hp) ~ cyl, data = mtcars, se_type = "HC1"))
+
+  v0 * (32 / 30)
+  v1
+
   expect_identical(
     mo$coefficient_name,
     c("(Intercept)", "cyl", "(Intercept)", "cyl")
   )
 
-  expect_identical(
-    mo$coefficients,
+  expect_equal(
+    lmro$coefficients,
     lmo$coefficients
   )
-
-  lmro$coefficients
-
 
   expect_equal(
     vcov(lmo),

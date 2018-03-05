@@ -8,7 +8,6 @@ lm_return <- function(return_list, model_data, formula) {
   } else {
     return_list[["outcome"]] <- deparse(formula[[2]], nlines = 5)
   }
-  names(return_list[["coefficients"]]) <- return_list[["coefficient_name"]]
 
   return(return_list)
 }

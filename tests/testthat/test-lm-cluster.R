@@ -298,3 +298,33 @@ test_that("Clustered SEs work with clusters of size 1", {
     cbind(lmo$coefficients, bmo$se.Stata)
   )
 })
+
+test_that("multiple outcomes", {
+
+  skip_if_not_installed("clubSandwich")
+  lmo <- lm(cbind(mpg, hp) ~ wt, data = mtcars)
+  lmro <- lm_robust(cbind(mpg, hp) ~ wt, data = mtcars, clusters = cyl)
+
+  expect_equivalent(
+    as.matrix(clubSandwich::vcovCR(lmo, cluster = mtcars$cyl, type = "CR2")),
+    vcov(lmro)
+  )
+
+  expect_equivalent(
+    as.matrix(clubSandwich::vcovCR(lmo, cluster = mtcars$cyl, type = "CR0")),
+    vcov(lm_robust(cbind(mpg, hp) ~ wt, data = mtcars, clusters = cyl, se_type = "CR0"))
+  )
+
+  J <- length(unique(mtcars$cyl))
+  n <- nrow(mtcars)
+  r <- 2
+
+  # Have to manually do correction because clubSandwich uses n*ny and r*ny in place of n and r in
+  # stata correction
+  expect_equivalent(
+    as.matrix(clubSandwich::vcovCR(lmo, cluster = mtcars$cyl, type = "CR0")) *
+      ((J * (n - 1)) / ((J - 1) * (n - r))) ,
+    vcov(lm_robust(cbind(mpg, hp) ~ wt, data = mtcars, clusters = cyl, se_type = "stata"))
+  )
+
+})

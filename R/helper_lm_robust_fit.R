@@ -152,7 +152,7 @@ lm_robust_fit <- function(y,
     )
   } else {
     return_list <- list(
-      coefficients = as.vector(fit$beta_hat),
+      coefficients = setNames(as.vector(fit$beta_hat), variable_names),
       se = NA,
       df = NA,
       stringsAsFactors = FALSE
@@ -319,6 +319,8 @@ lm_robust_fit <- function(y,
           rep(paste0(return_list[["outcome"]], ":"), each = rank),
           rep(return_list$coefficient_name, times = ny)
         )
+        # print(return_list[["vcov"]])
+        # print(coef_names)
         dimnames(return_list[["vcov"]]) <- list(
           coef_names,
           coef_names

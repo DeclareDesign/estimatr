@@ -88,7 +88,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // lm_variance_cr2
-List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Eigen::Map<Eigen::MatrixXd>& XtX_inv, const Eigen::Map<Eigen::VectorXd>& ei, const double weight_mean, const Eigen::Map<Eigen::ArrayXi>& clusters, const int& J, const bool& ci, const std::vector<bool>& which_covs);
+List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Eigen::Map<Eigen::MatrixXd>& XtX_inv, const Eigen::Map<Eigen::MatrixXd>& ei, const double weight_mean, const Eigen::Map<Eigen::ArrayXi>& clusters, const int& J, const bool& ci, const std::vector<bool>& which_covs);
 RcppExport SEXP _estimatr_lm_variance_cr2(SEXP XSEXP, SEXP XunweightedSEXP, SEXP XtX_invSEXP, SEXP eiSEXP, SEXP weight_meanSEXP, SEXP clustersSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP which_covsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -96,7 +96,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type X(XSEXP);
     Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericMatrix>& >::type Xunweighted(XunweightedSEXP);
     Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type XtX_inv(XtX_invSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd>& >::type ei(eiSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type ei(eiSEXP);
     Rcpp::traits::input_parameter< const double >::type weight_mean(weight_meanSEXP);
     Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXi>& >::type clusters(clustersSEXP);
     Rcpp::traits::input_parameter< const int& >::type J(JSEXP);
