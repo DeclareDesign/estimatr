@@ -337,22 +337,23 @@ test_that("r squared is right", {
   lmrown <- lm_robust(mpg ~ hp - 1, mtcars, weights = wt)
   lmrclust <- lm_robust(mpg ~ hp - 1, mtcars, weights = wt, clusters = carb) # for good measure
 
-  expect_equal(
+  # Use equivalent instead of equal because we change the name of the fstat value
+  expect_equivalent(
     c(lmo$r.squared, lmo$adj.r.squared, lmo$fstatistic),
     c(lmro$r.squared, lmro$adj.r.squared, lmro$fstatistic)
   )
 
-  expect_equal(
+  expect_equivalent(
     c(lmow$r.squared, lmow$adj.r.squared, lmow$fstatistic),
     c(lmrow$r.squared, lmrow$adj.r.squared, lmrow$fstatistic)
   )
 
-  expect_equal(
+  expect_equivalent(
     c(lmon$r.squared, lmon$adj.r.squared, lmon$fstatistic),
     c(lmron$r.squared, lmron$adj.r.squared, lmron$fstatistic)
   )
 
-  expect_equal(
+  expect_equivalent(
     c(lmown$r.squared, lmown$adj.r.squared, lmown$fstatistic),
     c(lmrown$r.squared, lmrown$adj.r.squared, lmrown$fstatistic)
   )
@@ -369,13 +370,6 @@ test_that("multiple outcomes", {
   lmo <- lm(cbind(mpg, hp) ~ cyl, data = mtcars)
   lmro <- lm_robust(cbind(mpg, hp) ~ cyl, data = mtcars, se_type = "classical")
   mo <- tidy(lmro)
-
-  v0 <- vcov(lm_robust(cbind(mpg, hp) ~ cyl, data = mtcars, se_type = "HC0"))
-
-  v1 <- vcov(lm_robust(cbind(mpg, hp) ~ cyl, data = mtcars, se_type = "HC1"))
-
-  v0 * (32 / 30)
-  v1
 
   expect_identical(
     mo$coefficient_name,

@@ -46,6 +46,80 @@ test_that("tidy, summary, and print work", {
     )
   )
 
+  # works with multiple outcomes
+  lmrmo <- lm_robust(cbind(y, x) ~ z, data = dat, se_type = "classical")
+  lmmo <- lm(cbind(y, x) ~ z, data = dat)
+
+  expect_equivalent(
+    as.matrix(tidy(lmrmo)[, c("coefficient_name", "outcome")]),
+    cbind(
+      rep(c("(Intercept)", "z"), times = 2),
+      rep(c("y", "x"), each = 2)
+    )
+  )
+
+  expect_equal(
+    dimnames(vcov(lmrmo)),
+    list(
+      c("y:(Intercept)", "y:z", "x:(Intercept)", "x:z"),
+      c("y:(Intercept)", "y:z", "x:(Intercept)", "x:z")
+    )
+  )
+
+  expect_equal(
+    coef(lmrmo),
+    coef(lmmo)
+  )
+
+  capture_output(
+    expect_equal(
+      rownames(print(lmrmo)),
+      rownames(vcov(lmrmo))
+    )
+  )
+
+  #
+  # # summary
+  # # coef
+  # # predict
+  #
+  # # weights res_var
+  # slmmo <- summary(lmmo)
+  # coef(slmmo)
+  # str(slmmo)
+  # lmrmo$tot_var
+  # sqrt(lmrmo$res_var)
+  # slmmo$`Response y`$sigma
+  # slmmo$`Response x`$sigma
+  # lmrmo$tot_var
+  # lmrmo$r.squared
+  # slmmo$`Response y`[c("r.squared")]
+  # slmmo$`Response x`[c("r.squared")]
+  # lmrmo$adj.r.squared
+  # slmmo$`Response y`[c("adj.r.squared")]
+  # slmmo$`Response x`[c("adj.r.squared")]
+  #
+  # lmrmo$fstatistic
+  # slmmo$`Response y`[c("fstatistic")]
+  # slmmo$`Response x`[c("fstatistic")]
+  #
+  # $sigma
+  # [1] 0.9675174
+  # $df
+  # [1] 2 8 2
+  # $r.squared
+  # [1] 0.07885525
+  # $adj.r.squared
+  # [1] -0.03628784
+  # $fstatistic
+  # value     numdf     dendf
+  # 0.6848457 1.0000000 8.0000000
+  #
+  #
+  # str(lmrmo)$coefficie
+  #
+  # summary(lmrmo)
+  # summary(lmmo)
 
   ## lm_lin
   lmlo <- lm_lin(y ~ x, ~ z, data = dat)

@@ -61,7 +61,18 @@ summarize_tidy <- function(object, test = "t", ...) {
       "DF"
     )
   tidy_mat <- as.matrix(tidy_out[, !(names(tidy_out) %in% remove_cols)])
-  rownames(tidy_mat) <- tidy_out$coefficient_name
+
+  ny <- length(object$outcome)
+  p <- length(object$coefficient_name)
+  if (length(object$outcome) > 1) {
+    rownames(tidy_mat) <- paste0(
+      rep(object$outcome, each = p),
+      ":",
+      rep(object$coefficient_name, times = ny)
+    )
+  } else {
+    rownames(tidy_mat) <- object$coefficient_name
+  }
 
   return(tidy_mat)
 }

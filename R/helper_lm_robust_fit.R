@@ -26,7 +26,9 @@ lm_robust_fit <- function(y,
                           try_cholesky = FALSE,
                           X_first_stage = NULL) {
 
-  multivariate <- is.matrix(y)
+  y <- as.matrix(y)
+  ny <- ncol(y)
+  multivariate <- ny > 1
   weighted <- !is.null(weights)
   iv <- !is.null(X_first_stage)
   clustered <- !is.null(cluster)
@@ -91,7 +93,7 @@ lm_robust_fit <- function(y,
   # Reorder if there are clusters and you need the SE or to return the fit
   if (clustered && se_type != "none") {
     cl_ord <- order(cluster)
-    y <- as.matrix(y)[cl_ord, , drop = FALSE]
+    y <- y[cl_ord, , drop = FALSE]
     X <- X[cl_ord, , drop = FALSE]
     cluster <- cluster[cl_ord]
     J <- length(unique(cluster))
@@ -135,7 +137,6 @@ lm_robust_fit <- function(y,
 
   fit$beta_hat <- as.matrix(fit$beta_hat)
   dimnames(fit$beta_hat) <- list(variable_names, colnames(y))
-  ny <- ncol(fit$beta_hat)
 
   # Use first model to get linear dependencies
   est_exists <- !is.na(fit$beta_hat)
@@ -281,21 +282,30 @@ lm_robust_fit <- function(y,
   if (se_type != "none") {
 
     if (weighted) {
-      return_list[["tot_var"]] <- ifelse(
-        has_int,
-        sum(weights ^ 2 * (yunweighted - weighted.mean(yunweighted, weights ^ 2)) ^ 2) * weight_mean,
-        sum(y ^ 2 * weight_mean)
-      )
-      return_list[["res_var"]] <- sum(ei ^ 2 * weight_mean) / (N - rank)
+      if (has_int) {
+        return_list[["tot_var"]] <-
+          colSums(
+            weights ^ 2 *
+              (yunweighted - weighted.mean(yunweighted, weights ^ 2)) ^ 2
+          ) * weight_mean
+      } else {
+        return_list[["tot_var"]] <- colSums(y ^ 2 * weight_mean)
+      }
+      return_list[["res_var"]] <- diag(as.matrix(colSums(ei ^ 2 * weight_mean) / (N - rank)))
     } else {
-      return_list[["tot_var"]] <- ifelse(has_int, sum((y - mean(y)) ^ 2), sum(y ^ 2))
-      return_list[["res_var"]] <- ifelse(vcov_fit$res_var < 0, NA, vcov_fit$res_var)
+      if (has_int) {
+        return_list[["tot_var"]] <- .rowSums(apply(y, 1, `-`, colMeans(y)) ^ 2, ny, N)
+      } else {
+        return_list[["tot_var"]] <- colSums(y ^ 2)
+      }
+      return_list[["res_var"]] <- diag(as.matrix(ifelse(vcov_fit$res_var < 0, NA, vcov_fit$res_var)))
     }
+    return_list[["tot_var"]] <- as.vector(return_list[["tot_var"]])
 
     return_list[["r.squared"]] <-
       1 - (
-        return_list[["df.residual"]] * return_list[["res_var"]] /
-          return_list[["tot_var"]]
+          return_list[["df.residual"]] * return_list[["res_var"]] /
+            return_list[["tot_var"]]
       )
 
     return_list[["adj.r.squared"]] <-
@@ -305,8 +315,11 @@ lm_robust_fit <- function(y,
       )
 
     return_list[["fstatistic"]] <- c(
-      value = (return_list[["r.squared"]] * return_list[["df.residual"]])
-      / ((1 - return_list[["r.squared"]]) * (rank - has_int)),
+      setNames(
+        return_list[["r.squared"]] * return_list[["df.residual"]] /
+          ((1 - return_list[["r.squared"]]) * (rank - has_int)),
+        paste0(colnames(y), ":value")
+      ),
       numdf = rank - has_int,
       dendf = return_list[["df.residual"]]
     )
