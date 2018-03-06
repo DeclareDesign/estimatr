@@ -78,6 +78,15 @@ test_that("tidy, summary, and print work", {
     )
   )
 
+  expect_equal(
+    predict(lmrmo, newdata = dat),
+    predict(lmmo)
+  )
+
+  expect_error(
+    predict(lmrmo, newdata = dat, se.fit = TRUE),
+    "Can't set `se.fit` == TRUE with multivariate outcome"
+  )
   #
   # # summary
   # # coef

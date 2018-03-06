@@ -119,6 +119,11 @@ predict.lm_robust <- function(object,
   interval <- match.arg(interval)
 
   if (se.fit || interval != "none") {
+
+    if (ncol(coefs) > 1) {
+      stop("Can't set `se.fit` == TRUE with multivariate outcome")
+    }
+
     ret <- list()
 
     var_fit <-
