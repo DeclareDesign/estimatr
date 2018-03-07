@@ -69,14 +69,13 @@ test_that("iv_robust matches AER + ivpack", {
   )
 
   # Weighting classical
-  # Weighting
   ivcw <- iv_robust(y ~ x | z, data = dat, weights = w, se_type = "classical")
   ivw <- ivreg(y ~ x | z, weights = w, data = dat)
-  ivpackrobw <- robust.se(ivw)
+  ivregsum <- summary(ivw)
 
   expect_equivalent(
-    as.matrix(tidy(ivrw)[, c("coefficients", "se", "p")]),
-    ivpackrobw[, c(1, 2, 4)]
+    as.matrix(tidy(ivcw)[, c("coefficients", "se", "p")]),
+    ivregsum$coefficients[, c(1, 2, 4)]
   )
 
   # HC1 weighted
