@@ -7,10 +7,10 @@ output:
 link-citations: yes
 bibliography: estimatr.bib
 vignette: |
-  %\VignetteIndexEntry{How Stata's hat matrix differs with weights} 
+  %\VignetteIndexEntry{How Stata's hat matrix differs with weights}
   \usepackage[utf8]{inputenc}
   %\VignetteEngine{knitr::rmarkdown}
-editor_options: 
+editor_options:
   chunk_output_type: console
 ---
 
@@ -29,7 +29,7 @@ The discrepancy is due to differences in how the software estimates the "hat" ma
 \mathbf{H} = \mathbf{X} (\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1} \mathbf{X}^\top
 \]
 
-while the usual approaches in R, including  [`sandwich`](https://CRAN.R-project.org/package=sandwich) and [`estimatr`](estimatr.declaredesign.org), and Python (e.g. [`statsmodels`](http://www.statsmodels.org/stable/index.html)) estimate the following hat matrix
+while the usual approaches in R, including  [`sandwich`](https://CRAN.R-project.org/package=sandwich) and [`estimatr`](/R/estimatr/), and Python (e.g. [`statsmodels`](http://www.statsmodels.org/stable/index.html)) estimate the following hat matrix
 
 \[
 \mathbf{H} = \mathbf{X} (\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{W}
@@ -62,7 +62,7 @@ where $\mathbf{W}$ is a diagonal matrix where each entry is $w_{i}$, $\mathbf{X}
 $$
 \begin{aligned}
 \widetilde{\mathbf{X}} &= \mathbf{X} \mathbf{W}^s \\
-\widetilde{\mathbf{y}} &= \mathbf{W}^s \mathbf{y} 
+\widetilde{\mathbf{y}} &= \mathbf{W}^s \mathbf{y}
 \end{aligned}
 $$
 
@@ -71,7 +71,7 @@ $$
 Turning to variance, the standard sandwich estimator is
 
 \[
-\mathbb{V}[\widehat{\mathbf{\beta}}] = (\mathbf{X}^{\top}\mathbf{X})^{-1} \mathbf{X}^\top \Omega \mathbf{X} (\mathbf{X}^{\top}\mathbf{X})^{-1} 
+\mathbb{V}[\widehat{\mathbf{\beta}}] = (\mathbf{X}^{\top}\mathbf{X})^{-1} \mathbf{X}^\top \Omega \mathbf{X} (\mathbf{X}^{\top}\mathbf{X})^{-1}
 \]
 
 where $\Omega$ represents $\mathbb{E}[\mathbf{\epsilon}\mathbf{\epsilon}^\top]$, the variance-covariance matrix of the disturbances. A nice review of the different variance estimators along with their properties can be found in @longervin2000  [[ungated]](http://www.indiana.edu/~jslsoc/files_research/testing_tests/hccm/99TAS.pdf). The HC2 and HC3 estimators, introduced by @mackinnonwhite1985, use the hat matrix as part of the estimation of $\Omega$. The standard hat matrix is written:
@@ -110,9 +110,9 @@ Thus the HC2 and HC3 estimator differ as the values of $h_{ii}$ are quite differ
 # Using estimatr
 library(estimatr)
 lm_robust(
-  mpg ~ hp, 
-  data = mtcars, 
-  weights = wt, 
+  mpg ~ hp,
+  data = mtcars,
+  weights = wt,
   se_type = "HC2"
 )
 ```
