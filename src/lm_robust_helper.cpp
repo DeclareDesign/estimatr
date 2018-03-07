@@ -456,7 +456,6 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
 
   }
 
-
   // Rcout << "bread: " << std::endl << bread << std::endl;
   // Rcout << "half_meat: " << std::endl << half_meat << std::endl;
   // Rcout << "meat: " << std::endl << (half_meat.transpose() * half_meat) << std::endl;

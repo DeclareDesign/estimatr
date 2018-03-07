@@ -180,7 +180,6 @@ test_that("lm cluster se", {
   test_lm_cluster_variance(NULL)
   test_lm_cluster_variance(dat$W)
 
-
 })
 
 test_that("Clustered weighted SEs are correct", {

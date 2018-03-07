@@ -6,10 +6,13 @@
 #' @param cluster numeric cluster vector
 #' @param ci boolean that when T returns confidence intervals and p-values
 #' @param se_type character denoting which kind of SEs to return
+#' @param has_int logical, whether the model has an intercept, used for \eqn{R^2}
 #' @param alpha numeric denoting the test size for confidence intervals
 #' @param return_vcov logical, whether to return the vcov matrix for later usage
+#' @param return_fit logical, whether to return fitted values
+#' @param return_unweighted_fit logical, whether to return unweighted fitted values in place of weighted fitted values if regression is weighted
 #' @param try_cholesky logical, whether to try using a cholesky decomposition to solve LS instead of a QR decomposition
-#' @param has_int logical, whether the model has an intercept, used for \eqn{R^2}
+#' @param X_first_stage numeric matrix of the first stage design matrix, only use for second stage of 2SLS IV regression, otherwise leave as \code{NULL}
 #'
 #' @export
 #'
@@ -22,7 +25,8 @@ lm_robust_fit <- function(y,
                           has_int, # TODO get this out of here
                           alpha = 0.05,
                           return_vcov = TRUE,
-                          return_fit = TRUE,
+                          return_fit = FALSE,
+                          return_unweighted_fit = FALSE,
                           try_cholesky = FALSE,
                           X_first_stage = NULL) {
 
@@ -30,14 +34,12 @@ lm_robust_fit <- function(y,
   ny <- ncol(y)
   multivariate <- ny > 1
   weighted <- !is.null(weights)
-  iv <- !is.null(X_first_stage)
+  iv_second_stage <- !is.null(X_first_stage)
   clustered <- !is.null(cluster)
 
   # ----------
   # Check se type
   # ----------
-
-  # TODO what is implemented for IV?
 
   # Allowable se_types with clustering
   cl_se_types <- c("CR0", "CR2", "stata")
@@ -100,7 +102,7 @@ lm_robust_fit <- function(y,
     if (weighted) {
       weights <- weights[cl_ord]
     }
-    if (iv) {
+    if (iv_second_stage) {
       X_first_stage <- X_first_stage[cl_ord, , drop = FALSE]
     }
   } else {
@@ -115,7 +117,7 @@ lm_robust_fit <- function(y,
     weights <- sqrt(weights / weight_mean)
     X <- weights * X
     y <- weights * y
-    if (iv) {
+    if (iv_second_stage) {
       X_first_stage_unweighted <- X_first_stage
       X_first_stage <- weights * X_first_stage
     }
@@ -171,7 +173,7 @@ lm_robust_fit <- function(y,
       if (weighted){
         Xunweighted <- Xunweighted[, covs_used, drop = FALSE]
       }
-      if (iv) {
+      if (iv_second_stage) {
         X_first_stage <- X_first_stage[, covs_used, drop = FALSE]
         if (weighted) {
           X_first_stage_unweighted <- X_first_stage_unweighted[, covs_used, drop = FALSE]
@@ -185,7 +187,7 @@ lm_robust_fit <- function(y,
     # need unweighted for CR2, as well as X weighted by weights again
     # so that instead of having X * sqrt(W) we have X * W
     if (se_type == "CR2" && weighted) {
-      if (iv) {
+      if (iv_second_stage) {
         fitted.values <- X_first_stage_unweighted %*% fit$beta_hat
       } else {
         fitted.values <- Xunweighted %*% fit$beta_hat
@@ -193,7 +195,7 @@ lm_robust_fit <- function(y,
       ei <- as.matrix(yunweighted - fitted.values)
       X <- weights * X
     } else {
-      if (iv) {
+      if (iv_second_stage) {
         fitted.values <- X_first_stage %*% fit$beta_hat
       } else {
         fitted.values <- X %*% fit$beta_hat
@@ -216,7 +218,7 @@ lm_robust_fit <- function(y,
           which_covs = which_covs[covs_used]
         )
         vcov_fit[["res_var"]] <-
-          sum((y - X %*% fit$beta_hat)^2) /
+          colSums((y - X %*% fit$beta_hat)^2) /
           (N - rank)
 
       } else {
@@ -249,12 +251,16 @@ lm_robust_fit <- function(y,
   return_list <- add_cis_pvals(return_list, alpha, ci && se_type != "none")
 
   if (return_fit) {
-    if ((se_type == "CR2" && weighted) || iv) {
+    if ((se_type == "CR2" && weighted) || iv_second_stage) {
       # Have to get weighted fits as original fits were unweighted for
-      # variance estimation or used wrong matrix for iv
-      return_list[["fitted.values"]] <- as.matrix(y - X %*% fit$beta_hat)
+      # variance estimation or used wrong regressors in IV
+      return_list[["fitted.values"]] <- as.matrix(X %*% fit$beta_hat)
     } else {
       return_list[["fitted.values"]] <- as.matrix(fitted.values)
+    }
+
+    if (weighted && return_unweighted_fit) {
+      return_list[["fitted.values"]] <- as.matrix(Xunweighted %*% fit$beta_hat)
     }
 
     # If we reordered to get SEs earlier, have to fix order

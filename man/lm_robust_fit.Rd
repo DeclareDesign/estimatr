@@ -5,8 +5,8 @@
 \title{Internal method that creates linear fits}
 \usage{
 lm_robust_fit(y, X, weights, cluster, ci, se_type, has_int, alpha = 0.05,
-  return_vcov = TRUE, return_fit = TRUE, try_cholesky = FALSE,
-  X_first_stage = NULL)
+  return_vcov = TRUE, return_fit = FALSE, return_unweighted_fit = FALSE,
+  try_cholesky = FALSE, X_first_stage = NULL)
 }
 \arguments{
 \item{y}{numeric outcome vector}
@@ -27,7 +27,13 @@ lm_robust_fit(y, X, weights, cluster, ci, se_type, has_int, alpha = 0.05,
 
 \item{return_vcov}{logical, whether to return the vcov matrix for later usage}
 
+\item{return_fit}{logical, whether to return fitted values}
+
+\item{return_unweighted_fit}{logical, whether to return unweighted fitted values in place of weighted fitted values if regression is weighted}
+
 \item{try_cholesky}{logical, whether to try using a cholesky decomposition to solve LS instead of a QR decomposition}
+
+\item{X_first_stage}{numeric matrix of the first stage design matrix, only use for second stage of 2SLS IV regression, otherwise leave as \code{NULL}}
 }
 \description{
 Internal method that creates linear fits

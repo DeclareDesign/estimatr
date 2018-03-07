@@ -2,6 +2,7 @@ context("Estimator - iv_robust")
 
 skip_if_not_installed("AER")
 skip_if_not_installed("ivpack")
+skip_if_not_installed("clubSandwich")
 
 N <- 20
 dat <- data.frame(
@@ -51,14 +52,58 @@ test_that("iv_robust matches AER + ivpack", {
   )
 
   # CR2
+  ivcr2o <- iv_robust(y ~ x | z, data = dat, clusters = clust)
+  clubsando <- clubSandwich::coef_test(ivfit, vcov = "CR2", cluster = dat$clust)
 
+  expect_equivalent(
+    as.matrix(tidy(ivcr2o)[, c("coefficients", "se", "df", "p")]),
+    as.matrix(clubsando)
+  )
+  # CR0
+  ivcr0o <- iv_robust(y ~ x | z, data = dat, clusters = clust, se_type = "CR0")
+  clubsandCR0o <- clubSandwich::coef_test(ivfit, vcov = "CR0", cluster = dat$clust, test = "naive-t")
+
+  expect_equivalent(
+    as.matrix(tidy(ivcr0o)[, c("coefficients", "se", "p")]),
+    as.matrix(clubsandCR0o)
+  )
+
+  # Weighting classical
   # Weighting
-  # ivrw <- iv_robust(y ~ x | z, data = dat, weights = w)
-  # ivw <- ivreg(y ~ x | z, weights = w, data = dat)
-  # ivpackrobw <- robust.se(ivw)
-  #
-  # expect_equivalent(
-  #   as.matrix(tidy(ivrw)[, c("coefficients", "se", "p")]),
-  #   ivpackrobw[, c(1, 2, 4)]
-  # )
+  ivcw <- iv_robust(y ~ x | z, data = dat, weights = w, se_type = "classical")
+  ivw <- ivreg(y ~ x | z, weights = w, data = dat)
+  ivpackrobw <- robust.se(ivw)
+
+  expect_equivalent(
+    as.matrix(tidy(ivrw)[, c("coefficients", "se", "p")]),
+    ivpackrobw[, c(1, 2, 4)]
+  )
+
+  # HC1 weighted
+  ivrw <- iv_robust(y ~ x | z, data = dat, weights = w, se_type = "HC0")
+  ivpackrobw <- robust.se(ivw)
+
+  expect_equivalent(
+    as.matrix(tidy(ivrw)[, c("coefficients", "se", "p")]),
+    ivpackrobw[, c(1, 2, 4)]
+  )
+
+  # CR2 weighted
+  ivcr2wo <- iv_robust(y ~ x | z, data = dat, clusters = clust, weights = w)
+  clubsandwo <- clubSandwich::coef_test(ivw, vcov = "CR2", cluster = dat$clust)
+
+  expect_equivalent(
+    as.matrix(tidy(ivcr2wo)[, c("coefficients", "se", "df", "p")]),
+    as.matrix(clubsandwo)
+  )
+
+  # CR0 weighted
+  ivcr0wo <- iv_robust(y ~ x | z, data = dat, clusters = clust, weights = w, se_type = "CR0")
+  clubsandCR0wo <- clubSandwich::coef_test(ivw, vcov = "CR0", cluster = dat$clust, test = "naive-t")
+
+  expect_equivalent(
+    as.matrix(tidy(ivcr0wo)[, c("coefficients", "se", "p")]),
+    as.matrix(clubsandCR0wo)
+  )
+
 })
