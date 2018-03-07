@@ -258,7 +258,6 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
   } else if (type == "stata") {
 
     // Rcout << "correction: " << (((double)J * (n - 1)) / (((double)J - 1) * (n - r))) << std::endl;
-
     Vcov_hat =
       Vcov_hat *
       (((double)J * (n - 1)) / (((double)J - 1) * (n - r)));
@@ -370,7 +369,7 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
       // Rcout << "MUWTWUM: " << MUWTWUM << std::endl;
 
       Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> At_WX(
-          (Eigen::MatrixXd::Identity(len, len) - H) - H +
+          (Eigen::MatrixXd::Identity(len, len) - H) - H.transpose() +
             Xoriginal.block(start_pos, 0, len, r) *
             MUWTWUM *
             Xoriginal.block(start_pos, 0, len, r).transpose()

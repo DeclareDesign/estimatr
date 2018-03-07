@@ -180,7 +180,30 @@ test_that("lm cluster se", {
   test_lm_cluster_variance(NULL)
   test_lm_cluster_variance(dat$W)
 
-  # bmlmse doesn't take into consideration weights, can't test
+
+})
+
+test_that("Clustered weighted SEs are correct", {
+  skip_if_not_installed("clubSandwich")
+
+  lm_cr2 <- lm_robust(mpg ~ hp, data = mtcars, weights = wt, clusters = cyl, se_type = "CR2")
+  lm_stata <- lm_robust(mpg ~ hp, data = mtcars, weights = wt, clusters = cyl, se_type = "stata")
+  lm_cr0 <- lm_robust(mpg ~ hp, data = mtcars, weights = wt, clusters = cyl, se_type = "CR0")
+
+  lm_o <- lm(mpg ~ hp, data = mtcars, weights = wt)
+
+  expect_equivalent(
+    vcov(lm_cr2),
+    as.matrix(clubSandwich::vcovCR(lm_o, cluster = mtcars$cyl, type = "CR2"))
+  )
+  expect_equivalent(
+    vcov(lm_cr0),
+    as.matrix(clubSandwich::vcovCR(lm_o, cluster = mtcars$cyl, type = "CR0"))
+  )
+  expect_equivalent(
+    vcov(lm_stata),
+    as.matrix(clubSandwich::vcovCR(lm_o, cluster = mtcars$cyl, type = "CR1S"))
+  )
 })
 
 test_that("lm cluster se with missingness", {
