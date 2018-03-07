@@ -1,10 +1,9 @@
 # estimatr 0.5.0 (GitHub version)
 
-* No changes as of yet
-
-# estimatr 0.4.0 (CRAN version)
-
-* No changes as of yet
+* Fixed bug that caused variances, standard errors, and p-values to be wrong for weighted "CR2" variance estimation
+* Added support for multivariate linear models
+* Added support for instrumental variables regression
+* Rewrite NSE handling to be done by `rlang`
 
 # estimatr 0.4.0 (CRAN version)
 
