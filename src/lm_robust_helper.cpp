@@ -277,7 +277,7 @@ List lm_solver(Eigen::Map<Eigen::MatrixXd>& Xfull,
             // Rcout << "MUWTWUM: " << MUWTWUM << std::endl;
 
             Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> At_WX(
-                (Eigen::MatrixXd::Identity(len, len) - H) - H +
+                (Eigen::MatrixXd::Identity(len, len) - H) - H.transpose() +
                   Xoriginal.block(start_pos, 0, len, r) * MUWTWUM * Xoriginal.block(start_pos, 0, len, r).transpose()
             );
 
