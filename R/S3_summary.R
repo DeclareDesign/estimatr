@@ -1,41 +1,89 @@
 #' @export
-summary.lm_robust <-
-  function(
-           object,
-           ...) {
-    return_list <-
-      object[c(
-        "call",
-        "k",
-        "rank",
-        "df.residual",
-        "r.squared",
-        "adj.r.squared",
-        "fstatistic",
-        "res_var",
-        "weighted",
-        "se_type"
-      )]
+summary.lm_robust <- function(object,
+                              ...) {
 
-    return_list[["coefficients"]] <- summarize_tidy(object)
-    return_list[["N"]] <- nobs(object)
+  if (is.matrix(object$coefficients)) {
+    ny <- ncol(object$coefficients)
 
-    class(return_list) <- "summary.lm_robust"
+    ret <- setNames(
+      vector("list", ny),
+      paste("Response", object$outcome)
+    )
 
-    return_list
+    mat_objs <- c(
+      "coefficients",
+      "se",
+      "df",
+      "ci_lower",
+      "ci_upper",
+      "p"
+    )
+
+    vec_objs <- c(
+      "outcome",
+      "r.squared",
+      "adj.r.squared",
+      "res_var"
+    )
+
+    all_models <- object
+
+    for (i in seq(ny)) {
+
+      for (nm in names(object)) {
+        if (nm %in% mat_objs) {
+          object[[nm]] <- all_models[[nm]][, i, drop = TRUE]
+        } else if (nm %in% vec_objs) {
+          object[[nm]] <- all_models[[nm]][i]
+        } else if (nm == "fstatistic") {
+          object[[nm]] <- all_models[[nm]][c(i, ny + 1:2)]
+        }
+      }
+      object$call$formula[[2L]] <- object$terms[[2L]] <- as.name(all_models$outcome[i])
+      ret[[i]] <- summary(object, ...)
+    }
+
+    class(ret) <- "listof"
+  } else {
+    ret <- summary_lm_model(object)
   }
+
+  ret
+}
+
+summary_lm_model <- function(object) {
+  return_list <-
+    object[c(
+      "call",
+      "k",
+      "rank",
+      "df.residual",
+      "r.squared",
+      "adj.r.squared",
+      "fstatistic",
+      "res_var",
+      "weighted",
+      "se_type"
+    )]
+
+  # Split into two lists if multivariate linear model
+
+  return_list[["coefficients"]] <- summarize_tidy(object)
+  return_list[["N"]] <- nobs(object)
+
+  class(return_list) <- "summary.lm_robust"
+  return(return_list)
+}
 
 
 #' @export
-summary.difference_in_means <-
-  function(
-           object,
-           ...) {
-    return(list(
-      coefficients = summarize_tidy(object),
-      design = object$design
-    ))
-  }
+summary.difference_in_means <- function(object,
+                                        ...) {
+  return(list(
+    coefficients = summarize_tidy(object),
+    design = object$design
+  ))
+}
 
 
 #' @export

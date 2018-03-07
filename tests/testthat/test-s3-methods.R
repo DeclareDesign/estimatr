@@ -49,6 +49,7 @@ test_that("tidy, summary, and print work", {
   # works with multiple outcomes
   lmrmo <- lm_robust(cbind(y, x) ~ z, data = dat, se_type = "classical")
   lmmo <- lm(cbind(y, x) ~ z, data = dat)
+  slmmo <- summary(lmmo)
 
   expect_equivalent(
     as.matrix(tidy(lmrmo)[, c("coefficient_name", "outcome")]),
@@ -87,48 +88,39 @@ test_that("tidy, summary, and print work", {
     predict(lmrmo, newdata = dat, se.fit = TRUE),
     "Can't set `se.fit` == TRUE with multivariate outcome"
   )
-  #
-  # # summary
-  # # coef
-  # # predict
-  #
-  # # weights res_var
-  # slmmo <- summary(lmmo)
-  # coef(slmmo)
-  # str(slmmo)
-  # lmrmo$tot_var
-  # sqrt(lmrmo$res_var)
-  # slmmo$`Response y`$sigma
-  # slmmo$`Response x`$sigma
-  # lmrmo$tot_var
-  # lmrmo$r.squared
-  # slmmo$`Response y`[c("r.squared")]
-  # slmmo$`Response x`[c("r.squared")]
-  # lmrmo$adj.r.squared
-  # slmmo$`Response y`[c("adj.r.squared")]
-  # slmmo$`Response x`[c("adj.r.squared")]
-  #
-  # lmrmo$fstatistic
-  # slmmo$`Response y`[c("fstatistic")]
-  # slmmo$`Response x`[c("fstatistic")]
-  #
-  # $sigma
-  # [1] 0.9675174
-  # $df
-  # [1] 2 8 2
-  # $r.squared
-  # [1] 0.07885525
-  # $adj.r.squared
-  # [1] -0.03628784
-  # $fstatistic
-  # value     numdf     dendf
-  # 0.6848457 1.0000000 8.0000000
-  #
-  #
-  # str(lmrmo)$coefficie
-  #
-  # summary(lmrmo)
-  # summary(lmmo)
+
+  expect_error(
+    slmrmo <- summary(lmrmo),
+    NA
+  )
+
+  lmroy <- lm_robust(y ~ z, data = dat, se_type = "classical")
+  lmrox <- lm_robust(x ~ z, data = dat, se_type = "classical")
+
+  # Only difference is name on fstatistic!
+  expect_equivalent(
+    slmrmo$`Response y`,
+    summary(lmroy)
+  )
+  expect_equivalent(
+    slmrmo$`Response x`,
+    summary(lmrox)
+  )
+
+  expect_equal(
+    lapply(slmrmo, function(x) x$coefficients[, c(1, 2, 3)]),
+    lapply(slmmo, function(x) x$coefficients[, c(1, 2, 4)])
+  )
+
+  expect_equivalent(
+    confint(lmrmo)[1:2,],
+    confint(lmroy)
+  )
+
+  expect_equivalent(
+    confint(lmrmo)[3:4,],
+    confint(lmrox)
+  )
 
   ## lm_lin
   lmlo <- lm_lin(y ~ x, ~ z, data = dat)
