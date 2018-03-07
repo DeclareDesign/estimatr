@@ -5,6 +5,8 @@ estimatr: Fast Estimators for Design-Based Inference
 
 [![CRAN Status](https://www.r-pkg.org/badges/version/estimatr)](cran.r-project.org/package=estimatr) [![Travis-CI Build Status](https://travis-ci.org/DeclareDesign/estimatr.svg?branch=master)](https://travis-ci.org/DeclareDesign/estimatr) [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/DeclareDesign/estimatr?branch=master&svg=true)](https://ci.appveyor.com/project/DeclareDesign/estimatr) [![Coverage Status](https://coveralls.io/repos/github/DeclareDesign/estimatr/badge.svg?branch=master)](https://coveralls.io/github/DeclareDesign/estimatr?branch=master)
 
+**Warning: the CRAN version of `estimatr` has incorrect variance estimates for our default clustered variance estimator, "CR2", ONLY when weights are applied. If you want to use "CR2" variance estimation with weights, please download the development version of the package using `devtools::install_github("DeclareDesign/estimatr")`**
+
 Technical papers and textbooks demand complex estimation strategies that are often difficult to implement, even for scientists who are expert coders. The result is slow code copied and pasted from the internet, where the result is taken on faith.
 
 **estimatr** provides a small set of commonly-used estimators (methods for estimating quantities of interest like treatment effects or regression parameters), using `C++` for speed, and implemented in `R` with simple, accessible syntax. We include two functions that implement means estimators, [`difference_in_means()`](http://estimatr.declaredesign.org/reference/difference_in_means.html) and [`horvitz_thompson()`](http://estimatr.declaredesign.org/reference/horvitz_thompson.html). In addition, we include two functions for linear regression estimators, [`lm_robust()`](http://estimatr.declaredesign.org/reference/lm_robust.html) and [`lm_lin()`](http://estimatr.declaredesign.org/reference/lm_lin.html). In each case, scientists can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs. The [Getting Started Guide](http://estimatr.declaredesign.org/articles/getting-started.html) describes each estimator provided by **estimatr** and how it can be used in your analysis.
@@ -53,7 +55,7 @@ summary(res_cl)
 #> Call:
 #> lm_robust(formula = y ~ z, data = dat, clusters = clusterID)
 #> 
-#> Standard error type =  CR2 
+#> Standard error type:  CR2 
 #> 
 #> Coefficients:
 #>             Estimate Std. Error Pr(>|t|) CI Lower CI Upper   DF

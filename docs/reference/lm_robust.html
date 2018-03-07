@@ -368,9 +368,9 @@ dependencies in the model and may fail silently if they exist.</p>
   <span class='kw'>weights</span> <span class='kw'>=</span> <span class='no'>w</span>,
   <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>clusterID</span>
 )</div><div class='output co'>#&gt;                 Estimate Std. Error     Pr(&gt;|t|)  CI Lower CI Upper       DF
-#&gt; (Intercept)  3.547433364  0.4040461 0.0002226048  2.529323 4.565544 5.357866
-#&gt; x           -0.002655767  0.3956012 0.9949295325 -1.052716 1.047404 4.522808
-#&gt; z            0.696123507  0.7074789 0.3711587223 -1.133237 2.525484 4.904283</div><div class='input'>
+#&gt; (Intercept)  3.547433364  0.4010499 0.0002071614  2.538678 4.556189 5.392696
+#&gt; x           -0.002655767  0.3913805 0.9948720561 -1.037964 1.032653 4.568917
+#&gt; z            0.696123507  0.7076223 0.3714943448 -1.136813 2.529060 4.876566</div><div class='input'>
 <span class='co'># Subsetting works just as in `lm()`</span>
 <span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>subset</span> <span class='kw'>=</span> <span class='no'>z</span> <span class='kw'>==</span> <span class='fl'>1</span>)</div><div class='output co'>#&gt;              Estimate Std. Error     Pr(&gt;|t|)  CI Lower CI Upper DF
 #&gt; (Intercept) 4.2882796  0.5267980 1.847702e-06  3.150202 5.426357 13
