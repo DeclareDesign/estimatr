@@ -40,6 +40,7 @@ env:
 r_github_packages:
 - DeclareDesign/DDtools
 - DeclareDesign/DeclareDesign
+- ropensci/git2r
 
 r_packages:
 - broom
