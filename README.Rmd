@@ -7,7 +7,7 @@ output: github_document
 ```{r, echo = FALSE}
 set.seed(42)
 knitr::opts_chunk$set(
-  collapse = TRUE, 
+  collapse = TRUE,
   comment = "#>",
   fig.path = "README-"  
 )
@@ -25,9 +25,9 @@ options(digits = 2)
 
 Technical papers and textbooks demand complex estimation strategies that are often difficult to implement, even for scientists who are expert coders. The result is slow code copied and pasted from the internet, where the result is taken on faith.
 
-**estimatr** provides a small set of commonly-used estimators (methods for estimating quantities of interest like treatment effects or regression parameters), using `C++` for speed, and implemented in `R` with simple, accessible syntax. We include two functions that implement means estimators, [`difference_in_means()`](http://estimatr.declaredesign.org/reference/difference_in_means.html) and [`horvitz_thompson()`](http://estimatr.declaredesign.org/reference/horvitz_thompson.html). In addition, we include two functions for linear regression estimators, [`lm_robust()`](http://estimatr.declaredesign.org/reference/lm_robust.html) and [`lm_lin()`](http://estimatr.declaredesign.org/reference/lm_lin.html). In each case, scientists can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs. The [Getting Started Guide](http://estimatr.declaredesign.org/articles/getting-started.html) describes each estimator provided by **estimatr** and how it can be used in your analysis.
+**estimatr** provides a small set of commonly-used estimators (methods for estimating quantities of interest like treatment effects or regression parameters), using `C++` for speed, and implemented in `R` with simple, accessible syntax. We include two functions that implement means estimators, [`difference_in_means()`](http://declaredesign.org/R/estimatr/reference/difference_in_means.html) and [`horvitz_thompson()`](http://declaredesign.org/R/estimatr/reference/horvitz_thompson.html). In addition, we include two functions for linear regression estimators, [`lm_robust()`](http://declaredesign.org/R/estimatr/reference/lm_robust.html) and [`lm_lin()`](http://declaredesign.org/R/estimatr/reference/lm_lin.html). In each case, scientists can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs. The [Getting Started Guide](http://declaredesign.org/R/estimatr/articles/getting-started.html) describes each estimator provided by **estimatr** and how it can be used in your analysis.
 
-Fast estimators also enable fast simulation of research designs to learn about their properties (see [DeclareDesign](http://declaredesign.org)). 
+Fast estimators also enable fast simulation of research designs to learn about their properties (see [DeclareDesign](http://declaredesign.org/R/DeclareDesign/)).
 
 ### Installing estimatr
 
@@ -76,11 +76,11 @@ data(sleep)
 res_dim <- difference_in_means(extra ~ group, data = sleep, blocks = ID)
 ```
 
-The [Getting Started Guide](http://estimatr.declaredesign.org/articles/getting-started.html) has more examples and uses, as do the reference pages. The [Mathematical Notes](http://estimatr.declaredesign.org/articles/mathematical-notes.html) provide more information about what each estimator is doing under the hood.
+The [Getting Started Guide](http://declaredesign.org/R/estimatr/articles/getting-started.html) has more examples and uses, as do the reference pages. The [Mathematical Notes](http://declaredesign.org/R/estimatr/articles/mathematical-notes.html) provide more information about what each estimator is doing under the hood.
 
 ### Fast to use
 
-Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using `lm()` and the `sandwich` package to get HC2 standard errors. More speed comparisons are available [here](http://estimatr.declaredesign.org/articles/benchmarking estimatr.html).
+Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using `lm()` and the `sandwich` package to get HC2 standard errors. More speed comparisons are available [here](http://declaredesign.org/R/estimatr/articles/benchmarking estimatr.html).
 
 ```{r, eval = F}
 # example code

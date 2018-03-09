@@ -7,10 +7,10 @@ output:
 link-citations: yes
 bibliography: estimatr.bib
 vignette: |
-  %\VignetteIndexEntry{Simulations - OLS and Variance} 
+  %\VignetteIndexEntry{Simulations - OLS and Variance}
   \usepackage[utf8]{inputenc}
   %\VignetteEngine{knitr::rmarkdown}
-editor_options: 
+editor_options:
   chunk_output_type: console
 ---
 
@@ -20,10 +20,10 @@ fname <- "simulations-ols-var.rda"
 rerun <- !file.exists(fname)
 if (!rerun) {
   load(fname)
-} 
+}
 ```
 
-This document exposes the properties of different variance estimators using [`DeclareDesign`](http://declaredesign.org) and [`estimatr`](http://estimatr.declaredesign.org). More details about the variance estimators with references can be found in the [mathematical notes](http://estimatr.declaredesign.org/articles/mathematical-notes.html).
+This document exposes the properties of different variance estimators using [`DeclareDesign`](http://declaredesign.org/R/DeclareDesign/) and [`estimatr`](http://declaredesign.org/R/estimatr/). More details about the variance estimators with references can be found in the [mathematical notes](http://declaredesign.org/R/estimatr/articles/mathematical-notes.html).
 
 ```{r}
 library(DeclareDesign)
@@ -32,7 +32,7 @@ library(ggplot2)
 
 # Homoskedastic errors
 
-Under simple conditions with homoskedasticity (i.e., all errors are drawn from a distribution with the same variance), the classical estimator of the variance of OLS should be unbiased. In this section I demonstrate this to be true using [`DeclareDesign`](declaredesign.org) and [`estimatr`](estimatr.declaredesign.org).
+Under simple conditions with homoskedasticity (i.e., all errors are drawn from a distribution with the same variance), the classical estimator of the variance of OLS should be unbiased. In this section I demonstrate this to be true using [`DeclareDesign`](http://declaredesign.org/R/DeclareDesign/) and [`estimatr`](http://declaredesign.org/R/estimatr/).
 
 First, let's take a simple set up:
 
@@ -50,7 +50,7 @@ set.seed(41)
 dat <- data.frame(x = rnorm(50))
 ```
 
-The function 
+The function
 
 \[
 \epsilon_i \overset{i.i.d.}{\sim} N(0, \sigma^2),
@@ -80,7 +80,7 @@ true_varb <- true_var_cov_mat[2, 2]
 true_varb
 ```
 
-Now, using [`DeclareDesign`](declaredesign.org), let's specify the rest of the data generating process (DGP). Let's set $\beta = [0, 1]^\top$, so that the true DGP is $\mathbf{y} = \mathbf{x_1} + \epsilon$.
+Now, using [`DeclareDesign`](http://declaredesign.org/R/DeclareDesign/), let's specify the rest of the data generating process (DGP). Let's set $\beta = [0, 1]^\top$, so that the true DGP is $\mathbf{y} = \mathbf{x_1} + \epsilon$.
 
 ```{r}
 simp_pop <- declare_population(
@@ -90,7 +90,7 @@ simp_pop <- declare_population(
 ```
 
 Now let's tell DeclareDesign that our target, our estimand, is the true variance.
-  
+
 ```{r}
 varb_estimand <- declare_estimand(true_varb = true_varb)
 ```
@@ -101,12 +101,12 @@ Our estimator for this estimand will be the classical OLS variance estimator, wh
 \widehat{\mathbb{V}[\widehat{\beta}]} = \frac{\mathbf{e}^\top\mathbf{e}}{N - K} (\mathbf{X}^\top \mathbf{X})^{-1},
 \]
 
-where the residuals $\mathbf{e} = \mathbf{y} - \mathbf{X}\widehat{\beta}$, $N$ is the number of observations, and $K$ is the number of regressors---two in our case. We can easily get this estimate of the variance by squaring the standard error we get out from `lm_robust` in [`estimatr`](http://estimatr.declaredesign.org). Let's tell [`DeclareDesign`](http://declaredesign.org) to use that estimator and get the coefficient on the $\mathbf{x}_1$ variable.
+where the residuals $\mathbf{e} = \mathbf{y} - \mathbf{X}\widehat{\beta}$, $N$ is the number of observations, and $K$ is the number of regressors---two in our case. We can easily get this estimate of the variance by squaring the standard error we get out from `lm_robust` in [`estimatr`](http://declaredesign.org/R/estimatr/). Let's tell [`DeclareDesign`](http://declaredesign.org/R/DeclareDesign/) to use that estimator and get the coefficient on the $\mathbf{x}_1$ variable.
 
 ```{r}
 lmc <- declare_estimator(
   y ~ x,
-  model = estimatr::lm_robust, 
+  model = estimatr::lm_robust,
   se_type = "classical",
   estimand = varb_estimand,
   coefficient_name = "x"
@@ -126,7 +126,7 @@ classical_design <- declare_design(
   lmc
 )
 
-# Declare a set of diagnosands that help us check if 
+# Declare a set of diagnosands that help us check if
 # we have unbiasedness
 my_diagnosands <- declare_diagnosands(
   `Bias of Estimated Variance` = mean(se^2 - estimand),
@@ -142,9 +142,9 @@ Now let's run the simulations!
 # Run 25000 simulations
 set.seed(42)
 dig <- diagnose_design(
-  classical_design, 
-  sims = 20000, 
-  diagnosands = my_diagnosands, 
+  classical_design,
+  sims = 20000,
+  diagnosands = my_diagnosands,
   parallel = TRUE
 )
 dig$simulations <- data.frame(var = dig$simulations$se^2)
@@ -180,7 +180,7 @@ We can also show that the standard error is unbiased for the standard deviation 
 ```{r, echo = FALSE}
 knitr::kable(
   t(dig$diagnosands[
-    , 
+    ,
     c(
       "Bias of Standard Error", "se(Bias of Standard Error)",
       "Coverage Rate", "se(Coverage Rate)"
@@ -199,7 +199,7 @@ Let's use the same fixed data set-up, but introduce heteroskedasticity. In this 
 \epsilon_i \sim N(0, \sigma_i^2),
 \]
 
-where $\sigma^2_i \neq \sigma^2_j$ for some units $i$ and $j$. If the variance of the errors is not independent of the regressors, the "classical" variance will be biased and inconsistent. Meanwhile, heteroskedastic-consistent variance estimators, such as the HC2 estimator, are consistent and normally less biased than the "classical" estimator. Let's demonstrate this using [`DeclareDesign`](declaredesign.org). First, let's specify the variance of the errors to be strongly correlated with $x$.
+where $\sigma^2_i \neq \sigma^2_j$ for some units $i$ and $j$. If the variance of the errors is not independent of the regressors, the "classical" variance will be biased and inconsistent. Meanwhile, heteroskedastic-consistent variance estimators, such as the HC2 estimator, are consistent and normally less biased than the "classical" estimator. Let's demonstrate this using [`DeclareDesign`](http://declaredesign.org/R/DeclareDesign/). First, let's specify the variance of the errors to be strongly correlated with $x$.
 
 ```{r, fig.width=4, fig.height=3}
 dat <- fabricate(
@@ -237,7 +237,7 @@ true_varb_het <- varb[2, 2]
 true_varb_het
 ```
 
-Now let's use [`DeclareDesign`](declaredesign.org) to test whether HC2 is less biased in this example than classical standard errors. However, I will use another feature of [`DeclareDesign`](declaredesign.org) where I can create a design template. This allows me to easily pass different datasets (i.e., of different sizes) and variance estimators so that I can test the properties different estimators across different datasets.
+Now let's use [`DeclareDesign`](http://declaredesign.org/R/DeclareDesign/) to test whether HC2 is less biased in this example than classical standard errors. However, I will use another feature of [`DeclareDesign`](http://declaredesign.org/R/DeclareDesign/) where I can create a design template. This allows me to easily pass different datasets (i.e., of different sizes) and variance estimators so that I can test the properties different estimators across different datasets.
 
 ```{r}
 # This creates a template that takes some fixed data
@@ -246,13 +246,13 @@ Now let's use [`DeclareDesign`](declaredesign.org) to test whether HC2 is less b
 # the properties you are interested in
 # It also takes the two se_types you'd like to compare
 fixed_dat_het_design_temp <- function(dat, se_types) {
-  
+
   # Get true variance for this data
   Xmat <- with(dat, cbind(1, x))
   XtX_inv <- solve(crossprod(Xmat))
   varb <- tcrossprod(XtX_inv, Xmat) %*% diag(with(dat, noise_var)) %*% Xmat %*% XtX_inv
   true_varb_het <- varb[2, 2]
-  
+
   # Population function now has heteroskedastic noise
   simp_pop <- declare_population(
     epsilon = rnorm(N, sd = sqrt(noise_var)),
@@ -270,23 +270,23 @@ fixed_dat_het_design_temp <- function(dat, se_types) {
     coefficient_name = "x",
     label = se_types[1]
   )
-  
+
   lm2 <- declare_estimator(
-    y ~ x, 
-    model = estimatr::lm_robust, 
+    y ~ x,
+    model = estimatr::lm_robust,
     se_type = !!se_types[2],
     estimand = varb_het_estimand,
     coefficient_name = "x",
     label = se_types[2]
   )
-  
+
   # We return the design so we can diagnose it
   return(
     declare_design(
       dat,
       simp_pop,
       varb_het_estimand,
-      lm1, 
+      lm1,
       lm2
     )
   )
@@ -301,7 +301,7 @@ het_design <- fixed_dat_het_design_temp(dat, se_types = c("classical", "HC2"))
 
 dig_het <- diagnose_design(
   het_design,
-  sims = 10000, 
+  sims = 10000,
   diagnosands = my_diagnosands,
   parallel = TRUE
 )
@@ -311,7 +311,7 @@ dig_het$simulations <- NULL
 ```{r, echo = FALSE}
 knitr::kable(
   t(dig_het$diagnosands[
-    , 
+    ,
     c(
       "True Variance", "Mean of Estimated Variance",
       "Bias of Estimated Variance", "se(Bias of Estimated Variance)",
@@ -341,7 +341,7 @@ for (i in seq_along(Ns)) {
   des <- fixed_dat_het_design_temp(dat, se_types = c("classical", "HC2"))
   diags[[i]] <- diagnose_design(
     des,
-    sims = 10000, 
+    sims = 10000,
     diagnosands = my_diagnosands,
     bootstrap = FALSE
   )$diagnosands
@@ -379,7 +379,7 @@ for (i in seq_along(Ns)) {
   des <- fixed_dat_het_design_temp(dat, se_types = c("HC1", "HC2"))
   diags_hc[[i]] <- diagnose_design(
     des,
-    sims = 200, 
+    sims = 200,
     diagnosands = my_diagnosands,
     bootstrap = FALSE
   )$diagnosands
@@ -389,10 +389,10 @@ for (i in seq_along(Ns)) {
 
 ```{r, echo = FALSE, fig.height = 4, fig.width = 5}
 plotdf <- do.call(rbind, diags_hc)
-ggplot(plotdf, aes(x = factor(N), y = `Bias of Estimated Variance`,  group = interaction(N, estimator_label), color = estimator_label)) + 
+ggplot(plotdf, aes(x = factor(N), y = `Bias of Estimated Variance`,  group = interaction(N, estimator_label), color = estimator_label)) +
   geom_hline(yintercept = 0, linetype = 2, color = "grey") +
   geom_boxplot() +
-  labs(x = "N", color = "Variance Estimator") + 
+  labs(x = "N", color = "Variance Estimator") +
   theme_classic()
 ```
 

@@ -7,10 +7,10 @@ output:
 link-citations: yes
 bibliography: estimatr.bib
 vignette: |
-  %\VignetteIndexEntry{Simulations - Debiasing Difference-in-Means} 
+  %\VignetteIndexEntry{Simulations - Debiasing Difference-in-Means}
   \usepackage[utf8]{inputenc}
   %\VignetteEngine{knitr::rmarkdown}
-editor_options: 
+editor_options:
   chunk_output_type: console
 ---
 
@@ -20,13 +20,13 @@ fname <- "simulations-debias-dim.rda"
 rerun <- !file.exists(fname)
 if (!rerun) {
   load(fname)
-} 
+}
 set.seed(42)
 ```
 
-This document shows how providing [`estimatr`](http://estimatr.declaredesign.org) with the appropriate blocks and clusters that define a research design can eliminate bias when estimating treatment effects using `difference_in_means()`. More details about the estimators with references can be found in the [mathematical notes](http://estimatr.declaredesign.org/articles/mathematical-notes.html).
+This document shows how providing [`estimatr`](http://declaredesign.org/R/estimatr/) with the appropriate blocks and clusters that define a research design can eliminate bias when estimating treatment effects using `difference_in_means()`. More details about the estimators with references can be found in the [mathematical notes](http://declaredesign.org/R/estimatr/articles/mathematical-notes.html).
 
-I am going to skip simple difference-in-means, and just straight to the case with blocks. Throughout I will use [`DeclareDesign`](http://declaredesign.org) to help diagnose the properties of the various estimators.
+I am going to skip simple difference-in-means, and just straight to the case with blocks. Throughout I will use [`DeclareDesign`](http://declaredesign.org/R/DeclareDesign/) to help diagnose the properties of the various estimators.
 
 ```{r}
 library(DeclareDesign)
@@ -61,7 +61,7 @@ blocked_assign <- declare_assignment(blocks = blocks, prob = 0.5)
 ate <- declare_estimand(ATE = mean(Y_Z_1 - Y_Z_0))
 ```
 
-Now let's define our two estimators, one that doesn't account for blocking and one that does. The estimator that accounts for blocking essentially will compute treatment effects within blocks and then will take a weighted average across blocks. Details and references can be found in the [mathematical notes](http://estimatr.declaredesign.org/articles/mathematical-notes.html#difference_in_means-notes).
+Now let's define our two estimators, one that doesn't account for blocking and one that does. The estimator that accounts for blocking essentially will compute treatment effects within blocks and then will take a weighted average across blocks. Details and references can be found in the [mathematical notes](http://declaredesign.org/R/estimatr/articles/mathematical-notes.html#difference_in_means-notes).
 
 ```{r}
 dim <- declare_estimator(Y ~ Z, label = "DIM")
@@ -73,7 +73,7 @@ simp_bl_des <- declare_design(
   blocked_pos,
   blocked_assign,
   ate,
-  dim, 
+  dim,
   dim_bl
 )
 
@@ -91,7 +91,7 @@ Let's get a sample dataset to show the relationship between treatment potential 
 
 ```{r}
 dat <- draw_data(simp_bl_des)
-plot(dat$blocks, dat$Y_Z_1, 
+plot(dat$blocks, dat$Y_Z_1,
      ylab = "Y_Z_1 (treatment PO)", xlab = "Block ID")
 ```
 
@@ -142,7 +142,7 @@ corr_blocks <- declare_population(
 )
 # Use same potential outcomes as above, but now treatment probability varies across blocks
 corr_blocked_assign <- declare_assignment(
-  blocks = blocks, 
+  blocks = blocks,
   # The next line will just get the number of treated for a block from
   # the first unit in that block
   block_m = m_treat[!duplicated(blocks)]
@@ -152,7 +152,7 @@ corr_bl_des <- declare_design(
   blocked_pos,
   corr_blocked_assign,
   ate,
-  dim, 
+  dim,
   dim_bl
 )
 ```
@@ -161,7 +161,7 @@ As you can see below, the probability of treatment is strongly correlated with t
 
 ```{r}
 dat <- draw_data(corr_bl_des)
-plot(factor(dat$m_treat / 8), dat$Y_Z_1 - dat$Y_Z_0, 
+plot(factor(dat$m_treat / 8), dat$Y_Z_1 - dat$Y_Z_0,
      ylab = "True treat. effect", xlab = "Pr treatment in block")
 ```
 
@@ -323,8 +323,8 @@ Now let's diagnose!
 ```{r, eval=rerun, echo = 1:6}
 set.seed(41)
 diff_cl_dig <- diagnose_design(
-  diff_cl_des, 
-  sims = 50000, 
+  diff_cl_des,
+  sims = 50000,
   diagnosands = my_diagnosands
 )
 diff_cl_dig$simulations <- NULL
