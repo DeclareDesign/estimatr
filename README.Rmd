@@ -89,9 +89,9 @@ lm_out <- lm(y ~ x1 + x2 + x3 + x4, data = dat)
 coeftest(lm_out, vcov = vcovHC(lm_out, type = 'HC2'))
 ```
 
-![](./articles/lm_speed.png)
+![](./vignettes/lm_speed.png)
 
-![](./articles/lm_speed_covars.png)
+![](./vignettes/lm_speed_covars.png)
 
 ---
 
