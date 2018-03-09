@@ -23,7 +23,7 @@ if (!rerun) {
 }
 ```
 
-This document exposes the properties of different variance estimators using [`DeclareDesign`](/R/DeclareDesign/) and [`estimatr`](/R/estimatr/). More details about the variance estimators with references can be found in the [mathematical notes](/R/estimatr/articles/mathematical-notes.html).
+This document exposes the properties of different variance estimators using [`DeclareDesign`](http://declaredesign.org/R/DeclareDesign/) and [`estimatr`](http://declaredesign.org/R/estimatr/). More details about the variance estimators with references can be found in the [mathematical notes](http://declaredesign.org/R/estimatr/articles/mathematical-notes.html).
 
 ```{r}
 library(DeclareDesign)
@@ -32,7 +32,7 @@ library(ggplot2)
 
 # Homoskedastic errors
 
-Under simple conditions with homoskedasticity (i.e., all errors are drawn from a distribution with the same variance), the classical estimator of the variance of OLS should be unbiased. In this section I demonstrate this to be true using [`DeclareDesign`](/R/DeclareDesign/) and [`estimatr`](/R/estimatr/).
+Under simple conditions with homoskedasticity (i.e., all errors are drawn from a distribution with the same variance), the classical estimator of the variance of OLS should be unbiased. In this section I demonstrate this to be true using [`DeclareDesign`](http://declaredesign.org/R/DeclareDesign/) and [`estimatr`](http://declaredesign.org/R/estimatr/).
 
 First, let's take a simple set up:
 
@@ -80,7 +80,7 @@ true_varb <- true_var_cov_mat[2, 2]
 true_varb
 ```
 
-Now, using [`DeclareDesign`](/R/DeclareDesign/), let's specify the rest of the data generating process (DGP). Let's set $\beta = [0, 1]^\top$, so that the true DGP is $\mathbf{y} = \mathbf{x_1} + \epsilon$.
+Now, using [`DeclareDesign`](http://declaredesign.org/R/DeclareDesign/), let's specify the rest of the data generating process (DGP). Let's set $\beta = [0, 1]^\top$, so that the true DGP is $\mathbf{y} = \mathbf{x_1} + \epsilon$.
 
 ```{r}
 simp_pop <- declare_population(
@@ -101,7 +101,7 @@ Our estimator for this estimand will be the classical OLS variance estimator, wh
 \widehat{\mathbb{V}[\widehat{\beta}]} = \frac{\mathbf{e}^\top\mathbf{e}}{N - K} (\mathbf{X}^\top \mathbf{X})^{-1},
 \]
 
-where the residuals $\mathbf{e} = \mathbf{y} - \mathbf{X}\widehat{\beta}$, $N$ is the number of observations, and $K$ is the number of regressors---two in our case. We can easily get this estimate of the variance by squaring the standard error we get out from `lm_robust` in [`estimatr`](/R/estimatr/). Let's tell [`DeclareDesign`](/R/DeclareDesign/) to use that estimator and get the coefficient on the $\mathbf{x}_1$ variable.
+where the residuals $\mathbf{e} = \mathbf{y} - \mathbf{X}\widehat{\beta}$, $N$ is the number of observations, and $K$ is the number of regressors---two in our case. We can easily get this estimate of the variance by squaring the standard error we get out from `lm_robust` in [`estimatr`](http://declaredesign.org/R/estimatr/). Let's tell [`DeclareDesign`](http://declaredesign.org/R/DeclareDesign/) to use that estimator and get the coefficient on the $\mathbf{x}_1$ variable.
 
 ```{r}
 lmc <- declare_estimator(
@@ -199,7 +199,7 @@ Let's use the same fixed data set-up, but introduce heteroskedasticity. In this 
 \epsilon_i \sim N(0, \sigma_i^2),
 \]
 
-where $\sigma^2_i \neq \sigma^2_j$ for some units $i$ and $j$. If the variance of the errors is not independent of the regressors, the "classical" variance will be biased and inconsistent. Meanwhile, heteroskedastic-consistent variance estimators, such as the HC2 estimator, are consistent and normally less biased than the "classical" estimator. Let's demonstrate this using [`DeclareDesign`](/R/DeclareDesign/). First, let's specify the variance of the errors to be strongly correlated with $x$.
+where $\sigma^2_i \neq \sigma^2_j$ for some units $i$ and $j$. If the variance of the errors is not independent of the regressors, the "classical" variance will be biased and inconsistent. Meanwhile, heteroskedastic-consistent variance estimators, such as the HC2 estimator, are consistent and normally less biased than the "classical" estimator. Let's demonstrate this using [`DeclareDesign`](http://declaredesign.org/R/DeclareDesign/). First, let's specify the variance of the errors to be strongly correlated with $x$.
 
 ```{r, fig.width=4, fig.height=3}
 dat <- fabricate(
@@ -237,7 +237,7 @@ true_varb_het <- varb[2, 2]
 true_varb_het
 ```
 
-Now let's use [`DeclareDesign`](/R/DeclareDesign/) to test whether HC2 is less biased in this example than classical standard errors. However, I will use another feature of [`DeclareDesign`](/R/DeclareDesign/) where I can create a design template. This allows me to easily pass different datasets (i.e., of different sizes) and variance estimators so that I can test the properties different estimators across different datasets.
+Now let's use [`DeclareDesign`](http://declaredesign.org/R/DeclareDesign/) to test whether HC2 is less biased in this example than classical standard errors. However, I will use another feature of [`DeclareDesign`](http://declaredesign.org/R/DeclareDesign/) where I can create a design template. This allows me to easily pass different datasets (i.e., of different sizes) and variance estimators so that I can test the properties different estimators across different datasets.
 
 ```{r}
 # This creates a template that takes some fixed data

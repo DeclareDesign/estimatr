@@ -29,7 +29,7 @@ The discrepancy is due to differences in how the software estimates the "hat" ma
 \mathbf{H} = \mathbf{X} (\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1} \mathbf{X}^\top
 \]
 
-while the usual approaches in R, including  [`sandwich`](https://CRAN.R-project.org/package=sandwich) and [`estimatr`](/R/estimatr/), and Python (e.g. [`statsmodels`](http://www.statsmodels.org/stable/index.html)) estimate the following hat matrix
+while the usual approaches in R, including  [`sandwich`](https://CRAN.R-project.org/package=sandwich) and [`estimatr`](http://declaredesign.org/R/estimatr/), and Python (e.g. [`statsmodels`](http://www.statsmodels.org/stable/index.html)) estimate the following hat matrix
 
 \[
 \mathbf{H} = \mathbf{X} (\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{W}
