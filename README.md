@@ -5,7 +5,7 @@ estimatr: Fast Estimators for Design-Based Inference
 
 [![CRAN Status](https://www.r-pkg.org/badges/version/estimatr)](cran.r-project.org/package=estimatr) [![Travis-CI Build Status](https://travis-ci.org/DeclareDesign/estimatr.svg?branch=master)](https://travis-ci.org/DeclareDesign/estimatr) [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/DeclareDesign/estimatr?branch=master&svg=true)](https://ci.appveyor.com/project/DeclareDesign/estimatr) [![Coverage Status](https://coveralls.io/repos/github/DeclareDesign/estimatr/badge.svg?branch=master)](https://coveralls.io/github/DeclareDesign/estimatr?branch=master)
 
-**Warning: the CRAN version of `estimatr` has the incorrect variance for weighted, "CR2" variance estimates. If you want to use "CR2" variance estimation with weights, please download the development version of the package using `devtools::install_github("DeclareDesign/estimatr")`**
+**Warning: the CRAN version of `estimatr` has the incorrect variance for weighted, "CR2" variance estimates. If you want to use "CR2" variance estimation with weights, please download the development version of the package using the instructions below.**
 
 Technical papers and textbooks demand complex estimation strategies that are often difficult to implement, even for scientists who are expert coders. The result is slow code copied and pasted from the internet, where the result is taken on faith.
 
@@ -16,6 +16,8 @@ Fast estimators also enable fast simulation of research designs to learn about t
 ### Installing estimatr
 
 To install the latest stable release of **estimatr**, please ensure that you are running version 3.3 or later of R and run the following code:
+
+**Warning: the CRAN version of `estimatr` has the incorrect variance for weighted, "CR2" variance estimates. If you want to use "CR2" variance estimation with weights, please download the development version instead.**
 
 ``` r
 install.packages("estimatr")
@@ -55,7 +57,7 @@ summary(res_cl)
 #> Call:
 #> lm_robust(formula = y ~ z, data = dat, clusters = clusterID)
 #> 
-#> Standard error type:  CR2 
+#> Standard error type =  CR2 
 #> 
 #> Coefficients:
 #>             Estimate Std. Error Pr(>|t|) CI Lower CI Upper   DF
