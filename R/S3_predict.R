@@ -109,7 +109,7 @@ predict.lm_robust <- function(object,
   # Get coefs
   coefs <- as.matrix(coef(object))
 
-  # Get NAs from rank-deficient
+  # Get prediction
   beta_na <- is.na(coefs[, 1])
 
   # Get predicted values
@@ -177,4 +177,38 @@ predict.lm_robust <- function(object,
   } else {
     return(predictor)
   }
+}
+
+lm_like_fits <- function(X, coefs) {
+  # Get NAs from rank-deficient
+  beta_na <- is.na(coefs[, 1])
+
+  # Get predicted values
+  predictor <- drop(X[, !beta_na, drop = FALSE] %*% coefs[!beta_na, ])
+
+  return(predictor)
+}
+
+#' @export
+predict.iv_robust <- function(object,
+                              newdata,
+                              na.action = na.pass,
+                              ...) {
+
+  # Get model matrix
+  rhs_terms <- delete.response(object$terms_regressors)
+  mf <- model.frame(rhs_terms, newdata, na.action = na.action)
+
+  # Check class of columns in newdata match those in model fit
+  if (!is.null(cl <- attr(rhs_terms, "dataClasses"))) .checkMFClasses(cl, mf)
+
+  X <- model.matrix(rhs_terms, mf, contrasts.arg = object$contrasts)
+
+  coefs <- as.matrix(coef(object))
+
+  beta_na <- is.na(coefs[, 1])
+
+  # Get predicted values
+  predictor <- drop(X[, !beta_na, drop = FALSE] %*% coefs[!beta_na, ])
+  return(predictor)
 }

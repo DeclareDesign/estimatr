@@ -90,6 +90,7 @@ clean_model_data <- function(data, datargs) {
 
   if (any(grepl("\\|", formula[[3]]))) {
     ret[["instrument_matrix"]] <- model.matrix(terms(formula, rhs = 2), data = mf)
+    ret[["terms_regressors"]] <- terms(formula, rhs = 1)
   }
 
   # Keep the original treatment vector for DiM and HT

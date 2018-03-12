@@ -119,6 +119,7 @@ iv_robust <- function(formula,
 
   return_list[["call"]] <- match.call()
 
+  return_list[["terms_regressors"]] <- model_data[["terms_regressors"]]
   class(return_list) <- "iv_robust"
 
   return(return_list)

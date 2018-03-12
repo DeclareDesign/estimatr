@@ -139,6 +139,11 @@ test_that("S3 methods", {
     summary(ivo)$waldtest[-2]
   )
 
+  expect_equal(
+    predict(ivro, newdata = mtcars),
+    predict(ivo)
+  )
+
   # no intercept
   ivo <- AER::ivreg(mpg ~ hp + cyl +0 | wt + gear, data = mtcars)
   ivro <- iv_robust(mpg ~ hp + cyl +0| wt + gear, data = mtcars, se_type = "classical")
