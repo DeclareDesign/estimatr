@@ -1,24 +1,25 @@
 #' @export
 confint.lm_robust <-
-  function(
-           object,
+  function(object,
            parm = NULL,
            level = NULL,
            ...) {
-    cis <- get_ci_mat(object, level)
+    return(confint_lm_like(object, parm, level, ...))
+  }
 
-    if (!is.null(parm)) {
-      cis <- cis[parm, , drop = FALSE]
-    }
-
-    return(cis)
+#' @export
+confint.iv_robust <-
+  function(object,
+           parm = NULL,
+           level = NULL,
+           ...) {
+    return(confint_lm_like(object, parm, level, ...))
   }
 
 
 #' @export
 confint.difference_in_means <-
-  function(
-           object,
+  function(object,
            parm = NULL,
            level = NULL,
            ...) {
@@ -29,8 +30,7 @@ confint.difference_in_means <-
 
 #' @export
 confint.horvitz_thompson <-
-  function(
-           object,
+  function(object,
            parm = NULL,
            level = NULL,
            ...) {
@@ -38,6 +38,19 @@ confint.horvitz_thompson <-
 
     return(cis)
   }
+
+confint_lm_like <- function(object,
+                            parm = NULL,
+                            level = NULL,
+                            ...) {
+  cis <- get_ci_mat(object, level)
+
+  if (!is.null(parm)) {
+    cis <- cis[parm, , drop = FALSE]
+  }
+
+  return(cis)
+}
 
 ## internal method that builds confidence intervals and labels the matrix to be returned
 get_ci_mat <- function(object, level, ttest = TRUE) {

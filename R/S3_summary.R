@@ -51,6 +51,14 @@ summary.lm_robust <- function(object,
   ret
 }
 
+#' @export
+summary.iv_robust <- function(object,
+                              ...) {
+
+  summary_lm_model(object)
+}
+
+
 summary_lm_model <- function(object) {
   return_list <-
     object[c(

@@ -49,6 +49,18 @@ tidy.lm_robust <- function(object, ...) {
   return(return_frame)
 }
 
+#' @rdname tidy
+#'
+#' @export tidy.iv_robust
+#' @export
+tidy.iv_robust <- function(object, ...) {
+  return_frame <- tidy_data_frame(object)
+
+  warn_singularities(object)
+
+  return(return_frame)
+}
+
 
 #' @rdname tidy
 #'

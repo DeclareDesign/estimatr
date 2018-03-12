@@ -106,3 +106,46 @@ test_that("iv_robust matches AER + ivpack", {
   )
 
 })
+
+test_that("S3 methods", {
+
+  ivo <- AER::ivreg(mpg ~ hp + cyl | wt + gear, data = mtcars)
+  ivro <- iv_robust(mpg ~ hp + cyl | wt + gear, data = mtcars, se_type = "classical")
+
+  expect_equal(
+    vcov(ivro),
+    vcov(ivo)
+  )
+
+  expect_is(
+    tidy(ivro),
+    "data.frame"
+  )
+
+  expect_equal(
+    nrow(tidy(ivro)),
+    3
+  )
+
+  capture_output(
+    expect_equivalent(
+      summary(ivro)$coefficients,
+      print(ivro)
+    )
+  )
+
+  expect_equivalent(
+    ivro$fstatistic,
+    summary(ivo)$waldtest[-2]
+  )
+
+  # no intercept
+  ivo <- AER::ivreg(mpg ~ hp + cyl +0 | wt + gear, data = mtcars)
+  ivro <- iv_robust(mpg ~ hp + cyl +0| wt + gear, data = mtcars, se_type = "classical")
+
+  expect_equivalent(
+    ivro$fstatistic,
+    summary(ivo)$waldtest[-2]
+  )
+
+})

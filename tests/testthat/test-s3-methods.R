@@ -177,6 +177,10 @@ test_that("tidy, summary, and print work", {
   dat$z2 <- dat$z
   lmro <- lm_robust(y ~ z + z2 + x, data = dat)
   tidy(lmro)
+
+  # instrumental variables S3 methods are in the IV test, owing to
+  # the AER dependency
+  # iv_robust
 })
 
 
@@ -223,6 +227,11 @@ test_that("vcov works", {
     dim(vcov(lmro)),
     c(3, 3)
   )
+
+  # Instrumental variables
+  library(AER)
+  ivo <- ivreg(y ~ x | z, data = dat)
+
 })
 
 

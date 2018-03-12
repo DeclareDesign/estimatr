@@ -4,6 +4,11 @@ vcov.lm_robust <-
     return(vcov_simple(object))
   }
 
+#' @export
+vcov.iv_robust <-
+  function(object, ...) {
+    return(vcov_simple(object))
+  }
 
 #' @export
 vcov.difference_in_means <-

@@ -119,5 +119,7 @@ iv_robust <- function(formula,
 
   return_list[["call"]] <- match.call()
 
+  class(return_list) <- "iv_robust"
+
   return(return_list)
 }
