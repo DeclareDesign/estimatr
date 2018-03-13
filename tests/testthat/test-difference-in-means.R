@@ -157,18 +157,12 @@ test_that("DIM Clustered", {
 test_that("DIM Pair Matched", {
   dat <- data.frame(
     Y = rnorm(100),
-    Z = rbinom(100, 1, .5),
+    Z = rep(0:1, 50),
     weights = runif(100),
     weights2 = 1,
     block = rep(1:50, each = 2)
   )
 
-  expect_error(
-    difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = dat),
-    "both treatment"
-  )
-
-  dat$Z <- rep(0:1, 50)
   dim_mp <- difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = dat)
 
   expect_equal(
@@ -195,18 +189,6 @@ test_that("DIM Matched Pair Cluster Randomization", {
       data = dat
     ),
     "same treatment condition"
-  )
-
-  dat$Z <- c(rep(rep(0:1, each = 4), 12), rep(0, 4))
-  expect_error(
-    difference_in_means(
-      Y ~ Z,
-      alpha = .05,
-      blocks = block,
-      clusters = cluster,
-      data = dat
-    ),
-    "both treatment conditions"
   )
 
   dat$Z <- rep(rep(0:1, each = 2), 25)
@@ -636,5 +618,36 @@ test_that("DIM matches lm_robust under certain conditions", {
   expect_error(
     difference_in_means(Y ~ z_mps, data = dat, weights = w, blocks = mps),
     "Cannot use `weights` with matched pairs design at the moment"
+  )
+
+  # Does blocking in d-i-m drop blocks the right way?
+  bldat <- data.frame(bl = rep(1:3, each = 4),
+                      z = c(0, 0, 0, 0, rep(0:1, times = 4)),
+                      y = rnorm(12))
+  expect_warning(
+    dim_miss <- difference_in_means(y ~ z, blocks = bl, data = bldat),
+    "1 block\\(s\\) dropped for containing no variation in treatment"
+  )
+
+  expect_equivalent(
+    dim_miss[c("coefficients", "se")],
+    difference_in_means(y ~ z, blocks = bl, data = bldat, subset = bl != 1)[c("coefficients", "se")]
+  )
+  expect_equivalent(
+    tidy(dim_miss)[, c("coefficients", "se")],
+    tidy(lm_lin(y ~ z, ~ factor(bl), data = bldat, subset = bl != 1))[2, 2:3]
+  )
+
+  # Diff!
+  #lm_lin(y ~ z, ~ factor(bl), data = bldat)
+
+  # linw_miss <- lm_lin(mpg ~ am, ~ factor(gear), weights = wt, data = mtcars)
+  # dimw_miss <- difference_in_means(mpg ~ am, blocks = gear, weights = wt, data = mtcars)
+
+  # Error!
+  errdat <- data.frame(bl = rep(1:2, each = 4), z = rep(0:1, each = 4), y = rnorm(8))
+  expect_error(
+    difference_in_means(y ~ z, blocks = bl, data = errdat),
+    "Must have some `blocks` containing variation in treatment"
   )
 })

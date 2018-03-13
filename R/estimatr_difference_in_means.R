@@ -318,6 +318,16 @@ difference_in_means <-
 
       block_estimates <- do.call(rbind, block_estimates)
 
+      if (is.null(block_estimates)) {
+        stop("Must have some `blocks` containing variation in treatment")
+      }
+      if (nrow(block_estimates) < length(block_dfs)) {
+        warning(
+          length(block_dfs) - nrow(block_estimates),
+          " block(s) dropped for containing no variation in treatment"
+        )
+      }
+
       N_overall <- with(block_estimates, sum(N))
 
       # Blocked design, (Gerber Green 2012, p73, eq3.10)
@@ -428,11 +438,11 @@ difference_in_means_internal <-
     N <- N2 + N1
 
     if ((N1 == 0) || (N2 == 0)) {
-      stop("Must have units with both treatment conditions within each block.")
+      return(NULL)
     }
 
     ## Check to make sure multiple in each group if pair matched is false
-    if (!pair_matched & (N2 == 1 | N1 == 1)) {
+    if (!pair_matched && (N2 == 1 | N1 == 1)) {
       stop(
         "Must have least two treated/control units in each block if design is not ",
         "pair-matched (i.e., every block is of size two). Only one treated or ",
