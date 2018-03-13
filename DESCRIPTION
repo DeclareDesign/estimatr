@@ -16,7 +16,7 @@ License: MIT + file LICENSE
 Depends: R (>= 3.3.0)
 Imports: 
     Rcpp (>= 0.12.15),
-    methods
+    methods,
     Formula,
     rlang
 LinkingTo: Rcpp, RcppEigen
