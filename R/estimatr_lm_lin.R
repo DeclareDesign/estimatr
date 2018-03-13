@@ -203,17 +203,14 @@ lm_lin <- function(formula,
       )
     )
 
-  where <- parent.frame()
-  model_data <- eval(substitute(
-    clean_model_data(
-      formula = full_formula,
-      data = data,
-      subset = subset,
-      cluster = clusters,
-      weights = weights,
-      where = where
-    )
-  ))
+  datargs <- enquos(
+    formula = full_formula,
+    weights = weights,
+    subset = subset,
+    cluster = clusters
+  )
+  data <- enquo(data)
+  model_data <- clean_model_data(data = data, datargs)
 
   outcome <- model_data$outcome
   n <- length(outcome)

@@ -12,17 +12,15 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
           "p-values and confidence intervals may not be calculated"
         )
 
-        return_frame$dof <- ifelse(return_frame$df <= 0, NA, return_frame$df)
-      } else {
-        return_frame$dof <- return_frame$df
+        return_frame$df <- ifelse(return_frame$df <= 0, NA, return_frame$df)
       }
 
       return_frame$p <- with(
         return_frame,
-        2 * pt(abs(coefficients / se), df = dof, lower.tail = FALSE)
+        2 * pt(abs(coefficients / se), df = df, lower.tail = FALSE)
       )
 
-      crit_se <- with(return_frame, qt(1 - alpha / 2, df = dof) * se)
+      crit_se <- with(return_frame, qt(1 - alpha / 2, df = df) * se)
     } else {
       return_frame$p <- with(
         return_frame,
@@ -36,10 +34,6 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
 
     return_frame$ci_lower <- with(return_frame, coefficients - crit_se)
     return_frame$ci_upper <- with(return_frame, coefficients + crit_se)
-
-    if (is.data.frame(return_frame)) {
-      return_frame <- return_frame[, !(names(return_frame) == "dof"), drop = FALSE]
-    }
 
     return(as.list(return_frame))
   } else {

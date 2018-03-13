@@ -16,7 +16,9 @@ License: MIT + file LICENSE
 Depends: R (>= 3.3.0)
 Imports: 
     Rcpp (>= 0.12.10),
-    methods
+    methods,
+    Formula,
+    rlang
 LinkingTo: Rcpp, RcppEigen
 RoxygenNote: 6.0.1
 LazyData: true
@@ -27,6 +29,7 @@ Suggests:
     fabricatr,
     randomizr (>= 0.8),
     margins,
-    prediction
+    prediction,
+    AER
 Enhances: broom, texreg
 Additional_repositories: http://r.declaredesign.org

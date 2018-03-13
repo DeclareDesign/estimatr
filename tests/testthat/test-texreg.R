@@ -6,7 +6,7 @@ test_that("texreg extension works", {
   skip_if_not_installed("texreg")
   library(texreg)
 
-  model2 <- lm_robust(extra~group, sleep, clusters = "ID")
+  model2 <- lm_robust(extra~group, sleep, clusters = ID)
 
   capture.output(treg <- extract(model2, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE))
   expect_is(

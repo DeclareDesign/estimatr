@@ -22,7 +22,6 @@ matrix:
       r: release
       if: branch = master
 
-
     - os: osx
       osx_image: xcode6.4
       r: oldrel
@@ -37,6 +36,11 @@ env:
   - secure: PoMVh0KzD9YiQT1FWtvbFM/dK7YjMu67PqpGqIODnv7TgBCTztwgHtbDle5uQK+wIfkCX/lGBNDJF3Am+B3Z16xlixZhsUFt9RBPCN/vRBjZZagL2dlfaHzkzpULgPa1PQp/GJmjlPf3ViIaC+cWa+lARvgpdQOv1kDbKR7cHK32YiAY3wVWbQDH4uxruet5MfM/OpM+6fYBaewGZrzyeqgVVpgJ5hdBIqxcXFygCxfPW5lE4f5C3qfDvqFFJH3zuElBZRgvbh4lOtgOFduoKQQPOagSuCQRxPQfG7Pl4xXJanyFmI05pswzSP1wp8EBidUq8SM+2IolydRTXtrAGzVeBATf9YC2Q7FaSwvXURzd22HqNSDHZOncd2in89XlgxLYT8AeNMqGO1I9qbnVplMDY9qR1ZtRqISaTK2rRGLfCkBzUN8QghY3asK6w5soJHxFK7HVbdC4+krZkgb1EVdiU8AMdeiMtQnHUsTBqhI8lroODVYrAcjQ/D75HSWYO0074oFd3Wsom/mHWa5vsiyLyGO7wrS57oFyXXJ21CBHXwxQ5AoJ5Gl7SxqmRxlr/WL38kbr+DTT3GvjEDOsj8Z7b8Nmf7Ro80zd2dxqXhsTECBqet7sNIAdViJrKZtMLa0HZmu2dUHZYwY6xsIcRe5PmujPE9DSUqPrURW9STg=
   - secure: D0Sbpp6I5Vw89Gy92Zt0iZDbTf0wCPoWtfaWMPBcywc7X1eosiZhxifSL7CT4hKpRW8QftTPTJfln0SfpnDvRafhlWIDbBI3iAKPtMH0zRTrbMQFl6dq23E45ZiDnroZW7Q80vc57z6x/hQMy2Du1Zfz+iyCgUdtT6O2vOw3qxBBEbyESJ5jJUlpnv3vDZFIfYWNakN2kp+QrKVbqglsk8pjD0iMfDt2oGxtWsMnc4iQNA+a6XVeZHaVJqRuZzKZFRB7teSUQRCBrcVJWpFaT3Z0smPYk+Ea2IzxQJZvBYfbpRSCpyaZoeTgai3NpmYdNnp7XSrw9i5aiggRIMyZwuAJMZWKnNPV7hsVzdY/10ory40/Rp3IaaQtY64E0Nzt978GA4JdzqrPOM/Cl8tysECKCbFuIb1pqvpnB2XzZOfF+Qq+ho3iRRNd6w8Z1krUduuEb0njcLTsDLb7H+JklvyTqf+0fhwXICeN+FzbQCrHXu6YRi9KAXDUNjTn1duLdwJhJKodxCd6pkNhXxx6PFkqxk20BPV3mrXcMRWxlZvfTmCQ50UDbZjGtGw7y4gTC681aXu8+NeSppGiLKKtwE/+G05fjcCy3k6MDg+gR/tiLz754txsncaJpl7Gv86Aqmy8VGuYv2dXqzZahcrMt4w85XsB4zC7f3plHQk/T3g=
 
+addons:
+  apt:
+    packages:
+      - libnlopt-dev
+
 r_github_packages:
 - DeclareDesign/DDtools
 - DeclareDesign/DeclareDesign
@@ -44,7 +48,6 @@ r_github_packages:
 
 r_packages:
 - broom
-- ggplot2
 - texreg
 - clubSandwich
 

@@ -282,74 +282,68 @@ horvitz_thompson <-
 
       # Add clusters, blocks, and treatment probabilities to data so they can be cleaned with clean_model_data
       if (!is.null(declaration$clusters)) {
-        if (is.null(data[[".clusters_ddinternal"]])) {
-          data[[".clusters_ddinternal"]] <- declaration$clusters
-          clusters <- ".clusters_ddinternal"
-        } else {
+        if (!is.null(data[[".clusters_ddinternal"]])) {
           stop(
             "Can't have a variable called '.clusters_ddinternal' in your `data`",
             "as we use that name for clusters from `declaration` objects."
           )
         }
+        .clusters_ddinternal <- declaration$clusters
+        clusters <- quo(.clusters_ddinternal)
       }
 
       if (!is.null(declaration$blocks)) {
-        if (is.null(data[[".blocks_ddinternal"]])) {
-          data[[".blocks_ddinternal"]] <- declaration$blocks
-          blocks <- ".blocks_ddinternal"
-        } else {
+        if (!is.null(data[[".blocks_ddinternal"]])) {
           stop(
             "Can't have a variable called '.blocks_ddinternal' in your `data`",
             "as we use that name for blocks from `declaration` objects."
           )
         }
+        .blocks_ddinternal <- declaration$blocks
+        blocks <- quo(.blocks_ddinternal)
       }
 
-      if (is.null(data[[".treatment_prob_ddinternal"]])) {
-        if (!is.null(condition2)) {
-          treatnum <-
-            which(declaration$cleaned_arguments$condition_names == condition2)
-
-          if (length(treatnum) == 0) {
-            stop(
-              "If `condition2` and `declaration` are both specified, ",
-              "`condition2` must match the condition_names in `declaration`.",
-              "\n`condition2`: ", condition2, "\n`condition_names`: ",
-              paste0(
-                declaration$cleaned_arguments$condition_names,
-                collapse = ", "
-              )
-            )
-          }
-
-          treatment_prob <- declaration$probabilities_matrix[, treatnum]
-        } else {
-          # assuming treatment is second column
-          treatment_prob <- declaration$probabilities_matrix[, 2]
-        }
-        data[[".treatment_prob_ddinternal"]] <- treatment_prob
-        condition_prs <- ".treatment_prob_ddinternal"
-      } else {
+      if (!is.null(data[[".treatment_prob_ddinternal"]])) {
         stop(
           "Can't have a variable called '.treatment_prob_ddinternal' in your `data`",
           "as we use that name for treatment probabilites."
         )
       }
+      if (!is.null(condition2)) {
+        treatnum <-
+          which(declaration$cleaned_arguments$condition_names == condition2)
+
+        if (length(treatnum) == 0) {
+          stop(
+            "If `condition2` and `declaration` are both specified, ",
+            "`condition2` must match the condition_names in `declaration`.",
+            "\n`condition2`: ", condition2, "\n`condition_names`: ",
+            paste0(
+              declaration$cleaned_arguments$condition_names,
+              collapse = ", "
+            )
+          )
+        }
+
+        treatment_prob <- declaration$probabilities_matrix[, treatnum]
+      } else {
+        # assuming treatment is second column
+        treatment_prob <- declaration$probabilities_matrix[, 2]
+      }
+      .treatment_prob_ddinternal <- treatment_prob
+      condition_prs <- quo(.treatment_prob_ddinternal)
     }
 
     ## Clean data
-    where <- parent.frame()
-    model_data <- eval(substitute(
-      clean_model_data(
-        formula = formula,
-        data = data,
-        subset = subset,
-        cluster = clusters,
-        condition_pr = condition_prs,
-        block = blocks,
-        where = where
-      )
-    ))
+    datargs <- enquos(
+      formula = formula,
+      subset = subset,
+      block = blocks,
+      cluster = clusters,
+      condition_pr = condition_prs
+    )
+    data <- enquo(data)
+    model_data <- clean_model_data(data = data, datargs)
 
     ## condition_pr_mat, if supplied, must be same length
     if (!is.null(condition_pr_mat) && (2 * length(model_data$outcome) != nrow(condition_pr_mat))) {
