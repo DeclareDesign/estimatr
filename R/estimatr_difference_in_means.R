@@ -215,7 +215,7 @@ difference_in_means <-
            condition2 = NULL,
            ci = TRUE,
            alpha = .05) {
-    if (length(all.vars(eval_tidy(formula)[[3]])) > 1) {
+    if (length(all.vars(f_rhs(eval_tidy(formula)))) > 1) {
       stop(
         "'formula' must have only one variable on the right-hand side: the ",
         "treatment variable."
