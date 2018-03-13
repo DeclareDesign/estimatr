@@ -9,7 +9,7 @@ test_that("estimatr::tidy works loaded before or after after broom", {
   library(estimatr)
 
   model <- lm(extra~group, sleep)
-  model2 <- lm_robust(extra~group, sleep, clusters = "ID")
+  model2 <- lm_robust(extra~group, sleep, clusters = ID)
 
   expect_identical(
     environmentName(environment(get("tidy", envir = globalenv(), inherit = TRUE))),
@@ -26,7 +26,7 @@ test_that("estimatr::tidy works loaded before or after after broom", {
   library(broom)
 
   model <- lm(extra~group, sleep)
-  model2 <- lm_robust(extra~group, sleep, clusters = "ID")
+  model2 <- lm_robust(extra~group, sleep, clusters = ID)
 
   expect_identical(
     environmentName(environment(get("tidy", envir = globalenv(), inherit = TRUE))),

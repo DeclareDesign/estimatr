@@ -46,6 +46,81 @@ test_that("tidy, summary, and print work", {
     )
   )
 
+  # works with multiple outcomes
+  lmrmo <- lm_robust(cbind(y, x) ~ z, data = dat, se_type = "classical")
+  lmmo <- lm(cbind(y, x) ~ z, data = dat)
+  slmmo <- summary(lmmo)
+
+  expect_equivalent(
+    as.matrix(tidy(lmrmo)[, c("coefficient_name", "outcome")]),
+    cbind(
+      rep(c("(Intercept)", "z"), times = 2),
+      rep(c("y", "x"), each = 2)
+    )
+  )
+
+  expect_equal(
+    dimnames(vcov(lmrmo)),
+    list(
+      c("y:(Intercept)", "y:z", "x:(Intercept)", "x:z"),
+      c("y:(Intercept)", "y:z", "x:(Intercept)", "x:z")
+    )
+  )
+
+  expect_equal(
+    coef(lmrmo),
+    coef(lmmo)
+  )
+
+  capture_output(
+    expect_equal(
+      rownames(print(lmrmo)),
+      rownames(vcov(lmrmo))
+    )
+  )
+
+  expect_equal(
+    predict(lmrmo, newdata = dat),
+    predict(lmmo)
+  )
+
+  expect_error(
+    predict(lmrmo, newdata = dat, se.fit = TRUE),
+    "Can't set `se.fit` == TRUE with multivariate outcome"
+  )
+
+  expect_error(
+    slmrmo <- summary(lmrmo),
+    NA
+  )
+
+  lmroy <- lm_robust(y ~ z, data = dat, se_type = "classical")
+  lmrox <- lm_robust(x ~ z, data = dat, se_type = "classical")
+
+  # Only difference is name on fstatistic!
+  expect_equivalent(
+    slmrmo$`Response y`,
+    summary(lmroy)
+  )
+  expect_equivalent(
+    slmrmo$`Response x`,
+    summary(lmrox)
+  )
+
+  expect_equal(
+    lapply(slmrmo, function(x) x$coefficients[, c(1, 2, 3)]),
+    lapply(slmmo, function(x) x$coefficients[, c(1, 2, 4)])
+  )
+
+  expect_equivalent(
+    confint(lmrmo)[1:2,],
+    confint(lmroy)
+  )
+
+  expect_equivalent(
+    confint(lmrmo)[3:4,],
+    confint(lmrox)
+  )
 
   ## lm_lin
   lmlo <- lm_lin(y ~ x, ~ z, data = dat)
@@ -102,6 +177,10 @@ test_that("tidy, summary, and print work", {
   dat$z2 <- dat$z
   lmro <- lm_robust(y ~ z + z2 + x, data = dat)
   tidy(lmro)
+
+  # instrumental variables S3 methods are in the IV test, owing to
+  # the AER dependency
+  # iv_robust
 })
 
 
@@ -148,6 +227,11 @@ test_that("vcov works", {
     dim(vcov(lmro)),
     c(3, 3)
   )
+
+  # Instrumental variables
+  library(AER)
+  ivo <- ivreg(y ~ x | z, data = dat)
+
 })
 
 

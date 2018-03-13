@@ -17,6 +17,8 @@ Depends: R (>= 3.3.0)
 Imports: 
     Rcpp (>= 0.12.15),
     methods
+    Formula,
+    rlang
 LinkingTo: Rcpp, RcppEigen
 RoxygenNote: 6.0.1
 LazyData: true
@@ -27,6 +29,7 @@ Suggests:
     fabricatr (>= 0.3),
     randomizr (>= 0.9),
     margins,
-    prediction
+    prediction,
+    AER
 Enhances: broom, texreg
 Additional_repositories: http://r.declaredesign.org

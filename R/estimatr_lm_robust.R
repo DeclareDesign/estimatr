@@ -192,17 +192,14 @@ lm_robust <- function(formula,
                       alpha = .05,
                       return_vcov = TRUE,
                       try_cholesky = FALSE) {
-  where <- parent.frame()
-  model_data <- eval(substitute(
-    clean_model_data(
-      formula = formula,
-      data = data,
-      subset = subset,
-      cluster = clusters,
-      weights = weights,
-      where = where
-    )
-  ))
+  datargs <- enquos(
+    formula = formula,
+    weights = weights,
+    subset = subset,
+    cluster = clusters
+  )
+  data <- enquo(data)
+  model_data <- clean_model_data(data = data, datargs)
 
   return_list <-
     lm_robust_fit(

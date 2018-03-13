@@ -180,7 +180,29 @@ test_that("lm cluster se", {
   test_lm_cluster_variance(NULL)
   test_lm_cluster_variance(dat$W)
 
-  # bmlmse doesn't take into consideration weights, can't test
+})
+
+test_that("Clustered weighted SEs are correct", {
+  skip_if_not_installed("clubSandwich")
+
+  lm_cr2 <- lm_robust(mpg ~ hp, data = mtcars, weights = wt, clusters = cyl, se_type = "CR2")
+  lm_stata <- lm_robust(mpg ~ hp, data = mtcars, weights = wt, clusters = cyl, se_type = "stata")
+  lm_cr0 <- lm_robust(mpg ~ hp, data = mtcars, weights = wt, clusters = cyl, se_type = "CR0")
+
+  lm_o <- lm(mpg ~ hp, data = mtcars, weights = wt)
+
+  expect_equivalent(
+    vcov(lm_cr2),
+    as.matrix(clubSandwich::vcovCR(lm_o, cluster = mtcars$cyl, type = "CR2"))
+  )
+  expect_equivalent(
+    vcov(lm_cr0),
+    as.matrix(clubSandwich::vcovCR(lm_o, cluster = mtcars$cyl, type = "CR0"))
+  )
+  expect_equivalent(
+    vcov(lm_stata),
+    as.matrix(clubSandwich::vcovCR(lm_o, cluster = mtcars$cyl, type = "CR1S"))
+  )
 })
 
 test_that("lm cluster se with missingness", {
@@ -212,7 +234,7 @@ test_that("lm cluster se with missingness", {
 
   estimatr_cluster_out[["call"]] <- NULL
   estimatr_cluster_sub[["call"]] <- NULL
-  expect_identical(
+  expect_equal(
     estimatr_cluster_out,
     estimatr_cluster_sub
   )
@@ -228,10 +250,10 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
   )
 
   lmr <- lm_robust(Y~Z, data = dat, weights = W)
-  lmrq <- lm_robust(Y~Z, data = dat, weights = "W")
+  lmrq <- lm_robust(Y~Z, data = dat, weights = W)
   lmr[["call"]] <- NULL
   lmrq[["call"]] <- NULL
-  expect_identical(
+  expect_equal(
     lmr,
     lmrq
   )
@@ -240,19 +262,18 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
   dat$J <- as.character(dat$J)
 
   lmrc <- lm_robust(Y~Z, data = dat, clusters = J)
-  lmrcq <- lm_robust(Y~Z, data = dat, clusters = "J")
+  lmrcq <- lm_robust(Y~Z, data = dat, clusters = J)
   lmrc[["call"]] <- NULL
   lmrcq[["call"]] <- NULL
-  expect_identical(
+  expect_equal(
     lmrc,
     lmrcq
   )
 
-
   # works with num
   dat$J_num <- as.numeric(dat$J)
 
-  lmrc_qnum <- lm_robust(Y~Z, data = dat, clusters = "J_num")
+  lmrc_qnum <- lm_robust(Y~Z, data = dat, clusters = J_num)
   lmrc_qnum[["call"]] <- NULL
   expect_equal(
     lmrc,
@@ -298,4 +319,34 @@ test_that("Clustered SEs work with clusters of size 1", {
     as.matrix(tidy(lm_stata)[, c("coefficients", "se")]),
     cbind(lmo$coefficients, bmo$se.Stata)
   )
+})
+
+test_that("multiple outcomes", {
+
+  skip_if_not_installed("clubSandwich")
+  lmo <- lm(cbind(mpg, hp) ~ wt, data = mtcars)
+  lmro <- lm_robust(cbind(mpg, hp) ~ wt, data = mtcars, clusters = cyl)
+
+  expect_equivalent(
+    as.matrix(clubSandwich::vcovCR(lmo, cluster = mtcars$cyl, type = "CR2")),
+    vcov(lmro)
+  )
+
+  expect_equivalent(
+    as.matrix(clubSandwich::vcovCR(lmo, cluster = mtcars$cyl, type = "CR0")),
+    vcov(lm_robust(cbind(mpg, hp) ~ wt, data = mtcars, clusters = cyl, se_type = "CR0"))
+  )
+
+  J <- length(unique(mtcars$cyl))
+  n <- nrow(mtcars)
+  r <- 2
+
+  # Have to manually do correction because clubSandwich uses n*ny and r*ny in place of n and r in
+  # stata correction
+  expect_equivalent(
+    as.matrix(clubSandwich::vcovCR(lmo, cluster = mtcars$cyl, type = "CR0")) *
+      ((J * (n - 1)) / ((J - 1) * (n - r))) ,
+    vcov(lm_robust(cbind(mpg, hp) ~ wt, data = mtcars, clusters = cyl, se_type = "stata"))
+  )
+
 })

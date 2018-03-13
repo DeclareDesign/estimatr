@@ -1,40 +1,46 @@
+# library(estimatr)
+# f <- function(w) {
+#   dat <- data.frame(x = rnorm(10), y = rnorm(10))
+#   lm_robust(y ~ x, data = dat, w = w)
+# }
+# f(NULL)
+# f(1:10)
+
+
 # Internal method to process data
-clean_model_data <- function(formula,
-                             data,
-                             subset,
-                             weights,
-                             block,
-                             condition_pr,
-                             cluster,
-                             where) {
-  mf <- match.call()
-  mf <- mf[c(1, match(names(formals(sys.function())), names(mf), 0L))] # drop formals left missing
-  mf[[1]] <- quote(stats::model.frame)
-  mf[["where"]] <- NULL # drop the where argument
-  mf[["na.action"]] <- quote(estimatr::na.omit_detailed.data.frame)
+#' @importFrom rlang f_rhs
+clean_model_data <- function(data, datargs) {
 
-  # Weights and clusters may be quoted...
-  # TODO helper function
-  if (!is.null(mf$weights) && is.character(mf[["weights"]])) {
-    mf[["weights"]] <- as.symbol(mf[["weights"]])
+  # if data exists, evaluate it
+  data <- if (quo_is_missing(data)) NULL else eval_tidy(data)
+
+  if(getOption("estimatr.debug.clean_model_data", FALSE)) browser()
+
+  mfargs <- Filter(Negate(quo_is_missing), datargs)
+
+  m_formula <- eval_tidy(mfargs[["formula"]])
+  m_formula_env <- environment(m_formula)
+
+  args_ignored <- c("subset", "se_type")
+  # For each ... that would go to model.fram .default, early eval, save to formula env, and point to it
+  # subset is also non-standard eval
+  to_process <- setdiff(
+    names(mfargs),
+    setdiff( names(formals(stats::model.frame.default)),args_ignored) )
+
+  for (da in to_process) {
+    name <- sprintf(".__%s%%%d__", da, sample.int(.Machine$integer.max, 1))
+    m_formula_env[[name]] <- eval_tidy(mfargs[[da]], data = data)
+    mfargs[[da]] <- sym(name)
   }
 
-  # Clusters...
-  if (!is.null(mf$cluster) && is.character(mf[["cluster"]])) {
-    mf[["cluster"]] <- as.symbol(mf[["cluster"]])
-  }
+  mfargs[["formula"]] <- Formula::as.Formula(m_formula)
 
-  # Blocks...
-  if (!is.null(mf$block) && is.character(mf[["block"]])) {
-    mf[["block"]] <- as.symbol(mf[["block"]])
-  }
-
-  # condition_prs...
-  if (!is.null(mf$condition_pr) && is.character(mf[["condition_pr"]])) {
-    mf[["condition_pr"]] <- as.symbol(mf[["condition_pr"]])
-  }
-
-  mf <- eval(mf, where)
+  # Get model frame
+  mf <- eval_tidy(quo((stats::model.frame)(!!!mfargs,
+                                           data=data,
+                                           na.action=na.omit_detailed.data.frame,
+                                           drop.unused.levels=TRUE)))
 
   local({
     na.action <- attr(mf, "na.action")
@@ -70,46 +76,49 @@ clean_model_data <- function(formula,
     }
   })
 
-  # TODO when using . it adds weights and clusters to model!
+
+  if (!is.null(attr(terms(mf), "Formula_without_dot"))) {
+    formula <- attr(terms(mf), "Formula_without_dot")
+  } else {
+    formula <- eval_tidy(mfargs[["formula"]]) # unwrap quosure => a formula
+  }
+
   ret <- list(
     outcome = model.response(mf, type = "numeric"),
-    design_matrix = model.matrix.default(terms(mf), data = mf)
+    design_matrix = model.matrix(terms(formula, rhs = 1), data = mf)
   )
+
+  if (any(grepl("\\|", formula[[3]]))) {
+    ret[["instrument_matrix"]] <- model.matrix(terms(formula, rhs = 2), data = mf)
+    ret[["terms_regressors"]] <- terms(formula, rhs = 1)
+  }
 
   # Keep the original treatment vector for DiM and HT
   # They will never have a model frame larger than 6 covars
   # so we can add a check that prevents slowing down large
   # lm_robust calls
-  if (ncol(mf) < 6) {
+  if (ncol(mf) < 6 && length(all.vars(terms(mf)[[3]])) != 0) {
     ret[["original_treatment"]] <- mf[, colnames(mf) == all.vars(terms(mf)[[3]])[1]]
   }
 
-  if (!missing(weights)) {
-    ret[["weights"]] <- model.extract(mf, "weights")
-    if (any(ret[["weights"]] < 0)) {
-      stop("`weights` must not be negative")
-    }
+  ret[["weights"]] <- model.extract(mf, "weights")
+  if (any(ret[["weights"]] < 0)) {
+    stop("`weights` must not be negative")
   }
 
-  if (!missing(cluster)) {
-    ret[["cluster"]] <- model.extract(mf, "cluster")
-    if (!(class(ret[["cluster"]]) %in% c("factor", "integer"))) {
-      ret[["cluster"]] <- as.factor(ret[["cluster"]])
-    }
+  ret[["cluster"]] <- model.extract(mf, "cluster")
+  if (!(class(ret[["cluster"]]) %in% c("factor", "integer")) && !is.null(ret[["cluster"]])) {
+    ret[["cluster"]] <- as.factor(ret[["cluster"]])
   }
 
-  if (!missing(block)) {
-    ret[["block"]] <- model.extract(mf, "block")
-  }
+  ret[["block"]] <- model.extract(mf, "block")
 
-  if (!missing(condition_pr)) {
-    ret[["condition_pr"]] <- model.extract(mf, "condition_pr")
+  ret[["condition_pr"]] <- model.extract(mf, "condition_pr")
 
-    if (any(ret[["condition_pr"]] <= 0 | ret[["condition_pr"]] > 1)) {
-      stop(
-        "`condition_prs` must be a vector of positive values no greater than 1"
-      )
-    }
+  if (any(ret[["condition_pr"]] <= 0 | ret[["condition_pr"]] > 1)) {
+    stop(
+      "`condition_prs` must be a vector of positive values no greater than 1"
+    )
   }
 
   ret[["terms"]] <- attr(mf, "terms")

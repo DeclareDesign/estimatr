@@ -5,6 +5,7 @@
 \alias{tidy.NULL}
 \alias{tidy.default}
 \alias{tidy.lm_robust}
+\alias{tidy.iv_robust}
 \alias{tidy.difference_in_means}
 \alias{tidy.horvitz_thompson}
 \title{Tidy the result of an estimator into a data.frame}
@@ -16,6 +17,8 @@ tidy(object, ...)
 \method{tidy}{default}(object, ...)
 
 \method{tidy}{lm_robust}(object, ...)
+
+\method{tidy}{iv_robust}(object, ...)
 
 \method{tidy}{difference_in_means}(object, ...)
 

@@ -347,8 +347,8 @@ test_that("DIM works with character args", {
   dim_quote <- difference_in_means(
     Y ~ Z,
     alpha = .05,
-    blocks = "block",
-    clusters = "cluster",
+    blocks = block,
+    clusters = cluster,
     data = dat
   )
 
@@ -367,7 +367,7 @@ test_that("DIM works with character args", {
     difference_in_means(
       Y ~ Z,
       alpha = .05,
-      weights = "cluster",
+      weights = cluster,
       data = dat
     )
   )
