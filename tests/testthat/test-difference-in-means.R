@@ -581,8 +581,6 @@ test_that("DIM matches lm_robust under certain conditions", {
   # With weights now, identical to lm_robust, HC2 by force! except for matched pairs which fails
   dat$w <- runif(nrow(dat))
 
-
-
   # simple W
   expect_equivalent(
     tidy(lm_robust(Y ~ z, data = dat, weights = w))[2, ],

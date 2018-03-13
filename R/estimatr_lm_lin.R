@@ -263,9 +263,7 @@ lm_lin <- function(formula,
 
   # Choose what to center on!
   if (is.numeric(weights)) {
-    weight_mean <- mean(weights)
-    weights <- weights / weight_mean
-    center <- colMeans(demeaned_covars * weights)
+    center <- apply(demeaned_covars, 2, weighted.mean, weights)
   } else {
     center <- TRUE
   }
@@ -276,7 +274,6 @@ lm_lin <- function(formula,
       center = center,
       scale = FALSE
     )
-  print(center)
 
   original_covar_names <- colnames(demeaned_covars)
 

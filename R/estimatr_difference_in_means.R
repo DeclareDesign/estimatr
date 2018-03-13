@@ -238,7 +238,11 @@ difference_in_means <-
       stringsAsFactors = FALSE
     )
     data$cluster <- model_data$cluster
-    data$weights <- model_data$weights
+    # rescale weights for convenience
+    if (is.numeric(model_data$weights)) {
+      weight_mean <- mean(model_data$weights)
+      data$weights <- model_data$weights / weight_mean
+    }
     data$block <- model_data$block
 
     if (!is.null(data$weights) && length(unique(data$weights)) == 1
@@ -355,7 +359,7 @@ difference_in_means <-
         ## matches lm_lin, two estimates per block
         if (is.null(data$cluster)) {
           design <- "Blocked"
-          df <- N_overall - 2 * n_blocks
+          df <- nrow(data) - 2 * n_blocks
         } else {
           design <- "Block-clustered"
           # Also matches lm_lin for even sized clusters, should be conservative
@@ -520,10 +524,15 @@ difference_in_means_internal <-
       data.frame(
         coefficients = diff,
         se = se,
-        N = N,
         df = df,
         stringsAsFactors = FALSE
       )
+
+    if (is.numeric(data$weights)) {
+      return_frame$N <- sum(data$weights)
+    } else {
+      return_frame$N <- N
+    }
 
     return(return_frame)
   }
