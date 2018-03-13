@@ -1,9 +1,5 @@
 context("Estimator - iv_robust")
 
-skip_if_not_installed("AER")
-skip_if_not_installed("ivpack")
-skip_if_not_installed("clubSandwich")
-
 N <- 20
 dat <- data.frame(
   y = rnorm(N),
@@ -14,12 +10,17 @@ dat <- data.frame(
   clust = sample(letters[1:3], size = N, replace = TRUE)
 )
 dat$z <- dat$x * 0.5 + rnorm(N)
-# xhaven::write_dta(dat, path = "~/test.dta", version = 13)
-
-library(AER)
-library(ivpack)
 
 test_that("iv_robust matches AER + ivpack", {
+
+
+  skip_if_not_installed("AER")
+  skip_if_not_installed("ivpack")
+  skip_if_not_installed("clubSandwich")
+
+  library(AER)
+  library(ivpack)
+
   ivco <- iv_robust(y ~ x | z, data = dat, se_type = "classical")
   ivfit <- ivreg(y ~ x | z, data = dat)
   ivo <- summary(ivfit)
@@ -108,6 +109,8 @@ test_that("iv_robust matches AER + ivpack", {
 })
 
 test_that("S3 methods", {
+
+  skip_if_not_installed("AER")
 
   ivo <- AER::ivreg(mpg ~ hp + cyl | wt + gear, data = mtcars)
   ivro <- iv_robust(mpg ~ hp + cyl | wt + gear, data = mtcars, se_type = "classical")

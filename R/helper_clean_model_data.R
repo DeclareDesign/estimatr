@@ -101,7 +101,7 @@ clean_model_data <- function(data, datargs) {
     ret[["original_treatment"]] <- mf[, colnames(mf) == all.vars(terms(mf)[[3]])[1]]
   }
 
-  if (!is.null(mfargs$weights)) {
+  if (!is.numeric(mfargs$weights)) {
     ret[["weights"]] <- model.extract(mf, "weights")
     if (any(ret[["weights"]] < 0)) {
       stop("`weights` must not be negative")
