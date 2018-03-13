@@ -101,32 +101,24 @@ clean_model_data <- function(data, datargs) {
     ret[["original_treatment"]] <- mf[, colnames(mf) == all.vars(terms(mf)[[3]])[1]]
   }
 
-  if (!is.numeric(mfargs$weights)) {
-    ret[["weights"]] <- model.extract(mf, "weights")
-    if (any(ret[["weights"]] < 0)) {
-      stop("`weights` must not be negative")
-    }
+  ret[["weights"]] <- model.extract(mf, "weights")
+  if (any(ret[["weights"]] < 0)) {
+    stop("`weights` must not be negative")
   }
 
-  if (!is.null(mfargs$cluster)) {
-    ret[["cluster"]] <- model.extract(mf, "cluster")
-    if (!(class(ret[["cluster"]]) %in% c("factor", "integer"))) {
-      ret[["cluster"]] <- as.factor(ret[["cluster"]])
-    }
+  ret[["cluster"]] <- model.extract(mf, "cluster")
+  if (!(class(ret[["cluster"]]) %in% c("factor", "integer")) && !is.null(ret[["cluster"]])) {
+    ret[["cluster"]] <- as.factor(ret[["cluster"]])
   }
 
-  if (!is.null(mfargs$block)) {
-    ret[["block"]] <- model.extract(mf, "block")
-  }
+  ret[["block"]] <- model.extract(mf, "block")
 
-  if (!is.null(mfargs$condition_pr)) {
-    ret[["condition_pr"]] <- model.extract(mf, "condition_pr")
+  ret[["condition_pr"]] <- model.extract(mf, "condition_pr")
 
-    if (any(ret[["condition_pr"]] <= 0 | ret[["condition_pr"]] > 1)) {
-      stop(
-        "`condition_prs` must be a vector of positive values no greater than 1"
-      )
-    }
+  if (any(ret[["condition_pr"]] <= 0 | ret[["condition_pr"]] > 1)) {
+    stop(
+      "`condition_prs` must be a vector of positive values no greater than 1"
+    )
   }
 
   ret[["terms"]] <- attr(mf, "terms")
