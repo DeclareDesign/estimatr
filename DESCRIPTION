@@ -32,4 +32,4 @@ Suggests:
     prediction,
     AER
 Enhances: broom, texreg
-Additional_repositories: http://r.declaredesign.org
+Additional_Repositories: http://r.declaredesign.org
