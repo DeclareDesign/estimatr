@@ -253,16 +253,22 @@ lm_lin <- function(formula,
   # Center and interact variables
   # ----------
 
+  # Initialize as non-demeaned
   demeaned_covars <-
-    scale(
-      design_matrix[
-        ,
-        setdiff(colnames(design_matrix), c(design_mat_treatment, "(Intercept)")),
-        drop = FALSE
-      ],
-      center = TRUE,
-      scale = FALSE
-    )
+    design_matrix[
+      ,
+      setdiff(colnames(design_matrix), c(design_mat_treatment, "(Intercept)")),
+      drop = FALSE
+    ]
+
+  # Choose what to center on!
+  if (is.numeric(weights)) {
+    center <- apply(demeaned_covars, 2, weighted.mean, weights)
+  } else {
+    center <- colMeans(demeaned_covars)
+  }
+
+  demeaned_covars <- sweep(demeaned_covars, 2, center)
 
   original_covar_names <- colnames(demeaned_covars)
 
@@ -338,7 +344,7 @@ lm_lin <- function(formula,
     formula = formula
   )
 
-  return_list[["scaled_center"]] <- attr(demeaned_covars, "scaled:center")
+  return_list[["scaled_center"]] <- center
   setNames(return_list[["scaled_center"]], original_covar_names)
 
   return_list[["call"]] <- match.call()
