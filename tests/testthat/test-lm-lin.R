@@ -312,7 +312,7 @@ test_that("Test LM Lin", {
   )
 })
 
-test_that("lm_lin weights appropriately", {
+test_that("lm_lin same as sampling perspective", {
 
   # Unweighted matches sampling view
   lmo <- lm_lin(mpg ~ am, ~ hp, data = mtcars)
@@ -329,6 +329,9 @@ test_that("lm_lin weights appropriately", {
     ate,
     lmo$coefficients["am"]
   )
+})
+
+test_that("weighted lm_lin same as with one covar sampling view", {
 
   # Weighted matches (one covar)
   lmwo <- lm_lin(mpg ~ am, ~ hp, weights = wt, data = mtcars)
@@ -345,6 +348,9 @@ test_that("lm_lin weights appropriately", {
     wate,
     lmwo$coefficients["am"]
   )
+})
+
+test_that("weighted lm_lin same as with two covar sampling view", {
 
   # Weighted matches (two covars)
   lmw2o <- lm_lin(mpg ~ am, ~ hp + cyl, weights = wt, data = mtcars)

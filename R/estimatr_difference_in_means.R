@@ -240,8 +240,7 @@ difference_in_means <-
     data$cluster <- model_data$cluster
     # rescale weights for convenience
     if (is.numeric(model_data$weights)) {
-      weight_mean <- mean(model_data$weights)
-      data$weights <- model_data$weights / weight_mean
+      data$weights <- model_data$weights / mean(model_data$weights)
     }
     data$block <- model_data$block
 

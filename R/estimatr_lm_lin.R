@@ -265,15 +265,10 @@ lm_lin <- function(formula,
   if (is.numeric(weights)) {
     center <- apply(demeaned_covars, 2, weighted.mean, weights)
   } else {
-    center <- TRUE
+    center <- colMeans(demeaned_covars)
   }
 
-  demeaned_covars <-
-    scale(
-      demeaned_covars,
-      center = center,
-      scale = FALSE
-    )
+  demeaned_covars <- sweep(demeaned_covars, 2, center)
 
   original_covar_names <- colnames(demeaned_covars)
 
@@ -349,7 +344,7 @@ lm_lin <- function(formula,
     formula = formula
   )
 
-  return_list[["scaled_center"]] <- attr(demeaned_covars, "scaled:center")
+  return_list[["scaled_center"]] <- center
   setNames(return_list[["scaled_center"]], original_covar_names)
 
   return_list[["call"]] <- match.call()
