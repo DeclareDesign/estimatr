@@ -162,16 +162,19 @@ lm_lin <- function(formula,
   # Check arguments
   # ----------
 
-  if (length(all.vars(formula[[3]])) > 1) {
+  if (length(all.vars(f_rhs(formula))) > 1) {
     stop(
-      "`formula` must only have one variable on the right-hand side: ",
-      " the treatment variable."
+      "The `formula` argument, `", format(formula), "`, must only have the ",
+      "treatment variable on the right-hand side of the formula. Covariates ",
+      "should be specified in the `covariates` argument like so:\n`covariates = ",
+      paste0("~ ", paste(all.vars(f_rhs(formula))[-1], sep = " + ")), "`.",
+      "\n\n See ?lm_lin."
     )
   }
 
   if (class(covariates) != "formula") {
     stop(
-      "`covariates` must be specified as a formula:\n",
+      "The `covariates` argument must be specified as a formula:\n",
       "You passed an object of class ", class(covariates)
     )
   }
@@ -181,7 +184,7 @@ lm_lin <- function(formula,
   # Check covariates is right hand sided fn
   if (attr(cov_terms, "response") != 0) {
     stop(
-      "`covariates` must be right-sided formula only, such as '~ x1 + x2 + x3'"
+      "The `covariates` argument must be right-sided formula only, such as '~ x1 + x2 + x3'"
     )
   }
 

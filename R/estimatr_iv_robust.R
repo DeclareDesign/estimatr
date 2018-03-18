@@ -1,8 +1,8 @@
 #' Two-Stage Least Squares Instrumental Variables Regression
 #'
 #' @description This formula estimates an instrumental variables regression
-#' using two-stage least squares with a variety of
-#' options for robust standard errors
+#' using two-stage least squares with a variety of options for robust
+#' standard errors.
 #'
 #' @param formula an object of class formula of the regression and the instruments.
 #' For example, the formula \code{y ~ x1 + x2 | z1 + z2} specifies \code{x1} and \code{x2}
@@ -31,24 +31,45 @@
 #'
 #' @details
 #'
-#' This function performs two-stage least squares estimation of
+#' This function performs two-stage least squares estimation to fit
+#' instrumental variables regression. The syntax is similar to that in
+#' \code{ivreg} from the \code{AER} package. Regressors and instruments
+#' should be specified in a two-part formula, such as
+#' \code{y ~ x1 + x2 | z1 + z2 + z3}, where \code{x1} and \code{x2} are
+#' regressors and \code{z1}, \code{z2}, and \code{z3} are instruments.
+#'
+#' Default variance estimators
+#'
+#' Math notes for further information
 #'
 #' @return An object of class \code{"iv_robust"}.
 #'
-#' For now, only use \code{tidy} on this object.
+#' Methods
+#' object names
 #'
 #' @examples
 #' library(fabricatr)
 #' dat <- fabricate(
 #'   N = 40,
-#'   y = rpois(N, lambda = 4),
+#'   Y = rpois(N, lambda = 4),
 #'   Z = rbinom(N, 1, prob = 0.4),
 #'   D  = Z * rbinom(N, 1, prob = 0.8),
 #'   X = rnorm(N)
 #' )
 #'
 #' # Instrument for treatment `D` with encouragement `Z`
-#' tidy(iv_robust(y ~ D + X | Z + X, data = dat))
+#' tidy(iv_robust(Y ~ D + X | Z + X, data = dat))
+#'
+#' # Instrument with Stata's `ivregress 2sls , small rob` HC1 variance
+#' tidy(iv_robust(Y ~ D | Z, data = dat, se_type = "stata"))
+#'
+#' # With clusters, we use CR2 errors by default
+#' dat$cl <- rep(letters[1:5], length.out = nrow(dat))
+#' tidy(iv_robust(Y ~ D | Z, data = dat, clusters = cl))
+#'
+#' # Again, easy to replicate Stata (again with `small` correction in Stata)
+#' tidy(iv_robust(Y ~ D | Z, data = dat, clusters = cl, se_type = "stata"))
+#'
 #'
 #' @export
 iv_robust <- function(formula,
@@ -70,6 +91,18 @@ iv_robust <- function(formula,
   )
   data <- enquo(data)
   model_data <- clean_model_data(data = data, datargs)
+
+  if (is.null(model_data$instrument_matrix)) {
+    stop(
+      "Must specify a `formula` with both regressors and instruments. For ",
+      "example, `formula = y ~ x1 + x2 | x1 + z2` where x1 and x2 are the ",
+      "regressors and z1 and z2 are the instruments.\n\nSee ?iv_robust."
+    )
+  }
+
+  if (ncol(model_data$instrument_matrix) < ncol(model_data$design_matrix))  {
+    warning("More regressors than instruments")
+  }
 
   # -----------
   # First stage

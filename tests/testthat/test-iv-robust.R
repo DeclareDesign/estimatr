@@ -11,8 +11,19 @@ dat <- data.frame(
 )
 dat$z <- dat$x * 0.5 + rnorm(N)
 
-test_that("iv_robust matches AER + ivpack", {
+test_that("iv_robust warnings and errors are correct", {
+  expect_warning(
+    ivro <- iv_robust(mpg ~ hp + cyl | am, data = mtcars, se_type = "HC0"),
+    "More regressors than instruments"
+  )
 
+  expect_error(
+    iv_robust(mpg ~ hp + cyl, data = mtcars),
+    "Must specify a `formula` with both regressors and instruments."
+  )
+})
+
+test_that("iv_robust matches AER + ivpack", {
 
   skip_if_not_installed("AER")
   skip_if_not_installed("ivpack")
@@ -104,6 +115,78 @@ test_that("iv_robust matches AER + ivpack", {
   expect_equivalent(
     as.matrix(tidy(ivcr0wo)[, c("coefficients", "se", "p")]),
     as.matrix(clubsandCR0wo)
+  )
+
+  # Rank-deficiency
+  # HC0
+  dat$x1_c <- dat$x
+  ivdefr <- iv_robust(y ~ x + x1_c| z + z2, data = dat, se_type = "HC0")
+  ivdef <- ivreg(y ~ x + x1_c| z + z2, data = dat)
+  ivdefse <- robust.se(ivdef)
+
+  expect_equal(
+    ivdefr$coefficients,
+    ivdef$coefficients
+  )
+
+  expect_equivalent(
+    as.matrix(tidy(ivdefr)[1:2, c("coefficients", "se", "p")]),
+    ivdefse[, c(1, 2, 4)]
+  )
+
+  # Also works as instrument
+  ivdefr <- iv_robust(y ~ z + z2| x + x1_c, data = dat, se_type = "HC0")
+  ivdef <- ivreg(y ~ z + z2| x + x1_c, data = dat)
+  ivdefse <- robust.se(ivdef)
+
+  expect_equal(
+    ivdefr$coefficients,
+    ivdef$coefficients
+  )
+
+  expect_equivalent(
+    as.matrix(tidy(ivdefr)[1:2, c("coefficients", "se", "p")]),
+    ivdefse[, c(1, 2, 4)]
+  )
+
+  # CR2
+
+  # HC2 Weighted
+
+  # CR2 Weighted
+})
+
+
+test_that("iv_robust different specifications work", {
+  skip_if_not_installed("AER")
+  skip_if_not_installed("ivpack")
+  library(AER)
+
+  # More instruments than endog. regressors
+  ivro <- iv_robust(mpg ~ wt | hp + cyl, data = mtcars, se_type = "HC0")
+  ivo <- ivreg(mpg ~ wt | hp + cyl, data = mtcars)
+  ivpo <- robust.se(ivo)
+  expect_equivalent(
+    as.matrix(tidy(ivro)[, c("coefficients", "se", "p")]),
+    ivpo[, c(1, 2, 4)]
+  )
+
+  # . notation for multiple exog, doesnt work!
+  # ivro <- iv_robust(mpg ~ wt + hp + vs | . - vs + cyl, data = mtcars, se_type = "HC0")
+  # ivo <- ivreg(mpg ~ wt + hp + vs | . - vs + cyl, data = mtcars)
+  # ivpo <- robust.se(ivo)
+  # expect_equivalent(
+  #   as.matrix(tidy(ivro)[, c("coefficients", "se", "p")]),
+  #   ivpo[, c(1, 2, 4)]
+  # )
+
+  # . notation in general
+  ivro <- iv_robust(mpg ~ .| ., data = mtcars, se_type = "HC0")
+  ivo <- ivreg(mpg ~ . | ., data = mtcars)
+  ivpo <- robust.se(ivo)
+  expect_equivalent(
+    as.matrix(tidy(ivro)[, c("coefficients", "se", "p")]),
+    ivpo[, c(1, 2, 4)]
   )
 
 })
