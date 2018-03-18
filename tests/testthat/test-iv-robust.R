@@ -135,25 +135,70 @@ test_that("iv_robust matches AER + ivpack", {
   )
 
   # Also works as instrument
-  ivdefr <- iv_robust(y ~ z + z2| x + x1_c, data = dat, se_type = "HC0")
-  ivdef <- ivreg(y ~ z + z2| x + x1_c, data = dat)
-  ivdefse <- robust.se(ivdef)
+  ivdefri <- iv_robust(y ~ z + z2| x + x1_c, data = dat, se_type = "HC0")
+  ivdefi <- ivreg(y ~ z + z2| x + x1_c, data = dat)
+  ivdefsei <- robust.se(ivdefi)
 
   expect_equal(
-    ivdefr$coefficients,
-    ivdef$coefficients
+    ivdefri$coefficients,
+    ivdefi$coefficients
   )
 
   expect_equivalent(
-    as.matrix(tidy(ivdefr)[1:2, c("coefficients", "se", "p")]),
-    ivdefse[, c(1, 2, 4)]
+    as.matrix(tidy(ivdefri)[1:2, c("coefficients", "se", "p")]),
+    ivdefsei[, c(1, 2, 4)]
+  )
+
+  # Stata
+  ivdefclr <- iv_robust(y ~ x + x1_c | z + z2, data = dat, clusters = clust, se_type = "stata")
+  ivdefcl <- ivreg(y ~ x + x1_c | z + z2, data = dat)
+  ivdefclse <- cluster.robust.se(ivdefcl, clusterid = dat$clust)
+
+  expect_equal(
+    ivdefclr$coefficients,
+    ivdefcl$coefficients
+  )
+
+  expect_equivalent(
+    as.matrix(tidy(ivdefclr)[1:2, c("coefficients", "se")]),
+    ivdefclse[, c(1, 2)]
   )
 
   # CR2
+  ivdefcl2r <- iv_robust(y ~ x + x1_c | z + z2, data = dat, clusters = clust, se_type = "CR2")
+  ivdefcl2 <- ivreg(y ~ x + x1_c | z + z2, data = dat)
+  ivdefcl2se <- clubSandwich::coef_test(ivdefcl2, vcov = "CR2", cluster = dat$clust)
 
-  # HC2 Weighted
+
+  expect_equivalent(
+    as.matrix(tidy(ivdefcl2r)[1:2, c("coefficients", "se", "df", "p")]),
+    as.matrix(ivdefcl2se)
+  )
+
+  # HC0 Weighted
+  ivdefrw <- iv_robust(y ~ x + x1_c| z + z2, weights = w, data = dat, se_type = "HC0")
+  ivdefw <- ivreg(y ~ x + x1_c| z + z2, weights = w, data = dat)
+  ivdefsew <- robust.se(ivdefw)
+
+  expect_equal(
+    ivdefrw$coefficients,
+    ivdefw$coefficients
+  )
+
+  expect_equivalent(
+    as.matrix(tidy(ivdefrw)[1:2, c("coefficients", "se", "p")]),
+    ivdefsew[, c(1, 2, 4)]
+  )
 
   # CR2 Weighted
+  ivdefclrw <- iv_robust(y ~ x + x1_c | z + z2, data = dat, clusters = clust, weights = w, se_type = "CR2")
+  ivdefclw <- ivreg(y ~ x + x1_c | z + z2, weights = w, data = dat)
+  ivdefclsew <- clubSandwich::coef_test(ivdefclw, vcov = "CR2", cluster = dat$clust)
+
+  expect_equivalent(
+    as.matrix(tidy(ivdefclrw)[1:2, c("coefficients", "se", "p")]),
+    as.matrix(ivdefclsew)[, c(1, 2, 4)]
+  )
 })
 
 

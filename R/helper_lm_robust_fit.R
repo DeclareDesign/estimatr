@@ -157,8 +157,7 @@ lm_robust_fit <- function(y,
     return_list <- list(
       coefficients = setNames(as.vector(fit$beta_hat), variable_names),
       se = NA,
-      df = NA,
-      stringsAsFactors = FALSE
+      df = NA
     )
   }
 
