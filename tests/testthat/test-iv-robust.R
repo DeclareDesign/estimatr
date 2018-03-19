@@ -172,7 +172,7 @@ test_that("iv_robust matches AER + ivpack", {
 
   expect_equivalent(
     as.matrix(tidy(ivdefcl2r)[1:2, c("estimate", "std.error", "df", "p.value")]),
-    as.matrix(ivdefcl2se)
+    as.matrix(ivdefcl2se[-3,])
   )
 
   # HC0 Weighted
@@ -197,7 +197,7 @@ test_that("iv_robust matches AER + ivpack", {
 
   expect_equivalent(
     as.matrix(tidy(ivdefclrw)[1:2, c("estimate", "std.error", "p.value")]),
-    as.matrix(ivdefclsew)[, c(1, 2, 4)]
+    as.matrix(ivdefclsew)[-3, c(1, 2, 4)]
   )
 
 
@@ -207,7 +207,7 @@ test_that("iv_robust matches AER + ivpack", {
 
   expect_equivalent(
     as.matrix(tidy(ivdef2clrw)[1:2, c("estimate", "std.error", "p.value")]),
-    as.matrix(ivdef2clsew)[, c(1, 2, 4)]
+    as.matrix(ivdef2clsew)[-3, c(1, 2, 4)]
   )
 })
 
