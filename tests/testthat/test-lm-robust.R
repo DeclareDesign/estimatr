@@ -1,5 +1,12 @@
 context("Estimator - lm_robust, non-clustered")
 
+# This file removes calls from function returns to make testing easier
+rmcall <- function(obj) {
+  obj[["call"]] <- NULL
+  obj
+}
+
+
 test_that("lm robust se", {
   set.seed(42)
   N <- 40
