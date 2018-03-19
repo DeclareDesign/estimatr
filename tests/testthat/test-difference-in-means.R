@@ -22,7 +22,7 @@ test_that("DIM arguments parsed correctly", {
   expect_equivalent(
     as.matrix(tidy(difference_in_means(
       Y ~ Z, data = dat, ci = FALSE
-    ))[, c("p", "ci_lower", "ci_upper")]),
+    ))[, c("p.value", "ci.lower", "ci.upper")]),
     matrix(NA, nrow = 1, ncol = 3)
   )
 
@@ -78,8 +78,8 @@ test_that("DIM Blocked", {
   dim_reverse <- difference_in_means(Y ~ Z, condition1 = 1, condition2 = 0, blocks = block, data = dat)
 
   expect_equal(
-    tidy(dim_normal)[c("coefficients", "se")],
-    tidy(dim_reverse)[c("coefficients", "se")] * c(-1, 1)
+    tidy(dim_normal)[c("estimate", "std.error")],
+    tidy(dim_reverse)[c("estimate", "std.error")] * c(-1, 1)
   )
 
   difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = dat)

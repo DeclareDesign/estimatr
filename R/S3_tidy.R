@@ -105,7 +105,7 @@ tidy_data_frame <- function(object, digits = NULL) {
     )
 
   tidy_mat <- do.call("cbind", lapply(vec_cols, function(x) {as.vector(object[[x]])}))
-  colnames(tidy_mat) <- vec_cols
+  colnames(tidy_mat) <- tidy_names
   return_frame <- data.frame(
     term = object[["coefficient_name"]],
     tidy_mat,

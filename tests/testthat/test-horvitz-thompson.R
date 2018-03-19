@@ -331,7 +331,7 @@ test_that("Horvitz-Thompson properly checks arguments and data", {
 
   ht_o <- horvitz_thompson(y ~ z, data = dat, ci = FALSE)
   expect_equivalent(
-    as.matrix(tidy(horvitz_thompson(y ~ z, data = dat, ci = FALSE))[, c("p", "ci_lower", "ci_upper")]),
+    as.matrix(tidy(horvitz_thompson(y ~ z, data = dat, ci = FALSE))[, c("p.value", "ci.lower", "ci.upper")]),
     matrix(NA, nrow = 1, ncol = 3)
   )
 
