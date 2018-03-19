@@ -20,7 +20,7 @@ test_that("Test LM Lin", {
       covariates = ~ X2,
       data = dat
     ),
-    "one variable on the right-hand side"
+    "must only have the treatment variable on the right-hand side of the formula"
   )
 
   dat2 <- dat

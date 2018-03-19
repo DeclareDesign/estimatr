@@ -9,7 +9,7 @@
 
 # Internal method to process data
 #' @importFrom rlang f_rhs
-clean_model_data <- function(data, datargs) {
+clean_model_data <- function(data, datargs, instruments = FALSE) {
 
   # if data exists, evaluate it
   data <- if (quo_is_missing(data)) NULL else eval_tidy(data)
@@ -88,7 +88,16 @@ clean_model_data <- function(data, datargs) {
     design_matrix = model.matrix(terms(formula, rhs = 1), data = mf)
   )
 
-  if (any(grepl("\\|", formula[[3]]))) {
+  if (instruments) {
+
+    if (length(formula)[2] != 2) {
+      stop(
+        "Must specify a `formula` with both regressors and instruments. For ",
+        "example, `formula = y ~ x1 + x2 | x1 + z2` where x1 and x2 are the ",
+        "regressors and z1 and z2 are the instruments.\n\nSee ?iv_robust."
+      )
+    }
+
     ret[["instrument_matrix"]] <- model.matrix(terms(formula, rhs = 2), data = mf)
     ret[["terms_regressors"]] <- terms(formula, rhs = 1)
   }
