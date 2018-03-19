@@ -199,6 +199,16 @@ test_that("iv_robust matches AER + ivpack", {
     as.matrix(tidy(ivdefclrw)[1:2, c("coefficients", "se", "p")]),
     as.matrix(ivdefclsew)[, c(1, 2, 4)]
   )
+
+
+  ivdef2clrw <- iv_robust(y ~ x + z | x + x1_c, data = dat, clusters = clust, weights = w, se_type = "CR2")
+  ivdef2clw <- ivreg(y ~ x + z | x + x1_c, weights = w, data = dat)
+  ivdef2clsew <- clubSandwich::coef_test(ivdef2clw, vcov = "CR2", cluster = dat$clust)
+
+  expect_equivalent(
+    as.matrix(tidy(ivdef2clrw)[1:2, c("coefficients", "se", "p")]),
+    as.matrix(ivdef2clsew)[, c(1, 2, 4)]
+  )
 })
 
 
@@ -258,6 +268,25 @@ test_that("S3 methods", {
     3
   )
 
+  siv <- capture_output(
+    summary(ivro),
+    print = TRUE
+  )
+
+  expect_true(
+    grepl(
+      "iv_robust(mpg ~ hp + cyl | wt + gear, data = mtcars, se_type = \"classical\")",
+      siv
+    )
+  )
+
+  expect_true(
+    grepl(
+      "F-statistic: 0.5134 on 1 and 18 DF,  p-value: 0.4829",
+      siv
+    )
+  )
+
   capture_output(
     expect_equivalent(
       summary(ivro)$coefficients,
@@ -276,8 +305,8 @@ test_that("S3 methods", {
   )
 
   # no intercept
-  ivo <- AER::ivreg(mpg ~ hp + cyl +0 | wt + gear, data = mtcars)
-  ivro <- iv_robust(mpg ~ hp + cyl +0| wt + gear, data = mtcars, se_type = "classical")
+  ivo <- AER::ivreg(mpg ~ hp + cyl + 0 | wt + gear, data = mtcars)
+  ivro <- iv_robust(mpg ~ hp + cyl + 0 | wt + gear, data = mtcars, se_type = "classical")
 
   expect_equivalent(
     ivro$fstatistic,
