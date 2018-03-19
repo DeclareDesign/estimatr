@@ -1,7 +1,8 @@
 context("Estimator - lm_robust, non-clustered")
 
 test_that("lm robust se", {
-  N <- 100
+  set.seed(42)
+  N <- 10
   dat <- data.frame(Y = rnorm(N), Z = rbinom(N, 1, .5), X = rnorm(N), W = runif(N))
 
   tidy(lm_robust(Y ~ Z, data = dat))
@@ -105,6 +106,31 @@ test_that("lm robust se", {
   expect_equal(
     tidy(lmall)[1:2, 1:3],
     tidy(lm1)[, 1:3]
+  )
+
+  # rlang works
+  my_w_vec <- rlang::sym("W")
+  expect_equal(
+    tidy(lm_robust(Y ~ Z + X, data = dat, weights = !!my_w_vec, se_type = "HC2")),
+    tidy(lm_robust(Y ~ Z + X, data = dat, weights = W, se_type = "HC2"))
+  )
+
+  my_dat <- rlang::sym("dat")
+  expect_equal(
+    tidy(lm_robust(Y ~ Z + X, data = !!my_dat, weights = W, se_type = "HC2")),
+    tidy(lm_robust(Y ~ Z + X, data = dat, weights = W, se_type = "HC2"))
+  )
+
+  my_y <- rlang::sym("Y")
+  expect_equal(
+    tidy(lm_robust(!!my_y ~ Z + X, data = dat, weights = W, se_type = "HC2")),
+    tidy(lm_robust(Y ~ Z + X, data = dat, weights = W, se_type = "HC2"))
+  )
+
+  my_formula <- as.formula("Y ~ Z + X")
+  expect_equal(
+    tidy(lm_robust(!!my_formula, data = dat, weights = W, se_type = "HC2")),
+    tidy(lm_robust(Y ~ Z + X, data = dat, weights = W, se_type = "HC2"))
   )
 })
 
