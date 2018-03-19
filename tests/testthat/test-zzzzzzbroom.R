@@ -3,6 +3,8 @@
 context("S3 - tidy and broom compatability")
 
 test_that("estimatr::tidy works loaded before or after after broom", {
+
+  skip_if_not_installed("broom")
   detach("package:estimatr", unload = TRUE)
 
   library(broom)

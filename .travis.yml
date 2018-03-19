@@ -46,7 +46,6 @@ r_github_packages:
 - ropensci/git2r
 
 r_packages:
-- broom
 - texreg
 - clubSandwich
 
