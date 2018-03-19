@@ -2,7 +2,7 @@ context("Estimator - lm_robust, non-clustered")
 
 test_that("lm robust se", {
   set.seed(42)
-  N <- 10
+  N <- 40
   dat <- data.frame(Y = rnorm(N), Z = rbinom(N, 1, .5), X = rnorm(N), W = runif(N))
 
   tidy(lm_robust(Y ~ Z, data = dat))
