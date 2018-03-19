@@ -60,9 +60,7 @@
 #' return results in a \code{data.frame}. To get useful data out of the return,
 #' you can use these data frames, you can use the resulting list directly, or
 #' you can use the generic accessor functions \code{coef}, \code{vcov},
-#' \code{confint}, and \code{predict}. Marginal effects and uncertainty about
-#' them can be gotten by passing this object to
-#' \code{\link[margins]{margins}} from the \pkg{margins}.
+#' \code{confint}, and \code{predict}.
 #'
 #' Users who want to print the results in TeX of HTML can use the
 #' \code{\link[texreg]{extract}} function and the \pkg{texreg} package.
@@ -73,13 +71,13 @@
 #'
 #' An object of class \code{"lm_robust"} is a list containing at least the
 #' following components:
-#'   \item{coefficients}{the estimated coefficients}
-#'   \item{se}{the estimated standard errors}
+#'   \item{estimate}{the estimated coefficients}
+#'   \item{std.error}{the estimated standard errors}
 #'   \item{df}{the estimated degrees of freedom}
-#'   \item{p}{the p-values from a two-sided t-test using \code{coefficients}, \code{se}, and \code{df}}
-#'   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
-#'   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
-#'   \item{coefficient_name}{a character vector of coefficient names}
+#'   \item{p.value}{the p-values from a two-sided t-test using \code{estimate}, \code{std.error}, and \code{df}}
+#'   \item{ci.lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
+#'   \item{ci.upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
+#'   \item{term}{a character vector of coefficient names}
 #'   \item{alpha}{the significance level specified by the user}
 #'   \item{res_var}{the residual variance}
 #'   \item{N}{the number of observations used}
@@ -124,11 +122,11 @@
 #' # Can use summary() to get more statistics
 #' summary(lmro)
 #' # Can also get coefficients three ways
-#' lmro$coefficients
+#' lmro$estimate
 #' coef(lmro)
-#' tidy(lmro)$coefficients
+#' tidy(lmro)$estimate
 #' # Can also get confidence intervals from object or with new 1 - `alpha`
-#' lmro$ci_lower
+#' lmro$ci.lower
 #' confint(lmro, level = 0.8)
 #'
 #' # Can recover classical standard errors

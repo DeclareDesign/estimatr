@@ -17,11 +17,11 @@ test_that("Horvitz-Thompson matches d-i-m under certain conditions", {
       y ~ z,
       condition_prs = ps,
       data = dat
-    )$coefficients,
+    )$estimate,
     difference_in_means(
       y ~ z,
       data = dat
-    )$coefficients
+    )$estimate
   )
 })
 
@@ -398,8 +398,8 @@ test_that("Works without variation in treatment", {
   )
 
 
-  expect_equivalent(ht_const_1$coefficients, mean(dat$y))
-  expect_equal(ht_const_1$se, 1 / (nrow(dat)) * sqrt(sum(dat$y ^ 2)))
+  expect_equivalent(ht_const_1$estimate, mean(dat$y))
+  expect_equal(ht_const_1$std.error, 1 / (nrow(dat)) * sqrt(sum(dat$y ^ 2)))
 
 
   expect_equal(
@@ -413,8 +413,8 @@ test_that("Works without variation in treatment", {
     condition_prs = ps
   )
 
-  expect_equivalent(ht_const$coefficients, mean(dat$y / dat$ps))
-  expect_equal(ht_const$se, 1 / (nrow(dat)) * sqrt(sum((dat$y / dat$ps) ^ 2)))
+  expect_equivalent(ht_const$estimate, mean(dat$y / dat$ps))
+  expect_equal(ht_const$std.error, 1 / (nrow(dat)) * sqrt(sum((dat$y / dat$ps) ^ 2)))
 
   ## Blocks and all are treated
   ht_block <- horvitz_thompson(
@@ -426,8 +426,8 @@ test_that("Works without variation in treatment", {
   )
 
   # with blocks SE is different because not simple any more
-  expect_equivalent(ht_block$coefficients, mean(dat$y / dat$ps))
-  # expect_equal(ht_block$se, 1/(nrow(dat)) * sqrt(sum((dat$y / dat$ps)^2)))
+  expect_equivalent(ht_block$estimate, mean(dat$y / dat$ps))
+  # expect_equal(ht_block$std.error, 1/(nrow(dat)) * sqrt(sum((dat$y / dat$ps)^2)))
 
   ## Blocks and some are treated!
   dat$z_diff <- as.numeric(dat$bl <= 2)
@@ -449,7 +449,7 @@ test_that("Works without variation in treatment", {
     condition_prs = rep(0.5, nrow(dat))
   )
 
-  expect_identical(ht_zero$coefficient_name, "z0")
+  expect_identical(ht_zero$term, "z0")
 
   # Drop name if they specify the only treatment as condition1
   ht_rev <- horvitz_thompson(
@@ -460,7 +460,7 @@ test_that("Works without variation in treatment", {
     condition_prs = rep(0.5, nrow(dat))
   )
 
-  expect_identical(ht_rev$coefficient_name, "z")
+  expect_identical(ht_rev$term, "z")
 
   # This is only true because condition prs are 0.5
   expect_identical(

@@ -1,15 +1,17 @@
 context("Helper - lm_robust margins")
 
-skip_if_not_installed("margins")
+# TODO ALL TESTS SKIPPED BECAUSE MARGINS NO LONGER
+# WORKS AFTER COEFFICIENTS -> ESTIMATE
+# SEE https://github.com/leeper/margins/issues/91
 
-# install.packages(c("margins", "prediction"))
-# devtools::install_github("leeper/prediction")
-# devtools::install_github("leeper/margins")
 library(margins)
 
 mv <- c("AME", "SE", "z", "p")
 
 test_that("lm robust can work with margins", {
+
+  skip("margins not working at the moment")
+
   x <- lm(mpg ~ cyl * hp + wt, data = mtcars)
   lmr <- lm_robust(mpg ~ cyl * hp + wt, data = mtcars)
 
@@ -53,6 +55,7 @@ test_that("lm robust can work with margins", {
 })
 
 test_that("lm robust + weights can work with margins", {
+  skip("margins not working at the moment")
   x <- lm(mpg ~ cyl * hp, data = mtcars, weights = wt)
   x2 <- lm_robust(mpg ~ cyl * hp, data = mtcars, weights = wt, se_type = "classical")
   expect_equal(marginal_effects(x), marginal_effects(x2))
@@ -71,7 +74,7 @@ test_that("lm robust + weights can work with margins", {
 })
 
 test_that("lm robust + cluster can work with margins", {
-
+  skip("margins not working at the moment")
   # works but throws a lot of warnings
   x <- lm(mpg ~ cyl * hp + wt, data = mtcars)
   x2 <- lm_robust(mpg ~ cyl * hp + wt, data = mtcars, clusters = am)
@@ -92,6 +95,7 @@ test_that("lm robust + cluster can work with margins", {
 
 
 test_that("lm lin can work with margins", {
+  skip("margins not working at the moment")
   data("alo_star_men")
   lml <- lm_lin(GPA_year1 ~ ssp, ~  gpa0, data = alo_star_men, se_type = "classical")
 

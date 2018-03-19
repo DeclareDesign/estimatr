@@ -123,20 +123,6 @@ tidy(lmout_stata)
 knitr::kable(tidy(lmout_stata))
 ```
 
-Furthermore, users can take advantage of the [`margins`](https://github.com/leeper/margins) package to get marginal effects, average marginal effects and their standard errors, and more. Similarly, the [`prediction`](https://github.com/leeper/prediction) package from the same author also provides a suite of software for different kinds of predictions.
-
-```{r margins, echo=TRUE}
-library(margins)
-
-lmout_int <- lm_robust(y ~ x * z, data = dat)
-mar_int <- margins(lmout_int, vce = "delta")
-summary(mar_int)
-
-library(prediction)
-prediction(lmout_int)
-prediction(lmout_int, at = list(x = c(-0.5, 0.5)))
-```
-
 Users who want their regression output in LaTeX or HTML can use the [`texreg`](https://github.com/leifeld/texreg) package, which we extend for the output of both the `lm_robust()` and `lm_lin()` functions.
 
 ```{r texreg, echo=TRUE, results='hide', message=FALSE}
@@ -163,7 +149,7 @@ tidy(lml_out)
 knitr::kable(tidy(lml_out))
 ```
 
-The output of a `lm_lin()` call can be used with the same methods as `lm_robust()`, including the [`margins`](https://github.com/leeper/margins) package.
+The output of a `lm_lin()` call can be used with the same methods as `lm_robust()`.
 
 ## `difference_in_means`
 

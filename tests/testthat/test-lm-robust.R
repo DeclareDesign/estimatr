@@ -13,7 +13,7 @@ test_that("lm robust se", {
   lm_robust(Y ~ Z * X, data = dat)
 
   expect_equivalent(
-    lm_robust(Y ~ 1, data = dat)$coefficients[1],
+    lm_robust(Y ~ 1, data = dat)$estimate[1],
     mean(dat$Y)
   )
 
@@ -50,12 +50,12 @@ test_that("lm robust se", {
       rmcall(lm_stata)
     )
 
-    expect_false(all(lm_hc0$se == lm_hc1$se))
-    expect_false(all(lm_hc0$se == lm_hc2$se))
-    expect_false(all(lm_hc0$se == lm_hc3$se))
-    expect_false(all(lm_hc1$se == lm_hc2$se))
-    expect_false(all(lm_hc1$se == lm_hc3$se))
-    expect_false(all(lm_hc2$se == lm_hc3$se))
+    expect_false(all(lm_hc0$std.error == lm_hc1$std.error))
+    expect_false(all(lm_hc0$std.error == lm_hc2$std.error))
+    expect_false(all(lm_hc0$std.error == lm_hc3$std.error))
+    expect_false(all(lm_hc1$std.error == lm_hc2$std.error))
+    expect_false(all(lm_hc1$std.error == lm_hc3$std.error))
+    expect_false(all(lm_hc2$std.error == lm_hc3$std.error))
 
     expect_equivalent(
       lm_hc0$df,
@@ -66,8 +66,8 @@ test_that("lm robust se", {
     )
 
     expect_equivalent(
-      lm_hc0$se ^ 2,
-      lm_hc1$se ^ 2 * ((N - length(lm_hc1$coefficients)) / N)
+      lm_hc0$std.error ^ 2,
+      lm_hc1$std.error ^ 2 * ((N - length(lm_hc1$estimate)) / N)
     )
   }
 
@@ -270,7 +270,7 @@ test_that("lm_robust_fit adds column names", {
   )
 
   expect_equal(
-    lm_o$coefficient_name,
+    lm_o$term,
     c("X1", "X2", "X3")
   )
 })
@@ -403,7 +403,7 @@ test_that("multiple outcomes", {
   )
 
   expect_equal(
-    lmro$coefficients,
+    lmro$estimate,
     lmo$coefficients
   )
 

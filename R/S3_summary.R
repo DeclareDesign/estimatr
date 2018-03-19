@@ -2,8 +2,8 @@
 summary.lm_robust <- function(object,
                               ...) {
 
-  if (is.matrix(object$coefficients)) {
-    ny <- ncol(object$coefficients)
+  if (is.matrix(object$estimate)) {
+    ny <- ncol(object$estimate)
 
     ret <- setNames(
       vector("list", ny),
@@ -11,12 +11,12 @@ summary.lm_robust <- function(object,
     )
 
     mat_objs <- c(
-      "coefficients",
-      "se",
+      "estimate",
+      "std.error",
       "df",
-      "ci_lower",
-      "ci_upper",
-      "p"
+      "ci.lower",
+      "ci.upper",
+      "p.value"
     )
 
     vec_objs <- c(
@@ -119,15 +119,15 @@ summarize_tidy <- function(object, test = "t", ...) {
   tidy_mat <- as.matrix(tidy_out[, !(names(tidy_out) %in% remove_cols)])
 
   ny <- length(object$outcome)
-  p <- length(object$coefficient_name)
+  p <- length(object$term)
   if (length(object$outcome) > 1) {
     rownames(tidy_mat) <- paste0(
       rep(object$outcome, each = p),
       ":",
-      rep(object$coefficient_name, times = ny)
+      rep(object$term, times = ny)
     )
   } else {
-    rownames(tidy_mat) <- object$coefficient_name
+    rownames(tidy_mat) <- object$term
   }
 
   return(tidy_mat)

@@ -161,13 +161,13 @@ test_that("lm cluster se", {
 
     # Stata is the same as CR0 but with finite sample
     expect_equivalent(
-      lm_cr0$se ^ 2,
-      lm_stata$se ^ 2 * (N - length(lm_stata$coefficients)) * (length(unique(dat$J)) - 1) / ((N - 1) * length(unique(dat$J)))
+      lm_cr0$std.error ^ 2,
+      lm_stata$std.error ^ 2 * (N - length(lm_stata$estimate)) * (length(unique(dat$J)) - 1) / ((N - 1) * length(unique(dat$J)))
     )
 
-    expect_false(all(lm_cr0$se == lm_stata$se))
-    expect_false(all(lm_cr0$se == lm_cr2$se))
-    expect_false(all(lm_stata$se == lm_cr2$se))
+    expect_false(all(lm_cr0$std.error == lm_stata$std.error))
+    expect_false(all(lm_cr0$std.error == lm_cr2$std.error))
+    expect_false(all(lm_stata$std.error == lm_cr2$std.error))
     expect_false(all(lm_stata$df == lm_cr2$df))
 
     expect_equivalent(

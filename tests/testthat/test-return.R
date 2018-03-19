@@ -13,12 +13,12 @@ test_that("Structure of output is the same", {
   # Should be in all estimator returns
   in_return <-
     c(
-      "coefficients",
-      "se",
+      "estimate",
+      "std.error",
       "df",
-      "p",
-      "ci_lower",
-      "ci_upper",
+      "p.value",
+      "ci.lower",
+      "ci.upper",
       "outcome",
       "alpha",
       "N"
@@ -55,7 +55,7 @@ test_that("Structure of output is the same", {
   )
 
   expect_equal(
-    difference_in_means(y ~ z - 1, data = dat)$coefficient_name,
+    difference_in_means(y ~ z - 1, data = dat)$term,
     "z"
   )
 })
