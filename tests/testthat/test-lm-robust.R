@@ -127,7 +127,7 @@ test_that("lm robust se", {
     tidy(lm_robust(Y ~ Z + X, data = dat, weights = W, se_type = "HC2"))
   )
 
-  my_formula <- as.formula("Y ~ Z + X")
+  my_formula <- Y ~ Z + X
   expect_equal(
     tidy(lm_robust(!!my_formula, data = dat, weights = W, se_type = "HC2")),
     tidy(lm_robust(Y ~ Z + X, data = dat, weights = W, se_type = "HC2"))
