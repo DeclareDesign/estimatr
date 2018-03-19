@@ -124,15 +124,7 @@ iv_robust <- function(formula,
     cluster = clusters
   )
   data <- enquo(data)
-  model_data <- clean_model_data(data = data, datargs)
-
-  if (is.null(model_data$instrument_matrix)) {
-    stop(
-      "Must specify a `formula` with both regressors and instruments. For ",
-      "example, `formula = y ~ x1 + x2 | x1 + z2` where x1 and x2 are the ",
-      "regressors and z1 and z2 are the instruments.\n\nSee ?iv_robust."
-    )
-  }
+  model_data <- clean_model_data(data = data, datargs, instruments = TRUE)
 
   if (ncol(model_data$instrument_matrix) < ncol(model_data$design_matrix))  {
     warning("More regressors than instruments")

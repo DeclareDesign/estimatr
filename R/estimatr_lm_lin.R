@@ -184,7 +184,8 @@ lm_lin <- function(formula,
   # Check covariates is right hand sided fn
   if (attr(cov_terms, "response") != 0) {
     stop(
-      "The `covariates` argument must be right-sided formula only, such as '~ x1 + x2 + x3'"
+      "Must not specify a response variable in `covariates`` formula.\n",
+      "`covariates` must be a right-sided formula, such as '~ x1 + x2 + x3'"
     )
   }
 
