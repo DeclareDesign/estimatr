@@ -11,8 +11,19 @@ dat <- data.frame(
 )
 dat$z <- dat$x * 0.5 + rnorm(N)
 
-test_that("iv_robust matches AER + ivpack", {
+test_that("iv_robust warnings and errors are correct", {
+  expect_warning(
+    ivro <- iv_robust(mpg ~ hp + cyl | am, data = mtcars, se_type = "HC0"),
+    "More regressors than instruments"
+  )
 
+  expect_error(
+    iv_robust(mpg ~ hp + cyl, data = mtcars),
+    "Must specify a `formula` with both regressors and instruments."
+  )
+})
+
+test_that("iv_robust matches AER + ivpack", {
 
   skip_if_not_installed("AER")
   skip_if_not_installed("ivpack")
@@ -106,6 +117,133 @@ test_that("iv_robust matches AER + ivpack", {
     as.matrix(clubsandCR0wo)
   )
 
+  # Rank-deficiency
+  # HC0
+  dat$x1_c <- dat$x
+  ivdefr <- iv_robust(y ~ x + x1_c| z + z2, data = dat, se_type = "HC0")
+  ivdef <- ivreg(y ~ x + x1_c| z + z2, data = dat)
+  ivdefse <- robust.se(ivdef)
+
+  expect_equal(
+    ivdefr$coefficients,
+    ivdef$coefficients
+  )
+
+  expect_equivalent(
+    as.matrix(tidy(ivdefr)[1:2, c("coefficients", "se", "p")]),
+    ivdefse[, c(1, 2, 4)]
+  )
+
+  # Also works as instrument
+  ivdefri <- iv_robust(y ~ z + z2| x + x1_c, data = dat, se_type = "HC0")
+  ivdefi <- ivreg(y ~ z + z2| x + x1_c, data = dat)
+  ivdefsei <- robust.se(ivdefi)
+
+  expect_equal(
+    ivdefri$coefficients,
+    ivdefi$coefficients
+  )
+
+  expect_equivalent(
+    as.matrix(tidy(ivdefri)[1:2, c("coefficients", "se", "p")]),
+    ivdefsei[, c(1, 2, 4)]
+  )
+
+  # Stata
+  ivdefclr <- iv_robust(y ~ x + x1_c | z + z2, data = dat, clusters = clust, se_type = "stata")
+  ivdefcl <- ivreg(y ~ x + x1_c | z + z2, data = dat)
+  ivdefclse <- cluster.robust.se(ivdefcl, clusterid = dat$clust)
+
+  expect_equal(
+    ivdefclr$coefficients,
+    ivdefcl$coefficients
+  )
+
+  expect_equivalent(
+    as.matrix(tidy(ivdefclr)[1:2, c("coefficients", "se")]),
+    ivdefclse[, c(1, 2)]
+  )
+
+  # CR2
+  ivdefcl2r <- iv_robust(y ~ x + x1_c | z + z2, data = dat, clusters = clust, se_type = "CR2")
+  ivdefcl2 <- ivreg(y ~ x + x1_c | z + z2, data = dat)
+  ivdefcl2se <- clubSandwich::coef_test(ivdefcl2, vcov = "CR2", cluster = dat$clust)
+
+
+  expect_equivalent(
+    as.matrix(tidy(ivdefcl2r)[1:2, c("coefficients", "se", "df", "p")]),
+    as.matrix(ivdefcl2se)
+  )
+
+  # HC0 Weighted
+  ivdefrw <- iv_robust(y ~ x + x1_c| z + z2, weights = w, data = dat, se_type = "HC0")
+  ivdefw <- ivreg(y ~ x + x1_c| z + z2, weights = w, data = dat)
+  ivdefsew <- robust.se(ivdefw)
+
+  expect_equal(
+    ivdefrw$coefficients,
+    ivdefw$coefficients
+  )
+
+  expect_equivalent(
+    as.matrix(tidy(ivdefrw)[1:2, c("coefficients", "se", "p")]),
+    ivdefsew[, c(1, 2, 4)]
+  )
+
+  # CR2 Weighted
+  ivdefclrw <- iv_robust(y ~ x + x1_c | z + z2, data = dat, clusters = clust, weights = w, se_type = "CR2")
+  ivdefclw <- ivreg(y ~ x + x1_c | z + z2, weights = w, data = dat)
+  ivdefclsew <- clubSandwich::coef_test(ivdefclw, vcov = "CR2", cluster = dat$clust)
+
+  expect_equivalent(
+    as.matrix(tidy(ivdefclrw)[1:2, c("coefficients", "se", "p")]),
+    as.matrix(ivdefclsew)[, c(1, 2, 4)]
+  )
+
+
+  ivdef2clrw <- iv_robust(y ~ x + z | x + x1_c, data = dat, clusters = clust, weights = w, se_type = "CR2")
+  ivdef2clw <- ivreg(y ~ x + z | x + x1_c, weights = w, data = dat)
+  ivdef2clsew <- clubSandwich::coef_test(ivdef2clw, vcov = "CR2", cluster = dat$clust)
+
+  expect_equivalent(
+    as.matrix(tidy(ivdef2clrw)[1:2, c("coefficients", "se", "p")]),
+    as.matrix(ivdef2clsew)[, c(1, 2, 4)]
+  )
+})
+
+
+test_that("iv_robust different specifications work", {
+  skip_if_not_installed("AER")
+  skip_if_not_installed("ivpack")
+  library(AER)
+
+  # More instruments than endog. regressors
+  ivro <- iv_robust(mpg ~ wt | hp + cyl, data = mtcars, se_type = "HC0")
+  ivo <- ivreg(mpg ~ wt | hp + cyl, data = mtcars)
+  ivpo <- robust.se(ivo)
+  expect_equivalent(
+    as.matrix(tidy(ivro)[, c("coefficients", "se", "p")]),
+    ivpo[, c(1, 2, 4)]
+  )
+
+  # . notation for multiple exog, doesnt work!
+  # ivro <- iv_robust(mpg ~ wt + hp + vs | . - vs + cyl, data = mtcars, se_type = "HC0")
+  # ivo <- ivreg(mpg ~ wt + hp + vs | . - vs + cyl, data = mtcars)
+  # ivpo <- robust.se(ivo)
+  # expect_equivalent(
+  #   as.matrix(tidy(ivro)[, c("coefficients", "se", "p")]),
+  #   ivpo[, c(1, 2, 4)]
+  # )
+
+  # . notation in general
+  ivro <- iv_robust(mpg ~ .| ., data = mtcars, se_type = "HC0")
+  ivo <- ivreg(mpg ~ . | ., data = mtcars)
+  ivpo <- robust.se(ivo)
+  expect_equivalent(
+    as.matrix(tidy(ivro)[, c("coefficients", "se", "p")]),
+    ivpo[, c(1, 2, 4)]
+  )
+
 })
 
 test_that("S3 methods", {
@@ -130,6 +268,25 @@ test_that("S3 methods", {
     3
   )
 
+  siv <- capture_output(
+    summary(ivro),
+    print = TRUE
+  )
+
+  expect_true(
+    grepl(
+      "iv\\_robust\\(formula = mpg \\~ hp \\+ cyl \\| wt \\+ gear, data = mtcars,",
+      siv
+    )
+  )
+
+  expect_true(
+    grepl(
+      "F\\-statistic\\: 33\\.73 on 2 and 29 DF,  p\\-value\\: 2\\.706e\\-08",
+      siv
+    )
+  )
+
   capture_output(
     expect_equivalent(
       summary(ivro)$coefficients,
@@ -148,8 +305,8 @@ test_that("S3 methods", {
   )
 
   # no intercept
-  ivo <- AER::ivreg(mpg ~ hp + cyl +0 | wt + gear, data = mtcars)
-  ivro <- iv_robust(mpg ~ hp + cyl +0| wt + gear, data = mtcars, se_type = "classical")
+  ivo <- AER::ivreg(mpg ~ hp + cyl + 0 | wt + gear, data = mtcars)
+  ivro <- iv_robust(mpg ~ hp + cyl + 0 | wt + gear, data = mtcars, se_type = "classical")
 
   expect_equivalent(
     ivro$fstatistic,

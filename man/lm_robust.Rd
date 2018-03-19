@@ -54,6 +54,10 @@ them can be gotten by passing this object to
 Users who want to print the results in TeX of HTML can use the
 \code{\link[texreg]{extract}} function and the \pkg{texreg} package.
 
+If users specify a multivariate linear regression model (multiple outcomes),
+then some of the below components will be of higher dimension to accomodate
+the additional models.
+
 An object of class \code{"lm_robust"} is a list containing at least the
 following components:
   \item{coefficients}{the estimated coefficients}
@@ -74,6 +78,7 @@ following components:
   is the mean of \eqn{y[i]} if there is an intercept and zero otherwise,
   and \eqn{e[i]} is the ith residual.}
   \item{adj.r.squared}{The \eqn{R^2} but penalized for having more parameters, \code{rank}}
+  \item{fstatistic}{a vector with the value of the F-statistic with the numerator and denominator degrees of freedom}
   \item{weighted}{whether or not weights were applied}
   \item{call}{the original function call}
 We also return \code{terms} and \code{contrasts}, used by \code{predict}.

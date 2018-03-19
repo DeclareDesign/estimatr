@@ -179,16 +179,6 @@ predict.lm_robust <- function(object,
   }
 }
 
-lm_like_fits <- function(X, coefs) {
-  # Get NAs from rank-deficient
-  beta_na <- is.na(coefs[, 1])
-
-  # Get predicted values
-  predictor <- drop(X[, !beta_na, drop = FALSE] %*% coefs[!beta_na, ])
-
-  return(predictor)
-}
-
 #' @export
 predict.iv_robust <- function(object,
                               newdata,

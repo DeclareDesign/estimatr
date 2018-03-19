@@ -45,27 +45,82 @@ perfect multi-collinearity)}
 \value{
 An object of class \code{"iv_robust"}.
 
-For now, only use \code{tidy} on this object.
+The post-estimation commands functions \code{summary} and \code{\link{tidy}}
+return results in a \code{data.frame}. To get useful data out of the return,
+you can use these data frames, you can use the resulting list directly, or
+you can use the generic accessor functions \code{coef}, \code{vcov},
+\code{confint}, and \code{predict}.
+
+An object of class \code{"iv_robust"} is a list containing at least the
+following components:
+  \item{coefficients}{the estimated coefficients}
+  \item{se}{the estimated standard errors}
+  \item{df}{the estimated degrees of freedom}
+  \item{p}{the p-values from a two-sided t-test using \code{coefficients}, \code{se}, and \code{df}}
+  \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
+  \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
+  \item{coefficient_name}{a character vector of coefficient names}
+  \item{alpha}{the significance level specified by the user}
+  \item{res_var}{the residual variance}
+  \item{N}{the number of observations used}
+  \item{k}{the number of columns in the design matrix (includes linearly dependent columns!)}
+  \item{rank}{the rank of the fitted model}
+  \item{vcov}{the fitted variance covariance matrix}
+  \item{r.squared}{the \eqn{R^2}}
+  \item{adj.r.squared}{the \eqn{R^2} but penalized for having more parameters, \code{rank}}
+  \item{fstatistic}{a vector with the value of the F-statistic with the numerator and denominator degrees of freedom}
+  \item{weighted}{whether or not weights were applied}
+  \item{call}{the original function call}
+We also return \code{terms} with the second stage terms and \code{terms_regressors} with the first stage terms, both of which used by \code{predict}.
 }
 \description{
 This formula estimates an instrumental variables regression
-using two-stage least squares with a variety of
-options for robust standard errors
+using two-stage least squares with a variety of options for robust
+standard errors.
 }
 \details{
-This function performs two-stage least squares estimation of
+This function performs two-stage least squares estimation to fit
+instrumental variables regression. The syntax is similar to that in
+\code{ivreg} from the \code{AER} package. Regressors and instruments
+should be specified in a two-part formula, such as
+\code{y ~ x1 + x2 | z1 + z2 + z3}, where \code{x1} and \code{x2} are
+regressors and \code{z1}, \code{z2}, and \code{z3} are instruments. Unlike
+\code{ivreg}, you must explicitly specify all exogenous regressors on
+both sides of the bar.
+
+The default variance estimators are the same as in \code{\link{lm_robust}}.
+Without clusters, we default to \code{HC2} standard errors, and with clusters
+we default to \code{CR2} standard errors. 2SLS variance estimates are
+computed using the same estimators as in \code{\link{lm_robust}}. The data
+are, as one would expect, the second-stage regressors, which
+includes the first-stage fits for the endogenous variables. The residuals,
+however, are not simply the second-stage residuals. Instead they are the difference
+between the outcome and a fit produced by the second-stage coefficients and the
+first-stage (endogenous) regressors. More notes on this can be found at
+\href{http://estimatr.declaredesign.org/articles/mathematical-notes.html}{the mathematical appendix}.
 }
 \examples{
 library(fabricatr)
 dat <- fabricate(
   N = 40,
-  y = rpois(N, lambda = 4),
+  Y = rpois(N, lambda = 4),
   Z = rbinom(N, 1, prob = 0.4),
   D  = Z * rbinom(N, 1, prob = 0.8),
   X = rnorm(N)
 )
 
 # Instrument for treatment `D` with encouragement `Z`
-tidy(iv_robust(y ~ D + X | Z + X, data = dat))
+tidy(iv_robust(Y ~ D + X | Z + X, data = dat))
+
+# Instrument with Stata's `ivregress 2sls , small rob` HC1 variance
+tidy(iv_robust(Y ~ D | Z, data = dat, se_type = "stata"))
+
+# With clusters, we use CR2 errors by default
+dat$cl <- rep(letters[1:5], length.out = nrow(dat))
+tidy(iv_robust(Y ~ D | Z, data = dat, clusters = cl))
+
+# Again, easy to replicate Stata (again with `small` correction in Stata)
+tidy(iv_robust(Y ~ D | Z, data = dat, clusters = cl, se_type = "stata"))
+
 
 }
