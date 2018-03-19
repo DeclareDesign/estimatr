@@ -137,7 +137,7 @@ test_that("lm robust works with missingness", {
   )
 
   expect_equivalent(
-    as.matrix(tidy(estimatr_missout_out)[, c("coefficients", "se")]),
+    as.matrix(tidy(estimatr_missout_out)[, c("estimate", "std.error")]),
     lm_missout_hc2
   )
 
@@ -190,7 +190,7 @@ test_that("lm robust works with weights", {
   )
 
   expect_equivalent(
-    as.matrix(tidy(estimatr_out)[, c("coefficients", "se")]),
+    as.matrix(tidy(estimatr_out)[, c("estimate", "std.error")]),
     lmo_hc2
   )
 
@@ -215,7 +215,7 @@ test_that("lm robust works with weights", {
   )
 
   expect_equivalent(
-    as.matrix(tidy(estimatr_miss_out)[, c("coefficients", "se")]),
+    as.matrix(tidy(estimatr_miss_out)[, c("estimate", "std.error")]),
     lmo_miss_hc2
   )
 
@@ -288,7 +288,7 @@ test_that("lm robust works with rank-deficient X", {
 
   ## order sometimes is different! Not stable order!
   # expect_equivalent(
-  #   as.matrix(tidy(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat, se_type = 'classical'))[, c('coefficients', 'se')]),
+  #   as.matrix(tidy(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat, se_type = 'classical'))[, c('estimate', 'std.error')]),
   #   out_sumlm
   # )
 
@@ -298,7 +298,7 @@ test_that("lm robust works with rank-deficient X", {
 
   ## Not the same as LM! Different QR decompositions when dependency isn't just equivalency
   expect_equivalent(
-    as.matrix(tidy(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat, se_type = "classical"))[, c("coefficients", "se")]),
+    as.matrix(tidy(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat, se_type = "classical"))[, c("estimate", "std.error")]),
     as.matrix(summary(RcppEigen::fastLm(Y ~ X1 + X2 + Z1 + X3, data = dat))$coefficients[, 1:2])
   )
 
@@ -372,7 +372,7 @@ test_that("multiple outcomes", {
   mo <- tidy(lmro)
 
   expect_identical(
-    mo$coefficient_name,
+    mo$term,
     c("(Intercept)", "cyl", "(Intercept)", "cyl")
   )
 

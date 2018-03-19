@@ -37,7 +37,7 @@ test_that("iv_robust matches AER + ivpack", {
   ivo <- summary(ivfit)
 
   expect_equivalent(
-    as.matrix(tidy(ivco)[, c("coefficients", "se", "p")]),
+    as.matrix(tidy(ivco)[, c("estimate", "std.error", "p.value")]),
     ivo$coefficients[, c(1, 2, 4)]
   )
   # Same as stata if you specify `small` as a stata option
@@ -48,7 +48,7 @@ test_that("iv_robust matches AER + ivpack", {
   ivpackrob <- robust.se(ivfit)
 
   expect_equivalent(
-    as.matrix(tidy(ivro)[, c("coefficients", "se", "p")]),
+    as.matrix(tidy(ivro)[, c("estimate", "std.error", "p.value")]),
     ivpackrob[, c(1, 2, 4)]
   )
 
@@ -59,7 +59,7 @@ test_that("iv_robust matches AER + ivpack", {
   # Our p-values are bigger (ivpack is be using less conservative DF, we use J - 1 which
   # is what stata uses for clusters w/ `small` and in OLS)
   expect_equivalent(
-    as.matrix(tidy(ivclusto)[, c("coefficients", "se")]),
+    as.matrix(tidy(ivclusto)[, c("estimate", "std.error")]),
     ivpackclust[, c(1, 2)]
   )
 
@@ -68,7 +68,7 @@ test_that("iv_robust matches AER + ivpack", {
   clubsando <- clubSandwich::coef_test(ivfit, vcov = "CR2", cluster = dat$clust)
 
   expect_equivalent(
-    as.matrix(tidy(ivcr2o)[, c("coefficients", "se", "df", "p")]),
+    as.matrix(tidy(ivcr2o)[, c("estimate", "std.error", "df", "p.value")]),
     as.matrix(clubsando)
   )
   # CR0
@@ -76,7 +76,7 @@ test_that("iv_robust matches AER + ivpack", {
   clubsandCR0o <- clubSandwich::coef_test(ivfit, vcov = "CR0", cluster = dat$clust, test = "naive-t")
 
   expect_equivalent(
-    as.matrix(tidy(ivcr0o)[, c("coefficients", "se", "p")]),
+    as.matrix(tidy(ivcr0o)[, c("estimate", "std.error", "p.value")]),
     as.matrix(clubsandCR0o)
   )
 
@@ -86,7 +86,7 @@ test_that("iv_robust matches AER + ivpack", {
   ivregsum <- summary(ivw)
 
   expect_equivalent(
-    as.matrix(tidy(ivcw)[, c("coefficients", "se", "p")]),
+    as.matrix(tidy(ivcw)[, c("estimate", "std.error", "p.value")]),
     ivregsum$coefficients[, c(1, 2, 4)]
   )
 
@@ -95,7 +95,7 @@ test_that("iv_robust matches AER + ivpack", {
   ivpackrobw <- robust.se(ivw)
 
   expect_equivalent(
-    as.matrix(tidy(ivrw)[, c("coefficients", "se", "p")]),
+    as.matrix(tidy(ivrw)[, c("estimate", "std.error", "p.value")]),
     ivpackrobw[, c(1, 2, 4)]
   )
 
@@ -104,7 +104,7 @@ test_that("iv_robust matches AER + ivpack", {
   clubsandwo <- clubSandwich::coef_test(ivw, vcov = "CR2", cluster = dat$clust)
 
   expect_equivalent(
-    as.matrix(tidy(ivcr2wo)[, c("coefficients", "se", "df", "p")]),
+    as.matrix(tidy(ivcr2wo)[, c("estimate", "std.error", "df", "p.value")]),
     as.matrix(clubsandwo)
   )
 
@@ -113,7 +113,7 @@ test_that("iv_robust matches AER + ivpack", {
   clubsandCR0wo <- clubSandwich::coef_test(ivw, vcov = "CR0", cluster = dat$clust, test = "naive-t")
 
   expect_equivalent(
-    as.matrix(tidy(ivcr0wo)[, c("coefficients", "se", "p")]),
+    as.matrix(tidy(ivcr0wo)[, c("estimate", "std.error", "p.value")]),
     as.matrix(clubsandCR0wo)
   )
 
@@ -130,7 +130,7 @@ test_that("iv_robust matches AER + ivpack", {
   )
 
   expect_equivalent(
-    as.matrix(tidy(ivdefr)[1:2, c("coefficients", "se", "p")]),
+    as.matrix(tidy(ivdefr)[1:2, c("estimate", "std.error", "p.value")]),
     ivdefse[, c(1, 2, 4)]
   )
 
@@ -145,7 +145,7 @@ test_that("iv_robust matches AER + ivpack", {
   )
 
   expect_equivalent(
-    as.matrix(tidy(ivdefri)[1:2, c("coefficients", "se", "p")]),
+    as.matrix(tidy(ivdefri)[1:2, c("estimate", "std.error", "p.value")]),
     ivdefsei[, c(1, 2, 4)]
   )
 
@@ -160,7 +160,7 @@ test_that("iv_robust matches AER + ivpack", {
   )
 
   expect_equivalent(
-    as.matrix(tidy(ivdefclr)[1:2, c("coefficients", "se")]),
+    as.matrix(tidy(ivdefclr)[1:2, c("estimate", "std.error")]),
     ivdefclse[, c(1, 2)]
   )
 
@@ -171,7 +171,7 @@ test_that("iv_robust matches AER + ivpack", {
 
 
   expect_equivalent(
-    as.matrix(tidy(ivdefcl2r)[1:2, c("coefficients", "se", "df", "p")]),
+    as.matrix(tidy(ivdefcl2r)[1:2, c("estimate", "std.error", "df", "p.value")]),
     as.matrix(ivdefcl2se)
   )
 
@@ -186,7 +186,7 @@ test_that("iv_robust matches AER + ivpack", {
   )
 
   expect_equivalent(
-    as.matrix(tidy(ivdefrw)[1:2, c("coefficients", "se", "p")]),
+    as.matrix(tidy(ivdefrw)[1:2, c("estimate", "std.error", "p.value")]),
     ivdefsew[, c(1, 2, 4)]
   )
 
@@ -196,7 +196,7 @@ test_that("iv_robust matches AER + ivpack", {
   ivdefclsew <- clubSandwich::coef_test(ivdefclw, vcov = "CR2", cluster = dat$clust)
 
   expect_equivalent(
-    as.matrix(tidy(ivdefclrw)[1:2, c("coefficients", "se", "p")]),
+    as.matrix(tidy(ivdefclrw)[1:2, c("estimate", "std.error", "p.value")]),
     as.matrix(ivdefclsew)[, c(1, 2, 4)]
   )
 
@@ -206,7 +206,7 @@ test_that("iv_robust matches AER + ivpack", {
   ivdef2clsew <- clubSandwich::coef_test(ivdef2clw, vcov = "CR2", cluster = dat$clust)
 
   expect_equivalent(
-    as.matrix(tidy(ivdef2clrw)[1:2, c("coefficients", "se", "p")]),
+    as.matrix(tidy(ivdef2clrw)[1:2, c("estimate", "std.error", "p.value")]),
     as.matrix(ivdef2clsew)[, c(1, 2, 4)]
   )
 })
@@ -222,7 +222,7 @@ test_that("iv_robust different specifications work", {
   ivo <- ivreg(mpg ~ wt | hp + cyl, data = mtcars)
   ivpo <- robust.se(ivo)
   expect_equivalent(
-    as.matrix(tidy(ivro)[, c("coefficients", "se", "p")]),
+    as.matrix(tidy(ivro)[, c("estimate", "std.error", "p.value")]),
     ivpo[, c(1, 2, 4)]
   )
 
@@ -231,7 +231,7 @@ test_that("iv_robust different specifications work", {
   # ivo <- ivreg(mpg ~ wt + hp + vs | . - vs + cyl, data = mtcars)
   # ivpo <- robust.se(ivo)
   # expect_equivalent(
-  #   as.matrix(tidy(ivro)[, c("coefficients", "se", "p")]),
+  #   as.matrix(tidy(ivro)[, c("estimate", "std.error", "p.value")]),
   #   ivpo[, c(1, 2, 4)]
   # )
 
@@ -240,7 +240,7 @@ test_that("iv_robust different specifications work", {
   ivo <- ivreg(mpg ~ . | ., data = mtcars)
   ivpo <- robust.se(ivo)
   expect_equivalent(
-    as.matrix(tidy(ivro)[, c("coefficients", "se", "p")]),
+    as.matrix(tidy(ivro)[, c("estimate", "std.error", "p.value")]),
     ivpo[, c(1, 2, 4)]
   )
 

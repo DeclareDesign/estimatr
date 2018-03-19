@@ -103,7 +103,7 @@ summary.horvitz_thompson <-
   }
 
 summarize_tidy <- function(object, test = "t", ...) {
-  remove_cols <- c("coefficient_name", "outcome")
+  remove_cols <- c("term", "outcome")
 
   # This is ugly SO THAT summary(fit)$coefficients returns something like lm does.
   tidy_out <- tidy(object, ...)

@@ -22,7 +22,7 @@ test_that("lm_lin recreates Lin 2013 Table 2", {
           data = alo_star_men,
           se_type = "HC0"
         )
-      )[2, c("coefficients", "se")],
+      )[2, c("estimate", "std.error")],
       3
     ),
     c(-0.036, 0.158)
@@ -38,7 +38,7 @@ test_that("lm_lin recreates Lin 2013 Table 2", {
           data = alo_star_men,
           se_type = "HC0"
         )
-      )[2, c("coefficients", "se")],
+      )[2, c("estimate", "std.error")],
       3
     )),
     c(-0.083, 0.146)
@@ -54,7 +54,7 @@ test_that("lm_lin recreates Lin 2013 Table 2", {
           data = alo_star_men,
           se_type = "HC0"
         )
-      )[2, c("coefficients", "se")],
+      )[2, c("estimate", "std.error")],
       3
     )),
     c(-0.081, 0.146)

@@ -52,7 +52,7 @@ test_that("tidy, summary, and print work", {
   slmmo <- summary(lmmo)
 
   expect_equivalent(
-    as.matrix(tidy(lmrmo)[, c("coefficient_name", "outcome")]),
+    as.matrix(tidy(lmrmo)[, c("term", "outcome")]),
     cbind(
       rep(c("(Intercept)", "z"), times = 2),
       rep(c("y", "x"), each = 2)
@@ -145,7 +145,7 @@ test_that("tidy, summary, and print work", {
   )
 
   expect_equivalent(
-    as.matrix(tidy(ht)[, c("coefficients", "se", "p", "ci_lower", "ci_upper", "df")]),
+    as.matrix(tidy(ht)[, c("estimate", "std.error", "p.value", "ci.lower", "ci.upper", "df")]),
     summary(ht)$coefficients
   )
 

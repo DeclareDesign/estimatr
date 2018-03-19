@@ -40,7 +40,7 @@ test_that("lm cluster se", {
           ci = FALSE,
           data = dat
         )
-      )[, c("p", "ci_lower", "ci_upper")]
+      )[, c("p.value", "ci.lower", "ci.upper")]
     ),
     matrix(NA, nrow = 3, ncol = 3)
   )
@@ -81,12 +81,12 @@ test_that("lm cluster se", {
     qt(0.975, df = length(unique(dat$J)) - 1) * bm_interact$se.Stata["Z:X"] * c(-1, 1)
 
   expect_equivalent(
-    tidy(lm_interact)[4, c("se", "ci_lower", "ci_upper")],
+    tidy(lm_interact)[4, c("std.error", "ci.lower", "ci.upper")],
     c(bm_interact$se["Z:X"], bm_interact_interval)
   )
 
   expect_equivalent(
-    tidy(lm_interact_stata)[4, c("se", "ci_lower", "ci_upper")],
+    tidy(lm_interact_stata)[4, c("std.error", "ci.lower", "ci.upper")],
     c(bm_interact$se.Stata["Z:X"], bm_interact_stata_interval)
   )
 
@@ -112,7 +112,7 @@ test_that("lm cluster se", {
   bm_full_upper <- lm_full_simple$coefficients + bm_full_moe
 
   expect_equivalent(
-    as.matrix(tidy(lm_full)[, c("se", "ci_lower", "ci_upper")]),
+    as.matrix(tidy(lm_full)[, c("std.error", "ci.lower", "ci.upper")]),
     cbind(bm_full$se, bm_full_lower, bm_full_upper)
   )
 
@@ -311,12 +311,12 @@ test_that("Clustered SEs work with clusters of size 1", {
     )
 
   expect_equivalent(
-    as.matrix(tidy(lm_cr2)[, c("coefficients", "se", "df")]),
+    as.matrix(tidy(lm_cr2)[, c("estimate", "std.error", "df")]),
     cbind(lmo$coefficients, bmo$se, bmo$dof)
   )
 
   expect_equivalent(
-    as.matrix(tidy(lm_stata)[, c("coefficients", "se")]),
+    as.matrix(tidy(lm_stata)[, c("estimate", "std.error")]),
     cbind(lmo$coefficients, bmo$se.Stata)
   )
 })
