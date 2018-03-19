@@ -275,14 +275,14 @@ test_that("S3 methods", {
 
   expect_true(
     grepl(
-      "iv_robust(mpg ~ hp + cyl | wt + gear, data = mtcars, se_type = \"classical\")",
+      "iv\\_robust\\(formula = mpg \\~ hp \\+ cyl \\| wt \\+ gear, data = mtcars,",
       siv
     )
   )
 
   expect_true(
     grepl(
-      "F-statistic: 0.5134 on 1 and 18 DF,  p-value: 0.4829",
+      "F\\-statistic\\: 33\\.73 on 2 and 29 DF,  p\\-value\\: 2\\.706e\\-08",
       siv
     )
   )
