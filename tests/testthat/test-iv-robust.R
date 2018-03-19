@@ -171,8 +171,8 @@ test_that("iv_robust matches AER + ivpack", {
 
 
   expect_equivalent(
-    as.matrix(tidy(ivdefcl2r)[1:2, c("estimate", "std.error", "df", "p.value")]),
-    as.matrix(ivdefcl2se)
+    na.omit(as.matrix(tidy(ivdefcl2r)[, c("estimate", "std.error", "df", "p.value")])),
+    na.omit(as.matrix(ivdefcl2se))
   )
 
   # HC0 Weighted
@@ -196,8 +196,8 @@ test_that("iv_robust matches AER + ivpack", {
   ivdefclsew <- clubSandwich::coef_test(ivdefclw, vcov = "CR2", cluster = dat$clust)
 
   expect_equivalent(
-    as.matrix(tidy(ivdefclrw)[1:2, c("estimate", "std.error", "p.value")]),
-    as.matrix(ivdefclsew)[, c(1, 2, 4)]
+    na.omit(as.matrix(tidy(ivdefclrw)[, c("estimate", "std.error", "p.value")])),
+    na.omit(as.matrix(ivdefclsew)[, c(1, 2, 4)])
   )
 
 
@@ -206,8 +206,8 @@ test_that("iv_robust matches AER + ivpack", {
   ivdef2clsew <- clubSandwich::coef_test(ivdef2clw, vcov = "CR2", cluster = dat$clust)
 
   expect_equivalent(
-    as.matrix(tidy(ivdef2clrw)[1:2, c("estimate", "std.error", "p.value")]),
-    as.matrix(ivdef2clsew)[, c(1, 2, 4)]
+    na.omit(as.matrix(tidy(ivdef2clrw)[, c("estimate", "std.error", "p.value")])),
+    na.omit(as.matrix(ivdef2clsew)[, c(1, 2, 4)])
   )
 })
 
