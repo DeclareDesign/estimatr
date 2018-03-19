@@ -124,7 +124,7 @@ iv_robust <- function(formula,
     cluster = clusters
   )
   data <- enquo(data)
-  model_data <- clean_model_data(data = data, datargs, instruments = TRUE)
+  model_data <- clean_model_data(data = data, datargs, estimator = "iv")
 
   if (ncol(model_data$instrument_matrix) < ncol(model_data$design_matrix))  {
     warning("More regressors than instruments")

@@ -241,7 +241,7 @@ horvitz_thompson <-
     # -----
     # Check arguments
     # -----
-    if (length(all.vars(formula[[3]])) > 1) {
+    if (length(all.vars(f_rhs(formula))) > 1) {
       stop(
         "'formula' must have only one variable on the right-hand side: the ",
         "treatment variable"
@@ -272,43 +272,17 @@ horvitz_thompson <-
         )
       }
 
-      # Declaration can only be used if it is the same length as the data being passed
-      if (nrow(declaration$probabilities_matrix) != nrow(data)) {
-        stop(
-          "Cannot use `declaration` if the number of observations in the ",
-          "`declaration` 'N' is different than the rows in data"
-        )
-      }
-
       # Add clusters, blocks, and treatment probabilities to data so they can be cleaned with clean_model_data
       if (!is.null(declaration$clusters)) {
-        if (!is.null(data[[".clusters_ddinternal"]])) {
-          stop(
-            "Can't have a variable called '.clusters_ddinternal' in your `data`",
-            "as we use that name for clusters from `declaration` objects."
-          )
-        }
         .clusters_ddinternal <- declaration$clusters
         clusters <- quo(.clusters_ddinternal)
       }
 
       if (!is.null(declaration$blocks)) {
-        if (!is.null(data[[".blocks_ddinternal"]])) {
-          stop(
-            "Can't have a variable called '.blocks_ddinternal' in your `data`",
-            "as we use that name for blocks from `declaration` objects."
-          )
-        }
         .blocks_ddinternal <- declaration$blocks
         blocks <- quo(.blocks_ddinternal)
       }
 
-      if (!is.null(data[[".treatment_prob_ddinternal"]])) {
-        stop(
-          "Can't have a variable called '.treatment_prob_ddinternal' in your `data`",
-          "as we use that name for treatment probabilites."
-        )
-      }
       if (!is.null(condition2)) {
         treatnum <-
           which(declaration$cleaned_arguments$condition_names == condition2)
@@ -343,7 +317,7 @@ horvitz_thompson <-
       condition_pr = condition_prs
     )
     data <- enquo(data)
-    model_data <- clean_model_data(data = data, datargs)
+    model_data <- clean_model_data(data = data, datargs, estimator = "ht")
 
     ## condition_pr_mat, if supplied, must be same length
     if (!is.null(condition_pr_mat) && (2 * length(model_data$outcome) != nrow(condition_pr_mat))) {
@@ -427,7 +401,7 @@ horvitz_thompson <-
           if (is.null(data$condition_probabilities)) {
             pr_treat <- mean(data$t == condition2)
             message(
-              "Learning probability of complete random assignment from data with",
+              "Learning probability of complete random assignment from data with ",
               "prob = ", round(pr_treat, 3)
             )
             condition_pr_mat <- gen_pr_matrix_complete(
