@@ -230,7 +230,7 @@ difference_in_means <-
       cluster = clusters
     )
     data <- enquo(data)
-    model_data <- clean_model_data(data = data, datargs)
+    model_data <- clean_model_data(data = data, datargs, estimator = "dim")
 
     data <- data.frame(
       y = model_data$outcome,

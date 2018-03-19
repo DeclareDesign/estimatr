@@ -9,7 +9,7 @@
 
 # Internal method to process data
 #' @importFrom rlang f_rhs
-clean_model_data <- function(data, datargs, instruments = FALSE) {
+clean_model_data <- function(data, datargs, estimator = "") {
 
   # if data exists, evaluate it
   data <- if (quo_is_missing(data)) NULL else eval_tidy(data)
@@ -26,7 +26,8 @@ clean_model_data <- function(data, datargs, instruments = FALSE) {
   # subset is also non-standard eval
   to_process <- setdiff(
     names(mfargs),
-    setdiff( names(formals(stats::model.frame.default)),args_ignored) )
+    setdiff( names(formals(stats::model.frame.default)),args_ignored)
+  )
 
   for (da in to_process) {
     name <- sprintf(".__%s%%%d__", da, sample.int(.Machine$integer.max, 1))
@@ -88,8 +89,7 @@ clean_model_data <- function(data, datargs, instruments = FALSE) {
     design_matrix = model.matrix(terms(formula, rhs = 1), data = mf)
   )
 
-  if (instruments) {
-
+  if (estimator == "iv") {
     if (length(formula)[2] != 2) {
       stop(
         "Must specify a `formula` with both regressors and instruments. For ",
@@ -97,16 +97,9 @@ clean_model_data <- function(data, datargs, instruments = FALSE) {
         "regressors and z1 and z2 are the instruments.\n\nSee ?iv_robust."
       )
     }
-
     ret[["instrument_matrix"]] <- model.matrix(terms(formula, rhs = 2), data = mf)
     ret[["terms_regressors"]] <- terms(formula, rhs = 1)
-  }
-
-  # Keep the original treatment vector for DiM and HT
-  # They will never have a model frame larger than 6 covars
-  # so we can add a check that prevents slowing down large
-  # lm_robust calls
-  if (ncol(mf) < 6 && length(all.vars(terms(mf)[[3]])) != 0) {
+  } else if (estimator %in% c("ht", "dim")) {
     ret[["original_treatment"]] <- mf[, colnames(mf) == all.vars(terms(mf)[[3]])[1]]
   }
 

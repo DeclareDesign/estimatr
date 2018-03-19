@@ -102,6 +102,30 @@ test_that("Horvitz-Thompson works in simple case", {
     horvitz_thompson(y ~ z_comp, data = dat, simple = FALSE, condition_prs = pr_wrong),
     "Treatment probabilities must be fixed for complete randomized designs"
   )
+
+  # Works without data frame!
+  ht_with <- with(
+    dat,
+    horvitz_thompson(y ~ z_comp, simple = FALSE, condition_prs = pr_comp)
+  )
+
+  pr_comp <- dat$pr_comp
+  y <- dat$y
+  z_comp <- dat$z_comp
+  ht_glob <- horvitz_thompson(y ~ z_comp, simple = FALSE, condition_prs = pr_comp)
+
+  expect_equal(
+    ht_with,
+    ht_glob
+  )
+
+  # with declaration
+  ht_nod <- horvitz_thompson(y ~ z_comp, declaration = comp_decl)
+  ht_d <- horvitz_thompson(y ~ z_comp, data = dat, declaration = comp_decl)
+  expect_equal(
+    tidy(ht_nod),
+    tidy(ht_d)
+  )
 })
 
 test_that("Horvitz-Thompson works with clustered data", {
@@ -219,7 +243,6 @@ test_that("Horvitz-Thompson works with clustered data", {
   )
 })
 
-# TODO test missingness works as expected
 test_that("Horvitz-Thompson works with missingness", {
   n <- 40
   dat <- data.frame(
@@ -326,44 +349,13 @@ test_that("Horvitz-Thompson properly checks arguments and data", {
 
   expect_error(
     horvitz_thompson(y ~ z, data = dat, declaration = randomizr::declare_ra(N = n + 1, prob = 0.4)),
-    "N|declaration"
+    "variable lengths differ"
   )
 
   ht_o <- horvitz_thompson(y ~ z, data = dat, ci = FALSE)
   expect_equivalent(
     as.matrix(tidy(horvitz_thompson(y ~ z, data = dat, ci = FALSE))[, c("p", "ci_lower", "ci_upper")]),
     matrix(NA, nrow = 1, ncol = 3)
-  )
-
-  # Reserved variable names
-  dat[[".clusters_ddinternal"]] <- 1
-  expect_error(
-    horvitz_thompson(
-      y ~ z,
-      data = dat,
-      declaration = randomizr::declare_ra(clusters = dat$cl)
-    ),
-    ".clusters_ddinternal"
-  )
-
-  dat[[".blocks_ddinternal"]] <- 1
-  expect_error(
-    horvitz_thompson(
-      y ~ z,
-      data = dat,
-      declaration = randomizr::declare_ra(blocks = dat$bl)
-    ),
-    ".blocks_ddinternal"
-  )
-
-  dat[[".treatment_prob_ddinternal"]] <- 1
-  expect_error(
-    horvitz_thompson(
-      y ~ z,
-      data = dat,
-      declaration = randomizr::declare_ra(N = n)
-    ),
-    ".treatment_prob_ddinternal"
   )
 
 
@@ -376,8 +368,6 @@ test_that("Horvitz-Thompson properly checks arguments and data", {
     ),
     "cleaning the data"
   )
-
-  # subset and condition_pr_mat checked
 })
 
 test_that("Works without variation in treatment", {
