@@ -15,9 +15,14 @@
 #' @param include.rmse logical. Defaults to TRUE
 #' @param ... unused
 #'
-extract.lm_robust <- function(model, include.ci = TRUE, include.rsquared = TRUE, include.adjrs = TRUE,
-                       include.nobs = TRUE, include.fstatistic = FALSE, include.rmse = TRUE, ...) {
-
+extract.lm_robust <- function(model,
+                              include.ci = TRUE,
+                              include.rsquared = TRUE,
+                              include.adjrs = TRUE,
+                              include.nobs = TRUE,
+                              include.fstatistic = FALSE,
+                              include.rmse = TRUE,
+                              ...) {
   s <- summary(model, ...)
 
   names <- rownames(s$coefficients)
@@ -31,9 +36,9 @@ extract.lm_robust <- function(model, include.ci = TRUE, include.rsquared = TRUE,
     ciupper <- coef(s)[, 5]
   }
 
-  rs <- s$r.squared  #extract R-squared
-  adj <- s$adj.r.squared  #extract adjusted R-squared
-  n <- nobs(model)  #extract number of observations
+  rs <- s$r.squared # extract R-squared
+  adj <- s$adj.r.squared # extract adjusted R-squared
+  n <- nobs(model) # extract number of observations
 
   gof <- numeric()
   gof.names <- character()

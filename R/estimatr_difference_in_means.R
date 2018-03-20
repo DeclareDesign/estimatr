@@ -205,278 +205,323 @@
 #' lm_robust(Y ~ Z_comp, weights = w, data = dat)
 #'
 #' @export
-difference_in_means <-
-  function(formula,
-           data,
-           blocks,
-           clusters,
-           weights,
-           subset,
-           se_type = c("default", "none"),
-           condition1 = NULL,
-           condition2 = NULL,
-           ci = TRUE,
-           alpha = .05) {
-    if (length(all.vars(f_rhs(eval_tidy(formula)))) > 1) {
-      stop(
-        "'formula' must have only one variable on the right-hand side: the ",
-        "treatment variable."
+difference_in_means <- function(formula,
+                                data,
+                                blocks,
+                                clusters,
+                                weights,
+                                subset,
+                                se_type = c("default", "none"),
+                                condition1 = NULL,
+                                condition2 = NULL,
+                                ci = TRUE,
+                                alpha = .05) {
+  if (length(all.vars(f_rhs(eval_tidy(formula)))) > 1) {
+    stop(
+      "'formula' must have only one variable on the right-hand side: the ",
+      "treatment variable."
+    )
+  }
+
+  se_type <- match.arg(se_type)
+
+  datargs <- enquos(
+    formula = formula,
+    weights = weights,
+    subset = subset,
+    block = blocks,
+    cluster = clusters
+  )
+  data <- enquo(data)
+  model_data <- clean_model_data(data = data, datargs, estimator = "dim")
+
+  data <- data.frame(
+    y = model_data$outcome,
+    t = model_data$original_treatment,
+    stringsAsFactors = FALSE
+  )
+  data$cluster <- model_data$cluster
+  # rescale weights for convenience
+  if (is.numeric(model_data$weights)) {
+    data$weights <- model_data$weights / mean(model_data$weights)
+  }
+  data$block <- model_data$block
+
+  if (!is.null(data$weights) && length(unique(data$weights)) == 1
+  && is.null(data$cluster) && is.null(data$block)) {
+    message(
+      "Constant `weights` passed to `difference_in_means` will ",
+      "unnecessarily trigger `lm_robust()` and the Welch-Satterthwaite ",
+      "approximation will not be used for the degrees of freedom."
+    )
+  }
+
+  rm(model_data)
+
+  # parse condition names
+  if (is.null(condition1) || is.null(condition2)) {
+    condition_names <- parse_conditions(
+      treatment = data$t,
+      condition1 = condition1,
+      condition2 = condition2,
+      estimator = "difference_in_means"
+    )
+    condition2 <- condition_names[[2]]
+    condition1 <- condition_names[[1]]
+  }
+
+  if (is.null(data$block)) {
+    return_frame <- difference_in_means_internal(
+      condition1 = condition1,
+      condition2 = condition2,
+      data = data,
+      alpha = alpha,
+      se_type = se_type
+    )
+
+    if (is.null(data$cluster)) {
+      design <- "Standard"
+    } else {
+      design <- "Clustered"
+    }
+  } else {
+    pair_matched <- FALSE
+
+    # When learning whether it is matched pairs, should only use relevant conditions
+    data <- subset.data.frame(data, t %in% c(condition1, condition2))
+
+    clust_per_block <- check_clusters_blocks(data)
+
+    # Check if design is pair matched
+    if (any(clust_per_block == 1)) {
+      stop("All `blocks` must have multiple units (or `clusters`)")
+    } else if (all(clust_per_block == 2)) {
+      pair_matched <- TRUE
+    } else if (any(clust_per_block == 2) & any(clust_per_block > 2)) {
+      pair_matched <- TRUE
+      warning(
+        "Some `blocks` have two units/`clusters` while other blocks ",
+        "have more units/`clusters`. As standard variance estimates ",
+        "cannot be computed within blocks with two units, we use the ",
+        "matched pairs estimator of the variance."
       )
     }
 
-    se_type <- match.arg(se_type)
+    block_dfs <- split(data, data$block)
 
-    datargs <- enquos(
-      formula = formula,
-      weights = weights,
-      subset = subset,
-      block = blocks,
-      cluster = clusters
-    )
-    data <- enquo(data)
-    model_data <- clean_model_data(data = data, datargs, estimator = "dim")
-
-    data <- data.frame(
-      y = model_data$outcome,
-      t = model_data$original_treatment,
-      stringsAsFactors = FALSE
-    )
-    data$cluster <- model_data$cluster
-    # rescale weights for convenience
-    if (is.numeric(model_data$weights)) {
-      data$weights <- model_data$weights / mean(model_data$weights)
-    }
-    data$block <- model_data$block
-
-    if (!is.null(data$weights) && length(unique(data$weights)) == 1
-    && is.null(data$cluster) && is.null(data$block)) {
-      message(
-        "Constant `weights` passed to `difference_in_means` will ",
-        "unnecessarily trigger `lm_robust()` and the Welch-Satterthwaite ",
-        "approximation will not be used for the degrees of freedom."
-      )
-    }
-
-    rm(model_data)
-
-    # parse condition names
-    if (is.null(condition1) || is.null(condition2)) {
-      condition_names <- parse_conditions(
-        treatment = data$t,
+    block_estimates <- lapply(block_dfs, function(x) {
+      difference_in_means_internal(
+        data = x,
         condition1 = condition1,
         condition2 = condition2,
-        estimator = "difference_in_means"
-      )
-      condition2 <- condition_names[[2]]
-      condition1 <- condition_names[[1]]
-    }
-
-    if (is.null(data$block)) {
-      return_frame <- difference_in_means_internal(
-        condition1 = condition1,
-        condition2 = condition2,
-        data = data,
+        pair_matched = pair_matched,
         alpha = alpha,
         se_type = se_type
       )
+    })
 
-      if (is.null(data$cluster)) {
-        design <- "Standard"
-      } else {
-        design <- "Clustered"
-      }
-    } else {
-      pair_matched <- FALSE
+    block_estimates <- do.call(rbind, block_estimates)
 
-      # When learning whether it is matched pairs, should only use relevant conditions
-      data <- subset.data.frame(data, t %in% c(condition1, condition2))
+    N_overall <- with(block_estimates, sum(N))
 
-      clust_per_block <- check_clusters_blocks(data)
-
-      # Check if design is pair matched
-      if (any(clust_per_block == 1)) {
-        stop("All `blocks` must have multiple units (or `clusters`)")
-      } else if (all(clust_per_block == 2)) {
-        pair_matched <- TRUE
-      } else if (any(clust_per_block == 2) & any(clust_per_block > 2)) {
-        pair_matched <- TRUE
-        warning(
-          "Some `blocks` have two units/`clusters` while other blocks ",
-          "have more units/`clusters`. As standard variance estimates ",
-          "cannot be computed within blocks with two units, we use the ",
-          "matched pairs estimator of the variance."
-        )
-      }
-
-      block_dfs <- split(data, data$block)
-
-      block_estimates <- lapply(block_dfs, function(x) {
-        difference_in_means_internal(
-          data = x,
-          condition1 = condition1,
-          condition2 = condition2,
-          pair_matched = pair_matched,
-          alpha = alpha,
-          se_type = se_type
-        )
-      })
-
-      block_estimates <- do.call(rbind, block_estimates)
-
-      N_overall <- with(block_estimates, sum(N))
-
-      # Blocked design, (Gerber Green 2012, p73, eq3.10)
-      diff <- with(block_estimates, sum(coefficients * N / N_overall))
-
-      df <- NA
-      std.error <- NA
-      n_blocks <- nrow(block_estimates)
-
-      if (pair_matched) {
-        if (is.null(data$cluster)) {
-          design <- "Matched-pair"
-
-          # Pair matched, unit randomized (Gerber Green 2012, p77, eq3.16)
-          if (se_type != "none") {
-            std.error <-
-              with(
-                block_estimates,
-                sqrt((1 / (n_blocks * (n_blocks - 1))) * sum((coefficients - diff) ^ 2))
-              )
-          }
-
-        } else {
-          design <- "Matched-pair clustered"
-          # Pair matched, cluster randomized (Imai, King, Nall 2009, p36, eq6)
-          if (se_type != "none") {
-            std.error <-
-              with(
-                block_estimates,
-                sqrt(
-                  (n_blocks / ((n_blocks - 1) * N_overall ^ 2)) *
-                    sum((N * coefficients - (N_overall * diff) / n_blocks) ^ 2)
-                )
-              )
-          }
-        }
-
-        # For pair matched, cluster randomized Imai et al. 2009 recommend (p. 37)
-        df <- n_blocks - 1
-      } else {
-        # Block randomized (Gerber and Green 2012, p. 74, footnote 17)
-        if (se_type != "none") {
-          std.error <- with(
-            block_estimates,
-            sqrt(sum(std.error ^ 2 * (N / N_overall) ^ 2))
-          )
-        }
-
-
-        ## we don't know if this is correct!
-        ## matches lm_lin, two estimates per block
-        if (is.null(data$cluster)) {
-          design <- "Blocked"
-          df <- nrow(data) - 2 * n_blocks
-        } else {
-          design <- "Block-clustered"
-          # Also matches lm_lin for even sized clusters, should be conservative
-          df <- sum(clust_per_block) - 2 * n_blocks
-        }
-      }
-
-      return_frame <- data.frame(
-        coefficients = diff,
-        std.error = std.error,
-        df = df,
-        N = N_overall,
-        stringsAsFactors = FALSE
-      )
-    }
-
-    if (!is.null(data$weights)) {
-      design <- paste0(design, " (weighted)")
-    }
-
-    return_list <- add_cis_pvals(return_frame, alpha, ci)
-
-    # print(c("Pair Matched? ", pair_matched))
-
-    return_list <- dim_like_return(
-      return_list,
-      alpha = alpha,
-      formula = formula,
-      conditions = list(condition1, condition2)
-    )
-
-    return_list[["design"]] <- design
-
-    attr(return_list, "class") <- "difference_in_means"
-
-    return(return_list)
-  }
-
-
-difference_in_means_internal <-
-  function(condition1 = NULL,
-           condition2 = NULL,
-           data,
-           pair_matched = FALSE,
-           alpha = .05,
-           se_type = "default") {
-
-    # Check that treatment status is uniform within cluster, checked here
-    # so that the treatment vector t doesn't have to be built anywhere else
-    if (!is.null(data$cluster)) {
-      if (is.factor(data$cluster)) {
-        data$cluster <- droplevels(data$cluster)
-      }
-
-      if (any(!tapply(data$t, data$cluster, function(x) all(x == x[1])))) {
-        stop(
-          "All units within a cluster must have the same treatment condition."
-        )
-      }
-    }
-
-    Y2 <- data$y[data$t == condition2]
-    Y1 <- data$y[data$t == condition1]
-
-    N2 <- length(Y2)
-    N1 <- length(Y1)
-    N <- N2 + N1
-
-    if ((N1 == 0) || (N2 == 0)) {
-      stop("Must have units with both treatment conditions within each block.")
-    }
-
-    ## Check to make sure multiple in each group if pair matched is false
-    if (!pair_matched & (N2 == 1 | N1 == 1)) {
-      stop(
-        "Must have least two treated/control units in each block if design is not ",
-        "pair-matched (i.e., every block is of size two). Only one treated or ",
-        "control unit in a block makes standard errors impossible to calculate"
-      )
-    }
+    # Blocked design, (Gerber Green 2012, p73, eq3.10)
+    diff <- with(block_estimates, sum(coefficients * N / N_overall))
 
     df <- NA
+    std.error <- NA
+    n_blocks <- nrow(block_estimates)
 
-    if (!is.null(data$cluster) && !pair_matched) {
+    if (pair_matched) {
+      if (is.null(data$cluster)) {
+        design <- "Matched-pair"
 
-      # For now, all clustered cases go to lm_robust
-      # CR2 nests Gerber and Green 2012, p. 83, eq. 3.23 when clusters are
-      # equal sizes (we think) and is more appropriate when clusters are different sizes
+        # Pair matched, unit randomized (Gerber Green 2012, p77, eq3.16)
+        if (se_type != "none") {
+          std.error <-
+            with(
+              block_estimates,
+              sqrt((1 / (n_blocks * (n_blocks - 1))) * sum((coefficients - diff)^2))
+            )
+        }
+      } else {
+        design <- "Matched-pair clustered"
+        # Pair matched, cluster randomized (Imai, King, Nall 2009, p36, eq6)
+        if (se_type != "none") {
+          std.error <-
+            with(
+              block_estimates,
+              sqrt(
+                (n_blocks / ((n_blocks - 1) * N_overall^2)) *
+                  sum((N * coefficients - (N_overall * diff) / n_blocks)^2)
+              )
+            )
+        }
+      }
+
+      # For pair matched, cluster randomized Imai et al. 2009 recommend (p. 37)
+      df <- n_blocks - 1
+    } else {
+      # Block randomized (Gerber and Green 2012, p. 74, footnote 17)
+      if (se_type != "none") {
+        std.error <- with(
+          block_estimates,
+          sqrt(sum(std.error^2 * (N / N_overall)^2))
+        )
+      }
+
+
+      ## we don't know if this is correct!
+      ## matches lm_lin, two estimates per block
+      if (is.null(data$cluster)) {
+        design <- "Blocked"
+        df <- nrow(data) - 2 * n_blocks
+      } else {
+        design <- "Block-clustered"
+        # Also matches lm_lin for even sized clusters, should be conservative
+        df <- sum(clust_per_block) - 2 * n_blocks
+      }
+    }
+
+    return_frame <- data.frame(
+      coefficients = diff,
+      std.error = std.error,
+      df = df,
+      N = N_overall,
+      stringsAsFactors = FALSE
+    )
+  }
+
+  if (!is.null(data$weights)) {
+    design <- paste0(design, " (weighted)")
+  }
+
+  return_list <- add_cis_pvals(return_frame, alpha, ci)
+
+  # print(c("Pair Matched? ", pair_matched))
+
+  return_list <- dim_like_return(
+    return_list,
+    alpha = alpha,
+    formula = formula,
+    conditions = list(condition1, condition2)
+  )
+
+  return_list[["design"]] <- design
+
+  attr(return_list, "class") <- "difference_in_means"
+
+  return(return_list)
+}
+
+
+difference_in_means_internal <- function(condition1 = NULL,
+                                         condition2 = NULL,
+                                         data,
+                                         pair_matched = FALSE,
+                                         alpha = .05,
+                                         se_type = "default") {
+
+  # Check that treatment status is uniform within cluster, checked here
+  # so that the treatment vector t doesn't have to be built anywhere else
+  if (!is.null(data$cluster)) {
+    if (is.factor(data$cluster)) {
+      data$cluster <- droplevels(data$cluster)
+    }
+
+    if (any(!tapply(data$t, data$cluster, function(x) all(x == x[1])))) {
+      stop(
+        "All units within a cluster must have the same treatment condition."
+      )
+    }
+  }
+
+  Y2 <- data$y[data$t == condition2]
+  Y1 <- data$y[data$t == condition1]
+
+  N2 <- length(Y2)
+  N1 <- length(Y1)
+  N <- N2 + N1
+
+  if ((N1 == 0) || (N2 == 0)) {
+    stop("Must have units with both treatment conditions within each block.")
+  }
+
+  ## Check to make sure multiple in each group if pair matched is false
+  if (!pair_matched & (N2 == 1 | N1 == 1)) {
+    stop(
+      "Must have least two treated/control units in each block if design is not ",
+      "pair-matched (i.e., every block is of size two). Only one treated or ",
+      "control unit in a block makes standard errors impossible to calculate"
+    )
+  }
+
+  df <- NA
+
+  if (!is.null(data$cluster) && !pair_matched) {
+
+    # For now, all clustered cases go to lm_robust
+    # CR2 nests Gerber and Green 2012, p. 83, eq. 3.23 when clusters are
+    # equal sizes (we think) and is more appropriate when clusters are different sizes
+
+    X <- cbind(1, t = as.numeric(data$t == condition2))
+
+    # print("Using lm_robust")
+    # TODO currently lm_robust_fit does too much, need to refactor it
+    # if it will be used here in the long run
+    cr2_out <- lm_robust_fit(
+      y = data$y,
+      X = cbind(1, t = as.numeric(data$t == condition2)),
+      cluster = data$cluster,
+      se_type = ifelse(se_type == "none", "none", "CR2"),
+      weights = data$weights,
+      ci = TRUE,
+      try_cholesky = TRUE,
+      alpha = alpha,
+      return_vcov = FALSE,
+      has_int = TRUE
+    )
+
+    diff <- coef(cr2_out)[2]
+    std.error <- cr2_out$std.error[2]
+    df <- cr2_out$df[2]
+  } else {
+    if (is.null(data$weights)) {
+      diff <- mean(Y2) - mean(Y1)
+
+      if (pair_matched || se_type == "none") {
+        # Pair matched designs
+        std.error <- NA
+      } else {
+        # Non-pair matched designs, unit level randomization
+        var_Y2 <- var(Y2)
+        var_Y1 <- var(Y1)
+
+        std.error <- sqrt(var_Y2 / N2 + var_Y1 / N1)
+
+        df <- std.error^4 /
+          (
+            (var_Y2 / N2)^2 / (N2 - 1) +
+              (var_Y1 / N1)^2 / (N1 - 1)
+          )
+      }
+    } else {
+      if (pair_matched) {
+        stop(
+          "Cannot use `weights` with matched pairs design at the moment"
+        )
+      }
 
       X <- cbind(1, t = as.numeric(data$t == condition2))
 
       # print("Using lm_robust")
       # TODO currently lm_robust_fit does too much, need to refactor it
       # if it will be used here in the long run
-      cr2_out <- lm_robust_fit(
+      w_hc2_out <- lm_robust_fit(
         y = data$y,
         X = cbind(1, t = as.numeric(data$t == condition2)),
-        cluster = data$cluster,
-        se_type = ifelse(se_type == "none", "none", "CR2"),
+        se_type = ifelse(se_type == "none", "none", "HC2"),
         weights = data$weights,
+        cluster = NULL,
         ci = TRUE,
         try_cholesky = TRUE,
         alpha = alpha,
@@ -484,73 +529,25 @@ difference_in_means_internal <-
         has_int = TRUE
       )
 
-      diff <- coef(cr2_out)[2]
-      std.error <- cr2_out$std.error[2]
-      df <- cr2_out$df[2]
-    } else {
-      if (is.null(data$weights)) {
-        diff <- mean(Y2) - mean(Y1)
-
-        if (pair_matched || se_type == "none") {
-          # Pair matched designs
-          std.error <- NA
-        } else {
-          # Non-pair matched designs, unit level randomization
-          var_Y2 <- var(Y2)
-          var_Y1 <- var(Y1)
-
-          std.error <- sqrt(var_Y2 / N2 + var_Y1 / N1)
-
-          df <- std.error ^ 4 /
-            (
-              (var_Y2 / N2) ^ 2 / (N2 - 1) +
-                (var_Y1 / N1) ^ 2 / (N1 - 1)
-            )
-        }
-      } else {
-        if (pair_matched) {
-          stop(
-            "Cannot use `weights` with matched pairs design at the moment"
-          )
-        }
-
-        X <- cbind(1, t = as.numeric(data$t == condition2))
-
-        # print("Using lm_robust")
-        # TODO currently lm_robust_fit does too much, need to refactor it
-        # if it will be used here in the long run
-        w_hc2_out <- lm_robust_fit(
-          y = data$y,
-          X = cbind(1, t = as.numeric(data$t == condition2)),
-          se_type = ifelse(se_type == "none", "none", "HC2"),
-          weights = data$weights,
-          cluster = NULL,
-          ci = TRUE,
-          try_cholesky = TRUE,
-          alpha = alpha,
-          return_vcov = FALSE,
-          has_int = TRUE
-        )
-
-        diff <- coef(w_hc2_out)[2]
-        std.error <- w_hc2_out$std.error[2]
-        df <- w_hc2_out$df[2]
-      }
+      diff <- coef(w_hc2_out)[2]
+      std.error <- w_hc2_out$std.error[2]
+      df <- w_hc2_out$df[2]
     }
-
-    return_frame <-
-      data.frame(
-        coefficients = diff,
-        std.error = std.error,
-        df = df,
-        stringsAsFactors = FALSE
-      )
-
-    if (is.numeric(data$weights)) {
-      return_frame$N <- sum(data$weights)
-    } else {
-      return_frame$N <- N
-    }
-
-    return(return_frame)
   }
+
+  return_frame <-
+    data.frame(
+      coefficients = diff,
+      std.error = std.error,
+      df = df,
+      stringsAsFactors = FALSE
+    )
+
+  if (is.numeric(data$weights)) {
+    return_frame$N <- sum(data$weights)
+  } else {
+    return_frame$N <- N
+  }
+
+  return(return_frame)
+}

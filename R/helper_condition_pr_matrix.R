@@ -113,7 +113,7 @@ declaration_to_condition_pr_mat <- function(ra_declaration,
     stop(
       "Cannot have `condition1 == NULL` and `condition2 != NULL`"
     )
-  }else if (!is.null(condition1) && is.null(condition2)) {
+  } else if (!is.null(condition1) && is.null(condition2)) {
     stop(
       "Cannot have `condition2 == NULL` and `condition1 != NULL`"
     )
@@ -439,10 +439,10 @@ gen_pr_matrix_block <- function(blocks, clusters, p2 = NULL, p1 = NULL, t = NULL
         condition_pr_matrix[
           ids,
           c(block_dat[[j]]$ids, n + block_dat[[j]]$ids)
-          ] <- tcrossprod(
-            c(block_dat[[i]]$p1, block_dat[[i]]$p2),
-            c(block_dat[[j]]$p1, block_dat[[j]]$p2)
-          )
+        ] <- tcrossprod(
+          c(block_dat[[i]]$p1, block_dat[[i]]$p2),
+          c(block_dat[[j]]$p1, block_dat[[j]]$p2)
+        )
       }
     }
   }

@@ -1,7 +1,5 @@
 #' @export
-summary.lm_robust <- function(object,
-                              ...) {
-
+summary.lm_robust <- function(object, ...) {
   if (is.matrix(coef(object))) {
     ny <- ncol(coef(object))
 
@@ -29,7 +27,6 @@ summary.lm_robust <- function(object,
     all_models <- object
 
     for (i in seq(ny)) {
-
       for (nm in names(object)) {
         if (nm %in% mat_objs) {
           object[[nm]] <- all_models[[nm]][, i, drop = TRUE]
@@ -52,9 +49,7 @@ summary.lm_robust <- function(object,
 }
 
 #' @export
-summary.iv_robust <- function(object,
-                              ...) {
-
+summary.iv_robust <- function(object, ...) {
   summary_lm_model(object)
 }
 
@@ -85,8 +80,7 @@ summary_lm_model <- function(object) {
 
 
 #' @export
-summary.difference_in_means <- function(object,
-                                        ...) {
+summary.difference_in_means <- function(object, ...) {
   return(list(
     coefficients = summarize_tidy(object),
     design = object$design
@@ -95,12 +89,9 @@ summary.difference_in_means <- function(object,
 
 
 #' @export
-summary.horvitz_thompson <-
-  function(
-           object,
-           ...) {
-    return(list(coefficients = summarize_tidy(object, "z")))
-  }
+summary.horvitz_thompson <- function(object, ...) {
+  return(list(coefficients = summarize_tidy(object, "z")))
+}
 
 summarize_tidy <- function(object, test = "t", ...) {
   remove_cols <- c("term", "outcome")
