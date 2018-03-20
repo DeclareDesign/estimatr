@@ -299,7 +299,7 @@ horvitz_thompson <-
           )
         }
 
-        treatment_prob <- randomizr::obtain_condition_probabilities(
+        treatment_prob <- obtain(
           ra_declaration,
           condition2
         )
