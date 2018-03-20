@@ -4,7 +4,7 @@
 \alias{na.omit_detailed.data.frame}
 \title{Extra logging on na.omit handler}
 \usage{
-na.omit_detailed.data.frame(object, ...)
+na.omit_detailed.data.frame(object)
 }
 \arguments{
 \item{object}{a data.frame}

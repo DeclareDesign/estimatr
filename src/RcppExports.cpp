@@ -106,6 +106,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// naomitwhy
+IntegerVector naomitwhy(DataFrame df, Function is_na_generic);
+RcppExport SEXP _estimatr_naomitwhy(SEXP dfSEXP, SEXP is_na_genericSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DataFrame >::type df(dfSEXP);
+    Rcpp::traits::input_parameter< Function >::type is_na_generic(is_na_genericSEXP);
+    rcpp_result_gen = Rcpp::wrap(naomitwhy(df, is_na_generic));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_estimatr_ht_covar_partial", (DL_FUNC) &_estimatr_ht_covar_partial, 5},
@@ -115,6 +127,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_estimatr_lm_solver", (DL_FUNC) &_estimatr_lm_solver, 3},
     {"_estimatr_lm_variance", (DL_FUNC) &_estimatr_lm_variance, 8},
     {"_estimatr_lm_variance_cr2", (DL_FUNC) &_estimatr_lm_variance_cr2, 9},
+    {"_estimatr_naomitwhy", (DL_FUNC) &_estimatr_naomitwhy, 2},
     {NULL, NULL, 0}
 };
 
