@@ -403,7 +403,7 @@ test_that("DIM unbiased", {
       dat$Z <- x
       dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
       dim <- difference_in_means(Y ~ Z, data = dat)
-      dim$estimate
+      coef(dim)
     }
   )
 
@@ -431,7 +431,7 @@ test_that("DIM unbiased", {
         clusters = cluster,
         data = dat
       )
-      dim$estimate
+      coef(dim)
     }
   )
 
@@ -460,7 +460,7 @@ test_that("DIM unbiased", {
         blocks = blocks,
         data = dat
       )
-      dim$estimate
+      coef(dim)
     }
   )
 
@@ -489,7 +489,7 @@ test_that("DIM unbiased", {
         blocks = blocks,
         data = dat
       )
-      dim$estimate
+      coef(dim)
     }
   )
 
@@ -520,7 +520,7 @@ test_that("DIM unbiased", {
         clusters = clusters,
         data = dat
       )
-      dim$estimate
+      coef(dim)
     }
   )
 

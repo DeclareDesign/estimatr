@@ -41,7 +41,7 @@ test_that("tidy, summary, and print work", {
 
   capture_output(
     expect_equivalent(
-      summary(lmo)$coefficients,
+      coef(summary(lmo)),
       print(lmo)
     )
   )
@@ -108,8 +108,8 @@ test_that("tidy, summary, and print work", {
   )
 
   expect_equal(
-    lapply(slmrmo, function(x) x$coefficients[, c(1, 2, 3)]),
-    lapply(slmmo, function(x) x$coefficients[, c(1, 2, 4)])
+    lapply(slmrmo, function(x) coef(x)[, c(1, 2, 3)]),
+    lapply(slmmo, function(x) coef(x)[, c(1, 2, 4)])
   )
 
   expect_equivalent(
@@ -132,7 +132,7 @@ test_that("tidy, summary, and print work", {
 
   capture_output(
     expect_equivalent(
-      summary(lmlo)$coefficients,
+      coef(summary(lmlo)),
       print(lmlo)
     )
   )
@@ -146,13 +146,13 @@ test_that("tidy, summary, and print work", {
 
   expect_equivalent(
     as.matrix(tidy(ht)[, c("estimate", "std.error", "p.value", "ci.lower", "ci.upper", "df")]),
-    summary(ht)$coefficients
+    coef(summary(ht))
   )
 
 
   capture_output(
     expect_equivalent(
-      summary(ht)$coefficients,
+      coef(summary(ht)),
       print(ht)
     )
   )
@@ -168,7 +168,7 @@ test_that("tidy, summary, and print work", {
 
   capture_output(
     expect_equivalent(
-      summary(dim)$coefficients,
+      coef(summary(dim)),
       print(dim)
     )
   )
@@ -247,7 +247,7 @@ test_that("coef and confint work", {
   lmo <- lm_robust(y ~ x, data = dat)
   expect_equivalent(
     coef(lmo),
-    lmo$estimate
+    lmo$coefficients
   )
 
   expect_equivalent(
@@ -258,7 +258,7 @@ test_that("coef and confint work", {
   lm2o <- lm_robust(y ~ x + z, data = dat)
   expect_equivalent(
     coef(lm2o)[2],
-    lm2o$estimate["x"]
+    lm2o$coefficients["x"]
   )
 
   expect_equivalent(
@@ -283,7 +283,7 @@ test_that("coef and confint work", {
   dim <- difference_in_means(y ~ x, data = dat)
   expect_equivalent(
     coef(dim),
-    dim$estimate
+    dim$coefficients
   )
   expect_equivalent(
     confint(dim),
@@ -293,7 +293,7 @@ test_that("coef and confint work", {
   ht <- horvitz_thompson(y ~ x, condition_prs = p, data = dat)
   expect_equivalent(
     coef(ht),
-    ht$estimate
+    ht$coefficients
   )
   expect_equivalent(
     confint(ht),

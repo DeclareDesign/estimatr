@@ -2,8 +2,8 @@
 summary.lm_robust <- function(object,
                               ...) {
 
-  if (is.matrix(object$estimate)) {
-    ny <- ncol(object$estimate)
+  if (is.matrix(coef(object))) {
+    ny <- ncol(coef(object))
 
     ret <- setNames(
       vector("list", ny),
@@ -11,7 +11,7 @@ summary.lm_robust <- function(object,
     )
 
     mat_objs <- c(
-      "estimate",
+      "coefficients",
       "std.error",
       "df",
       "ci.lower",

@@ -65,10 +65,10 @@
 #'
 #' An object of class \code{"difference_in_means"} is a list containing at
 #' least the following components:
-#'   \item{estimate}{the estimated difference in means}
+#'   \item{coefficients}{the estimated difference in means}
 #'   \item{std.error}{the estimated standard error}
 #'   \item{df}{the estimated degrees of freedom}
-#'   \item{p.value}{the p-value from a two-sided t-test using \code{estimate}, \code{std.error}, and \code{df}}
+#'   \item{p.value}{the p-value from a two-sided t-test using \code{coefficients}, \code{std.error}, and \code{df}}
 #'   \item{ci.lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{ci.upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{term}{a character vector of coefficient names}
@@ -326,7 +326,7 @@ difference_in_means <-
       N_overall <- with(block_estimates, sum(N))
 
       # Blocked design, (Gerber Green 2012, p73, eq3.10)
-      diff <- with(block_estimates, sum(estimate * N / N_overall))
+      diff <- with(block_estimates, sum(coefficients * N / N_overall))
 
       df <- NA
       std.error <- NA
@@ -341,7 +341,7 @@ difference_in_means <-
             std.error <-
               with(
                 block_estimates,
-                sqrt((1 / (n_blocks * (n_blocks - 1))) * sum((estimate - diff) ^ 2))
+                sqrt((1 / (n_blocks * (n_blocks - 1))) * sum((coefficients - diff) ^ 2))
               )
           }
 
@@ -354,7 +354,7 @@ difference_in_means <-
                 block_estimates,
                 sqrt(
                   (n_blocks / ((n_blocks - 1) * N_overall ^ 2)) *
-                    sum((N * estimate - (N_overall * diff) / n_blocks) ^ 2)
+                    sum((N * coefficients - (N_overall * diff) / n_blocks) ^ 2)
                 )
               )
           }
@@ -385,7 +385,7 @@ difference_in_means <-
       }
 
       return_frame <- data.frame(
-        estimate = diff,
+        coefficients = diff,
         std.error = std.error,
         df = df,
         N = N_overall,
@@ -484,7 +484,7 @@ difference_in_means_internal <-
         has_int = TRUE
       )
 
-      diff <- cr2_out$estimate[2]
+      diff <- coef(cr2_out)[2]
       std.error <- cr2_out$std.error[2]
       df <- cr2_out$df[2]
     } else {
@@ -532,7 +532,7 @@ difference_in_means_internal <-
           has_int = TRUE
         )
 
-        diff <- w_hc2_out$estimate[2]
+        diff <- coef(w_hc2_out)[2]
         std.error <- w_hc2_out$std.error[2]
         df <- w_hc2_out$df[2]
       }
@@ -540,7 +540,7 @@ difference_in_means_internal <-
 
     return_frame <-
       data.frame(
-        estimate = diff,
+        coefficients = diff,
         std.error = std.error,
         df = df,
         stringsAsFactors = FALSE

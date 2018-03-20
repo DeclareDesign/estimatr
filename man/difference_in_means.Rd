@@ -57,10 +57,10 @@ you can use the generic accessor functions \code{coef} and
 
 An object of class \code{"difference_in_means"} is a list containing at
 least the following components:
-  \item{estimate}{the estimated difference in means}
+  \item{coefficients}{the estimated difference in means}
   \item{std.error}{the estimated standard error}
   \item{df}{the estimated degrees of freedom}
-  \item{p.value}{the p-value from a two-sided t-test using \code{estimate}, \code{std.error}, and \code{df}}
+  \item{p.value}{the p-value from a two-sided t-test using \code{coefficients}, \code{std.error}, and \code{df}}
   \item{ci.lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
   \item{ci.upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
   \item{term}{a character vector of coefficient names}
