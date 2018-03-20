@@ -1,5 +1,5 @@
 obtain <- function(ra_declaration, condition) {
-  if(requireNamespace("randomizr", quietly = TRUE)) {
+  if (requireNamespace("randomizr", quietly = TRUE)) {
     randomizr::obtain_condition_probabilities(ra_declaration, condition)
   } else {
     ra_declaration$probability_matrix[, paste0("prob_", condition)]

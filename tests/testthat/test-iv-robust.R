@@ -268,6 +268,8 @@ test_that("S3 methods", {
     3
   )
 
+  summary(ivro)
+
   siv <- capture_output(
     summary(ivro),
     print = TRUE

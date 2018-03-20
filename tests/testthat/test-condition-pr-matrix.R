@@ -1,6 +1,6 @@
 context("Helper - HT condition_pr_matrix")
 
-test_that("condition_pr_matrix behaves as expected", {
+cond_pr_mat_tests <- function() {
 
   # Errors appropriately
   expect_error(
@@ -258,4 +258,9 @@ test_that("condition_pr_matrix behaves as expected", {
     estimatr:::gen_pr_matrix_block(c(1, 2), c(1, 2)),
     "Must specify one of `t`, `p2`, or `p1`"
   )
+}
+
+test_that("condition_pr_matrix behaves as expected w/ randomizr", {
+  cond_pr_mat_tests()
 })
+
