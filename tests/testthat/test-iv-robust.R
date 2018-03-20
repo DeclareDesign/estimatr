@@ -125,7 +125,7 @@ test_that("iv_robust matches AER + ivpack", {
   ivdefse <- robust.se(ivdef)
 
   expect_equal(
-    ivdefr$estimate,
+    ivdefr$coefficients,
     ivdef$coefficients
   )
 
@@ -140,7 +140,7 @@ test_that("iv_robust matches AER + ivpack", {
   ivdefsei <- robust.se(ivdefi)
 
   expect_equal(
-    ivdefri$estimate,
+    ivdefri$coefficients,
     ivdefi$coefficients
   )
 
@@ -155,7 +155,7 @@ test_that("iv_robust matches AER + ivpack", {
   ivdefclse <- cluster.robust.se(ivdefcl, clusterid = dat$clust)
 
   expect_equal(
-    ivdefclr$estimate,
+    ivdefclr$coefficients,
     ivdefcl$coefficients
   )
 
@@ -181,7 +181,7 @@ test_that("iv_robust matches AER + ivpack", {
   ivdefsew <- robust.se(ivdefw)
 
   expect_equal(
-    ivdefrw$estimate,
+    ivdefrw$coefficients,
     ivdefw$coefficients
   )
 

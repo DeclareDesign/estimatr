@@ -82,10 +82,10 @@ you can use the generic accessor functions \code{coef} and
 An object of class \code{"horvitz_thompson"} is a list containing at
 least the following components:
 
-  \item{estimate}{the estimated difference in totals}
+  \item{coefficients}{the estimated difference in totals}
   \item{std.error}{the estimated standard error}
   \item{df}{the estimated degrees of freedom}
-  \item{p.value}{the p-value from a two-sided z-test using \code{estimate} and \code{std.error}}
+  \item{p.value}{the p-value from a two-sided z-test using \code{coefficients} and \code{std.error}}
   \item{ci.lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
   \item{ci.upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
   \item{term}{a character vector of coefficient names}

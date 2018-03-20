@@ -121,10 +121,10 @@
 #' An object of class \code{"horvitz_thompson"} is a list containing at
 #' least the following components:
 #'
-#'   \item{estimate}{the estimated difference in totals}
+#'   \item{coefficients}{the estimated difference in totals}
 #'   \item{std.error}{the estimated standard error}
 #'   \item{df}{the estimated degrees of freedom}
-#'   \item{p.value}{the p-value from a two-sided z-test using \code{estimate} and \code{std.error}}
+#'   \item{p.value}{the p-value from a two-sided z-test using \code{coefficients} and \code{std.error}}
 #'   \item{ci.lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{ci.upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{term}{a character vector of coefficient names}
@@ -545,12 +545,12 @@ horvitz_thompson <-
 
       n_blocks <- nrow(block_estimates)
 
-      diff <- with(block_estimates, sum(estimate * N / N_overall))
+      diff <- with(block_estimates, sum(coefficients * N / N_overall))
 
       std.error <- with(block_estimates, sqrt(sum(std.error ^ 2 * (N / N_overall) ^ 2)))
 
       return_frame <- data.frame(
-        estimate = diff,
+        coefficients = diff,
         std.error = std.error,
         N = N_overall
       )
@@ -749,7 +749,7 @@ horvitz_thompson_internal <-
 
     return_frame <-
       data.frame(
-        estimate = diff,
+        coefficients = diff,
         std.error = std.error,
         N = N,
         stringsAsFactors = FALSE

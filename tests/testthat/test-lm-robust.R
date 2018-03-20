@@ -13,7 +13,7 @@ test_that("lm robust se", {
   lm_robust(Y ~ Z * X, data = dat)
 
   expect_equivalent(
-    lm_robust(Y ~ 1, data = dat)$estimate[1],
+    lm_robust(Y ~ 1, data = dat)$coefficients[1],
     mean(dat$Y)
   )
 
@@ -67,7 +67,7 @@ test_that("lm robust se", {
 
     expect_equivalent(
       lm_hc0$std.error ^ 2,
-      lm_hc1$std.error ^ 2 * ((N - length(lm_hc1$estimate)) / N)
+      lm_hc1$std.error ^ 2 * ((N - length(lm_hc1$coefficients)) / N)
     )
   }
 
@@ -403,7 +403,7 @@ test_that("multiple outcomes", {
   )
 
   expect_equal(
-    lmro$estimate,
+    lmro$coefficients,
     lmo$coefficients
   )
 

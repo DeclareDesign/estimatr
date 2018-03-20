@@ -17,14 +17,14 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
 
       return_frame$p.value <- with(
         return_frame,
-        2 * pt(abs(estimate / std.error), df = df, lower.tail = FALSE)
+        2 * pt(abs(coefficients / std.error), df = df, lower.tail = FALSE)
       )
 
       crit_se <- with(return_frame, qt(1 - alpha / 2, df = df) * std.error)
     } else {
       return_frame$p.value <- with(
         return_frame,
-        2 * pnorm(abs(estimate / std.error), lower.tail = FALSE)
+        2 * pnorm(abs(coefficients / std.error), lower.tail = FALSE)
       )
 
       crit_se <- with(return_frame, qnorm(1 - alpha / 2) * std.error)
@@ -32,8 +32,8 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
       return_frame$df <- NA
     }
 
-    return_frame$ci.lower <- with(return_frame, estimate - crit_se)
-    return_frame$ci.upper <- with(return_frame, estimate + crit_se)
+    return_frame$ci.lower <- with(return_frame, coefficients - crit_se)
+    return_frame$ci.upper <- with(return_frame, coefficients + crit_se)
 
     return(as.list(return_frame))
   } else {

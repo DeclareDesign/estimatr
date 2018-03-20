@@ -17,11 +17,11 @@ test_that("Horvitz-Thompson matches d-i-m under certain conditions", {
       y ~ z,
       condition_prs = ps,
       data = dat
-    )$estimate,
+    )$coefficients,
     difference_in_means(
       y ~ z,
       data = dat
-    )$estimate
+    )$coefficients
   )
 })
 
@@ -398,7 +398,7 @@ test_that("Works without variation in treatment", {
   )
 
 
-  expect_equivalent(ht_const_1$estimate, mean(dat$y))
+  expect_equivalent(ht_const_1$coefficients, mean(dat$y))
   expect_equal(ht_const_1$std.error, 1 / (nrow(dat)) * sqrt(sum(dat$y ^ 2)))
 
 
@@ -413,7 +413,7 @@ test_that("Works without variation in treatment", {
     condition_prs = ps
   )
 
-  expect_equivalent(ht_const$estimate, mean(dat$y / dat$ps))
+  expect_equivalent(ht_const$coefficients, mean(dat$y / dat$ps))
   expect_equal(ht_const$std.error, 1 / (nrow(dat)) * sqrt(sum((dat$y / dat$ps) ^ 2)))
 
   ## Blocks and all are treated
@@ -426,7 +426,7 @@ test_that("Works without variation in treatment", {
   )
 
   # with blocks SE is different because not simple any more
-  expect_equivalent(ht_block$estimate, mean(dat$y / dat$ps))
+  expect_equivalent(ht_block$coefficients, mean(dat$y / dat$ps))
   # expect_equal(ht_block$std.error, 1/(nrow(dat)) * sqrt(sum((dat$y / dat$ps)^2)))
 
   ## Blocks and some are treated!

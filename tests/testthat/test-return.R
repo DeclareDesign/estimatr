@@ -13,7 +13,7 @@ test_that("Structure of output is the same", {
   # Should be in all estimator returns
   in_return <-
     c(
-      "estimate",
+      "coefficients",
       "std.error",
       "df",
       "p.value",

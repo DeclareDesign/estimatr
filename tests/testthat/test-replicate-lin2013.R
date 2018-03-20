@@ -80,8 +80,8 @@ if (rep_table_3) {
   }
   ci_custom <- function(obj) {
     return(list(
-      ci.upper = obj$estimate[2] + obj$std.error[2] * 1.96,
-      ci.lower = obj$estimate[2] - obj$std.error[2] * 1.96
+      ci.upper = obj$coefficients[2] + obj$std.error[2] * 1.96,
+      ci.lower = obj$coefficients[2] - obj$std.error[2] * 1.96
     ))
   }
 
@@ -136,7 +136,7 @@ if (rep_table_3) {
       )
     }
 
-    ests[i, ] <- c(unadj$estimate[2], tradadj$estimate[2], intadj$estimate[2])
+    ests[i, ] <- c(unadj$coefficients[2], tradadj$coefficients[2], intadj$coefficients[2])
     sd_mats[i, , ] <- sd_mat
     cover_mats[i, , ] <- cover_mat
     width_mats[i, , ] <- width_mat

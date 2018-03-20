@@ -247,7 +247,7 @@ test_that("coef and confint work", {
   lmo <- lm_robust(y ~ x, data = dat)
   expect_equivalent(
     coef(lmo),
-    lmo$estimate
+    lmo$coefficients
   )
 
   expect_equivalent(
@@ -258,7 +258,7 @@ test_that("coef and confint work", {
   lm2o <- lm_robust(y ~ x + z, data = dat)
   expect_equivalent(
     coef(lm2o)[2],
-    lm2o$estimate["x"]
+    lm2o$coefficients["x"]
   )
 
   expect_equivalent(
@@ -283,7 +283,7 @@ test_that("coef and confint work", {
   dim <- difference_in_means(y ~ x, data = dat)
   expect_equivalent(
     coef(dim),
-    dim$estimate
+    dim$coefficients
   )
   expect_equivalent(
     confint(dim),
@@ -293,7 +293,7 @@ test_that("coef and confint work", {
   ht <- horvitz_thompson(y ~ x, condition_prs = p, data = dat)
   expect_equivalent(
     coef(ht),
-    ht$estimate
+    ht$coefficients
   )
   expect_equivalent(
     confint(ht),

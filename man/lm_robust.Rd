@@ -58,10 +58,10 @@ the additional models.
 
 An object of class \code{"lm_robust"} is a list containing at least the
 following components:
-  \item{estimate}{the estimated coefficients}
+  \item{coefficients}{the estimated coefficients}
   \item{std.error}{the estimated standard errors}
   \item{df}{the estimated degrees of freedom}
-  \item{p.value}{the p-values from a two-sided t-test using \code{estimate}, \code{std.error}, and \code{df}}
+  \item{p.value}{the p-values from a two-sided t-test using \code{coefficients}, \code{std.error}, and \code{df}}
   \item{ci.lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
   \item{ci.upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
   \item{term}{a character vector of coefficient names}
@@ -129,7 +129,7 @@ tidy(lmro)
 # Can use summary() to get more statistics
 summary(lmro)
 # Can also get coefficients three ways
-lmro$estimate
+lmro$coefficients
 coef(lmro)
 tidy(lmro)$estimate
 # Can also get confidence intervals from object or with new 1 - `alpha`
