@@ -98,7 +98,7 @@ test_that("DIM same as t.test", {
 
   expect_equal(
     unlist(
-      difference_in_means(Y ~ Z, data = dat)[c("p", "ci_lower", "ci_upper", "df")],
+      difference_in_means(Y ~ Z, data = dat)[c("p.value", "ci.lower", "ci.upper", "df")],
       F,
       F
     ),
@@ -146,7 +146,7 @@ test_that("DIM Clustered", {
   dim_05 <- difference_in_means(Y ~ Z, alpha = .05, clusters = J, data = dat)
   dim_10 <- difference_in_means(Y ~ Z, alpha = .10, clusters = J, data = dat)
 
-  expect_true(dim_05$ci_lower < dim_10$ci_lower)
+  expect_true(dim_05$ci.lower < dim_10$ci.lower)
 
   expect_equal(
     dim_10$design,
@@ -402,7 +402,7 @@ test_that("DIM unbiased", {
       dat$Z <- x
       dat$Y <- ifelse(dat$Z, dat$Y1, dat$Y0)
       dim <- difference_in_means(Y ~ Z, data = dat)
-      dim$coefficients
+      dim$estimate
     }
   )
 
@@ -430,7 +430,7 @@ test_that("DIM unbiased", {
         clusters = cluster,
         data = dat
       )
-      dim$coefficients
+      dim$estimate
     }
   )
 
@@ -459,7 +459,7 @@ test_that("DIM unbiased", {
         blocks = blocks,
         data = dat
       )
-      dim$coefficients
+      dim$estimate
     }
   )
 
@@ -488,7 +488,7 @@ test_that("DIM unbiased", {
         blocks = blocks,
         data = dat
       )
-      dim$coefficients
+      dim$estimate
     }
   )
 
@@ -519,7 +519,7 @@ test_that("DIM unbiased", {
         clusters = clusters,
         data = dat
       )
-      dim$coefficients
+      dim$estimate
     }
   )
 

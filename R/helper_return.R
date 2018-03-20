@@ -33,17 +33,17 @@ dim_like_return <- function(return_list, alpha, formula, conditions) {
   coef_name <- labels(fterms)
 
   if (add_label) {
-    return_list[["coefficient_name"]] <- paste0(
+    return_list[["term"]] <- paste0(
       coef_name,
       conditions[[2]]
     )
   } else {
-    return_list[["coefficient_name"]] <- coef_name
+    return_list[["term"]] <- coef_name
   }
 
   return_list[["outcome"]] <- deparse(formula[[2]], nlines = 5)
 
-  names(return_list[["coefficients"]]) <- return_list[["coefficient_name"]]
+  names(return_list[["estimate"]]) <- return_list[["term"]]
 
   return(return_list)
 }

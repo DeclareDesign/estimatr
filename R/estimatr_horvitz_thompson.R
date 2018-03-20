@@ -121,13 +121,13 @@
 #' An object of class \code{"horvitz_thompson"} is a list containing at
 #' least the following components:
 #'
-#'   \item{coefficients}{the estimated coefficients}
-#'   \item{se}{the estimated standard errors}
+#'   \item{estimate}{the estimated difference in totals}
+#'   \item{std.error}{the estimated standard error}
 #'   \item{df}{the estimated degrees of freedom}
-#'   \item{p}{the p-values from from a two-sided z-test using \code{coefficients}, \code{se}, and \code{df}}
-#'   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
-#'   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
-#'   \item{coefficient_name}{a character vector of coefficient names}
+#'   \item{p.value}{the p-value from a two-sided z-test using \code{estimate} and \code{std.error}}
+#'   \item{ci.lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
+#'   \item{ci.upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
+#'   \item{term}{a character vector of coefficient names}
 #'   \item{alpha}{the significance level specified by the user}
 #'   \item{N}{the number of observations used}
 #'   \item{outcome}{the name of the outcome variable}
@@ -545,13 +545,13 @@ horvitz_thompson <-
 
       n_blocks <- nrow(block_estimates)
 
-      diff <- with(block_estimates, sum(coefficients * N / N_overall))
+      diff <- with(block_estimates, sum(estimate * N / N_overall))
 
-      se <- with(block_estimates, sqrt(sum(se ^ 2 * (N / N_overall) ^ 2)))
+      std.error <- with(block_estimates, sqrt(sum(std.error ^ 2 * (N / N_overall) ^ 2)))
 
       return_frame <- data.frame(
-        coefficients = diff,
-        se = se,
+        estimate = diff,
+        std.error = std.error,
         N = N_overall
       )
     }
@@ -601,7 +601,7 @@ horvitz_thompson_internal <-
 
     N <- length(t2) + length(t1)
 
-    se <- NA
+    std.error <- NA
 
     collapsed <- !is.null(data$clusters)
     if (collapsed) {
@@ -639,7 +639,7 @@ horvitz_thompson_internal <-
 
       diff <- (sum(Y2) - sum(Y1)) / N
 
-      se <-
+      std.error <-
         sqrt(
           sum(Y2 ^ 2) +
             sum(Y1 ^ 2) +
@@ -687,7 +687,7 @@ horvitz_thompson_internal <-
           )
 
 
-          se <-
+          std.error <-
             sqrt(
               var_ht_total_no_cov(y1, data$condition_probabilities) +
                 var_ht_total_no_cov(y0, 1 - data$condition_probabilities) +
@@ -696,7 +696,7 @@ horvitz_thompson_internal <-
             ) / N
         } else {
           # Young's inequality
-          se <-
+          std.error <-
             sqrt(sum(Y2 ^ 2) + sum(Y1 ^ 2)) / N
         }
       } else {
@@ -733,15 +733,15 @@ horvitz_thompson_internal <-
           if (!is.nan(varN2)) {
             if (varN2 < 0) {
               warning("Variance below 0")
-              se <- NA
+              std.error <- NA
             } else {
-              se <- sqrt(varN2) / N
+              std.error <- sqrt(varN2) / N
             }
           } else {
             warning(
               "Variance is NaN. This is likely the result of a complex condition probability matrix"
             )
-            se <- NA
+            std.error <- NA
           }
         }
       }
@@ -749,8 +749,8 @@ horvitz_thompson_internal <-
 
     return_frame <-
       data.frame(
-        coefficients = diff,
-        se = se,
+        estimate = diff,
+        std.error = std.error,
         N = N,
         stringsAsFactors = FALSE
       )

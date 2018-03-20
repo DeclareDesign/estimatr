@@ -64,13 +64,13 @@
 #'
 #' An object of class \code{"difference_in_means"} is a list containing at
 #' least the following components:
-#'   \item{coefficients}{the estimated coefficients}
-#'   \item{se}{the estimated standard errors}
+#'   \item{estimate}{the estimated difference in means}
+#'   \item{std.error}{the estimated standard error}
 #'   \item{df}{the estimated degrees of freedom}
-#'   \item{p}{the p-values from a two-sided t-test using \code{coefficients}, \code{se}, and \code{df}}
-#'   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
-#'   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
-#'   \item{coefficient_name}{a character vector of coefficient names}
+#'   \item{p.value}{the p-value from a two-sided t-test using \code{estimate}, \code{std.error}, and \code{df}}
+#'   \item{ci.lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
+#'   \item{ci.upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
+#'   \item{term}{a character vector of coefficient names}
 #'   \item{alpha}{the significance level specified by the user}
 #'   \item{N}{the number of observations used}
 #'   \item{outcome}{the name of the outcome variable}
@@ -320,7 +320,7 @@ difference_in_means <-
       N_overall <- with(block_estimates, sum(N))
 
       # Blocked design, (Gerber Green 2012, p73, eq3.10)
-      diff <- with(block_estimates, sum(coefficients * N / N_overall))
+      diff <- with(block_estimates, sum(estimate * N / N_overall))
 
       df <- NA
       n_blocks <- nrow(block_estimates)
@@ -329,20 +329,20 @@ difference_in_means <-
         if (is.null(data$cluster)) {
           design <- "Matched-pair"
           # Pair matched, unit randomized (Gerber Green 2012, p77, eq3.16)
-          se <-
+          std.error <-
             with(
               block_estimates,
-              sqrt((1 / (n_blocks * (n_blocks - 1))) * sum((coefficients - diff) ^ 2))
+              sqrt((1 / (n_blocks * (n_blocks - 1))) * sum((estimate - diff) ^ 2))
             )
         } else {
           design <- "Matched-pair clustered"
           # Pair matched, cluster randomized (Imai, King, Nall 2009, p36, eq6)
-          se <-
+          std.error <-
             with(
               block_estimates,
               sqrt(
                 (n_blocks / ((n_blocks - 1) * N_overall ^ 2)) *
-                  sum((N * coefficients - (N_overall * diff) / n_blocks) ^ 2)
+                  sum((N * estimate - (N_overall * diff) / n_blocks) ^ 2)
               )
             )
         }
@@ -351,7 +351,7 @@ difference_in_means <-
         df <- n_blocks - 1
       } else {
         # Block randomized (Gerber and Green 2012, p. 74, footnote 17)
-        se <- with(block_estimates, sqrt(sum(se ^ 2 * (N / N_overall) ^ 2)))
+        std.error <- with(block_estimates, sqrt(sum(std.error ^ 2 * (N / N_overall) ^ 2)))
 
 
         ## we don't know if this is correct!
@@ -367,8 +367,8 @@ difference_in_means <-
       }
 
       return_frame <- data.frame(
-        coefficients = diff,
-        se = se,
+        estimate = diff,
+        std.error = std.error,
         df = df,
         N = N_overall,
         stringsAsFactors = FALSE
@@ -465,8 +465,8 @@ difference_in_means_internal <-
         has_int = TRUE
       )
 
-      diff <- cr2_out$coefficients[2]
-      se <- cr2_out$se[2]
+      diff <- cr2_out$estimate[2]
+      std.error <- cr2_out$std.error[2]
       df <- cr2_out$df[2]
     } else {
       if (is.null(data$weights)) {
@@ -474,15 +474,15 @@ difference_in_means_internal <-
 
         if (pair_matched) {
           # Pair matched designs
-          se <- NA
+          std.error <- NA
         } else {
           # Non-pair matched designs, unit level randomization
           var_Y2 <- var(Y2)
           var_Y1 <- var(Y1)
 
-          se <- sqrt(var_Y2 / N2 + var_Y1 / N1)
+          std.error <- sqrt(var_Y2 / N2 + var_Y1 / N1)
 
-          df <- se ^ 4 /
+          df <- std.error ^ 4 /
             (
               (var_Y2 / N2) ^ 2 / (N2 - 1) +
                 (var_Y1 / N1) ^ 2 / (N1 - 1)
@@ -513,16 +513,16 @@ difference_in_means_internal <-
           has_int = TRUE
         )
 
-        diff <- w_hc2_out$coefficients[2]
-        se <- w_hc2_out$se[2]
+        diff <- w_hc2_out$estimate[2]
+        std.error <- w_hc2_out$std.error[2]
         df <- w_hc2_out$df[2]
       }
     }
 
     return_frame <-
       data.frame(
-        coefficients = diff,
-        se = se,
+        estimate = diff,
+        std.error = std.error,
         df = df,
         stringsAsFactors = FALSE
       )

@@ -84,7 +84,7 @@ test_that("Test LM Lin", {
   )
 
   expect_equivalent(
-    lm_lin_out$coefficients,
+    lm_lin_out$estimate,
     lm(Y ~ Z + Z * X1_c + Z * X2_c, data = dat)$coefficients
   )
 
@@ -291,7 +291,7 @@ test_that("Test LM Lin", {
 
   lm_lin(Y ~ treat, ~ treat2 + X1, data = dat) # somewhat odd behavior
   expect_equivalent(
-    is.na(lm_lin(Y ~ treat, ~ X1_2 + X1, data = dat)$coefficients),
+    is.na(lm_lin(Y ~ treat, ~ X1_2 + X1, data = dat)$estimate),
     c(FALSE, FALSE, FALSE, TRUE, FALSE, TRUE)
   )
 
@@ -307,7 +307,7 @@ test_that("Test LM Lin", {
   dat$z <- rbinom(nrow(dat), 1, 0.5)
   lmlo <- lm_lin(Y ~ z + 0, ~X1, data = dat)
   expect_equal(
-    lmlo$coefficient_name,
+    lmlo$term,
     c("z", "X1_c", "z:X1_c")
   )
 })
@@ -327,7 +327,7 @@ test_that("lm_lin same as sampling perspective", {
 
   expect_equivalent(
     ate,
-    lmo$coefficients["am"]
+    lmo$estimate["am"]
   )
 })
 
@@ -346,7 +346,7 @@ test_that("weighted lm_lin same as with one covar sampling view", {
 
   expect_equivalent(
     wate,
-    lmwo$coefficients["am"]
+    lmwo$estimate["am"]
   )
 })
 
@@ -365,6 +365,6 @@ test_that("weighted lm_lin same as with two covar sampling view", {
 
   expect_equivalent(
     w2ate,
-    lmw2o$coefficients["am"]
+    lmw2o$estimate["am"]
   )
 })
