@@ -1,10 +1,24 @@
+obtain <- function(ra_declaration, condition) {
+  if(requireNamespace("randomizr", quietly = TRUE)) {
+    randomizr::obtain_condition_probabilities(ra_declaration, condition)
+  } else {
+    ra_declaration$probability_matrix[, paste0("prob_", condition)]
+  }
+}
+
 #' Builds condition probability matrices for Horvitz-Thompson estimation from
 #' \pkg{randomizr} declaration
 #'
-#' @param declaration An object of class \code{"ra_declaration"}, generated
+#' @param ra_declaration An object of class \code{"ra_declaration"}, generated
 #' by the \code{\link[randomizr]{declare_ra}} function in \pkg{randomizr}. This
 #' object contains the experimental design that will be represented in a
 #' condition probability matrix
+#' @param condition1 The name of the first condition, often the control group. If \code{NULL},
+#' defaults to first condition in randomizr declaration. Either both `condition1`
+#' and `condition2` have to be specified or both left as \code{NULL}.
+#' @param condition2 The name of the second condition, often the treatment group. If \code{NULL},
+#' defaults to second condition in randomizr declaration. Either both `condition1`
+#' and `condition2` have to be specified or both left as \code{NULL}.
 #'
 #' @details This function takes a \code{"ra_declaration"}, generated
 #' by the \code{\link[randomizr]{declare_ra}} function in \pkg{randomizr} and
@@ -66,7 +80,7 @@
 #' # Declare complete blocked randomization
 #' bl_declaration <- declare_ra(blocks = dat$blocks, prob = 0.4, simple = FALSE)
 #' # Get probabilities
-#' block_pr_mat <- declaration_to_condition_pr_mat(bl_declaration)
+#' block_pr_mat <- declaration_to_condition_pr_mat(bl_declaration, 0, 1)
 #' # Do randomiztion
 #' dat$z <- bl_declaration$ra_function()
 #'
@@ -75,36 +89,57 @@
 #' # When you pass a declaration to horvitz_thompson, this function is called
 #'
 #' # Equivalent to above call
-#' horvitz_thompson(y ~ z, data = dat, declaration = bl_declaration)
+#' horvitz_thompson(y ~ z, data = dat, ra_declaration = bl_declaration)
 #'
 #' @export
-declaration_to_condition_pr_mat <- function(declaration) {
-  if (class(declaration) != "ra_declaration") {
-    stop("'declaration' must be an object of class 'ra_declaration'")
+declaration_to_condition_pr_mat <- function(ra_declaration,
+                                            condition1 = NULL,
+                                            condition2 = NULL) {
+  if (class(ra_declaration) != "ra_declaration") {
+    stop("`ra_declaration` must be an object of class 'ra_declaration'")
   }
 
-  if (ncol(declaration$probabilities_matrix) > 2) {
+  if (ncol(ra_declaration$probabilities_matrix) > 2) {
     stop(
-      "`declaration` must have only two arms when passed directly to ",
+      "`ra_declaration` must have only two arms when passed directly to ",
       "declaration_to_condition_pr_mat()"
     )
   }
 
-  p1 <- declaration$probabilities_matrix[, 1]
-  p2 <- declaration$probabilities_matrix[, 2]
+  if (is.null(condition1) && is.null(condition2)) {
+    condition1 <- ra_declaration$cleaned_arguments$condition_names[1]
+    condition2 <- ra_declaration$cleaned_arguments$condition_names[2]
+  } else if (is.null(condition1) && !is.null(condition2)) {
+    stop(
+      "Cannot have `condition1 == NULL` and `condition2 != NULL`"
+    )
+  }else if (!is.null(condition1) && is.null(condition2)) {
+    stop(
+      "Cannot have `condition2 == NULL` and `condition1 != NULL`"
+    )
+  }
 
-  declaration_call <- as.list(declaration$original_call)
+  p1 <- obtain(
+    ra_declaration,
+    condition1
+  )
+  p2 <- obtain(
+    ra_declaration,
+    condition2
+  )
+
+  declaration_call <- as.list(ra_declaration$original_call)
   simple <- eval(declaration_call$simple)
 
-  n <- nrow(declaration$probabilities_matrix)
+  n <- nrow(ra_declaration$probabilities_matrix)
 
-  if (declaration$ra_type == "simple") {
+  if (ra_declaration$ra_type == "simple") {
     v <- c(p1, p2)
     condition_pr_matrix <- tcrossprod(v)
     diag(condition_pr_matrix) <- v
     condition_pr_matrix[cbind(n + 1:n, 1:n)] <- 0
     condition_pr_matrix[cbind(1:n, n + 1:n)] <- 0
-  } else if (declaration$ra_type == "complete") {
+  } else if (ra_declaration$ra_type == "complete") {
     if (length(unique(p2)) > 1) {
       stop(
         "Treatment probabilities must be fixed for complete randomized designs"
@@ -116,34 +151,34 @@ declaration_to_condition_pr_mat <- function(declaration) {
         pr = p2[1],
         n_total = n
       )
-  } else if (declaration$ra_type == "clustered") {
+  } else if (ra_declaration$ra_type == "clustered") {
     condition_pr_matrix <- gen_pr_matrix_cluster(
-      clusters = declaration$clusters,
+      clusters = ra_declaration$clusters,
       treat_probs = p2,
       simple = simple
     )
-  } else if (declaration$ra_type == "blocked") {
+  } else if (ra_declaration$ra_type == "blocked") {
     condition_pr_matrix <- gen_pr_matrix_block(
-      blocks = declaration$blocks,
+      blocks = ra_declaration$blocks,
       clusters = NULL,
       p1 = p1,
       p2 = p2
     )
-  } else if (declaration$ra_type == "blocked_and_clustered") {
+  } else if (ra_declaration$ra_type == "blocked_and_clustered") {
     condition_pr_matrix <- gen_pr_matrix_block(
-      blocks = declaration$blocks,
-      clusters = declaration$clusters,
+      blocks = ra_declaration$blocks,
+      clusters = ra_declaration$clusters,
       p1 = p1,
       p2 = p2
     )
-  } else if (declaration$ra_type == "custom") {
+  } else if (ra_declaration$ra_type == "custom") {
     # Use permutation matrix
-    return(permutations_to_condition_pr_mat(declaration$permutation_matrix))
+    return(permutations_to_condition_pr_mat(ra_declaration$permutation_matrix))
   }
 
   # Add names
   colnames(condition_pr_matrix) <- rownames(condition_pr_matrix) <-
-    c(paste0("0_", 1:n), paste0("1_", 1:n))
+    c(paste0(condition1, "_", 1:n), paste0(condition2, "_", 1:n))
 
   return(condition_pr_matrix)
 }

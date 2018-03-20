@@ -5,7 +5,7 @@ test_that("condition_pr_matrix behaves as expected", {
   # Errors appropriately
   expect_error(
     declaration_to_condition_pr_mat(rbinom(5, 1, 0.5)),
-    "'declaration' must be an object of class 'ra_declaration'"
+    "`ra_declaration` must be an object of class 'ra_declaration'"
   )
 
   # Complete randomization
@@ -18,6 +18,37 @@ test_that("condition_pr_matrix behaves as expected", {
     declaration_to_condition_pr_mat(comp_ra),
     permutations_to_condition_pr_mat(perms)
   )
+
+  # declaration to condition_pr_mat errors
+  expect_error(
+    declaration_to_condition_pr_mat(randomizr::declare_ra(N = n), 1, NULL),
+    "Cannot have `condition2 == NULL`"
+  )
+  expect_error(
+    declaration_to_condition_pr_mat(randomizr::declare_ra(N = n), NULL, 1),
+    "Cannot have `condition1 == NULL`"
+  )
+  expect_error(
+    declaration_to_condition_pr_mat(rbinom(5, 1, 0.5)),
+    "`ra_declaration` must be an object of class 'ra_declaration'"
+  )
+
+  # Condition args work properly
+  mat01 <- declaration_to_condition_pr_mat(
+    randomizr::declare_ra(N = n, prob = 0.4),
+    0,
+    1
+  )
+  mat10 <- declaration_to_condition_pr_mat(
+    randomizr::declare_ra(N = n, prob = 0.4),
+    1,
+    0
+  )
+
+  # Diagonals are just flipped, check the names!
+  # colnames(mat01)
+  # colnames(mat10)
+  expect_equal(mat01, mat10[rownames(mat01), colnames(mat01)])
 
   # Complete randomization with number of treated units not fixed
   comp_odd_ra <- randomizr::declare_ra(N = 3, prob = 0.5)
@@ -181,7 +212,7 @@ test_that("condition_pr_matrix behaves as expected", {
   mult_ra <- randomizr::declare_ra(N = 10, prob_each = c(0.2, 0.2, 0.6))
   expect_error(
     declaration_to_condition_pr_mat(mult_ra),
-    "`declaration` must have only two arms when passed directly"
+    "`ra_declaration` must have only two arms when passed directly"
   )
 
   # Permutation error
@@ -207,6 +238,8 @@ test_that("condition_pr_matrix behaves as expected", {
   )
   bl_small$probabilities_matrix <-
     cbind(c(0.4, 0.5, 0.6, 0.7), c(0.6, 0.5, 0.4, 0.3))
+  bl_small$cleaned_arguments$condition_names
+  colnames(bl_small$probabilities_matrix) <- c("prob_0", "prob_1")
   expect_error(
     declaration_to_condition_pr_mat(bl_small),
     "Treatment probabilities must be fixed within blocks for block randomized"
@@ -214,6 +247,7 @@ test_that("condition_pr_matrix behaves as expected", {
 
   comp <- randomizr::declare_ra(N = 2, m = 1)
   comp$probabilities_matrix <- cbind(c(0.4, 0.5), c(0.6, 0.5))
+  colnames(comp$probabilities_matrix) <- c("prob_0", "prob_1")
   expect_error(
     declaration_to_condition_pr_mat(comp),
     "Treatment probabilities must be fixed for complete randomized designs"

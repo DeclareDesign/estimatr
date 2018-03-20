@@ -5,13 +5,22 @@
 \title{Builds condition probability matrices for Horvitz-Thompson estimation from
 \pkg{randomizr} declaration}
 \usage{
-declaration_to_condition_pr_mat(declaration)
+declaration_to_condition_pr_mat(ra_declaration, condition1 = NULL,
+  condition2 = NULL)
 }
 \arguments{
-\item{declaration}{An object of class \code{"ra_declaration"}, generated
+\item{ra_declaration}{An object of class \code{"ra_declaration"}, generated
 by the \code{\link[randomizr]{declare_ra}} function in \pkg{randomizr}. This
 object contains the experimental design that will be represented in a
 condition probability matrix}
+
+\item{condition1}{The name of the first condition, often the control group. If \code{NULL},
+defaults to first condition in randomizr declaration. Either both `condition1`
+and `condition2` have to be specified or both left as \code{NULL}.}
+
+\item{condition2}{The name of the second condition, often the treatment group. If \code{NULL},
+defaults to second condition in randomizr declaration. Either both `condition1`
+and `condition2` have to be specified or both left as \code{NULL}.}
 }
 \value{
 a numeric 2n*2n matrix of marginal and joint condition treatment
@@ -77,7 +86,7 @@ dat <- data.frame(
 # Declare complete blocked randomization
 bl_declaration <- declare_ra(blocks = dat$blocks, prob = 0.4, simple = FALSE)
 # Get probabilities
-block_pr_mat <- declaration_to_condition_pr_mat(bl_declaration)
+block_pr_mat <- declaration_to_condition_pr_mat(bl_declaration, 0, 1)
 # Do randomiztion
 dat$z <- bl_declaration$ra_function()
 
@@ -86,7 +95,7 @@ horvitz_thompson(y ~ z, data = dat, condition_pr_mat = block_pr_mat)
 # When you pass a declaration to horvitz_thompson, this function is called
 
 # Equivalent to above call
-horvitz_thompson(y ~ z, data = dat, declaration = bl_declaration)
+horvitz_thompson(y ~ z, data = dat, ra_declaration = bl_declaration)
 
 }
 \seealso{
