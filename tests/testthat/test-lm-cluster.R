@@ -73,11 +73,11 @@ test_that("lm cluster se", {
   bm_interact
 
   bm_interact_interval <-
-    lm_interact_simple$coefficients["Z:X"] +
+    coef(lm_interact_simple)["Z:X"] +
     qt(0.975, df = bm_interact$dof["Z:X"]) * bm_interact$se["Z:X"] * c(-1, 1)
 
   bm_interact_stata_interval <-
-    lm_interact_simple$coefficients["Z:X"] +
+    coef(lm_interact_simple)["Z:X"] +
     qt(0.975, df = length(unique(dat$J)) - 1) * bm_interact$se.Stata["Z:X"] * c(-1, 1)
 
   expect_equivalent(
@@ -108,8 +108,8 @@ test_that("lm cluster se", {
     )
 
   bm_full_moe <- qt(0.975, df = bm_full$dof) * bm_full$se
-  bm_full_lower <- lm_full_simple$coefficients - bm_full_moe
-  bm_full_upper <- lm_full_simple$coefficients + bm_full_moe
+  bm_full_lower <- coef(lm_full_simple) - bm_full_moe
+  bm_full_upper <- coef(lm_full_simple) + bm_full_moe
 
   expect_equivalent(
     as.matrix(tidy(lm_full)[, c("std.error", "ci.lower", "ci.upper")]),
@@ -162,7 +162,7 @@ test_that("lm cluster se", {
     # Stata is the same as CR0 but with finite sample
     expect_equivalent(
       lm_cr0$std.error ^ 2,
-      lm_stata$std.error ^ 2 * (N - length(lm_stata$estimate)) * (length(unique(dat$J)) - 1) / ((N - 1) * length(unique(dat$J)))
+      lm_stata$std.error ^ 2 * (N - length(coef(lm_stata))) * (length(unique(dat$J)) - 1) / ((N - 1) * length(unique(dat$J)))
     )
 
     expect_false(all(lm_cr0$std.error == lm_stata$std.error))
@@ -312,12 +312,12 @@ test_that("Clustered SEs work with clusters of size 1", {
 
   expect_equivalent(
     as.matrix(tidy(lm_cr2)[, c("estimate", "std.error", "df")]),
-    cbind(lmo$coefficients, bmo$se, bmo$dof)
+    cbind(coef(lmo), bmo$se, bmo$dof)
   )
 
   expect_equivalent(
     as.matrix(tidy(lm_stata)[, c("estimate", "std.error")]),
-    cbind(lmo$coefficients, bmo$se.Stata)
+    cbind(coef(lmo), bmo$se.Stata)
   )
 })
 

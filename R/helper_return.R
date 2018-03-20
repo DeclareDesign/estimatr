@@ -43,7 +43,7 @@ dim_like_return <- function(return_list, alpha, formula, conditions) {
 
   return_list[["outcome"]] <- deparse(formula[[2]], nlines = 5)
 
-  names(return_list[["estimate"]]) <- return_list[["term"]]
+  names(return_list[["coefficients"]]) <- return_list[["term"]]
 
   return(return_list)
 }

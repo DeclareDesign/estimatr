@@ -148,13 +148,13 @@ lm_robust_fit <- function(y,
 
   if (multivariate) {
     return_list <- list(
-      estimate = fit$beta_hat,
+      coefficients = fit$beta_hat,
       std.error = matrix(NA, k, ny),
       df = matrix(NA, k, ny)
     )
   } else {
     return_list <- list(
-      estimate = setNames(as.vector(fit$beta_hat), variable_names),
+      coefficients = setNames(as.vector(fit$beta_hat), variable_names),
       std.error = NA,
       df = NA
     )
