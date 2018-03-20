@@ -29,7 +29,6 @@ Suggests:
     fabricatr (>= 0.3),
     randomizr (>= 0.9),
     AER
-Enhances: 
-    broom, 
+Enhances:
     texreg
 Additional_Repositories: http://r.declaredesign.org
