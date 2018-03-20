@@ -12,7 +12,7 @@ na.omit_detailed.data.frame <- function(object){
 
   why_omit <- naomitwhy(object, function(x) is.na(x))
 
-  if(is.integer(why_omit)) {
+  if(length(why_omit)) {
     object <- if(length(dim(object))) object[-why_omit, , drop=FALSE] else object[-why_omit]
     attr(object, "na.action") <- why_omit
   }
