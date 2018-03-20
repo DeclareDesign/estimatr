@@ -51,7 +51,9 @@
 #' return results in a \code{data.frame}. To get useful data out of the return,
 #' you can use these data frames, you can use the resulting list directly, or
 #' you can use the generic accessor functions \code{coef}, \code{vcov},
-#' \code{confint}, and \code{predict}.
+#' \code{confint}, and \code{predict}. Marginal effects and uncertainty about
+#' them can be gotten by passing this object to
+#' \code{\link[margins]{margins}} from the \pkg{margins}.
 #'
 #' Users who want to print the results in TeX of HTML can use the
 #' \code{\link[texreg]{extract}} function and the \pkg{texreg} package.

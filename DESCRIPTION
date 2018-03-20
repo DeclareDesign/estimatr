@@ -28,6 +28,8 @@ Suggests:
     RcppEigen,
     fabricatr (>= 0.3),
     randomizr (>= 0.9),
+    margins,
+    prediction,
     AER
 Enhances:
     broom,
