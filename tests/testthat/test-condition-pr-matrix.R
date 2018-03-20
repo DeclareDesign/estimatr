@@ -5,7 +5,7 @@ test_that("condition_pr_matrix behaves as expected", {
   # Errors appropriately
   expect_error(
     declaration_to_condition_pr_mat(rbinom(5, 1, 0.5)),
-    "'declaration' must be an object of class 'ra_declaration'"
+    "`ra_declaration` must be an object of class 'ra_declaration'"
   )
 
   # Complete randomization
@@ -181,7 +181,7 @@ test_that("condition_pr_matrix behaves as expected", {
   mult_ra <- randomizr::declare_ra(N = 10, prob_each = c(0.2, 0.2, 0.6))
   expect_error(
     declaration_to_condition_pr_mat(mult_ra),
-    "`declaration` must have only two arms when passed directly"
+    "`ra_declaration` must have only two arms when passed directly"
   )
 
   # Permutation error

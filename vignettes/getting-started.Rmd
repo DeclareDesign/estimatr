@@ -203,7 +203,7 @@ crs_decl <- declare_ra(
 ht_comp <- horvitz_thompson(
   y ~ z,
   data = dat,
-  declaration = crs_decl
+  ra_declaration = crs_decl
 )
 tidy(ht_comp)
 ```
@@ -225,7 +225,7 @@ crs_clust_decl <- declare_ra(
 ht_clust <- horvitz_thompson(
   y_clust ~ z_clust,
   data = dat,
-  declaration = crs_clust_decl
+  ra_declaration = crs_clust_decl
 )
 tidy(ht_clust)
 ```

@@ -36,7 +36,7 @@ test_that("Horvitz-Thompson works in simple case", {
   ht_simp <- horvitz_thompson(
     y ~ z,
     data = dat,
-    declaration = simp_decl,
+    ra_declaration = simp_decl,
     return_condition_pr_mat = TRUE
   )
 
@@ -44,7 +44,7 @@ test_that("Horvitz-Thompson works in simple case", {
   ht_const <- horvitz_thompson(
     y ~ z,
     data = dat,
-    declaration = simp_decl,
+    ra_declaration = simp_decl,
     se_type = "constant"
   )
 
@@ -54,7 +54,7 @@ test_that("Horvitz-Thompson works in simple case", {
     data = dat,
     condition1 = 1,
     condition2 = 0,
-    declaration = simp_decl,
+    ra_declaration = simp_decl,
     return_condition_pr_mat = TRUE
   )
 
@@ -66,7 +66,7 @@ test_that("Horvitz-Thompson works in simple case", {
       data = dat,
       condition1 = 0,
       condition2 = 2,
-      declaration = simp_decl
+      ra_declaration = simp_decl
     )
   )
 
@@ -88,7 +88,7 @@ test_that("Horvitz-Thompson works in simple case", {
   # We can learn it! or you can tell us
   expect_equal(
     horvitz_thompson(y ~ z_comp, data = dat, simple = FALSE),
-    horvitz_thompson(y ~ z_comp, data = dat, declaration = comp_decl)
+    horvitz_thompson(y ~ z_comp, data = dat, ra_declaration = comp_decl)
   )
   expect_equal(
     horvitz_thompson(y ~ z_comp, data = dat, simple = FALSE),
@@ -120,8 +120,8 @@ test_that("Horvitz-Thompson works in simple case", {
   )
 
   # with declaration
-  ht_nod <- horvitz_thompson(y ~ z_comp, declaration = comp_decl)
-  ht_d <- horvitz_thompson(y ~ z_comp, data = dat, declaration = comp_decl)
+  ht_nod <- horvitz_thompson(y ~ z_comp, ra_declaration = comp_decl)
+  ht_d <- horvitz_thompson(y ~ z_comp, data = dat, ra_declaration = comp_decl)
   expect_equal(
     tidy(ht_nod),
     tidy(ht_d)
@@ -140,7 +140,7 @@ test_that("Horvitz-Thompson works with clustered data", {
   dat$z <- randomizr::conduct_ra(clust_crs_decl)
 
   # Regular SE using Young's inequality
-  ht_crs_decl <- horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl)
+  ht_crs_decl <- horvitz_thompson(y ~ z, data = dat, ra_declaration = clust_crs_decl)
 
   expect_equal(
     ht_crs_decl$df,
@@ -155,7 +155,7 @@ test_that("Horvitz-Thompson works with clustered data", {
 
   # And constant effects error for non-simple designs
   expect_error(
-    horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl, se_type = "constant"),
+    horvitz_thompson(y ~ z, data = dat, ra_declaration = clust_crs_decl, se_type = "constant"),
     "`se_type` = 'constant' only supported for simple random"
   )
 
@@ -169,7 +169,7 @@ test_that("Horvitz-Thompson works with clustered data", {
 
   # With declaration
   # Regular SE using Young's inequality
-  ht_srs_decl <- horvitz_thompson(y ~ z, data = dat, declaration = clust_srs_decl)
+  ht_srs_decl <- horvitz_thompson(y ~ z, data = dat, ra_declaration = clust_srs_decl)
 
   # Not the same because second doesn't know it's clustered!
   # Just passing mat
@@ -198,7 +198,7 @@ test_that("Horvitz-Thompson works with clustered data", {
   blcl_ra <- randomizr::declare_ra(blocks = clbl_dat$bl, clusters = clbl_dat$cl_new, m = c(1, 2, 1))
   clbl_dat$z_clbl <- blcl_ra$ra_function()
   expect_equivalent(
-    horvitz_thompson(y ~ z_clbl, data = clbl_dat, declaration = blcl_ra),
+    horvitz_thompson(y ~ z_clbl, data = clbl_dat, ra_declaration = blcl_ra),
     horvitz_thompson(y ~ z_clbl, data = clbl_dat, blocks = bl, clusters = cl_new)
   )
 
@@ -213,7 +213,7 @@ test_that("Horvitz-Thompson works with clustered data", {
   # And constant effects
   # Only work for simple for now
   expect_error(
-    horvitz_thompson(y ~ z, data = dat, declaration = clust_srs_decl, se_type = "constant"),
+    horvitz_thompson(y ~ z, data = dat, ra_declaration = clust_srs_decl, se_type = "constant"),
     "`se_type` = 'constant' only supported for simple random designs at the moment"
   )
 
@@ -257,7 +257,7 @@ test_that("Horvitz-Thompson works with missingness", {
   missing_dat$y[1] <- NA
 
   expect_error(
-    horvitz_thompson(y ~ z, data = missing_dat, declaration = decl),
+    horvitz_thompson(y ~ z, data = missing_dat, ra_declaration = decl),
     NA
   )
 
@@ -289,7 +289,7 @@ test_that("Estimating Horvitz-Thompson can be done two ways with blocks", {
 
   # This creates estimates within blocks and then joins them together using the common
   # formula
-  ht_declare_bl <- horvitz_thompson(y ~ z, data = dat, declaration = bl_ra)
+  ht_declare_bl <- horvitz_thompson(y ~ z, data = dat, ra_declaration = bl_ra)
   # This estimates the treatment effect at once using only condition_pr_mat
   ht_condmat_bl <- horvitz_thompson(y ~ z, data = dat, condition_pr_mat = bl_pr_mat)
 
@@ -303,7 +303,7 @@ test_that("Estimating Horvitz-Thompson can be done two ways with blocks", {
   dat$z <- randomizr::conduct_ra(mp_ra)
   mp_pr_mat <- declaration_to_condition_pr_mat(mp_ra)
 
-  ht_declare_mp <- horvitz_thompson(y ~ z, data = dat, declaration = mp_ra)
+  ht_declare_mp <- horvitz_thompson(y ~ z, data = dat, ra_declaration = mp_ra)
   # This estimates the treatment effect at once using only condition_pr_mat
   ht_condmat_mp <- horvitz_thompson(y ~ z, data = dat, condition_pr_mat = mp_pr_mat)
 
@@ -333,22 +333,22 @@ test_that("Horvitz-Thompson properly checks arguments and data", {
   )
 
   expect_error(
-    horvitz_thompson(y ~ z, data = dat, condition_prs = ps, declaration = decl),
-    "Cannot use `declaration` with any of"
+    horvitz_thompson(y ~ z, data = dat, condition_prs = ps, ra_declaration = decl),
+    "Cannot use `ra_declaration` with any of"
   )
 
   expect_error(
-    horvitz_thompson(y ~ z, data = dat, condition_pr_mat = declaration_to_condition_pr_mat(decl), declaration = decl),
-    "Cannot use `declaration` with any of"
+    horvitz_thompson(y ~ z, data = dat, condition_pr_mat = declaration_to_condition_pr_mat(decl), ra_declaration = decl),
+    "Cannot use `ra_declaration` with any of"
   )
 
   expect_error(
-    horvitz_thompson(y ~ z + x, data = dat, declaration = decl),
+    horvitz_thompson(y ~ z + x, data = dat, ra_declaration = decl),
     "must have only one variable on the right-hand side"
   )
 
   expect_error(
-    horvitz_thompson(y ~ z, data = dat, declaration = randomizr::declare_ra(N = n + 1, prob = 0.4)),
+    horvitz_thompson(y ~ z, data = dat, ra_declaration = randomizr::declare_ra(N = n + 1, prob = 0.4)),
     "variable lengths differ"
   )
 
@@ -483,7 +483,7 @@ test_that("Works without variation in treatment", {
   )
 })
 
-test_that("multi-valued treatments not allowed in declaration", {
+test_that("multi-valued treatments not allowed in ra_declaration", {
   dat <- data.frame(
     y = rnorm(20),
     ps = 0.4
@@ -493,8 +493,8 @@ test_that("multi-valued treatments not allowed in declaration", {
   dat$z <- randomizr::conduct_ra(decl_multi)
 
   expect_error(
-    horvitz_thompson(y ~ z, data = dat, declaration = decl_multi),
-    "Cannot use horvitz_thompson\\(\\) with a `declaration` with"
+    horvitz_thompson(y ~ z, data = dat, ra_declaration = decl_multi),
+    "Cannot use horvitz_thompson\\(\\) with a `ra_declaration` with"
   )
 
   # will work but you have to get the PRs right!
