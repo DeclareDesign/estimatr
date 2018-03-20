@@ -30,5 +30,6 @@ Suggests:
     randomizr (>= 0.9),
     AER
 Enhances:
+    broom,
     texreg
 Additional_Repositories: http://r.declaredesign.org

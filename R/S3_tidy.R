@@ -6,7 +6,12 @@
 #'
 #' @export
 tidy <- function(object, ...) {
-  if (requireNamespace("broom", quietly = TRUE)) broom::tidy(object, ...) else UseMethod("tidy")
+  if (requireNamespace("broom", quietly = TRUE)) {
+    tidy <- get("tidy", asNamespace("broom"))
+    tidy(object, ...)
+  } else {
+    UseMethod("tidy")
+  }
 }
 
 
