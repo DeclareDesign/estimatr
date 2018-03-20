@@ -40,6 +40,25 @@ test_that("Horvitz-Thompson works in simple case", {
     return_condition_pr_mat = TRUE
   )
 
+  # Also with no SEs
+  ht_simp_no <- horvitz_thompson(
+    y ~ z,
+    data = dat,
+    ra_declaration = simp_decl,
+    return_condition_pr_mat = TRUE,
+    se_type = "none"
+  )
+
+  expect_equal(
+    ht_simp$estimate,
+    ht_simp_no$estimate
+  )
+
+  expect_equivalent(
+    tidy(ht_simp_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    rep(NA_real_, 4)
+  )
+
   # Works with constant effects assumption
   ht_const <- horvitz_thompson(
     y ~ z,
@@ -87,12 +106,25 @@ test_that("Horvitz-Thompson works in simple case", {
   dat$pr_comp <- 0.4
   # We can learn it! or you can tell us
   expect_equal(
-    horvitz_thompson(y ~ z_comp, data = dat, simple = FALSE),
+    ht_comp <- horvitz_thompson(y ~ z_comp, data = dat, simple = FALSE),
     horvitz_thompson(y ~ z_comp, data = dat, ra_declaration = comp_decl)
   )
   expect_equal(
-    horvitz_thompson(y ~ z_comp, data = dat, simple = FALSE),
+    ht_comp,
     horvitz_thompson(y ~ z_comp, data = dat, simple = FALSE, condition_prs = pr_comp)
+  )
+
+  # Also with no SEs
+  ht_comp_no <- horvitz_thompson(y ~ z_comp, data = dat, simple = FALSE, se_type = "none")
+
+  expect_equal(
+    ht_comp$estimate,
+    ht_comp_no$estimate
+  )
+
+  expect_equivalent(
+    tidy(ht_comp_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    rep(NA_real_, 4)
   )
 
   # error if you pass wrong prs
@@ -147,6 +179,19 @@ test_that("Horvitz-Thompson works with clustered data", {
     NA
   )
 
+  # Also with no SEs
+  ht_crs_decl_no <- horvitz_thompson(y ~ z, data = dat, ra_declaration = clust_crs_decl, se_type = "none")
+
+  expect_equal(
+    ht_crs_decl$estimate,
+    ht_crs_decl_no$estimate
+  )
+
+  expect_equivalent(
+    tidy(ht_crs_decl_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    rep(NA_real_, 4)
+  )
+
   # Can infer probabilities as well
   expect_equal(
     ht_crs_decl,
@@ -171,21 +216,50 @@ test_that("Horvitz-Thompson works with clustered data", {
   # Regular SE using Young's inequality
   ht_srs_decl <- horvitz_thompson(y ~ z, data = dat, ra_declaration = clust_srs_decl)
 
+  # Also with no SEs
+  ht_srs_decl_no <- horvitz_thompson(y ~ z, data = dat, ra_declaration = clust_srs_decl, se_type = "none")
+
+  expect_equal(
+    ht_srs_decl$estimate,
+    ht_srs_decl_no$estimate
+  )
+
+  expect_equivalent(
+    tidy(ht_srs_decl_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    rep(NA_real_, 4)
+  )
+
   # Not the same because second doesn't know it's clustered!
   # Just passing mat
   clust_srs_mat <- declaration_to_condition_pr_mat(clust_srs_decl)
   expect_is(
     all.equal(
       ht_srs_decl,
-      horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_srs_mat)
+      ht_srs_nodecl <- horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_srs_mat)
     ),
     "character"
+  )
+
+  # Also with no SEs
+  ht_srs_nodecl_no <-  horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_srs_mat, se_type = "none")
+
+  expect_equal(
+    ht_srs_nodecl$estimate,
+    ht_srs_nodecl_no$estimate
   )
 
   # works if I also pass cluster
   expect_identical(
     ht_srs_decl,
-    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_pr_mat = clust_srs_mat)
+    ht_srs_cl <- horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_pr_mat = clust_srs_mat)
+  )
+
+  # Also with no SEs
+  ht_srs_cl_no <- horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_pr_mat = clust_srs_mat, se_type = "none")
+
+  expect_equal(
+    ht_srs_cl$estimate,
+    ht_srs_cl_no$estimate
   )
 
   # Can infer from number of treated clusters per block the treatment pr
@@ -206,9 +280,16 @@ test_that("Horvitz-Thompson works with clustered data", {
   dat$ps <- 0.4
   expect_identical(
     ht_srs_decl,
-    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = ps)
+    ht_srs_prs <- horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = ps)
   )
 
+  # Also with no SEs
+  ht_srs_prs_no <- horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = ps, se_type = "none")
+
+  expect_equal(
+    ht_srs_prs$estimate,
+    ht_srs_prs_no$estimate
+  )
 
   # And constant effects
   # Only work for simple for now
@@ -296,6 +377,19 @@ test_that("Estimating Horvitz-Thompson can be done two ways with blocks", {
   expect_equivalent(
     tidy(ht_declare_bl),
     tidy(ht_condmat_bl)
+  )
+
+  # Also with no SEs
+  ht_declare_bl_no <- horvitz_thompson(y ~ z, data = dat, ra_declaration = bl_ra, se_type = "none")
+  ht_condmat_bl_no <- horvitz_thompson(y ~ z, data = dat, condition_pr_mat = bl_pr_mat, se_type = "none")
+
+  expect_equal(
+    ht_declare_bl$estimate,
+    ht_declare_bl_no$estimate
+  )
+  expect_equal(
+    ht_condmat_bl$estimate,
+    ht_condmat_bl_no$estimate
   )
 
   dat$mps <- rep(1:20, each = 2)

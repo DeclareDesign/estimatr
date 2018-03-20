@@ -46,9 +46,10 @@ test_that("DIM arguments parsed correctly", {
 
   dat$bad_mp <- rep(1:50, each = 2)
   dat$bad_mp[dat$bad_mp == 50] <- 49
-  expect_error(
+  dat$Z <- 0:1
+  expect_warning(
     difference_in_means(Y ~ Z, blocks = bad_mp, data = dat),
-    "`blocks` must either all have two units/`clusters`"
+    "Some `blocks` have two units/`clusters` while other blocks have more units/`clusters`"
   )
 
   expect_error(
@@ -636,5 +637,95 @@ test_that("DIM matches lm_robust under certain conditions", {
   expect_error(
     difference_in_means(Y ~ z_mps, data = dat, weights = w, blocks = mps),
     "Cannot use `weights` with matched pairs design at the moment"
+  )
+})
+
+test_that("se_type = none works", {
+  # simple
+  dim <- difference_in_means(mpg ~ am, data = mtcars)
+  dim_no <- difference_in_means(mpg ~ am, data = mtcars, se_type = "none")
+
+  expect_equal(
+    dim$estimate,
+    dim_no$estimate
+  )
+
+  expect_equivalent(
+    tidy(dim_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    rep(NA_real_, 4)
+  )
+
+  # block
+  dimb <- difference_in_means(mpg ~ am, blocks = cyl, data = mtcars)
+  dimb_no <- difference_in_means(mpg ~ am, blocks = cyl, data = mtcars, se_type = "none")
+
+  expect_equal(
+    dimb$estimate,
+    dimb_no$estimate
+  )
+
+  expect_equivalent(
+    tidy(dimb_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    rep(NA_real_, 4)
+  )
+
+  # cluster
+  mtcars$z <- as.numeric(mtcars$cyl < 5)
+  dimc <- difference_in_means(mpg ~ z, clusters = cyl, data = mtcars)
+  dimc_no <- difference_in_means(mpg ~ z, clusters = cyl, data = mtcars, se_type = "none")
+
+  expect_equal(
+    dimc$estimate,
+    dimc_no$estimate
+  )
+
+  expect_equivalent(
+    tidy(dimc_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    rep(NA_real_, 4)
+  )
+
+  # weight
+  dimw <- difference_in_means(mpg ~ am, weights = wt, data = mtcars)
+  dimw_no <- difference_in_means(mpg ~ am, weights = wt, data = mtcars, se_type = "none")
+
+  expect_equal(
+    dimw$estimate,
+    dimw_no$estimate
+  )
+
+  expect_equivalent(
+    tidy(dimw_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    rep(NA_real_, 4)
+  )
+
+  # cluster, weight
+  dimcw <- difference_in_means(mpg ~ z, weights = wt, clusters = cyl, data = mtcars)
+  dimcw_no <- difference_in_means(mpg ~ z, weights = wt, clusters = cyl, data = mtcars, se_type = "none")
+
+  expect_equal(
+    dimcw$estimate,
+    dimcw_no$estimate
+  )
+
+  expect_equivalent(
+    tidy(dimcw_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    rep(NA_real_, 4)
+  )
+
+
+  # matched-pair
+  mtcars$mp <- rep(1:(nrow(mtcars) / 2), each = 2)
+  mtcars$z <- rep(c(0, 1), times = nrow(mtcars) / 2)
+  dimmp <- difference_in_means(mpg ~ z, blocks = mp, data = mtcars)
+  dimmp_no <- difference_in_means(mpg ~ z, blocks = mp, data = mtcars, se_type = "none")
+
+  expect_equal(
+    dimmp$estimate,
+    dimmp_no$estimate
+  )
+
+  expect_equivalent(
+    tidy(dimmp_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    rep(NA_real_, 4)
   )
 })

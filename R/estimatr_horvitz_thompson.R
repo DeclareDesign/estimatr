@@ -27,11 +27,11 @@
 #' \code{blocks}, \code{clusters}, or \code{condition_pr_mat}. See details.
 #' @param subset An optional bare (unquoted) expression specifying a subset of
 #' observations to be used.
-#' @param se_type can be one of \code{c("youngs", "constant")} and corresponds
+#' @param se_type can be one of \code{c("youngs", "constant", "none")} and corresponds
 #' the estimator of the standard errors. Default estimator uses Young's
 #' inequality (and is conservative) while the other uses a constant treatment
 #' effects assumption and only works for simple randomized designs at the
-#' moment.
+#' moment. If "none" then standard errors will not be computed which may speed up run time if only the point estimate is required.
 #' @param condition1 value in the treatment vector of the condition
 #' to be the control. Effects are
 #' estimated with \code{condition1} as the control and \code{condition2} as the
@@ -233,7 +233,7 @@ horvitz_thompson <-
            subset,
            condition1 = NULL,
            condition2 = NULL,
-           se_type = c("youngs", "constant"),
+           se_type = c("youngs", "constant", "none"),
            ci = TRUE,
            alpha = .05,
            return_condition_pr_mat = FALSE) {
@@ -365,8 +365,9 @@ horvitz_thompson <-
         )
       }
 
-      # If simple, just use condition probabilities shortcut!
-      if (ra_declaration$ra_type == "simple") {
+      # If simple, just use condition probabilities shortcut
+      # Same if se not needed
+      if (ra_declaration$ra_type == "simple" || se_type == "none") {
         condition_pr_mat <- NULL
       } else {
         # TODO to allow for declaration with multiple arms, get probability matrix
@@ -386,28 +387,31 @@ horvitz_thompson <-
           # marginal probabilities
           # if user didn't pass, we have to guess
           if (is.null(data$condition_probabilities)) {
-            pr_treat <- mean(data$t == condition2)
+            data$condition_probabilities <- mean(data$t == condition2)
 
             message(
               "Assuming simple random assignment with probability of treatment ",
               "equal to the mean number of obs in `condition2`, which is roughly ",
-              round(pr_treat, 3)
+              round(data$condition_probabilities[1], 3)
             )
 
-            data$condition_probabilities <- pr_treat
           }
         } else {
           # If we don't know the prob, learn it
           if (is.null(data$condition_probabilities)) {
-            pr_treat <- mean(data$t == condition2)
+            data$condition_probabilities <- mean(data$t == condition2)
             message(
               "Learning probability of complete random assignment from data with ",
-              "prob = ", round(pr_treat, 3)
+              "prob = ", round(data$condition_probabilities[1], 3)
             )
-            condition_pr_mat <- gen_pr_matrix_complete(
-              pr = pr_treat,
-              n_total = length(data$y)
-            )
+
+            if (se_type != "none") {
+              condition_pr_mat <- gen_pr_matrix_complete(
+                pr = data$condition_probabilities[1],
+                n_total = length(data$y)
+              )
+            }
+
           } else {
             if (length(unique(data$condition_probabilities)) > 1) {
               stop(
@@ -415,16 +419,19 @@ horvitz_thompson <-
               )
             }
 
-            condition_pr_mat <- gen_pr_matrix_complete(
-              pr = data$condition_probabilities[1],
-              n_total = length(data$y)
-            )
+            if (se_type != "none") {
+              condition_pr_mat <- gen_pr_matrix_complete(
+                pr = data$condition_probabilities[1],
+                n_total = length(data$y)
+              )
+            }
+
           }
         }
       } else if (is.null(data$blocks)) {
         # clustered case
         message(
-          "`simple = ", simple, ", using ",
+          "`simple` = ", simple, ", using ",
           ifelse(simple, "simple", "complete"), " cluster randomization"
         )
 
@@ -432,19 +439,23 @@ horvitz_thompson <-
 
           # Split by cluster and get complete randomized values within each cluster
           cluster_treats <- get_cluster_treats(data, condition2)
-          pr_treat <- mean(cluster_treats$treat_clust)
+          data$condition_probabilities <- mean(cluster_treats$treat_clust)
+
           message(
             "`condition_prs` not found, estimating probability of treatment ",
-            "to be constant at mean of clusters in `condition2` at prob =", pr_treat
+            "to be constant at mean of clusters in `condition2` at prob =",
+            data$condition_probabilities[1]
           )
 
-          # Some redundancy in following fn
-          condition_pr_mat <- gen_pr_matrix_cluster(
-            clusters = data$clusters,
-            treat_probs = rep(pr_treat, length(data$clusters)),
-            simple = simple
-          )
-        } else {
+          if (se_type != "none") {
+            # Some redundancy in following fn
+            condition_pr_mat <- gen_pr_matrix_cluster(
+              clusters = data$clusters,
+              treat_probs = data$condition_probabilities,
+              simple = simple
+            )
+          }
+        } else if (se_type != "none") {
 
           # Just to check if cluster has same treatment within
           get_cluster_treats(data, condition2)
@@ -484,7 +495,7 @@ horvitz_thompson <-
       }
     }
 
-    # Need the marginal condition prs for later
+    # Need the marginal condition prs for later in rare cases where not yet set
     if (is.null(data$condition_probabilities)) {
       data$condition_probabilities <-
         diag(condition_pr_mat)[(length(data$y) + 1):(2 * length(data$y))]
@@ -547,12 +558,17 @@ horvitz_thompson <-
 
       diff <- with(block_estimates, sum(estimate * N / N_overall))
 
-      std.error <- with(block_estimates, sqrt(sum(std.error ^ 2 * (N / N_overall) ^ 2)))
+      if (se_type != "none") {
+        std.error <- with(block_estimates, sqrt(sum(std.error ^ 2 * (N / N_overall) ^ 2)))
+      } else {
+        std.error = NA
+      }
 
       return_frame <- data.frame(
         estimate = diff,
         std.error = std.error,
-        N = N_overall
+        N = N_overall,
+        stringsAsFactors = FALSE
       )
     }
 
@@ -627,11 +643,9 @@ horvitz_thompson_internal <-
       y1_totals <-
         y1_totals[as.character(data$clusters[-to_drop][t1])]
 
-      condition_pr_mat <-
-        condition_pr_mat[-c(to_drop, N + to_drop), -c(to_drop, N + to_drop)]
-
-      ps2 <- diag(condition_pr_mat)[k + t2]
-      ps1 <- diag(condition_pr_mat)[t1]
+      prs <- data$condition_probabilities[-to_drop]
+      ps2 <- prs[k + t2]
+      ps1 <- 1 - prs[t1]
 
       # for now rescale, with joint pr need squared top alone
       Y2 <- y2_totals / ps2
@@ -639,26 +653,33 @@ horvitz_thompson_internal <-
 
       diff <- (sum(Y2) - sum(Y1)) / N
 
-      std.error <-
-        sqrt(
-          sum(Y2 ^ 2) +
-            sum(Y1 ^ 2) +
-            ht_var_partial(
-              Y2,
-              condition_pr_mat[(k + t2), (k + t2), drop = FALSE]
-            ) +
-            ht_var_partial(
-              Y1,
-              condition_pr_mat[t1, t1, drop = FALSE]
-            ) -
-            2 * ht_covar_partial(
-              Y2,
-              Y1,
-              condition_pr_mat[(k + t2), t1, drop = FALSE],
-              ps2,
-              ps1
-            )
-        ) / N
+      if (se_type != "none") {
+
+        condition_pr_mat <-
+          condition_pr_mat[-c(to_drop, N + to_drop), -c(to_drop, N + to_drop)]
+
+        std.error <-
+          sqrt(
+            sum(Y2 ^ 2) +
+              sum(Y1 ^ 2) +
+              ht_var_partial(
+                Y2,
+                condition_pr_mat[(k + t2), (k + t2), drop = FALSE]
+              ) +
+              ht_var_partial(
+                Y1,
+                condition_pr_mat[t1, t1, drop = FALSE]
+              ) -
+              2 * ht_covar_partial(
+                Y2,
+                Y1,
+                condition_pr_mat[(k + t2), t1, drop = FALSE],
+                ps2,
+                ps1
+              )
+          ) / N
+      }
+
     } else {
       # All non-clustered designs
 
@@ -694,7 +715,7 @@ horvitz_thompson_internal <-
                 # TODO why is it +2 instead of - (looking at old samii/aronow)
                 2 * sum(c(data$y[t2], data$y[t1] + diff) * c(data$y[t2] - diff, data$y[t1]))
             ) / N
-        } else {
+        } else if (se_type == "youngs") {
           # Young's inequality
           std.error <-
             sqrt(sum(Y2 ^ 2) + sum(Y1 ^ 2)) / N
@@ -706,7 +727,7 @@ horvitz_thompson_internal <-
             "`se_type` = 'constant' only supported for simple random designs ",
             "at the moment"
           )
-        } else {
+        } else if (se_type == "youngs") {
           # Young's inequality
           # this is the "clustered" estimator where each unit is a cluster
           # shouldn't apply to clustered designs but may if user passes a

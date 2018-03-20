@@ -18,6 +18,7 @@
 #' supplied data.
 #' @param subset An optional bare (unquoted) expression specifying a subset of
 #' observations to be used.
+#' @param se_type An optional string that can be one of \code{c("default", "none")}. If "default" (the default), it will use the default standard error estimator for the design, and if "none" then standard errors will not be computed which may speed up run time if only the point estimate is required.
 #' @param condition1 value in the treatment vector of the condition
 #' to be the control. Effects are
 #' estimated with \code{condition1} as the control and \code{condition2} as the
@@ -211,6 +212,7 @@ difference_in_means <-
            clusters,
            weights,
            subset,
+           se_type = c("default", "none"),
            condition1 = NULL,
            condition2 = NULL,
            ci = TRUE,
@@ -221,6 +223,8 @@ difference_in_means <-
         "treatment variable."
       )
     }
+
+    se_type <- match.arg(se_type)
 
     datargs <- enquos(
       formula = formula,
@@ -272,7 +276,8 @@ difference_in_means <-
         condition1 = condition1,
         condition2 = condition2,
         data = data,
-        alpha = alpha
+        alpha = alpha,
+        se_type = se_type
       )
 
       if (is.null(data$cluster)) {
@@ -294,12 +299,12 @@ difference_in_means <-
       } else if (all(clust_per_block == 2)) {
         pair_matched <- TRUE
       } else if (any(clust_per_block == 2) & any(clust_per_block > 2)) {
-        stop(
-          "`blocks` must either all have two units/`clusters` (i.e., a ",
-          "matched pairs design) or all have ",
-          "more than two units. You cannot mix blocks of size two with ",
-          "blocks of a larger size. In order to estimate treatment effects with ",
-          "this design, use inverse propensity score weights with lm_robust()"
+        pair_matched <- TRUE
+        warning(
+          "Some `blocks` have two units/`clusters` while other blocks ",
+          "have more units/`clusters`. As standard variance estimates ",
+          "cannot be computed within blocks with two units, we use the ",
+          "matched pairs estimator of the variance."
         )
       }
 
@@ -311,7 +316,8 @@ difference_in_means <-
           condition1 = condition1,
           condition2 = condition2,
           pair_matched = pair_matched,
-          alpha = alpha
+          alpha = alpha,
+          se_type = se_type
         )
       })
 
@@ -323,35 +329,47 @@ difference_in_means <-
       diff <- with(block_estimates, sum(estimate * N / N_overall))
 
       df <- NA
+      std.error <- NA
       n_blocks <- nrow(block_estimates)
 
       if (pair_matched) {
         if (is.null(data$cluster)) {
           design <- "Matched-pair"
+
           # Pair matched, unit randomized (Gerber Green 2012, p77, eq3.16)
-          std.error <-
-            with(
-              block_estimates,
-              sqrt((1 / (n_blocks * (n_blocks - 1))) * sum((estimate - diff) ^ 2))
-            )
+          if (se_type != "none") {
+            std.error <-
+              with(
+                block_estimates,
+                sqrt((1 / (n_blocks * (n_blocks - 1))) * sum((estimate - diff) ^ 2))
+              )
+          }
+
         } else {
           design <- "Matched-pair clustered"
           # Pair matched, cluster randomized (Imai, King, Nall 2009, p36, eq6)
-          std.error <-
-            with(
-              block_estimates,
-              sqrt(
-                (n_blocks / ((n_blocks - 1) * N_overall ^ 2)) *
-                  sum((N * estimate - (N_overall * diff) / n_blocks) ^ 2)
+          if (se_type != "none") {
+            std.error <-
+              with(
+                block_estimates,
+                sqrt(
+                  (n_blocks / ((n_blocks - 1) * N_overall ^ 2)) *
+                    sum((N * estimate - (N_overall * diff) / n_blocks) ^ 2)
+                )
               )
-            )
+          }
         }
 
         # For pair matched, cluster randomized Imai et al. 2009 recommend (p. 37)
         df <- n_blocks - 1
       } else {
         # Block randomized (Gerber and Green 2012, p. 74, footnote 17)
-        std.error <- with(block_estimates, sqrt(sum(std.error ^ 2 * (N / N_overall) ^ 2)))
+        if (se_type != "none") {
+          std.error <- with(
+            block_estimates,
+            sqrt(sum(std.error ^ 2 * (N / N_overall) ^ 2))
+          )
+        }
 
 
         ## we don't know if this is correct!
@@ -403,7 +421,8 @@ difference_in_means_internal <-
            condition2 = NULL,
            data,
            pair_matched = FALSE,
-           alpha = .05) {
+           alpha = .05,
+           se_type = "default") {
 
     # Check that treatment status is uniform within cluster, checked here
     # so that the treatment vector t doesn't have to be built anywhere else
@@ -456,7 +475,7 @@ difference_in_means_internal <-
         y = data$y,
         X = cbind(1, t = as.numeric(data$t == condition2)),
         cluster = data$cluster,
-        se_type = "CR2",
+        se_type = ifelse(se_type == "none", "none", "CR2"),
         weights = data$weights,
         ci = TRUE,
         try_cholesky = TRUE,
@@ -472,7 +491,7 @@ difference_in_means_internal <-
       if (is.null(data$weights)) {
         diff <- mean(Y2) - mean(Y1)
 
-        if (pair_matched) {
+        if (pair_matched || se_type == "none") {
           # Pair matched designs
           std.error <- NA
         } else {
@@ -503,7 +522,7 @@ difference_in_means_internal <-
         w_hc2_out <- lm_robust_fit(
           y = data$y,
           X = cbind(1, t = as.numeric(data$t == condition2)),
-          se_type = "HC2",
+          se_type = ifelse(se_type == "none", "none", "HC2"),
           weights = data$weights,
           cluster = NULL,
           ci = TRUE,
