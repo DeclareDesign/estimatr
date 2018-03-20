@@ -1,3 +1,11 @@
+obtain <- function(ra_declaration, condition) {
+  if(requireNamespace("randomizr", quietly = TRUE)) {
+    randomizr::obtain_condition_probabilities(ra_declaration, condition)
+  } else {
+    ra_declaration$probability_matrix[, paste0("prob_", condition)]
+  }
+}
+
 #' Builds condition probability matrices for Horvitz-Thompson estimation from
 #' \pkg{randomizr} declaration
 #'
@@ -111,11 +119,11 @@ declaration_to_condition_pr_mat <- function(ra_declaration,
     )
   }
 
-  p1 <- randomizr::obtain_condition_probabilities(
+  p1 <- obtain(
     ra_declaration,
     condition1
   )
-  p2 <- randomizr::obtain_condition_probabilities(
+  p2 <- obtain(
     ra_declaration,
     condition2
   )
