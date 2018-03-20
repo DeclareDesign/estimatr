@@ -2,8 +2,8 @@
 summary.lm_robust <- function(object,
                               ...) {
 
-  if (is.matrix(object$coefficients)) {
-    ny <- ncol(object$coefficients)
+  if (is.matrix(coef(object))) {
+    ny <- ncol(coef(object))
 
     ret <- setNames(
       vector("list", ny),

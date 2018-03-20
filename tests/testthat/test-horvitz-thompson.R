@@ -13,15 +13,15 @@ test_that("Horvitz-Thompson matches d-i-m under certain conditions", {
   dat$y <- ifelse(dat$z, dat$y1, dat$y0)
 
   expect_equal(
-    horvitz_thompson(
+    coef(horvitz_thompson(
       y ~ z,
       condition_prs = ps,
       data = dat
-    )$coefficients,
-    difference_in_means(
+    )),
+    coef(difference_in_means(
       y ~ z,
       data = dat
-    )$coefficients
+    ))
   )
 })
 
@@ -398,7 +398,7 @@ test_that("Works without variation in treatment", {
   )
 
 
-  expect_equivalent(ht_const_1$coefficients, mean(dat$y))
+  expect_equivalent(coef(ht_const_1), mean(dat$y))
   expect_equal(ht_const_1$std.error, 1 / (nrow(dat)) * sqrt(sum(dat$y ^ 2)))
 
 
@@ -413,7 +413,7 @@ test_that("Works without variation in treatment", {
     condition_prs = ps
   )
 
-  expect_equivalent(ht_const$coefficients, mean(dat$y / dat$ps))
+  expect_equivalent(coef(ht_const), mean(dat$y / dat$ps))
   expect_equal(ht_const$std.error, 1 / (nrow(dat)) * sqrt(sum((dat$y / dat$ps) ^ 2)))
 
   ## Blocks and all are treated
@@ -426,7 +426,7 @@ test_that("Works without variation in treatment", {
   )
 
   # with blocks SE is different because not simple any more
-  expect_equivalent(ht_block$coefficients, mean(dat$y / dat$ps))
+  expect_equivalent(coef(ht_block), mean(dat$y / dat$ps))
   # expect_equal(ht_block$std.error, 1/(nrow(dat)) * sqrt(sum((dat$y / dat$ps)^2)))
 
   ## Blocks and some are treated!

@@ -465,7 +465,7 @@ difference_in_means_internal <-
         has_int = TRUE
       )
 
-      diff <- cr2_out$coefficients[2]
+      diff <- coef(cr2_out)[2]
       std.error <- cr2_out$std.error[2]
       df <- cr2_out$df[2]
     } else {
@@ -513,7 +513,7 @@ difference_in_means_internal <-
           has_int = TRUE
         )
 
-        diff <- w_hc2_out$coefficients[2]
+        diff <- coef(w_hc2_out)[2]
         std.error <- w_hc2_out$std.error[2]
         df <- w_hc2_out$df[2]
       }

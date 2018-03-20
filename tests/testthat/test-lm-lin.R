@@ -84,8 +84,8 @@ test_that("Test LM Lin", {
   )
 
   expect_equivalent(
-    lm_lin_out$coefficients,
-    lm(Y ~ Z + Z * X1_c + Z * X2_c, data = dat)$coefficients
+    coef(lm_lin_out),
+    coef(lm(Y ~ Z + Z * X1_c + Z * X2_c, data = dat))
   )
 
 
@@ -291,7 +291,7 @@ test_that("Test LM Lin", {
 
   lm_lin(Y ~ treat, ~ treat2 + X1, data = dat) # somewhat odd behavior
   expect_equivalent(
-    is.na(lm_lin(Y ~ treat, ~ X1_2 + X1, data = dat)$coefficients),
+    is.na(coef(lm_lin(Y ~ treat, ~ X1_2 + X1, data = dat))),
     c(FALSE, FALSE, FALSE, TRUE, FALSE, TRUE)
   )
 
@@ -321,13 +321,13 @@ test_that("lm_lin same as sampling perspective", {
   breg <- lm(mpg ~ hp, data = mtcars, subset = am == 0)
   ate <-
     with(mtcars[mtcars$am == 1, ],
-         mean(mpg) + (m_hp - mean(hp)) * areg$coefficients[2]) -
+         mean(mpg) + (m_hp - mean(hp)) * coef(areg)[2]) -
     with(mtcars[mtcars$am == 0, ],
-         mean(mpg) + (m_hp - mean(hp)) * breg$coefficients[2])
+         mean(mpg) + (m_hp - mean(hp)) * coef(breg)[2])
 
   expect_equivalent(
     ate,
-    lmo$coefficients["am"]
+    coef(lmo)["am"]
   )
 })
 
@@ -340,13 +340,13 @@ test_that("weighted lm_lin same as with one covar sampling view", {
   wbreg <- lm(mpg ~ hp, data = mtcars, subset = am == 0, weights = wt)
   wate <-
     with(mtcars[mtcars$am == 1, ],
-         weighted.mean(mpg, wt) + (hp_wmean - weighted.mean(hp, wt)) * wareg$coefficients[2]) -
+         weighted.mean(mpg, wt) + (hp_wmean - weighted.mean(hp, wt)) * coef(wareg)[2]) -
     with(mtcars[mtcars$am == 0, ],
-         weighted.mean(mpg, wt) + (hp_wmean - weighted.mean(hp, wt)) * wbreg$coefficients[2])
+         weighted.mean(mpg, wt) + (hp_wmean - weighted.mean(hp, wt)) * coef(wbreg)[2])
 
   expect_equivalent(
     wate,
-    lmwo$coefficients["am"]
+    coef(lmwo)["am"]
   )
 })
 
@@ -359,12 +359,12 @@ test_that("weighted lm_lin same as with two covar sampling view", {
   w2breg <- lm(mpg ~ hp + cyl, data = mtcars, subset = am == 0, weights = wt)
   w2ate <-
     with(mtcars[mtcars$am == 1, ],
-         weighted.mean(mpg, wt) + (hpcyl_wmean - apply(cbind(hp, cyl), 2, weighted.mean, wt)) %*% w2areg$coefficients[2:3]) -
+         weighted.mean(mpg, wt) + (hpcyl_wmean - apply(cbind(hp, cyl), 2, weighted.mean, wt)) %*% coef(w2areg)[2:3]) -
     with(mtcars[mtcars$am == 0, ],
-         weighted.mean(mpg, wt) + (hpcyl_wmean - apply(cbind(hp, cyl), 2, weighted.mean, wt)) %*% w2breg$coefficients[2:3])
+         weighted.mean(mpg, wt) + (hpcyl_wmean - apply(cbind(hp, cyl), 2, weighted.mean, wt)) %*% coef(w2breg)[2:3])
 
   expect_equivalent(
     w2ate,
-    lmw2o$coefficients["am"]
+    coef(lmw2o)["am"]
   )
 })
