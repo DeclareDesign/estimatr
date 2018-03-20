@@ -68,7 +68,7 @@
 #' \code{\link[texreg]{extract}} function and the \pkg{texreg} package.
 #'
 #' If users specify a multivariate linear regression model (multiple outcomes),
-#' then some of the below components will be of higher dimension to accomodate
+#' then some of the below components will be of higher dimension to accommodate
 #' the additional models.
 #'
 #' An object of class \code{"lm_robust"} is a list containing at least the
