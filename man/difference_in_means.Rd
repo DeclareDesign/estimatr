@@ -5,7 +5,8 @@
 \title{Design-based difference-in-means estimator}
 \usage{
 difference_in_means(formula, data, blocks, clusters, weights, subset,
-  condition1 = NULL, condition2 = NULL, ci = TRUE, alpha = 0.05)
+  se_type = c("default", "none"), condition1 = NULL, condition2 = NULL,
+  ci = TRUE, alpha = 0.05)
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}, such as
@@ -25,6 +26,8 @@ supplied data.}
 
 \item{subset}{An optional bare (unquoted) expression specifying a subset of
 observations to be used.}
+
+\item{se_type}{An optional string that can be one of \code{c("default", "none")}. If "default" (the default), it will use the default standard error estimator for the design, and if "none" then standard errors will not be computed which may speed up run time if only the point estimate is required.}
 
 \item{condition1}{value in the treatment vector of the condition
 to be the control. Effects are

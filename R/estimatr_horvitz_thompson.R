@@ -561,7 +561,7 @@ horvitz_thompson <-
       if (se_type != "none") {
         std.error <- with(block_estimates, sqrt(sum(std.error ^ 2 * (N / N_overall) ^ 2)))
       } else {
-        std.error = NA
+        std.error <- NA
       }
 
       return_frame <- data.frame(
