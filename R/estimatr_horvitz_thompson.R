@@ -287,7 +287,7 @@ horvitz_thompson <-
         treatnum <-
           which(ra_declaration$cleaned_arguments$condition_names == condition2)
 
-        if (length(treatnum) == 0) {
+        if (!(condition2 %in% ra_declaration$cleaned_arguments$condition_names)) {
           stop(
             "If `condition2` and `ra_declaration` are both specified, ",
             "`condition2` must match the condition_names in `ra_declaration`.",
@@ -299,7 +299,10 @@ horvitz_thompson <-
           )
         }
 
-        treatment_prob <- ra_declaration$probabilities_matrix[, treatnum]
+        treatment_prob <- randomizr::obtain_condition_probabilities(
+          ra_declaration,
+          condition2
+        )
       } else {
         # assuming treatment is second column
         treatment_prob <- ra_declaration$probabilities_matrix[, 2]
@@ -359,10 +362,13 @@ horvitz_thompson <-
 
       # Use output from clean_model_data to rebuild declaration
       if (nrow(ra_declaration$probabilities_matrix) != length(data$y)) {
+        prob_names <- colnames(ra_declaration$probabilities_matrix)
         ra_declaration$probabilities_matrix <- cbind(
           1 - data$condition_probabilities,
           data$condition_probabilities
         )
+        colnames(ra_declaration$probabilities_matrix) <- prob_names
+
       }
 
       # If simple, just use condition probabilities shortcut
@@ -372,7 +378,11 @@ horvitz_thompson <-
       } else {
         # TODO to allow for declaration with multiple arms, get probability matrix
         # and build it like decl$pr_mat <- cbind(decl$pr_mat[, c(cond1, cond2)])
-        condition_pr_mat <- declaration_to_condition_pr_mat(ra_declaration)
+        condition_pr_mat <- declaration_to_condition_pr_mat(
+          ra_declaration,
+          condition1,
+          condition2
+        )
       }
     } else if (is.null(condition_pr_mat)) {
       # need to learn it if no declaration and not passed

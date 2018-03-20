@@ -6,8 +6,8 @@
 \usage{
 horvitz_thompson(formula, data, blocks, clusters, simple = NULL,
   condition_prs, condition_pr_mat = NULL, ra_declaration = NULL, subset,
-  condition1 = NULL, condition2 = NULL, se_type = c("youngs", "constant"),
-  ci = TRUE, alpha = 0.05, return_condition_pr_mat = FALSE)
+  condition1 = NULL, condition2 = NULL, se_type = c("youngs", "constant",
+  "none"), ci = TRUE, alpha = 0.05, return_condition_pr_mat = FALSE)
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}, such as
@@ -55,11 +55,11 @@ default be 0 and \code{condition2} will be 1). See the examples for more.}
 \item{condition2}{value in the treatment vector of the condition to be the
 treatment. See \code{condition1}.}
 
-\item{se_type}{can be one of \code{c("youngs", "constant")} and corresponds
+\item{se_type}{can be one of \code{c("youngs", "constant", "none")} and corresponds
 the estimator of the standard errors. Default estimator uses Young's
 inequality (and is conservative) while the other uses a constant treatment
 effects assumption and only works for simple randomized designs at the
-moment.}
+moment. If "none" then standard errors will not be computed which may speed up run time if only the point estimate is required.}
 
 \item{ci}{logical. Whether to compute and return p-values and
 confidence intervals, TRUE by default.}

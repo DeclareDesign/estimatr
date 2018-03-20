@@ -5,6 +5,12 @@
 #' by the \code{\link[randomizr]{declare_ra}} function in \pkg{randomizr}. This
 #' object contains the experimental design that will be represented in a
 #' condition probability matrix
+#' @param condition1 The name of the first condition, often the control group. If \code{NULL},
+#' defaults to first condition in randomizr declaration. Either both `condition1`
+#' and `condition2` have to be specified or both left as \code{NULL}.
+#' @param condition2 The name of the second condition, often the treatment group. If \code{NULL},
+#' defaults to second condition in randomizr declaration. Either both `condition1`
+#' and `condition2` have to be specified or both left as \code{NULL}.
 #'
 #' @details This function takes a \code{"ra_declaration"}, generated
 #' by the \code{\link[randomizr]{declare_ra}} function in \pkg{randomizr} and
@@ -66,7 +72,7 @@
 #' # Declare complete blocked randomization
 #' bl_declaration <- declare_ra(blocks = dat$blocks, prob = 0.4, simple = FALSE)
 #' # Get probabilities
-#' block_pr_mat <- declaration_to_condition_pr_mat(bl_declaration)
+#' block_pr_mat <- declaration_to_condition_pr_mat(bl_declaration, 0, 1)
 #' # Do randomiztion
 #' dat$z <- bl_declaration$ra_function()
 #'
@@ -78,7 +84,9 @@
 #' horvitz_thompson(y ~ z, data = dat, ra_declaration = bl_declaration)
 #'
 #' @export
-declaration_to_condition_pr_mat <- function(ra_declaration) {
+declaration_to_condition_pr_mat <- function(ra_declaration,
+                                            condition1 = NULL,
+                                            condition2 = NULL) {
   if (class(ra_declaration) != "ra_declaration") {
     stop("`ra_declaration` must be an object of class 'ra_declaration'")
   }
@@ -90,8 +98,27 @@ declaration_to_condition_pr_mat <- function(ra_declaration) {
     )
   }
 
-  p1 <- ra_declaration$probabilities_matrix[, 1]
-  p2 <- ra_declaration$probabilities_matrix[, 2]
+  if (is.null(condition1) && is.null(condition2)) {
+    condition1 <- ra_declaration$cleaned_arguments$condition_names[1]
+    condition2 <- ra_declaration$cleaned_arguments$condition_names[2]
+  } else if (is.null(condition1) && !is.null(condition2)) {
+    stop(
+      "Cannot have `condition1 == NULL` and `condition2 != NULL`"
+    )
+  }else if (!is.null(condition1) && is.null(condition2)) {
+    stop(
+      "Cannot have `condition2 == NULL` and `condition1 != NULL`"
+    )
+  }
+
+  p1 <- randomizr::obtain_condition_probabilities(
+    ra_declaration,
+    condition1
+  )
+  p2 <- randomizr::obtain_condition_probabilities(
+    ra_declaration,
+    condition2
+  )
 
   declaration_call <- as.list(ra_declaration$original_call)
   simple <- eval(declaration_call$simple)
@@ -143,7 +170,7 @@ declaration_to_condition_pr_mat <- function(ra_declaration) {
 
   # Add names
   colnames(condition_pr_matrix) <- rownames(condition_pr_matrix) <-
-    c(paste0("0_", 1:n), paste0("1_", 1:n))
+    c(paste0(condition1, "_", 1:n), paste0(condition2, "_", 1:n))
 
   return(condition_pr_matrix)
 }
