@@ -51,17 +51,19 @@
 #' return results in a \code{data.frame}. To get useful data out of the return,
 #' you can use these data frames, you can use the resulting list directly, or
 #' you can use the generic accessor functions \code{coef}, \code{vcov},
-#' \code{confint}, and \code{predict}.
+#' \code{confint}, and \code{predict}. Marginal effects and uncertainty about
+#' them can be gotten by passing this object to
+#' \code{\link[margins]{margins}} from the \pkg{margins}.
 #'
 #' Users who want to print the results in TeX of HTML can use the
 #' \code{\link[texreg]{extract}} function and the \pkg{texreg} package.
 #'
 #' An object of class \code{"lm_robust"} is a list containing at least the
 #' following components:
-#'   \item{estimate}{the estimated coefficients}
+#'   \item{coefficients}{the estimated coefficients}
 #'   \item{std.error}{the estimated standard errors}
 #'   \item{df}{the estimated degrees of freedom}
-#'   \item{p.value}{the p-values from a two-sided t-test using \code{estimate}, \code{std.error}, and \code{df}}
+#'   \item{p.value}{the p-values from a two-sided t-test using \code{coefficients}, \code{std.error}, and \code{df}}
 #'   \item{ci.lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{ci.upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{term}{a character vector of coefficient names}
