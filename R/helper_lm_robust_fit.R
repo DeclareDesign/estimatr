@@ -29,7 +29,6 @@ lm_robust_fit <- function(y,
                           return_unweighted_fit = FALSE,
                           try_cholesky = FALSE,
                           X_first_stage = NULL) {
-
   y <- as.matrix(y)
   ny <- ncol(y)
   multivariate <- ny > 1
@@ -165,10 +164,9 @@ lm_robust_fit <- function(y,
   # ----------
 
   if (se_type != "none" || return_fit) {
-
     if (rank < ncol(X)) {
       X <- X[, covs_used, drop = FALSE]
-      if (weighted){
+      if (weighted) {
         Xunweighted <- Xunweighted[, covs_used, drop = FALSE]
       }
       if (iv_second_stage) {
@@ -202,7 +200,6 @@ lm_robust_fit <- function(y,
     }
 
     if (se_type != "none") {
-
       if (se_type == "CR2") {
         vcov_fit <- lm_variance_cr2(
           X = X,
@@ -217,8 +214,7 @@ lm_robust_fit <- function(y,
         )
         vcov_fit[["res_var"]] <-
           colSums((y - X %*% fit$beta_hat)^2) /
-          (N - rank)
-
+            (N - rank)
       } else {
         vcov_fit <- lm_variance(
           X = X,
@@ -284,23 +280,22 @@ lm_robust_fit <- function(y,
   return_list[["rank"]] <- rank
 
   if (se_type != "none") {
-
     if (weighted) {
       if (has_int) {
         return_list[["tot_var"]] <-
           colSums(
-            weights ^ 2 *
-              (yunweighted - weighted.mean(yunweighted, weights ^ 2)) ^ 2
+            weights^2 *
+              (yunweighted - weighted.mean(yunweighted, weights^2))^2
           ) * weight_mean
       } else {
-        return_list[["tot_var"]] <- colSums(y ^ 2 * weight_mean)
+        return_list[["tot_var"]] <- colSums(y^2 * weight_mean)
       }
-      return_list[["res_var"]] <- diag(as.matrix(colSums(ei ^ 2 * weight_mean) / (N - rank)))
+      return_list[["res_var"]] <- diag(as.matrix(colSums(ei^2 * weight_mean) / (N - rank)))
     } else {
       if (has_int) {
-        return_list[["tot_var"]] <- .rowSums(apply(y, 1, `-`, colMeans(y)) ^ 2, ny, N)
+        return_list[["tot_var"]] <- .rowSums(apply(y, 1, `-`, colMeans(y))^2, ny, N)
       } else {
-        return_list[["tot_var"]] <- colSums(y ^ 2)
+        return_list[["tot_var"]] <- colSums(y^2)
       }
       return_list[["res_var"]] <- diag(as.matrix(ifelse(vcov_fit$res_var < 0, NA, vcov_fit$res_var)))
     }
@@ -308,8 +303,8 @@ lm_robust_fit <- function(y,
 
     return_list[["r.squared"]] <-
       1 - (
-          return_list[["df.residual"]] * return_list[["res_var"]] /
-            return_list[["tot_var"]]
+        return_list[["df.residual"]] * return_list[["res_var"]] /
+          return_list[["tot_var"]]
       )
 
     return_list[["adj.r.squared"]] <-

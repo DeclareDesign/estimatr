@@ -83,7 +83,6 @@ tidy.horvitz_thompson <- function(object, ...) {
 
 
 tidy_data_frame <- function(object, digits = NULL) {
-
   vec_cols <-
     c(
       "coefficients",
@@ -94,7 +93,9 @@ tidy_data_frame <- function(object, digits = NULL) {
       "df"
     )
 
-  tidy_mat <- do.call("cbind", lapply(vec_cols, function(x) {as.vector(object[[x]])}))
+  tidy_mat <- do.call("cbind", lapply(vec_cols, function(x) {
+    as.vector(object[[x]])
+  }))
   vec_cols[which(vec_cols == "coefficients")] <- "estimate"
   colnames(tidy_mat) <- vec_cols
   return_frame <- data.frame(

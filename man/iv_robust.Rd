@@ -26,7 +26,7 @@ corresponds to the clusters in the data.}
 \item{se_type}{The sort of standard error sought. If `clusters` is
 not specified the options are "HC0", "HC1" (or "stata", the equivalent),
  "HC2" (default), "HC3", or
-"classical". If `clusters` is specified the options are "CR0", "CR2" (default), or "stata".}
+"classical". If `clusters` is specified the options are "CR0", "CR2" (default), or "stata". Can also specify "none", which may speed up estimation of the coefficients.}
 
 \item{ci}{logical. Whether to compute and return p-values and confidence
 intervals, TRUE by default.}
@@ -66,9 +66,9 @@ following components:
   \item{k}{the number of columns in the design matrix (includes linearly dependent columns!)}
   \item{rank}{the rank of the fitted model}
   \item{vcov}{the fitted variance covariance matrix}
-  \item{r.squared}{the \eqn{R^2}}
-  \item{adj.r.squared}{the \eqn{R^2} but penalized for having more parameters, \code{rank}}
-  \item{fstatistic}{a vector with the value of the F-statistic with the numerator and denominator degrees of freedom}
+  \item{r.squared}{the \eqn{R^2} of the second stage regrssion}
+  \item{adj.r.squared}{the \eqn{R^2} of the second stage regression, but penalized for having more parameters, \code{rank}}
+  \item{fstatistic}{a vector with the value of the second stage F-statistic with the numerator and denominator degrees of freedom}
   \item{weighted}{whether or not weights were applied}
   \item{call}{the original function call}
 We also return \code{terms} with the second stage terms and \code{terms_regressors} with the first stage terms, both of which used by \code{predict}.
