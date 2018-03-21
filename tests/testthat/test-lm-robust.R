@@ -13,7 +13,7 @@ test_that("lm robust se", {
   lm_robust(Y ~ Z * X, data = dat)
 
   expect_equivalent(
-    lm_robust(Y ~ 1, data = dat)$coefficients[1],
+    coef(lm_robust(Y ~ 1, data = dat))[1],
     mean(dat$Y)
   )
 
@@ -50,12 +50,12 @@ test_that("lm robust se", {
       rmcall(lm_stata)
     )
 
-    expect_false(all(lm_hc0$se == lm_hc1$se))
-    expect_false(all(lm_hc0$se == lm_hc2$se))
-    expect_false(all(lm_hc0$se == lm_hc3$se))
-    expect_false(all(lm_hc1$se == lm_hc2$se))
-    expect_false(all(lm_hc1$se == lm_hc3$se))
-    expect_false(all(lm_hc2$se == lm_hc3$se))
+    expect_false(all(lm_hc0$std.error == lm_hc1$std.error))
+    expect_false(all(lm_hc0$std.error == lm_hc2$std.error))
+    expect_false(all(lm_hc0$std.error == lm_hc3$std.error))
+    expect_false(all(lm_hc1$std.error == lm_hc2$std.error))
+    expect_false(all(lm_hc1$std.error == lm_hc3$std.error))
+    expect_false(all(lm_hc2$std.error == lm_hc3$std.error))
 
     expect_equivalent(
       lm_hc0$df,
@@ -66,8 +66,8 @@ test_that("lm robust se", {
     )
 
     expect_equivalent(
-      lm_hc0$se ^ 2,
-      lm_hc1$se ^ 2 * ((N - length(lm_hc1$coefficients)) / N)
+      lm_hc0$std.error ^ 2,
+      lm_hc1$std.error ^ 2 * ((N - length(coef(lm_hc1))) / N)
     )
   }
 
@@ -158,7 +158,7 @@ test_that("lm robust works with missingness", {
 
   lm_missout_out <- lm(Y ~ Z + X, data = dat)
   lm_missout_hc2 <- cbind(
-    lm_missout_out$coefficients,
+    coef(lm_missout_out),
     sqrt(diag(sandwich::vcovHC(lm_missout_out, type = "HC2")))
   )
 
@@ -211,7 +211,7 @@ test_that("lm robust works with weights", {
   # Compare to lm output
   lm_out <- lm(Y ~ Z * X, weights = W, data = dat)
   lmo_hc2 <- cbind(
-    lm_out$coefficients,
+    coef(lm_out),
     sqrt(diag(sandwich::vcovHC(lm_out, type = "HC2")))
   )
 
@@ -236,7 +236,7 @@ test_that("lm robust works with weights", {
   # Compare to lm output
   lm_miss_out <- lm(Y ~ Z * X, weights = W, data = dat)
   lmo_miss_hc2 <- cbind(
-    lm_miss_out$coefficients,
+    coef(lm_miss_out),
     sqrt(diag(sandwich::vcovHC(lm_miss_out, type = "HC2")))
   )
 
@@ -270,7 +270,7 @@ test_that("lm_robust_fit adds column names", {
   )
 
   expect_equal(
-    lm_o$coefficient_name,
+    lm_o$term,
     c("X1", "X2", "X3")
   )
 })
@@ -307,7 +307,7 @@ test_that("lm robust works with rank-deficient X", {
   j <- 1
   for (i in seq_along(sum_lm$aliased)) {
     if (!sum_lm$aliased[i]) {
-      out_sumlm[i, ] <- sum_lm$coefficients[j, 1:2]
+      out_sumlm[i, ] <- coef(sum_lm)[j, 1:2]
       j <- j + 1
     }
   }
@@ -403,8 +403,8 @@ test_that("multiple outcomes", {
   )
 
   expect_equal(
-    lmro$coefficients,
-    lmo$coefficients
+    coef(lmro),
+    coef(lmo)
   )
 
   expect_equal(

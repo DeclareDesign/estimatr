@@ -21,14 +21,14 @@ extract.lm_robust <- function(model, include.ci = TRUE, include.rsquared = TRUE,
   s <- summary(model, ...)
 
   names <- rownames(s$coefficients)
-  co <- s$coefficients[, 1]
-  se <- s$coefficients[, 2]
-  pval <- s$coefficients[, 3]
+  co <- coef(s)[, 1]
+  se <- coef(s)[, 2]
+  pval <- coef(s)[, 3]
   cilow <- numeric()
   ciupper <- numeric()
   if (include.ci) {
-    cilow <- s$coefficients[, 4]
-    ciupper <- s$coefficients[, 5]
+    cilow <- coef(s)[, 4]
+    ciupper <- coef(s)[, 5]
   }
 
   rs <- s$r.squared  #extract R-squared

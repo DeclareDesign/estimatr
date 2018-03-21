@@ -123,7 +123,9 @@ tidy(lmout_stata)
 knitr::kable(tidy(lmout_stata))
 ```
 
-Furthermore, users can take advantage of the [`margins`](https://github.com/leeper/margins) package to get marginal effects, average marginal effects and their standard errors, and more. Similarly, the [`prediction`](https://github.com/leeper/prediction) package from the same author also provides a suite of software for different kinds of predictions.
+
+
+Furthermore, users can take advantage of the margins package to get marginal effects, average marginal effects and their standard errors, and more. Similarly, the prediction package from the same author also provides a suite of software for different kinds of predictions.
 
 ```{r margins, echo=TRUE}
 library(margins)
@@ -217,7 +219,7 @@ crs_decl <- declare_ra(
 ht_comp <- horvitz_thompson(
   y ~ z,
   data = dat,
-  declaration = crs_decl
+  ra_declaration = crs_decl
 )
 tidy(ht_comp)
 ```
@@ -239,7 +241,7 @@ crs_clust_decl <- declare_ra(
 ht_clust <- horvitz_thompson(
   y_clust ~ z_clust,
   data = dat,
-  declaration = crs_clust_decl
+  ra_declaration = crs_clust_decl
 )
 tidy(ht_clust)
 ```

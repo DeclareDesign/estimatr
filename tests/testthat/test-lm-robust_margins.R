@@ -1,10 +1,5 @@
 context("Helper - lm_robust margins")
 
-skip_if_not_installed("margins")
-
-# install.packages(c("margins", "prediction"))
-# devtools::install_github("leeper/prediction")
-# devtools::install_github("leeper/margins")
 library(margins)
 
 mv <- c("AME", "SE", "z", "p")
@@ -58,20 +53,19 @@ test_that("lm robust + weights can work with margins", {
   expect_equal(marginal_effects(x), marginal_effects(x2))
 
 
-  expect_warning(
-    lmc <- round(summary(margins(x, vce = "delta"))[, mv], 3),
-    "'weights'"
+  suppressWarnings(
+    {lmc <- round(summary(margins(x, vce = "delta"))[, mv], 3)}
   )
-  expect_warning(
-    lmr <- round(summary(margins(x2, vce = "delta"))[, mv], 3),
-    "'weights'"
+
+  suppressWarnings(
+    {lmr <- round(summary(margins(x2, vce = "delta"))[, mv], 3)}
   )
+
   # Have to round quite a bit!
   expect_equal(lmc, lmr)
 })
 
 test_that("lm robust + cluster can work with margins", {
-
   # works but throws a lot of warnings
   x <- lm(mpg ~ cyl * hp + wt, data = mtcars)
   x2 <- lm_robust(mpg ~ cyl * hp + wt, data = mtcars, clusters = am)

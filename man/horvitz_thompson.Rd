@@ -5,9 +5,9 @@
 \title{Horvitz-Thompson estimator for two-armed trials}
 \usage{
 horvitz_thompson(formula, data, blocks, clusters, simple = NULL,
-  condition_prs, condition_pr_mat = NULL, declaration = NULL, subset,
-  condition1 = NULL, condition2 = NULL, se_type = c("youngs", "constant"),
-  ci = TRUE, alpha = 0.05, return_condition_pr_mat = FALSE)
+  condition_prs, condition_pr_mat = NULL, ra_declaration = NULL, subset,
+  condition1 = NULL, condition2 = NULL, se_type = c("youngs", "constant",
+  "none"), ci = TRUE, alpha = 0.05, return_condition_pr_mat = FALSE)
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}, such as
@@ -25,7 +25,7 @@ designs. For blocked designs, clusters must be within blocks.}
 \item{simple}{logical, optional. Whether the randomization is simple
 (TRUE) or complete (FALSE). This is ignored if \code{blocks} are specified,
 as all blocked designs use complete randomization, or either
-\code{declaration} or \code{condition_pr_mat} are passed. Otherwise, it
+\code{ra_declaration} or \code{condition_pr_mat} are passed. Otherwise, it
 defaults to \code{TRUE}.}
 
 \item{condition_prs}{An optional bare (unquoted) name of the variable with
@@ -34,7 +34,7 @@ the condition 2 (treatment) probabilities. See details.}
 \item{condition_pr_mat}{An optional 2n * 2n matrix of marginal and joint
 probabilities of all units in condition1 and condition2. See details.}
 
-\item{declaration}{An object of class \code{"ra_declaration"}, from
+\item{ra_declaration}{An object of class \code{"ra_declaration"}, from
 the \code{\link[randomizr]{declare_ra}} function in the \pkg{randomizr}
 package. This is the third way that one can specify a design for this
 estimator. Cannot be used along with any of \code{condition_prs},
@@ -55,11 +55,11 @@ default be 0 and \code{condition2} will be 1). See the examples for more.}
 \item{condition2}{value in the treatment vector of the condition to be the
 treatment. See \code{condition1}.}
 
-\item{se_type}{can be one of \code{c("youngs", "constant")} and corresponds
+\item{se_type}{can be one of \code{c("youngs", "constant", "none")} and corresponds
 the estimator of the standard errors. Default estimator uses Young's
 inequality (and is conservative) while the other uses a constant treatment
 effects assumption and only works for simple randomized designs at the
-moment.}
+moment. If "none" then standard errors will not be computed which may speed up run time if only the point estimate is required.}
 
 \item{ci}{logical. Whether to compute and return p-values and
 confidence intervals, TRUE by default.}
@@ -82,13 +82,13 @@ you can use the generic accessor functions \code{coef} and
 An object of class \code{"horvitz_thompson"} is a list containing at
 least the following components:
 
-  \item{coefficients}{the estimated coefficients}
-  \item{se}{the estimated standard errors}
+  \item{coefficients}{the estimated difference in totals}
+  \item{std.error}{the estimated standard error}
   \item{df}{the estimated degrees of freedom}
-  \item{p}{the p-values from from a two-sided z-test using \code{coefficients}, \code{se}, and \code{df}}
-  \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
-  \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
-  \item{coefficient_name}{a character vector of coefficient names}
+  \item{p.value}{the p-value from a two-sided z-test using \code{coefficients} and \code{std.error}}
+  \item{ci.lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
+  \item{ci.upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
+  \item{term}{a character vector of coefficient names}
   \item{alpha}{the significance level specified by the user}
   \item{N}{the number of observations used}
   \item{outcome}{the name of the outcome variable}
@@ -126,7 +126,7 @@ the \code{\link[randomizr]{declare_ra}} function in the \pkg{randomizr}
 package. This function takes several arguments, including blocks, clusters,
 treatment probabilities, whether randomization is simple or not, and more.
 Passing the outcome of that function, an object of class
-\code{"ra_declaration"} to the \code{declaration} argument in this function,
+\code{"ra_declaration"} to the \code{ra_declaration} argument in this function,
 will lead to a call of the \code{\link{declaration_to_condition_pr_mat}}
 function which generates the condition probability matrix needed to
 estimate treatment effects and standard errors. We provide many examples
@@ -184,7 +184,7 @@ horvitz_thompson(y ~ z, data = dat, condition_prs = p, se_type = "constant")
 
 # Also can use randomizr to pass a declaration
 srs_declaration <- declare_ra(N = nrow(dat), prob = 0.5, simple = TRUE)
-horvitz_thompson(y ~ z, data = dat, declaration = srs_declaration)
+horvitz_thompson(y ~ z, data = dat, ra_declaration = srs_declaration)
 
 #----------
 # 2. Complete random assignment
@@ -193,7 +193,7 @@ horvitz_thompson(y ~ z, data = dat, declaration = srs_declaration)
 dat$z <- sample(rep(0:1, each = n/2))
 # Can use a declaration
 crs_declaration <- declare_ra(N = nrow(dat), prob = 0.5, simple = FALSE)
-horvitz_thompson(y ~ z, data = dat, declaration = crs_declaration)
+horvitz_thompson(y ~ z, data = dat, ra_declaration = crs_declaration)
 # Can precompute condition_pr_mat and pass it
 # (faster for multiple runs with same condition probability matrix)
 crs_pr_mat <- declaration_to_condition_pr_mat(crs_declaration)
@@ -208,7 +208,7 @@ dat$prob <- 0.5
 clust_crs_decl <- declare_ra(N = nrow(dat), clusters = dat$cl, prob = 0.5)
 dat$z <- conduct_ra(clust_crs_decl)
 # Easiest to specify using declaration
-ht_cl <- horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl)
+ht_cl <- horvitz_thompson(y ~ z, data = dat, ra_declaration = clust_crs_decl)
 # Also can pass the condition probability and the clusters
 ht_cl_manual <- horvitz_thompson(
   y ~ z,

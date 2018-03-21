@@ -30,7 +30,7 @@ print_summary_lm_like <- function(x,
     cat("\nCoefficients:\n")
   }
 
-  print(x$coefficients, digits = digits)
+  print(coef(x), digits = digits)
 
   if (!is.null(x$fstatistic)) {
     cat(

@@ -303,7 +303,7 @@ clustered_POs <- declare_potential_outcomes(Y ~ Z * 0.4 * clust_shock + epsilon)
 ht_cl <- declare_estimator(
   formula = Y ~ Z,
   # Give your randomization declaration to HT and it sorts it out!
-  declaration = randomizr::declare_ra(clusters = with(data, clusters), prob = 0.5),
+  ra_declaration = randomizr::declare_ra(clusters = with(data, clusters), prob = 0.5),
   model = estimatr::horvitz_thompson,
   label = "Horvitz-Thompson Clustered"
 )

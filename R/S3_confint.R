@@ -53,20 +53,20 @@ get_ci_mat <- function(object, level, ttest = TRUE) {
   }
 
   cis <- cbind(
-    as.vector(object$ci_lower),
-    as.vector(object$ci_upper)
+    as.vector(object$ci.lower),
+    as.vector(object$ci.upper)
   )
 
-  if (is.matrix(object$ci_lower)) {
-    ny <- ncol(object$ci_lower)
-    p <- nrow(object$ci_lower)
+  if (is.matrix(object$ci.lower)) {
+    ny <- ncol(object$ci.lower)
+    p <- nrow(object$ci.lower)
     rownames(cis) <- paste0(
       rep(object$outcome, each = p),
       ":",
-      rep(object$coefficient_name, times = ny)
+      rep(object$term, times = ny)
     )
   } else {
-    rownames(cis) <- object$coefficient_name
+    rownames(cis) <- object$term
   }
 
   colnames(cis) <- paste((1 - level) / 2 * c(100, -100) + c(0, 100), "%")

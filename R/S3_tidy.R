@@ -87,16 +87,6 @@ tidy_data_frame <- function(object, digits = NULL) {
   vec_cols <-
     c(
       "coefficients",
-      "se",
-      "p",
-      "ci_lower",
-      "ci_upper",
-      "df"
-    )
-
-  tidy_names <-
-    c(
-      "estimate",
       "std.error",
       "p.value",
       "ci.lower",
@@ -105,14 +95,15 @@ tidy_data_frame <- function(object, digits = NULL) {
     )
 
   tidy_mat <- do.call("cbind", lapply(vec_cols, function(x) {as.vector(object[[x]])}))
-  colnames(tidy_mat) <- tidy_names
+  vec_cols[which(vec_cols == "coefficients")] <- "estimate"
+  colnames(tidy_mat) <- vec_cols
   return_frame <- data.frame(
-    term = object[["coefficient_name"]],
+    term = object[["term"]],
     tidy_mat,
     stringsAsFactors = FALSE
   )
 
-  return_frame$outcome <- rep(object[["outcome"]], each = length(object[["coefficient_name"]]))
+  return_frame$outcome <- rep(object[["outcome"]], each = length(object[["term"]]))
 
   rownames(return_frame) <- NULL
   return(return_frame)

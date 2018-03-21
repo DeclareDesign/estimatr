@@ -73,15 +73,15 @@ if (rep_table_3) {
   its <- 250000
   set.seed(161235)
   check_cover <- function(obj, point = 0) {
-    return(obj$ci_lower[2] < point & obj$ci_upper[2] > point)
+    return(obj$ci.lower[2] < point & obj$ci.upper[2] > point)
   }
   ci_dist <- function(obj) {
-    return(obj$ci_upper[2] - obj$ci_lower[2])
+    return(obj$ci.upper[2] - obj$ci.lower[2])
   }
   ci_custom <- function(obj) {
     return(list(
-      ci_upper = obj$coefficients[2] + obj$se[2] * 1.96,
-      ci_lower = obj$coefficients[2] - obj$se[2] * 1.96
+      ci.upper = coef(obj)[2] + obj$std.error[2] * 1.96,
+      ci.lower = coef(obj)[2] - obj$std.error[2] * 1.96
     ))
   }
 
@@ -123,7 +123,7 @@ if (rep_table_3) {
         se_type = ses[j]
       )
 
-      sd_mat[j, ] <- c(unadj$se[2], tradadj$se[2], intadj$se[2])
+      sd_mat[j, ] <- c(unadj$std.error[2], tradadj$std.error[2], intadj$std.error[2])
       cover_mat[j, ] <- c(
         check_cover(ci_custom(unadj)),
         check_cover(ci_custom(tradadj)),
@@ -136,7 +136,7 @@ if (rep_table_3) {
       )
     }
 
-    ests[i, ] <- c(unadj$coefficients[2], tradadj$coefficients[2], intadj$coefficients[2])
+    ests[i, ] <- c(coef(unadj)[2], coef(tradadj)[2], coef(intadj)[2])
     sd_mats[i, , ] <- sd_mat
     cover_mats[i, , ] <- cover_mat
     width_mats[i, , ] <- width_mat

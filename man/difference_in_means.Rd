@@ -5,7 +5,8 @@
 \title{Design-based difference-in-means estimator}
 \usage{
 difference_in_means(formula, data, blocks, clusters, weights, subset,
-  condition1 = NULL, condition2 = NULL, ci = TRUE, alpha = 0.05)
+  se_type = c("default", "none"), condition1 = NULL, condition2 = NULL,
+  ci = TRUE, alpha = 0.05)
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}, such as
@@ -25,6 +26,8 @@ supplied data.}
 
 \item{subset}{An optional bare (unquoted) expression specifying a subset of
 observations to be used.}
+
+\item{se_type}{An optional string that can be one of \code{c("default", "none")}. If "default" (the default), it will use the default standard error estimator for the design, and if "none" then standard errors will not be computed which may speed up run time if only the point estimate is required.}
 
 \item{condition1}{value in the treatment vector of the condition
 to be the control. Effects are
@@ -54,13 +57,13 @@ you can use the generic accessor functions \code{coef} and
 
 An object of class \code{"difference_in_means"} is a list containing at
 least the following components:
-  \item{coefficients}{the estimated coefficients}
-  \item{se}{the estimated standard errors}
+  \item{coefficients}{the estimated difference in means}
+  \item{std.error}{the estimated standard error}
   \item{df}{the estimated degrees of freedom}
-  \item{p}{the p-values from a two-sided t-test using \code{coefficients}, \code{se}, and \code{df}}
-  \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
-  \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
-  \item{coefficient_name}{a character vector of coefficient names}
+  \item{p.value}{the p-value from a two-sided t-test using \code{coefficients}, \code{std.error}, and \code{df}}
+  \item{ci.lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
+  \item{ci.upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
+  \item{term}{a character vector of coefficient names}
   \item{alpha}{the significance level specified by the user}
   \item{N}{the number of observations used}
   \item{outcome}{the name of the outcome variable}

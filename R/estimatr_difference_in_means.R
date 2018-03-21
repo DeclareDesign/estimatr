@@ -18,6 +18,7 @@
 #' supplied data.
 #' @param subset An optional bare (unquoted) expression specifying a subset of
 #' observations to be used.
+#' @param se_type An optional string that can be one of \code{c("default", "none")}. If "default" (the default), it will use the default standard error estimator for the design, and if "none" then standard errors will not be computed which may speed up run time if only the point estimate is required.
 #' @param condition1 value in the treatment vector of the condition
 #' to be the control. Effects are
 #' estimated with \code{condition1} as the control and \code{condition2} as the
@@ -64,13 +65,13 @@
 #'
 #' An object of class \code{"difference_in_means"} is a list containing at
 #' least the following components:
-#'   \item{coefficients}{the estimated coefficients}
-#'   \item{se}{the estimated standard errors}
+#'   \item{coefficients}{the estimated difference in means}
+#'   \item{std.error}{the estimated standard error}
 #'   \item{df}{the estimated degrees of freedom}
-#'   \item{p}{the p-values from a two-sided t-test using \code{coefficients}, \code{se}, and \code{df}}
-#'   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
-#'   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
-#'   \item{coefficient_name}{a character vector of coefficient names}
+#'   \item{p.value}{the p-value from a two-sided t-test using \code{coefficients}, \code{std.error}, and \code{df}}
+#'   \item{ci.lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
+#'   \item{ci.upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
+#'   \item{term}{a character vector of coefficient names}
 #'   \item{alpha}{the significance level specified by the user}
 #'   \item{N}{the number of observations used}
 #'   \item{outcome}{the name of the outcome variable}
@@ -211,6 +212,7 @@ difference_in_means <-
            clusters,
            weights,
            subset,
+           se_type = c("default", "none"),
            condition1 = NULL,
            condition2 = NULL,
            ci = TRUE,
@@ -221,6 +223,8 @@ difference_in_means <-
         "treatment variable."
       )
     }
+
+    se_type <- match.arg(se_type)
 
     datargs <- enquos(
       formula = formula,
@@ -272,7 +276,8 @@ difference_in_means <-
         condition1 = condition1,
         condition2 = condition2,
         data = data,
-        alpha = alpha
+        alpha = alpha,
+        se_type = se_type
       )
 
       if (is.null(data$cluster)) {
@@ -294,12 +299,12 @@ difference_in_means <-
       } else if (all(clust_per_block == 2)) {
         pair_matched <- TRUE
       } else if (any(clust_per_block == 2) & any(clust_per_block > 2)) {
-        stop(
-          "`blocks` must either all have two units/`clusters` (i.e., a ",
-          "matched pairs design) or all have ",
-          "more than two units. You cannot mix blocks of size two with ",
-          "blocks of a larger size. In order to estimate treatment effects with ",
-          "this design, use inverse propensity score weights with lm_robust()"
+        pair_matched <- TRUE
+        warning(
+          "Some `blocks` have two units/`clusters` while other blocks ",
+          "have more units/`clusters`. As standard variance estimates ",
+          "cannot be computed within blocks with two units, we use the ",
+          "matched pairs estimator of the variance."
         )
       }
 
@@ -311,7 +316,8 @@ difference_in_means <-
           condition1 = condition1,
           condition2 = condition2,
           pair_matched = pair_matched,
-          alpha = alpha
+          alpha = alpha,
+          se_type = se_type
         )
       })
 
@@ -323,35 +329,47 @@ difference_in_means <-
       diff <- with(block_estimates, sum(coefficients * N / N_overall))
 
       df <- NA
+      std.error <- NA
       n_blocks <- nrow(block_estimates)
 
       if (pair_matched) {
         if (is.null(data$cluster)) {
           design <- "Matched-pair"
+
           # Pair matched, unit randomized (Gerber Green 2012, p77, eq3.16)
-          se <-
-            with(
-              block_estimates,
-              sqrt((1 / (n_blocks * (n_blocks - 1))) * sum((coefficients - diff) ^ 2))
-            )
+          if (se_type != "none") {
+            std.error <-
+              with(
+                block_estimates,
+                sqrt((1 / (n_blocks * (n_blocks - 1))) * sum((coefficients - diff) ^ 2))
+              )
+          }
+
         } else {
           design <- "Matched-pair clustered"
           # Pair matched, cluster randomized (Imai, King, Nall 2009, p36, eq6)
-          se <-
-            with(
-              block_estimates,
-              sqrt(
-                (n_blocks / ((n_blocks - 1) * N_overall ^ 2)) *
-                  sum((N * coefficients - (N_overall * diff) / n_blocks) ^ 2)
+          if (se_type != "none") {
+            std.error <-
+              with(
+                block_estimates,
+                sqrt(
+                  (n_blocks / ((n_blocks - 1) * N_overall ^ 2)) *
+                    sum((N * coefficients - (N_overall * diff) / n_blocks) ^ 2)
+                )
               )
-            )
+          }
         }
 
         # For pair matched, cluster randomized Imai et al. 2009 recommend (p. 37)
         df <- n_blocks - 1
       } else {
         # Block randomized (Gerber and Green 2012, p. 74, footnote 17)
-        se <- with(block_estimates, sqrt(sum(se ^ 2 * (N / N_overall) ^ 2)))
+        if (se_type != "none") {
+          std.error <- with(
+            block_estimates,
+            sqrt(sum(std.error ^ 2 * (N / N_overall) ^ 2))
+          )
+        }
 
 
         ## we don't know if this is correct!
@@ -368,7 +386,7 @@ difference_in_means <-
 
       return_frame <- data.frame(
         coefficients = diff,
-        se = se,
+        std.error = std.error,
         df = df,
         N = N_overall,
         stringsAsFactors = FALSE
@@ -403,7 +421,8 @@ difference_in_means_internal <-
            condition2 = NULL,
            data,
            pair_matched = FALSE,
-           alpha = .05) {
+           alpha = .05,
+           se_type = "default") {
 
     # Check that treatment status is uniform within cluster, checked here
     # so that the treatment vector t doesn't have to be built anywhere else
@@ -456,7 +475,7 @@ difference_in_means_internal <-
         y = data$y,
         X = cbind(1, t = as.numeric(data$t == condition2)),
         cluster = data$cluster,
-        se_type = "CR2",
+        se_type = ifelse(se_type == "none", "none", "CR2"),
         weights = data$weights,
         ci = TRUE,
         try_cholesky = TRUE,
@@ -465,24 +484,24 @@ difference_in_means_internal <-
         has_int = TRUE
       )
 
-      diff <- cr2_out$coefficients[2]
-      se <- cr2_out$se[2]
+      diff <- coef(cr2_out)[2]
+      std.error <- cr2_out$std.error[2]
       df <- cr2_out$df[2]
     } else {
       if (is.null(data$weights)) {
         diff <- mean(Y2) - mean(Y1)
 
-        if (pair_matched) {
+        if (pair_matched || se_type == "none") {
           # Pair matched designs
-          se <- NA
+          std.error <- NA
         } else {
           # Non-pair matched designs, unit level randomization
           var_Y2 <- var(Y2)
           var_Y1 <- var(Y1)
 
-          se <- sqrt(var_Y2 / N2 + var_Y1 / N1)
+          std.error <- sqrt(var_Y2 / N2 + var_Y1 / N1)
 
-          df <- se ^ 4 /
+          df <- std.error ^ 4 /
             (
               (var_Y2 / N2) ^ 2 / (N2 - 1) +
                 (var_Y1 / N1) ^ 2 / (N1 - 1)
@@ -503,7 +522,7 @@ difference_in_means_internal <-
         w_hc2_out <- lm_robust_fit(
           y = data$y,
           X = cbind(1, t = as.numeric(data$t == condition2)),
-          se_type = "HC2",
+          se_type = ifelse(se_type == "none", "none", "HC2"),
           weights = data$weights,
           cluster = NULL,
           ci = TRUE,
@@ -513,8 +532,8 @@ difference_in_means_internal <-
           has_int = TRUE
         )
 
-        diff <- w_hc2_out$coefficients[2]
-        se <- w_hc2_out$se[2]
+        diff <- coef(w_hc2_out)[2]
+        std.error <- w_hc2_out$std.error[2]
         df <- w_hc2_out$df[2]
       }
     }
@@ -522,7 +541,7 @@ difference_in_means_internal <-
     return_frame <-
       data.frame(
         coefficients = diff,
-        se = se,
+        std.error = std.error,
         df = df,
         stringsAsFactors = FALSE
       )

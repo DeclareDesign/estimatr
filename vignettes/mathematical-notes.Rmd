@@ -30,8 +30,10 @@ The current estimators we provide are:
 
 * [`lm_robust`](#lm_robust-notes) - for fitting linear models with heteroskedasticity/cluster-robust standard errors
 * [`lm_lin`](#lm_lin-notes) - a wrapper for `lm_robust()` to simplify interacting centered pre-treatment covariates with a treatment variable
+* [`iv_robust`] - two stage least squares estimation of instrumental variables regression (not yet documented in this vignette)
 * [`difference_in_means`](#difference_in_means-notes) - for estimating differences in means with appropriate standard errors for unit-randomized, cluster-randomized, block-randomized, matched-pair randomized, and matched-pair clustered designs
 * [`horvitz_thompson`](#horvitz_thompson-notes) - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs
+
 
 ## `lm_robust` notes
 
@@ -159,6 +161,8 @@ There are two subsets of blocked designs that we also consider:
 
 * Matched-pairs (only `blocks` is specified and all blocks are size two)
 * Matched-pair clustered design (both names are specified and each block only has two clusters)
+
+Note: if there are blocks of size two and blocks greater than size two, we default to the matched-pairs estimators described below.
 
 For each design, our estimator is informed by the recent statistical literature on the analysis of experimental data.
 

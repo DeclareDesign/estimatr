@@ -149,14 +149,13 @@ lm_robust_fit <- function(y,
   if (multivariate) {
     return_list <- list(
       coefficients = fit$beta_hat,
-      se = matrix(NA, k, ny),
-      df = matrix(NA, k, ny),
-      stringsAsFactors = FALSE
+      std.error = matrix(NA, k, ny),
+      df = matrix(NA, k, ny)
     )
   } else {
     return_list <- list(
       coefficients = setNames(as.vector(fit$beta_hat), variable_names),
-      se = NA,
+      std.error = NA,
       df = NA
     )
   }
@@ -234,7 +233,7 @@ lm_robust_fit <- function(y,
       }
       # print(est_exists)
       # print(vcov_fit)
-      return_list$se[est_exists] <- sqrt(diag(vcov_fit$Vcov_hat))
+      return_list$std.error[est_exists] <- sqrt(diag(vcov_fit$Vcov_hat))
 
       if (ci) {
         # If any not computed in variance fn, replace with NA
@@ -268,7 +267,7 @@ lm_robust_fit <- function(y,
     }
   }
 
-  return_list[["coefficient_name"]] <- variable_names
+  return_list[["term"]] <- variable_names
   return_list[["outcome"]] <- colnames(y)
   return_list[["alpha"]] <- alpha
   return_list[["se_type"]] <- se_type
@@ -351,7 +350,7 @@ lm_robust_fit <- function(y,
       if (multivariate) {
         coef_names <- paste0(
           rep(paste0(return_list[["outcome"]], ":"), each = rank),
-          rep(return_list$coefficient_name, times = ny)
+          rep(return_list$term, times = ny)
         )
         # print(return_list[["vcov"]])
         # print(coef_names)
@@ -361,8 +360,8 @@ lm_robust_fit <- function(y,
         )
       } else {
         dimnames(return_list[["vcov"]]) <- list(
-          return_list$coefficient_name[est_exists],
-          return_list$coefficient_name[est_exists]
+          return_list$term[est_exists],
+          return_list$term[est_exists]
         )
       }
     }

@@ -65,7 +65,7 @@ test_that("We match Joel's estimator", {
   ht_decl_o <- horvitz_thompson(
     y ~ z,
     data = dat,
-    declaration = randomizr::declare_ra(
+    ra_declaration = randomizr::declare_ra(
       N = nrow(dat),
       prob = dat$p[1],
       simple = TRUE
@@ -92,7 +92,7 @@ test_that("We match Joel's estimator", {
   ht_const_o <- horvitz_thompson(
     y ~ z,
     data = dat,
-    declaration = randomizr::declare_ra(
+    ra_declaration = randomizr::declare_ra(
       N = nrow(dat),
       prob = dat$p[1],
       simple = TRUE
@@ -122,7 +122,7 @@ test_that("We match Joel's estimator", {
   ht_comp_decl_o <- horvitz_thompson(
     y ~ z,
     data = dat,
-    declaration = randomizr::declare_ra(
+    ra_declaration = randomizr::declare_ra(
       N = nrow(dat),
       prob = dat$p[1],
       simple = FALSE
@@ -153,7 +153,7 @@ test_that("We match Joel's estimator", {
   # ht_comp_const_o  <- horvitz_thompson(
   #   y ~ z,
   #   data = dat,
-  #   declaration = randomizr::declare_ra(
+  #   ra_declaration = randomizr::declare_ra(
   #     N = nrow(dat),
   #     prob = dat$p[1],
   #     simple = FALSE

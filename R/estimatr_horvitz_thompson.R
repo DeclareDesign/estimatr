@@ -16,22 +16,22 @@
 #' @param simple logical, optional. Whether the randomization is simple
 #' (TRUE) or complete (FALSE). This is ignored if \code{blocks} are specified,
 #' as all blocked designs use complete randomization, or either
-#' \code{declaration} or \code{condition_pr_mat} are passed. Otherwise, it
+#' \code{ra_declaration} or \code{condition_pr_mat} are passed. Otherwise, it
 #' defaults to \code{TRUE}.
 #' @param condition_pr_mat An optional 2n * 2n matrix of marginal and joint
 #' probabilities of all units in condition1 and condition2. See details.
-#' @param declaration An object of class \code{"ra_declaration"}, from
+#' @param ra_declaration An object of class \code{"ra_declaration"}, from
 #' the \code{\link[randomizr]{declare_ra}} function in the \pkg{randomizr}
 #' package. This is the third way that one can specify a design for this
 #' estimator. Cannot be used along with any of \code{condition_prs},
 #' \code{blocks}, \code{clusters}, or \code{condition_pr_mat}. See details.
 #' @param subset An optional bare (unquoted) expression specifying a subset of
 #' observations to be used.
-#' @param se_type can be one of \code{c("youngs", "constant")} and corresponds
+#' @param se_type can be one of \code{c("youngs", "constant", "none")} and corresponds
 #' the estimator of the standard errors. Default estimator uses Young's
 #' inequality (and is conservative) while the other uses a constant treatment
 #' effects assumption and only works for simple randomized designs at the
-#' moment.
+#' moment. If "none" then standard errors will not be computed which may speed up run time if only the point estimate is required.
 #' @param condition1 value in the treatment vector of the condition
 #' to be the control. Effects are
 #' estimated with \code{condition1} as the control and \code{condition2} as the
@@ -76,7 +76,7 @@
 #' package. This function takes several arguments, including blocks, clusters,
 #' treatment probabilities, whether randomization is simple or not, and more.
 #' Passing the outcome of that function, an object of class
-#' \code{"ra_declaration"} to the \code{declaration} argument in this function,
+#' \code{"ra_declaration"} to the \code{ra_declaration} argument in this function,
 #' will lead to a call of the \code{\link{declaration_to_condition_pr_mat}}
 #' function which generates the condition probability matrix needed to
 #' estimate treatment effects and standard errors. We provide many examples
@@ -121,13 +121,13 @@
 #' An object of class \code{"horvitz_thompson"} is a list containing at
 #' least the following components:
 #'
-#'   \item{coefficients}{the estimated coefficients}
-#'   \item{se}{the estimated standard errors}
+#'   \item{coefficients}{the estimated difference in totals}
+#'   \item{std.error}{the estimated standard error}
 #'   \item{df}{the estimated degrees of freedom}
-#'   \item{p}{the p-values from from a two-sided z-test using \code{coefficients}, \code{se}, and \code{df}}
-#'   \item{ci_lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
-#'   \item{ci_upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
-#'   \item{coefficient_name}{a character vector of coefficient names}
+#'   \item{p.value}{the p-value from a two-sided z-test using \code{coefficients} and \code{std.error}}
+#'   \item{ci.lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
+#'   \item{ci.upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
+#'   \item{term}{a character vector of coefficient names}
 #'   \item{alpha}{the significance level specified by the user}
 #'   \item{N}{the number of observations used}
 #'   \item{outcome}{the name of the outcome variable}
@@ -167,7 +167,7 @@
 #'
 #' # Also can use randomizr to pass a declaration
 #' srs_declaration <- declare_ra(N = nrow(dat), prob = 0.5, simple = TRUE)
-#' horvitz_thompson(y ~ z, data = dat, declaration = srs_declaration)
+#' horvitz_thompson(y ~ z, data = dat, ra_declaration = srs_declaration)
 #'
 #' #----------
 #' # 2. Complete random assignment
@@ -176,7 +176,7 @@
 #' dat$z <- sample(rep(0:1, each = n/2))
 #' # Can use a declaration
 #' crs_declaration <- declare_ra(N = nrow(dat), prob = 0.5, simple = FALSE)
-#' horvitz_thompson(y ~ z, data = dat, declaration = crs_declaration)
+#' horvitz_thompson(y ~ z, data = dat, ra_declaration = crs_declaration)
 #' # Can precompute condition_pr_mat and pass it
 #' # (faster for multiple runs with same condition probability matrix)
 #' crs_pr_mat <- declaration_to_condition_pr_mat(crs_declaration)
@@ -191,7 +191,7 @@
 #' clust_crs_decl <- declare_ra(N = nrow(dat), clusters = dat$cl, prob = 0.5)
 #' dat$z <- conduct_ra(clust_crs_decl)
 #' # Easiest to specify using declaration
-#' ht_cl <- horvitz_thompson(y ~ z, data = dat, declaration = clust_crs_decl)
+#' ht_cl <- horvitz_thompson(y ~ z, data = dat, ra_declaration = clust_crs_decl)
 #' # Also can pass the condition probability and the clusters
 #' ht_cl_manual <- horvitz_thompson(
 #'   y ~ z,
@@ -229,11 +229,11 @@ horvitz_thompson <-
            simple = NULL,
            condition_prs,
            condition_pr_mat = NULL,
-           declaration = NULL,
+           ra_declaration = NULL,
            subset,
            condition1 = NULL,
            condition2 = NULL,
-           se_type = c("youngs", "constant"),
+           se_type = c("youngs", "constant", "none"),
            ci = TRUE,
            alpha = .05,
            return_condition_pr_mat = FALSE) {
@@ -254,10 +254,10 @@ horvitz_thompson <-
     # Parse arguments, clean data
     # -----
     # User can either use declaration or the arguments, not both!
-    if (!is.null(declaration)) {
-      if (ncol(declaration$probabilities_matrix) > 2) {
+    if (!is.null(ra_declaration)) {
+      if (ncol(ra_declaration$probabilities_matrix) > 2) {
         stop(
-          "Cannot use horvitz_thompson() with a `declaration` with more than ",
+          "Cannot use horvitz_thompson() with a `ra_declaration` with more than ",
           "two treatment arms for now"
         )
       }
@@ -267,42 +267,45 @@ horvitz_thompson <-
         !missing(blocks) |
         !is.null(condition_pr_mat)) {
         stop(
-          "Cannot use `declaration` with any of `clusters`, `condition_prs`, ",
+          "Cannot use `ra_declaration` with any of `clusters`, `condition_prs`, ",
           "`blocks`, `condition_pr_mat`"
         )
       }
 
       # Add clusters, blocks, and treatment probabilities to data so they can be cleaned with clean_model_data
-      if (!is.null(declaration$clusters)) {
-        .clusters_ddinternal <- declaration$clusters
+      if (!is.null(ra_declaration$clusters)) {
+        .clusters_ddinternal <- ra_declaration$clusters
         clusters <- quo(.clusters_ddinternal)
       }
 
-      if (!is.null(declaration$blocks)) {
-        .blocks_ddinternal <- declaration$blocks
+      if (!is.null(ra_declaration$blocks)) {
+        .blocks_ddinternal <- ra_declaration$blocks
         blocks <- quo(.blocks_ddinternal)
       }
 
       if (!is.null(condition2)) {
         treatnum <-
-          which(declaration$cleaned_arguments$condition_names == condition2)
+          which(ra_declaration$cleaned_arguments$condition_names == condition2)
 
-        if (length(treatnum) == 0) {
+        if (!(condition2 %in% ra_declaration$cleaned_arguments$condition_names)) {
           stop(
-            "If `condition2` and `declaration` are both specified, ",
-            "`condition2` must match the condition_names in `declaration`.",
+            "If `condition2` and `ra_declaration` are both specified, ",
+            "`condition2` must match the condition_names in `ra_declaration`.",
             "\n`condition2`: ", condition2, "\n`condition_names`: ",
             paste0(
-              declaration$cleaned_arguments$condition_names,
+              ra_declaration$cleaned_arguments$condition_names,
               collapse = ", "
             )
           )
         }
 
-        treatment_prob <- declaration$probabilities_matrix[, treatnum]
+        treatment_prob <- obtain(
+          ra_declaration,
+          condition2
+        )
       } else {
         # assuming treatment is second column
-        treatment_prob <- declaration$probabilities_matrix[, 2]
+        treatment_prob <- ra_declaration$probabilities_matrix[, 2]
       }
       .treatment_prob_ddinternal <- treatment_prob
       condition_prs <- quo(.treatment_prob_ddinternal)
@@ -355,23 +358,31 @@ horvitz_thompson <-
     # ----------
 
     # Declaration is passed
-    if (!is.null(declaration)) {
+    if (!is.null(ra_declaration)) {
 
       # Use output from clean_model_data to rebuild declaration
-      if (nrow(declaration$probabilities_matrix) != length(data$y)) {
-        declaration$probabilities_matrix <- cbind(
+      if (nrow(ra_declaration$probabilities_matrix) != length(data$y)) {
+        prob_names <- colnames(ra_declaration$probabilities_matrix)
+        ra_declaration$probabilities_matrix <- cbind(
           1 - data$condition_probabilities,
           data$condition_probabilities
         )
+        colnames(ra_declaration$probabilities_matrix) <- prob_names
+
       }
 
-      # If simple, just use condition probabilities shortcut!
-      if (declaration$ra_type == "simple") {
+      # If simple, just use condition probabilities shortcut
+      # Same if se not needed
+      if (ra_declaration$ra_type == "simple" || se_type == "none") {
         condition_pr_mat <- NULL
       } else {
         # TODO to allow for declaration with multiple arms, get probability matrix
         # and build it like decl$pr_mat <- cbind(decl$pr_mat[, c(cond1, cond2)])
-        condition_pr_mat <- declaration_to_condition_pr_mat(declaration)
+        condition_pr_mat <- declaration_to_condition_pr_mat(
+          ra_declaration,
+          condition1,
+          condition2
+        )
       }
     } else if (is.null(condition_pr_mat)) {
       # need to learn it if no declaration and not passed
@@ -386,28 +397,31 @@ horvitz_thompson <-
           # marginal probabilities
           # if user didn't pass, we have to guess
           if (is.null(data$condition_probabilities)) {
-            pr_treat <- mean(data$t == condition2)
+            data$condition_probabilities <- mean(data$t == condition2)
 
             message(
               "Assuming simple random assignment with probability of treatment ",
               "equal to the mean number of obs in `condition2`, which is roughly ",
-              round(pr_treat, 3)
+              round(data$condition_probabilities[1], 3)
             )
 
-            data$condition_probabilities <- pr_treat
           }
         } else {
           # If we don't know the prob, learn it
           if (is.null(data$condition_probabilities)) {
-            pr_treat <- mean(data$t == condition2)
+            data$condition_probabilities <- mean(data$t == condition2)
             message(
               "Learning probability of complete random assignment from data with ",
-              "prob = ", round(pr_treat, 3)
+              "prob = ", round(data$condition_probabilities[1], 3)
             )
-            condition_pr_mat <- gen_pr_matrix_complete(
-              pr = pr_treat,
-              n_total = length(data$y)
-            )
+
+            if (se_type != "none") {
+              condition_pr_mat <- gen_pr_matrix_complete(
+                pr = data$condition_probabilities[1],
+                n_total = length(data$y)
+              )
+            }
+
           } else {
             if (length(unique(data$condition_probabilities)) > 1) {
               stop(
@@ -415,16 +429,19 @@ horvitz_thompson <-
               )
             }
 
-            condition_pr_mat <- gen_pr_matrix_complete(
-              pr = data$condition_probabilities[1],
-              n_total = length(data$y)
-            )
+            if (se_type != "none") {
+              condition_pr_mat <- gen_pr_matrix_complete(
+                pr = data$condition_probabilities[1],
+                n_total = length(data$y)
+              )
+            }
+
           }
         }
       } else if (is.null(data$blocks)) {
         # clustered case
         message(
-          "`simple = ", simple, ", using ",
+          "`simple` = ", simple, ", using ",
           ifelse(simple, "simple", "complete"), " cluster randomization"
         )
 
@@ -432,19 +449,23 @@ horvitz_thompson <-
 
           # Split by cluster and get complete randomized values within each cluster
           cluster_treats <- get_cluster_treats(data, condition2)
-          pr_treat <- mean(cluster_treats$treat_clust)
+          data$condition_probabilities <- mean(cluster_treats$treat_clust)
+
           message(
             "`condition_prs` not found, estimating probability of treatment ",
-            "to be constant at mean of clusters in `condition2` at prob =", pr_treat
+            "to be constant at mean of clusters in `condition2` at prob =",
+            data$condition_probabilities[1]
           )
 
-          # Some redundancy in following fn
-          condition_pr_mat <- gen_pr_matrix_cluster(
-            clusters = data$clusters,
-            treat_probs = rep(pr_treat, length(data$clusters)),
-            simple = simple
-          )
-        } else {
+          if (se_type != "none") {
+            # Some redundancy in following fn
+            condition_pr_mat <- gen_pr_matrix_cluster(
+              clusters = data$clusters,
+              treat_probs = data$condition_probabilities,
+              simple = simple
+            )
+          }
+        } else if (se_type != "none") {
 
           # Just to check if cluster has same treatment within
           get_cluster_treats(data, condition2)
@@ -459,7 +480,7 @@ horvitz_thompson <-
         # blocked case
         message(
           "Assuming complete random assignment of clusters within blocks. ",
-          "User can use `declaration` or `condition_pr_mat` to have full ",
+          "User can use `ra_declaration` or `condition_pr_mat` to have full ",
           "control over the design."
         )
 
@@ -484,7 +505,7 @@ horvitz_thompson <-
       }
     }
 
-    # Need the marginal condition prs for later
+    # Need the marginal condition prs for later in rare cases where not yet set
     if (is.null(data$condition_probabilities)) {
       data$condition_probabilities <-
         diag(condition_pr_mat)[(length(data$y) + 1):(2 * length(data$y))]
@@ -547,12 +568,17 @@ horvitz_thompson <-
 
       diff <- with(block_estimates, sum(coefficients * N / N_overall))
 
-      se <- with(block_estimates, sqrt(sum(se ^ 2 * (N / N_overall) ^ 2)))
+      if (se_type != "none") {
+        std.error <- with(block_estimates, sqrt(sum(std.error ^ 2 * (N / N_overall) ^ 2)))
+      } else {
+        std.error = NA
+      }
 
       return_frame <- data.frame(
         coefficients = diff,
-        se = se,
-        N = N_overall
+        std.error = std.error,
+        N = N_overall,
+        stringsAsFactors = FALSE
       )
     }
 
@@ -601,7 +627,7 @@ horvitz_thompson_internal <-
 
     N <- length(t2) + length(t1)
 
-    se <- NA
+    std.error <- NA
 
     collapsed <- !is.null(data$clusters)
     if (collapsed) {
@@ -627,11 +653,9 @@ horvitz_thompson_internal <-
       y1_totals <-
         y1_totals[as.character(data$clusters[-to_drop][t1])]
 
-      condition_pr_mat <-
-        condition_pr_mat[-c(to_drop, N + to_drop), -c(to_drop, N + to_drop)]
-
-      ps2 <- diag(condition_pr_mat)[k + t2]
-      ps1 <- diag(condition_pr_mat)[t1]
+      prs <- data$condition_probabilities[-to_drop]
+      ps2 <- prs[k + t2]
+      ps1 <- 1 - prs[t1]
 
       # for now rescale, with joint pr need squared top alone
       Y2 <- y2_totals / ps2
@@ -639,26 +663,33 @@ horvitz_thompson_internal <-
 
       diff <- (sum(Y2) - sum(Y1)) / N
 
-      se <-
-        sqrt(
-          sum(Y2 ^ 2) +
-            sum(Y1 ^ 2) +
-            ht_var_partial(
-              Y2,
-              condition_pr_mat[(k + t2), (k + t2), drop = FALSE]
-            ) +
-            ht_var_partial(
-              Y1,
-              condition_pr_mat[t1, t1, drop = FALSE]
-            ) -
-            2 * ht_covar_partial(
-              Y2,
-              Y1,
-              condition_pr_mat[(k + t2), t1, drop = FALSE],
-              ps2,
-              ps1
-            )
-        ) / N
+      if (se_type != "none") {
+
+        condition_pr_mat <-
+          condition_pr_mat[-c(to_drop, N + to_drop), -c(to_drop, N + to_drop)]
+
+        std.error <-
+          sqrt(
+            sum(Y2 ^ 2) +
+              sum(Y1 ^ 2) +
+              ht_var_partial(
+                Y2,
+                condition_pr_mat[(k + t2), (k + t2), drop = FALSE]
+              ) +
+              ht_var_partial(
+                Y1,
+                condition_pr_mat[t1, t1, drop = FALSE]
+              ) -
+              2 * ht_covar_partial(
+                Y2,
+                Y1,
+                condition_pr_mat[(k + t2), t1, drop = FALSE],
+                ps2,
+                ps1
+              )
+          ) / N
+      }
+
     } else {
       # All non-clustered designs
 
@@ -687,16 +718,16 @@ horvitz_thompson_internal <-
           )
 
 
-          se <-
+          std.error <-
             sqrt(
               var_ht_total_no_cov(y1, data$condition_probabilities) +
                 var_ht_total_no_cov(y0, 1 - data$condition_probabilities) +
                 # TODO why is it +2 instead of - (looking at old samii/aronow)
                 2 * sum(c(data$y[t2], data$y[t1] + diff) * c(data$y[t2] - diff, data$y[t1]))
             ) / N
-        } else {
+        } else if (se_type == "youngs") {
           # Young's inequality
-          se <-
+          std.error <-
             sqrt(sum(Y2 ^ 2) + sum(Y1 ^ 2)) / N
         }
       } else {
@@ -706,7 +737,7 @@ horvitz_thompson_internal <-
             "`se_type` = 'constant' only supported for simple random designs ",
             "at the moment"
           )
-        } else {
+        } else if (se_type == "youngs") {
           # Young's inequality
           # this is the "clustered" estimator where each unit is a cluster
           # shouldn't apply to clustered designs but may if user passes a
@@ -733,15 +764,15 @@ horvitz_thompson_internal <-
           if (!is.nan(varN2)) {
             if (varN2 < 0) {
               warning("Variance below 0")
-              se <- NA
+              std.error <- NA
             } else {
-              se <- sqrt(varN2) / N
+              std.error <- sqrt(varN2) / N
             }
           } else {
             warning(
               "Variance is NaN. This is likely the result of a complex condition probability matrix"
             )
-            se <- NA
+            std.error <- NA
           }
         }
       }
@@ -750,7 +781,7 @@ horvitz_thompson_internal <-
     return_frame <-
       data.frame(
         coefficients = diff,
-        se = se,
+        std.error = std.error,
         N = N,
         stringsAsFactors = FALSE
       )
