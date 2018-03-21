@@ -44,6 +44,7 @@ addons:
 r_github_packages:
 - DeclareDesign/DDtools
 - ropensci/git2r
+- DeclareDesign/fabricatr@v0.4.0
 
 r_packages:
 - broom
