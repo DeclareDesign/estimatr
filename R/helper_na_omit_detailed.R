@@ -10,7 +10,7 @@
 #' @seealso \code{\link{na.omit}}
 na.omit_detailed.data.frame <- function(object){
 
-  naomitwhy(object, is.na(object), function(x, w) x[w, , drop=FALSE])
+  naomitwhy(object, function(x, w) x[w, , drop=FALSE])
 
 }
 

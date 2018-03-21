@@ -29,7 +29,7 @@ lm_variance_cr2 <- function(X, Xunweighted, XtX_inv, ei, weight_mean, clusters, 
     .Call(`_estimatr_lm_variance_cr2`, X, Xunweighted, XtX_inv, ei, weight_mean, clusters, J, ci, which_covs)
 }
 
-naomitwhy <- function(df, isna, recursive_subset) {
-    .Call(`_estimatr_naomitwhy`, df, isna, recursive_subset)
+naomitwhy <- function(df, recursive_subset) {
+    .Call(`_estimatr_naomitwhy`, df, recursive_subset)
 }
 

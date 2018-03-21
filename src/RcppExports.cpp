@@ -107,15 +107,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // naomitwhy
-DataFrame naomitwhy(DataFrame df, LogicalMatrix isna, Function recursive_subset);
-RcppExport SEXP _estimatr_naomitwhy(SEXP dfSEXP, SEXP isnaSEXP, SEXP recursive_subsetSEXP) {
+DataFrame naomitwhy(DataFrame df, Function recursive_subset);
+RcppExport SEXP _estimatr_naomitwhy(SEXP dfSEXP, SEXP recursive_subsetSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< DataFrame >::type df(dfSEXP);
-    Rcpp::traits::input_parameter< LogicalMatrix >::type isna(isnaSEXP);
     Rcpp::traits::input_parameter< Function >::type recursive_subset(recursive_subsetSEXP);
-    rcpp_result_gen = Rcpp::wrap(naomitwhy(df, isna, recursive_subset));
+    rcpp_result_gen = Rcpp::wrap(naomitwhy(df, recursive_subset));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -128,7 +127,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_estimatr_lm_solver", (DL_FUNC) &_estimatr_lm_solver, 3},
     {"_estimatr_lm_variance", (DL_FUNC) &_estimatr_lm_variance, 8},
     {"_estimatr_lm_variance_cr2", (DL_FUNC) &_estimatr_lm_variance_cr2, 9},
-    {"_estimatr_naomitwhy", (DL_FUNC) &_estimatr_naomitwhy, 3},
+    {"_estimatr_naomitwhy", (DL_FUNC) &_estimatr_naomitwhy, 2},
     {NULL, NULL, 0}
 };
 
