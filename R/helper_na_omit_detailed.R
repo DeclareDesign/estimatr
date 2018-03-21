@@ -8,12 +8,9 @@
 #' column name, if any were dropped.
 #'
 #' @seealso \code{\link{na.omit}}
-na.omit_detailed.data.frame <- function(object) {
-  why_omit <- naomitwhy(object, function(x) is.na(x))
+na.omit_detailed.data.frame <- function(object){
 
-  if (length(why_omit)) {
-    object <- if (length(dim(object))) object[-why_omit, , drop = FALSE] else object[-why_omit]
-    attr(object, "na.action") <- why_omit
-  }
-  object
+  naomitwhy(object, function(x, w) x[w, , drop=FALSE])
+
 }
+
