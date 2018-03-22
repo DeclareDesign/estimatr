@@ -1,4 +1,4 @@
-# estimatr 0.5.0 (GitHub version)
+# estimatr 0.6.0
 
 * Added support for multivariate linear models
 * Added support for instrumental variables regression
@@ -16,7 +16,7 @@
 * Rewrite `na.omit` handler in R
 * Major refactor of C++ underlying regression estimators
 
-# estimatr 0.4.0 (CRAN version)
+# estimatr 0.4.0
 
 * Changed suffix added to centered variables in `lm_lin()` from `_bar` to `_c`
 * Added all vignettes to `.Rbuildignore`, only available on website now
