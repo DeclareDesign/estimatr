@@ -1,9 +1,12 @@
 # estimatr 0.5.0 (GitHub version)
 
-* Fixed bug that caused variances, standard errors, and p-values to be wrong for weighted "CR2" variance estimation
 * Added support for multivariate linear models
 * Added support for instrumental variables regression
+* Fixed bug that caused variances, standard errors, and p-values to be wrong for weighted "CR2" variance estimation
+* Fixed incorrect estimates when both weights and blocks were passed to `difference_in_means`
 * Rewrite NSE handling to be done by `rlang`
+* Rewrite `na.omit` handler in R
+* Major refactor of C++ underlying regression estimators
 
 # estimatr 0.4.0 (CRAN version)
 
