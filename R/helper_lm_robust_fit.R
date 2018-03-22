@@ -313,31 +313,32 @@ lm_robust_fit <- function(y,
           ((N - has_int) / return_list[["df.residual"]])
       )
 
+    if (ny > 1) {
+      fstat_names <- paste0(colnames(y), ":value")
+    } else {
+      fstat_names <- "value"
+    }
     if (iv_second_stage && se_type != "none") {
       indices <- seq.int(has_int + 1, rank, by = 1)
-      return_list[["fstatistic"]] <- c(
-        setNames(
-          crossprod(
-            fit$beta_hat[indices],
-            solve(vcov_fit$Vcov_hat[indices, indices], fit$beta_hat[indices])
-          ) / (rank - has_int),
-          paste0(colnames(y), ":value")
-        ),
-        numdf = rank - has_int,
-        dendf = return_list[["df.residual"]]
+      fstat <- setNames(
+        crossprod(
+          fit$beta_hat[indices],
+          solve(vcov_fit$Vcov_hat[indices, indices], fit$beta_hat[indices])
+        ) / (rank - has_int),
+        fstat_names
       )
     } else {
-      return_list[["fstatistic"]] <- c(
-        setNames(
-          return_list[["r.squared"]] * return_list[["df.residual"]] /
-            ((1 - return_list[["r.squared"]]) * (rank - has_int)),
-          paste0(colnames(y), ":value")
-        ),
-        numdf = rank - has_int,
-        dendf = return_list[["df.residual"]]
+      fstat <- setNames(
+        return_list[["r.squared"]] * return_list[["df.residual"]] /
+          ((1 - return_list[["r.squared"]]) * (rank - has_int)),
+        fstat_names
       )
     }
-
+    return_list[["fstatistic"]] <- c(
+      fstat,
+      numdf = rank - has_int,
+      dendf = return_list[["df.residual"]]
+    )
 
     if (return_vcov) {
       # return_list$residuals <- fit$residuals

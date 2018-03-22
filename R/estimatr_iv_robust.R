@@ -2,7 +2,7 @@
 #'
 #' @description This formula estimates an instrumental variables regression
 #' using two-stage least squares with a variety of options for robust
-#' standard errors.
+#' standard errors
 #'
 #' @param formula an object of class formula of the regression and the instruments.
 #' For example, the formula \code{y ~ x1 + x2 | z1 + z2} specifies \code{x1} and \code{x2}
@@ -43,10 +43,9 @@
 #' The default variance estimators are the same as in \code{\link{lm_robust}}.
 #' Without clusters, we default to \code{HC2} standard errors, and with clusters
 #' we default to \code{CR2} standard errors. 2SLS variance estimates are
-#' computed using the same estimators as in \code{\link{lm_robust}}. The data
-#' are, as one would expect, the second-stage regressors, which
-#' includes the first-stage fits for the endogenous variables. The residuals,
-#' however, are not simply the second-stage residuals. Instead they are the difference
+#' computed using the same estimators as in \code{\link{lm_robust}}, however the
+#' design matrix used are the second-stage regressors, which includes the estimated
+#' endogenous regressors, and the residuals used are the difference
 #' between the outcome and a fit produced by the second-stage coefficients and the
 #' first-stage (endogenous) regressors. More notes on this can be found at
 #' \href{http://estimatr.declaredesign.org/articles/mathematical-notes.html}{the mathematical appendix}.
@@ -69,6 +68,7 @@
 #'   \item{ci.upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{term}{a character vector of coefficient names}
 #'   \item{alpha}{the significance level specified by the user}
+#'   \item{se_type}{the standard error type specified by the user}
 #'   \item{res_var}{the residual variance}
 #'   \item{N}{the number of observations used}
 #'   \item{k}{the number of columns in the design matrix (includes linearly dependent columns!)}

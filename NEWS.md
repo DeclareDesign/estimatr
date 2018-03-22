@@ -2,6 +2,14 @@
 
 * Added support for multivariate linear models
 * Added support for instrumental variables regression
+* Major change to name of object output elements to mostly match with `broom::tidy`
+  * old -> new
+  * `coefficient_names` -> `term`
+  * `se` -> `std.error`
+  * `p` -> `p.values`
+  * `ci_lower` -> `ci.lower`
+  * `ci_upper` -> `ci.upper`
+  * All of the above changes are also made to the column names on the output of `tidy`; furthermore for `tidy` objects one further name change from `coefficients` -> `estimate` has been made
 * Fixed bug that caused variances, standard errors, and p-values to be wrong for weighted "CR2" variance estimation
 * Fixed incorrect estimates when both weights and blocks were passed to `difference_in_means`
 * Rewrite NSE handling to be done by `rlang`
