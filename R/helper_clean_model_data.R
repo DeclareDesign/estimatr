@@ -14,7 +14,7 @@ clean_model_data <- function(data, datargs, estimator = "") {
   # if data exists, evaluate it
   data <- if (quo_is_missing(data)) NULL else eval_tidy(data)
 
-  if(getOption("estimatr.debug.clean_model_data", FALSE)) browser()
+  if (getOption("estimatr.debug.clean_model_data", FALSE)) browser()
 
   mfargs <- Filter(Negate(quo_is_missing), datargs)
 
@@ -26,7 +26,7 @@ clean_model_data <- function(data, datargs, estimator = "") {
   # subset is also non-standard eval
   to_process <- setdiff(
     names(mfargs),
-    setdiff( names(formals(stats::model.frame.default)),args_ignored)
+    setdiff(names(formals(stats::model.frame.default)), args_ignored)
   )
 
   for (da in to_process) {
@@ -38,10 +38,12 @@ clean_model_data <- function(data, datargs, estimator = "") {
   mfargs[["formula"]] <- Formula::as.Formula(m_formula)
 
   # Get model frame
-  mf <- eval_tidy(quo((stats::model.frame)(!!!mfargs,
-                                           data=data,
-                                           na.action=na.omit_detailed.data.frame,
-                                           drop.unused.levels=TRUE)))
+  mf <- eval_tidy(quo((stats::model.frame)(
+    !!!mfargs,
+    data = data,
+    na.action = na.omit_detailed.data.frame,
+    drop.unused.levels = TRUE
+  )))
 
   local({
     na.action <- attr(mf, "na.action")

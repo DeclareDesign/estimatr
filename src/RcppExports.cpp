@@ -107,14 +107,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // naomitwhy
-IntegerVector naomitwhy(DataFrame df, Function is_na_generic);
-RcppExport SEXP _estimatr_naomitwhy(SEXP dfSEXP, SEXP is_na_genericSEXP) {
+DataFrame naomitwhy(DataFrame df, Function recursive_subset);
+RcppExport SEXP _estimatr_naomitwhy(SEXP dfSEXP, SEXP recursive_subsetSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< DataFrame >::type df(dfSEXP);
-    Rcpp::traits::input_parameter< Function >::type is_na_generic(is_na_genericSEXP);
-    rcpp_result_gen = Rcpp::wrap(naomitwhy(df, is_na_generic));
+    Rcpp::traits::input_parameter< Function >::type recursive_subset(recursive_subsetSEXP);
+    rcpp_result_gen = Rcpp::wrap(naomitwhy(df, recursive_subset));
     return rcpp_result_gen;
 END_RCPP
 }

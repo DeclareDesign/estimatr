@@ -2,7 +2,7 @@
 #'
 #' @description This formula estimates an instrumental variables regression
 #' using two-stage least squares with a variety of options for robust
-#' standard errors.
+#' standard errors
 #'
 #' @param formula an object of class formula of the regression and the instruments.
 #' For example, the formula \code{y ~ x1 + x2 | z1 + z2} specifies \code{x1} and \code{x2}
@@ -17,7 +17,7 @@
 #' @param se_type The sort of standard error sought. If `clusters` is
 #' not specified the options are "HC0", "HC1" (or "stata", the equivalent),
 #'  "HC2" (default), "HC3", or
-#' "classical". If `clusters` is specified the options are "CR0", "CR2" (default), or "stata".
+#' "classical". If `clusters` is specified the options are "CR0", "CR2" (default), or "stata". Can also specify "none", which may speed up estimation of the coefficients.
 #' @param ci logical. Whether to compute and return p-values and confidence
 #' intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
@@ -43,10 +43,9 @@
 #' The default variance estimators are the same as in \code{\link{lm_robust}}.
 #' Without clusters, we default to \code{HC2} standard errors, and with clusters
 #' we default to \code{CR2} standard errors. 2SLS variance estimates are
-#' computed using the same estimators as in \code{\link{lm_robust}}. The data
-#' are, as one would expect, the second-stage regressors, which
-#' includes the first-stage fits for the endogenous variables. The residuals,
-#' however, are not simply the second-stage residuals. Instead they are the difference
+#' computed using the same estimators as in \code{\link{lm_robust}}, however the
+#' design matrix used are the second-stage regressors, which includes the estimated
+#' endogenous regressors, and the residuals used are the difference
 #' between the outcome and a fit produced by the second-stage coefficients and the
 #' first-stage (endogenous) regressors. More notes on this can be found at
 #' \href{http://estimatr.declaredesign.org/articles/mathematical-notes.html}{the mathematical appendix}.
@@ -69,14 +68,15 @@
 #'   \item{ci.upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{term}{a character vector of coefficient names}
 #'   \item{alpha}{the significance level specified by the user}
+#'   \item{se_type}{the standard error type specified by the user}
 #'   \item{res_var}{the residual variance}
 #'   \item{N}{the number of observations used}
 #'   \item{k}{the number of columns in the design matrix (includes linearly dependent columns!)}
 #'   \item{rank}{the rank of the fitted model}
 #'   \item{vcov}{the fitted variance covariance matrix}
-#'   \item{r.squared}{the \eqn{R^2}}
-#'   \item{adj.r.squared}{the \eqn{R^2} but penalized for having more parameters, \code{rank}}
-#'   \item{fstatistic}{a vector with the value of the F-statistic with the numerator and denominator degrees of freedom}
+#'   \item{r.squared}{the \eqn{R^2} of the second stage regrssion}
+#'   \item{adj.r.squared}{the \eqn{R^2} of the second stage regression, but penalized for having more parameters, \code{rank}}
+#'   \item{fstatistic}{a vector with the value of the second stage F-statistic with the numerator and denominator degrees of freedom}
 #'   \item{weighted}{whether or not weights were applied}
 #'   \item{call}{the original function call}
 #' We also return \code{terms} with the second stage terms and \code{terms_regressors} with the first stage terms, both of which used by \code{predict}.
@@ -116,7 +116,6 @@ iv_robust <- function(formula,
                       alpha = .05,
                       return_vcov = TRUE,
                       try_cholesky = FALSE) {
-
   datargs <- enquos(
     formula = formula,
     weights = weights,
@@ -126,7 +125,7 @@ iv_robust <- function(formula,
   data <- enquo(data)
   model_data <- clean_model_data(data = data, datargs, estimator = "iv")
 
-  if (ncol(model_data$instrument_matrix) < ncol(model_data$design_matrix))  {
+  if (ncol(model_data$instrument_matrix) < ncol(model_data$design_matrix)) {
     warning("More regressors than instruments")
   }
 

@@ -13,7 +13,8 @@ print_summary_lm_like <- function(x,
                                   ...) {
   cat(
     "\nCall:\n", paste(deparse(x$call, nlines = 5), sep = "\n", collapse = "\n"),
-    "\n\n", sep = ""
+    "\n\n",
+    sep = ""
   )
   if (x$weighted) {
     cat("Weighted, ")
@@ -67,18 +68,13 @@ print.summary.iv_robust <- function(x,
 }
 
 #' @export
-print.difference_in_means <-
-  function(
-           x,
-           ...) {
-    cat("Design: ", x$design, "\n")
-    print(summarize_tidy(x))
-  }
+print.difference_in_means <- function(x, ...) {
+  cat("Design: ", x$design, "\n")
+  print(summarize_tidy(x))
+}
 
 
 #' @export
-print.horvitz_thompson <-
-  function(x,
-           ...) {
-    print(summarize_tidy(x))
-  }
+print.horvitz_thompson <- function(x, ...) {
+  print(summarize_tidy(x))
+}

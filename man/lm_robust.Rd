@@ -24,7 +24,7 @@ corresponds to the clusters in the data.}
 \item{se_type}{The sort of standard error sought. If `clusters` is
 not specified the options are "HC0", "HC1" (or "stata", the equivalent),
  "HC2" (default), "HC3", or
-"classical". If `clusters` is specified the options are "CR0", "CR2" (default), or "stata".}
+"classical". If `clusters` is specified the options are "CR0", "CR2" (default), or "stata". Can also specify "none", which may speed up estimation of the coefficients.}
 
 \item{ci}{logical. Whether to compute and return p-values and confidence
 intervals, TRUE by default.}
@@ -55,7 +55,7 @@ Users who want to print the results in TeX of HTML can use the
 \code{\link[texreg]{extract}} function and the \pkg{texreg} package.
 
 If users specify a multivariate linear regression model (multiple outcomes),
-then some of the below components will be of higher dimension to accomodate
+then some of the below components will be of higher dimension to accommodate
 the additional models.
 
 An object of class \code{"lm_robust"} is a list containing at least the
@@ -68,6 +68,7 @@ following components:
   \item{ci.upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
   \item{term}{a character vector of coefficient names}
   \item{alpha}{the significance level specified by the user}
+  \item{se_type}{the standard error type specified by the user}
   \item{res_var}{the residual variance}
   \item{N}{the number of observations used}
   \item{k}{the number of columns in the design matrix (includes linearly dependent columns!)}
