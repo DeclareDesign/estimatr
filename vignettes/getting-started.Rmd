@@ -33,6 +33,7 @@ The current estimators we provide are:
 
 * [`lm_robust`](#lm_robust) - for fitting linear models with heteroskedasticity/cluster-robust standard errors
 * [`lm_lin`](#lm_lin) - a wrapper for `lm_robust()` to simplify interacting centered pre-treatment covariates with a treatment variable
+* [`iv_robust`](#iv_robust) - two stage least squares estimation of instrumental variables regression
 * [`difference_in_means`](#difference_in_means) - for estimating differences in means with appropriate standard errors for unit-randomized, cluster-randomized, block-randomized, matched-pair randomized, and matched-pair clustered designs
 * [`horvitz_thompson`](#horvitz_thompson) - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs
 
@@ -123,8 +124,6 @@ tidy(lmout_stata)
 knitr::kable(tidy(lmout_stata))
 ```
 
-
-
 Furthermore, users can take advantage of the margins package to get marginal effects, average marginal effects and their standard errors, and more. Similarly, the prediction package from the same author also provides a suite of software for different kinds of predictions.
 
 ```{r margins, echo=TRUE}
@@ -166,6 +165,16 @@ knitr::kable(tidy(lml_out))
 ```
 
 The output of a `lm_lin()` call can be used with the same methods as `lm_robust()`, including the [`margins`](https://github.com/leeper/margins) package.
+
+## `iv_robust`
+
+We also implement a two-stage least squares instrumental variables estimator. This estimator provides a simple syntax and fast estimation of standard errors (users can select from the same set of standard error estimators as in `lm_robust()`).
+
+```{r iv_robust, echo=TRUE}
+# `x` is endogenous variable and `z` is the instrument
+iv_out <- iv_robust(y ~ x | z, data = dat)
+summary(iv_out)
+```
 
 ## `difference_in_means`
 
