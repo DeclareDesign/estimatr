@@ -11,4 +11,6 @@ The package pasts on Travis-CI, Appveyor, and winbuilder for the following confi
 - Windows, R-release
 - Windows, R-oldrel
 
+The package was also checked with valgrind on R-hub without errors.
+
 There are, however, errors when the package is checked with `rchk` on R-hub. These errors appear to be internal to Rcpp or RcppEigen or in how they export Rcpp files and are largely out of our hands.
