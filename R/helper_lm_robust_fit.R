@@ -320,13 +320,29 @@ lm_robust_fit <- function(y,
     }
     if (iv_second_stage && se_type != "none") {
       indices <- seq.int(has_int + 1, rank, by = 1)
-      fstat <- setNames(
-        crossprod(
-          fit$beta_hat[indices],
-          solve(vcov_fit$Vcov_hat[indices, indices], fit$beta_hat[indices])
-        ) / (rank - has_int),
+      setNames(
+        fstat <-
+          tryCatch({
+              crossprod(
+                fit$beta_hat[indices],
+                solve(vcov_fit$Vcov_hat[indices, indices], fit$beta_hat[indices])
+             ) / (rank - has_int)
+          }, error = function(e) {
+            if (grepl("system is computationally singular", e)) {
+              warning(
+                "Unable to compute f-statistic due to rank deficient variance-",
+                "covariance matrix"
+              )
+            } else {
+              warning(
+                "Unable to compute f-statistic"
+              )
+            }
+            NA
+          }),
         fstat_names
       )
+
     } else {
       fstat <- setNames(
         return_list[["r.squared"]] * return_list[["df.residual"]] /
@@ -348,8 +364,6 @@ lm_robust_fit <- function(y,
           rep(paste0(return_list[["outcome"]], ":"), each = rank),
           rep(return_list$term, times = ny)
         )
-        # print(return_list[["vcov"]])
-        # print(coef_names)
         dimnames(return_list[["vcov"]]) <- list(
           coef_names,
           coef_names
