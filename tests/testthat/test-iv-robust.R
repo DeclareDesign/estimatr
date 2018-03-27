@@ -218,9 +218,9 @@ test_that("iv_robust matches AER + ivpack", {
     ivr <- iv_robust(y ~ bl + x | bl + z, data = dat, se_type = "stata"),
     "Unable to compute f\\-statistic"
   )
-  expect_equal(
+  expect_equivalent(
     ivr$fstatistic[1],
-    NA
+    NA_integer_
   )
 
 })
