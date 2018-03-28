@@ -30,7 +30,7 @@ The current estimators we provide are:
 
 * [`lm_robust`](#lm_robust-notes) - for fitting linear models with heteroskedasticity/cluster-robust standard errors
 * [`lm_lin`](#lm_lin-notes) - a wrapper for `lm_robust()` to simplify interacting centered pre-treatment covariates with a treatment variable
-* [`iv_robust`] - two stage least squares estimation of instrumental variables regression (not yet documented in this vignette)
+* [`iv_robust`](#iv_robust-notes) - two stage least squares estimation of instrumental variables regression
 * [`difference_in_means`](#difference_in_means-notes) - for estimating differences in means with appropriate standard errors for unit-randomized, cluster-randomized, block-randomized, matched-pair randomized, and matched-pair clustered designs
 * [`horvitz_thompson`](#horvitz_thompson-notes) - for estimating average treatment effects taking into consideration treatment probabilities or sampling probabilities for simple and cluster randomized designs
 
@@ -147,6 +147,63 @@ y_i = \tau z_i + \mathbf{\beta}^\top \mathbf{x}^c_i  + \mathbf{\gamma}^\top \mat
 where $\mathbf{x}^c_i$ is a vector of pre-treatment covariates for unit $i$ that have been centered to have mean zero and $z_i$ is an indicator for the treatment group. @lin2013 proposed this estimator in response to the critique by @freedman2008 that using regression to adjust for pre-treatment covariates could bias estimates of treatment effects.
 
 The estimator `lm_lin` also works for multi-valued treatments by creating a full set of dummies for each treatment level and interacting each with the centered pre-treatment covariates. The rest of the options for the function and corresponding estimation is identical to [`lm_robust`](#lm_robust).
+
+## `iv_robust` notes
+
+Our [`iv_robust`](#iv_robust) estimator uses a two-stage least squares estimation.
+
+### Coefficient estimates
+
+\[
+\widehat{\beta}_{2SLS} =(\mathbf{X}^{\top}\mathbf{P_z}\mathbf{X})^{-1}\mathbf{X}^{\top}\mathbf{P_z}\mathbf{y},
+\]
+
+where $\mathbf{X}$ are the endogenous regressors, $\mathbf{P_Z} = \mathbf{Z}(\mathbf{Z}^{\top}\mathbf{Z})^{-1}\mathbf{Z}^\top$, and $\mathbf{Z}$ are the instruments. This is equivalent to estimating the first stage regression,
+
+\[
+\mathbf{X} = \mathbf{Z}\beta_{FS} + \mathbf{\zeta},
+\]
+
+and using the first stage predicted values in the second stage regression,
+
+$$
+\begin{aligned}
+\widehat{\mathbf{X}} &= \mathbf{Z}\widehat{\beta}_{FS} \\
+\mathbf{y} &= \widehat{\mathbf{X}}\beta_{2SLS} + \mathbf{\epsilon}.
+\end{aligned}
+$$
+
+#### Weighting
+
+When weights are applied, we use the same estimation strategy as in `lm_robust` where we first transform the data by the square root of the weights and proceed with estimation as usual.
+
+### Variance
+
+The variances estimates for `iv_robust` are the same as the estimates for `lm_robust` although two changes are made. First, we replace $\mathbf{X}$ with the second stage regressors, $\widehat{\mathbf{X}}$, and we replace the residuals, $e_i$, with $\mathbf{y} - \mathbf{X} \beta_{2SLS}$. That is, we use the residuals from the final coefficients and the endogenous, uninstrumented regressors $\mathbf{X}$.
+
+Because Stata does not default to using finite sample corrections and tests with its `ivregress 2sls` estimator, the correspondence between our instrumental variables estimator and theirs can be a bit confulsing. The following table shows the options in Stata that correspond to our estimators.
+
+| `estimatr`                                                           | Stata                                           | Notes                                                                                                                                    |
+|----------------------------------------------------------------------|-------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| N/A                                                                  | `ivregress 2sls y (x = z)`                      | Stata's default has no finite sample correction (i.e., $\widehat{\sigma}^2 = \mathbf{e}^\top \mathbf{e}$). Stata here also uses z-tests. |
+| `iv_robust(y ~ x | z, se_type = "classical")`                        | `ivregress 2sls y (x = z), small`               | $\widehat{\sigma}^2 = \frac{\mathbf{e}^\top \mathbf{e}}{N - k}$.                                                                         |
+| `iv_robust(y ~ x | z, se_type = "HC0")`                              | `ivregress 2sls y (x = z), rob`                 | Stata uses z-tests here.                                                                                                                 |
+| `iv_robust(y ~ x | z, se_type = "HC1")`                              | `ivregress 2sls y (x = z), rob small`           |                                                                                                                                          |
+| `iv_robust(y ~ x | z, se_type = "HC2")` (default)                    | N/A                                             |                                                                                                                                          |
+| `iv_robust(y ~ x | z, se_type = "HC3")`                              | N/A                                             |                                                                                                                                          |
+| `iv_robust(y ~ x | z, clusters = clust,` `se_type = "CR0")`          | `ivregress 2sls y (x = z), vce(cl clust)`       | Stata uses z-tests here.                                                                                                                 |
+| `iv_robust(y ~ x | z, clusters = clust,` `se_type = "stata")`        | `ivregress 2sls y (x = z), vce(cl clust) small` |                                                                                                                                          |
+| `iv_robust(y ~ x | z, clusters = clust,` `se_type = "CR2")` (default) | N/A                                             |                                                                                                                                          |
+
+### Confidence intervals and hypothesis testing
+
+If $\widehat{\mathbb{V}}_k$ is the $k$th diagonal element of $\widehat{\mathbb{V}}$, we build confidence intervals using the user specified $\alpha$ as:
+
+\[
+\mathrm{CI}^{1-\alpha} = \left(\widehat{\beta_{2SLS, k} + t^{df}_{\alpha/2} \sqrt{\widehat{\mathbb{V}}_k}, \widehat{\beta_{2SLS, k}} + t^{df}_{1 - \alpha/2} \sqrt{\widehat{\mathbb{V}}_k}\right)
+\]
+
+We also provide two-sided p-values using a t-distribution with the aforementioned significance level $\alpha$ and degrees of freedom $df$, which come from the second-stage regression. As mentioned in the table above, these results will be different from Stata in certain cases as Stata uses z-tests when `small` is not specified.
 
 ## `difference_in_means` notes
 
