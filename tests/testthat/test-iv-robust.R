@@ -209,6 +209,20 @@ test_that("iv_robust matches AER + ivpack", {
     na.omit(as.matrix(tidy(ivdef2clrw)[, c("estimate", "std.error", "p.value")])),
     na.omit(as.matrix(ivdef2clsew)[, c(1, 2, 4)])
   )
+
+  # F-stat fails properly with blocks of size 1
+  set.seed(42)
+  N <- 20
+  dat <- data.frame(y = rnorm(N), x = rnorm(N), z = rnorm(N), bl = sample(letters, size = N, replace = T))
+  expect_warning(
+    ivr <- iv_robust(y ~ bl + x | bl + z, data = dat, se_type = "stata"),
+    "Unable to compute f\\-statistic"
+  )
+  expect_equivalent(
+    ivr$fstatistic[1],
+    NA_integer_
+  )
+
 })
 
 
