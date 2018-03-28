@@ -135,17 +135,30 @@
 <span class="pkg">randomizr</span> declaration</p>
     
 
-    <pre class="usage"><span class='fu'>declaration_to_condition_pr_mat</span>(<span class='no'>declaration</span>)</pre>
+    <pre class="usage"><span class='fu'>declaration_to_condition_pr_mat</span>(<span class='no'>ra_declaration</span>, <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>declaration</th>
+      <th>ra_declaration</th>
       <td><p>An object of class <code>"ra_declaration"</code>, generated
 by the <code><a href='http://www.rdocumentation.org/packages/randomizr/topics/declare_ra'>declare_ra</a></code> function in <span class="pkg">randomizr</span>. This
 object contains the experimental design that will be represented in a
 condition probability matrix</p></td>
+    </tr>
+    <tr>
+      <th>condition1</th>
+      <td><p>The name of the first condition, often the control group. If <code>NULL</code>,
+defaults to first condition in randomizr declaration. Either both `condition1`
+and `condition2` have to be specified or both left as <code>NULL</code>.</p></td>
+    </tr>
+    <tr>
+      <th>condition2</th>
+      <td><p>The name of the second condition, often the treatment group. If <code>NULL</code>,
+defaults to second condition in randomizr declaration. Either both `condition1`
+and `condition2` have to be specified or both left as <code>NULL</code>.</p></td>
     </tr>
     </table>
     
@@ -210,7 +223,7 @@ Pr(Z_i = Condition2, Z_j = Condition2).</p>
 <span class='co'># Declare complete blocked randomization</span>
 <span class='no'>bl_declaration</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/declare_ra'>declare_ra</a></span>(<span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>blocks</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.4</span>, <span class='kw'>simple</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
 <span class='co'># Get probabilities</span>
-<span class='no'>block_pr_mat</span> <span class='kw'>&lt;-</span> <span class='fu'>declaration_to_condition_pr_mat</span>(<span class='no'>bl_declaration</span>)
+<span class='no'>block_pr_mat</span> <span class='kw'>&lt;-</span> <span class='fu'>declaration_to_condition_pr_mat</span>(<span class='no'>bl_declaration</span>, <span class='fl'>0</span>, <span class='fl'>1</span>)
 <span class='co'># Do randomiztion</span>
 <span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='no'>bl_declaration</span>$<span class='fu'>ra_function</span>()
 
@@ -219,7 +232,7 @@ Pr(Z_i = Condition2, Z_j = Condition2).</p>
 <span class='co'># When you pass a declaration to horvitz_thompson, this function is called</span>
 
 <span class='co'># Equivalent to above call</span>
-<span class='fu'><a href='horvitz_thompson.html'>horvitz_thompson</a></span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>bl_declaration</span>)</div><div class='output co'>#&gt;    Estimate Std. Error  Pr(&gt;|t|)   CI Lower  CI Upper DF
+<span class='fu'><a href='horvitz_thompson.html'>horvitz_thompson</a></span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>ra_declaration</span> <span class='kw'>=</span> <span class='no'>bl_declaration</span>)</div><div class='output co'>#&gt;    Estimate Std. Error  Pr(&gt;|t|)   CI Lower  CI Upper DF
 #&gt; z 0.0789944  0.2167921 0.7155754 -0.3459104 0.5038992 NA</div><div class='input'>
 </div></pre>
   </div>

@@ -134,9 +134,9 @@ which the randomization scheme is known</p>
     
 
     <pre class="usage"><span class='fu'>horvitz_thompson</span>(<span class='no'>formula</span>, <span class='no'>data</span>, <span class='no'>blocks</span>, <span class='no'>clusters</span>, <span class='kw'>simple</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>condition_prs</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>subset</span>,
-  <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"youngs"</span>, <span class='st'>"constant"</span>),
-  <span class='kw'>ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>return_condition_pr_mat</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+  <span class='no'>condition_prs</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>ra_declaration</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>subset</span>,
+  <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"youngs"</span>, <span class='st'>"constant"</span>,
+  <span class='st'>"none"</span>), <span class='kw'>ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>return_condition_pr_mat</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -166,7 +166,7 @@ designs. For blocked designs, clusters must be within blocks.</p></td>
       <td><p>logical, optional. Whether the randomization is simple
 (TRUE) or complete (FALSE). This is ignored if <code>blocks</code> are specified,
 as all blocked designs use complete randomization, or either
-<code>declaration</code> or <code>condition_pr_mat</code> are passed. Otherwise, it
+<code>ra_declaration</code> or <code>condition_pr_mat</code> are passed. Otherwise, it
 defaults to <code>TRUE</code>.</p></td>
     </tr>
     <tr>
@@ -180,7 +180,7 @@ the condition 2 (treatment) probabilities. See details.</p></td>
 probabilities of all units in condition1 and condition2. See details.</p></td>
     </tr>
     <tr>
-      <th>declaration</th>
+      <th>ra_declaration</th>
       <td><p>An object of class <code>"ra_declaration"</code>, from
 the <code><a href='http://www.rdocumentation.org/packages/randomizr/topics/declare_ra'>declare_ra</a></code> function in the <span class="pkg">randomizr</span>
 package. This is the third way that one can specify a design for this
@@ -210,11 +210,11 @@ treatment. See <code>condition1</code>.</p></td>
     </tr>
     <tr>
       <th>se_type</th>
-      <td><p>can be one of <code>c("youngs", "constant")</code> and corresponds
+      <td><p>can be one of <code>c("youngs", "constant", "none")</code> and corresponds
 the estimator of the standard errors. Default estimator uses Young's
 inequality (and is conservative) while the other uses a constant treatment
 effects assumption and only works for simple randomized designs at the
-moment.</p></td>
+moment. If "none" then standard errors will not be computed which may speed up run time if only the point estimate is required.</p></td>
     </tr>
     <tr>
       <th>ci</th>
@@ -244,13 +244,13 @@ you can use the generic accessor functions <code>coef</code> and
 <p>An object of class <code>"horvitz_thompson"</code> is a list containing at
 least the following components:</p>
 <p></p>
-<dt>coefficients</dt><dd><p>the estimated coefficients</p></dd>
-  <dt>se</dt><dd><p>the estimated standard errors</p></dd>
+<dt>coefficients</dt><dd><p>the estimated difference in totals</p></dd>
+  <dt>std.error</dt><dd><p>the estimated standard error</p></dd>
   <dt>df</dt><dd><p>the estimated degrees of freedom</p></dd>
-  <dt>p</dt><dd><p>the p-values from from a two-sided z-test using <code>coefficients</code>, <code>se</code>, and <code>df</code></p></dd>
-  <dt>ci_lower</dt><dd><p>the lower bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
-  <dt>ci_upper</dt><dd><p>the upper bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
-  <dt>coefficient_name</dt><dd><p>a character vector of coefficient names</p></dd>
+  <dt>p.value</dt><dd><p>the p-value from a two-sided z-test using <code>coefficients</code> and <code>std.error</code></p></dd>
+  <dt>ci.lower</dt><dd><p>the lower bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
+  <dt>ci.upper</dt><dd><p>the upper bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
+  <dt>term</dt><dd><p>a character vector of coefficient names</p></dd>
   <dt>alpha</dt><dd><p>the significance level specified by the user</p></dd>
   <dt>N</dt><dd><p>the number of observations used</p></dd>
   <dt>outcome</dt><dd><p>the name of the outcome variable</p></dd>
@@ -283,7 +283,7 @@ the <code><a href='http://www.rdocumentation.org/packages/randomizr/topics/decla
 package. This function takes several arguments, including blocks, clusters,
 treatment probabilities, whether randomization is simple or not, and more.
 Passing the outcome of that function, an object of class
-<code>"ra_declaration"</code> to the <code>declaration</code> argument in this function,
+<code>"ra_declaration"</code> to the <code>ra_declaration</code> argument in this function,
 will lead to a call of the <code><a href='declaration_to_condition_pr_mat.html'>declaration_to_condition_pr_mat</a></code>
 function which generates the condition probability matrix needed to
 estimate treatment effects and standard errors. We provide many examples
@@ -349,7 +349,7 @@ only use this option if they are certain they know what they are doing.</p>
 #&gt; z -0.2532128  0.6038814 0.6749904 -1.436799 0.930373 NA</div><div class='input'>
 <span class='co'># Also can use randomizr to pass a declaration</span>
 <span class='no'>srs_declaration</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/declare_ra'>declare_ra</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>), <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.5</span>, <span class='kw'>simple</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>srs_declaration</span>)</div><div class='output co'>#&gt;     Estimate Std. Error Pr(&gt;|t|)  CI Lower  CI Upper DF
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>ra_declaration</span> <span class='kw'>=</span> <span class='no'>srs_declaration</span>)</div><div class='output co'>#&gt;     Estimate Std. Error Pr(&gt;|t|)  CI Lower  CI Upper DF
 #&gt; z -0.2532128   0.609167 0.677651 -1.447158 0.9407325 NA</div><div class='input'>
 <span class='co'>#----------</span>
 <span class='co'># 2. Complete random assignment</span>
@@ -358,12 +358,12 @@ only use this option if they are certain they know what they are doing.</p>
 <span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='fu'>sample</span>(<span class='fu'>rep</span>(<span class='fl'>0</span>:<span class='fl'>1</span>, <span class='kw'>each</span> <span class='kw'>=</span> <span class='no'>n</span>/<span class='fl'>2</span>))
 <span class='co'># Can use a declaration</span>
 <span class='no'>crs_declaration</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/declare_ra'>declare_ra</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>), <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.5</span>, <span class='kw'>simple</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>crs_declaration</span>)</div><div class='output co'>#&gt;    Estimate Std. Error  Pr(&gt;|t|)  CI Lower  CI Upper DF
-#&gt; z -0.247794  0.5309541 0.6407175 -1.288445 0.7928568 NA</div><div class='input'><span class='co'># Can precompute condition_pr_mat and pass it</span>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>ra_declaration</span> <span class='kw'>=</span> <span class='no'>crs_declaration</span>)</div><div class='output co'>#&gt;    Estimate Std. Error  Pr(&gt;|t|)   CI Lower CI Upper DF
+#&gt; z 0.6216921  0.5271134 0.2382279 -0.4114311 1.654815 NA</div><div class='input'><span class='co'># Can precompute condition_pr_mat and pass it</span>
 <span class='co'># (faster for multiple runs with same condition probability matrix)</span>
 <span class='no'>crs_pr_mat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='declaration_to_condition_pr_mat.html'>declaration_to_condition_pr_mat</a></span>(<span class='no'>crs_declaration</span>)
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>crs_pr_mat</span>)</div><div class='output co'>#&gt;    Estimate Std. Error  Pr(&gt;|t|)  CI Lower  CI Upper DF
-#&gt; z -0.247794  0.5309541 0.6407175 -1.288445 0.7928568 NA</div><div class='input'>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>crs_pr_mat</span>)</div><div class='output co'>#&gt;    Estimate Std. Error  Pr(&gt;|t|)   CI Lower CI Upper DF
+#&gt; z 0.6216921  0.5271134 0.2382279 -0.4114311 1.654815 NA</div><div class='input'>
 <span class='co'>#----------</span>
 <span class='co'># 3. Clustered treatment, complete random assigment</span>
 <span class='co'>#-----------</span>
@@ -373,7 +373,7 @@ only use this option if they are certain they know what they are doing.</p>
 <span class='no'>clust_crs_decl</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/declare_ra'>declare_ra</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>), <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>cl</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.5</span>)
 <span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/conduct_ra'>conduct_ra</a></span>(<span class='no'>clust_crs_decl</span>)
 <span class='co'># Easiest to specify using declaration</span>
-<span class='no'>ht_cl</span> <span class='kw'>&lt;-</span> <span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>declaration</span> <span class='kw'>=</span> <span class='no'>clust_crs_decl</span>)
+<span class='no'>ht_cl</span> <span class='kw'>&lt;-</span> <span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>ra_declaration</span> <span class='kw'>=</span> <span class='no'>clust_crs_decl</span>)
 <span class='co'># Also can pass the condition probability and the clusters</span>
 <span class='no'>ht_cl_manual</span> <span class='kw'>&lt;-</span> <span class='fu'>horvitz_thompson</span>(
   <span class='no'>y</span> ~ <span class='no'>z</span>,
@@ -381,9 +381,9 @@ only use this option if they are certain they know what they are doing.</p>
   <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>cl</span>,
   <span class='kw'>condition_prs</span> <span class='kw'>=</span> <span class='no'>prob</span>,
   <span class='kw'>simple</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
-)</div><div class='output co'>#&gt; <span class='message'>`simple = FALSE, using complete cluster randomization</span></div><div class='input'><span class='no'>ht_cl</span></div><div class='output co'>#&gt;   Estimate Std. Error   Pr(&gt;|t|)    CI Lower  CI Upper DF
-#&gt; z 0.373693   0.189923 0.04911381 0.001450693 0.7459353 NA</div><div class='input'><span class='no'>ht_cl_manual</span></div><div class='output co'>#&gt;   Estimate Std. Error   Pr(&gt;|t|)    CI Lower  CI Upper DF
-#&gt; z 0.373693   0.189923 0.04911381 0.001450693 0.7459353 NA</div><div class='input'>
+)</div><div class='output co'>#&gt; <span class='message'>`simple` = FALSE, using complete cluster randomization</span></div><div class='input'><span class='no'>ht_cl</span></div><div class='output co'>#&gt;   Estimate Std. Error Pr(&gt;|t|) CI Lower CI Upper DF
+#&gt; z       NA         NA       NA       NA       NA NA</div><div class='input'><span class='no'>ht_cl_manual</span></div><div class='output co'>#&gt;   Estimate Std. Error Pr(&gt;|t|) CI Lower CI Upper DF
+#&gt; z       NA         NA       NA       NA       NA NA</div><div class='input'>
 <span class='co'># Blocked estimators specified similarly</span>
 
 <span class='co'>#----------</span>

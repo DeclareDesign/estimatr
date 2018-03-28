@@ -115,7 +115,7 @@
 <p><span class="math display">\[
 \mathbf{H} = \mathbf{X} (\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1} \mathbf{X}^\top
 \]</span></p>
-<p>while the usual approaches in R, including <a href="https://CRAN.R-project.org/package=sandwich"><code>sandwich</code></a> and <a href="estimatr.declaredesign.org"><code>estimatr</code></a>, and Python (e.g. <a href="http://www.statsmodels.org/stable/index.html"><code>statsmodels</code></a>) estimate the following hat matrix</p>
+<p>while the usual approaches in R, including <a href="https://CRAN.R-project.org/package=sandwich"><code>sandwich</code></a> and <a href="/R/estimatr/"><code>estimatr</code></a>, and Python (e.g. <a href="http://www.statsmodels.org/stable/index.html"><code>statsmodels</code></a>) estimate the following hat matrix</p>
 <p><span class="math display">\[
 \mathbf{H} = \mathbf{X} (\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{W}
 \]</span></p>
@@ -139,7 +139,7 @@ y_i = \mathbf{x}_i^\top \mathbf{\beta} + \epsilon_i,
 <p><span class="math display">\[
 \begin{aligned}
 \widetilde{\mathbf{X}} &amp;= \mathbf{X} \mathbf{W}^s \\
-\widetilde{\mathbf{y}} &amp;= \mathbf{W}^s \mathbf{y} 
+\widetilde{\mathbf{y}} &amp;= \mathbf{W}^s \mathbf{y}
 \end{aligned}
 \]</span></p>
 </div>
@@ -148,7 +148,7 @@ y_i = \mathbf{x}_i^\top \mathbf{\beta} + \epsilon_i,
 <a href="#heteroskedastic-consistent-variance-estimators" class="anchor"></a>Heteroskedastic-consistent variance estimators</h2>
 <p>Turning to variance, the standard sandwich estimator is</p>
 <p><span class="math display">\[
-\mathbb{V}[\widehat{\mathbf{\beta}}] = (\mathbf{X}^{\top}\mathbf{X})^{-1} \mathbf{X}^\top \Omega \mathbf{X} (\mathbf{X}^{\top}\mathbf{X})^{-1} 
+\mathbb{V}[\widehat{\mathbf{\beta}}] = (\mathbf{X}^{\top}\mathbf{X})^{-1} \mathbf{X}^\top \Omega \mathbf{X} (\mathbf{X}^{\top}\mathbf{X})^{-1}
 \]</span></p>
 <p>where <span class="math inline">\(\Omega\)</span> represents <span class="math inline">\(\mathbb{E}[\mathbf{\epsilon}\mathbf{\epsilon}^\top]\)</span>, the variance-covariance matrix of the disturbances. A nice review of the different variance estimators along with their properties can be found in <span class="citation">Long and Ervin (<a href="#ref-longervin2000">2000</a>)</span> <a href="http://www.indiana.edu/~jslsoc/files_research/testing_tests/hccm/99TAS.pdf">[ungated]</a>. The HC2 and HC3 estimators, introduced by <span class="citation">MacKinnon and White (<a href="#ref-mackinnonwhite1985">1985</a>)</span>, use the hat matrix as part of the estimation of <span class="math inline">\(\Omega\)</span>. The standard hat matrix is written:</p>
 <p><span class="math display">\[
@@ -174,9 +174,9 @@ y_i = \mathbf{x}_i^\top \mathbf{\beta} + \epsilon_i,
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Using estimatr</span>
 <span class="kw">library</span>(estimatr)
 <span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(
-  mpg <span class="op">~</span><span class="st"> </span>hp, 
-  <span class="dt">data =</span> mtcars, 
-  <span class="dt">weights =</span> wt, 
+  mpg <span class="op">~</span><span class="st"> </span>hp,
+  <span class="dt">data =</span> mtcars,
+  <span class="dt">weights =</span> wt,
   <span class="dt">se_type =</span> <span class="st">"HC2"</span>
 )
 <span class="co">#&gt;                Estimate Std. Error     Pr(&gt;|t|)    CI Lower    CI Upper DF</span>
@@ -213,7 +213,7 @@ reg mpg hp [aweight=wt], vce(hc2)</code></pre>
 <a href="#which-should-we-prefer" class="anchor"></a>Which should we prefer?</h4>
 <p>Just because Stata is not documenting their HC2 and HC3 estimator does not mean they’re wrong. Also the differences tend to be minor. In fact, it is unclear which we should prefer given that there is not a strong literature supporting one or the other. However, there are several arguments to be made for <span class="math inline">\(\matbf{H}_{R}\)</span>.</p>
 <ol style="list-style-type: decimal">
-<li>It’s the estimator you get when you weight your data by the square root of the weights (<span class="math inline">\(\mathbf{X} \rightarrow \widetilde{\mathbf{X}}\)</span> and <span class="math inline">\(\mathbf{y} \rightarrow \widetilde{\mathbf{y}}\)</span>) and fit regular ordinary least squares. If one considers the weighted model as simply a rescaled version of the unweighted moded, then users should prefer <span class="math inline">\(\mathbf{H}_{R}\)</span>.</li>
+<li>It’s the estimator you get when you weight your data by the square root of the weights (<span class="math inline">\(\mathbf{X} \rightarrow \widetilde{\mathbf{X}}\)</span> and <span class="math inline">\(\mathbf{y} \rightarrow \widetilde{\mathbf{y}}\)</span>) and fit regular ordinary least squares. If one considers the weighted model as simply a rescaled version of the unweighted model, then users should prefer <span class="math inline">\(\mathbf{H}_{R}\)</span>.</li>
 <li>The diagonal of <span class="math inline">\(\mathbf{H}_{R}\)</span> are the weighted leverages <span class="citation">(Li and Valliant <a href="#ref-livalliant2009">2009</a>)</span>, while <span class="math inline">\(\mathbf{H}_{Stata}\)</span> would need to be weighted again for the diagonal to recover the weighted leverage.</li>
 </ol>
 </div>

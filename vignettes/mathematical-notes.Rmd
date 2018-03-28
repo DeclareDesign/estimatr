@@ -200,7 +200,7 @@ Because Stata does not default to using finite sample corrections and tests with
 If $\widehat{\mathbb{V}}_k$ is the $k$th diagonal element of $\widehat{\mathbb{V}}$, we build confidence intervals using the user specified $\alpha$ as:
 
 \[
-\mathrm{CI}^{1-\alpha} = \left(\widehat{\beta_{2SLS, k} + t^{df}_{\alpha/2} \sqrt{\widehat{\mathbb{V}}_k}, \widehat{\beta_{2SLS, k}} + t^{df}_{1 - \alpha/2} \sqrt{\widehat{\mathbb{V}}_k}\right)
+\mathrm{CI}^{1-\alpha} = \left(\widehat{\beta_{2SLS, k}} + t^{df}_{\alpha/2} \sqrt{\widehat{\mathbb{V}}_k}, \widehat{\beta_{2SLS, k}} + t^{df}_{1 - \alpha/2} \sqrt{\widehat{\mathbb{V}}_k}\right)
 \]
 
 We also provide two-sided p-values using a t-distribution with the aforementioned significance level $\alpha$ and degrees of freedom $df$, which come from the second-stage regression. As mentioned in the table above, these results will be different from Stata in certain cases as Stata uses z-tests when `small` is not specified.

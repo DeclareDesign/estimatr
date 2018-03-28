@@ -110,16 +110,17 @@
     
     
 <div class="contents">
-<p>This document exposes the properties of different variance estimators using <a href="http://declaredesign.org"><code>DeclareDesign</code></a> and <a href="http://estimatr.declaredesign.org"><code>estimatr</code></a>. More details about the variance estimators with references can be found in the <a href="http://estimatr.declaredesign.org/articles/mathematical-notes.html">mathematical notes</a>.</p>
+<p>This document exposes the properties of different variance estimators using <a href="/R/DeclareDesign/"><code>DeclareDesign</code></a> and <a href="/R/estimatr/"><code>estimatr</code></a>. More details about the variance estimators with references can be found in the <a href="/R/estimatr/articles/mathematical-notes.html">mathematical notes</a>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(DeclareDesign)</code></pre></div>
 <pre><code>## Loading required package: randomizr</code></pre>
+<pre><code>## Warning: package 'randomizr' was built under R version 3.4.4</code></pre>
 <pre><code>## Loading required package: fabricatr</code></pre>
 <pre><code>## Loading required package: estimatr</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(ggplot2)</code></pre></div>
 <div id="homoskedastic-errors" class="section level1">
 <h1 class="hasAnchor">
 <a href="#homoskedastic-errors" class="anchor"></a>Homoskedastic errors</h1>
-<p>Under simple conditions with homoskedasticity (i.e., all errors are drawn from a distribution with the same variance), the classical estimator of the variance of OLS should be unbiased. In this section I demonstrate this to be true using <a href="declaredesign.org"><code>DeclareDesign</code></a> and <a href="estimatr.declaredesign.org"><code>estimatr</code></a>.</p>
+<p>Under simple conditions with homoskedasticity (i.e., all errors are drawn from a distribution with the same variance), the classical estimator of the variance of OLS should be unbiased. In this section I demonstrate this to be true using <a href="/R/DeclareDesign/"><code>DeclareDesign</code></a> and <a href="/R/estimatr/"><code>estimatr</code></a>.</p>
 <p>First, let’s take a simple set up:</p>
 <p><span class="math display">\[
 \begin{aligned}
@@ -150,7 +151,7 @@ true_var_cov_mat &lt;-<span class="st"> </span>sigmasq <span class="op">*</span>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">true_varb &lt;-<span class="st"> </span>true_var_cov_mat[<span class="dv">2</span>, <span class="dv">2</span>]
 true_varb</code></pre></div>
 <pre><code>## [1] 0.07831866</code></pre>
-<p>Now, using <a href="declaredesign.org"><code>DeclareDesign</code></a>, let’s specify the rest of the data generating process (DGP). Let’s set <span class="math inline">\(\beta = [0, 1]^\top\)</span>, so that the true DGP is <span class="math inline">\(\mathbf{y} = \mathbf{x_1} + \epsilon\)</span>.</p>
+<p>Now, using <a href="/R/DeclareDesign/"><code>DeclareDesign</code></a>, let’s specify the rest of the data generating process (DGP). Let’s set <span class="math inline">\(\beta = [0, 1]^\top\)</span>, so that the true DGP is <span class="math inline">\(\mathbf{y} = \mathbf{x_1} + \epsilon\)</span>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">simp_pop &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_population">declare_population</a></span>(
   <span class="dt">epsilon =</span> <span class="kw">rnorm</span>(N, <span class="dt">sd =</span> <span class="dv">2</span>),
   <span class="dt">y =</span> x <span class="op">+</span><span class="st"> </span>epsilon
@@ -161,10 +162,10 @@ true_varb</code></pre></div>
 <p><span class="math display">\[
 \widehat{\mathbb{V}[\widehat{\beta}]} = \frac{\mathbf{e}^\top\mathbf{e}}{N - K} (\mathbf{X}^\top \mathbf{X})^{-1},
 \]</span></p>
-<p>where the residuals <span class="math inline">\(\mathbf{e} = \mathbf{y} - \mathbf{X}\widehat{\beta}\)</span>, <span class="math inline">\(N\)</span> is the number of observations, and <span class="math inline">\(K\)</span> is the number of regressors—two in our case. We can easily get this estimate of the variance by squaring the standard error we get out from <code>lm_robust</code> in <a href="http://estimatr.declaredesign.org"><code>estimatr</code></a>. Let’s tell <a href="http://declaredesign.org"><code>DeclareDesign</code></a> to use that estimator and get the coefficient on the <span class="math inline">\(\mathbf{x}_1\)</span> variable.</p>
+<p>where the residuals <span class="math inline">\(\mathbf{e} = \mathbf{y} - \mathbf{X}\widehat{\beta}\)</span>, <span class="math inline">\(N\)</span> is the number of observations, and <span class="math inline">\(K\)</span> is the number of regressors—two in our case. We can easily get this estimate of the variance by squaring the standard error we get out from <code>lm_robust</code> in <a href="/R/estimatr/"><code>estimatr</code></a>. Let’s tell <a href="/R/DeclareDesign/"><code>DeclareDesign</code></a> to use that estimator and get the coefficient on the <span class="math inline">\(\mathbf{x}_1\)</span> variable.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">lmc &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_estimator">declare_estimator</a></span>(
   y <span class="op">~</span><span class="st"> </span>x,
-  <span class="dt">model =</span> estimatr<span class="op">::</span>lm_robust, 
+  <span class="dt">model =</span> estimatr<span class="op">::</span>lm_robust,
   <span class="dt">se_type =</span> <span class="st">"classical"</span>,
   <span class="dt">estimand =</span> varb_estimand,
   <span class="dt">coefficient_name =</span> <span class="st">"x"</span>
@@ -179,7 +180,7 @@ classical_design &lt;-<span class="st"> </span><span class="kw"><a href="http://
   lmc
 )
 
-<span class="co"># Declare a set of diagnosands that help us check if </span>
+<span class="co"># Declare a set of diagnosands that help us check if</span>
 <span class="co"># we have unbiasedness</span>
 my_diagnosands &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_diagnosands">declare_diagnosands</a></span>(
   <span class="st">`</span><span class="dt">Bias of Estimated Variance</span><span class="st">`</span> =<span class="st"> </span><span class="kw">mean</span>(se<span class="op">^</span><span class="dv">2</span> <span class="op">-</span><span class="st"> </span>estimand),
@@ -192,9 +193,9 @@ my_diagnosands &lt;-<span class="st"> </span><span class="kw"><a href="http://ww
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Run 25000 simulations</span>
 <span class="kw">set.seed</span>(<span class="dv">42</span>)
 dig &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/diagnose_design">diagnose_design</a></span>(
-  classical_design, 
-  <span class="dt">sims =</span> <span class="dv">20000</span>, 
-  <span class="dt">diagnosands =</span> my_diagnosands, 
+  classical_design,
+  <span class="dt">sims =</span> <span class="dv">20000</span>,
+  <span class="dt">diagnosands =</span> my_diagnosands,
   <span class="dt">parallel =</span> <span class="ot">TRUE</span>
 )</code></pre></div>
 <p>Our diagnosands can help us see if there is any bias. Note that the standard error of the diagnosands—denoted as <code>se(Diagnosand)</code>—is a useful tool that let’s us know whether our estimated bias, or any other diagnosand, is simply an artifact of simulation noise or if it appears to be precisely estimated via simulation.</p>
@@ -257,7 +258,7 @@ dig &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 <p><span class="math display">\[
 \epsilon_i \sim N(0, \sigma_i^2),
 \]</span></p>
-<p>where <span class="math inline">\(\sigma^2_i \neq \sigma^2_j\)</span> for some units <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>. If the variance of the errors is not independent of the regressors, the “classical” variance will be biased and inconsistent. Meanwhile, heteroskedastic-consistent variance estimators, such as the HC2 estimator, are consistent and normally less biased than the “classical” estimator. Let’s demonstrate this using <a href="declaredesign.org"><code>DeclareDesign</code></a>. First, let’s specify the variance of the errors to be strongly correlated with <span class="math inline">\(x\)</span>.</p>
+<p>where <span class="math inline">\(\sigma^2_i \neq \sigma^2_j\)</span> for some units <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>. If the variance of the errors is not independent of the regressors, the “classical” variance will be biased and inconsistent. Meanwhile, heteroskedastic-consistent variance estimators, such as the HC2 estimator, are consistent and normally less biased than the “classical” estimator. Let’s demonstrate this using <a href="/R/DeclareDesign/"><code>DeclareDesign</code></a>. First, let’s specify the variance of the errors to be strongly correlated with <span class="math inline">\(x\)</span>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dat &lt;-<span class="st"> </span><span class="kw">fabricate</span>(
   dat,
   <span class="dt">noise_var =</span> <span class="dv">1</span> <span class="op">+</span><span class="st"> </span>(x <span class="op">-</span><span class="st"> </span><span class="kw">min</span>(x))<span class="op">^</span><span class="dv">2</span>
@@ -285,20 +286,20 @@ varb &lt;-<span class="st"> </span><span class="kw">tcrossprod</span>(XtX_inv, X
 true_varb_het &lt;-<span class="st"> </span>varb[<span class="dv">2</span>, <span class="dv">2</span>]
 true_varb_het</code></pre></div>
 <pre><code>## [1] 0.1473923</code></pre>
-<p>Now let’s use <a href="declaredesign.org"><code>DeclareDesign</code></a> to test whether HC2 is less biased in this example than classical standard errors. However, I will use another feature of <a href="declaredesign.org"><code>DeclareDesign</code></a> where I can create a design template. This allows me to easily pass different datasets (i.e., of different sizes) and variance estimators so that I can test the properties different estimators across different datasets.</p>
+<p>Now let’s use <a href="/R/DeclareDesign/"><code>DeclareDesign</code></a> to test whether HC2 is less biased in this example than classical standard errors. However, I will use another feature of <a href="/R/DeclareDesign/"><code>DeclareDesign</code></a> where I can create a design template. This allows me to easily pass different datasets (i.e., of different sizes) and variance estimators so that I can test the properties different estimators across different datasets.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># This creates a template that takes some fixed data</span>
 <span class="co"># that has x and noise_var. Then for that data, it creates</span>
 <span class="co"># a single design that you can then simulate many times to get</span>
 <span class="co"># the properties you are interested in</span>
 <span class="co"># It also takes the two se_types you'd like to compare</span>
 fixed_dat_het_design_temp &lt;-<span class="st"> </span><span class="cf">function</span>(dat, se_types) {
-  
+
   <span class="co"># Get true variance for this data</span>
   Xmat &lt;-<span class="st"> </span><span class="kw">with</span>(dat, <span class="kw">cbind</span>(<span class="dv">1</span>, x))
   XtX_inv &lt;-<span class="st"> </span><span class="kw">solve</span>(<span class="kw">crossprod</span>(Xmat))
   varb &lt;-<span class="st"> </span><span class="kw">tcrossprod</span>(XtX_inv, Xmat) <span class="op">%*%</span><span class="st"> </span><span class="kw">diag</span>(<span class="kw">with</span>(dat, noise_var)) <span class="op">%*%</span><span class="st"> </span>Xmat <span class="op">%*%</span><span class="st"> </span>XtX_inv
   true_varb_het &lt;-<span class="st"> </span>varb[<span class="dv">2</span>, <span class="dv">2</span>]
-  
+
   <span class="co"># Population function now has heteroskedastic noise</span>
   simp_pop &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_population">declare_population</a></span>(
     <span class="dt">epsilon =</span> <span class="kw">rnorm</span>(N, <span class="dt">sd =</span> <span class="kw">sqrt</span>(noise_var)),
@@ -316,23 +317,23 @@ fixed_dat_het_design_temp &lt;-<span class="st"> </span><span class="cf">functio
     <span class="dt">coefficient_name =</span> <span class="st">"x"</span>,
     <span class="dt">label =</span> se_types[<span class="dv">1</span>]
   )
-  
+
   lm2 &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_estimator">declare_estimator</a></span>(
-    y <span class="op">~</span><span class="st"> </span>x, 
-    <span class="dt">model =</span> estimatr<span class="op">::</span>lm_robust, 
+    y <span class="op">~</span><span class="st"> </span>x,
+    <span class="dt">model =</span> estimatr<span class="op">::</span>lm_robust,
     <span class="dt">se_type =</span> <span class="op">!!</span>se_types[<span class="dv">2</span>],
     <span class="dt">estimand =</span> varb_het_estimand,
     <span class="dt">coefficient_name =</span> <span class="st">"x"</span>,
     <span class="dt">label =</span> se_types[<span class="dv">2</span>]
   )
-  
+
   <span class="co"># We return the design so we can diagnose it</span>
   <span class="kw">return</span>(
     <span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_design">declare_design</a></span>(
       dat,
       simp_pop,
       varb_het_estimand,
-      lm1, 
+      lm1,
       lm2
     )
   )
@@ -404,7 +405,7 @@ diags &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="
   des &lt;-<span class="st"> </span><span class="kw">fixed_dat_het_design_temp</span>(dat, <span class="dt">se_types =</span> <span class="kw">c</span>(<span class="st">"classical"</span>, <span class="st">"HC2"</span>))
   diags[[i]] &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/diagnose_design">diagnose_design</a></span>(
     des,
-    <span class="dt">sims =</span> <span class="dv">10000</span>, 
+    <span class="dt">sims =</span> <span class="dv">10000</span>,
     <span class="dt">diagnosands =</span> my_diagnosands,
     <span class="dt">bootstrap =</span> <span class="ot">FALSE</span>
   )<span class="op">$</span>diagnosands
@@ -431,7 +432,7 @@ diags_hc &lt;-<span class="st"> </span><span class="kw">vector</span>(<span clas
   des &lt;-<span class="st"> </span><span class="kw">fixed_dat_het_design_temp</span>(dat, <span class="dt">se_types =</span> <span class="kw">c</span>(<span class="st">"HC1"</span>, <span class="st">"HC2"</span>))
   diags_hc[[i]] &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/diagnose_design">diagnose_design</a></span>(
     des,
-    <span class="dt">sims =</span> <span class="dv">200</span>, 
+    <span class="dt">sims =</span> <span class="dv">200</span>,
     <span class="dt">diagnosands =</span> my_diagnosands,
     <span class="dt">bootstrap =</span> <span class="ot">FALSE</span>
   )<span class="op">$</span>diagnosands

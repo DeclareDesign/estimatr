@@ -110,7 +110,7 @@
     
     
 <div class="contents">
-<p>This document provides the mathematical notes for each of the estimators in <code>estimatr</code>. The most up-to-date version of this can be found on the <a href="http://estimatr.declaredesign.org/articles/mathematical-notes.html">DeclareDesign website here</a>.</p>
+<p>This document provides the mathematical notes for each of the estimators in <code>estimatr</code>. The most up-to-date version of this can be found on the <a href="/R/estimatr/articles/mathematical-notes.html">DeclareDesign website here</a>.</p>
 <div id="estimators" class="section level1">
 <h1 class="hasAnchor">
 <a href="#estimators" class="anchor"></a>Estimators</h1>
@@ -120,6 +120,8 @@
 <a href="#lm_robust-notes"><code>lm_robust</code></a> - for fitting linear models with heteroskedasticity/cluster-robust standard errors</li>
 <li>
 <a href="#lm_lin-notes"><code>lm_lin</code></a> - a wrapper for <code><a href="../reference/lm_robust.html">lm_robust()</a></code> to simplify interacting centered pre-treatment covariates with a treatment variable</li>
+<li>
+<a href="#iv_robust-notes"><code>iv_robust</code></a> - two stage least squares estimation of instrumental variables regression</li>
 <li>
 <a href="#difference_in_means-notes"><code>difference_in_means</code></a> - for estimating differences in means with appropriate standard errors for unit-randomized, cluster-randomized, block-randomized, matched-pair randomized, and matched-pair clustered designs</li>
 <li>
@@ -145,17 +147,17 @@
 \widehat{\beta} =(\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1}\mathbf{X}^{\top}\mathbf{W}\mathbf{y}
 \]</span></p>
 <p>The transformed data are then used in the analysis below, where <span class="math inline">\((\mathbf{X}^{\top}\mathbf{X})^{-1}\)</span> is now <span class="math inline">\((\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1}\)</span> and <span class="math inline">\(\mathbf{X}\)</span> is now <span class="math inline">\(\mathbf{X} \mathrm{sqrt}[W]\)</span>, where <span class="math inline">\(\mathrm{sqrt}[.]\)</span> is an operator that applies a square root to the coefficients of some matrix.</p>
-<p>We should note that this transformation yields the same standard errors as specifying weights using <code>aweight</code> in Stata for the “classical”, “HC0”, and “HC1” (“stata”) variance estimators. Furthermore, in the clustered case, our weighted estimator for the “stata” cluster-robust variance also matches Stata. Thus Stata’s main robust standard error estimators, “HC1” and their clustered estimator, match our package when weights are applied. Nonetheless, Stata uses a slightly different Hat matrix and thus “HC2” and “HC3” estimates in Stata when weights are specified may differ from our estimates—<a href="http://estimatr.declaredesign.org/articles/stata-wls-hat.html">more on that here</a>.</p>
+<p>We should note that this transformation yields the same standard errors as specifying weights using <code>aweight</code> in Stata for the “classical”, “HC0”, and “HC1” (“stata”) variance estimators. Furthermore, in the clustered case, our weighted estimator for the “stata” cluster-robust variance also matches Stata. Thus Stata’s main robust standard error estimators, “HC1” and their clustered estimator, match our package when weights are applied. Nonetheless, Stata uses a slightly different Hat matrix and thus “HC2” and “HC3” estimates in Stata when weights are specified may differ from our estimates—<a href="/R/estimatr/articles/stata-wls-hat.html">more on that here</a>.</p>
 </div>
 </div>
 <div id="variance" class="section level3">
 <h3 class="hasAnchor">
 <a href="#variance" class="anchor"></a>Variance</h3>
-<p>In addition to solving for OLS coefficients faster than <code>lm</code>, we provide a variety of robust variance estimators. Below we outline them for the non-clustered and clustered cases. You can see some simulations about the unbiasedness of the classical variance estimators with homoskedasticity and the consistency of the HC2 estimators with heteroskedasticity in <a href="http://estimatr.declaredesign.org/articles/simulations-ols-variance.html">these simulations</a>.</p>
+<p>In addition to solving for OLS coefficients faster than <code>lm</code>, we provide a variety of robust variance estimators. Below we outline them for the non-clustered and clustered cases. You can see some simulations about the unbiasedness of the classical variance estimators with homoskedasticity and the consistency of the HC2 estimators with heteroskedasticity in <a href="/R/estimatr/articles/simulations-ols-variance.html">these simulations</a>.</p>
 <div id="heteroskedasticity-robust-variance-and-degrees-of-freedom" class="section level4">
 <h4 class="hasAnchor">
 <a href="#heteroskedasticity-robust-variance-and-degrees-of-freedom" class="anchor"></a>Heteroskedasticity-Robust Variance and Degrees of Freedom</h4>
-<p>The default variance estimator without clusters is the HC2 variance, first proposed by <span class="citation">MacKinnon and White (<a href="#ref-mackinnonwhite1985">1985</a>)</span>. This estimator has the advantage of being equivalent to a conservative randomization-based “Neyman” estimator of the variance <span class="citation">(Samii and Aronow <a href="#ref-samiiaronow2012">2012</a>)</span>. Furthermore, while it is somewhat less efficient than the HC1 variance estimator, the default in Stata, it tends to perform better in small samples (evidence for that can be found in our simulations <a href="http://estimatr.declaredesign.org/articles/simulations-ols-variance.html#hc1-and-hc2-in-small-samples">here</a>).</p>
+<p>The default variance estimator without clusters is the HC2 variance, first proposed by <span class="citation">MacKinnon and White (<a href="#ref-mackinnonwhite1985">1985</a>)</span>. This estimator has the advantage of being equivalent to a conservative randomization-based “Neyman” estimator of the variance <span class="citation">(Samii and Aronow <a href="#ref-samiiaronow2012">2012</a>)</span>. Furthermore, while it is somewhat less efficient than the HC1 variance estimator, the default in Stata, it tends to perform better in small samples (evidence for that can be found in our simulations <a href="/R/estimatr/articles/simulations-ols-variance.html#hc1-and-hc2-in-small-samples">here</a>).</p>
 <table style="width:100%;" class="table">
 <colgroup>
 <col width="14%">
@@ -276,7 +278,7 @@
 <p>In the CR2 variance calculation, we get <span class="math inline">\(\mathbf{A}_s\)</span> as follows:</p>
 <p><span class="math display">\[
 \begin{aligned}
-\mathbf{H} &amp;= \mathbf{X}(\mathbf{X}^{\top}\mathbf{X})^{-1}\mathbf{X}^\top \\\\\\ 
+\mathbf{H} &amp;= \mathbf{X}(\mathbf{X}^{\top}\mathbf{X})^{-1}\mathbf{X}^\top \\\\\\
 \mathbf{B}_s &amp;= (I_{N} - \mathbf{H})_s (I_{N} - \mathbf{H})^\top_s \\\\\\
 \mathbf{A}_s &amp;= \mathbf{B}^{+1/2}_s
 \end{aligned}
@@ -312,6 +314,115 @@ y_i = \tau z_i + \mathbf{\beta}^\top \mathbf{x}^c_i  + \mathbf{\gamma}^\top \mat
 <p>where <span class="math inline">\(\mathbf{x}^c_i\)</span> is a vector of pre-treatment covariates for unit <span class="math inline">\(i\)</span> that have been centered to have mean zero and <span class="math inline">\(z_i\)</span> is an indicator for the treatment group. <span class="citation">Lin (<a href="#ref-lin2013">2013</a>)</span> proposed this estimator in response to the critique by <span class="citation">Freedman (<a href="#ref-freedman2008">2008</a>)</span> that using regression to adjust for pre-treatment covariates could bias estimates of treatment effects.</p>
 <p>The estimator <code>lm_lin</code> also works for multi-valued treatments by creating a full set of dummies for each treatment level and interacting each with the centered pre-treatment covariates. The rest of the options for the function and corresponding estimation is identical to <a href="#lm_robust"><code>lm_robust</code></a>.</p>
 </div>
+<div id="iv_robust-notes" class="section level2">
+<h2 class="hasAnchor">
+<a href="#iv_robust-notes" class="anchor"></a><code>iv_robust</code> notes</h2>
+<p>Our <a href="#iv_robust"><code>iv_robust</code></a> estimator uses a two-stage least squares estimation.</p>
+<div id="coefficient-estimates-1" class="section level3">
+<h3 class="hasAnchor">
+<a href="#coefficient-estimates-1" class="anchor"></a>Coefficient estimates</h3>
+<p><span class="math display">\[
+\widehat{\beta}_{2SLS} =(\mathbf{X}^{\top}\mathbf{P_z}\mathbf{X})^{-1}\mathbf{X}^{\top}\mathbf{P_z}\mathbf{y},
+\]</span></p>
+<p>where <span class="math inline">\(\mathbf{X}\)</span> are the endogenous regressors, <span class="math inline">\(\mathbf{P_Z} = \mathbf{Z}(\mathbf{Z}^{\top}\mathbf{Z})^{-1}\mathbf{Z}^\top\)</span>, and <span class="math inline">\(\mathbf{Z}\)</span> are the instruments. This is equivalent to estimating the first stage regression,</p>
+<p><span class="math display">\[
+\mathbf{X} = \mathbf{Z}\beta_{FS} + \mathbf{\zeta},
+\]</span></p>
+<p>and using the first stage predicted values in the second stage regression,</p>
+<p><span class="math display">\[
+\begin{aligned}
+\widehat{\mathbf{X}} &amp;= \mathbf{Z}\widehat{\beta}_{FS} \\
+\mathbf{y} &amp;= \widehat{\mathbf{X}}\beta_{2SLS} + \mathbf{\epsilon}.
+\end{aligned}
+\]</span></p>
+<div id="weighting" class="section level4">
+<h4 class="hasAnchor">
+<a href="#weighting" class="anchor"></a>Weighting</h4>
+<p>When weights are applied, we use the same estimation strategy as in <code>lm_robust</code> where we first transform the data by the square root of the weights and proceed with estimation as usual.</p>
+</div>
+</div>
+<div id="variance-1" class="section level3">
+<h3 class="hasAnchor">
+<a href="#variance-1" class="anchor"></a>Variance</h3>
+<p>The variances estimates for <code>iv_robust</code> are the same as the estimates for <code>lm_robust</code> although two changes are made. First, we replace <span class="math inline">\(\mathbf{X}\)</span> with the second stage regressors, <span class="math inline">\(\widehat{\mathbf{X}}\)</span>, and we replace the residuals, <span class="math inline">\(e_i\)</span>, with <span class="math inline">\(\mathbf{y} - \mathbf{X} \beta_{2SLS}\)</span>. That is, we use the residuals from the final coefficients and the endogenous, uninstrumented regressors <span class="math inline">\(\mathbf{X}\)</span>.</p>
+<p>Because Stata does not default to using finite sample corrections and tests with its <code>ivregress 2sls</code> estimator, the correspondence between our instrumental variables estimator and theirs can be a bit confulsing. The following table shows the options in Stata that correspond to our estimators.</p>
+<table class="table">
+<colgroup>
+<col width="27%">
+<col width="19%">
+<col width="53%">
+</colgroup>
+<thead><tr class="header">
+<th><code>estimatr</code></th>
+<th>Stata</th>
+<th>Notes</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>N/A</td>
+<td><code>ivregress 2sls y (x = z)</code></td>
+<td>Stata’s default has no finite sample correction (i.e., <span class="math inline">\(\widehat{\sigma}^2 = \mathbf{e}^\top \mathbf{e}\)</span>). Stata here also uses z-tests.</td>
+</tr>
+<tr class="even">
+<td><code><a href="../reference/iv_robust.html">iv_robust(y ~ x | z, se_type = "classical")</a></code></td>
+<td><code>ivregress 2sls y (x = z), small</code></td>
+<td>
+<span class="math inline">\(\widehat{\sigma}^2 = \frac{\mathbf{e}^\top \mathbf{e}}{N - k}\)</span>.</td>
+</tr>
+<tr class="odd">
+<td><code><a href="../reference/iv_robust.html">iv_robust(y ~ x | z, se_type = "HC0")</a></code></td>
+<td><code>ivregress 2sls y (x = z), rob</code></td>
+<td>Stata uses z-tests here.</td>
+</tr>
+<tr class="even">
+<td><code><a href="../reference/iv_robust.html">iv_robust(y ~ x | z, se_type = "HC1")</a></code></td>
+<td><code>ivregress 2sls y (x = z), rob small</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>
+<code><a href="../reference/iv_robust.html">iv_robust(y ~ x | z, se_type = "HC2")</a></code> (default)</td>
+<td>N/A</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code><a href="../reference/iv_robust.html">iv_robust(y ~ x | z, se_type = "HC3")</a></code></td>
+<td>N/A</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>
+<code>iv_robust(y ~ x | z, clusters = clust,</code> <code>se_type = "CR0")</code>
+</td>
+<td><code>ivregress 2sls y (x = z), vce(cl clust)</code></td>
+<td>Stata uses z-tests here.</td>
+</tr>
+<tr class="even">
+<td>
+<code>iv_robust(y ~ x | z, clusters = clust,</code> <code>se_type = "stata")</code>
+</td>
+<td><code>ivregress 2sls y (x = z), vce(cl clust) small</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>
+<code>iv_robust(y ~ x | z, clusters = clust,</code> <code>se_type = "CR2")</code> (default)</td>
+<td>N/A</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="confidence-intervals-and-hypothesis-testing-1" class="section level3">
+<h3 class="hasAnchor">
+<a href="#confidence-intervals-and-hypothesis-testing-1" class="anchor"></a>Confidence intervals and hypothesis testing</h3>
+<p>If <span class="math inline">\(\widehat{\mathbb{V}}_k\)</span> is the <span class="math inline">\(k\)</span>th diagonal element of <span class="math inline">\(\widehat{\mathbb{V}}\)</span>, we build confidence intervals using the user specified <span class="math inline">\(\alpha\)</span> as:</p>
+<p><span class="math display">\[
+\mathrm{CI}^{1-\alpha} = \left(\widehat{\beta_{2SLS, k}} + t^{df}_{\alpha/2} \sqrt{\widehat{\mathbb{V}}_k}, \widehat{\beta_{2SLS, k}} + t^{df}_{1 - \alpha/2} \sqrt{\widehat{\mathbb{V}}_k}\right)
+\]</span></p>
+<p>We also provide two-sided p-values using a t-distribution with the aforementioned significance level <span class="math inline">\(\alpha\)</span> and degrees of freedom <span class="math inline">\(df\)</span>, which come from the second-stage regression. As mentioned in the table above, these results will be different from Stata in certain cases as Stata uses z-tests when <code>small</code> is not specified.</p>
+</div>
+</div>
 <div id="difference_in_means-notes" class="section level2">
 <h2 class="hasAnchor">
 <a href="#difference_in_means-notes" class="anchor"></a><code>difference_in_means</code> notes</h2>
@@ -327,6 +438,7 @@ y_i = \tau z_i + \mathbf{\beta}^\top \mathbf{x}^c_i  + \mathbf{\gamma}^\top \mat
 <li>Matched-pairs (only <code>blocks</code> is specified and all blocks are size two)</li>
 <li>Matched-pair clustered design (both names are specified and each block only has two clusters)</li>
 </ul>
+<p>Note: if there are blocks of size two and blocks greater than size two, we default to the matched-pairs estimators described below.</p>
 <p>For each design, our estimator is informed by the recent statistical literature on the analysis of experimental data.</p>
 <div id="estimates" class="section level3">
 <h3 class="hasAnchor">
@@ -337,9 +449,9 @@ y_i = \tau z_i + \mathbf{\beta}^\top \mathbf{x}^c_i  + \mathbf{\gamma}^\top \mat
 <p><strong>Blocked design (including matched-pairs designs)</strong> <span class="math display">\[
 \widehat{\tau} = \sum^J_{j=1} \frac{N_j}{N} \widehat{\tau_j}
 \]</span> where <span class="math inline">\(J\)</span> is the number of blocks, <span class="math inline">\(N_j\)</span> is the size of those blocks, and <span class="math inline">\(\widehat{\tau_j}\)</span> is the estimated difference-in-means in block <span class="math inline">\(j\)</span>.</p>
-<div id="weighting" class="section level4">
+<div id="weighting-1" class="section level4">
 <h4 class="hasAnchor">
-<a href="#weighting" class="anchor"></a>Weighting</h4>
+<a href="#weighting-1" class="anchor"></a>Weighting</h4>
 <p>If the user specifies weights, treatment effects (or block-level treatment effects) and their standard errors are estimated by <code>lm_robust</code>. There are three exceptions. First, we still compute the degrees of freedom as in the below table. Second, if the design is blocked, a weighted treatment effect and variance estimate are computed within each block using <code>lm_robust</code> and then combined as below. Third, specifying weights with a matched-pairs estimator in <code>difference_in_means</code> is not supported at the moment.</p>
 </div>
 </div>
@@ -400,9 +512,9 @@ y_i = \tau z_i + \mathbf{\beta}^\top \mathbf{x}^c_i  + \mathbf{\gamma}^\top \mat
 </tbody>
 </table>
 </div>
-<div id="confidence-intervals-and-hypothesis-testing-1" class="section level3">
+<div id="confidence-intervals-and-hypothesis-testing-2" class="section level3">
 <h3 class="hasAnchor">
-<a href="#confidence-intervals-and-hypothesis-testing-1" class="anchor"></a>Confidence intervals and hypothesis testing</h3>
+<a href="#confidence-intervals-and-hypothesis-testing-2" class="anchor"></a>Confidence intervals and hypothesis testing</h3>
 <p>We build confidence intervals using the user specified <span class="math inline">\(\alpha\)</span> as:</p>
 <p><span class="math display">\[
 \mathrm{CI}^{1-\alpha} = \left(\widehat{\tau} + t^{df}_{\alpha/2} \sqrt{\widehat{\mathbb{V}}[\widehat{\tau}]},\widehat{\tau}] + t^{df}_{1 - \alpha/2} \sqrt{\widehat{\mathbb{V}}[\widehat{\tau}]}\right)
@@ -431,16 +543,16 @@ y_i = \tau z_i + \mathbf{\beta}^\top \mathbf{x}^c_i  + \mathbf{\gamma}^\top \mat
 <a href="#estimates-1" class="anchor"></a>Estimates</h3>
 <p><strong>Simple, complete, clustered</strong></p>
 <p><span class="math display">\[
-\widehat{\tau} = \frac{1}{N} \sum^N_{i=1} z_i \frac{y_i}{\pi_{1i}} - (1 - z_i) \frac{y_i}{\pi_{0i}} 
+\widehat{\tau} = \frac{1}{N} \sum^N_{i=1} z_i \frac{y_i}{\pi_{1i}} - (1 - z_i) \frac{y_i}{\pi_{0i}}
 \]</span></p>
 <p><strong>Blocked</strong></p>
 <p><span class="math display">\[
 \widehat{\tau} = \sum^J_{j=1} \frac{N_j}{N} \widehat{\tau_j}
 \]</span> where <span class="math inline">\(J\)</span> is the number of blocks, <span class="math inline">\(N_j\)</span> is the size of those blocks, and <span class="math inline">\(\widehat{\tau_j}\)</span> is the Horvitz-Thompson estimate in block <span class="math inline">\(j\)</span>.</p>
 </div>
-<div id="variance-1" class="section level3">
+<div id="variance-2" class="section level3">
 <h3 class="hasAnchor">
-<a href="#variance-1" class="anchor"></a>Variance</h3>
+<a href="#variance-2" class="anchor"></a>Variance</h3>
 <p>Currently we provide variance estimates that rely on two separate assumptions:</p>
 <ul>
 <li>
@@ -497,9 +609,9 @@ y_i = \tau z_i + \mathbf{\beta}^\top \mathbf{x}^c_i  + \mathbf{\gamma}^\top \mat
 \end{aligned}
 \]</span></p>
 </div>
-<div id="confidence-intervals-and-hypothesis-testing-2" class="section level3">
+<div id="confidence-intervals-and-hypothesis-testing-3" class="section level3">
 <h3 class="hasAnchor">
-<a href="#confidence-intervals-and-hypothesis-testing-2" class="anchor"></a>Confidence intervals and hypothesis testing</h3>
+<a href="#confidence-intervals-and-hypothesis-testing-3" class="anchor"></a>Confidence intervals and hypothesis testing</h3>
 <p>Theory on hypothesis testing with the Horvitz-Thompson estimator is yet to be developed. We rely on a normal approximation and construct confidence intervals in the following way: <span class="math display">\[
 \mathrm{CI}^{1-\alpha} = \left(\widehat{\tau} + z_{\alpha/2} \sqrt{\widehat{\mathbb{V}}[\widehat{\tau}]}, \widehat{\tau} + z_{1 - \alpha/2} \sqrt{\widehat{\mathbb{V}}[\widehat{\tau}]}\right)
 \]</span></p>
@@ -567,6 +679,7 @@ y_i = \tau z_i + \mathbf{\beta}^\top \mathbf{x}^c_i  + \mathbf{\gamma}^\top \mat
 <a href="#estimators">Estimators</a><ul class="nav nav-pills nav-stacked">
 <li><a href="#lm_robust-notes"><code>lm_robust</code> notes</a></li>
       <li><a href="#lm_lin-notes"><code>lm_lin</code> notes</a></li>
+      <li><a href="#iv_robust-notes"><code>iv_robust</code> notes</a></li>
       <li><a href="#difference_in_means-notes"><code>difference_in_means</code> notes</a></li>
       <li><a href="#horvitz_thompson-notes"><code>horvitz_thompson</code> notes</a></li>
       </ul>

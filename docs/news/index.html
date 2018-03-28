@@ -130,16 +130,43 @@
     </div>
 
     <div class="contents">
-    <div id="estimatr-0-5-0-github-version" class="section level1">
+    <div id="estimatr-0-6-0" class="section level1">
 <h1 class="hasAnchor">
-<a href="#estimatr-0-5-0-github-version" class="anchor"></a>estimatr 0.5.0 (GitHub version)</h1>
+<a href="#estimatr-0-6-0" class="anchor"></a>estimatr 0.6.0</h1>
 <ul>
-<li>No changes as of yet</li>
+<li>Added support for multivariate linear models</li>
+<li>Added support for instrumental variables regression</li>
+<li>Major change to name of object output elements to mostly match with <code><a href="http://www.rdocumentation.org/packages/broom/topics/tidy">broom::tidy</a></code>
+</li>
+<li>old -&gt; new</li>
+<li>
+<code>coefficient_names</code> -&gt; <code>term</code>
+</li>
+<li>
+<code>se</code> -&gt; <code>std.error</code>
+</li>
+<li>
+<code>p</code> -&gt; <code>p.values</code>
+</li>
+<li>
+<code>ci_lower</code> -&gt; <code>ci.lower</code>
+</li>
+<li>
+<code>ci_upper</code> -&gt; <code>ci.upper</code>
+</li>
+<li>All of the above changes are also made to the column names on the output of <code>tidy</code>; furthermore for <code>tidy</code> objects one further name change from <code>coefficients</code> -&gt; <code>estimate</code> has been made</li>
+<li>Fixed bug that caused variances, standard errors, and p-values to be wrong for weighted “CR2” variance estimation</li>
+<li>Fixed incorrect estimates when both weights and blocks were passed to <code>difference_in_means</code>
+</li>
+<li>Rewrite NSE handling to be done by <code>rlang</code>
+</li>
+<li>Rewrite <code>na.omit</code> handler in R</li>
+<li>Major refactor of C++ underlying regression estimators</li>
 </ul>
 </div>
-    <div id="estimatr-0-4-0-cran-version" class="section level1">
+    <div id="estimatr-0-4-0" class="section level1">
 <h1 class="hasAnchor">
-<a href="#estimatr-0-4-0-cran-version" class="anchor"></a>estimatr 0.4.0 (CRAN version)</h1>
+<a href="#estimatr-0-4-0" class="anchor"></a>estimatr 0.4.0</h1>
 <ul>
 <li>Changed suffix added to centered variables in <code><a href="../reference/lm_lin.html">lm_lin()</a></code> from <code>_bar</code> to <code>_c</code>
 </li>
@@ -163,8 +190,8 @@
     <div id="tocnav">
       <h2>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-        <li><a href="#estimatr-0-5-0-github-version">0.5.0</a></li>
-        <li><a href="#estimatr-0-4-0-cran-version">0.4.0</a></li>
+        <li><a href="#estimatr-0-6-0">0.6.0</a></li>
+        <li><a href="#estimatr-0-4-0">0.4.0</a></li>
         <li><a href="#estimatr-0-2-0">0.2.0</a></li>
       </ul>
     </div>
