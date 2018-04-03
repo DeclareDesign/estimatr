@@ -13,7 +13,6 @@ cond_pr_mat_tests <- function() {
   prs <- rep(0.4, times = n)
   comp_ra <- randomizr::declare_ra(N = n, prob = prs[1])
   perms <- randomizr::obtain_permutation_matrix(comp_ra)
-
   expect_equal(
     declaration_to_condition_pr_mat(comp_ra),
     permutations_to_condition_pr_mat(perms)
@@ -57,7 +56,7 @@ cond_pr_mat_tests <- function() {
   decl_cond_pr_mat <- declaration_to_condition_pr_mat(comp_odd_ra)
 
   # following passes so just use perms instead of get_perms
-  # get_perms <- replicate(40000, comp_odd_ra$ra_function())
+  # get_perms <- replicate(40000, conduct_ra(comp_odd_ra))
   # expect_true(
   #    max(permutations_to_condition_pr_mat(perms) -
   #         round(permutations_to_condition_pr_mat(get_perms), 3)) < 0.01
@@ -73,7 +72,7 @@ cond_pr_mat_tests <- function() {
   decl_cond_pr_mat <- declaration_to_condition_pr_mat(comp_odd_ra)
 
   set.seed(40)
-  get_perms <- replicate(5000, comp_odd_ra$ra_function())
+  get_perms <- replicate(5000, randomizr::conduct_ra(comp_odd_ra))
   expect_equal(
     decl_cond_pr_mat,
     permutations_to_condition_pr_mat(get_perms),
@@ -87,7 +86,7 @@ cond_pr_mat_tests <- function() {
   # perms <- randomizr::obtain_permutation_matrix(simp_ra)
   # Won't work because some permutations are more likely than others
   # So instead we just resample and set the tolerance
-  perms <- replicate(10000, simp_ra$ra_function())
+  perms <- replicate(10000, randomizr::conduct_ra(simp_ra))
   # Won't be equal because some permutations are more likely than others in
   # this case
   expect_equal(
@@ -114,7 +113,7 @@ cond_pr_mat_tests <- function() {
   bl <- c("A", "B", "A", "A", "B", "B")
 
   bl_ra <- randomizr::declare_ra(blocks = dat$bl, prob = 0.4)
-  bl_perms <- replicate(5000, bl_ra$ra_function())
+  bl_perms <- replicate(5000, randomizr::conduct_ra(bl_ra))
 
   expect_equal(
     declaration_to_condition_pr_mat(bl_ra),
@@ -161,7 +160,7 @@ cond_pr_mat_tests <- function() {
     "character"
   )
 
-  cl_simp_sim_perms <- replicate(5000, cl_simp_ra$ra_function())
+  cl_simp_sim_perms <- replicate(5000, randomizr::conduct_ra(cl_simp_ra))
 
   expect_equal(
     cl_simp_cpm,
@@ -236,18 +235,30 @@ cond_pr_mat_tests <- function() {
     blocks = c(1, 1, 2, 2),
     prob = 0.4
   )
-  bl_small$probabilities_matrix <-
-    cbind(c(0.4, 0.5, 0.6, 0.7), c(0.6, 0.5, 0.4, 0.3))
-  bl_small$cleaned_arguments$condition_names
-  colnames(bl_small$probabilities_matrix) <- c("prob_0", "prob_1")
+  assign(
+    "probabilities_matrix",
+    matrix(
+      c(0.4, 0.5, 0.6, 0.7, 0.6, 0.5, 0.4, 0.3),
+      ncol = 2,
+      dimnames = list(NULL, c("prob_0", "prob_1"))
+    ),
+    bl_small
+  )
   expect_error(
     declaration_to_condition_pr_mat(bl_small),
     "Treatment probabilities must be fixed within blocks for block randomized"
   )
 
   comp <- randomizr::declare_ra(N = 2, m = 1)
-  comp$probabilities_matrix <- cbind(c(0.4, 0.5), c(0.6, 0.5))
-  colnames(comp$probabilities_matrix) <- c("prob_0", "prob_1")
+  assign(
+    "probabilities_matrix",
+    matrix(
+      c(0.4, 0.5, 0.6, 0.5),
+      ncol = 2,
+      dimnames = list(NULL, c("prob_0", "prob_1"))
+    ),
+    comp
+  )
   expect_error(
     declaration_to_condition_pr_mat(comp),
     "Treatment probabilities must be fixed for complete randomized designs"

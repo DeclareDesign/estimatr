@@ -90,7 +90,7 @@ test_that("iv_robust matches AER + ivpack", {
     coef(ivregsum)[, c(1, 2, 4)]
   )
 
-  # HC1 weighted
+  # HC0 weighted
   ivrw <- iv_robust(y ~ x | z, data = dat, weights = w, se_type = "HC0")
   ivpackrobw <- robust.se(ivw)
 

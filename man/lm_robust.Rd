@@ -191,7 +191,7 @@ lm_robust(y ~ x + z, data = dat, alpha = 0.1)
 
   # Can output results using 'texreg'
   library(texreg)
-  texregobj <- extract(lmrout)
+  texreg(lmrout)
 }
 
 }

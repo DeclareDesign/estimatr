@@ -270,7 +270,7 @@ test_that("Horvitz-Thompson works with clustered data", {
   )
   # pr = 0.25 in first, 0.5 in second
   blcl_ra <- randomizr::declare_ra(blocks = clbl_dat$bl, clusters = clbl_dat$cl_new, m = c(1, 2, 1))
-  clbl_dat$z_clbl <- blcl_ra$ra_function()
+  clbl_dat$z_clbl <- randomizr::conduct_ra(blcl_ra)
   expect_equivalent(
     horvitz_thompson(y ~ z_clbl, data = clbl_dat, ra_declaration = blcl_ra),
     horvitz_thompson(y ~ z_clbl, data = clbl_dat, blocks = bl, clusters = cl_new)
@@ -336,7 +336,14 @@ test_that("Horvitz-Thompson works with missingness", {
   dat$z <- randomizr::conduct_ra(decl)
   missing_dat <- dat
   missing_dat$y[1] <- NA
-
+  decl$probabilities_matrix
+  nrow(missing_dat)
+  expect_error(
+    horvitz_thompson(y ~ z, data = missing_dat, ra_declaration = decl),
+    NA
+  )
+  # Test that we didn't edit the declaration in the users env
+  # Should work a second time
   expect_error(
     horvitz_thompson(y ~ z, data = missing_dat, ra_declaration = decl),
     NA

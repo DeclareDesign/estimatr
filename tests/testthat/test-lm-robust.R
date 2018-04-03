@@ -325,7 +325,7 @@ test_that("lm robust works with rank-deficient X", {
   ## Not the same as LM! Different QR decompositions when dependency isn't just equivalency
   expect_equivalent(
     as.matrix(tidy(lm_robust(Y ~ X1 + X2 + Z1 + X3, data = dat, se_type = "classical"))[, c("estimate", "std.error")]),
-    as.matrix(summary(RcppEigen::fastLm(Y ~ X1 + X2 + Z1 + X3, data = dat))$coefficients[, 1:2])
+    as.matrix(RcppEigen:::summary.fastLm(RcppEigen::fastLm(Y ~ X1 + X2 + Z1 + X3, data = dat))$coefficients[, 1:2])
   )
 
   # trigger cascade to QR from try_chol; set seed above because try_cholesky

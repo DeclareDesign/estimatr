@@ -284,15 +284,15 @@ horvitz_thompson <- function(formula,
 
     if (!is.null(condition2)) {
       treatnum <-
-        which(ra_declaration$cleaned_arguments$condition_names == condition2)
+        which(ra_declaration$condition_names == condition2)
 
-      if (!(condition2 %in% ra_declaration$cleaned_arguments$condition_names)) {
+      if (!(condition2 %in% ra_declaration$condition_names)) {
         stop(
           "If `condition2` and `ra_declaration` are both specified, ",
           "`condition2` must match the condition_names in `ra_declaration`.",
           "\n`condition2`: ", condition2, "\n`condition_names`: ",
           paste0(
-            ra_declaration$cleaned_arguments$condition_names,
+            ra_declaration$condition_names,
             collapse = ", "
           )
         )
@@ -359,19 +359,18 @@ horvitz_thompson <- function(formula,
   # Declaration is passed
   if (!is.null(ra_declaration)) {
 
+    prob_matrix <- NULL
     # Use output from clean_model_data to rebuild declaration
     if (nrow(ra_declaration$probabilities_matrix) != length(data$y)) {
-      prob_names <- colnames(ra_declaration$probabilities_matrix)
-      ra_declaration$probabilities_matrix <- cbind(
-        1 - data$condition_probabilities,
-        data$condition_probabilities
-      )
-      colnames(ra_declaration$probabilities_matrix) <- prob_names
+      prob_matrix <-
+        cbind(
+          1 - data$condition_probabilities,
+          data$condition_probabilities
+        )
     }
-
     # If simple, just use condition probabilities shortcut
     # Same if se not needed
-    if (ra_declaration$ra_type == "simple" || se_type == "none") {
+    if ("ra_simple" %in% class(ra_declaration) || se_type == "none") {
       condition_pr_mat <- NULL
     } else {
       # TODO to allow for declaration with multiple arms, get probability matrix
@@ -379,7 +378,8 @@ horvitz_thompson <- function(formula,
       condition_pr_mat <- declaration_to_condition_pr_mat(
         ra_declaration,
         condition1,
-        condition2
+        condition2,
+        prob_matrix
       )
     }
   } else if (is.null(condition_pr_mat)) {
