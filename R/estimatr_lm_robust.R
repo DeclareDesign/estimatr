@@ -184,7 +184,7 @@
 #'
 #'   # Can output results using 'texreg'
 #'   library(texreg)
-#'   texregobj <- extract(lmrout)
+#'   texreg(lmrout)
 #' }
 #'
 #' @export

@@ -195,7 +195,7 @@ difference_in_means(
 # comparison of interest
 dat$Z_multi <- simple_ra(
   nrow(dat),
-  condition_names = c("Treatment 2", "Treatment 1", "Control"),
+  conditions = c("Treatment 2", "Treatment 1", "Control"),
   prob_each = c(0.4, 0.4, 0.2)
 )
 

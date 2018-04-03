@@ -27,7 +27,7 @@ Suggests:
     sandwich,
     RcppEigen,
     fabricatr (>= 0.3),
-    randomizr (>= 0.9),
+    randomizr (>= 0.15),
     margins,
     prediction,
     AER

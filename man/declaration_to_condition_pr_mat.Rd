@@ -6,7 +6,7 @@
 \pkg{randomizr} declaration}
 \usage{
 declaration_to_condition_pr_mat(ra_declaration, condition1 = NULL,
-  condition2 = NULL)
+  condition2 = NULL, prob_matrix = NULL)
 }
 \arguments{
 \item{ra_declaration}{An object of class \code{"ra_declaration"}, generated
@@ -21,6 +21,9 @@ and `condition2` have to be specified or both left as \code{NULL}.}
 \item{condition2}{The name of the second condition, often the treatment group. If \code{NULL},
 defaults to second condition in randomizr declaration. Either both `condition1`
 and `condition2` have to be specified or both left as \code{NULL}.}
+
+\item{prob_matrix}{An optional probability matrix to override the one in
+`ra_declaration`}
 }
 \value{
 a numeric 2n*2n matrix of marginal and joint condition treatment
@@ -88,7 +91,7 @@ bl_declaration <- declare_ra(blocks = dat$blocks, prob = 0.4, simple = FALSE)
 # Get probabilities
 block_pr_mat <- declaration_to_condition_pr_mat(bl_declaration, 0, 1)
 # Do randomiztion
-dat$z <- bl_declaration$ra_function()
+dat$z <- conduct_ra(bl_declaration)
 
 horvitz_thompson(y ~ z, data = dat, condition_pr_mat = block_pr_mat)
 
