@@ -98,7 +98,7 @@ declaration_to_condition_pr_mat <- function(ra_declaration,
                                             condition1 = NULL,
                                             condition2 = NULL,
                                             prob_matrix = NULL) {
-  if (!("ra_declaration" %in% class(ra_declaration))) {
+  if (!(inherits(ra_declaration, "ra_declaration"))) {
     stop("`ra_declaration` must be an object of class 'ra_declaration'")
   }
 
@@ -140,13 +140,13 @@ declaration_to_condition_pr_mat <- function(ra_declaration,
 
   n <- nrow(prob_matrix)
 
-  if ("ra_simple" %in% class(ra_declaration)) {
+  if (inherits(ra_declaration, "ra_simple")) {
     v <- c(p1, p2)
     condition_pr_matrix <- tcrossprod(v)
     diag(condition_pr_matrix) <- v
     condition_pr_matrix[cbind(n + 1:n, 1:n)] <- 0
     condition_pr_matrix[cbind(1:n, n + 1:n)] <- 0
-  } else if ("ra_complete" %in% class(ra_declaration)) {
+  } else if (inherits(ra_declaration, "ra_complete")) {
     if (length(unique(p2)) > 1) {
       stop(
         "Treatment probabilities must be fixed for complete randomized designs"
@@ -158,27 +158,27 @@ declaration_to_condition_pr_mat <- function(ra_declaration,
         pr = p2[1],
         n_total = n
       )
-  } else if ("ra_clustered" %in% class(ra_declaration)) {
+  } else if (inherits(ra_declaration, "ra_clustered")) {
     condition_pr_matrix <- gen_pr_matrix_cluster(
       clusters = ra_declaration$clusters,
       treat_probs = p2,
       simple = simple
     )
-  } else if ("ra_blocked" %in% class(ra_declaration)) {
+  } else if (inherits(ra_declaration, "ra_blocked")) {
     condition_pr_matrix <- gen_pr_matrix_block(
       blocks = ra_declaration$blocks,
       clusters = NULL,
       p1 = p1,
       p2 = p2
     )
-  } else if ("ra_blocked_and_clustered" %in% class(ra_declaration)) {
+  } else if (inherits(ra_declaration, "ra_blocked_and_clustered")) {
     condition_pr_matrix <- gen_pr_matrix_block(
       blocks = ra_declaration$blocks,
       clusters = ra_declaration$clusters,
       p1 = p1,
       p2 = p2
     )
-  } else if ("ra_custom" %in% class(ra_declaration)) {
+  } else if (inherits(ra_declaration, "ra_custom")) {
     # Use permutation matrix
     return(permutations_to_condition_pr_mat(ra_declaration$permutation_matrix))
   }
