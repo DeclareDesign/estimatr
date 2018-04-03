@@ -26,6 +26,8 @@ build_script:
   - travis-tool.sh install_deps
   - travis-tool.sh install_github DeclareDesign/DDtools
   - travis-tool.sh install_github DeclareDesign/fabricatr@v0.4.0
+  - travis-tool.sh install_github DeclareDesign/randomizr
+
 
 test_script:
   - travis-tool.sh run_tests
