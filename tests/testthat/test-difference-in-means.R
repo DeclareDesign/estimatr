@@ -646,8 +646,8 @@ test_that("se_type = none works", {
   dim_no <- difference_in_means(mpg ~ am, data = mtcars, se_type = "none")
 
   expect_equal(
-    dim$estimate,
-    dim_no$estimate
+    dim$coefficients,
+    dim_no$coefficients
   )
 
   expect_equivalent(
@@ -660,8 +660,8 @@ test_that("se_type = none works", {
   dimb_no <- difference_in_means(mpg ~ am, blocks = cyl, data = mtcars, se_type = "none")
 
   expect_equal(
-    dimb$estimate,
-    dimb_no$estimate
+    dimb$coefficients,
+    dimb_no$coefficients
   )
 
   expect_equivalent(
@@ -675,8 +675,8 @@ test_that("se_type = none works", {
   dimc_no <- difference_in_means(mpg ~ z, clusters = cyl, data = mtcars, se_type = "none")
 
   expect_equal(
-    dimc$estimate,
-    dimc_no$estimate
+    dimc$coefficients,
+    dimc_no$coefficients
   )
 
   expect_equivalent(
@@ -689,8 +689,8 @@ test_that("se_type = none works", {
   dimw_no <- difference_in_means(mpg ~ am, weights = wt, data = mtcars, se_type = "none")
 
   expect_equal(
-    dimw$estimate,
-    dimw_no$estimate
+    dimw$coefficients,
+    dimw_no$coefficients
   )
 
   expect_equivalent(
@@ -703,8 +703,8 @@ test_that("se_type = none works", {
   dimcw_no <- difference_in_means(mpg ~ z, weights = wt, clusters = cyl, data = mtcars, se_type = "none")
 
   expect_equal(
-    dimcw$estimate,
-    dimcw_no$estimate
+    dimcw$coefficients,
+    dimcw_no$coefficients
   )
 
   expect_equivalent(
@@ -720,8 +720,8 @@ test_that("se_type = none works", {
   dimmp_no <- difference_in_means(mpg ~ z, blocks = mp, data = mtcars, se_type = "none")
 
   expect_equal(
-    dimmp$estimate,
-    dimmp_no$estimate
+    dimmp$coefficients,
+    dimmp_no$coefficients
   )
 
   expect_equivalent(

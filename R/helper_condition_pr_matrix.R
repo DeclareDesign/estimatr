@@ -135,9 +135,6 @@ declaration_to_condition_pr_mat <- function(ra_declaration,
     condition2
   )
 
-  declaration_call <- as.list(ra_declaration$original_call)
-  simple <- eval(declaration_call$simple)
-
   n <- nrow(prob_matrix)
 
   if (inherits(ra_declaration, "ra_simple")) {
@@ -162,7 +159,7 @@ declaration_to_condition_pr_mat <- function(ra_declaration,
     condition_pr_matrix <- gen_pr_matrix_cluster(
       clusters = ra_declaration$clusters,
       treat_probs = p2,
-      simple = simple
+      simple = ra_declaration$simple
     )
   } else if (inherits(ra_declaration, "ra_blocked")) {
     condition_pr_matrix <- gen_pr_matrix_block(
