@@ -630,6 +630,11 @@ horvitz_thompson_internal <- function(condition_pr_mat = NULL,
         "at the moment"
       )
     }
+
+    if (is.factor(data$clusters)) {
+      data$clusters <- as.numeric(data$clusters)
+    }
+
     # used for cluster randomized designs
     k <- length(unique(data$clusters))
 
@@ -647,7 +652,7 @@ horvitz_thompson_internal <- function(condition_pr_mat = NULL,
       y1_totals[as.character(data$clusters[-to_drop][t1])]
 
     prs <- data$condition_probabilities[-to_drop]
-    ps2 <- prs[k + t2]
+    ps2 <- prs[t2]
     ps1 <- 1 - prs[t1]
 
     # for now rescale, with joint pr need squared top alone
