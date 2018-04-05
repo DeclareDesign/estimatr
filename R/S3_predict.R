@@ -1,4 +1,4 @@
-#' Predict method for \code{\link{lm_robust}} object
+#' Predict method for \code{lm_robust} object
 #'
 #' @param object an object of class 'lm_robust'
 #' @param newdata a data frame in which to look for variables with which to predict
