@@ -273,7 +273,7 @@ test_that("Horvitz-Thompson works with clustered data", {
     y = rnorm(12)
   )
   # pr = 0.25 in first, 0.5 in second
-  blcl_ra <- randomizr::declare_ra(blocks = clbl_dat$bl, clusters = clbl_dat$cl_new, m = c(1, 2, 1))
+  blcl_ra <- randomizr::declare_ra(blocks = clbl_dat$bl, clusters = clbl_dat$cl_new, block_m = c(1, 2, 1))
   clbl_dat$z_clbl <- randomizr::conduct_ra(blcl_ra)
   expect_equivalent(
     horvitz_thompson(y ~ z_clbl, data = clbl_dat, ra_declaration = blcl_ra),
