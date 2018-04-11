@@ -283,25 +283,22 @@ horvitz_thompson <- function(formula,
     }
 
     if (!is.null(condition2)) {
-      treatnum <-
-        which(ra_declaration$condition_names == condition2)
+      treatnum <- match(condition2, ra_declaration$conditions)
 
-      if (!(condition2 %in% ra_declaration$condition_names)) {
+      if (is.na(treatnum)) {
         stop(
           "If `condition2` and `ra_declaration` are both specified, ",
           "`condition2` must match the condition_names in `ra_declaration`.",
           "\n`condition2`: ", condition2, "\n`condition_names`: ",
           paste0(
-            ra_declaration$condition_names,
+            ra_declaration$conditions,
             collapse = ", "
           )
         )
       }
 
-      treatment_prob <- obtain(
-        ra_declaration,
-        condition2
-      )
+      treatment_prob <- obtain(ra_declaration,condition2)
+
     } else {
       # assuming treatment is second column
       treatment_prob <- ra_declaration$probabilities_matrix[, 2]
@@ -370,7 +367,7 @@ horvitz_thompson <- function(formula,
     }
     # If simple, just use condition probabilities shortcut
     # Same if se not needed
-    if ("ra_simple" %in% class(ra_declaration) || se_type == "none") {
+    if (inherits(ra_declaration, "ra_simple") || se_type == "none") {
       condition_pr_mat <- NULL
     } else {
       # TODO to allow for declaration with multiple arms, get probability matrix
