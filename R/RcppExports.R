@@ -9,6 +9,18 @@ ht_var_partial <- function(y, p) {
     .Call(`_estimatr_ht_var_partial`, y, p)
 }
 
+eigenAve <- function(x, fe, nlev) {
+    .Call(`_estimatr_eigenAve`, x, fe, nlev)
+}
+
+eigenAve2 <- function(x, fe, nlev) {
+    .Call(`_estimatr_eigenAve2`, x, fe, nlev)
+}
+
+demeanMat <- function(Y, X, fes, fe_nlevs, has_int, eps) {
+    .Call(`_estimatr_demeanMat`, Y, X, fes, fe_nlevs, has_int, eps)
+}
+
 AtA <- function(A) {
     .Call(`_estimatr_AtA`, A)
 }

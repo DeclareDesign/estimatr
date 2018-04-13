@@ -193,6 +193,7 @@ lm_robust <- function(formula,
                       weights,
                       subset,
                       clusters,
+                      fixed_effects,
                       se_type = NULL,
                       ci = TRUE,
                       alpha = .05,
@@ -202,11 +203,16 @@ lm_robust <- function(formula,
     formula = formula,
     weights = weights,
     subset = subset,
-    cluster = clusters
+    cluster = clusters,
+    fixed_effects = fixed_effects
   )
   data <- enquo(data)
   model_data <- clean_model_data(data = data, datargs)
 
+  fes <- is.integer(model_data[["fixed_effects"]])
+  if (fes) {
+    model_data <- demean_fes(model_data)
+  }
   return_list <-
     lm_robust_fit(
       y = model_data$outcome,

@@ -31,7 +31,20 @@ clean_model_data <- function(data, datargs, estimator = "") {
 
   for (da in to_process) {
     name <- sprintf(".__%s%%%d__", da, sample.int(.Machine$integer.max, 1))
-    m_formula_env[[name]] <- eval_tidy(mfargs[[da]], data = data)
+    if (da == "fixed_effects") {
+      # get fixed effects factors as integers
+      m_formula_env[[name]] <- sapply(
+        eval_tidy(quo((stats::model.frame.default)(
+          mfargs[["fixed_effects"]],
+          data = data,
+          na.action = NULL
+        ))),
+        function(fe) as.integer(as.factor(fe))
+      )
+      print(str(m_formula_env[[name]]))
+    } else {
+      m_formula_env[[name]] <- eval_tidy(mfargs[[da]], data = data)
+    }
     mfargs[[da]] <- sym(name)
   }
 
@@ -77,6 +90,13 @@ clean_model_data <- function(data, datargs, estimator = "") {
         "the outcome or covariates. These observations have been dropped."
       )
     }
+
+    if (!is.null(why_omit[["(fixed_effects)"]])) {
+      warning(
+        "Some observations have missingness in the fixed effects but ",
+        "not in the outcome or covariates. These observations have been dropped."
+      )
+    }
   })
 
 
@@ -119,6 +139,8 @@ clean_model_data <- function(data, datargs, estimator = "") {
 
   ret[["condition_pr"]] <- model.extract(mf, "condition_pr")
 
+  ret[["fixed_effects"]] <- model.extract(mf, "fixed_effects")
+
   if (any(ret[["condition_pr"]] <= 0 | ret[["condition_pr"]] > 1)) {
     stop(
       "`condition_prs` must be a vector of positive values no greater than 1"
@@ -128,4 +150,31 @@ clean_model_data <- function(data, datargs, estimator = "") {
   ret[["terms"]] <- attr(mf, "terms")
 
   return(ret)
+}
+
+demean_fes <- function(model_data) {
+  nfaclevels <-
+    apply(model_data[["fixed_effects"]], 2, function(fe) length(unique(fe)))
+
+  print(str(model_data))
+  print(str(nfaclevels))
+  print(str(as.matrix(model_data[["outcome"]])))
+  print(str(model_data[["design_matrix"]]))
+  print(str(model_data[["fixed_effects"]]))
+
+  # intercepts
+  demeaned <- demeanMat(
+    as.matrix(model_data[["outcome"]]),
+    model_data[["design_matrix"]],
+    model_data[["fixed_effects"]],
+    nfaclevels,
+    has_int = attr(model_data$terms, "intercept"),
+    eps = 1e-8
+  )
+
+  print(str(demeaned))
+
+  model_data[["outcome"]] <- demeaned[["newY"]]
+  model_data[["design_matrix"]] <- demeaned[["newX"]]
+  return(model_data)
 }

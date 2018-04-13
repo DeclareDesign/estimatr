@@ -4,6 +4,105 @@
 #include <RcppEigen.h>
 using namespace Rcpp;
 
+// [[Rcpp::depends(RcppEigen)]]
+// [[Rcpp::plugins(cpp11)]]
+
+#include <RcppEigen.h>
+using namespace Rcpp;
+
+// [[Rcpp::export]]
+Eigen::MatrixXd eigenAve(const Eigen::VectorXd& x,
+                         const Eigen::VectorXi& fe,
+                         const int& nlev) {
+  Eigen::SparseMatrix<double> fe_mat(fe.rows(), nlev);
+  Eigen::ArrayXd fesums = Eigen::ArrayXd::Zero(nlev);
+  for (Eigen::Index i=0; i<fe.rows(); i++) {
+    fe_mat.insert(i, fe(i)-1) = 1.0;
+    fesums(fe(i)-1) += 1.0;
+  }
+  //Rcout << fesums << std::endl;
+  fe_mat.makeCompressed();
+  //Eigen::MatrixXd avevec(1,1);
+  Eigen::MatrixXd avevec =
+    ((x.transpose() * fe_mat).array() / fesums.transpose()).matrix() * fe_mat.transpose();
+  //Rcout << avevec.transpose() << std::endl;
+  return avevec;
+}
+
+// [[Rcpp::export]]
+Eigen::MatrixXd eigenAve2(const Eigen::VectorXd& x,
+                         const Eigen::VectorXi& fe,
+                         const int& nlev) {
+  Eigen::SparseMatrix<double> fe_mat(fe.rows(), nlev);
+  Eigen::ArrayXd fesums = Eigen::ArrayXd::Zero(nlev);
+  for (Eigen::Index i=0; i<fe.rows(); i++) {
+    fe_mat.insert(i, fe(i)-1) = 1.0;
+    fesums(fe(i)-1) += 1.0;
+  }
+  //Rcout << fesums << std::endl;
+  fe_mat.makeCompressed();
+  //Eigen::MatrixXd avevec(1,1);
+  Eigen::MatrixXd avevec =
+    ((x.transpose() * fe_mat).array() / fesums.transpose()).matrix() * fe_mat.transpose();
+  //Rcout << avevec.transpose() << std::endl;
+  return avevec;
+}
+
+// [[Rcpp::export]]
+List demeanMat(const Eigen::VectorXd& Y,
+                          const Eigen::MatrixXd& X,
+                          const Eigen::MatrixXi& fes,
+                          const Eigen::ArrayXi& fe_nlevs,
+                          const bool& has_int,
+                          const double& eps) {
+
+  int start_col = 0 + has_int;
+
+  Eigen::MatrixXd newX(X.rows(), X.cols() - start_col);
+  Eigen::MatrixXd newY(Y.rows(), Y.cols());
+
+
+  // TODO pre-compute FE mats
+
+  // Rcout << X.rows() << std::endl;
+  // Rcout << X.cols() << std::endl;
+  for (Eigen::Index i = start_col; i < X.cols(); ++i) {
+    Eigen::ArrayXd oldxi = X.col(i).array() - 1.0;
+    Eigen::ArrayXd newxi = X.col(i).array();
+    // Rcout << std::sqrt((oldxi - newxi).pow(2).sum()) << std::endl;
+    while (std::sqrt((oldxi - newxi).pow(2).sum()) >= eps) {
+      oldxi = newxi;
+      for (Eigen::Index j=0; j<fes.cols(); ++j) {
+        newxi -= eigenAve(newxi.matrix(), fes.col(j), fe_nlevs(j)).transpose().array();
+      }
+      // Rcout << "oldxi" << std::endl << oldxi << std::endl;
+      // Rcout << "newxi" << std::endl << newxi << std::endl;
+      // Rcout << std::sqrt((oldxi - newxi).pow(2).sum()) << std::endl;
+    }
+    newX.col(i) = newxi;
+  }
+
+  for (Eigen::Index i=0; i<Y.cols(); ++i) {
+    Eigen::ArrayXd oldyi = Y.col(i).array() - 1.0;
+    Eigen::ArrayXd newyi = Y.col(i).array();
+    // Rcout << std::sqrt((oldxi - newxi).pow(2).sum()) << std::endl;
+    while (std::sqrt((oldyi - newyi).pow(2).sum()) >= eps) {
+      oldyi = newyi;
+      for (Eigen::Index j=0; j<fes.cols(); ++j) {
+        newyi -= eigenAve(newyi.matrix(), fes.col(j), fe_nlevs(j)).transpose().array();
+      }
+      // Rcout << "oldxi" << std::endl << oldxi << std::endl;
+      // Rcout << "newxi" << std::endl << newxi << std::endl;
+      // Rcout << std::sqrt((oldxi - newxi).pow(2).sum()) << std::endl;
+    }
+    newY.col(i) = newyi;
+  }
+  return List::create(
+    _["newY"]= newY,
+    _["newX"]= newX
+  );
+}
+
 // Much of what follows is modified from RcppEigen Vignette by Douglas Bates and Dirk Eddelbuettel
 // https://cran.r-project.org/web/packages/RcppEigen/vignettes/RcppEigen-Introduction.pdf
 // [[Rcpp::export]]

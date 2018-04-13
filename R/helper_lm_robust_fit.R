@@ -20,6 +20,7 @@ lm_robust_fit <- function(y,
                           X,
                           weights,
                           cluster,
+                          fixed_effects,
                           ci,
                           se_type,
                           has_int, # TODO get this out of here
@@ -90,6 +91,10 @@ lm_robust_fit <- function(y,
 
   # Legacy, in case we want to only get some covs in the future
   which_covs <- rep(TRUE, ncol(X))
+
+  # ----------
+  # Demean fixed effects
+  # ----------
 
   # Reorder if there are clusters and you need the SE or to return the fit
   if (clustered && se_type != "none") {
