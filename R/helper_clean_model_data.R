@@ -41,7 +41,7 @@ clean_model_data <- function(data, datargs, estimator = "") {
         ))),
         function(fe) as.integer(as.factor(fe))
       )
-      print(str(m_formula_env[[name]]))
+      #print(str(m_formula_env[[name]]))
     } else {
       m_formula_env[[name]] <- eval_tidy(mfargs[[da]], data = data)
     }
@@ -154,27 +154,27 @@ clean_model_data <- function(data, datargs, estimator = "") {
 
 demean_fes <- function(model_data) {
   nfaclevels <-
-    apply(model_data[["fixed_effects"]], 2, function(fe) length(unique(fe)))
+    apply(model_data[["fixed_effects"]], 2, function(fe) nlevels(fe))
 
-  print(str(model_data))
-  print(str(nfaclevels))
-  print(str(as.matrix(model_data[["outcome"]])))
-  print(str(model_data[["design_matrix"]]))
-  print(str(model_data[["fixed_effects"]]))
+  # print(str(model_data))
+  # print(str(nfaclevels))
+  # print(str(as.matrix(model_data[["outcome"]])))
+  # print(str(model_data[["design_matrix"]]))
+  # print(str(model_data[["fixed_effects"]]))
 
   # intercepts
   demeaned <- demeanMat(
     as.matrix(model_data[["outcome"]]),
     model_data[["design_matrix"]],
     model_data[["fixed_effects"]],
-    nfaclevels,
     has_int = attr(model_data$terms, "intercept"),
     eps = 1e-8
   )
 
-  print(str(demeaned))
+  #print(str(demeaned))
 
   model_data[["outcome"]] <- demeaned[["newY"]]
   model_data[["design_matrix"]] <- demeaned[["newX"]]
+  model_data[["fe_levels"]] <- nfaclevels
   return(model_data)
 }

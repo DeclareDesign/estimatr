@@ -13,12 +13,12 @@ eigenAve <- function(x, fe, nlev) {
     .Call(`_estimatr_eigenAve`, x, fe, nlev)
 }
 
-eigenAve2 <- function(x, fe, nlev) {
-    .Call(`_estimatr_eigenAve2`, x, fe, nlev)
+eigenAve2 <- function(x, fe) {
+    .Call(`_estimatr_eigenAve2`, x, fe)
 }
 
-demeanMat <- function(Y, X, fes, fe_nlevs, has_int, eps) {
-    .Call(`_estimatr_demeanMat`, Y, X, fes, fe_nlevs, has_int, eps)
+demeanMat <- function(Y, X, fes, fe_nlevs, has_int, eps, hash) {
+    .Call(`_estimatr_demeanMat`, Y, X, fes, fe_nlevs, has_int, eps, hash)
 }
 
 AtA <- function(A) {

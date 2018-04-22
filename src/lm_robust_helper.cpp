@@ -14,6 +14,7 @@ using namespace Rcpp;
 Eigen::MatrixXd eigenAve(const Eigen::VectorXd& x,
                          const Eigen::VectorXi& fe,
                          const int& nlev) {
+
   Eigen::SparseMatrix<double> fe_mat(fe.rows(), nlev);
   Eigen::ArrayXd fesums = Eigen::ArrayXd::Zero(nlev);
   for (Eigen::Index i=0; i<fe.rows(); i++) {
@@ -21,7 +22,7 @@ Eigen::MatrixXd eigenAve(const Eigen::VectorXd& x,
     fesums(fe(i)-1) += 1.0;
   }
   //Rcout << fesums << std::endl;
-  fe_mat.makeCompressed();
+  //fe_mat.makeCompressed();
   //Eigen::MatrixXd avevec(1,1);
   Eigen::MatrixXd avevec =
     ((x.transpose() * fe_mat).array() / fesums.transpose()).matrix() * fe_mat.transpose();
@@ -30,21 +31,29 @@ Eigen::MatrixXd eigenAve(const Eigen::VectorXd& x,
 }
 
 // [[Rcpp::export]]
-Eigen::MatrixXd eigenAve2(const Eigen::VectorXd& x,
-                         const Eigen::VectorXi& fe,
-                         const int& nlev) {
-  Eigen::SparseMatrix<double> fe_mat(fe.rows(), nlev);
-  Eigen::ArrayXd fesums = Eigen::ArrayXd::Zero(nlev);
+Eigen::MatrixXd eigenAve2(const Eigen::ArrayXd& x,
+                         const Eigen::VectorXi& fe) {
+
+  std::unordered_map<int, Eigen::Array2d> aves;
+  Eigen::ArrayXd avevec(x.rows());
+
   for (Eigen::Index i=0; i<fe.rows(); i++) {
-    fe_mat.insert(i, fe(i)-1) = 1.0;
-    fesums(fe(i)-1) += 1.0;
+    Eigen::Array2d dat;
+    dat(0) = x(i);
+    dat(1) = 1.0;
+    if (aves.find(fe(i)) != aves.end()) {
+      aves[fe(i)] += dat;
+    } else {
+      aves[fe(i)] = dat;
+    }
   }
-  //Rcout << fesums << std::endl;
-  fe_mat.makeCompressed();
-  //Eigen::MatrixXd avevec(1,1);
-  Eigen::MatrixXd avevec =
-    ((x.transpose() * fe_mat).array() / fesums.transpose()).matrix() * fe_mat.transpose();
-  //Rcout << avevec.transpose() << std::endl;
+//
+//   for( const auto& n : aves ) {
+//     std::cout << "Key:[" << n.first << "] Value:[" << n.second << "]\n";
+//   }
+  for (Eigen::Index i=0; i<fe.rows(); i++) {
+    avevec(i) = x(i) - aves[fe(i)](0)/aves[fe(i)](1);
+  }
   return avevec;
 }
 
@@ -54,13 +63,14 @@ List demeanMat(const Eigen::VectorXd& Y,
                           const Eigen::MatrixXi& fes,
                           const Eigen::ArrayXi& fe_nlevs,
                           const bool& has_int,
-                          const double& eps) {
+                          const double& eps,
+                          const bool& hash) {
 
   int start_col = 0 + has_int;
+  // Rcout << start_col << std::endl;
 
   Eigen::MatrixXd newX(X.rows(), X.cols() - start_col);
   Eigen::MatrixXd newY(Y.rows(), Y.cols());
-
 
   // TODO pre-compute FE mats
 
@@ -73,13 +83,18 @@ List demeanMat(const Eigen::VectorXd& Y,
     while (std::sqrt((oldxi - newxi).pow(2).sum()) >= eps) {
       oldxi = newxi;
       for (Eigen::Index j=0; j<fes.cols(); ++j) {
-        newxi -= eigenAve(newxi.matrix(), fes.col(j), fe_nlevs(j)).transpose().array();
+        if (hash) {
+          newxi = eigenAve2(newxi.matrix(), fes.col(j));
+        } else {
+          newxi -= eigenAve(newxi.matrix(), fes.col(j), fe_nlevs(j)).transpose().array();
+        }
+
       }
       // Rcout << "oldxi" << std::endl << oldxi << std::endl;
       // Rcout << "newxi" << std::endl << newxi << std::endl;
       // Rcout << std::sqrt((oldxi - newxi).pow(2).sum()) << std::endl;
     }
-    newX.col(i) = newxi;
+    newX.col(i - start_col) = newxi;
   }
 
   for (Eigen::Index i=0; i<Y.cols(); ++i) {
@@ -89,7 +104,12 @@ List demeanMat(const Eigen::VectorXd& Y,
     while (std::sqrt((oldyi - newyi).pow(2).sum()) >= eps) {
       oldyi = newyi;
       for (Eigen::Index j=0; j<fes.cols(); ++j) {
-        newyi -= eigenAve(newyi.matrix(), fes.col(j), fe_nlevs(j)).transpose().array();
+        if (hash) {
+          newyi = eigenAve2(newyi.matrix(), fes.col(j));
+        } else {
+          newyi -= eigenAve(newyi.matrix(), fes.col(j), fe_nlevs(j)).transpose().array();
+
+        }
       }
       // Rcout << "oldxi" << std::endl << oldxi << std::endl;
       // Rcout << "newxi" << std::endl << newxi << std::endl;
