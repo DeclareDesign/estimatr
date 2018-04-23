@@ -11,27 +11,7 @@ using namespace Rcpp;
 using namespace Rcpp;
 
 // [[Rcpp::export]]
-Eigen::MatrixXd eigenAve(const Eigen::VectorXd& x,
-                         const Eigen::VectorXi& fe,
-                         const int& nlev) {
-
-  Eigen::SparseMatrix<double> fe_mat(fe.rows(), nlev);
-  Eigen::ArrayXd fesums = Eigen::ArrayXd::Zero(nlev);
-  for (Eigen::Index i=0; i<fe.rows(); i++) {
-    fe_mat.insert(i, fe(i)-1) = 1.0;
-    fesums(fe(i)-1) += 1.0;
-  }
-  //Rcout << fesums << std::endl;
-  //fe_mat.makeCompressed();
-  //Eigen::MatrixXd avevec(1,1);
-  Eigen::MatrixXd avevec =
-    ((x.transpose() * fe_mat).array() / fesums.transpose()).matrix() * fe_mat.transpose();
-  //Rcout << avevec.transpose() << std::endl;
-  return avevec;
-}
-
-// [[Rcpp::export]]
-Eigen::MatrixXd eigenAve2(const Eigen::ArrayXd& x,
+Eigen::MatrixXd eigenAve(const Eigen::ArrayXd& x,
                          const Eigen::VectorXi& fe) {
 
   std::unordered_map<int, Eigen::Array2d> aves;
@@ -47,10 +27,7 @@ Eigen::MatrixXd eigenAve2(const Eigen::ArrayXd& x,
       aves[fe(i)] = dat;
     }
   }
-//
-//   for( const auto& n : aves ) {
-//     std::cout << "Key:[" << n.first << "] Value:[" << n.second << "]\n";
-//   }
+
   for (Eigen::Index i=0; i<fe.rows(); i++) {
     avevec(i) = x(i) - aves[fe(i)](0)/aves[fe(i)](1);
   }
@@ -61,62 +38,50 @@ Eigen::MatrixXd eigenAve2(const Eigen::ArrayXd& x,
 List demeanMat(const Eigen::VectorXd& Y,
                           const Eigen::MatrixXd& X,
                           const Eigen::MatrixXi& fes,
-                          const Eigen::ArrayXi& fe_nlevs,
                           const bool& has_int,
-                          const double& eps,
-                          const bool& hash) {
+                          const double& eps) {
 
   int start_col = 0 + has_int;
   // Rcout << start_col << std::endl;
 
-  Eigen::MatrixXd newX(X.rows(), X.cols() - start_col);
-  Eigen::MatrixXd newY(Y.rows(), Y.cols());
-
-  // TODO pre-compute FE mats
+  int n = X.rows();
+  int p = X.cols();
+  int ny = Y.cols();
+  // Drop integer
+  Eigen::MatrixXd newX(n, p - start_col);
+  Eigen::MatrixXd newY(n, ny);
 
   // Rcout << X.rows() << std::endl;
   // Rcout << X.cols() << std::endl;
-  for (Eigen::Index i = start_col; i < X.cols(); ++i) {
-    Eigen::ArrayXd oldxi = X.col(i).array() - 1.0;
-    Eigen::ArrayXd newxi = X.col(i).array();
-    // Rcout << std::sqrt((oldxi - newxi).pow(2).sum()) << std::endl;
-    while (std::sqrt((oldxi - newxi).pow(2).sum()) >= eps) {
-      oldxi = newxi;
-      for (Eigen::Index j=0; j<fes.cols(); ++j) {
-        if (hash) {
-          newxi = eigenAve2(newxi.matrix(), fes.col(j));
-        } else {
-          newxi -= eigenAve(newxi.matrix(), fes.col(j), fe_nlevs(j)).transpose().array();
-        }
-
-      }
-      // Rcout << "oldxi" << std::endl << oldxi << std::endl;
-      // Rcout << "newxi" << std::endl << newxi << std::endl;
-      // Rcout << std::sqrt((oldxi - newxi).pow(2).sum()) << std::endl;
+  // Iterate over columns of X, starting at 1 if there is an intercept
+  // and then do Y
+  for (Eigen::Index i = start_col; i < (p + ny); ++i) {
+    Eigen::ArrayXd oldcol(n);
+    Eigen::ArrayXd newcol(n);
+    if (i < p) {
+      oldcol = X.col(i).array() - 1.0;
+      newcol = X.col(i).array();
+    } else {
+      oldcol = Y.col(i-p).array() - 1.0;
+      newcol = Y.col(i-p).array();
     }
-    newX.col(i - start_col) = newxi;
+
+    while (std::sqrt((oldcol - newcol).pow(2).sum()) >= eps) {
+      oldcol = newcol;
+      for (Eigen::Index j = 0; j < fes.cols(); ++j) {
+        newcol = eigenAve(newcol.matrix(), fes.col(j));
+      }
+      // Rcout << "oldcol" << std::endl << oldcol << std::endl;
+      // Rcout << "newcol" << std::endl << newcol << std::endl;
+      // Rcout << std::sqrt((oldcol - newcol).pow(2).sum()) << std::endl;
+    }
+    if (i < p) {
+      newX.col(i - start_col) = newcol;
+    } else {
+      newY.col(i - p) = newcol;
+    }
   }
 
-  for (Eigen::Index i=0; i<Y.cols(); ++i) {
-    Eigen::ArrayXd oldyi = Y.col(i).array() - 1.0;
-    Eigen::ArrayXd newyi = Y.col(i).array();
-    // Rcout << std::sqrt((oldxi - newxi).pow(2).sum()) << std::endl;
-    while (std::sqrt((oldyi - newyi).pow(2).sum()) >= eps) {
-      oldyi = newyi;
-      for (Eigen::Index j=0; j<fes.cols(); ++j) {
-        if (hash) {
-          newyi = eigenAve2(newyi.matrix(), fes.col(j));
-        } else {
-          newyi -= eigenAve(newyi.matrix(), fes.col(j), fe_nlevs(j)).transpose().array();
-
-        }
-      }
-      // Rcout << "oldxi" << std::endl << oldxi << std::endl;
-      // Rcout << "newxi" << std::endl << newxi << std::endl;
-      // Rcout << std::sqrt((oldxi - newxi).pow(2).sum()) << std::endl;
-    }
-    newY.col(i) = newyi;
-  }
   return List::create(
     _["newY"]= newY,
     _["newX"]= newX
@@ -238,12 +203,15 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
                  const Eigen::Map<Eigen::MatrixXd>& XtX_inv,
                  const Eigen::Map<Eigen::MatrixXd>& ei,
                  const Rcpp::Nullable<Rcpp::IntegerVector> & cluster,
-                 const int & J,
-                 const bool & ci,
+                 const int& J,
+                 const bool& ci,
                  const String type,
-                 const std::vector<bool> & which_covs) {
+                 const std::vector<bool> & which_covs,
+                 const int& fe_rank) {
 
   const int n(X.rows()), r(X.cols()), ny(ei.cols());
+  //Rcout << "fe_rank:" << fe_rank << std::endl;
+  const int r_fe = r + fe_rank;
   const double clustered = ((type == "stata") || (type == "CR0"));
   const int npars = r * ny;
   int sandwich_size = n;
@@ -261,18 +229,18 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
   // Standard error calculations
   if (type == "classical") {
     // Classical
-    s2 = AtA(ei)/((double)n - (double)r);
+    s2 = AtA(ei)/((double)n - (double)r_fe);
     Vcov_hat = Kr(s2, XtX_inv);
 
-    dof.fill(n - r);
+    dof.fill(n - r_fe);
 
   } else {
     // Robust
     Eigen::MatrixXd temp_omega = ei.array().pow(2);
 
-    s2 = temp_omega.colwise().sum()/((double)n - (double)r);
+    s2 = temp_omega.colwise().sum()/((double)n - (double)r_fe);
 
-    dof.fill(n - r);
+    dof.fill(n - r_fe);
 
     Eigen::MatrixXd bread(npars, npars);
     Eigen::MatrixXd half_meat(sandwich_size, npars);
@@ -372,14 +340,14 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
 
     Vcov_hat =
       Vcov_hat *
-      (double)n / ((double)n - (double)r);
+      (double)n / ((double)n - (double)r_fe);
 
   } else if (type == "stata") {
 
     // Rcout << "correction: " << (((double)J * (n - 1)) / (((double)J - 1) * (n - r))) << std::endl;
     Vcov_hat =
       Vcov_hat *
-      (((double)J * (n - 1)) / (((double)J - 1) * (n - r)));
+      (((double)J * (n - 1)) / (((double)J - 1) * (n - r_fe)));
   }
 
   return List::create(_["Vcov_hat"]= Vcov_hat,

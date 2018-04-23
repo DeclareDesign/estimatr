@@ -9,16 +9,12 @@ ht_var_partial <- function(y, p) {
     .Call(`_estimatr_ht_var_partial`, y, p)
 }
 
-eigenAve <- function(x, fe, nlev) {
-    .Call(`_estimatr_eigenAve`, x, fe, nlev)
+eigenAve <- function(x, fe) {
+    .Call(`_estimatr_eigenAve`, x, fe)
 }
 
-eigenAve2 <- function(x, fe) {
-    .Call(`_estimatr_eigenAve2`, x, fe)
-}
-
-demeanMat <- function(Y, X, fes, fe_nlevs, has_int, eps, hash) {
-    .Call(`_estimatr_demeanMat`, Y, X, fes, fe_nlevs, has_int, eps, hash)
+demeanMat <- function(Y, X, fes, has_int, eps) {
+    .Call(`_estimatr_demeanMat`, Y, X, fes, has_int, eps)
 }
 
 AtA <- function(A) {
@@ -33,8 +29,8 @@ lm_solver <- function(X, y, try_cholesky) {
     .Call(`_estimatr_lm_solver`, X, y, try_cholesky)
 }
 
-lm_variance <- function(X, XtX_inv, ei, cluster, J, ci, type, which_covs) {
-    .Call(`_estimatr_lm_variance`, X, XtX_inv, ei, cluster, J, ci, type, which_covs)
+lm_variance <- function(X, XtX_inv, ei, cluster, J, ci, type, which_covs, fe_rank) {
+    .Call(`_estimatr_lm_variance`, X, XtX_inv, ei, cluster, J, ci, type, which_covs, fe_rank)
 }
 
 lm_variance_cr2 <- function(X, Xunweighted, XtX_inv, ei, weight_mean, clusters, J, ci, which_covs) {

@@ -212,10 +212,11 @@ lm_robust <- function(formula,
   fes <- is.integer(model_data[["fixed_effects"]])
   if (fes) {
     model_data <- demean_fes(model_data)
-    attr(model_data$design_matrix, "fe_rank") <- model_data[["fe_levels"]]
+    attr(model_data$design_matrix, "fe_rank") <- sum(model_data[["fe_levels"]]) + 1
   } else {
     attr(model_data$design_matrix, "fe_rank") <- 0
   }
+
   return_list <-
     lm_robust_fit(
       y = model_data$outcome,

@@ -154,7 +154,7 @@ clean_model_data <- function(data, datargs, estimator = "") {
 
 demean_fes <- function(model_data) {
   nfaclevels <-
-    apply(model_data[["fixed_effects"]], 2, function(fe) nlevels(fe))
+    apply(model_data[["fixed_effects"]], 2, function(fe) length(unique((fe)))-1)
 
   # print(str(model_data))
   # print(str(nfaclevels))

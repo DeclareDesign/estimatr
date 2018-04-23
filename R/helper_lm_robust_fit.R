@@ -225,7 +225,8 @@ lm_robust_fit <- function(y,
           J = J,
           ci = ci,
           type = se_type,
-          which_covs = which_covs[covs_used]
+          which_covs = which_covs[covs_used],
+          fe_rank = attr(X, "fe_rank")
         )
       }
       # print(est_exists)
