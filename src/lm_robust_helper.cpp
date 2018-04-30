@@ -37,11 +37,11 @@ Eigen::MatrixXd eigenAve(const Eigen::ArrayXd& x,
 
 // [[Rcpp::export]]
 List demeanMat(const Eigen::VectorXd& Y,
-                          const Eigen::MatrixXd& X,
-                          const Eigen::MatrixXi& fes,
-                          const Eigen::VectorXd& weights,
-                          const bool& has_int,
-                          const double& eps) {
+               const Eigen::MatrixXd& X,
+               const Eigen::MatrixXi& fes,
+               const Eigen::VectorXd& weights,
+               const bool& has_int,
+               const double& eps) {
 
   int start_col = 0 + has_int;
   // Rcout << start_col << std::endl;
@@ -242,6 +242,7 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
     } else {
       bread = Kr(Eigen::MatrixXd::Identity(ny, ny), XtX_inv);
     }
+    // Rcout << "temp_omega1: " << std::endl << temp_omega << std::endl;
 
     if ( !clustered ) {
       // Robust, no clusters
@@ -255,6 +256,8 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
           meatXtX_inv = XtX_inv;
         }
 
+        // Rcout << "meatXtX_inv: " << std::endl << meatXtX_inv << std::endl;
+
         if (type == "HC2") {
           for (int i = 0; i < n; i++) {
             Eigen::VectorXd Xi = X.row(i);
@@ -264,13 +267,13 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
 
           for (int i = 0; i < n; i++) {
             Eigen::VectorXd Xi = X.row(i);
+            // Rcout << "denom:" << std::endl << std::pow(1.0 - Xi.transpose() * meatXtX_inv * Xi, 2) << std::endl;
             temp_omega.row(i) = temp_omega.row(i) / (std::pow(1.0 - Xi.transpose() * meatXtX_inv * Xi, 2));
           }
         }
 
       }
-
-      // Rcout << "temp_omega: " << std::endl << temp_omega << std::endl;
+      // Rcout << "temp_omega2: " << std::endl << temp_omega << std::endl;
       for (int m = 0; m < ny; m++) {
         half_meat.block(0, r*m, n, r) = X.leftCols(r).array().colwise() * temp_omega.col(m).array().sqrt();
       }
@@ -343,12 +346,12 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
       Vcov_hat *
       (double)n / ((double)n - (double)r_fe);
 
-  // } else if (type == "HC2") {
-  //
-  //
-  //   Vcov_hat =
-  //     Vcov_hat *
-  //     (double)n / ((double)n - (double)fe_rank);
+    // } else if (type == "HC2") {
+    //
+    //
+    //   Vcov_hat =
+    //     Vcov_hat *
+    //     (double)n / ((double)n - (double)fe_rank);
 
   } else if (type == "stata") {
 
@@ -377,10 +380,12 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
                      const Eigen::Map<Eigen::ArrayXi>& clusters,
                      const int & J,
                      const bool & ci,
-                     const std::vector<bool> & which_covs) {
+                     const std::vector<bool> & which_covs,
+                     const int& fe_rank) {
 
 
   const int n(X.rows()), r(XtX_inv.cols()), ny(ei.cols());
+  const int r_fe = r + fe_rank;
   const int npars = r * ny;
 
   // Rcout << "X:" << X << std::endl << std::endl;
@@ -416,10 +421,10 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
   }
 
   // used for the dof corrction
-  Eigen::MatrixXd H1s(r, r*J);
-  Eigen::MatrixXd H2s(r, r*J);
-  Eigen::MatrixXd H3s(r, r*J);
-  Eigen::MatrixXd P_diags(r, J);
+  Eigen::MatrixXd H1s(r_fe, r_fe*J);
+  Eigen::MatrixXd H2s(r_fe, r_fe*J);
+  Eigen::MatrixXd H3s(r_fe, r_fe*J);
+  Eigen::MatrixXd P_diags(r_fe, J);
 
   Eigen::MatrixXd M_U_ct = meatXtX_inv.llt().matrixL();
   Eigen::MatrixXd MUWTWUM = meatXtX_inv * X.transpose() * X * meatXtX_inv;
@@ -451,11 +456,11 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
 
       // Rcout <<  X.transpose().block(0, start_pos, r, len) << std::endl << std::endl;
 
-      // TODO H should be symmetric, shouldn't need to transpose
+      // H is not symmetric if weighted CR2
       Eigen::MatrixXd H =
-        Xoriginal.block(start_pos, 0, len, r) *
-        XtX_inv *
-        X.block(start_pos, 0, len, r).transpose();
+        Xoriginal.block(start_pos, 0, len, r_fe) *
+        meatXtX_inv *
+        X.block(start_pos, 0, len, r_fe).transpose();
 
       // Rcout << "H: " << H << std::endl;
 
@@ -473,10 +478,12 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
       // If no FEs
       Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> At_WX(
           (Eigen::MatrixXd::Identity(len, len) - H) - H.transpose() +
-            Xoriginal.block(start_pos, 0, len, r) *
+            Xoriginal.block(start_pos, 0, len, r_fe) *
             MUWTWUM *
-            Xoriginal.block(start_pos, 0, len, r).transpose()
+            Xoriginal.block(start_pos, 0, len, r_fe).transpose()
       );
+
+      // Rcout << "At_WX RETRIEVED" << std::endl;
 
       Eigen::VectorXd eigvals = At_WX.eigenvalues();
       for (int m = 0; m < eigvals.size(); ++m) {
@@ -496,31 +503,34 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
         At_WX.eigenvectors() *
         eigvals.asDiagonal() *
         At_WX.eigenvectors().transpose() *
-        X.block(start_pos, 0, len, r);
+        X.block(start_pos, 0, len, r_fe);
+
+      // Rcout << "At_WX INVERTED" << std::endl;
 
       if (ci) {
 
-        Eigen::MatrixXd ME(r, len);
+        Eigen::MatrixXd ME(r_fe, len);
         if (weight_mean != 1) {
-          ME = (XtX_inv / weight_mean) * At_WX_inv.transpose();
+          ME = (meatXtX_inv / weight_mean) * At_WX_inv.transpose();
         } else {
-          ME = XtX_inv * At_WX_inv.transpose();
+          ME = meatXtX_inv * At_WX_inv.transpose();
         }
 
         P_diags.col(clust_num) = ME.array().pow(2).rowwise().sum();
 
-        Eigen::MatrixXd MEU = ME * Xoriginal.block(start_pos, 0, len, r);
+        Eigen::MatrixXd MEU = ME * Xoriginal.block(start_pos, 0, len, r_fe);
 
-        int p_pos = clust_num*r;
+        int p_pos = clust_num*r_fe;
         // Rcout << "p_pos: " << p_pos << std::endl;
-        H1s.block(0, p_pos, r, r) = MEU * M_U_ct;
-        H2s.block(0, p_pos, r, r) = ME * X.block(start_pos, 0, len, r_fe) * M_U_ct;
-        H3s.block(0, p_pos, r, r) = MEU * Omega_ct;
+        H1s.block(0, p_pos, r_fe, r_fe) = MEU * M_U_ct;
+        H2s.block(0, p_pos, r_fe, r_fe) = ME * X.block(start_pos, 0, len, r_fe) * M_U_ct;
+        H3s.block(0, p_pos, r_fe, r_fe) = MEU * Omega_ct;
       }
 
       // t(cr2_eis) %*% (I - P_ss)^{-1/2} %*% Xj
       // each ro  w is the contribution of the cluster to the meat
       // Below use  t(tutX) %*% tutX to sum contributions across clusters
+      // Rcout << "At_WX dim:" << At_WX_inv.rows() << "x" << At_WX_inv.cols() << std::endl;
 
       // Rcout << "At_WX_inv: " << At_WX_inv << std::endl;
       // Rcout << "cr2_eis: " << cr2_eis.segment(start_pos, len).transpose() << std::endl;
@@ -535,14 +545,14 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
         // Rcout << "ei_long:" << std::endl << ei_long << std::endl;
         half_meat.block(clust_num, 0, 1, npars) =
           ei_long *
-          Kr(Eigen::MatrixXd::Identity(ny, ny), At_WX_inv);
+          Kr(Eigen::MatrixXd::Identity(ny, ny), At_WX_inv.leftCols(r));
 
       } else {
         // Rcout << "clust_num: " << clust_num << std::endl;
         // Rcout << "ei:" << std::endl << ei.block(start_pos, 0, len, 1).transpose() << std::endl;
         half_meat.row(clust_num) =
           ei.block(start_pos, 0, len, 1).transpose() *
-          At_WX_inv;
+          At_WX_inv.leftCols(r);
       }
 
       if (i < n) {
@@ -559,6 +569,7 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
 
   }
 
+  // Rcout << "DONE W SEs" << std::endl;
   // Rcout << "bread: " << std::endl << bread << std::endl;
   // Rcout << "half_meat: " << std::endl << half_meat << std::endl;
   // Rcout << "meat: " << std::endl << (half_meat.transpose() * half_meat) << std::endl;
@@ -579,11 +590,11 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
         Eigen::MatrixXd H1t = H1s.row(j);
         Eigen::MatrixXd H2t = H2s.row(j);
         Eigen::MatrixXd H3t = H3s.row(j);
-        // Rcout << H1t << std::endl<< std::endl;
+        // Rcout << "H1t size:" << std::endl << H1t.rows() << "x" << H1t.cols() << std::endl<< std::endl;
 
-        H1t.resize(r, J);
-        H2t.resize(r, J);
-        H3t.resize(r, J);
+        H1t.resize(r_fe, J);
+        H2t.resize(r_fe, J);
+        H3t.resize(r_fe, J);
 
         // Rcout << H1t << std::endl<< std::endl;
 

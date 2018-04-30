@@ -33,8 +33,8 @@ lm_variance <- function(X, XtX_inv, ei, cluster, J, ci, type, which_covs, fe_ran
     .Call(`_estimatr_lm_variance`, X, XtX_inv, ei, cluster, J, ci, type, which_covs, fe_rank)
 }
 
-lm_variance_cr2 <- function(X, Xunweighted, XtX_inv, ei, weight_mean, clusters, J, ci, which_covs) {
-    .Call(`_estimatr_lm_variance_cr2`, X, Xunweighted, XtX_inv, ei, weight_mean, clusters, J, ci, which_covs)
+lm_variance_cr2 <- function(X, Xunweighted, XtX_inv, ei, weight_mean, clusters, J, ci, which_covs, fe_rank) {
+    .Call(`_estimatr_lm_variance_cr2`, X, Xunweighted, XtX_inv, ei, weight_mean, clusters, J, ci, which_covs, fe_rank)
 }
 
 naomitwhy <- function(df, recursive_subset) {
