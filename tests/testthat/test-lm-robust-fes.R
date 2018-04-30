@@ -1,7 +1,7 @@
 context("Estimator - lm_robust, fixed effects")
 
 test_that("test matches lm_robust with dummies", {
-  set.seed(41)
+  set.seed(43)
   N <- 20
   dat <- data.frame(
     Y = rnorm(N),
@@ -12,6 +12,8 @@ test_that("test matches lm_robust with dummies", {
     B2 = factor(rep(1:4, times = c(3, 3, 4, 10))),
     cl = sample(1:4, size = N, replace = T)
   )
+  dat$Xdup <- dat$X
+  dat$Bdup <- dat$B
 
   ## One FE, one covar
 
@@ -182,8 +184,8 @@ test_that("test matches lm_robust with dummies", {
   ## Multiple Outcomes
 
   ## Classical
-  ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = dat, se_type = "classical"))
-  rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "classical"))
+  ro <- tidy(lm_robust(cbind(Y, Y2) ~ Z + X + factor(B) + factor(B2), data = dat, se_type = "classical"))
+  rfo <- tidy(lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "classical"))
 
   expect_equivalent(
     ro[ro$term %in% c("Z", "X"), ],
@@ -191,8 +193,8 @@ test_that("test matches lm_robust with dummies", {
   )
 
   ## HC0
-  ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = dat, se_type = "HC0"))
-  rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC0"))
+  ro <- tidy(lm_robust(cbind(Y, Y2) ~ Z + X + factor(B) + factor(B2), data = dat, se_type = "HC0"))
+  rfo <- tidy(lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC0"))
 
   expect_equivalent(
     ro[ro$term %in% c("Z", "X"), ],
@@ -200,8 +202,8 @@ test_that("test matches lm_robust with dummies", {
   )
 
   ## HC1
-  ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = dat, se_type = "HC1"))
-  rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC1"))
+  ro <- tidy(lm_robust(cbind(Y, Y2) ~ Z + X + factor(B) + factor(B2), data = dat, se_type = "HC1"))
+  rfo <- tidy(lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC1"))
 
   expect_equivalent(
     ro[ro$term %in% c("Z", "X"), ],
@@ -209,8 +211,8 @@ test_that("test matches lm_robust with dummies", {
   )
 
   ## HC2
-  ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = dat, se_type = "HC2"))
-  rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC2"))
+  ro <- tidy(lm_robust(cbind(Y, Y2) ~ Z + X + factor(B) + factor(B2), data = dat, se_type = "HC2"))
+  rfo <- tidy(lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC2"))
 
   expect_equivalent(
     ro[ro$term %in% c("Z", "X"), ],
@@ -219,8 +221,8 @@ test_that("test matches lm_robust with dummies", {
 
   ## HC3
 
-  ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = dat, se_type = "HC3"))
-  rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC3"))
+  ro <- tidy(lm_robust(cbind(Y, Y2) ~ Z + X + factor(B) + factor(B2), data = dat, se_type = "HC3"))
+  rfo <- tidy(lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC3"))
 
   expect_equivalent(
     ro[ro$term %in% c("Z", "X"), ],
@@ -228,8 +230,8 @@ test_that("test matches lm_robust with dummies", {
   )
 
   ## CR0
-  ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl, data = dat, se_type = "CR0"))
-  rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "CR0"))
+  ro <- tidy(lm_robust(cbind(Y, Y2) ~ Z + X + factor(B) + factor(B2), clusters = cl, data = dat, se_type = "CR0"))
+  rfo <- tidy(lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "CR0"))
 
   expect_equivalent(
     ro[ro$term %in% c("Z", "X"), ],
@@ -237,8 +239,8 @@ test_that("test matches lm_robust with dummies", {
   )
 
   ## CR stata
-  ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl, data = dat, se_type = "stata"))
-  rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "stata"))
+  ro <- tidy(lm_robust(cbind(Y, Y2) ~ Z + X + factor(B) + factor(B2), clusters = cl, data = dat, se_type = "stata"))
+  rfo <- tidy(lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "stata"))
 
   expect_equivalent(
     ro[ro$term %in% c("Z", "X"), ],
@@ -246,19 +248,163 @@ test_that("test matches lm_robust with dummies", {
   )
 
   ## CR2
-  ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl, data = dat, se_type = "CR2"))
-  rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "CR2"))
+  ro <- tidy(lm_robust(cbind(Y, Y2) ~ Z + X + factor(B) + factor(B2), clusters = cl, data = dat, se_type = "CR2"))
+  rfo <- tidy(lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "CR2"))
 
   expect_equivalent(
     ro[ro$term %in% c("Z", "X"), ],
     rfo[rfo$term %in% c("Z", "X"), ]
   )
 
+  ## Collinear factors NOT WORKING
 
-  ## Collinear factors
+  ## Classical
+  # ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), data = dat, se_type = "classical"))
+  # rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, data = dat, se_type = "classical"))
+  #
+  # expect_equivalent(
+  #   ro[ro$term %in% c("Z", "X"), ],
+  #   rfo[rfo$term %in% c("Z", "X"), ]
+  # )
+  #
+  # ## HC0
+  # ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), data = dat, se_type = "HC0"))
+  # rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, data = dat, se_type = "HC0"))
+  #
+  # expect_equivalent(
+  #   ro[ro$term %in% c("Z", "X"), ],
+  #   rfo[rfo$term %in% c("Z", "X"), ]
+  # )
+  #
+  # ## HC1
+  # ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), data = dat, se_type = "HC1"))
+  # rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, data = dat, se_type = "HC1"))
+  #
+  # expect_equivalent(
+  #   ro[ro$term %in% c("Z", "X"), ],
+  #   rfo[rfo$term %in% c("Z", "X"), ]
+  # )
+  #
+  # ## HC2
+  # ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), data = dat, se_type = "HC2"))
+  # rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, data = dat, se_type = "HC2"))
+  #
+  # expect_equivalent(
+  #   ro[ro$term %in% c("Z", "X"), ],
+  #   rfo[rfo$term %in% c("Z", "X"), ]
+  # )
+  #
+  # ## HC3
+  #
+  # ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), data = dat, se_type = "HC3"))
+  # rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, data = dat, se_type = "HC3"))
+  #
+  # expect_equivalent(
+  #   ro[ro$term %in% c("Z", "X"), ],
+  #   rfo[rfo$term %in% c("Z", "X"), ]
+  # )
+  #
+  # ## CR0
+  # ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), clusters = cl, data = dat, se_type = "CR0"))
+  # rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, clusters = cl, data = dat, se_type = "CR0"))
+  #
+  # expect_equivalent(
+  #   ro[ro$term %in% c("Z", "X"), ],
+  #   rfo[rfo$term %in% c("Z", "X"), ]
+  # )
+  #
+  # ## CR stata
+  # ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), clusters = cl, data = dat, se_type = "stata"))
+  # rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, clusters = cl, data = dat, se_type = "stata"))
+  #
+  # expect_equivalent(
+  #   ro[ro$term %in% c("Z", "X"), ],
+  #   rfo[rfo$term %in% c("Z", "X"), ]
+  # )
+  #
+  # ## CR2
+  # ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), clusters = cl, data = dat, se_type = "CR2"))
+  # rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, clusters = cl, data = dat, se_type = "CR2"))
+  #
+  # expect_equivalent(
+  #   ro[ro$term %in% c("Z", "X"), ],
+  #   rfo[rfo$term %in% c("Z", "X"), ]
+  # )
 
   ## Collinear covariates
 
+  ## Classical
+  ro <- tidy(lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = dat, se_type = "classical"))
+  rfo <- tidy(lm_robust(Y ~ Z + X + Xdup, fixed_effects = ~ B + B2, data = dat, se_type = "classical"))
+
+  expect_equivalent(
+    ro[ro$term %in% c("Z", "X", "Xdup"), ],
+    rfo[rfo$term %in% c("Z", "X", "Xdup"), ]
+  )
+
+  ## HC0
+  ro <- tidy(lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = dat, se_type = "HC0"))
+  rfo <- tidy(lm_robust(Y ~ Z + X + Xdup, fixed_effects = ~ B + B2, data = dat, se_type = "HC0"))
+
+  expect_equivalent(
+    ro[ro$term %in% c("Z", "X", "Xdup"), ],
+    rfo[rfo$term %in% c("Z", "X", "Xdup"), ]
+  )
+
+  ## HC1
+  ro <- tidy(lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = dat, se_type = "HC1"))
+  rfo <- tidy(lm_robust(Y ~ Z + X + Xdup, fixed_effects = ~ B + B2, data = dat, se_type = "HC1"))
+
+  expect_equivalent(
+    ro[ro$term %in% c("Z", "X", "Xdup"), ],
+    rfo[rfo$term %in% c("Z", "X", "Xdup"), ]
+  )
+
+  ## HC2
+  ro <- tidy(lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = dat, se_type = "HC2"))
+  rfo <- tidy(lm_robust(Y ~ Z + X + Xdup, fixed_effects = ~ B + B2, data = dat, se_type = "HC2"))
+
+  expect_equivalent(
+    ro[ro$term %in% c("Z", "X", "Xdup"), ],
+    rfo[rfo$term %in% c("Z", "X", "Xdup"), ]
+  )
+
+  ## HC3
+
+  ro <- tidy(lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = dat, se_type = "HC3"))
+  rfo <- tidy(lm_robust(Y ~ Z + X + Xdup, fixed_effects = ~ B + B2, data = dat, se_type = "HC3"))
+
+  expect_equivalent(
+    ro[ro$term %in% c("Z", "X", "Xdup"), ],
+    rfo[rfo$term %in% c("Z", "X", "Xdup"), ]
+  )
+
+  ## CR0
+  ro <- tidy(lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), clusters = cl, data = dat, se_type = "CR0"))
+  rfo <- tidy(lm_robust(Y ~ Z + X + Xdup, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "CR0"))
+
+  expect_equivalent(
+    ro[ro$term %in% c("Z", "X", "Xdup"), ],
+    rfo[rfo$term %in% c("Z", "X", "Xdup"), ]
+  )
+
+  ## CR stata
+  ro <- tidy(lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), clusters = cl, data = dat, se_type = "stata"))
+  rfo <- tidy(lm_robust(Y ~ Z + X + Xdup, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "stata"))
+
+  expect_equivalent(
+    ro[ro$term %in% c("Z", "X", "Xdup"), ],
+    rfo[rfo$term %in% c("Z", "X", "Xdup"), ]
+  )
+
+  ## CR2
+  ro <- tidy(lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), clusters = cl, data = dat, se_type = "CR2"))
+  rfo <- tidy(lm_robust(Y ~ Z + X + Xdup, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "CR2"))
+
+  expect_equivalent(
+    ro[ro$term %in% c("Z", "X", "Xdup"), ],
+    rfo[rfo$term %in% c("Z", "X", "Xdup"), ]
+  )
 })
 
 

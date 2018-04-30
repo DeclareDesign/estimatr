@@ -47,12 +47,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // demeanMat
-List demeanMat(const Eigen::VectorXd& Y, const Eigen::MatrixXd& X, const Eigen::MatrixXi& fes, const Eigen::VectorXd& weights, const bool& has_int, const double& eps);
+List demeanMat(const Eigen::MatrixXd& Y, const Eigen::MatrixXd& X, const Eigen::MatrixXi& fes, const Eigen::VectorXd& weights, const bool& has_int, const double& eps);
 RcppExport SEXP _estimatr_demeanMat(SEXP YSEXP, SEXP XSEXP, SEXP fesSEXP, SEXP weightsSEXP, SEXP has_intSEXP, SEXP epsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type Y(YSEXP);
     Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type X(XSEXP);
     Rcpp::traits::input_parameter< const Eigen::MatrixXi& >::type fes(fesSEXP);
     Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type weights(weightsSEXP);

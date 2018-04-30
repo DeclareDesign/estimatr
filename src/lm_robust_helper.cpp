@@ -4,12 +4,6 @@
 #include <RcppEigen.h>
 using namespace Rcpp;
 
-// [[Rcpp::depends(RcppEigen)]]
-// [[Rcpp::plugins(cpp11)]]
-
-#include <RcppEigen.h>
-using namespace Rcpp;
-
 // [[Rcpp::export]]
 Eigen::MatrixXd eigenAve(const Eigen::ArrayXd& x,
                          const Eigen::VectorXi& fe,
@@ -36,7 +30,7 @@ Eigen::MatrixXd eigenAve(const Eigen::ArrayXd& x,
 }
 
 // [[Rcpp::export]]
-List demeanMat(const Eigen::VectorXd& Y,
+List demeanMat(const Eigen::MatrixXd& Y,
                const Eigen::MatrixXd& X,
                const Eigen::MatrixXi& fes,
                const Eigen::VectorXd& weights,

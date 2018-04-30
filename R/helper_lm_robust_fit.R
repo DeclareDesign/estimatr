@@ -204,8 +204,9 @@ lm_robust_fit <- function(y,
           which_covs = which_covs[covs_used],
           fe_rank = fe_rank
         )
+
         vcov_fit[["res_var"]] <-
-          colSums((y - X[, covs_used, drop = FALSE] %*% fit$beta_hat)^2) /
+          colSums((y - X[, 1:rank, drop = FALSE] %*% fit$beta_hat)^2) /
             (N - rank)
       } else {
         vcov_fit <- lm_variance(
@@ -241,13 +242,13 @@ lm_robust_fit <- function(y,
     if ((se_type == "CR2" && weighted) || iv_second_stage) {
       # Have to get weighted fits as original fits were unweighted for
       # variance estimation or used wrong regressors in IV
-      return_list[["fitted.values"]] <- as.matrix(X[, covs_used, drop = FALSE] %*% fit$beta_hat)
+      return_list[["fitted.values"]] <- as.matrix(X[, 1:rank, drop = FALSE] %*% fit$beta_hat)
     } else {
       return_list[["fitted.values"]] <- as.matrix(fitted.values)
     }
 
     if (weighted && return_unweighted_fit) {
-      return_list[["fitted.values"]] <- as.matrix(Xunweighted[, covs_used, drop = FALSE] %*% fit$beta_hat)
+      return_list[["fitted.values"]] <- as.matrix(Xunweighted[, 1:rank, drop = FALSE] %*% fit$beta_hat)
     }
 
     # If we reordered to get SEs earlier, have to fix order
