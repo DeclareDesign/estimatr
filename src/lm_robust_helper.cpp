@@ -12,15 +12,16 @@ using namespace Rcpp;
 
 // [[Rcpp::export]]
 Eigen::MatrixXd eigenAve(const Eigen::ArrayXd& x,
-                         const Eigen::VectorXi& fe) {
+                         const Eigen::VectorXi& fe,
+                         const Eigen::VectorXd& weights) {
 
   std::unordered_map<int, Eigen::Array2d> aves;
   Eigen::ArrayXd avevec(x.rows());
 
   for (Eigen::Index i=0; i<fe.rows(); i++) {
     Eigen::Array2d dat;
-    dat(0) = x(i);
-    dat(1) = 1.0;
+    dat(0) = weights(i) * x(i);
+    dat(1) = weights(i);
     if (aves.find(fe(i)) != aves.end()) {
       aves[fe(i)] += dat;
     } else {
@@ -38,6 +39,7 @@ Eigen::MatrixXd eigenAve(const Eigen::ArrayXd& x,
 List demeanMat(const Eigen::VectorXd& Y,
                           const Eigen::MatrixXd& X,
                           const Eigen::MatrixXi& fes,
+                          const Eigen::VectorXd& weights,
                           const bool& has_int,
                           const double& eps) {
 
@@ -69,7 +71,7 @@ List demeanMat(const Eigen::VectorXd& Y,
     while (std::sqrt((oldcol - newcol).pow(2).sum()) >= eps) {
       oldcol = newcol;
       for (Eigen::Index j = 0; j < fes.cols(); ++j) {
-        newcol = eigenAve(newcol.matrix(), fes.col(j));
+        newcol = eigenAve(newcol.matrix(), fes.col(j), weights);
       }
       // Rcout << "oldcol" << std::endl << oldcol << std::endl;
       // Rcout << "newcol" << std::endl << newcol << std::endl;
@@ -109,6 +111,38 @@ Eigen::MatrixXd Kr(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B) {
   return AB;
 }
 
+std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::ColPivHouseholderQR<Eigen::MatrixXd>> XtX_QR(const Eigen::MatrixXd& X) {
+
+
+  Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR(X);
+  const Eigen::ColPivHouseholderQR<Eigen::MatrixXd>::PermutationType Pmat(PQR.colsPermutation());
+
+  int r = PQR.rank();
+  int p = X.cols();
+
+  Eigen::MatrixXd R_inv = PQR.matrixQR().topLeftCorner(r, r).triangularView<Eigen::Upper>().solve(Eigen::MatrixXd::Identity(r, r));
+
+  // Get all column indices
+  Eigen::ArrayXi Pmat_indices = Pmat.indices();
+  // Get the order for the columns you are keeping
+  Eigen::ArrayXi Pmat_keep = Pmat_indices.head(r);
+  // Get the indices for columns you are discarding
+  Eigen::ArrayXi Pmat_toss = Pmat_indices.tail(p - r);
+
+  for(Eigen::Index i=0; i<r; ++i)
+  {
+    Pmat_keep(i) = Pmat_keep(i) - (Pmat_toss < Pmat_keep(i)).count();
+  }
+
+  Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P = Eigen::PermutationWrapper<Eigen::ArrayXi>(Pmat_keep);
+
+  Eigen::MatrixXd P_R_inv_P = P * R_inv * P;
+
+  Eigen::MatrixXd XtX_inv = P_R_inv_P * P_R_inv_P.transpose();
+
+  return std::make_tuple(XtX_inv, R_inv, PQR);
+}
+
 // [[Rcpp::export]]
 List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
                const Eigen::Map<Eigen::MatrixXd>& y,
@@ -135,17 +169,10 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
   }
 
   if (do_qr) {
-    // Rcout << X << std::endl;
-
-    Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR(X);
-    const Eigen::ColPivHouseholderQR<Eigen::MatrixXd>::PermutationType Pmat(PQR.colsPermutation());
+    Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR;
+    std::tie(XtX_inv, R_inv, PQR) = XtX_QR(X);
 
     r = PQR.rank();
-
-    R_inv = PQR.matrixQR().topLeftCorner(r, r).triangularView<Eigen::Upper>().solve(Eigen::MatrixXd::Identity(r, r));
-
-    // Rcout << "R_inv:" << std::endl;
-    // Rcout << R_inv << std::endl;
 
     Eigen::MatrixXd effects(PQR.householderQ().adjoint() * y);
 
@@ -155,41 +182,7 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
     beta_out.topRows(r) = R_inv * effects.topRows(r);
     // Rcout << "beta_out:" << std::endl;
     // Rcout << beta_out << std::endl;
-    beta_out = Pmat * beta_out;
-
-    // Get all column indices
-    Eigen::ArrayXi Pmat_indices = Pmat.indices();
-    // Get the order for the columns you are keeping
-    Eigen::ArrayXi Pmat_keep = Pmat_indices.head(r);
-    // Get the indices for columns you are discarding
-    Eigen::ArrayXi Pmat_toss = Pmat_indices.tail(p - r);
-
-    // this code takes the indices you are keeping, and, while preserving order, keeps them in the range [0, r-1]
-    // For each one, see how many dropped indices are smaller, and subtract that difference
-    // Ex: p = 4, r = 2
-    // Pmat_indices = {3, 1, 0, 2}
-    // Pmat_keep = {3, 1}
-    // Pmat_toss = {0, 2}
-    // Now we go through each keeper, count how many in toss are smaller, and then modify accordingly
-    // 3 - 2 and 1 - 1
-    // Pmat_keep = {1, 0}
-    for(Eigen::Index i=0; i<r; ++i)
-    {
-      Pmat_keep(i) = Pmat_keep(i) - (Pmat_toss < Pmat_keep(i)).count();
-    }
-    // Rcout << Pmat_indices << std::endl << std::endl;
-    // Rcout << Pmat_keep << std::endl << std::endl;
-    //
-    // Rcout << Pmat * Eigen::MatrixXd::Identity(p, p) << std::endl << std::endl;
-
-    Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P = Eigen::PermutationWrapper<Eigen::ArrayXi>(Pmat_keep);
-    // Rcout << "Pmat * I" << std::endl;
-    // Rcout << Pmat * Eigen::MatrixXd::Identity(r, r) << std::endl << std::endl;
-
-    R_inv = P * R_inv * P;
-    XtX_inv = R_inv * R_inv.transpose();
-    // Rcout << "XtX_inv: " << std::endl;
-    // Rcout << XtX_inv << std::endl;
+    beta_out = PQR.colsPermutation() * beta_out;
   }
 
   return List::create(
@@ -209,7 +202,7 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
                  const std::vector<bool> & which_covs,
                  const int& fe_rank) {
 
-  const int n(X.rows()), r(X.cols()), ny(ei.cols());
+  const int n(X.rows()), r(XtX_inv.cols()), ny(ei.cols());
   //Rcout << "fe_rank:" << fe_rank << std::endl;
   const int r_fe = r + fe_rank;
   const double clustered = ((type == "stata") || (type == "CR0"));
@@ -253,25 +246,33 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
     if ( !clustered ) {
       // Robust, no clusters
 
-      if (type == "HC2") {
+      if ((type == "HC2") || (type == "HC3")) {
 
-        for (int i = 0; i < n; i++) {
-          Eigen::VectorXd Xi = X.row(i);
-          temp_omega.row(i) = temp_omega.row(i) / (1.0 - (Xi.transpose() * XtX_inv * Xi));
+        Eigen::MatrixXd meatXtX_inv;
+        if (X.cols() > r) {
+          std::tie(meatXtX_inv, std::ignore, std::ignore) = XtX_QR(X);
+        } else {
+          meatXtX_inv = XtX_inv;
         }
 
-      } else if (type == "HC3") {
+        if (type == "HC2") {
+          for (int i = 0; i < n; i++) {
+            Eigen::VectorXd Xi = X.row(i);
+            temp_omega.row(i) = temp_omega.row(i) / (1.0 - (Xi.transpose() * meatXtX_inv * Xi));
+          }
+        } else if (type == "HC3") {
 
-        for (int i = 0; i < n; i++) {
-          Eigen::VectorXd Xi = X.row(i);
-          temp_omega.row(i) = temp_omega.row(i) / (std::pow(1.0 - Xi.transpose() * XtX_inv * Xi, 2));
+          for (int i = 0; i < n; i++) {
+            Eigen::VectorXd Xi = X.row(i);
+            temp_omega.row(i) = temp_omega.row(i) / (std::pow(1.0 - Xi.transpose() * meatXtX_inv * Xi, 2));
+          }
         }
 
       }
 
       // Rcout << "temp_omega: " << std::endl << temp_omega << std::endl;
       for (int m = 0; m < ny; m++) {
-        half_meat.block(0, r*m, n, r) = X.array().colwise() * temp_omega.col(m).array().sqrt();
+        half_meat.block(0, r*m, n, r) = X.leftCols(r).array().colwise() * temp_omega.col(m).array().sqrt();
       }
 
     } else {
@@ -342,6 +343,13 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
       Vcov_hat *
       (double)n / ((double)n - (double)r_fe);
 
+  // } else if (type == "HC2") {
+  //
+  //
+  //   Vcov_hat =
+  //     Vcov_hat *
+  //     (double)n / ((double)n - (double)fe_rank);
+
   } else if (type == "stata") {
 
     // Rcout << "correction: " << (((double)J * (n - 1)) / (((double)J - 1) * (n - r))) << std::endl;
@@ -372,7 +380,7 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
                      const std::vector<bool> & which_covs) {
 
 
-  const int n(X.rows()), r(X.cols()), ny(ei.cols());
+  const int n(X.rows()), r(XtX_inv.cols()), ny(ei.cols());
   const int npars = r * ny;
 
   // Rcout << "X:" << X << std::endl << std::endl;
@@ -400,14 +408,21 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
     bread = Kr(Eigen::MatrixXd::Identity(ny, ny), XtX_inv);
   }
 
+  Eigen::MatrixXd meatXtX_inv;
+  if (X.cols() > r) {
+    std::tie(meatXtX_inv, std::ignore, std::ignore) = XtX_QR(X);
+  } else {
+    meatXtX_inv = XtX_inv;
+  }
+
   // used for the dof corrction
   Eigen::MatrixXd H1s(r, r*J);
   Eigen::MatrixXd H2s(r, r*J);
   Eigen::MatrixXd H3s(r, r*J);
   Eigen::MatrixXd P_diags(r, J);
 
-  Eigen::MatrixXd M_U_ct = XtX_inv.llt().matrixL();
-  Eigen::MatrixXd MUWTWUM = XtX_inv * X.transpose() * X * XtX_inv;
+  Eigen::MatrixXd M_U_ct = meatXtX_inv.llt().matrixL();
+  Eigen::MatrixXd MUWTWUM = meatXtX_inv * X.transpose() * X * meatXtX_inv;
   Eigen::MatrixXd Omega_ct = MUWTWUM.llt().matrixL();
 
   // Rcout << Omega_ct << std::endl;
@@ -455,6 +470,7 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
       // Rcout << "At_WX: " << (Eigen::MatrixXd::Identity(len, len) - H) - H.transpose() + Xoriginal.block(start_pos, 0, len, r) * MUWTWUM * Xoriginal.block(start_pos, 0, len, r).transpose() << std::endl;
       // Rcout << "MUWTWUM: " << MUWTWUM << std::endl;
 
+      // If no FEs
       Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> At_WX(
           (Eigen::MatrixXd::Identity(len, len) - H) - H.transpose() +
             Xoriginal.block(start_pos, 0, len, r) *
@@ -498,7 +514,7 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
         int p_pos = clust_num*r;
         // Rcout << "p_pos: " << p_pos << std::endl;
         H1s.block(0, p_pos, r, r) = MEU * M_U_ct;
-        H2s.block(0, p_pos, r, r) = ME * X.block(start_pos, 0, len, r) * M_U_ct;
+        H2s.block(0, p_pos, r, r) = ME * X.block(start_pos, 0, len, r_fe) * M_U_ct;
         H3s.block(0, p_pos, r, r) = MEU * Omega_ct;
       }
 

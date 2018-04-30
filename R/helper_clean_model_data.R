@@ -33,6 +33,8 @@ clean_model_data <- function(data, datargs, estimator = "") {
     name <- sprintf(".__%s%%%d__", da, sample.int(.Machine$integer.max, 1))
     if (da == "fixed_effects") {
       # get fixed effects factors as integers
+      # Need to cast as integers because "fixed_effects" object needs to be a matrix for
+      # later model.frame call
       m_formula_env[[name]] <- sapply(
         eval_tidy(quo((stats::model.frame.default)(
           mfargs[["fixed_effects"]],
@@ -156,25 +158,24 @@ demean_fes <- function(model_data) {
   nfaclevels <-
     apply(model_data[["fixed_effects"]], 2, function(fe) length(unique((fe)))-1)
 
-  # print(str(model_data))
-  # print(str(nfaclevels))
-  # print(str(as.matrix(model_data[["outcome"]])))
-  # print(str(model_data[["design_matrix"]]))
-  # print(str(model_data[["fixed_effects"]]))
-
   # intercepts
   demeaned <- demeanMat(
     as.matrix(model_data[["outcome"]]),
     model_data[["design_matrix"]],
     model_data[["fixed_effects"]],
+    if (is.numeric(model_data[["weights"]])) model_data[["weights"]] else rep(1, nrow(model_data[["design_matrix"]])),
     has_int = attr(model_data$terms, "intercept"),
     eps = 1e-8
   )
 
-  #print(str(demeaned))
+  # save names
+  dimnames(demeaned[["newY"]]) <- dimnames(model_data[["outcome"]])
+  new_names <- dimnames(model_data[["design_matrix"]])
+  new_names[[2]] <- new_names[[2]][new_names[[2]] != "(Intercept)"]
+  dimnames(demeaned[["newX"]]) <- new_names
 
   model_data[["outcome"]] <- demeaned[["newY"]]
   model_data[["design_matrix"]] <- demeaned[["newX"]]
-  model_data[["fe_levels"]] <- nfaclevels
+  model_data[["fe_levels"]] <- setNames(nfaclevels, nm = colnames(model_data[["fixed_effects"]]))
   return(model_data)
 }

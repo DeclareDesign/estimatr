@@ -20,8 +20,8 @@ lm_robust_fit <- function(y,
                           X,
                           weights,
                           cluster,
-                          fixed_effects,
-                          ci,
+                          fixed_effects = NULL,
+                          ci = TRUE,
                           se_type,
                           has_int, # TODO get this out of here
                           alpha = 0.05,
@@ -30,8 +30,11 @@ lm_robust_fit <- function(y,
                           return_unweighted_fit = FALSE,
                           try_cholesky = FALSE,
                           X_first_stage = NULL) {
+
   y <- as.matrix(y)
   ny <- ncol(y)
+  fe_rank <- attr(X, "fe_rank")
+  fes <- !is.null(fixed_effects)
   multivariate <- ny > 1
   weighted <- !is.null(weights)
   iv_second_stage <- !is.null(X_first_stage)
@@ -41,42 +44,7 @@ lm_robust_fit <- function(y,
   # Check se type
   # ----------
 
-  # Allowable se_types with clustering
-  cl_se_types <- c("CR0", "CR2", "stata")
-  rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata")
-
-  # Parse cluster variable
-  if (clustered) {
-
-    # set/check se_type
-    if (is.null(se_type)) {
-      se_type <- "CR2"
-    } else if (!(se_type %in% c(cl_se_types, "none"))) {
-      stop(
-        "`se_type` must be either 'CR0', 'stata', 'CR2', or 'none' when ",
-        "`clusters` are specified.\nYou passed: ", se_type
-      )
-    }
-  } else {
-
-    # set/check se_type
-    if (is.null(se_type)) {
-      se_type <- "HC2"
-    } else if (se_type %in% setdiff(cl_se_types, "stata")) {
-      stop(
-        "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3', ",
-        "'classical' or 'none' with no `clusters`.\nYou passed: ", se_type,
-        " which is reserved for a case with clusters."
-      )
-    } else if (!(se_type %in% c(rob_se_types, "none"))) {
-      stop(
-        "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3', ",
-        "'classical' or 'none' with no `clusters`.\nYou passed: ", se_type
-      )
-    } else if (se_type == "stata") {
-      se_type <- "HC1" # In IV this is true with small option
-    }
-  }
+  se_type <- check_se_type(se_type, clustered, iv_second_stage)
 
   # -----------
   # Prep data for fitting
@@ -92,21 +60,31 @@ lm_robust_fit <- function(y,
   # Legacy, in case we want to only get some covs in the future
   which_covs <- rep(TRUE, ncol(X))
 
+  ## TODO build list with all data and have weight and order helper functions
   # Reorder if there are clusters and you need the SE or to return the fit
   if (clustered && se_type != "none") {
     cl_ord <- order(cluster)
+    cluster <- cluster[cl_ord]
     y <- y[cl_ord, , drop = FALSE]
     X <- X[cl_ord, , drop = FALSE]
-    cluster <- cluster[cl_ord]
-    J <- length(unique(cluster))
+
+    if (fes) {
+      fixed_effects <- fixed_effects[cl_ord, , drop = FALSE]
+    }
     if (weighted) {
       weights <- weights[cl_ord]
     }
     if (iv_second_stage) {
       X_first_stage <- X_first_stage[cl_ord, , drop = FALSE]
     }
+
+    J <- length(unique(cluster))
   } else {
     J <- 1
+  }
+
+  if (fes) {
+    femat <- model.matrix(~ 0 + ., data = as.data.frame(apply(fixed_effects, 2, as.character)))
   }
 
   # Weight if there are weights
@@ -117,6 +95,10 @@ lm_robust_fit <- function(y,
     weights <- sqrt(weights / weight_mean)
     X <- weights * X
     y <- weights * y
+    if (fes) {
+      fematunweighted <- femat
+      femat <- weights * femat
+    }
     if (iv_second_stage) {
       X_first_stage_unweighted <- X_first_stage
       X_first_stage <- weights * X_first_stage
@@ -201,6 +183,14 @@ lm_robust_fit <- function(y,
     }
 
     if (se_type != "none") {
+
+      if (se_type %in% c("HC2", "HC3", "CR2") && is.numeric(fixed_effects)) {
+        X <- cbind(X, femat)
+        if (weighted) {
+          Xunweighted <- cbind(Xunweighted, fematunweighted)
+        }
+      }
+
       if (se_type == "CR2") {
         vcov_fit <- lm_variance_cr2(
           X = X,
@@ -226,7 +216,7 @@ lm_robust_fit <- function(y,
           ci = ci,
           type = se_type,
           which_covs = which_covs[covs_used],
-          fe_rank = attr(X, "fe_rank")
+          fe_rank = fe_rank
         )
       }
       # print(est_exists)
@@ -382,4 +372,46 @@ lm_robust_fit <- function(y,
   attr(return_list, "class") <- "lm_robust"
 
   return(return_list)
+}
+
+check_se_type <- function(se_type, clustered, iv) {
+
+  # Allowable se_types with clustering
+  cl_se_types <- c("CR0", "CR2", "stata")
+  rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata")
+
+  # Parse cluster variable
+  if (clustered) {
+
+    # set/check se_type
+    if (is.null(se_type)) {
+      se_type <- "CR2"
+    } else if (!(se_type %in% c(cl_se_types, "none"))) {
+      stop(
+        "`se_type` must be either 'CR0', 'stata', 'CR2', or 'none' when ",
+        "`clusters` are specified.\nYou passed: ", se_type
+      )
+    }
+  } else {
+
+    # set/check se_type
+    if (is.null(se_type)) {
+      se_type <- "HC2"
+    } else if (se_type %in% setdiff(cl_se_types, "stata")) {
+      stop(
+        "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3', ",
+        "'classical' or 'none' with no `clusters`.\nYou passed: ", se_type,
+        " which is reserved for a case with clusters."
+      )
+    } else if (!(se_type %in% c(rob_se_types, "none"))) {
+      stop(
+        "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3', ",
+        "'classical' or 'none' with no `clusters`.\nYou passed: ", se_type
+      )
+    } else if (se_type == "stata") {
+      se_type <- "HC1" # In IV this is true with small option
+    }
+  }
+
+  return(se_type)
 }
