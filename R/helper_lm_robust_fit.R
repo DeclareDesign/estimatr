@@ -33,8 +33,12 @@ lm_robust_fit <- function(y,
 
   y <- as.matrix(y)
   ny <- ncol(y)
-  fe_rank <- attr(X, "fe_rank")
   fes <- !is.null(fixed_effects)
+  if (fes) {
+    fe_rank <- attr(X, "fe_rank")
+  } else {
+    fe_rank <- 0
+  }
   multivariate <- ny > 1
   weighted <- !is.null(weights)
   iv_second_stage <- !is.null(X_first_stage)
@@ -191,35 +195,24 @@ lm_robust_fit <- function(y,
         }
       }
 
-      if (se_type == "CR2") {
-        vcov_fit <- lm_variance_cr2(
-          X = X,
-          Xunweighted = Xunweighted,
-          XtX_inv = fit$XtX_inv,
-          ei = ei,
-          weight_mean = weight_mean,
-          clusters = cluster,
-          J = J,
-          ci = ci,
-          which_covs = which_covs[covs_used],
-          fe_rank = fe_rank
-        )
+      vcov_fit <- lm_variance(
+        X = X,
+        Xunweighted = Xunweighted,
+        XtX_inv = fit$XtX_inv,
+        ei = ei,
+        weight_mean = weight_mean,
+        cluster = cluster,
+        J = J,
+        ci = ci,
+        type = se_type,
+        which_covs = which_covs[covs_used],
+        fe_rank = fe_rank
+      )
 
+      if (se_type == "CR2") {
         vcov_fit[["res_var"]] <-
           colSums((y - X[, 1:rank, drop = FALSE] %*% fit$beta_hat)^2) /
-            (N - rank)
-      } else {
-        vcov_fit <- lm_variance(
-          X = X,
-          XtX_inv = fit$XtX_inv,
-          ei = ei,
-          cluster = cluster,
-          J = J,
-          ci = ci,
-          type = se_type,
-          which_covs = which_covs[covs_used],
-          fe_rank = fe_rank
-        )
+          (N - rank)
       }
       # print(est_exists)
       # print(vcov_fit)
@@ -291,7 +284,7 @@ lm_robust_fit <- function(y,
       } else {
         return_list[["tot_var"]] <- colSums(y^2)
       }
-      return_list[["res_var"]] <- diag(as.matrix(ifelse(vcov_fit$res_var < 0, NA, vcov_fit$res_var)))
+      return_list[["res_var"]] <- diag(as.matrix(ifelse(vcov_fit[["res_var"]] < 0, NA, vcov_fit[["res_var"]])))
     }
     return_list[["tot_var"]] <- as.vector(return_list[["tot_var"]])
 
