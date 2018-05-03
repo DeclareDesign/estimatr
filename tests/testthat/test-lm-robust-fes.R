@@ -256,43 +256,64 @@ test_that("test matches lm_robust with dummies", {
     rfo[rfo$term %in% c("Z", "X"), ]
   )
 
-  ## Collinear factors NOT WORKING
+  ## Collinear factors
+  ## Only works for HC2, HC3 for now
 
   ## Classical
-  # ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), data = dat, se_type = "classical"))
-  # rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, data = dat, se_type = "classical"))
+  ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), data = dat, se_type = "classical"))
+  rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, data = dat, se_type = "classical"))
+  # lo <- felm(Y ~ Z + X|B + B2 + Bdup, data = dat)
   #
-  # expect_equivalent(
-  #   ro[ro$term %in% c("Z", "X"), ],
-  #   rfo[rfo$term %in% c("Z", "X"), ]
-  # )
+  # mtcars$cyl2 <- mtcars$cyl
+  # # Doesn't properly deal if collinearity not in first two
+  # summary(felm(mpg ~ hp | cyl + am + cyl2, data = mtcars))$coefficients
+  # library(estimatr)
+  # mtcars$cyl2 <- mtcars$cyl
+  # tidy(lm_robust(mpg ~ hp, fixed_effects = ~ cyl + cyl2 + am, data = mtcars))
   #
-  # ## HC0
-  # ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), data = dat, se_type = "HC0"))
-  # rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, data = dat, se_type = "HC0"))
+  # tidy(lm_robust(mpg ~ hp, fixed_effects = ~ cyl + am, data = mtcars))
+  # tidy(lm_robust(mpg ~ hp + factor(cyl) + factor(am), data = mtcars))[2,]
   #
-  # expect_equivalent(
-  #   ro[ro$term %in% c("Z", "X"), ],
-  #   rfo[rfo$term %in% c("Z", "X"), ]
-  # )
+  # tidy(lm_robust(mpg ~ hp, fixed_effects = ~ cyl + cyl2 + am, data = mtcars))
+  # tidy(lm_robust(mpg ~ hp + factor(cyl) + factor(cyl2)  + factor(am), data = mtcars))[2,]
+  # tidy(lm_robust(mpg ~ hp + factor(cyl) + factor(am), data = mtcars))[2,]
   #
-  # ## HC1
-  # ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), data = dat, se_type = "HC1"))
-  # rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, data = dat, se_type = "HC1"))
-  #
-  # expect_equivalent(
-  #   ro[ro$term %in% c("Z", "X"), ],
-  #   rfo[rfo$term %in% c("Z", "X"), ]
-  # )
-  #
-  # ## HC2
-  # ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), data = dat, se_type = "HC2"))
-  # rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, data = dat, se_type = "HC2"))
-  #
-  # expect_equivalent(
-  #   ro[ro$term %in% c("Z", "X"), ],
-  #   rfo[rfo$term %in% c("Z", "X"), ]
-  # )
+  # # LFE does the right thing if the dependency is in the first two
+  # summary(felm(mpg ~ hp | cyl + cyl2 + am, data = mtcars))$coefficients
+  # tidy(lm_robust(mpg ~ hp + factor(cyl) + factor(cyl3) + factor(am), data = mtcars, se_type = "classical"))[2,]
+
+  # Not the same (denom is wrong)
+  expect_equivalent(
+    ro[ro$term %in% c("Z", "X"), ],
+    rfo[rfo$term %in% c("Z", "X"), ]
+  )
+
+  ## HC0
+  ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), data = dat, se_type = "HC0"))
+  rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, data = dat, se_type = "HC0"))
+
+  expect_equivalent(
+    ro[ro$term %in% c("Z", "X"), ],
+    rfo[rfo$term %in% c("Z", "X"), ]
+  )
+
+  ## HC1
+  ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), data = dat, se_type = "HC1"))
+  rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, data = dat, se_type = "HC1"))
+
+  expect_equivalent(
+    ro[ro$term %in% c("Z", "X"), ],
+    rfo[rfo$term %in% c("Z", "X"), ]
+  )
+
+  ## HC2
+  ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), data = dat, se_type = "HC2"))
+  rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, data = dat, se_type = "HC2"))
+
+  expect_equivalent(
+    ro[ro$term %in% c("Z", "X"), ],
+    rfo[rfo$term %in% c("Z", "X"), ]
+  )
   #
   # ## HC3
   #

@@ -29,6 +29,18 @@ Eigen::MatrixXd eigenAve(const Eigen::ArrayXd& x,
   return avevec;
 }
 
+// Modifiedrom user raahlb on Stack Overflow
+// https://stackoverflow.com/a/46303314/4257918
+// [[Rcpp::export]]
+void removeColumn(Eigen::Map<Eigen::MatrixXd>& matrix, unsigned int colToRemove) {
+  unsigned int numRows = matrix.rows();
+  unsigned int numCols = matrix.cols()-1;
+
+  if( colToRemove < numCols )
+    matrix.block(0,colToRemove,numRows,numCols-colToRemove) = matrix.rightCols(numCols-colToRemove);
+
+}
+
 // [[Rcpp::export]]
 List demeanMat(const Eigen::MatrixXd& Y,
                const Eigen::MatrixXd& X,
@@ -105,7 +117,7 @@ Eigen::MatrixXd Kr(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B) {
   return AB;
 }
 
-std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::ColPivHouseholderQR<Eigen::MatrixXd>> XtX_QR(const Eigen::MatrixXd& X) {
+std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::ColPivHouseholderQR<Eigen::MatrixXd>, Eigen::ArrayXi> XtX_QR(const Eigen::MatrixXd& X) {
 
 
   Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR(X);
@@ -134,7 +146,7 @@ std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::ColPivHouseholderQR<Eigen::M
 
   Eigen::MatrixXd XtX_inv = P_R_inv_P * P_R_inv_P.transpose();
 
-  return std::make_tuple(XtX_inv, R_inv, PQR);
+  return std::make_tuple(XtX_inv, R_inv, PQR, Pmat_toss);
 }
 
 // [[Rcpp::export]]
@@ -164,7 +176,7 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
 
   if (do_qr) {
     Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR;
-    std::tie(XtX_inv, R_inv, PQR) = XtX_QR(X);
+    std::tie(XtX_inv, R_inv, PQR, std::ignore) = XtX_QR(X);
 
     r = PQR.rank();
 
@@ -186,7 +198,7 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
 }
 
 // [[Rcpp::export]]
-List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
+List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
                  const Eigen::Map<Eigen::MatrixXd>& XtX_inv,
                  const Eigen::Map<Eigen::MatrixXd>& ei,
                  const Rcpp::Nullable<Rcpp::IntegerVector> & cluster,
@@ -198,8 +210,8 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
 
   const int n(X.rows()), r(XtX_inv.cols()), ny(ei.cols());
   //Rcout << "fe_rank:" << fe_rank << std::endl;
-  const int r_fe = r + fe_rank;
-  const double clustered = ((type == "stata") || (type == "CR0"));
+  int r_fe = r + fe_rank;
+  const bool clustered = ((type == "stata") || (type == "CR0"));
   const int npars = r * ny;
   int sandwich_size = n;
   if (clustered) {
@@ -227,8 +239,6 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
 
     s2 = temp_omega.colwise().sum()/((double)n - (double)r_fe);
 
-    dof.fill(n - r_fe);
-
     Eigen::MatrixXd bread(npars, npars);
     Eigen::MatrixXd half_meat(sandwich_size, npars);
     if (ny == 1) {
@@ -244,24 +254,28 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
       if ((type == "HC2") || (type == "HC3")) {
 
         Eigen::MatrixXd meatXtX_inv;
+        Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR;
+        Eigen::ArrayXi dropped;
         if (X.cols() > r) {
-          std::tie(meatXtX_inv, std::ignore, std::ignore) = XtX_QR(X);
+          std::tie(meatXtX_inv, std::ignore, PQR, dropped) = XtX_QR(X);
+          for (Eigen::Index i=0; i<dropped.size(); i++) {
+            if (dropped(i) < X.cols())
+            X.block(0, dropped(i), n, X.cols() - dropped(i) - 1) = X.rightCols(X.cols() - dropped(i) - 1);
+          }
+
+          r_fe -= dropped.size();
+
         } else {
           meatXtX_inv = XtX_inv;
         }
 
-        // Rcout << "meatXtX_inv: " << std::endl << meatXtX_inv << std::endl;
+        // Rcout << "meatXtX_inv:" << std::endl << meatXtX_inv << std::endl;
 
-        if (type == "HC2") {
-          for (int i = 0; i < n; i++) {
-            Eigen::VectorXd Xi = X.row(i);
+        for (int i = 0; i < n; i++) {
+          Eigen::VectorXd Xi = X.leftCols(r_fe).row(i);
+          if (type == "HC2") {
             temp_omega.row(i) = temp_omega.row(i) / (1.0 - (Xi.transpose() * meatXtX_inv * Xi));
-          }
-        } else if (type == "HC3") {
-
-          for (int i = 0; i < n; i++) {
-            Eigen::VectorXd Xi = X.row(i);
-            // Rcout << "denom:" << std::endl << std::pow(1.0 - Xi.transpose() * meatXtX_inv * Xi, 2) << std::endl;
+          } else if (type == "HC3") {
             temp_omega.row(i) = temp_omega.row(i) / (std::pow(1.0 - Xi.transpose() * meatXtX_inv * Xi, 2));
           }
         }
@@ -271,6 +285,8 @@ List lm_variance(const Eigen::Map<Eigen::MatrixXd>& X,
       for (int m = 0; m < ny; m++) {
         half_meat.block(0, r*m, n, r) = X.leftCols(r).array().colwise() * temp_omega.col(m).array().sqrt();
       }
+
+      dof.fill(n - r_fe);
 
     } else {
       // Robust, clustered
@@ -409,7 +425,7 @@ List lm_variance_cr2(const Eigen::Map<Eigen::MatrixXd>& X,
 
   Eigen::MatrixXd meatXtX_inv;
   if (X.cols() > r) {
-    std::tie(meatXtX_inv, std::ignore, std::ignore) = XtX_QR(X);
+    std::tie(meatXtX_inv, std::ignore, std::ignore, std::ignore) = XtX_QR(X);
   } else {
     meatXtX_inv = XtX_inv;
   }

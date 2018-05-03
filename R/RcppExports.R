@@ -13,6 +13,10 @@ eigenAve <- function(x, fe, weights) {
     .Call(`_estimatr_eigenAve`, x, fe, weights)
 }
 
+removeColumn <- function(matrix, colToRemove) {
+    invisible(.Call(`_estimatr_removeColumn`, matrix, colToRemove))
+}
+
 demeanMat <- function(Y, X, fes, weights, has_int, eps) {
     .Call(`_estimatr_demeanMat`, Y, X, fes, weights, has_int, eps)
 }
