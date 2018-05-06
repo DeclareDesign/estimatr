@@ -2,7 +2,7 @@
 % Please edit documentation in R/S3_predict.R
 \name{predict.lm_robust}
 \alias{predict.lm_robust}
-\title{Predict method for \code{\link{lm_robust}} object}
+\title{Predict method for \code{lm_robust} object}
 \usage{
 \method{predict}{lm_robust}(object, newdata, se.fit = FALSE,
   interval = c("none", "confidence", "prediction"), alpha = 0.05,
@@ -32,7 +32,7 @@ newdata.}
 \item{...}{other arguments, unused}
 }
 \description{
-Predict method for \code{\link{lm_robust}} object
+Predict method for \code{lm_robust} object
 }
 \details{
 Produces predicted values, obtained by evaluating the regression
