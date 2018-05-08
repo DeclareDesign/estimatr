@@ -158,12 +158,12 @@ demean_fes <- function(model_data) {
   nfaclevels <-
     apply(model_data[["fixed_effects"]], 2, function(fe) length(unique((fe)))-1)
 
-  # intercepts
   demeaned <- demeanMat(
-    as.matrix(model_data[["outcome"]]),
-    model_data[["design_matrix"]],
-    model_data[["fixed_effects"]],
-    if (is.numeric(model_data[["weights"]])) model_data[["weights"]] else rep(1, nrow(model_data[["design_matrix"]])),
+    Y = as.matrix(model_data[["outcome"]]),
+    X = model_data[["design_matrix"]],
+    Z = model_data[["instrument_matrix"]],
+    fes = model_data[["fixed_effects"]],
+    weights = if (is.numeric(model_data[["weights"]])) model_data[["weights"]] else rep(1, nrow(model_data[["design_matrix"]])),
     has_int = attr(model_data$terms, "intercept"),
     eps = 1e-8
   )
@@ -176,6 +176,10 @@ demean_fes <- function(model_data) {
 
   model_data[["outcome"]] <- demeaned[["newY"]]
   model_data[["design_matrix"]] <- demeaned[["newX"]]
+  if (is.numeric(model_data[["instrument_matrix"]])) {
+    model_data[["instrument_matrix"]] <- demeaned[["newZ"]]
+  }
+
   model_data[["fe_levels"]] <- setNames(nfaclevels, nm = colnames(model_data[["fixed_effects"]]))
   return(model_data)
 }

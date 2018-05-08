@@ -4,8 +4,9 @@
 \alias{iv_robust}
 \title{Two-Stage Least Squares Instrumental Variables Regression}
 \usage{
-iv_robust(formula, data, weights, subset, clusters, se_type = NULL,
-  ci = TRUE, alpha = 0.05, return_vcov = TRUE, try_cholesky = FALSE)
+iv_robust(formula, data, weights, subset, clusters, fixed_effects,
+  se_type = NULL, ci = TRUE, alpha = 0.05, return_vcov = TRUE,
+  try_cholesky = FALSE)
 }
 \arguments{
 \item{formula}{an object of class formula of the regression and the instruments.

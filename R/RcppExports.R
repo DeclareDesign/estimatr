@@ -13,12 +13,8 @@ eigenAve <- function(x, fe, weights) {
     .Call(`_estimatr_eigenAve`, x, fe, weights)
 }
 
-removeColumn <- function(matrix, colToRemove) {
-    invisible(.Call(`_estimatr_removeColumn`, matrix, colToRemove))
-}
-
-demeanMat <- function(Y, X, fes, weights, has_int, eps) {
-    .Call(`_estimatr_demeanMat`, Y, X, fes, weights, has_int, eps)
+demeanMat <- function(Y, X, Zmat, fes, weights, has_int, eps) {
+    .Call(`_estimatr_demeanMat`, Y, X, Zmat, fes, weights, has_int, eps)
 }
 
 AtA <- function(A) {
@@ -33,8 +29,8 @@ lm_solver <- function(X, y, try_cholesky) {
     .Call(`_estimatr_lm_solver`, X, y, try_cholesky)
 }
 
-lm_variance <- function(X, Xunweighted, XtX_inv, ei, weight_mean, cluster, J, ci, type, which_covs, fe_rank) {
-    .Call(`_estimatr_lm_variance`, X, Xunweighted, XtX_inv, ei, weight_mean, cluster, J, ci, type, which_covs, fe_rank)
+lm_variance <- function(X, Xunweighted, XtX_inv, ei, weight_mean, cluster, J, ci, se_type, which_covs, fe_rank) {
+    .Call(`_estimatr_lm_variance`, X, Xunweighted, XtX_inv, ei, weight_mean, cluster, J, ci, se_type, which_covs, fe_rank)
 }
 
 naomitwhy <- function(df, recursive_subset) {

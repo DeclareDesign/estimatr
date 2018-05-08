@@ -18,6 +18,7 @@
 #'
 lm_robust_fit <- function(y,
                           X,
+                          yoriginal = NULL,
                           weights,
                           cluster,
                           fixed_effects = NULL,
@@ -74,6 +75,7 @@ lm_robust_fit <- function(y,
 
     if (fes) {
       fixed_effects <- fixed_effects[cl_ord, , drop = FALSE]
+      yoriginal <- as.matrix(yoriginal)[cl_ord, , drop = FALSE]
     }
     if (weighted) {
       weights <- weights[cl_ord]
@@ -109,6 +111,7 @@ lm_robust_fit <- function(y,
     }
   } else {
     weight_mean <- 1
+    yunweighted <- NULL
     Xunweighted <- NULL
   }
 
@@ -130,7 +133,8 @@ lm_robust_fit <- function(y,
   est_exists <- !is.na(fit$beta_hat)
   covs_used <- which(est_exists[, 1])
   N <- nrow(X)
-  rank <- length(covs_used)
+  x_rank <- length(covs_used)
+  tot_rank <- x_rank + fe_rank
 
   if (multivariate) {
     return_list <- list(
@@ -151,7 +155,7 @@ lm_robust_fit <- function(y,
   # ----------
 
   if (se_type != "none" || return_fit) {
-    if (rank < ncol(X)) {
+    if (x_rank < ncol(X)) {
       X <- X[, covs_used, drop = FALSE]
       if (weighted) {
         Xunweighted <- Xunweighted[, covs_used, drop = FALSE]
@@ -176,7 +180,11 @@ lm_robust_fit <- function(y,
         fitted.values <- Xunweighted %*% fit$beta_hat
       }
       ei <- as.matrix(yunweighted - fitted.values)
+      # diff not ei
       X <- weights * X
+      if (fes) {
+        femat <- weights * femat
+      }
     } else {
       if (iv_second_stage) {
         fitted.values <- X_first_stage %*% fit$beta_hat
@@ -204,18 +212,17 @@ lm_robust_fit <- function(y,
         cluster = cluster,
         J = J,
         ci = ci,
-        type = se_type,
+        se_type = se_type,
         which_covs = which_covs[covs_used],
         fe_rank = fe_rank
       )
 
       if (se_type == "CR2") {
         vcov_fit[["res_var"]] <-
-          colSums((y - X[, 1:rank, drop = FALSE] %*% fit$beta_hat)^2) /
-          (N - rank)
+          colSums((y - X[, 1:x_rank, drop = FALSE] %*% fit$beta_hat)^2) /
+          (N - tot_rank)
       }
-      # print(est_exists)
-      # print(vcov_fit)
+
       return_list$std.error[est_exists] <- sqrt(diag(vcov_fit$Vcov_hat))
 
       if (ci) {
@@ -229,19 +236,20 @@ lm_robust_fit <- function(y,
   # ----------
   # Augment return object
   # ----------
+
   return_list <- add_cis_pvals(return_list, alpha, ci && se_type != "none")
 
   if (return_fit) {
     if ((se_type == "CR2" && weighted) || iv_second_stage) {
       # Have to get weighted fits as original fits were unweighted for
       # variance estimation or used wrong regressors in IV
-      return_list[["fitted.values"]] <- as.matrix(X[, 1:rank, drop = FALSE] %*% fit$beta_hat)
+      return_list[["fitted.values"]] <- as.matrix(X[, 1:x_rank, drop = FALSE] %*% fit$beta_hat)
     } else {
       return_list[["fitted.values"]] <- as.matrix(fitted.values)
     }
 
     if (weighted && return_unweighted_fit) {
-      return_list[["fitted.values"]] <- as.matrix(Xunweighted[, 1:rank, drop = FALSE] %*% fit$beta_hat)
+      return_list[["fitted.values"]] <- as.matrix(Xunweighted[, 1:x_rank, drop = FALSE] %*% fit$beta_hat)
     }
 
     # If we reordered to get SEs earlier, have to fix order
@@ -255,93 +263,75 @@ lm_robust_fit <- function(y,
   return_list[["alpha"]] <- alpha
   return_list[["se_type"]] <- se_type
   return_list[["weighted"]] <- weighted
-
   # return_list[["fitted.values"]] <- fit$fit
   # return_list[["residuals"]] <- fit$residuals
-
-  return_list[["df.residual"]] <- N - rank
-
+  return_list[["df.residual"]] <- N - tot_rank
   # return_list[["XtX_inv"]] <- fit$XtX_inv
   return_list[["N"]] <- N
   return_list[["k"]] <- k
-  return_list[["rank"]] <- rank
+  return_list[["rank"]] <- x_rank
 
   if (se_type != "none") {
+
     if (weighted) {
-      if (has_int) {
-        return_list[["tot_var"]] <-
-          colSums(
-            weights^2 *
-              (yunweighted - weighted.mean(yunweighted, weights^2))^2
-          ) * weight_mean
-      } else {
-        return_list[["tot_var"]] <- colSums(y^2 * weight_mean)
-      }
-      return_list[["res_var"]] <- diag(as.matrix(colSums(ei^2 * weight_mean) / (N - rank)))
+      return_list[["res_var"]] <- colSums(ei^2 * weight_mean) / (N - tot_rank)
     } else {
-      if (has_int) {
-        return_list[["tot_var"]] <- .rowSums(apply(y, 1, `-`, colMeans(y))^2, ny, N)
-      } else {
-        return_list[["tot_var"]] <- colSums(y^2)
-      }
       return_list[["res_var"]] <- diag(as.matrix(ifelse(vcov_fit[["res_var"]] < 0, NA, vcov_fit[["res_var"]])))
     }
-    return_list[["tot_var"]] <- as.vector(return_list[["tot_var"]])
 
-    return_list[["r.squared"]] <-
-      1 - (
-        return_list[["df.residual"]] * return_list[["res_var"]] /
-          return_list[["tot_var"]]
-      )
-
-    return_list[["adj.r.squared"]] <-
-      1 - (
-        (1 - return_list[["r.squared"]]) *
-          ((N - has_int) / return_list[["df.residual"]])
-      )
-
-    if (ny > 1) {
-      fstat_names <- paste0(colnames(y), ":value")
-    } else {
-      fstat_names <- "value"
-    }
-    if (iv_second_stage && se_type != "none") {
-      indices <- seq.int(has_int + 1, rank, by = 1)
-      setNames(
-        fstat <-
-          tryCatch({
-              crossprod(
-                fit$beta_hat[indices],
-                solve(vcov_fit$Vcov_hat[indices, indices], fit$beta_hat[indices])
-             ) / (rank - has_int)
-          }, error = function(e) {
-            if (grepl("system is computationally singular", e)) {
-              warning(
-                "Unable to compute f-statistic due to rank deficient variance-",
-                "covariance matrix"
-              )
-            } else {
-              warning(
-                "Unable to compute f-statistic"
-              )
-            }
-            NA
-          }),
-        fstat_names
-      )
-
-    } else {
-      fstat <- setNames(
-        return_list[["r.squared"]] * return_list[["df.residual"]] /
-          ((1 - return_list[["r.squared"]]) * (rank - has_int)),
-        fstat_names
-      )
-    }
-    return_list[["fstatistic"]] <- c(
-      fstat,
-      numdf = rank - has_int,
-      dendf = return_list[["df.residual"]]
+    tss_r2s <- get_r2s(
+      y = y,
+      return_list = return_list,
+      has_int = has_int,
+      yunweighted = yunweighted,
+      weights = weights,
+      weight_mean = weight_mean
     )
+
+    nomdf <- x_rank - !fes * has_int
+    f <- get_fstat(
+      tss_r2s = tss_r2s,
+      return_list = return_list,
+      nomdf = nomdf,
+      fit = fit,
+      vcov_fit = vcov_fit,
+      has_int = has_int,
+      iv_second_stage = iv_second_stage
+    )
+
+
+    if (!fes) {
+      return_list <- c(return_list, tss_r2s)
+      return_list[["fstatistic"]] <- f
+    } else {
+      return_list <- c(return_list, setNames(tss_r2s, paste0("proj_", names(tss_r2s))))
+      return_list[["proj_fstatistic"]] <- f
+
+      yoriginal <- as.matrix(yoriginal)
+      tss_r2s <- get_r2s(
+        y = if (weighted) weights * yoriginal else yoriginal,
+        return_list = return_list,
+        has_int = has_int,
+        yunweighted = yoriginal,
+        weights = weights,
+        weight_mean = weight_mean
+      )
+
+      nomdf <- tot_rank - has_int
+      f <- get_fstat(
+        tss_r2s = tss_r2s,
+        return_list = return_list,
+        nomdf = nomdf,
+        fit = fit,
+        vcov_fit = vcov_fit,
+        has_int = has_int,
+        iv_second_stage = iv_second_stage
+      )
+
+      return_list <- c(return_list, tss_r2s)
+      return_list[["fstatistic"]] <- f
+
+    }
 
     if (return_vcov) {
       # return_list$residuals <- fit$residuals
@@ -409,4 +399,94 @@ check_se_type <- function(se_type, clustered, iv) {
   }
 
   return(se_type)
+}
+
+get_r2s <- function(y, return_list, has_int, yunweighted, weights, weight_mean) {
+
+  N <- nrow(y)
+  if (return_list[["weighted"]]) {
+    if (has_int) {
+      tot_var <-
+        colSums(apply(yunweighted, 2, function(x) {
+          weights^2 * (x - weighted.mean(x, weights^2))^2
+        })) * weight_mean
+    } else {
+      tot_var <- colSums(y^2 * weight_mean)
+    }
+  } else {
+    if (has_int) {
+      tot_var <- .rowSums(apply(y, 1, `-`, colMeans(y))^2, ncol(y), N)
+    } else {
+      tot_var <- colSums(y^2)
+    }
+  }
+
+  tot_var <- as.vector(tot_var)
+
+  r.squared <-
+    1 - (
+      return_list[["df.residual"]] * return_list[["res_var"]] /
+        tot_var
+    )
+
+  adj.r.squared <-
+    1 - (
+      (1 - r.squared) *
+        ((N - has_int) / return_list[["df.residual"]])
+    )
+
+  return(list(
+    tot_var = tot_var,
+    r.squared = r.squared,
+    adj.r.squared = adj.r.squared
+  ))
+}
+
+get_fstat <- function(tss_r2s, return_list, nomdf, fit, vcov_fit, has_int, iv_second_stage) {
+
+  if (length(return_list[["outcome"]]) > 1) {
+    fstat_names <- paste0(return_list[["outcome"]], ":value")
+  } else {
+    fstat_names <- "value"
+  }
+
+  if (!iv_second_stage) {
+    fstat <- setNames(
+      tss_r2s$r.squared * return_list[["df.residual"]] /
+        ((1 - tss_r2s$r.squared) * (nomdf)),
+      fstat_names
+    )
+  } else if (return_list[["se_type"]] != "none") {
+    indices <- seq.int(has_int + 1, nomdf, by = 1)
+    setNames(
+      fstat <-
+        tryCatch({
+          crossprod(
+            fit$beta_hat[indices],
+            solve(vcov_fit$Vcov_hat[indices, indices], fit$beta_hat[indices])
+          ) / (nomdf)
+        }, error = function(e) {
+          if (grepl("system is computationally singular", e)) {
+            warning(
+              "Unable to compute f-statistic due to rank deficient variance-",
+              "covariance matrix"
+            )
+          } else {
+            warning(
+              "Unable to compute f-statistic"
+            )
+          }
+          NA
+        }),
+      fstat_names
+    )
+  }
+
+  f <- c(
+    fstat,
+    numdf = nomdf,
+    dendf = return_list[["df.residual"]]
+  )
+
+  return(f)
 }

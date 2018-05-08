@@ -211,16 +211,18 @@ lm_robust <- function(formula,
 
   fes <- is.integer(model_data[["fixed_effects"]])
   if (fes) {
+    yoriginal <- model_data[["outcome"]]
     model_data <- demean_fes(model_data)
     attr(model_data$design_matrix, "fe_rank") <- sum(model_data[["fe_levels"]]) + 1
   } else {
-    attr(model_data$design_matrix, "fe_rank") <- 0
+    yoriginal <- NULL
   }
 
   return_list <-
     lm_robust_fit(
       y = model_data$outcome,
       X = model_data$design_matrix,
+      yoriginal = yoriginal,
       weights = model_data$weights,
       cluster = model_data$cluster,
       fixed_effects = model_data$fixed_effects,
@@ -235,7 +237,8 @@ lm_robust <- function(formula,
   return_list <- lm_return(
     return_list,
     model_data = model_data,
-    formula = formula
+    formula = formula,
+    fes = fes
   )
 
   return_list[["call"]] <- match.call()

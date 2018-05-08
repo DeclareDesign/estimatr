@@ -5,47 +5,35 @@ import delimited mtcars.csv
 
 gen w = drat / 5
 
-file open outf using stata-ests.txt, write r
+file open outf using stata-fe-ests.txt, write r
 
-reg mpg hp
+// xtset carb
+// xtreg mpg hp, fe
+
+areg mpg hp, absorb(carb)
 mat V=e(V)
-file write outf _n "classical" _tab (V[1,1]) _tab (V[2,2]) _tab (e(df_r))
+file write outf _n "classical" _tab (V[1,1]) _tab (e(F))
 
-reg mpg hp, vce(robust)
+areg mpg hp, absorb(carb) vce(robust)
 mat V=e(V)
-file write outf _n "HC1" _tab (V[1,1]) _tab (V[2,2]) _tab (e(df_r))
+file write outf _n "HC1" _tab (V[1,1]) _tab (e(F))
 
-reg mpg hp, vce(hc2)
+
+areg mpg hp, absorb(carb) vce(cluster cyl)
 mat V=e(V)
-file write outf _n "HC2" _tab (V[1,1]) _tab (V[2,2]) _tab (e(df_r))
+file write outf _n "stata_cl" _tab (V[1,1]) _tab (e(F))
 
-reg mpg hp, vce(hc3)
-mat V=e(V)
-file write outf _n "HC3" _tab (V[1,1]) _tab (V[2,2]) _tab (e(df_r))
-
-reg mpg hp, vce(cluster cyl)
-mat V=e(V)
-file write outf _n "stata_cl" _tab (V[1,1]) _tab (V[2,2]) _tab (e(df_r))
-
-reg mpg hp [aweight=w]
+areg mpg hp [aweight=w]
 predict hii, hat
 mat V=e(V)
-file write outf _n "classicalw" _tab (V[1,1]) _tab (V[2,2]) _tab (e(df_r))
+file write outf _n "classicalw" _tab (V[1,1]) _tab (e(F))
 
-reg mpg hp [aweight=w], vce(robust)
+areg mpg hp [aweight=w], absorb(carb) vce(robust)
 mat V=e(V)
-file write outf _n "HC1w" _tab (V[1,1]) _tab (V[2,2]) _tab (e(df_r))
+file write outf _n "HC1w" _tab (V[1,1]) _tab (e(F))
 
-reg mpg hp [aweight=w], vce(hc2)
+areg mpg hp [aweight=w], absorb(carb) vce(cluster cyl)
 mat V=e(V)
-file write outf _n "HC2w" _tab (V[1,1]) _tab (V[2,2]) _tab (e(df_r))
-
-reg mpg hp [aweight=w], vce(hc3)
-mat V=e(V)
-file write outf _n "HC3w" _tab (V[1,1]) _tab (V[2,2]) _tab (e(df_r))
-
-reg mpg hp [aweight=w], vce(cluster cyl)
-mat V=e(V)
-file write outf _n "stata_clw" _tab (V[1,1]) _tab (V[2,2]) _tab (e(df_r))
+file write outf _n "stata_clw" _tab (V[1,1]) _tab (e(F))
 
 file close outf

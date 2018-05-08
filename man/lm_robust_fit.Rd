@@ -4,9 +4,9 @@
 \alias{lm_robust_fit}
 \title{Internal method that creates linear fits}
 \usage{
-lm_robust_fit(y, X, weights, cluster, fixed_effects = NULL, ci = TRUE,
-  se_type, has_int, alpha = 0.05, return_vcov = TRUE, return_fit = FALSE,
-  return_unweighted_fit = FALSE, try_cholesky = FALSE,
+lm_robust_fit(y, X, fully = NULL, weights, cluster, fixed_effects = NULL,
+  ci = TRUE, se_type, has_int, alpha = 0.05, return_vcov = TRUE,
+  return_fit = FALSE, return_unweighted_fit = FALSE, try_cholesky = FALSE,
   X_first_stage = NULL)
 }
 \arguments{

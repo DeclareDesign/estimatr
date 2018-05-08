@@ -111,6 +111,7 @@ iv_robust <- function(formula,
                       weights,
                       subset,
                       clusters,
+                      fixed_effects,
                       se_type = NULL,
                       ci = TRUE,
                       alpha = .05,
@@ -120,13 +121,22 @@ iv_robust <- function(formula,
     formula = formula,
     weights = weights,
     subset = subset,
-    cluster = clusters
+    cluster = clusters,
+    fixed_effects = fixed_effects
   )
   data <- enquo(data)
   model_data <- clean_model_data(data = data, datargs, estimator = "iv")
 
   if (ncol(model_data$instrument_matrix) < ncol(model_data$design_matrix)) {
     warning("More regressors than instruments")
+  }
+
+  fes <- is.integer(model_data[["fixed_effects"]])
+  if (fes) {
+    yoriginal <- model_data[["outcome"]]
+    model_data <- demean_fes(model_data)
+  } else {
+    yoriginal <- NULL
   }
 
   # -----------
@@ -139,6 +149,7 @@ iv_robust <- function(formula,
       X = model_data$instrument_matrix,
       weights = model_data$weights,
       cluster = model_data$cluster,
+      fixed_effects = model_data$fixed_effects,
       ci = FALSE,
       se_type = "none",
       has_int = attr(model_data$terms, "intercept"),
@@ -153,13 +164,16 @@ iv_robust <- function(formula,
   # Second stage
   # ------
   colnames(first_stage$fitted.values) <- colnames(model_data$design_matrix)
+  attr(first_stage$fitted.values, "fe_rank") <- sum(model_data[["fe_levels"]]) + 1
 
   second_stage <-
     lm_robust_fit(
       y = model_data$outcome,
+      yoriginal = yoriginal,
       X = first_stage$fitted.values,
       weights = model_data$weights,
       cluster = model_data$cluster,
+      fixed_effects = model_data$fixed_effects,
       ci = ci,
       se_type = se_type,
       has_int = attr(model_data$terms, "intercept"),

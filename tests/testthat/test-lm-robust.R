@@ -429,5 +429,34 @@ test_that("multiple outcomes", {
     vcov(lm_robust(cbind(mpg, hp) ~ cyl, data = mtcars, se_type = "HC3"))
   )
 
+  # with weights
+  lmo <- lm(cbind(mpg, hp) ~ cyl, data = mtcars, weights = wt)
+  lmro <- lm_robust(hp ~ cyl, data = mtcars, weights = wt)
+  lmro <- lm_robust(cbind(mpg, hp) ~ cyl, data = mtcars, weights = wt, se_type = "classical")
+  mo <- tidy(lmro)
+
+
+  lmro[c("r.squared", "adj.r.squared", "fstatistic")]
+  lapply(summary(lmo), `[`, c("r.squared", "adj.r.squared", "fstatistic"))
+  summary(lmo)[[2]][c("r.squared", "adj.r.squared", "fstatistic")]
+
+  expect_identical(
+    mo$term,
+    c("(Intercept)", "cyl", "(Intercept)", "cyl")
+  )
+
+  expect_equal(
+    coef(lmro),
+    coef(lmo)
+  )
+
+  expect_equivalent(
+    sapply(summary(lmo)[[1]][c("r.squared", "adj.r.squared", "fstatistic")], `[`, 1),
+    sapply(lmro[c("r.squared", "adj.r.squared", "fstatistic")], `[`, 1)
+  )
+  expect_equivalent(
+    sapply(summary(lmo)[[2]][c("r.squared", "adj.r.squared", "fstatistic")], `[`, 1),
+    sapply(lmro[c("r.squared", "adj.r.squared", "fstatistic")], `[`, 2)
+  )
 
 })
