@@ -431,14 +431,8 @@ test_that("multiple outcomes", {
 
   # with weights
   lmo <- lm(cbind(mpg, hp) ~ cyl, data = mtcars, weights = wt)
-  lmro <- lm_robust(hp ~ cyl, data = mtcars, weights = wt)
   lmro <- lm_robust(cbind(mpg, hp) ~ cyl, data = mtcars, weights = wt, se_type = "classical")
   mo <- tidy(lmro)
-
-
-  lmro[c("r.squared", "adj.r.squared", "fstatistic")]
-  lapply(summary(lmo), `[`, c("r.squared", "adj.r.squared", "fstatistic"))
-  summary(lmo)[[2]][c("r.squared", "adj.r.squared", "fstatistic")]
 
   expect_identical(
     mo$term,

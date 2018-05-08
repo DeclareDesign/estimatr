@@ -133,6 +133,7 @@ lm_robust_fit <- function(y,
   est_exists <- !is.na(fit$beta_hat)
   covs_used <- which(est_exists[, 1])
   N <- nrow(X)
+
   x_rank <- length(covs_used)
   tot_rank <- x_rank + fe_rank
 
@@ -288,7 +289,7 @@ lm_robust_fit <- function(y,
       weight_mean = weight_mean
     )
 
-    nomdf <- x_rank - !fes * has_int
+    nomdf <- x_rank - as.numeric(!fes) * has_int
     f <- get_fstat(
       tss_r2s = tss_r2s,
       return_list = return_list,
@@ -338,7 +339,7 @@ lm_robust_fit <- function(y,
       return_list[["vcov"]] <- vcov_fit$Vcov_hat
       if (multivariate) {
         coef_names <- paste0(
-          rep(paste0(return_list[["outcome"]], ":"), each = rank),
+          rep(paste0(return_list[["outcome"]], ":"), each = x_rank),
           rep(return_list$term, times = ny)
         )
         dimnames(return_list[["vcov"]]) <- list(
@@ -457,7 +458,7 @@ get_fstat <- function(tss_r2s, return_list, nomdf, fit, vcov_fit, has_int, iv_se
       fstat_names
     )
   } else if (return_list[["se_type"]] != "none") {
-    indices <- seq.int(has_int + 1, nomdf, by = 1)
+    indices <- seq.int(has_int + 1, return_list[["rank"]], by = 1)
     setNames(
       fstat <-
         tryCatch({
