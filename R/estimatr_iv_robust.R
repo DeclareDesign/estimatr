@@ -48,7 +48,7 @@
 #' endogenous regressors, and the residuals used are the difference
 #' between the outcome and a fit produced by the second-stage coefficients and the
 #' first-stage (endogenous) regressors. More notes on this can be found at
-#' \href{http://estimatr.declaredesign.org/articles/mathematical-notes.html}{the mathematical appendix}.
+#' \href{https://estimatr.declaredesign.org/articles/mathematical-notes.html}{the mathematical appendix}.
 #'
 #' @return An object of class \code{"iv_robust"}.
 #'
