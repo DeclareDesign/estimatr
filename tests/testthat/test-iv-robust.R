@@ -329,4 +329,8 @@ test_that("S3 methods", {
     summary(ivo)$waldtest[-2]
   )
 
+  iv_robust(mpg ~ hp | vs, data = mtcars, se_type = "classical")$fstatistic
+  summary(ivreg(mpg ~ hp | vs, data = mtcars))$waldtest
+
 })
+

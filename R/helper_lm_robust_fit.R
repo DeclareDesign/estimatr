@@ -36,7 +36,7 @@ lm_robust_fit <- function(y,
   ny <- ncol(y)
   fes <- !is.null(fixed_effects)
   if (fes) {
-    fe_rank <- attr(X, "fe_rank")
+    fe_rank <- attr(fixed_effects, "fe_rank")
   } else {
     fe_rank <- 0
   }
@@ -195,6 +195,18 @@ lm_robust_fit <- function(y,
       ei <- as.matrix(y - fitted.values)
     }
 
+    if (iv_second_stage) {
+      iv_fits <- X %*% fit$beta_hat
+      if (weighted) {
+        iv_ei <- weights * as.matrix(y - iv_fits)
+      } else {
+        iv_ei <- as.matrix(y - iv_fits)
+      }
+    } else {
+      iv_fits <- NULL
+      iv_ei <- NULL
+    }
+
     if (se_type != "none") {
 
       if (se_type %in% c("HC2", "HC3", "CR2") && is.numeric(fixed_effects)) {
@@ -264,6 +276,8 @@ lm_robust_fit <- function(y,
   return_list[["alpha"]] <- alpha
   return_list[["se_type"]] <- se_type
   return_list[["weighted"]] <- weighted
+  return_list[["fes"]] <- fes
+  return_list[["clustered"]] <- clustered
   # return_list[["fitted.values"]] <- fit$fit
   # return_list[["residuals"]] <- fit$residuals
   return_list[["df.residual"]] <- N - tot_rank
@@ -275,11 +289,10 @@ lm_robust_fit <- function(y,
   if (se_type != "none") {
 
     if (weighted) {
-      return_list[["res_var"]] <- colSums(ei^2 * weight_mean) / (N - tot_rank)
+      return_list[["res_var"]] <- colSums(ei^2 * weight_mean) / (return_list[["df.residual"]])
     } else {
       return_list[["res_var"]] <- diag(as.matrix(ifelse(vcov_fit[["res_var"]] < 0, NA, vcov_fit[["res_var"]])))
     }
-
     tss_r2s <- get_r2s(
       y = y,
       return_list = return_list,
@@ -290,10 +303,18 @@ lm_robust_fit <- function(y,
     )
 
     nomdf <- x_rank - as.numeric(!fes) * has_int
+    if (clustered) {
+      dendf <- J - 1
+    } else {
+      dendf <- return_list[["df.residual"]]
+    }
+
     f <- get_fstat(
       tss_r2s = tss_r2s,
       return_list = return_list,
+      iv_ei = iv_ei,
       nomdf = nomdf,
+      dendf = dendf,
       fit = fit,
       vcov_fit = vcov_fit,
       has_int = has_int,
@@ -322,7 +343,9 @@ lm_robust_fit <- function(y,
       f <- get_fstat(
         tss_r2s = tss_r2s,
         return_list = return_list,
+        iv_ei = iv_ei,
         nomdf = nomdf,
+        dendf = dendf,
         fit = fit,
         vcov_fit = vcov_fit,
         has_int = has_int,
@@ -402,32 +425,32 @@ check_se_type <- function(se_type, clustered, iv) {
   return(se_type)
 }
 
-get_r2s <- function(y, return_list, has_int, yunweighted, weights, weight_mean) {
+get_r2s <- function(y, return_list, has_int, yunweighted, weights, weight_mean, iv_second_stage) {
 
   N <- nrow(y)
   if (return_list[["weighted"]]) {
     if (has_int) {
-      tot_var <-
+      tss <-
         colSums(apply(yunweighted, 2, function(x) {
           weights^2 * (x - weighted.mean(x, weights^2))^2
         })) * weight_mean
     } else {
-      tot_var <- colSums(y^2 * weight_mean)
+      tss <- colSums(y^2 * weight_mean)
     }
   } else {
     if (has_int) {
-      tot_var <- .rowSums(apply(y, 1, `-`, colMeans(y))^2, ncol(y), N)
+      tss <- .rowSums(apply(y, 1, `-`, colMeans(y))^2, ncol(y), N)
     } else {
-      tot_var <- colSums(y^2)
+      tss <- colSums(y^2)
     }
   }
 
-  tot_var <- as.vector(tot_var)
+  tss <- as.vector(tss)
 
   r.squared <-
     1 - (
       return_list[["df.residual"]] * return_list[["res_var"]] /
-        tot_var
+        tss
     )
 
   adj.r.squared <-
@@ -437,13 +460,13 @@ get_r2s <- function(y, return_list, has_int, yunweighted, weights, weight_mean) 
     )
 
   return(list(
-    tot_var = tot_var,
+    tss = tss,
     r.squared = r.squared,
     adj.r.squared = adj.r.squared
   ))
 }
 
-get_fstat <- function(tss_r2s, return_list, nomdf, fit, vcov_fit, has_int, iv_second_stage) {
+get_fstat <- function(tss_r2s, return_list, iv_ei, nomdf, dendf, fit, vcov_fit, has_int, iv_second_stage) {
 
   if (length(return_list[["outcome"]]) > 1) {
     fstat_names <- paste0(return_list[["outcome"]], ":value")
@@ -451,42 +474,39 @@ get_fstat <- function(tss_r2s, return_list, nomdf, fit, vcov_fit, has_int, iv_se
     fstat_names <- "value"
   }
 
-  if (!iv_second_stage) {
-    fstat <- setNames(
-      tss_r2s$r.squared * return_list[["df.residual"]] /
-        ((1 - tss_r2s$r.squared) * (nomdf)),
-      fstat_names
-    )
-  } else if (return_list[["se_type"]] != "none") {
+
+  if (!iv_second_stage && return_list[["se_type"]] == "classical") {
+    fstat <- tss_r2s$r.squared * return_list[["df.residual"]] /
+        ((1 - tss_r2s$r.squared) * (nomdf))
+  } else if (return_list[["se_type"]] == "classical" && iv_second_stage) {
+    ivrss <- colSums(iv_ei^2)
+    fstat <- ((tss_r2s$tss - ivrss) / nomdf) / return_list[["res_var"]]
+  } else {
     indices <- seq.int(has_int + 1, return_list[["rank"]], by = 1)
-    setNames(
-      fstat <-
-        tryCatch({
-          crossprod(
-            fit$beta_hat[indices],
-            solve(vcov_fit$Vcov_hat[indices, indices], fit$beta_hat[indices])
-          ) / (nomdf)
-        }, error = function(e) {
-          if (grepl("system is computationally singular", e)) {
-            warning(
-              "Unable to compute f-statistic due to rank deficient variance-",
-              "covariance matrix"
-            )
-          } else {
-            warning(
-              "Unable to compute f-statistic"
-            )
-          }
-          NA
-        }),
-      fstat_names
-    )
+    fstat <-
+      tryCatch({
+        sapply(seq_len(ncol(fit$beta_hat)),
+               function(x) {
+                 outcome_indices <- indices + (x - 1) * return_list[["rank"]]
+                 crossprod(fit$beta_hat[outcome_indices],
+                           chol2inv(chol(vcov_fit$Vcov_hat[outcome_indices, outcome_indices])) %*%
+                             fit$beta_hat[outcome_indices]) / (return_list[["rank"]] - has_int)
+               })
+      }, error = function(e) {
+        if (grepl("system is computationally singular", e)) {
+          warning("Unable to compute f-statistic due to rank deficient variance-",
+                  "covariance matrix")
+        } else {
+          warning("Unable to compute f-statistic")
+        }
+        NA
+      })
   }
 
   f <- c(
-    fstat,
+    setNames(fstat, fstat_names),
     numdf = nomdf,
-    dendf = return_list[["df.residual"]]
+    dendf = dendf
   )
 
   return(f)

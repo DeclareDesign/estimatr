@@ -85,4 +85,8 @@ test_that("lm_robust matches stata", {
     max(estimatr_mat[, 1] - as.numeric(stata_ests[, 4])) < 2e-05
   )
 
+  expect_true(
+    max(estimatr_mat[, 4] - as.numeric(stata_ests[, 5])) < 2e-05
+  )
+
 })

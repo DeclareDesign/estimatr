@@ -134,6 +134,219 @@ test_that("lm robust se", {
   )
 })
 
+test_that("lm robust F-tests are correct", {
+
+  skip_if_not_installed("car")
+  skip_if_not_installed("clubSandwich")
+
+  co <- lm_robust(mpg ~ hp + am, data = mtcars, se_type = "classical")
+  caro <- car::linearHypothesis(co, c("hp = 0", "am = 0"), test = "F")
+  carolm <- car::linearHypothesis(lm(mpg ~ hp + am, data = mtcars),
+                                  c("hp = 0", "am = 0"),
+                                  test = "F")
+  expect_equivalent(
+    co$fstatistic,
+    c(caro$F[2], caro$Df[2], caro$Res.Df[2])
+  )
+  expect_equivalent(
+    co$fstatistic,
+    c(carolm$F[2], carolm$Df[2], carolm$Res.Df[2])
+  )
+
+  cow <- lm_robust(mpg ~ hp + am, data = mtcars, weights = wt, se_type = "classical")
+  caro <- car::linearHypothesis(cow, c("hp = 0", "am = 0"), test = "F")
+  expect_equivalent(
+    cow$fstatistic,
+    c(caro$F[2], caro$Df[2], caro$Res.Df[2])
+  )
+
+  hc0 <- lm_robust(mpg ~ hp + am, data = mtcars, se_type = "HC0")
+  caro <- car::linearHypothesis(hc0, c("hp = 0", "am = 0"), test = "F")
+  carolm <- car::linearHypothesis(lm(mpg ~ hp + am, data = mtcars),
+                                  c("hp = 0", "am = 0"),
+                                  test = "F",
+                                  white.adjust = "hc0")
+  expect_equivalent(
+    hc0$fstatistic,
+    c(caro$F[2], caro$Df[2], caro$Res.Df[2])
+  )
+  expect_equivalent(
+    hc0$fstatistic,
+    c(carolm$F[2], carolm$Df[2], carolm$Res.Df[2])
+  )
+
+  hc1 <- lm_robust(mpg ~ hp + am, data = mtcars, se_type = "HC1")
+  caro <- car::linearHypothesis(hc1, c("hp = 0", "am = 0"), test = "F")
+  carolm <- car::linearHypothesis(lm(mpg ~ hp + am, data = mtcars),
+                                  c("hp = 0", "am = 0"),
+                                  test = "F",
+                                  white.adjust = "hc1")
+  expect_equivalent(
+    hc1$fstatistic,
+    c(caro$F[2], caro$Df[2], caro$Res.Df[2])
+  )
+  expect_equivalent(
+    hc1$fstatistic,
+    c(carolm$F[2], carolm$Df[2], carolm$Res.Df[2])
+  )
+
+  hc1w <- lm_robust(mpg ~ hp + am, data = mtcars, weights = wt, se_type = "HC1")
+  caro <- car::linearHypothesis(hc1w, c("hp = 0", "am = 0"), test = "F")
+  expect_equivalent(
+    hc1w$fstatistic,
+    c(caro$F[2], caro$Df[2], caro$Res.Df[2])
+  )
+
+  hc2 <- lm_robust(mpg ~ hp + am, data = mtcars, se_type = "HC2")
+  caro <- car::linearHypothesis(hc2, c("hp = 0", "am = 0"), test = "F")
+  carolm <- car::linearHypothesis(lm(mpg ~ hp + am, data = mtcars),
+                                  c("hp = 0", "am = 0"),
+                                  test = "F",
+                                  white.adjust = "hc2")
+  expect_equivalent(
+    hc2$fstatistic,
+    c(caro$F[2], caro$Df[2], caro$Res.Df[2])
+  )
+  expect_equivalent(
+    hc2$fstatistic,
+    c(carolm$F[2], carolm$Df[2], carolm$Res.Df[2])
+  )
+
+  hc3 <- lm_robust(mpg ~ hp + am, data = mtcars, se_type = "HC3")
+  caro <- car::linearHypothesis(hc3, c("hp = 0", "am = 0"), test = "F")
+  carolm <- car::linearHypothesis(lm(mpg ~ hp + am, data = mtcars),
+                                  c("hp = 0", "am = 0"),
+                                  test = "F",
+                                  white.adjust = "hc3")
+  expect_equivalent(
+    hc3$fstatistic,
+    c(caro$F[2], caro$Df[2], caro$Res.Df[2])
+  )
+  expect_equivalent(
+    hc3$fstatistic,
+    c(carolm$F[2], carolm$Df[2], carolm$Res.Df[2])
+  )
+
+  cr0 <- lm_robust(mpg ~ hp + am, data = mtcars, clusters = carb, se_type = "CR0")
+  caro <- clubSandwich::Wald_test(lm(mpg ~ hp + am, data = mtcars),
+                                  cluster = mtcars$carb,
+                                  c(FALSE, TRUE, TRUE),
+                                  vcov = "CR0",
+                                  test = "Naive-F")
+
+  expect_equivalent(
+    cr0$fstatistic[c(1, 3)],
+    c(caro$Fstat, caro$df)
+  )
+
+  cr1s <- lm_robust(mpg ~ hp + am, data = mtcars, clusters = carb, se_type = "stata")
+  caro <- clubSandwich::Wald_test(lm(mpg ~ hp + am, data = mtcars),
+                                  cluster = mtcars$carb,
+                                  c(FALSE, TRUE, TRUE),
+                                  vcov = "CR1S",
+                                  test = "Naive-F")
+
+  expect_equivalent(
+    cr1s$fstatistic[c(1, 3)],
+    c(caro$Fstat, caro$df)
+  )
+
+  cr1sw <- lm_robust(mpg ~ hp + am, data = mtcars, clusters = carb, weights = wt, se_type = "stata")
+  caro <- clubSandwich::Wald_test(lm(mpg ~ hp + am, weights = wt, data = mtcars),
+                                  cluster = mtcars$carb,
+                                  c(FALSE, TRUE, TRUE),
+                                  vcov = "CR1S",
+                                  test = "Naive-F")
+
+  expect_equivalent(
+    cr1sw$fstatistic[c(1, 3)],
+    c(caro$Fstat, caro$df)
+  )
+
+  cr2 <- lm_robust(mpg ~ hp + am, data = mtcars, clusters = carb, se_type = "CR2")
+  caro <- clubSandwich::Wald_test(lm(mpg ~ hp + am, data = mtcars),
+                                  cluster = mtcars$carb,
+                                  c(FALSE, TRUE, TRUE),
+                                  vcov = "CR2",
+                                  test = "Naive-F")
+
+  expect_equivalent(
+    cr2$fstatistic[c(1, 3)],
+    c(caro$Fstat, caro$df)
+  )
+
+  cr2w <- lm_robust(mpg ~ hp + am, data = mtcars, clusters = carb, weights = wt, se_type = "CR2")
+  caro <- clubSandwich::Wald_test(lm(mpg ~ hp + am, weights = wt, data = mtcars),
+                                  cluster = mtcars$carb,
+                                  c(FALSE, TRUE, TRUE),
+                                  vcov = "CR2",
+                                  test = "Naive-F")
+
+  expect_equivalent(
+    cr2w$fstatistic[c(1, 3)],
+    c(caro$Fstat, caro$df)
+  )
+
+})
+
+test_that("lm robust mlm gets right fstats", {
+  cocyl <- lm_robust(cyl ~ hp + am, data = mtcars, se_type = "classical")
+  compg <- lm_robust(mpg ~ hp + am, data = mtcars, se_type = "classical")
+  co2 <- lm_robust(cbind(cyl, mpg) ~ hp + am, data = mtcars, se_type = "classical")
+
+  expect_equivalent(
+    co2$fstatistic[1:2],
+    c(cocyl$fstatistic[1], compg$fstatistic[1])
+  )
+
+  hc2cyl <- lm_robust(cyl ~ hp + am, data = mtcars, se_type = "HC2")
+  hc2mpg <- lm_robust(mpg ~ hp + am, data = mtcars, se_type = "HC2")
+  hc22 <- lm_robust(cbind(cyl, mpg) ~ hp + am, data = mtcars, se_type = "HC2")
+
+  expect_equivalent(
+    hc22$fstatistic[1:2],
+    c(hc2cyl$fstatistic[1], hc2mpg$fstatistic[1])
+  )
+
+  cr2cyl <- lm_robust(cyl ~ hp + am, data = mtcars, cluster = carb, se_type = "CR2")
+  cr2mpg <- lm_robust(mpg ~ hp + am, data = mtcars, cluster = carb, se_type = "CR2")
+  cr22 <- lm_robust(cbind(cyl, mpg) ~ hp + am, data = mtcars, cluster = carb, se_type = "CR2")
+
+  expect_equivalent(
+    cr22$fstatistic[1:2],
+    c(cr2cyl$fstatistic[1], cr2mpg$fstatistic[1])
+  )
+
+  cowcyl <- lm_robust(cyl ~ hp + am, data = mtcars, weights = wt, se_type = "classical")
+  cowmpg <- lm_robust(mpg ~ hp + am, data = mtcars, weights = wt, se_type = "classical")
+  cow2 <- lm_robust(cbind(cyl, mpg) ~ hp + am, data = mtcars, weights = wt, se_type = "classical")
+
+  expect_equivalent(
+    cow2$fstatistic[1:2],
+    c(cowcyl$fstatistic[1], cowmpg$fstatistic[1])
+  )
+
+  hc2wcyl <- lm_robust(cyl ~ hp + am, data = mtcars, weights = wt, se_type = "HC2")
+  hc2wmpg <- lm_robust(mpg ~ hp + am, data = mtcars, weights = wt, se_type = "HC2")
+  hc2w2 <- lm_robust(cbind(cyl, mpg) ~ hp + am, data = mtcars, weights = wt, se_type = "HC2")
+
+  expect_equivalent(
+    hc2w2$fstatistic[1:2],
+    c(hc2wcyl$fstatistic[1], hc2wmpg$fstatistic[1])
+  )
+
+  cr2wcyl <- lm_robust(cyl ~ hp + am, data = mtcars, cluster = carb, weights = wt, se_type = "CR2")
+  cr2wmpg <- lm_robust(mpg ~ hp + am, data = mtcars, cluster = carb, weights = wt, se_type = "CR2")
+  cr2w2 <- lm_robust(cbind(cyl, mpg) ~ hp + am, data = mtcars, cluster = carb, weights = wt, se_type = "CR2")
+
+  expect_equivalent(
+    cr2w2$fstatistic[1:2],
+    c(cr2wcyl$fstatistic[1], cr2wmpg$fstatistic[1])
+  )
+
+})
+
+
 test_that("lm robust works with missingness", {
   dat <- data.frame(
     Y = rnorm(100),

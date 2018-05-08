@@ -1,6 +1,5 @@
 context("Estimator - lm_robust, fixed effects")
 
-
 set.seed(43)
 N <- 20
 dat <- data.frame(
@@ -515,19 +514,35 @@ test_that("FEs handle collinear FEs", {
   # summary(felm(mpg ~ hp | cyl + cyl2 + am, data = mtcars))$coefficients
   # tidy(lm_robust(mpg ~ hp + factor(cyl) + factor(cyl3) + factor(am), data = mtcars, se_type = "classical"))[2,]
 
-  # Not the same (denom is wrong)
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    ro$estimate[ro$term %in% c("Z", "X")],
+    rfo$estimate[rfo$term %in% c("Z", "X")]
+  )
+
+  # SE is wrong because we count the FEs incorrectly for the finite sample correction
+  expect_false(
+    all(
+      ro$std.error[ro$term %in% c("Z", "X")] ==
+        rfo$std.error[rfo$term %in% c("Z", "X")]
+    )
   )
 
   ## HC0
   ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), data = dat, se_type = "HC0"))
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, data = dat, se_type = "HC0"))
 
+  # SE is right for HC0 (as there is no finite sample correction), but DoF is still wrong
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    ro[ro$term %in% c("Z", "X"), c("estimate", "std.error")],
+    rfo[rfo$term %in% c("Z", "X"), c("estimate", "std.error")]
+  )
+
+  # SE is right, but FE is wrong because we count the FEs incorrectly for the finite sample correction
+  expect_false(
+    all(
+      ro$df[ro$term %in% c("Z", "X")] ==
+        rfo$df[rfo$term %in% c("Z", "X")]
+    )
   )
 
   ## HC1
@@ -535,21 +550,30 @@ test_that("FEs handle collinear FEs", {
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, data = dat, se_type = "HC1"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    ro$estimate[ro$term %in% c("Z", "X")],
+    rfo$estimate[rfo$term %in% c("Z", "X")]
+  )
+
+  # SE is wrong because we count the FEs incorrectly for the finite sample correction
+  expect_false(
+    all(
+      ro$std.error[ro$term %in% c("Z", "X")] ==
+        rfo$std.error[rfo$term %in% c("Z", "X")]
+    )
   )
 
   ## HC2
   ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), data = dat, se_type = "HC2"))
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, data = dat, se_type = "HC2"))
 
+  # HC2 or HC3 work because we can get the collinearity in the FEs for free as we have to invert
+  # UtU anyways (where U is cbind(X, FE_dummy_mat))
   expect_equivalent(
     ro[ro$term %in% c("Z", "X"), ],
     rfo[rfo$term %in% c("Z", "X"), ]
   )
 
   ## HC3
-
   ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), data = dat, se_type = "HC3"))
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, data = dat, se_type = "HC3"))
 
@@ -562,6 +586,7 @@ test_that("FEs handle collinear FEs", {
   ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), clusters = cl, data = dat, se_type = "CR0"))
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, clusters = cl, data = dat, se_type = "CR0"))
 
+  # DoF for CR0 works, unlike HC0, because our DoF for CR0 is N_clust - 1, not N - total_rank
   expect_equivalent(
     ro[ro$term %in% c("Z", "X"), ],
     rfo[rfo$term %in% c("Z", "X"), ]
@@ -572,14 +597,23 @@ test_that("FEs handle collinear FEs", {
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, clusters = cl, data = dat, se_type = "stata"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    ro$estimate[ro$term %in% c("Z", "X")],
+    rfo$estimate[rfo$term %in% c("Z", "X")]
+  )
+
+  # SE is wrong because we count the FEs incorrectly for the finite sample correction
+  expect_false(
+    all(
+      ro$std.error[ro$term %in% c("Z", "X")] ==
+        rfo$std.error[rfo$term %in% c("Z", "X")]
+    )
   )
 
   ## CR2
   ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), clusters = cl, data = dat, se_type = "CR2"))
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, clusters = cl, data = dat, se_type = "CR2"))
 
+  # As with HC2, we get the count of FEs here for free
   expect_equivalent(
     ro[ro$term %in% c("Z", "X"), ],
     rfo[rfo$term %in% c("Z", "X"), ]
