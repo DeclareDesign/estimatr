@@ -46,7 +46,8 @@ install.packages("estimatr", dependencies = TRUE,
 
 Once the package is installed, getting appropriate estimates and standard errors is now both fast and easy.
 
-```{r, eval = TRUE}
+```{r, eval = TRUE, echo=-1}
+set.seed(42)
 library(estimatr)
 
 # sample data from cluster-randomized experiment
