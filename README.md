@@ -9,7 +9,7 @@ Technical papers and textbooks demand complex estimation strategies that are oft
 
 **estimatr** provides a small set of commonly-used estimators (methods for estimating quantities of interest like treatment effects or regression parameters), using `C++` for speed, and implemented in `R` with simple, accessible syntax. We include two functions that implement means estimators, `difference_in_means()` and `horvitz_thompson()`. In addition, we include three functions for linear regression estimators, `lm_robust()`, `lm_lin()`, and `iv_robust()`. In each case, scientists can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs. The [Getting Started Guide](articles/getting-started.html) describes each estimator provided by **estimatr** and how it can be used in your analysis.
 
-Fast estimators also enable fast simulation of research designs to learn about their properties (see [DeclareDesign](declaredesign.org/)).
+Fast estimators also enable fast simulation of research designs to learn about their properties (see [DeclareDesign](declaredesign.org)).
 
 Installing estimatr
 -------------------
