@@ -261,7 +261,8 @@ More details of the about each of the estimators can be found in the
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'>
-<span class='fu'>library</span>(<span class='no'>fabricatr</span>)</div><div class='output co'>#&gt; <span class='warning'>Warning: package ‘fabricatr’ was built under R version 3.4.4</span></div><div class='input'><span class='fu'>library</span>(<span class='no'>randomizr</span>)
+<span class='fu'>library</span>(<span class='no'>fabricatr</span>)
+<span class='fu'>library</span>(<span class='no'>randomizr</span>)
 <span class='co'># Get appropriate standard errors for unit-randomized designs</span>
 
 <span class='co'># ----------</span>
@@ -475,21 +476,21 @@ More details of the about each of the estimators can be found in the
   <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>
 )</div><div class='output co'>#&gt; Design:  Standard 
 #&gt;                 Estimate Std. Error  Pr(&gt;|t|)   CI Lower CI Upper       DF
-#&gt; Z_multiControl 0.3803983  0.3409199 0.2760514 -0.3249199 1.085717 22.95785</div><div class='input'><span class='fu'>difference_in_means</span>(
+#&gt; Z_multiControl 0.3235135  0.3268957 0.3343248 -0.3589736 1.006001 19.73174</div><div class='input'><span class='fu'>difference_in_means</span>(
   <span class='no'>Y</span> ~ <span class='no'>Z_multi</span>,
   <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='st'>"Treatment 1"</span>,
   <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='st'>"Control"</span>,
   <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>
 )</div><div class='output co'>#&gt; Design:  Standard 
 #&gt;                 Estimate Std. Error  Pr(&gt;|t|)   CI Lower CI Upper       DF
-#&gt; Z_multiControl 0.3235135  0.3268957 0.3343248 -0.3589736 1.006001 19.73174</div><div class='input'>
+#&gt; Z_multiControl 0.3803983  0.3409199 0.2760514 -0.3249199 1.085717 22.95785</div><div class='input'>
 <span class='co'># Specifying weights will result in estimation via lm_robust()</span>
 <span class='no'>dat</span>$<span class='no'>w</span> <span class='kw'>&lt;-</span> <span class='fu'>runif</span>(<span class='fu'>nrow</span>(<span class='no'>dat</span>))
 <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_comp</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='no'>w</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt; Design:  Standard (weighted) 
-#&gt;         Estimate Std. Error  Pr(&gt;|t|)    CI Lower  CI Upper DF
-#&gt; Z_comp 0.4592481  0.2333557 0.0518919 -0.00383858 0.9223348 98</div><div class='input'><span class='fu'><a href='lm_robust.html'>lm_robust</a></span>(<span class='no'>Y</span> ~ <span class='no'>Z_comp</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='no'>w</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;               Estimate Std. Error  Pr(&gt;|t|)    CI Lower   CI Upper DF
-#&gt; (Intercept) -0.2498878  0.1417116 0.0809576 -0.53110998 0.03133429 98
-#&gt; Z_comp       0.4592481  0.2333557 0.0518919 -0.00383858 0.92233484 98</div><div class='input'>
+#&gt;         Estimate Std. Error   Pr(&gt;|t|)    CI Lower  CI Upper DF
+#&gt; Z_comp 0.5011984   0.250709 0.04836406 0.003674594 0.9987222 98</div><div class='input'><span class='fu'><a href='lm_robust.html'>lm_robust</a></span>(<span class='no'>Y</span> ~ <span class='no'>Z_comp</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='no'>w</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;               Estimate Std. Error   Pr(&gt;|t|)     CI Lower  CI Upper DF
+#&gt; (Intercept) -0.1778921  0.1560113 0.25696068 -0.487491513 0.1317073 98
+#&gt; Z_comp       0.5011984  0.2507090 0.04836406  0.003674594 0.9987222 98</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
