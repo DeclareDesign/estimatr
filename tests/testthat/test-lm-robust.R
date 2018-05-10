@@ -563,7 +563,6 @@ test_that("lm robust works with rank-deficient X", {
   )
 })
 
-# TODO fix r-squared implementation
 test_that("r squared is right", {
   lmo <- summary(lm(mpg ~ hp, mtcars))
   lmow <- summary(lm(mpg ~ hp, mtcars, weights = wt))
@@ -572,36 +571,53 @@ test_that("r squared is right", {
 
   lmro <- lm_robust(mpg ~ hp, mtcars)
   lmrow <- lm_robust(mpg ~ hp, mtcars, weights = wt)
+  lmroclust <- lm_robust(mpg ~ hp, mtcars, clusters = carb)
+  lmrowclust <- lm_robust(mpg ~ hp, mtcars, weights = wt, clusters = carb)
   lmron <- lm_robust(mpg ~ hp - 1, mtcars)
   lmrown <- lm_robust(mpg ~ hp - 1, mtcars, weights = wt)
-  lmrclust <- lm_robust(mpg ~ hp - 1, mtcars, weights = wt, clusters = carb) # for good measure
+  lmrclust <- lm_robust(mpg ~ hp - 1, mtcars, clusters = carb)
+  lmrwclust <- lm_robust(mpg ~ hp - 1, mtcars, weights = wt, clusters = carb)
 
   # Use equivalent instead of equal because we change the name of the fstat value
   expect_equivalent(
-    c(lmo$r.squared, lmo$adj.r.squared, lmo$fstatistic),
-    c(lmro$r.squared, lmro$adj.r.squared, lmro$fstatistic)
+    c(lmo$r.squared, lmo$adj.r.squared),
+    c(lmro$r.squared, lmro$adj.r.squared)
   )
 
   expect_equivalent(
-    c(lmow$r.squared, lmow$adj.r.squared, lmow$fstatistic),
-    c(lmrow$r.squared, lmrow$adj.r.squared, lmrow$fstatistic)
+    c(lmow$r.squared, lmow$adj.r.squared),
+    c(lmrow$r.squared, lmrow$adj.r.squared)
   )
 
   expect_equivalent(
-    c(lmon$r.squared, lmon$adj.r.squared, lmon$fstatistic),
-    c(lmron$r.squared, lmron$adj.r.squared, lmron$fstatistic)
+    c(lmon$r.squared, lmon$adj.r.squared),
+    c(lmron$r.squared, lmron$adj.r.squared)
   )
 
   expect_equivalent(
-    c(lmown$r.squared, lmown$adj.r.squared, lmown$fstatistic),
-    c(lmrown$r.squared, lmrown$adj.r.squared, lmrown$fstatistic)
+    c(lmown$r.squared, lmown$adj.r.squared),
+    c(lmrown$r.squared, lmrown$adj.r.squared)
   )
 
-  # TODO clusters give different r-squared
-  # expect_equal(
-  #   c(lmown$r.squared, lmown$adj.r.squared, lmown$fstatistic),
-  #   c(lmrclust$r.squared, lmrclust$adj.r.squared, lmrclust$fstatistic)
-  # )
+  expect_equal(
+    c(lmon$r.squared, lmon$adj.r.squared),
+    c(lmrclust$r.squared, lmrclust$adj.r.squared)
+  )
+
+  expect_equal(
+    c(lmown$r.squared, lmown$adj.r.squared),
+    c(lmrwclust$r.squared, lmrwclust$adj.r.squared)
+  )
+
+  expect_equal(
+    c(lmo$r.squared, lmo$adj.r.squared),
+    c(lmroclust$r.squared, lmroclust$adj.r.squared)
+  )
+
+  expect_equal(
+    c(lmow$r.squared, lmow$adj.r.squared),
+    c(lmrowclust$r.squared, lmrowclust$adj.r.squared)
+  )
 })
 
 test_that("multiple outcomes", {

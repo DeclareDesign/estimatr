@@ -22,7 +22,6 @@ test_that("FE matches lm_robust with dummies", {
   ro <- tidy(lm_robust(Y ~ Z + factor(B), data = dat, se_type = "classical"))
   rfo <- tidy(lm_robust(Y ~ Z, fixed_effects = ~ B, data = dat, se_type = "classical"))
 
-  ## TODO fstat, r.squared
   expect_equivalent(
     ro[ro$term %in% c("Z"), ],
     rfo[rfo$term %in% c("Z"), ]
@@ -270,8 +269,8 @@ test_that("FEs work with multiple outcomes", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## HC0
@@ -284,8 +283,8 @@ test_that("FEs work with multiple outcomes", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## HC1
@@ -298,8 +297,8 @@ test_that("FEs work with multiple outcomes", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## HC2
@@ -312,8 +311,8 @@ test_that("FEs work with multiple outcomes", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## HC3
@@ -326,8 +325,8 @@ test_that("FEs work with multiple outcomes", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## CR0
@@ -340,8 +339,8 @@ test_that("FEs work with multiple outcomes", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## CR stata
@@ -354,8 +353,8 @@ test_that("FEs work with multiple outcomes", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## CR2
@@ -368,8 +367,8 @@ test_that("FEs work with multiple outcomes", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## multiple outcomes with weights
@@ -383,8 +382,8 @@ test_that("FEs work with multiple outcomes", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## HC0
@@ -397,8 +396,8 @@ test_that("FEs work with multiple outcomes", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## HC1
@@ -411,8 +410,8 @@ test_that("FEs work with multiple outcomes", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## HC2
@@ -425,8 +424,8 @@ test_that("FEs work with multiple outcomes", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## HC3
@@ -439,8 +438,8 @@ test_that("FEs work with multiple outcomes", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## CR0
@@ -453,8 +452,8 @@ test_that("FEs work with multiple outcomes", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## CR stata
@@ -467,8 +466,8 @@ test_that("FEs work with multiple outcomes", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## CR2
@@ -482,8 +481,8 @@ test_that("FEs work with multiple outcomes", {
 
   expect_true(
     max(
-      unlist(ro[c("r.squared", "adj.r.squared", "fstatistic")]) -
-        unlist(rfo[c("r.squared", "adj.r.squared", "fstatistic")])
+      unlist(ro[c("r.squared", "adj.r.squared")]) -
+        unlist(rfo[c("r.squared", "adj.r.squared")])
     ) < 1e-7
   )
 
@@ -700,30 +699,125 @@ test_that("FEs work with collinear covariates", {
 
 test_that("test matches stata absorb", {
 
+  # write.csv(mtcars,
+  #           file = 'tests/testthat/mtcars.csv',
+  #           row.names = F)
 
-  # Stata returns those two stats on the transformed data, which I think makes a certain kind of sense.  I don't know how you'd do the f-stat or r2 otherwise, so let's just copy stata's approach (and justification)
+  stata_ests <- read.table(
+    "stata-fe-ests.txt",
+    col.names = c("model", "var", "fstat"),
+    stringsAsFactors = FALSE
+  )
 
-  library(lfe)
-  #fo <- felm(cbind(mpg, wt) ~ hp|carb, mtcars)
+  mtcars$w <- mtcars$drat / 5
+
+  estimatr_mat <- matrix(NA, 6, 1)
 
   #summary(fo)
   rfo <- lm_robust(mpg ~ hp, mtcars, fixed_effects = ~ carb, se_type = "classical") # areg mpg hp, absorb(carb)
-  rfo[c("fstatistic", "res_var", "tot_var", "df.residual", "r.squared", "adj.r.squared", "proj_r.squared", "proj_adj.r.squared", "proj_fstatistic")]
-  rfo <- lm_robust(mpg ~ hp + factor(carb), mtcars, se_type = "classical")
+  estimatr_mat[1, ] <- c(rfo$std.error ^ 2)
 
   rfo <- tidy(lm_robust(mpg ~ hp, mtcars, fixed_effects = ~ carb, se_type = "HC1")) # areg mpg hp, absorb(carb) rob
-  rfo
+  estimatr_mat[2, ] <- c(rfo$std.error ^ 2)
+
   rfo <- tidy(lm_robust(mpg ~ hp, mtcars, fixed_effects = ~ carb, clusters = cyl, se_type = "stata")) # areg mpg hp, absorb(carb) cl(cyl)
-  rfo
+  estimatr_mat[3, ] <- c(rfo$std.error ^ 2)
 
-  rfo <- tidy(lm_robust(mpg ~ hp, mtcars, fixed_effects = ~ carb, weights = wt, se_type = "classical")) # areg mpg hp [aweight=w], absorb(carb)
-  rfo
-  rfo <- tidy(lm_robust(mpg ~ hp, mtcars, fixed_effects = ~ carb, se_type = "HC1")) # areg mpg hp [aweight=w], absorb(carb) rob
-  rfo
-  rfo <- tidy(lm_robust(mpg ~ hp, mtcars, fixed_effects = ~ carb, clusters = cyl, se_type = "stata")) # areg mpg hp [aweight=w], absorb(carb) cl(cyl)
-  rfo
 
+  rfo <- tidy(lm_robust(mpg ~ hp, mtcars, fixed_effects = ~ carb, weights = w, se_type = "classical")) # areg mpg hp [aweight=w], absorb(carb)
+  estimatr_mat[4, ] <- c(rfo$std.error ^ 2)
+
+  rfo <- tidy(lm_robust(mpg ~ hp, mtcars, fixed_effects = ~ carb, weights = w, se_type = "HC1")) # areg mpg hp [aweight=w], absorb(carb) rob
+  estimatr_mat[5, ] <- c(rfo$std.error ^ 2)
+
+  rfo <- tidy(lm_robust(mpg ~ hp, mtcars, fixed_effects = ~ carb, weights = w, clusters = cyl, se_type = "stata")) # areg mpg hp [aweight=w], absorb(carb) cl(cyl)
+  estimatr_mat[6, ] <- c(rfo$std.error ^ 2)
+
+  expect_equal(
+    estimatr_mat[, 1],
+    stata_ests[, 2]
+  )
 
 })
 
-# compare with felm for projected values
+
+test_that("FEs give correct projected F-stats", {
+
+  skip_if_not_installed("lfe")
+  library(lfe)
+
+  feo <- felm(Y ~ Z + X | B + B2, data = dat)
+  sfeo <- summary(leo)
+  sfeor <- summary(leo, robust = TRUE)
+
+  cfeo <- felm(Y ~ Z + X | B + B2 | 0 | cl, data = dat)
+  sfeoc <- summary(cleo, robust = TRUE)
+
+  # classical
+  rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "classical")
+
+  expect_equivalent(
+    tidy(rfo)[rfo$term %in% c("Z", "X"), c("estimate", "std.error", "p.value")],
+    as.data.frame(sfeo$coefficients[, c(1, 2, 4)])
+  )
+
+  expect_equivalent(
+    rfo[c("r.squared", "adj.r.squared", "proj_r.squared", "proj_adj.r.squared")],
+    sfeo[c("r.squared", "adj.r.squared", "P.r.squared", "P.adj.r.squared")]
+  )
+
+  expect_equivalent(
+    rfo[["proj_fstatistic"]],
+    sfeo[["P.fstat"]][c("F", "df1", "df2")]
+  )
+
+  ## HC1
+  rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC1")
+
+  expect_equivalent(
+    tidy(rfo)[rfo$term %in% c("Z", "X"), c("estimate", "std.error", "p.value")],
+    as.data.frame(sfeor$coefficients[, c(1, 2, 4)])
+  )
+
+  expect_equivalent(
+    rfo[c("r.squared", "adj.r.squared", "proj_r.squared", "proj_adj.r.squared")],
+    sfeor[c("r.squared", "adj.r.squared", "P.r.squared", "P.adj.r.squared")]
+  )
+
+  expect_equivalent(
+    rfo[["proj_fstatistic"]],
+    sfeor[["P.fstat"]][c("F", "df1", "df2")]
+  )
+
+  ## CR stata
+  rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "stata")
+
+  # Different pval because lfe doesn't use J-1 as it's DoF
+  expect_equivalent(
+    tidy(rfo)[rfo$term %in% c("Z", "X"), c("estimate", "std.error")],
+    as.data.frame(sfeoc$coefficients[, c(1, 2)])
+  )
+
+  expect_equivalent(
+    rfo[c("r.squared", "adj.r.squared", "proj_r.squared", "proj_adj.r.squared")],
+    sfeoc[c("r.squared", "adj.r.squared", "P.r.squared", "P.adj.r.squared")]
+  )
+
+  expect_equivalent(
+    rfo[["proj_fstatistic"]],
+    sfeoc[["P.fstat"]][c("F", "df1", "df2")]
+  )
+
+})
+
+
+test_that("Handle perfect fits appropriately", {
+  dat$Bsingle <- c(1, 2, rep(3:4, each = 9))
+  rfo <- lm_robust(Y ~ X, fixed_effects = ~ Bsingle, data = dat)
+  ro <- lm_robust(Y ~ X + factor(Bsingle), data = dat)
+
+  expect_equivalent(
+    tidy(rfo)[rfo$term == "X", ],
+    tidy(ro)[ro$term == "X", ]
+  )
+})

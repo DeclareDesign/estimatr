@@ -18,12 +18,11 @@ areg mpg hp, absorb(carb) vce(robust)
 mat V=e(V)
 file write outf _n "HC1" _tab (V[1,1]) _tab (e(F))
 
-
 areg mpg hp, absorb(carb) vce(cluster cyl)
 mat V=e(V)
 file write outf _n "stata_cl" _tab (V[1,1]) _tab (e(F))
 
-areg mpg hp [aweight=w]
+areg mpg hp [aweight=w], absorb(carb)
 predict hii, hat
 mat V=e(V)
 file write outf _n "classicalw" _tab (V[1,1]) _tab (e(F))

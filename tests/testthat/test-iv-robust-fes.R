@@ -26,16 +26,10 @@ test_that("FE matches with multiple FEs and covars", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
-  library(lfe)
-  lfo <- felm(Y ~ X2 | B + B2 | (X1 ~ Z), data = dat)
-  debugonce(lfe:::summary.felm)
-  summary(lfo)
-  ro[c("r.squared", "adj.r.squared", "fstatistic")]
-  rfo[c("r.squared", "adj.r.squared", "fstatistic", "proj_r.squared", "proj_adj.r.squared", "proj_fstatistic")]
   ## HC0
   ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), data = dat, se_type = "HC0")
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, se_type = "HC0")
@@ -46,8 +40,8 @@ test_that("FE matches with multiple FEs and covars", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## HC1
@@ -60,8 +54,8 @@ test_that("FE matches with multiple FEs and covars", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## HC2
@@ -74,8 +68,8 @@ test_that("FE matches with multiple FEs and covars", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## HC3
@@ -88,8 +82,8 @@ test_that("FE matches with multiple FEs and covars", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## CR0
@@ -102,8 +96,8 @@ test_that("FE matches with multiple FEs and covars", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## CR stata
@@ -116,8 +110,8 @@ test_that("FE matches with multiple FEs and covars", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## CR2
@@ -130,8 +124,8 @@ test_that("FE matches with multiple FEs and covars", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
 })
@@ -147,8 +141,8 @@ test_that("FE matches with weights", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## HC0
@@ -161,8 +155,8 @@ test_that("FE matches with weights", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## HC1
@@ -175,8 +169,8 @@ test_that("FE matches with weights", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## HC2
@@ -189,8 +183,8 @@ test_that("FE matches with weights", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## HC3
@@ -203,8 +197,8 @@ test_that("FE matches with weights", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## CR0
@@ -217,8 +211,8 @@ test_that("FE matches with weights", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## CR stata
@@ -231,8 +225,8 @@ test_that("FE matches with weights", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
   )
 
   ## CR2
@@ -245,8 +239,143 @@ test_that("FE matches with weights", {
   )
 
   expect_equal(
-    ro[c("r.squared", "adj.r.squared", "fstatistic")],
-    rfo[c("r.squared", "adj.r.squared", "fstatistic")]
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
+  )
+
+})
+
+test_that("IV FE matches lfe including proj r2", {
+
+  skip_if_not_installed("lfe")
+  library(lfe)
+
+  ## unweighted
+
+  ## Classical
+  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, se_type = "classical")
+  feo <- felm(Y ~ X2 | B + B2 | (X1 ~ Z), data = dat)
+  sfeo <- summary(feo)
+
+  expect_equivalent(
+    tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")],
+    data.frame(feo$coefficients, feo$se)[c(2, 1), ]
+  )
+
+  expect_equivalent(
+    rfo[c("r.squared", "adj.r.squared", "proj_r.squared", "proj_adj.r.squared")],
+    sfeo[c("r.squared", "adj.r.squared", "P.r.squared", "P.adj.r.squared")]
+  )
+
+  expect_equivalent(
+    rfo[["proj_fstatistic"]],
+    sfeo[["P.fstat"]][c("F", "df1", "df2")]
+  )
+
+  ## HC1
+  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, se_type = "HC1")
+
+  feo <- felm(Y ~ X2 | B + B2 | (X1 ~ Z), data = dat)
+  sfeo <- summary(feo, robust = T)
+
+  expect_equivalent(
+    tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")],
+    data.frame(feo$coefficients, sqrt(diag(feo$robustvcv)))[c(2, 1), ]
+  )
+
+  expect_equivalent(
+    rfo[c("r.squared", "adj.r.squared", "proj_r.squared", "proj_adj.r.squared")],
+    sfeo[c("r.squared", "adj.r.squared", "P.r.squared", "P.adj.r.squared")]
+  )
+
+  expect_equivalent(
+    rfo[["proj_fstatistic"]],
+    sfeo[["P.fstat"]][c("F", "df1", "df2")]
+  )
+
+  ## CR1stata
+  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "stata")
+  feo <- felm(Y ~ X2 | B + B2 | (X1 ~ Z) | cl, data = dat)
+
+  sfeo <- summary(feo)
+
+  expect_equivalent(
+    tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")],
+    data.frame(feo$coefficients, sqrt(diag(feo$clustervcv)))[c(2, 1), ]
+  )
+
+  expect_equivalent(
+    rfo[c("r.squared", "adj.r.squared", "proj_r.squared", "proj_adj.r.squared")],
+    sfeo[c("r.squared", "adj.r.squared", "P.r.squared", "P.adj.r.squared")]
+  )
+
+  expect_true(
+    max(abs(
+      rfo[["proj_fstatistic"]] - sfeo[["P.fstat"]][c("F", "df1", "df2")]
+    )) < 1e-7
+  )
+
+  ## Weighted
+  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "classical")
+  feo <- felm(Y ~ X2 | B + B2 | (X1 ~ Z), data = dat, weights = dat$w)
+  sfeo <- summary(feo)
+
+  expect_equivalent(
+    tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")],
+    data.frame(feo$coefficients, feo$se)[c(2, 1), ]
+  )
+
+  expect_equivalent(
+    rfo[c("r.squared", "adj.r.squared", "proj_r.squared", "proj_adj.r.squared")],
+    sfeo[c("r.squared", "adj.r.squared", "P.r.squared", "P.adj.r.squared")]
+  )
+
+  expect_equivalent(
+    rfo[["proj_fstatistic"]],
+    sfeo[["P.fstat"]][c("F", "df1", "df2")]
+  )
+
+  ## HC1
+  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "HC1")
+
+  feo <- felm(Y ~ X2 | B + B2 | (X1 ~ Z), data = dat,  weights = dat$w)
+  sfeo <- summary(feo, robust = T)
+
+  expect_equivalent(
+    tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")],
+    data.frame(feo$coefficients, sqrt(diag(feo$robustvcv)))[c(2, 1), ]
+  )
+
+  expect_equivalent(
+    rfo[c("r.squared", "adj.r.squared", "proj_r.squared", "proj_adj.r.squared")],
+    sfeo[c("r.squared", "adj.r.squared", "P.r.squared", "P.adj.r.squared")]
+  )
+
+  expect_equivalent(
+    rfo[["proj_fstatistic"]],
+    sfeo[["P.fstat"]][c("F", "df1", "df2")]
+  )
+
+  ## CR1stata
+  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, weights = w, se_type = "stata")
+  feo <- felm(Y ~ X2 | B + B2 | (X1 ~ Z) | cl, data = dat, weights = dat$w)
+
+  sfeo <- summary(feo)
+
+  expect_equivalent(
+    tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")],
+    data.frame(feo$coefficients, sqrt(diag(feo$clustervcv)))[c(2, 1), ]
+  )
+
+  expect_equivalent(
+    rfo[c("r.squared", "adj.r.squared", "proj_r.squared", "proj_adj.r.squared")],
+    sfeo[c("r.squared", "adj.r.squared", "P.r.squared", "P.adj.r.squared")]
+  )
+
+  expect_true(
+    max(abs(
+      rfo[["proj_fstatistic"]] - sfeo[["P.fstat"]][c("F", "df1", "df2")]
+    )) < 1e-6
   )
 
 })

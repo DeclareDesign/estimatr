@@ -168,7 +168,7 @@ lm_robust_fit <- function(y,
         }
       }
 
-      fit$beta_hat <- fit$beta_hat[covs_used, ]
+      fit$beta_hat <- fit$beta_hat[covs_used, , drop = FALSE]
     }
 
     # compute fitted.values and residuals
@@ -181,7 +181,7 @@ lm_robust_fit <- function(y,
         fitted.values <- Xunweighted %*% fit$beta_hat
       }
       ei <- as.matrix(yunweighted - fitted.values)
-      # diff not ei
+      ei_weight <- as.matrix(y - X[, 1:x_rank, drop = FALSE] %*% fit$beta_hat)
       X <- weights * X
       if (fes) {
         femat <- weights * femat
@@ -229,12 +229,6 @@ lm_robust_fit <- function(y,
         which_covs = which_covs[covs_used],
         fe_rank = fe_rank
       )
-
-      if (se_type == "CR2") {
-        vcov_fit[["res_var"]] <-
-          colSums((y - X[, 1:x_rank, drop = FALSE] %*% fit$beta_hat)^2) /
-          (N - tot_rank)
-      }
 
       return_list$std.error[est_exists] <- sqrt(diag(vcov_fit$Vcov_hat))
 
@@ -288,11 +282,18 @@ lm_robust_fit <- function(y,
 
   if (se_type != "none") {
 
-    if (weighted) {
-      return_list[["res_var"]] <- colSums(ei^2 * weight_mean) / (return_list[["df.residual"]])
-    } else {
-      return_list[["res_var"]] <- diag(as.matrix(ifelse(vcov_fit[["res_var"]] < 0, NA, vcov_fit[["res_var"]])))
+    if (se_type == "CR2" && weighted) {
+      ei <- ei_weight
     }
+
+    if (weighted) {
+      return_list[["res_var"]] <-
+        colSums(ei^2 * weight_mean) / (return_list[["df.residual"]])
+    } else {
+      return_list[["res_var"]] <-
+        diag(as.matrix(ifelse(vcov_fit[["res_var"]] < 0, NA, vcov_fit[["res_var"]])))
+    }
+
     tss_r2s <- get_r2s(
       y = y,
       return_list = return_list,
@@ -309,18 +310,21 @@ lm_robust_fit <- function(y,
       dendf <- return_list[["df.residual"]]
     }
 
-    f <- get_fstat(
-      tss_r2s = tss_r2s,
-      return_list = return_list,
-      iv_ei = iv_ei,
-      nomdf = nomdf,
-      dendf = dendf,
-      fit = fit,
-      vcov_fit = vcov_fit,
-      has_int = has_int,
-      iv_second_stage = iv_second_stage
-    )
-
+    if (nomdf > 0) {
+      f <- get_fstat(
+        tss_r2s = tss_r2s,
+        return_list = return_list,
+        iv_ei = iv_ei,
+        nomdf = nomdf,
+        dendf = dendf,
+        fit = fit,
+        vcov_fit = vcov_fit,
+        has_int = has_int,
+        iv_second_stage = iv_second_stage
+      )
+    } else {
+      f <- NULL
+    }
 
     if (!fes) {
       return_list <- c(return_list, tss_r2s)
@@ -339,21 +343,21 @@ lm_robust_fit <- function(y,
         weight_mean = weight_mean
       )
 
-      nomdf <- tot_rank - has_int
-      f <- get_fstat(
-        tss_r2s = tss_r2s,
-        return_list = return_list,
-        iv_ei = iv_ei,
-        nomdf = nomdf,
-        dendf = dendf,
-        fit = fit,
-        vcov_fit = vcov_fit,
-        has_int = has_int,
-        iv_second_stage = iv_second_stage
-      )
+      # nomdf <- tot_rank - has_int
+      # f <- get_fstat(
+      #   tss_r2s = tss_r2s,
+      #   return_list = return_list,
+      #   iv_ei = iv_ei,
+      #   nomdf = nomdf,
+      #   dendf = dendf,
+      #   fit = fit,
+      #   vcov_fit = vcov_fit,
+      #   has_int = has_int,
+      #   iv_second_stage = iv_second_stage
+      # )
 
       return_list <- c(return_list, tss_r2s)
-      return_list[["fstatistic"]] <- f
+      # return_list[["fstatistic"]] <- f
 
     }
 
@@ -474,32 +478,26 @@ get_fstat <- function(tss_r2s, return_list, iv_ei, nomdf, dendf, fit, vcov_fit, 
     fstat_names <- "value"
   }
 
-
   if (!iv_second_stage && return_list[["se_type"]] == "classical") {
     fstat <- tss_r2s$r.squared * return_list[["df.residual"]] /
         ((1 - tss_r2s$r.squared) * (nomdf))
-  } else if (return_list[["se_type"]] == "classical" && iv_second_stage) {
+  } else if (return_list[["se_type"]] == "classical" && iv_second_stage && !return_list[["weighted"]]) {
     ivrss <- colSums(iv_ei^2)
     fstat <- ((tss_r2s$tss - ivrss) / nomdf) / return_list[["res_var"]]
   } else {
-    indices <- seq.int(has_int + 1, return_list[["rank"]], by = 1)
+    indices <- seq.int(has_int + (!return_list[["fes"]]), return_list[["rank"]], by = 1)
     fstat <-
       tryCatch({
         sapply(seq_len(ncol(fit$beta_hat)),
                function(x) {
-                 outcome_indices <- indices + (x - 1) * return_list[["rank"]]
-                 crossprod(fit$beta_hat[outcome_indices],
-                           chol2inv(chol(vcov_fit$Vcov_hat[outcome_indices, outcome_indices])) %*%
-                             fit$beta_hat[outcome_indices]) / (return_list[["rank"]] - has_int)
+                 vcov_indices <- indices + (x - 1) * return_list[["rank"]]
+                 crossprod(fit$beta_hat[indices, x],
+                           chol2inv(chol(vcov_fit$Vcov_hat[vcov_indices, vcov_indices])) %*%
+                             fit$beta_hat[indices, x]) / nomdf
                })
       }, error = function(e) {
-        if (grepl("system is computationally singular", e)) {
-          warning("Unable to compute f-statistic due to rank deficient variance-",
-                  "covariance matrix")
-        } else {
-          warning("Unable to compute f-statistic")
-        }
-        NA
+        warning("Unable to compute f-statistic because variance-covariance matrix cannot be inverted")
+        rep(NA, length(fstat_names))
       })
   }
 

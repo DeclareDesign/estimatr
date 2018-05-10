@@ -139,6 +139,7 @@ test_that("iv_robust matches AER + ivpack", {
   ivdefi <- ivreg(y ~ z + z2| x + x1_c, data = dat)
   ivdefsei <- robust.se(ivdefi)
 
+  # No longer equal
   expect_equal(
     coef(ivdefri),
     coef(ivdefi)
@@ -253,6 +254,7 @@ test_that("iv_robust different specifications work", {
   ivro <- iv_robust(mpg ~ .| ., data = mtcars, se_type = "HC0")
   ivo <- ivreg(mpg ~ . | ., data = mtcars)
   ivpo <- robust.se(ivo)
+
   expect_equivalent(
     as.matrix(tidy(ivro)[, c("estimate", "std.error", "p.value")]),
     ivpo[, c(1, 2, 4)]
