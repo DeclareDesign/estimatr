@@ -111,22 +111,21 @@
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#estimatr-fast-estimators-for-design-based-inference" class="anchor"></a>estimatr: Fast Estimators for Design-Based Inference</h1></div>
 
-<p><strong>If you have an older than v0.6 (check using <code>packageVersion("estimatr")</code>), please install the new version CRAN or the version on the development server to get v0.6 or v0.7, which contain important bugfixes.</strong></p>
 <p>Technical papers and textbooks demand complex estimation strategies that are often difficult to implement, even for scientists who are expert coders. The result is slow code copied and pasted from the internet, where the result is taken on faith.</p>
-<p><strong>estimatr</strong> provides a small set of commonly-used estimators (methods for estimating quantities of interest like treatment effects or regression parameters), using <code>C++</code> for speed, and implemented in <code>R</code> with simple, accessible syntax. We include two functions that implement means estimators, <a href="https://declaredesign.org/R/estimatr/reference/difference_in_means.html"><code><a href="reference/difference_in_means.html">difference_in_means()</a></code></a> and <a href="https://declaredesign.org/R/estimatr/reference/horvitz_thompson.html"><code><a href="reference/horvitz_thompson.html">horvitz_thompson()</a></code></a>. In addition, we include three functions for linear regression estimators, <a href="https://declaredesign.org/R/estimatr/reference/lm_robust.html"><code><a href="reference/lm_robust.html">lm_robust()</a></code></a>, <a href="https://declaredesign.org/R/estimatr/reference/lm_lin.html"><code><a href="reference/lm_lin.html">lm_lin()</a></code></a>, and <a href="https://declaredesign.org/R/estimatr/reference/iv_robust.html"><code><a href="reference/iv_robust.html">iv_robust()</a></code></a>. In each case, scientists can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs. The <a href="https://declaredesign.org/R/estimatr/articles/getting-started.html">Getting Started Guide</a> describes each estimator provided by <strong>estimatr</strong> and how it can be used in your analysis.</p>
-<p>Fast estimators also enable fast simulation of research designs to learn about their properties (see <a href="https://declaredesign.org/R/DeclareDesign/">DeclareDesign</a>).</p>
-<div id="installing-estimatr" class="section level3">
-<h3 class="hasAnchor">
-<a href="#installing-estimatr" class="anchor"></a>Installing estimatr</h3>
+<p><strong>estimatr</strong> provides a small set of commonly-used estimators (methods for estimating quantities of interest like treatment effects or regression parameters), using <code>C++</code> for speed, and implemented in <code>R</code> with simple, accessible syntax. We include two functions that implement means estimators, <code><a href="reference/difference_in_means.html">difference_in_means()</a></code> and <code><a href="reference/horvitz_thompson.html">horvitz_thompson()</a></code>. In addition, we include three functions for linear regression estimators, <code><a href="reference/lm_robust.html">lm_robust()</a></code>, <code><a href="reference/lm_lin.html">lm_lin()</a></code>, and <code><a href="reference/iv_robust.html">iv_robust()</a></code>. In each case, scientists can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs. The <a href="articles/getting-started.html">Getting Started Guide</a> describes each estimator provided by <strong>estimatr</strong> and how it can be used in your analysis.</p>
+<p>Fast estimators also enable fast simulation of research designs to learn about their properties (see <a href="declaredesign.org">DeclareDesign</a>).</p>
+<div id="installing-estimatr" class="section level2">
+<h2 class="hasAnchor">
+<a href="#installing-estimatr" class="anchor"></a>Installing estimatr</h2>
 <p>To install the latest stable release of <strong>estimatr</strong>, please ensure that you are running version 3.3 or later of R and run the following code:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">install.packages</span>(<span class="st">"estimatr"</span>)</code></pre></div>
 <p>If you would like to use the latest development release of <strong>estimatr</strong>, please ensure that you are running version 3.3 or later of R and run the following code:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">install.packages</span>(<span class="st">"estimatr"</span>, <span class="dt">dependencies =</span> <span class="ot">TRUE</span>,
                  <span class="dt">repos =</span> <span class="kw">c</span>(<span class="st">"http://r.declaredesign.org"</span>, <span class="st">"https://cloud.r-project.org"</span>))</code></pre></div>
 </div>
-<div id="easy-to-use" class="section level3">
-<h3 class="hasAnchor">
-<a href="#easy-to-use" class="anchor"></a>Easy to use</h3>
+<div id="easy-to-use" class="section level2">
+<h2 class="hasAnchor">
+<a href="#easy-to-use" class="anchor"></a>Easy to use</h2>
 <p>Once the package is installed, getting appropriate estimates and standard errors is now both fast and easy.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(estimatr)
 
@@ -156,21 +155,21 @@ res_cl &lt;-<span class="st"> </span><span class="kw"><a href="reference/lm_robu
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Coefficients:</span>
 <span class="co">#&gt;             Estimate Std. Error Pr(&gt;|t|) CI Lower CI Upper   DF</span>
-<span class="co">#&gt; (Intercept)   -0.180      0.200    0.428   -0.777    0.417 3.38</span>
-<span class="co">#&gt; z              0.424      0.236    0.118   -0.142    0.990 6.54</span>
+<span class="co">#&gt; (Intercept)    0.269      0.164     0.20   -0.255    0.793 2.99</span>
+<span class="co">#&gt; z             -0.422      0.250     0.14   -1.027    0.182 6.30</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Multiple R-squared:  0.0419 ,    Adjusted R-squared:  0.0321 </span>
-<span class="co">#&gt; F-statistic: 4.28 on 1 and 98 DF,  p-value: 0.0411</span>
+<span class="co">#&gt; Multiple R-squared:  0.041 , Adjusted R-squared:  0.0312 </span>
+<span class="co">#&gt; F-statistic: 4.18 on 1 and 98 DF,  p-value: 0.0435</span>
 
 <span class="co"># matched-pair design learned from blocks argument</span>
 <span class="kw">data</span>(sleep)
 res_dim &lt;-<span class="st"> </span><span class="kw"><a href="reference/difference_in_means.html">difference_in_means</a></span>(extra <span class="op">~</span><span class="st"> </span>group, <span class="dt">data =</span> sleep, <span class="dt">blocks =</span> ID)</code></pre></div>
-<p>The <a href="https://declaredesign.org/R/estimatr/articles/getting-started.html">Getting Started Guide</a> has more examples and uses, as do the reference pages. The <a href="https://declaredesign.org/R/estimatr/articles/mathematical-notes.html">Mathematical Notes</a> provide more information about what each estimator is doing under the hood.</p>
+<p>The <a href="articles/getting-started.html">Getting Started Guide</a> has more examples and uses, as do the reference pages. The <a href="articles/mathematical-notes.html">Mathematical Notes</a> provide more information about what each estimator is doing under the hood.</p>
 </div>
-<div id="fast-to-use" class="section level3">
-<h3 class="hasAnchor">
-<a href="#fast-to-use" class="anchor"></a>Fast to use</h3>
-<p>Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using <code>lm()</code> and the <code>sandwich</code> package to get HC2 standard errors. More speed comparisons are available <a href="https://declaredesign.org/R/estimatr/articles/benchmarking%20estimatr.html">here</a>.</p>
+<div id="fast-to-use" class="section level2">
+<h2 class="hasAnchor">
+<a href="#fast-to-use" class="anchor"></a>Fast to use</h2>
+<p>Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using <code>lm()</code> and the <code>sandwich</code> package to get HC2 standard errors. More speed comparisons are available <a href="articles/benchmarking-estimatr.html">here</a>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># example code</span>
 <span class="co"># estimatr</span>
 <span class="kw"><a href="reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>x1 <span class="op">+</span><span class="st"> </span>x2 <span class="op">+</span><span class="st"> </span>x3 <span class="op">+</span><span class="st"> </span>x4, <span class="dt">data =</span> dat)
@@ -187,7 +186,7 @@ lm_out &lt;-<span class="st"> </span><span class="kw">lm</span>(y <span class="o
 <img src="articles/lm_speed_covars.png">
 </div>
 <hr>
-<p>This project is generously supported by a grant from the <a href="http://www.arnoldfoundation.org">Laura and John Arnold Foundation</a> and seed funding from <a href="http://egap.org">Evidence in Governance and Politics (EGAP)</a>.</p>
+<p>This project is generously supported by a grant from the <a href="arnoldfoundation.org">Laura and John Arnold Foundation</a> and seed funding from <a href="egap.org">Evidence in Governance and Politics (EGAP)</a>.</p>
 </div>
 </div>
 </div>

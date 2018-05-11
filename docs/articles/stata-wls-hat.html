@@ -120,9 +120,9 @@
 \mathbf{H} = \mathbf{X} (\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{W}
 \]</span></p>
 <p>This results in differences when researches estimate HC2 and HC3 variance estimators. The HC1 standard errors, Stata’s default, are the same across all packages. The rest of this document just walks through the set-up for the above and demonstrates some results from Stata, R, and Python.</p>
-<div id="weighted-least-squares" class="section level2">
-<h2 class="hasAnchor">
-<a href="#weighted-least-squares" class="anchor"></a>Weighted least squares</h2>
+<div id="weighted-least-squares" class="section level3">
+<h3 class="hasAnchor">
+<a href="#weighted-least-squares" class="anchor"></a>Weighted least squares</h3>
 <p>Let’s briefly review WLS. Weights are used in linear regression often for two key problems; (1) to model and correct for heteroskedasticity, and (2) to deal with unequal sampling (or treatment) probabilities. In both cases, we take the standard model</p>
 <p><span class="math display">\[
 y_i = \mathbf{x}_i^\top \mathbf{\beta} + \epsilon_i,
@@ -143,9 +143,9 @@ y_i = \mathbf{x}_i^\top \mathbf{\beta} + \epsilon_i,
 \end{aligned}
 \]</span></p>
 </div>
-<div id="heteroskedastic-consistent-variance-estimators" class="section level2">
-<h2 class="hasAnchor">
-<a href="#heteroskedastic-consistent-variance-estimators" class="anchor"></a>Heteroskedastic-consistent variance estimators</h2>
+<div id="heteroskedastic-consistent-variance-estimators" class="section level3">
+<h3 class="hasAnchor">
+<a href="#heteroskedastic-consistent-variance-estimators" class="anchor"></a>Heteroskedastic-consistent variance estimators</h3>
 <p>Turning to variance, the standard sandwich estimator is</p>
 <p><span class="math display">\[
 \mathbb{V}[\widehat{\mathbf{\beta}}] = (\mathbf{X}^{\top}\mathbf{X})^{-1} \mathbf{X}^\top \Omega \mathbf{X} (\mathbf{X}^{\top}\mathbf{X})^{-1}
@@ -218,9 +218,9 @@ reg mpg hp [aweight=wt], vce(hc2)</code></pre>
 </ol>
 </div>
 </div>
-<div id="references" class="section level2 unnumbered">
-<h2 class="hasAnchor">
-<a href="#references" class="anchor"></a>References</h2>
+<div id="references" class="section level3 unnumbered">
+<h3 class="hasAnchor">
+<a href="#references" class="anchor"></a>References</h3>
 <div id="refs" class="references">
 <div id="ref-livalliant2009">
 <p>Li, Jianzhu, and Richard Valliant. 2009. “Survey Weighted Hat Matrix and Leverages.” <em>Survey Methodology</em> 35 (1). Statistics Canada: 15–24.</p>
@@ -237,15 +237,6 @@ reg mpg hp [aweight=wt], vce(hc2)</code></pre>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
-        <div id="tocnav">
-      <h2 class="hasAnchor">
-<a href="#tocnav" class="anchor"></a>Contents</h2>
-      <ul class="nav nav-pills nav-stacked">
-<li><a href="#weighted-least-squares">Weighted least squares</a></li>
-      <li><a href="#heteroskedastic-consistent-variance-estimators">Heteroskedastic-consistent variance estimators</a></li>
-      <li><a href="#references">References</a></li>
-      </ul>
-</div>
       </div>
 
 </div>
