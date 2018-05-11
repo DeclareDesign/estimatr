@@ -114,8 +114,8 @@ declaration_to_condition_pr_mat <- function(ra_declaration,
   }
 
   if (is.null(condition1) && is.null(condition2)) {
-    condition1 <- ra_declaration$condition_names[1]
-    condition2 <- ra_declaration$condition_names[2]
+    condition1 <- ra_declaration$conditions[1]
+    condition2 <- ra_declaration$conditions[2]
   } else if (is.null(condition1) && !is.null(condition2)) {
     stop(
       "Cannot have `condition1 == NULL` and `condition2 != NULL`"
