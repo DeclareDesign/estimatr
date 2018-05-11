@@ -60,13 +60,13 @@
 #' dependencies in the model and may fail silently if they exist.
 #'
 #' If \code{`fixed_effects`} are specified, both the outcome and design matrix
-#' are centered using ALGORITHM OF ALTERNATING PROJECTIONS (Gaure 2013). Specifying
+#' are centered using the method of alternating projections (Halperin 1962; Gaure 2013). Specifying
 #' fixed effects in this way will result in large speed gains with standard error
 #' estimators that do not need to invert the matrix of fixed effects. This means using
 #' "classical", "HC0", "HC1", "CR0", or "stata" standard errors will be faster than other
 #' standard error estimators. Be wary when specifying fixed effects that may result
 #' in perfect fits for some observations or if there are intersecting groups across
-#' multiple fixed effect variables (e.g. if you specify both `year` and `country` fixed-effects
+#' multiple fixed effect variables (e.g. if you specify both "year" and "country" fixed effects
 #' with an unbalanced panel where one year you only have data for one country).
 #'
 #' @return An object of class \code{"lm_robust"}.
@@ -116,6 +116,10 @@
 #' Abadie, Alberto, Susan Athey, Guido W Imbens, and Jeffrey Wooldridge. 2017. "A Class of Unbiased Estimators of the Average Treatment Effect in Randomized Experiments." arXiv Pre-Print. \url{https://arxiv.org/abs/1710.02926v2}.
 #'
 #' Bell, Robert M, and Daniel F McCaffrey. 2002. "Bias Reduction in Standard Errors for Linear Regression with Multi-Stage Samples." Survey Methodology 28 (2): 169-82.
+#'
+#' Gaure, Simon. 2013. "OLS with multiple high dimensional category variables." Computational Statistics \& Data Analysis 66: 8-1. \url{http://dx.doi.org/10.1016/j.csda.2013.03.024}
+#'
+#' Halperin, I. 1962. "The product of projection operators." Acta Scientiarum Mathematicarum (Szeged) 23(1-2): 96-99.
 #'
 #' MacKinnon, James, and Halbert White. 1985. "Some Heteroskedasticity-Consistent Covariance Matrix Estimators with Improved Finite Sample Properties." Journal of Econometrics 29 (3): 305-25. \url{https://doi.org/10.1016/0304-4076(85)90158-7}.
 #'

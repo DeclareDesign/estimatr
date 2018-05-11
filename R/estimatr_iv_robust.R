@@ -14,6 +14,11 @@
 #' of observations to be used.
 #' @param clusters An optional bare (unquoted) name of the variable that
 #' corresponds to the clusters in the data.
+#' @param fixed_effects An optional right-sided formula containing the fixed
+#' effects that will be projected out of the data, such as \code{~ blockID}. Do not
+#' pass multiple-fixed effects with intersecting groups. Speed gains are greatest for
+#' variables with large numbers of groups and when using "HC1" or "stata" standard errors.
+#' See 'Details'.
 #' @param se_type The sort of standard error sought. If `clusters` is
 #' not specified the options are "HC0", "HC1" (or "stata", the equivalent),
 #'  "HC2" (default), "HC3", or
@@ -50,6 +55,16 @@
 #' first-stage (endogenous) regressors. More notes on this can be found at
 #' \href{https://declaredesign.org/R/estimatr/articles/mathematical-notes.html}{the mathematical appendix}.
 #'
+#' If \code{`fixed_effects`} are specified, both the outcome, regressors, and instruments
+#' are centered using the method of alternating projections (Halperin 1962; Gaure 2013). Specifying
+#' fixed effects in this way will result in large speed gains with standard error
+#' estimators that do not need to invert the matrix of fixed effects. This means using
+#' "classical", "HC0", "HC1", "CR0", or "stata" standard errors will be faster than other
+#' standard error estimators. Be wary when specifying fixed effects that may result
+#' in perfect fits for some observations or if there are intersecting groups across
+#' multiple fixed effect variables (e.g. if you specify both "year" and "country" fixed effects
+#' with an unbalanced panel where one year you only have data for one country).
+#'
 #' @return An object of class \code{"iv_robust"}.
 #'
 #' The post-estimation commands functions \code{summary} and \code{\link{tidy}}
@@ -80,6 +95,12 @@
 #'   \item{weighted}{whether or not weights were applied}
 #'   \item{call}{the original function call}
 #' We also return \code{terms} with the second stage terms and \code{terms_regressors} with the first stage terms, both of which used by \code{predict}.
+#'
+#' @references
+#'
+#' Gaure, Simon. 2013. "OLS with multiple high dimensional category variables." Computational Statistics & Data Analysis 66: 8-1. \url{http://dx.doi.org/10.1016/j.csda.2013.03.024}
+#'
+#' Halperin, I. 1962. "The product of projection operators." Acta Scientiarum Mathematicarum (Szeged) 23(1-2): 96-99.
 #'
 #' @examples
 #' library(fabricatr)

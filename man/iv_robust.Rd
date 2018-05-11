@@ -24,6 +24,12 @@ of observations to be used.}
 \item{clusters}{An optional bare (unquoted) name of the variable that
 corresponds to the clusters in the data.}
 
+\item{fixed_effects}{An optional right-sided formula containing the fixed
+effects that will be projected out of the data, such as \code{~ blockID}. Do not
+pass multiple-fixed effects with intersecting groups. Speed gains are greatest for
+variables with large numbers of groups and when using "HC1" or "stata" standard errors.
+See 'Details'.}
+
 \item{se_type}{The sort of standard error sought. If `clusters` is
 not specified the options are "HC0", "HC1" (or "stata", the equivalent),
  "HC2" (default), "HC3", or
@@ -99,6 +105,16 @@ endogenous regressors, and the residuals used are the difference
 between the outcome and a fit produced by the second-stage coefficients and the
 first-stage (endogenous) regressors. More notes on this can be found at
 \href{https://declaredesign.org/R/estimatr/articles/mathematical-notes.html}{the mathematical appendix}.
+
+If \code{`fixed_effects`} are specified, both the outcome, regressors, and instruments
+are centered using the method of alternating projections (Halperin 1962; Gaure 2013). Specifying
+fixed effects in this way will result in large speed gains with standard error
+estimators that do not need to invert the matrix of fixed effects. This means using
+"classical", "HC0", "HC1", "CR0", or "stata" standard errors will be faster than other
+standard error estimators. Be wary when specifying fixed effects that may result
+in perfect fits for some observations or if there are intersecting groups across
+multiple fixed effect variables (e.g. if you specify both "year" and "country" fixed effects
+with an unbalanced panel where one year you only have data for one country).
 }
 \examples{
 library(fabricatr)
@@ -124,4 +140,9 @@ tidy(iv_robust(Y ~ D | Z, data = dat, clusters = cl))
 tidy(iv_robust(Y ~ D | Z, data = dat, clusters = cl, se_type = "stata"))
 
 
+}
+\references{
+Gaure, Simon. 2013. "OLS with multiple high dimensional category variables." Computational Statistics & Data Analysis 66: 8-1. \url{http://dx.doi.org/10.1016/j.csda.2013.03.024}
+
+Halperin, I. 1962. "The product of projection operators." Acta Scientiarum Mathematicarum (Szeged) 23(1-2): 96-99.
 }
