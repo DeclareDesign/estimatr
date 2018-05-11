@@ -230,18 +230,23 @@ test_that("FE matches with weights", {
   )
 
   ## CR2
-  ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), clusters = cl, data = dat, weights = w, se_type = "CR2")
-  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, weights = w, se_type = "CR2")
-
-  expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+  expect_error(
+    rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, weights = w, se_type = "CR2"),
+    "Cannot use `fixed_effects` with weighted"
   )
 
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    rfo[c("r.squared", "adj.r.squared")]
-  )
+
+  # ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), clusters = cl, data = dat, weights = w, se_type = "CR2")
+  #
+  # expect_equivalent(
+  #   tidy(ro)[ro$term %in% c("X1", "X2"), ],
+  #   tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+  # )
+  #
+  # expect_equal(
+  #   ro[c("r.squared", "adj.r.squared")],
+  #   rfo[c("r.squared", "adj.r.squared")]
+  # )
 
 })
 

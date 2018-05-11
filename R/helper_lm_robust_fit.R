@@ -51,6 +51,10 @@ lm_robust_fit <- function(y,
 
   se_type <- check_se_type(se_type, clustered, iv_second_stage)
 
+  if (weighted && se_type == "CR2" && fes) {
+    stop("Cannot use `fixed_effects` with weighted CR2 estimation at the moment")
+  }
+
   # -----------
   # Prep data for fitting
   # -----------
@@ -365,13 +369,16 @@ lm_robust_fit <- function(y,
       # return_list$residuals <- fit$residuals
       return_list[["vcov"]] <- vcov_fit$Vcov_hat
       if (multivariate) {
-        coef_names <- paste0(
-          rep(paste0(return_list[["outcome"]], ":"), each = x_rank),
-          rep(return_list$term, times = ny)
+        coef_names <- lapply(seq_len(ncol(est_exists)), function(j) return_list$term[est_exists[, j]])
+
+        outcome_coef_names <- paste0(
+          rep(paste0(return_list[["outcome"]], ":"), times = sapply(coef_names, length)),
+          unlist(coef_names, FALSE, FALSE)
         )
+
         dimnames(return_list[["vcov"]]) <- list(
-          coef_names,
-          coef_names
+          outcome_coef_names,
+          outcome_coef_names
         )
       } else {
         dimnames(return_list[["vcov"]]) <- list(

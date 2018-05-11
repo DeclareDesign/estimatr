@@ -682,4 +682,20 @@ test_that("multiple outcomes", {
     sapply(lmro[c("r.squared", "adj.r.squared", "fstatistic")], `[`, 2)
   )
 
+  # with missingness
+  mtcarsmiss <- mtcars
+  mtcarsmiss$hp[10] <- NA
+
+  lmo <- lm(cbind(mpg, hp) ~ cyl, data = mtcarsmiss)
+  summary(lmo)
+  lmro <- lm_robust(cbind(mpg, hp) ~ cyl, data = mtcarsmiss, se_type = "classical")
+  summary(lmro)
+
+  lmro <- lm_robust(cbind(mpg, hp) ~ cyl, data = mtcarsmiss, se_type = "HC2")
+  tidy(lmro)
+  library(lmtest)
+  library(sandwich)
+  coeftest(lmo, vcov = vcovHC(lmo, type = "HC2"))
+  tidy(lmro)
+
 })

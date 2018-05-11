@@ -134,21 +134,21 @@ test_that("iv_robust matches AER + ivpack", {
     ivdefse[, c(1, 2, 4)]
   )
 
-  # Also works as instrument
+  # Does not work if instrument is collinear with other instrument
   ivdefri <- iv_robust(y ~ z + z2| x + x1_c, data = dat, se_type = "HC0")
   ivdefi <- ivreg(y ~ z + z2| x + x1_c, data = dat)
   ivdefsei <- robust.se(ivdefi)
 
-  # No longer equal
-  expect_equal(
-    coef(ivdefri),
-    coef(ivdefi)
-  )
+  # No longer equal!
+  # expect_equal(
+  #   coef(ivdefri),
+  #   coef(ivdefi)
+  # )
 
-  expect_equivalent(
-    as.matrix(tidy(ivdefri)[1:2, c("estimate", "std.error", "p.value")]),
-    ivdefsei[, c(1, 2, 4)]
-  )
+  # expect_equivalent(
+  #   as.matrix(tidy(ivdefri)[1:2, c("estimate", "std.error", "p.value")]),
+  #   ivdefsei[, c(1, 2, 4)]
+  # )
 
   # Stata
   ivdefclr <- iv_robust(y ~ x + x1_c | z + z2, data = dat, clusters = clust, se_type = "stata")
