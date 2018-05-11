@@ -11,6 +11,11 @@
 #' of observations to be used.
 #' @param clusters An optional bare (unquoted) name of the variable that
 #' corresponds to the clusters in the data.
+#' @param fixed_effects An optional right-sided formula containing the fixed
+#' effects that will be projected out of the data, such as \code{~ blockID}. Do not
+#' pass multiple-fixed effects with intersecting groups. Speed gains are greatest for
+#' variables with large numbers of groups and when using "HC1" or "stata" standard errors.
+#' See 'Details'.
 #' @param se_type The sort of standard error sought. If `clusters` is
 #' not specified the options are "HC0", "HC1" (or "stata", the equivalent),
 #'  "HC2" (default), "HC3", or
@@ -53,6 +58,16 @@
 #' use a Cholesky decomposition instead. This will likely result in quicker
 #' solutions, but the algorithm does not reliably detect when there are linear
 #' dependencies in the model and may fail silently if they exist.
+#'
+#' If \code{`fixed_effects`} are specified, both the outcome and design matrix
+#' are centered using ALGORITHM OF ALTERNATING PROJECTIONS (Gaure 2013). Specifying
+#' fixed effects in this way will result in large speed gains with standard error
+#' estimators that do not need to invert the matrix of fixed effects. This means using
+#' "classical", "HC0", "HC1", "CR0", or "stata" standard errors will be faster than other
+#' standard error estimators. Be wary when specifying fixed effects that may result
+#' in perfect fits for some observations or if there are intersecting groups across
+#' multiple fixed effect variables (e.g. if you specify both `year` and `country` fixed-effects
+#' with an unbalanced panel where one year you only have data for one country).
 #'
 #' @return An object of class \code{"lm_robust"}.
 #'

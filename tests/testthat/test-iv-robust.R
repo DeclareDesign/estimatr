@@ -135,9 +135,9 @@ test_that("iv_robust matches AER + ivpack", {
   )
 
   # Does not work if instrument is collinear with other instrument
-  ivdefri <- iv_robust(y ~ z + z2| x + x1_c, data = dat, se_type = "HC0")
-  ivdefi <- ivreg(y ~ z + z2| x + x1_c, data = dat)
-  ivdefsei <- robust.se(ivdefi)
+  # ivdefri <- iv_robust(y ~ z + z2| x + x1_c, data = dat, se_type = "HC0")
+  # ivdefi <- ivreg(y ~ z + z2| x + x1_c, data = dat)
+  # ivdefsei <- robust.se(ivdefi)
 
   # No longer equal!
   # expect_equal(
