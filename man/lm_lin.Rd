@@ -99,9 +99,9 @@ its mean, and interacting them with the treatment. If the treatment has
 multiple values, a series of dummies for each value is created and each of
 those is interacted with the demeaned covariates. More details can be found
 in the
-\href{http://estimatr.declaredesign.org/articles/getting-started.html}{Getting Started vignette}
+\href{https://declaredesign.org/R/estimatr/articles/getting-started.html}{Getting Started vignette}
 and the
-\href{http://estimatr.declaredesign.org/articles/mathematical-notes.html}{mathematical notes}.
+\href{https://declaredesign.org/R/estimatr/articles/mathematical-notes.html}{mathematical notes}.
 }
 \examples{
 library(fabricatr)

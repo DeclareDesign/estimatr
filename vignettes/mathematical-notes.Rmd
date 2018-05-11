@@ -266,7 +266,7 @@ We also provide two-sided p-values using a t-distribution with the aforementione
 
 We provide Horvitz-Thompson estimators for two-armed trials and can be used to estimate unbiased treatment effects when the randomization is known. Horvitz-Thompson estimators require information about the probability each unit is in treatment and control, as well as the joint probability each unit is in the treatment, in the control, and in opposite treatment conditions.
 
-The estimator we implement here, `horvitz_thompson()`, can be told the design of an experiment in several ways, and the reference page is a good place to see some of those examples. Users can see a description of the estimator and its properties in @aronowmiddleton2013, @middletonaronow2015, and aronowsamii2017.
+The estimator we implement here, `horvitz_thompson()`, can be told the design of an experiment in several ways, and the reference page is a good place to see some of those examples. Users can see a description of the estimator and its properties in @aronowmiddleton2013, @middletonaronow2015, and @aronowsamii2017.
 
 Some definitions used below:
 
