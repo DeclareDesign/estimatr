@@ -24,9 +24,18 @@ test_that("tidy, summary, and print work", {
 
   ## lm_robust
   lmo <- lm_robust(y ~ x, data = dat, se_type = "classical")
+  lmfo <- lm_robust(y ~ z, data = dat, fixed_effects = ~ x)
 
   capture_output(
     summary(lmo)
+  )
+
+  capture_output(
+    summary(lmfo)
+  )
+
+  expect_true(
+    any(grepl("proj\\. model", capture.output(summary(lmfo))))
   )
 
   expect_is(
@@ -34,15 +43,33 @@ test_that("tidy, summary, and print work", {
     "data.frame"
   )
 
+  expect_is(
+    tidy(lmfo),
+    "data.frame"
+  )
+
+
   expect_equal(
     nrow(tidy(lm_robust(y ~ x, data = dat, se_type = "classical"))),
     2
+  )
+
+  expect_equal(
+    nrow(tidy(lmfo)),
+    1
   )
 
   capture_output(
     expect_equivalent(
       coef(summary(lmo)),
       print(lmo)
+    )
+  )
+
+  capture_output(
+    expect_equivalent(
+      coef(summary(lmfo)),
+      print(lmfo)
     )
   )
 

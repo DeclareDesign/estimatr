@@ -64,9 +64,13 @@ summary_lm_model <- function(object) {
       "r.squared",
       "adj.r.squared",
       "fstatistic",
+      "proj_r.squared",
+      "proj_adj.r.squared",
+      "proj_fstatistic",
       "res_var",
       "weighted",
-      "se_type"
+      "se_type",
+      "fes"
     )]
 
   # Split into two lists if multivariate linear model

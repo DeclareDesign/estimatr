@@ -34,9 +34,7 @@ print_summary_lm_like <- function(x,
   print(coef(x), digits = digits)
 
   if (!is.null(x$fstatistic)) {
-    cat(
-      "\nMultiple R-squared: ", formatC(x$r.squared, digits = digits),
-      ",\tAdjusted R-squared: ", formatC(x$adj.r.squared, digits = digits),
+    fstat <- paste(
       "\nF-statistic:", formatC(x$fstatistic[1L], digits = digits),
       "on", x$fstatistic[2L], "and", x$fstatistic[3L],
       "DF,  p-value:",
@@ -47,8 +45,32 @@ print_summary_lm_like <- function(x,
         lower.tail = FALSE
       ), digits = digits)
     )
-    cat("\n")
+  } else {
+    fstat <- NULL
   }
+
+  cat(
+    "\nMultiple R-squared: ", formatC(x$r.squared, digits = digits),
+    ",\tAdjusted R-squared: ", formatC(x$adj.r.squared, digits = digits),
+    fstat
+  )
+
+  if (!is.null(x$proj_fstatistic)) {
+    cat(
+      "\nMultiple R-squared (proj. model): ", formatC(x$proj_r.squared, digits = digits),
+      ",\tAdjusted R-squared (proj. model): ", formatC(x$proj_adj.r.squared, digits = digits),
+      "\nF-statistic (proj. model):", formatC(x$proj_fstatistic[1L], digits = digits),
+      "on", x$proj_fstatistic[2L], "and", x$proj_fstatistic[3L],
+      "DF,  p-value:",
+      format.pval(pf(
+        x$proj_fstatistic[1L],
+        x$proj_fstatistic[2L],
+        x$proj_fstatistic[3L],
+        lower.tail = FALSE
+      ), digits = digits)
+    )
+  }
+  cat("\n")
 
   invisible(x)
 }
