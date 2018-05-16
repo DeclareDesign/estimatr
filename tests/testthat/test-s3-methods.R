@@ -1,13 +1,16 @@
 context("S3")
+n <- 10
+dat <- data.frame(
+  x = rep(0:1, times = 5),
+  p = 0.5,
+  z = rnorm(n),
+  y = rnorm(n)
+)
+
+lmbo <- lm_robust(y ~ z + as.factor(x), data = dat)
+lmfo <- lm_robust(y ~ z, data = dat, fixed_effects = ~ x)
 
 test_that("tidy, summary, and print work", {
-  n <- 10
-  dat <- data.frame(
-    x = rep(0:1, times = 5),
-    p = 0.5,
-    z = rnorm(n),
-    y = rnorm(n)
-  )
 
   expect_is(
     tidy(NULL),
@@ -24,7 +27,6 @@ test_that("tidy, summary, and print work", {
 
   ## lm_robust
   lmo <- lm_robust(y ~ x, data = dat, se_type = "classical")
-  lmfo <- lm_robust(y ~ z, data = dat, fixed_effects = ~ x)
 
   capture_output(
     summary(lmo)
@@ -212,18 +214,16 @@ test_that("tidy, summary, and print work", {
 
 
 test_that("vcov works", {
-  n <- 10
-  dat <- data.frame(
-    x = rep(0:1, times = 5),
-    p = 0.5,
-    z = rnorm(n),
-    y = rnorm(n)
-  )
 
   # not identical due to < 1e-15 diffs
   expect_equal(
     vcov(lm_robust(y ~ x, data = dat, se_type = "classical")),
     vcov(lm(y ~ x, data = dat))
+  )
+
+  expect_equal(
+    vcov(lmbo)["z", "z"],
+    vcov(lmfo)["z", "z"]
   )
 
   expect_error(
@@ -263,13 +263,6 @@ test_that("vcov works", {
 
 
 test_that("coef and confint work", {
-  n <- 10
-  dat <- data.frame(
-    x = rep(0:1, times = 5),
-    p = 0.5,
-    z = rnorm(n),
-    y = rnorm(n)
-  )
 
   lmo <- lm_robust(y ~ x, data = dat)
   expect_equivalent(
@@ -278,8 +271,33 @@ test_that("coef and confint work", {
   )
 
   expect_equivalent(
+    coef(lmfo),
+    lmfo$coefficients
+  )
+
+  expect_equivalent(
+    coef(lmbo)["z"],
+    coef(lmfo)["z"]
+  )
+
+  expect_equivalent(
     confint(lmo),
     cbind(lmo$ci.lower, lmo$ci.upper)
+  )
+
+  expect_equivalent(
+    confint(lmfo),
+    cbind(lmfo$ci.lower, lmfo$ci.upper)
+  )
+
+  expect_equal(
+    confint(lmbo, parm = "z"),
+    confint(lmfo, parm = "z")
+  )
+
+  expect_equal(
+    confint(lmbo, parm = "z", level = 0.8),
+    confint(lmfo, parm = "z", level = 0.8)
   )
 
   lm2o <- lm_robust(y ~ x + z, data = dat)
