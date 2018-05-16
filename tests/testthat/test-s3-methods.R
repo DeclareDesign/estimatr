@@ -36,8 +36,9 @@ test_that("tidy, summary, and print work", {
     summary(lmfo)
   )
 
-  expect_true(
-    any(grepl("proj\\. model", capture.output(summary(lmfo))))
+  expect_output(
+    print(summary(lmfo)),
+    "proj\\. model"
   )
 
   expect_is(
