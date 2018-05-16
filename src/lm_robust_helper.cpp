@@ -120,10 +120,9 @@ Eigen::MatrixXd Kr(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B) {
   return AB;
 }
 
-// Uses QR decomposition to get the inverse of XtX for some matrix X
-std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::ColPivHouseholderQR<Eigen::MatrixXd>, Eigen::ArrayXi> XtX_QR(const Eigen::MatrixXd& X) {
-
-
+// Gets padded UtU matrix (where U = cbind(X, FE_dummies))
+Eigen::MatrixXd getMeatXtX(Eigen::Map<Eigen::MatrixXd>& X,
+                           const Eigen::MatrixXd& XtX_inv) {
   Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR(X);
   const Eigen::ColPivHouseholderQR<Eigen::MatrixXd>::PermutationType Pmat(PQR.colsPermutation());
 
@@ -146,28 +145,13 @@ std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::ColPivHouseholderQR<Eigen::M
 
   Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P = Eigen::PermutationWrapper<Eigen::ArrayXi>(Pmat_keep);
 
-  Eigen::MatrixXd P_R_inv_P = P * R_inv * P;
+  R_inv = P * R_inv * P;
 
-  Eigen::MatrixXd XtX_inv = P_R_inv_P * P_R_inv_P.transpose();
+  Eigen::MatrixXd meatXtX_inv = R_inv * R_inv.transpose();
 
-  return std::make_tuple(XtX_inv, R_inv, PQR, Pmat_toss);
-}
-
-
-// Gets padded UtU matrix (where U = cbind(X, FE_dummies))
-Eigen::MatrixXd getMeatXtX(Eigen::Map<Eigen::MatrixXd>& X,
-                           const Eigen::MatrixXd& XtX_inv) {
-  Eigen::MatrixXd meatXtX_inv;
-  Eigen::ArrayXi dropped;
-  if (X.cols() > XtX_inv.cols()) {
-    std::tie(meatXtX_inv, std::ignore, std::ignore, dropped) = XtX_QR(X);
-    for (Eigen::Index i=0; i<dropped.size(); i++) {
-      if (dropped(i) < X.cols())
-        X.block(0, dropped(i), X.rows(), X.cols() - dropped(i) - 1) = X.rightCols(X.cols() - dropped(i) - 1);
-    }
-
-  } else {
-    meatXtX_inv = XtX_inv;
+  for (Eigen::Index i=0; i<Pmat_toss.size(); i++) {
+    if (Pmat_toss(i) < X.cols())
+      X.block(0, Pmat_toss(i), X.rows(), X.cols() - Pmat_toss(i) - 1) = X.rightCols(X.cols() - Pmat_toss(i) - 1);
   }
 
   return meatXtX_inv;
@@ -199,11 +183,26 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
   }
 
   if (do_qr) {
-    Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR;
-    std::tie(XtX_inv, R_inv, PQR, std::ignore) = XtX_QR(X);
+    Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR(X);
+    const Eigen::ColPivHouseholderQR<Eigen::MatrixXd>::PermutationType Pmat(PQR.colsPermutation());
 
     r = PQR.rank();
 
+    Eigen::MatrixXd R_inv = PQR.matrixQR().topLeftCorner(r, r).triangularView<Eigen::Upper>().solve(Eigen::MatrixXd::Identity(r, r));
+
+    // Get all column indices
+    Eigen::ArrayXi Pmat_indices = Pmat.indices();
+    // Get the order for the columns you are keeping
+    Eigen::ArrayXi Pmat_keep = Pmat_indices.head(r);
+    // Get the indices for columns you are discarding
+    Eigen::ArrayXi Pmat_toss = Pmat_indices.tail(p - r);
+
+    for(Eigen::Index i=0; i<r; ++i)
+    {
+      Pmat_keep(i) = Pmat_keep(i) - (Pmat_toss < Pmat_keep(i)).count();
+    }
+
+    Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P = Eigen::PermutationWrapper<Eigen::ArrayXi>(Pmat_keep);
     Eigen::MatrixXd effects(PQR.householderQ().adjoint() * y);
 
     // Rcout << "effects:" << std::endl;
@@ -213,6 +212,11 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
     // Rcout << "beta_out:" << std::endl;
     // Rcout << beta_out << std::endl;
     beta_out = PQR.colsPermutation() * beta_out;
+
+    R_inv = P * R_inv * P;
+
+    XtX_inv = R_inv * R_inv.transpose();
+
   }
 
   return List::create(
@@ -281,9 +285,15 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
     Eigen::MatrixXd meatXtX_inv;
     if ((se_type == "HC2") || (se_type == "HC3") || (se_type == "CR2")) {
-      meatXtX_inv = getMeatXtX(X, XtX_inv);
-      r_fe = meatXtX_inv.cols();
+      if (X.cols() > r) {
+        meatXtX_inv = getMeatXtX(X, XtX_inv);
+        r_fe = meatXtX_inv.cols();
+      } else {
+        meatXtX_inv = XtX_inv;
+      }
     }
+
+    // Rcout << "meatXtX_inv:" << std::endl << meatXtX_inv << std::endl;
 
     if ( !clustered ) {
       // Rcout << "temp_omega:" << std::endl << temp_omega << std::endl;

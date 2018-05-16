@@ -503,7 +503,7 @@ get_fstat <- function(tss_r2s, return_list, iv_ei, nomdf, dendf, fit, vcov_fit, 
                              fit$beta_hat[indices, x]) / nomdf
                })
       }, error = function(e) {
-        warning("Unable to compute f-statistic because variance-covariance matrix cannot be inverted")
+        # warning("Unable to compute f-statistic because variance-covariance matrix cannot be inverted")
         rep(NA, length(fstat_names))
       })
   }

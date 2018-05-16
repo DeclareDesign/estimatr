@@ -215,10 +215,7 @@ test_that("iv_robust matches AER + ivpack", {
   set.seed(42)
   N <- 20
   dat <- data.frame(y = rnorm(N), x = rnorm(N), z = rnorm(N), bl = sample(letters, size = N, replace = T))
-  expect_warning(
-    ivr <- iv_robust(y ~ bl + x | bl + z, data = dat, se_type = "stata"),
-    "Unable to compute f\\-statistic"
-  )
+  ivr <- iv_robust(y ~ bl + x | bl + z, data = dat, se_type = "stata")
   expect_equivalent(
     ivr$fstatistic[1],
     NA_integer_
