@@ -75,7 +75,7 @@ predict.lm_robust <- function(object,
   # Get model matrix
   rhs_terms <- delete.response(object$terms)
 
-  mf <- model.frame(rhs_terms, newdata, na.action = na.action)
+  mf <- model.frame(rhs_terms, newdata, na.action = na.action, xlev = object$xlevels)
 
   # Check class of columns in newdata match those in model fit
   if (!is.null(cl <- attr(rhs_terms, "dataClasses"))) .checkMFClasses(cl, mf)
@@ -83,6 +83,16 @@ predict.lm_robust <- function(object,
   # Add factors!
   if (object[["fes"]]) {
     args <- as.list(object[["call"]])
+
+    if (length(all.vars(rlang::f_rhs(args[["fixed_effects"]]))) > 1) {
+      stop(
+        "Can't use `predict.lm_robust` with more than one set of ",
+        "`fixed_effects`. Can recover fits in `fitted.values` in the model ",
+        "object."
+      )
+    }
+
+    # cast as factor
     femat <- model.matrix(
       ~ 0 + .,
       data = as.data.frame(
@@ -134,11 +144,16 @@ predict.lm_robust <- function(object,
   # Get predicted values
   preds <- X[, !beta_na, drop = FALSE] %*% coefs[!beta_na, ]
   if (object[["fes"]]) {
-    preds <- preds + femat[, names(object[["fixed_effects"]])] %*% object[["fixed_effects"]]
+    keep_facs <- names(object[["fixed_effects"]]) %in% colnames(femat)
+    extra_facs <- length(setdiff(colnames(femat), names(object[["fixed_effects"]])))
+    if (extra_facs) stop("New levels present in `newdata` `fixed_effects` variable")
+    preds <- preds +
+      femat[, names(object[["fixed_effects"]])[keep_facs]] %*%
+      object[["fixed_effects"]][keep_facs]
   }
   predictor <- drop(preds)
 
-  df_resid <- object$N - object$rank
+  df_resid <- object$df.residual
   interval <- match.arg(interval)
 
   if (se.fit || interval != "none") {
