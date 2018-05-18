@@ -74,20 +74,32 @@ predict.lm_robust <- function(object,
 
   # Get model matrix
   rhs_terms <- delete.response(object$terms)
-  if (object[["fes"]]) {
-    print(str(X))
-    print(rhs_terms)
-  }
 
   mf <- model.frame(rhs_terms, newdata, na.action = na.action)
 
   # Check class of columns in newdata match those in model fit
   if (!is.null(cl <- attr(rhs_terms, "dataClasses"))) .checkMFClasses(cl, mf)
 
-  X <- model.matrix(rhs_terms, mf, contrasts.arg = object$contrasts)
-
   # Add factors!
+  if (object[["fes"]]) {
+    args <- as.list(object[["call"]])
+    femat <- model.matrix(
+      ~ 0 + .,
+      data = as.data.frame(
+        sapply(
+          stats::model.frame.default(
+            args[["fixed_effects"]],
+            data = newdata,
+            na.action = NULL
+          ),
+          function(fe) as.factor(fe)
+        )
+      )
+    )
+    attr(rhs_terms, "intercept") <- 0
+  }
 
+  X <- model.matrix(rhs_terms, mf, contrasts.arg = object$contrasts)
 
   # lm_lin scaling
   if (!is.null(object$scaled_center)) {
@@ -120,7 +132,11 @@ predict.lm_robust <- function(object,
   beta_na <- is.na(coefs[, 1])
 
   # Get predicted values
-  predictor <- drop(X[, !beta_na, drop = FALSE] %*% coefs[!beta_na, ])
+  preds <- X[, !beta_na, drop = FALSE] %*% coefs[!beta_na, ]
+  if (object[["fes"]]) {
+    preds <- preds + femat[, names(object[["fixed_effects"]])] %*% object[["fixed_effects"]]
+  }
+  predictor <- drop(preds)
 
   df_resid <- object$N - object$rank
   interval <- match.arg(interval)
@@ -128,6 +144,10 @@ predict.lm_robust <- function(object,
   if (se.fit || interval != "none") {
     if (ncol(coefs) > 1) {
       stop("Can't set `se.fit` == TRUE with multivariate outcome")
+    }
+
+    if (object[["fes"]]) {
+      stop("Can't set `se.fit` == TRUE with `fixed_effects`")
     }
 
     ret <- list()
