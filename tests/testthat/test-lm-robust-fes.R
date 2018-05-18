@@ -267,6 +267,10 @@ test_that("FEs work with multiple outcomes", {
   ro <- lm_robust(cbind(Y, Y2) ~ Z + X + factor(B) + factor(B2), data = dat, se_type = "classical")
   rfo <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "classical")
 
+
+  ro <- lm_robust(Y ~ Z + X + factor(B), data = dat, se_type = "classical")
+  rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ B, data = dat, se_type = "classical")
+
   expect_equivalent(
     tidy(ro)[ro$term %in% c("Z", "X"), ],
     tidy(rfo)[rfo$term %in% c("Z", "X"), ]

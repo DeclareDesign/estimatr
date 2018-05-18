@@ -19,6 +19,7 @@
 lm_robust_fit <- function(y,
                           X,
                           yoriginal = NULL,
+                          Xoriginal = NULL,
                           weights,
                           cluster,
                           fixed_effects = NULL,
@@ -27,7 +28,7 @@ lm_robust_fit <- function(y,
                           has_int, # TODO get this out of here
                           alpha = 0.05,
                           return_vcov = TRUE,
-                          return_fit = FALSE,
+                          return_fit = TRUE,
                           return_unweighted_fit = FALSE,
                           try_cholesky = FALSE,
                           X_first_stage = NULL) {
@@ -94,7 +95,7 @@ lm_robust_fit <- function(y,
   }
 
   if (fes) {
-    femat <- model.matrix(~ 0 + ., data = as.data.frame(apply(fixed_effects, 2, as.character)))
+    femat <- model.matrix(~ 0 + ., data = as.data.frame(fixed_effects))
   }
 
   # Weight if there are weights
@@ -213,7 +214,8 @@ lm_robust_fit <- function(y,
 
     if (se_type != "none") {
 
-      if (se_type %in% c("HC2", "HC3", "CR2") && is.numeric(fixed_effects)) {
+
+      if (se_type %in% c("HC2", "HC3", "CR2") && fes) {
         X <- cbind(X, femat)
         if (weighted) {
           Xunweighted <- cbind(Xunweighted, fematunweighted)
@@ -255,18 +257,40 @@ lm_robust_fit <- function(y,
       # Have to get weighted fits as original fits were unweighted for
       # variance estimation or used wrong regressors in IV
       return_list[["fitted.values"]] <- as.matrix(X[, 1:x_rank, drop = FALSE] %*% fit$beta_hat)
+      if (fes) {
+        return_list[["fitted.values"]] <- as.matrix(yoriginal - (y - return_list[["fitted.values"]]))
+      }
     } else {
       return_list[["fitted.values"]] <- as.matrix(fitted.values)
+      if (fes && !is.null(yoriginal)) {
+        return_list[["fitted.values"]] <- as.matrix(yoriginal - ei)
+      }
     }
 
+    # only used by IV first stage
     if (weighted && return_unweighted_fit) {
       return_list[["fitted.values"]] <- as.matrix(Xunweighted[, 1:x_rank, drop = FALSE] %*% fit$beta_hat)
     }
 
+    if (fes && (ncol(fixed_effects) == 1)) {
+      return_list[["fixed_effects"]] <- setNames(
+        tapply(
+          return_list[["fitted.values"]] -
+            as.matrix(Xoriginal)[, variable_names, drop = FALSE] %*% fit$beta_hat,
+          fixed_effects,
+          `[`,
+          1
+        ),
+        colnames(femat)
+      )
+    }
+
     # If we reordered to get SEs earlier, have to fix order
     if (clustered && se_type != "none") {
-      return_list[["fitted.values"]] <- return_list[["fitted.values"]][order(cl_ord), ]
+      return_list[["fitted.values"]] <- return_list[["fitted.values"]][order(cl_ord), , drop = FALSE]
     }
+
+    colnames(return_list[["fitted.values"]]) <- colnames(y)
   }
 
   return_list[["term"]] <- variable_names
@@ -276,10 +300,7 @@ lm_robust_fit <- function(y,
   return_list[["weighted"]] <- weighted
   return_list[["fes"]] <- fes
   return_list[["clustered"]] <- clustered
-  # return_list[["fitted.values"]] <- fit$fit
-  # return_list[["residuals"]] <- fit$residuals
   return_list[["df.residual"]] <- N - tot_rank
-  # return_list[["XtX_inv"]] <- fit$XtX_inv
   return_list[["N"]] <- N
   return_list[["k"]] <- k
   return_list[["rank"]] <- x_rank

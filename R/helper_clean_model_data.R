@@ -41,7 +41,7 @@ clean_model_data <- function(data, datargs, estimator = "") {
           data = data,
           na.action = NULL
         ))),
-        function(fe) as.integer(as.factor(fe))
+        function(fe) as.factor(fe)
       )
       #print(str(m_formula_env[[name]]))
     } else {
@@ -169,16 +169,18 @@ demean_fes <- function(model_data) {
   )
 
   # save names
-  dimnames(demeaned[["newY"]]) <- dimnames(model_data[["outcome"]])
+  dimnames(demeaned[["outcome"]]) <- dimnames(model_data[["outcome"]])
   new_names <- dimnames(model_data[["design_matrix"]])
   new_names[[2]] <- new_names[[2]][new_names[[2]] != "(Intercept)"]
-  dimnames(demeaned[["newX"]]) <- new_names
+  dimnames(demeaned[["design_matrix"]]) <- new_names
 
-  model_data[["outcome"]] <- demeaned[["newY"]]
-  model_data[["design_matrix"]] <- demeaned[["newX"]]
+  model_data[["outcome"]] <- demeaned[["outcome"]]
+  model_data[["design_matrix"]] <- demeaned[["design_matrix"]]
   if (is.numeric(model_data[["instrument_matrix"]])) {
-    model_data[["instrument_matrix"]] <- demeaned[["newZ"]]
+    model_data[["instrument_matrix"]] <- demeaned[["instrument_matrix"]]
   }
+
+  # model_data[["fixed_effects"]] <- model_data[["fixed_effects"]]
 
   model_data[["fe_levels"]] <- setNames(nfaclevels, nm = colnames(model_data[["fixed_effects"]]))
   return(model_data)

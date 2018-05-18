@@ -74,12 +74,20 @@ predict.lm_robust <- function(object,
 
   # Get model matrix
   rhs_terms <- delete.response(object$terms)
+  if (object[["fes"]]) {
+    print(str(X))
+    print(rhs_terms)
+  }
+
   mf <- model.frame(rhs_terms, newdata, na.action = na.action)
 
   # Check class of columns in newdata match those in model fit
   if (!is.null(cl <- attr(rhs_terms, "dataClasses"))) .checkMFClasses(cl, mf)
 
   X <- model.matrix(rhs_terms, mf, contrasts.arg = object$contrasts)
+
+  # Add factors!
+
 
   # lm_lin scaling
   if (!is.null(object$scaled_center)) {
@@ -93,7 +101,6 @@ predict.lm_robust <- function(object,
         center = object$scaled_center,
         scale = FALSE
       )
-
 
     # Interacted with treatment
     treat_name <- attr(object$terms, "term.labels")[1]

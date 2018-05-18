@@ -152,7 +152,7 @@ iv_robust <- function(formula,
     warning("More regressors than instruments")
   }
 
-  fes <- is.integer(model_data[["fixed_effects"]])
+  fes <- !is.null(model_data[["fixed_effects"]])
   if (fes) {
     yoriginal <- model_data[["outcome"]]
     model_data <- demean_fes(model_data)

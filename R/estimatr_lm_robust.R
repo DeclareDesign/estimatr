@@ -228,12 +228,14 @@ lm_robust <- function(formula,
   data <- enquo(data)
   model_data <- clean_model_data(data = data, datargs)
 
-  fes <- is.integer(model_data[["fixed_effects"]])
+  fes <- !is.null(model_data[["fixed_effects"]])
   if (fes) {
     yoriginal <- model_data[["outcome"]]
+    Xoriginal <- model_data[["design_matrix"]]
     model_data <- demean_fes(model_data)
     attr(model_data$fixed_effects, "fe_rank") <- sum(model_data[["fe_levels"]]) + 1
   } else {
+    Xoriginal <- NULL
     yoriginal <- NULL
   }
 
@@ -242,6 +244,7 @@ lm_robust <- function(formula,
       y = model_data$outcome,
       X = model_data$design_matrix,
       yoriginal = yoriginal,
+      Xoriginal = Xoriginal,
       weights = model_data$weights,
       cluster = model_data$cluster,
       fixed_effects = model_data$fixed_effects,

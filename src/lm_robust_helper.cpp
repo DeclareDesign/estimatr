@@ -4,28 +4,32 @@
 #include <RcppEigen.h>
 using namespace Rcpp;
 
-// [[Rcpp::export]]
 Eigen::MatrixXd eigenAve(const Eigen::ArrayXd& x,
-                         const Eigen::VectorXi& fe,
+                         const Rcpp::StringVector& fe,
                          const Eigen::VectorXd& weights) {
 
-  std::unordered_map<int, Eigen::Array2d> aves;
+  std::unordered_map<std::string, Eigen::Array2d> sums;
   Eigen::ArrayXd avevec(x.rows());
 
-  for (Eigen::Index i=0; i<fe.rows(); i++) {
+  for (int i=0; i<fe.size(); i++) {
+    std::string fei = Rcpp::as<std::string>(fe(i));
     Eigen::Array2d dat;
     dat(0) = weights(i) * x(i);
     dat(1) = weights(i);
-    if (aves.find(fe(i)) != aves.end()) {
-      aves[fe(i)] += dat;
+    if (sums.find(fei) != sums.end()) {
+      sums[fei] += dat;
     } else {
-      aves[fe(i)] = dat;
+      sums[fei] = dat;
     }
   }
 
-  for (Eigen::Index i=0; i<fe.rows(); i++) {
-    avevec(i) = x(i) - aves[fe(i)](0)/aves[fe(i)](1);
+  for (int i=0; i<fe.size(); i++) {
+    std::string fei = Rcpp::as<std::string>(fe(i));
+
+    // Rcout << sums[fei](0) << std::endl;
+    avevec(i) = x(i) - sums[fei](0)/sums[fei](1);
   }
+
   return avevec;
 }
 
@@ -33,7 +37,7 @@ Eigen::MatrixXd eigenAve(const Eigen::ArrayXd& x,
 List demeanMat(const Eigen::MatrixXd& Y,
                const Eigen::MatrixXd& X,
                const Rcpp::Nullable<Rcpp::NumericMatrix>& Zmat,
-               const Eigen::MatrixXi& fes,
+               const Rcpp::StringMatrix& fes,
                const Eigen::VectorXd& weights,
                const bool& has_int,
                const double& eps) {
@@ -57,6 +61,8 @@ List demeanMat(const Eigen::MatrixXd& Y,
   Eigen::MatrixXd newX(n, p - start_col);
   Eigen::MatrixXd newY(n, ny);
 
+  Eigen::MatrixXd fixed_effects(n, fes.cols());
+
   // Iterate over columns of X, starting at 1 if there is an intercept
   // and then do Y
   for (Eigen::Index i = start_col; i <= (p + ny + nz - start_col); ++i) {
@@ -77,7 +83,7 @@ List demeanMat(const Eigen::MatrixXd& Y,
     while (std::sqrt((oldcol - newcol).pow(2).sum()) >= eps) {
       oldcol = newcol;
       for (Eigen::Index j = 0; j < fes.cols(); ++j) {
-        newcol = eigenAve(newcol.matrix(), fes.col(j), weights);
+        newcol = eigenAve(newcol.matrix(), fes.column(j), weights);
       }
       // Rcout << "oldcol" << std::endl << oldcol << std::endl;
       // Rcout << "newcol" << std::endl << newcol << std::endl;
@@ -93,9 +99,9 @@ List demeanMat(const Eigen::MatrixXd& Y,
   }
 
   return List::create(
-    _["newY"]= newY,
-    _["newX"]= newX,
-    _["newZ"]= newZ
+    _["outcome"]= newY,
+    _["design_matrix"]= newX,
+    _["instrument_matrix"]= newZ
   );
 }
 
@@ -263,7 +269,7 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
   Eigen::VectorXd dof = Eigen::VectorXd::Constant(npars, -99.0);
   Eigen::MatrixXd s2 = Eigen::MatrixXd::Constant(ny, ny, -99.0);
 
-  // Standard error calculations
+    // Standard error calculations
   if (se_type == "classical") {
     // Classical
     s2 = AtA(ei)/((double)n - (double)r_fe);
@@ -292,7 +298,6 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
         meatXtX_inv = XtX_inv;
       }
     }
-
     // Rcout << "meatXtX_inv:" << std::endl << meatXtX_inv << std::endl;
 
     if ( !clustered ) {
