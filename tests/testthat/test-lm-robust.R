@@ -687,15 +687,19 @@ test_that("multiple outcomes", {
   mtcarsmiss$hp[10] <- NA
 
   lmo <- lm(cbind(mpg, hp) ~ cyl, data = mtcarsmiss)
-  summary(lmo)
   lmro <- lm_robust(cbind(mpg, hp) ~ cyl, data = mtcarsmiss, se_type = "classical")
-  summary(lmro)
 
-  lmro <- lm_robust(cbind(mpg, hp) ~ cyl, data = mtcarsmiss, se_type = "HC2")
-  tidy(lmro)
-  library(lmtest)
-  library(sandwich)
-  coeftest(lmo, vcov = vcovHC(lmo, type = "HC2"))
-  tidy(lmro)
+  expect_equal(
+    tidy(lmo)[, c("estimate", "std.error", "p.value")],
+    tidy(lmro)[, c("estimate", "std.error", "p.value")]
+  )
 
+  expect_equivalent(
+    sapply(summary(lmo)[[1]][c("r.squared", "adj.r.squared", "fstatistic")], `[`, 1),
+    sapply(lmro[c("r.squared", "adj.r.squared", "fstatistic")], `[`, 1)
+  )
+  expect_equivalent(
+    sapply(summary(lmo)[[2]][c("r.squared", "adj.r.squared", "fstatistic")], `[`, 1),
+    sapply(lmro[c("r.squared", "adj.r.squared", "fstatistic")], `[`, 2)
+  )
 })

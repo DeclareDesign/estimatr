@@ -274,10 +274,12 @@ lm_robust_fit <- function(y,
       if (fes) {
         return_list[["fitted.values"]] <- as.matrix(yoriginal - (y - return_list[["fitted.values"]]))
       }
-    } else if (weighted && fes && is.numeric(yoriginal)) {
-      return_list[["fitted.values"]] <- as.matrix(yoriginalunweighted - ei / weights)
     } else if (weighted && return_unweighted_fit) {
-      return_list[["fitted.values"]] <- as.matrix(Xunweighted[, 1:x_rank, drop = FALSE] %*% fit$beta_hat)
+      if (fes && is.numeric(yoriginal)) {
+        return_list[["fitted.values"]] <- as.matrix(yoriginalunweighted - ei / weights)
+      } else {
+        return_list[["fitted.values"]] <- as.matrix(Xunweighted[, 1:x_rank, drop = FALSE] %*% fit$beta_hat)
+      }
     } else {
       if (fes && is.numeric(yoriginal)) {
         return_list[["fitted.values"]] <- as.matrix(yoriginal - ei)

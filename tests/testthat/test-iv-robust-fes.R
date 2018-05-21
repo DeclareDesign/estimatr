@@ -25,6 +25,11 @@ test_that("FE matches with multiple FEs and covars", {
     tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
   )
 
+  expect_equivalent(
+    ro$fitted.values,
+    rfo$fitted.values
+  )
+
   expect_equal(
     ro[c("r.squared", "adj.r.squared")],
     rfo[c("r.squared", "adj.r.squared")]
@@ -37,6 +42,11 @@ test_that("FE matches with multiple FEs and covars", {
   expect_equivalent(
     tidy(ro)[ro$term %in% c("X1", "X2"), ],
     tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+  )
+
+  expect_equivalent(
+    ro$fitted.values,
+    rfo$fitted.values
   )
 
   expect_equal(
@@ -53,6 +63,11 @@ test_that("FE matches with multiple FEs and covars", {
     tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
   )
 
+  expect_equivalent(
+    ro$fitted.values,
+    rfo$fitted.values
+  )
+
   expect_equal(
     ro[c("r.squared", "adj.r.squared")],
     rfo[c("r.squared", "adj.r.squared")]
@@ -65,6 +80,11 @@ test_that("FE matches with multiple FEs and covars", {
   expect_equivalent(
     tidy(ro)[ro$term %in% c("X1", "X2"), ],
     tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+  )
+
+  expect_equivalent(
+    ro$fitted.values,
+    rfo$fitted.values
   )
 
   expect_equal(
@@ -81,6 +101,11 @@ test_that("FE matches with multiple FEs and covars", {
     tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
   )
 
+  expect_equivalent(
+    ro$fitted.values,
+    rfo$fitted.values
+  )
+
   expect_equal(
     ro[c("r.squared", "adj.r.squared")],
     rfo[c("r.squared", "adj.r.squared")]
@@ -93,6 +118,11 @@ test_that("FE matches with multiple FEs and covars", {
   expect_equivalent(
     tidy(ro)[ro$term %in% c("X1", "X2"), ],
     tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+  )
+
+  expect_equivalent(
+    ro$fitted.values,
+    rfo$fitted.values
   )
 
   expect_equal(
@@ -109,6 +139,11 @@ test_that("FE matches with multiple FEs and covars", {
     tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
   )
 
+  expect_equivalent(
+    ro$fitted.values,
+    rfo$fitted.values
+  )
+
   expect_equal(
     ro[c("r.squared", "adj.r.squared")],
     rfo[c("r.squared", "adj.r.squared")]
@@ -121,6 +156,11 @@ test_that("FE matches with multiple FEs and covars", {
   expect_equivalent(
     tidy(ro)[ro$term %in% c("X1", "X2"), ],
     tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+  )
+
+  expect_equivalent(
+    ro$fitted.values,
+    rfo$fitted.values
   )
 
   expect_equal(
@@ -140,6 +180,11 @@ test_that("FE matches with weights", {
     tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
   )
 
+  expect_equivalent(
+    ro$fitted.values,
+    rfo$fitted.values
+  )
+
   expect_equal(
     ro[c("r.squared", "adj.r.squared")],
     rfo[c("r.squared", "adj.r.squared")]
@@ -152,6 +197,11 @@ test_that("FE matches with weights", {
   expect_equivalent(
     tidy(ro)[ro$term %in% c("X1", "X2"), ],
     tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+  )
+
+  expect_equivalent(
+    ro$fitted.values,
+    rfo$fitted.values
   )
 
   expect_equal(
@@ -168,6 +218,11 @@ test_that("FE matches with weights", {
     tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
   )
 
+  expect_equivalent(
+    ro$fitted.values,
+    rfo$fitted.values
+  )
+
   expect_equal(
     ro[c("r.squared", "adj.r.squared")],
     rfo[c("r.squared", "adj.r.squared")]
@@ -180,6 +235,11 @@ test_that("FE matches with weights", {
   expect_equivalent(
     tidy(ro)[ro$term %in% c("X1", "X2"), ],
     tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+  )
+
+  expect_equivalent(
+    ro$fitted.values,
+    rfo$fitted.values
   )
 
   expect_equal(
@@ -196,6 +256,11 @@ test_that("FE matches with weights", {
     tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
   )
 
+  expect_equivalent(
+    ro$fitted.values,
+    rfo$fitted.values
+  )
+
   expect_equal(
     ro[c("r.squared", "adj.r.squared")],
     rfo[c("r.squared", "adj.r.squared")]
@@ -210,6 +275,11 @@ test_that("FE matches with weights", {
     tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
   )
 
+  expect_equivalent(
+    ro$fitted.values,
+    rfo$fitted.values
+  )
+
   expect_equal(
     ro[c("r.squared", "adj.r.squared")],
     rfo[c("r.squared", "adj.r.squared")]
@@ -222,6 +292,11 @@ test_that("FE matches with weights", {
   expect_equivalent(
     tidy(ro)[ro$term %in% c("X1", "X2"), ],
     tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+  )
+
+  expect_equivalent(
+    ro$fitted.values,
+    rfo$fitted.values
   )
 
   expect_equal(
