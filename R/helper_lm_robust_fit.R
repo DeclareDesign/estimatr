@@ -29,7 +29,7 @@ lm_robust_fit <- function(y,
                           alpha = 0.05,
                           return_vcov = TRUE,
                           return_fit = TRUE,
-                          return_unweighted_fit = FALSE,
+                          return_unweighted_fit = TRUE,
                           try_cholesky = FALSE,
                           X_first_stage = NULL) {
 
@@ -37,6 +37,12 @@ lm_robust_fit <- function(y,
   ny <- ncol(y)
   fes <- !is.null(fixed_effects)
   if (fes) {
+    if (is.numeric(yoriginal)) {
+      yoriginal <- as.matrix(yoriginal)
+    }
+    if (is.numeric(Xoriginal)) {
+      Xoriginal <- as.matrix(Xoriginal)
+    }
     fe_rank <- attr(fixed_effects, "fe_rank")
   } else {
     fe_rank <- 0
@@ -53,7 +59,10 @@ lm_robust_fit <- function(y,
   se_type <- check_se_type(se_type, clustered, iv_second_stage)
 
   if (weighted && se_type == "CR2" && fes) {
-    stop("Cannot use `fixed_effects` with weighted CR2 estimation at the moment")
+    stop(
+      "Cannot use `fixed_effects` with weighted CR2 estimation at the moment. ",
+      "Try setting `se_type` = \"stata\""
+    )
   }
 
   # -----------
@@ -80,7 +89,8 @@ lm_robust_fit <- function(y,
 
     if (fes) {
       fixed_effects <- fixed_effects[cl_ord, , drop = FALSE]
-      yoriginal <- as.matrix(yoriginal)[cl_ord, , drop = FALSE]
+      yoriginal <- yoriginal[cl_ord, , drop = FALSE]
+      Xoriginal <- Xoriginal[cl_ord, , drop = FALSE]
     }
     if (weighted) {
       weights <- weights[cl_ord]
@@ -107,6 +117,10 @@ lm_robust_fit <- function(y,
     X <- weights * X
     y <- weights * y
     if (fes) {
+      if (is.numeric(yoriginal)) {
+        yoriginalunweighted <- yoriginal
+        yoriginal <- weights * yoriginal
+      }
       fematunweighted <- femat
       femat <- weights * femat
     }
@@ -260,23 +274,23 @@ lm_robust_fit <- function(y,
       if (fes) {
         return_list[["fitted.values"]] <- as.matrix(yoriginal - (y - return_list[["fitted.values"]]))
       }
-    } else {
-      return_list[["fitted.values"]] <- as.matrix(fitted.values)
-      if (fes && !is.null(yoriginal)) {
-        return_list[["fitted.values"]] <- as.matrix(yoriginal - ei)
-      }
-    }
-
-    # only used by IV first stage
-    if (weighted && return_unweighted_fit) {
+    } else if (weighted && fes && is.numeric(yoriginal)) {
+      return_list[["fitted.values"]] <- as.matrix(yoriginalunweighted - ei / weights)
+    } else if (weighted && return_unweighted_fit) {
       return_list[["fitted.values"]] <- as.matrix(Xunweighted[, 1:x_rank, drop = FALSE] %*% fit$beta_hat)
+    } else {
+      if (fes && is.numeric(yoriginal)) {
+        return_list[["fitted.values"]] <- as.matrix(yoriginal - ei)
+      } else {
+        return_list[["fitted.values"]] <- as.matrix(fitted.values)
+      }
     }
 
     if (fes && (ncol(fixed_effects) == 1)) {
       return_list[["fixed_effects"]] <- setNames(
         tapply(
           return_list[["fitted.values"]] -
-            as.matrix(Xoriginal)[, variable_names, drop = FALSE] %*% fit$beta_hat,
+            Xoriginal[, variable_names, drop = FALSE] %*% fit$beta_hat,
           fixed_effects,
           `[`,
           1
@@ -358,12 +372,11 @@ lm_robust_fit <- function(y,
       return_list <- c(return_list, setNames(tss_r2s, paste0("proj_", names(tss_r2s))))
       return_list[["proj_fstatistic"]] <- f
 
-      yoriginal <- as.matrix(yoriginal)
       tss_r2s <- get_r2s(
-        y = if (weighted) weights * yoriginal else yoriginal,
+        y = yoriginal,
         return_list = return_list,
         has_int = has_int,
-        yunweighted = yoriginal,
+        yunweighted = yoriginalunweighted,
         weights = weights,
         weight_mean = weight_mean
       )
