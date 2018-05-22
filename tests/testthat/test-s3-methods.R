@@ -705,20 +705,33 @@ test_that("predict works with fixed effects", {
 })
 
 test_that("predict.iv_robust works with fixed effects", {
-  ro <- lm_robust(mpg ~ hp + vs + factor(cyl), data = mtcars)
-  rfo <- lm_robust(mpg ~ hp + vs, fixed_effects = ~ cyl, data = mtcars)
-  lo <- lm(mpg ~ hp + vs + factor(cyl), data = mtcars)
+  skip_if_not_installed("AER")
 
-  plo <- predict(lo, newdata = mtcars)
+  library(AER)
+
+  ro <- iv_robust(mpg ~ hp + factor(cyl) | vs + factor(cyl), data = mtcars)
+  rfo <- iv_robust(mpg ~ hp | vs, fixed_effects = ~ cyl, data = mtcars)
+  io <- ivreg(mpg ~ hp + factor(cyl) | vs + factor(cyl), data = mtcars)
+
+  pio <- predict(io, newdata = mtcars)
+  expect_equal(
+    ro$fitted.values,
+    rfo$fitted.values
+  )
+
+  expect_equivalent(
+    rfo$fitted.values,
+    io$fitted.values
+  )
 
   expect_equal(
     predict(ro, newdata = mtcars),
     predict(rfo, newdata = mtcars)
   )
 
-  expect_error(
-    predict(rfo, newdata = mtcars, se.fit = TRUE),
-    "Can't set `se.fit`|TRUE with `fixed_effects`"
+  expect_equal(
+    pio,
+    predict(rfo, newdata = mtcars)
   )
 
   mtcars2 <- data.frame(
@@ -750,19 +763,19 @@ test_that("predict.iv_robust works with fixed effects", {
     predict(rfo, newdata = mtcars3)
   )
 
-  ## Weights
-  row <- lm_robust(mpg ~ 0 + hp + vs + factor(cyl), weights = wt, data = mtcars)
-  rfow <- lm_robust(mpg ~ hp + vs, fixed_effects = ~ cyl, weights = wt, data = mtcars)
-  low <- lm(mpg ~ hp + vs + factor(cyl), weights = wt, data = mtcars)
+  expect_equal(
+    predict(io, newdata = mtcars3),
+    predict(rfo, newdata = mtcars3)
+  )
 
-  plow <- predict(low, newdata = mtcars)
+  ## Weights
+  row <- iv_robust(mpg ~ hp + factor(cyl) | vs + factor(cyl), weights = wt, data = mtcars)
+  rfow <- iv_robust(mpg ~ hp | vs, fixed_effects = ~ cyl, weights = wt, data = mtcars)
+  iow <- ivreg(mpg ~ hp + factor(cyl) | vs + factor(cyl), weights = wt, data = mtcars)
+
+  piow <- predict(iow, newdata = mtcars)
   prow <- predict(row, newdata = mtcars)
   prfow <- predict(rfow, newdata = mtcars)
-
-  expect_error(
-    predict(rfow, newdata = mtcars, se.fit = TRUE),
-    "Can't set `se.fit`|TRUE with `fixed_effects`"
-  )
 
   expect_equal(
     prow,
@@ -771,12 +784,12 @@ test_that("predict.iv_robust works with fixed effects", {
 
   expect_equal(
     prow,
-    plow
+    piow
   )
 
   expect_equivalent(
-    row$fitted.values,
-    low$fitted.values
+    rfow$fitted.values,
+    iow$fitted.values
   )
 
   expect_equal(
@@ -814,8 +827,8 @@ test_that("predict.iv_robust works with fixed effects", {
   )
 
   ## Clustered
-  roc <- lm_robust(mpg ~ 0 + hp + vs + factor(cyl), clusters = carb, data = mtcars)
-  rfoc <- lm_robust(mpg ~ hp + vs, fixed_effects = ~ cyl, clusters = carb, data = mtcars)
+  roc <- iv_robust(mpg ~ hp + factor(cyl) | vs + factor(cyl), clusters = carb, data = mtcars)
+  rfoc <- iv_robust(mpg ~ hp | vs, fixed_effects = ~ cyl, clusters = carb, data = mtcars)
 
   proc <- predict(roc, newdata = mtcars)
   prfoc <- predict(rfoc, newdata = mtcars)
@@ -826,8 +839,8 @@ test_that("predict.iv_robust works with fixed effects", {
   )
 
   expect_equivalent(
-    roc$fitted.values,
-    lo$fitted.values # not weighted, just lm predictions
+    rfoc$fitted.values,
+    io$fitted.values # not weighted, just lm predictions
   )
 
   expect_equal(
@@ -837,12 +850,12 @@ test_that("predict.iv_robust works with fixed effects", {
 
   expect_equal(
     prfoc,
-    plo
+    pio
   )
 
   ## Clustered, weights
-  rocw <- lm_robust(mpg ~ 0 + hp + vs + factor(cyl), weights = wt, clusters = carb, data = mtcars, se_type = "stata")
-  rfocw <- lm_robust(mpg ~ hp + vs, fixed_effects = ~ cyl, weights = wt, clusters = carb, data = mtcars, se_type = "stata")
+  rocw <- iv_robust(mpg ~ hp + factor(cyl) | vs + factor(cyl), clusters = carb, weights = wt, data = mtcars, se_type = "stata")
+  rfocw <- iv_robust(mpg ~ hp | vs, fixed_effects = ~ cyl, clusters = carb, weights = wt, data = mtcars, se_type = "stata")
 
   procw <- predict(rocw, newdata = mtcars)
   prfocw <- predict(rfocw, newdata = mtcars)
@@ -854,7 +867,7 @@ test_that("predict.iv_robust works with fixed effects", {
 
   expect_equivalent(
     rocw$fitted.values,
-    low$fitted.values # not weighted, just lm predictions
+    iow$fitted.values # not weighted, just lm predictions
   )
 
   expect_equal(
@@ -864,11 +877,11 @@ test_that("predict.iv_robust works with fixed effects", {
 
   expect_equal(
     prfocw,
-    plow
+    piow
   )
 
   ## Fails with two fixed effects
-  rfocw <- lm_robust(mpg ~ hp + vs, fixed_effects = ~ cyl + carb, data = mtcars)
+  rfocw <- iv_robust(mpg ~ hp | vs, fixed_effects = ~ cyl + carb, data = mtcars)
   expect_error(
     predict(rfocw, newdata = mtcars),
     "Can't use `predict.lm_robust` with more than one set of `fixed_effects`"

@@ -294,7 +294,7 @@ lm_robust_fit <- function(y,
       }
     }
 
-    if (fes && (ncol(fixed_effects) == 1)) {
+    if (fes && (ncol(fixed_effects) == 1) && is.numeric(Xoriginal)) {
       return_list[["fixed_effects"]] <- setNames(
         tapply(
           return_list[["fitted.values"]] -

@@ -155,9 +155,11 @@ iv_robust <- function(formula,
   fes <- !is.null(model_data[["fixed_effects"]])
   if (fes) {
     yoriginal <- model_data[["outcome"]]
+    Xoriginal <- model_data[["design_matrix"]]
     model_data <- demean_fes(model_data)
   } else {
     yoriginal <- NULL
+    Xoriginal <- NULL
   }
 
   # -----------
@@ -192,8 +194,9 @@ iv_robust <- function(formula,
   second_stage <-
     lm_robust_fit(
       y = model_data$outcome,
-      yoriginal = yoriginal,
       X = first_stage$fitted.values,
+      yoriginal = yoriginal,
+      Xoriginal = Xoriginal,
       weights = model_data$weights,
       cluster = model_data$cluster,
       fixed_effects = model_data$fixed_effects,
