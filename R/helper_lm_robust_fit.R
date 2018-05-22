@@ -175,6 +175,8 @@ lm_robust_fit <- function(y,
   # ----------
 
   if (se_type != "none" || return_fit) {
+
+    # Drop NA columns from data and from beta_hat
     if (x_rank < ncol(X)) {
       X <- X[, covs_used, drop = FALSE]
       if (weighted) {
@@ -184,6 +186,12 @@ lm_robust_fit <- function(y,
         X_first_stage <- X_first_stage[, covs_used, drop = FALSE]
         if (weighted) {
           X_first_stage_unweighted <- X_first_stage_unweighted[, covs_used, drop = FALSE]
+        }
+      }
+      if (is.numeric(Xoriginal)) {
+        Xoriginal <- Xoriginal[, covs_used, drop = FALSE]
+        if (weighted) {
+          Xoriginal <- Xoriginal[, covs_used, drop = FALSE]
         }
       }
 
@@ -228,17 +236,9 @@ lm_robust_fit <- function(y,
 
     if (se_type != "none") {
 
-
-      if (se_type %in% c("HC2", "HC3", "CR2") && fes) {
-        X <- cbind(X, femat)
-        if (weighted) {
-          Xunweighted <- cbind(Xunweighted, fematunweighted)
-        }
-      }
-
       vcov_fit <- lm_variance(
-        X = X,
-        Xunweighted = Xunweighted,
+        X = if (se_type %in% c("HC2", "HC3", "CR2") && fes) cbind(X, femat) else X,
+        Xunweighted = if (se_type %in% c("HC2", "HC3", "CR2") && fes && weighted) cbind(Xunweighted, fematunweighted) else Xunweighted,
         XtX_inv = fit$XtX_inv,
         ei = ei,
         weight_mean = weight_mean,
@@ -267,10 +267,16 @@ lm_robust_fit <- function(y,
   return_list <- add_cis_pvals(return_list, alpha, ci && se_type != "none")
 
   if (return_fit) {
-    if ((se_type == "CR2" && weighted) || iv_second_stage) {
+    if (iv_second_stage && !fes) {
+      if (weighted) {
+        return_list[["fitted.values"]] <- as.matrix(X_first_stage_unweighted %*% fit$beta_hat)
+      } else {
+        return_list[["fitted.values"]] <- as.matrix(fitted.values)
+      }
+    } else if ((se_type == "CR2" && weighted)) {
       # Have to get weighted fits as original fits were unweighted for
       # variance estimation or used wrong regressors in IV
-      return_list[["fitted.values"]] <- as.matrix(X[, 1:x_rank, drop = FALSE] %*% fit$beta_hat)
+      return_list[["fitted.values"]] <- as.matrix(X %*% fit$beta_hat)
       if (fes) {
         return_list[["fitted.values"]] <- as.matrix(yoriginal - (y - return_list[["fitted.values"]]))
       }
@@ -278,7 +284,7 @@ lm_robust_fit <- function(y,
       if (fes && is.numeric(yoriginal)) {
         return_list[["fitted.values"]] <- as.matrix(yoriginalunweighted - ei / weights)
       } else {
-        return_list[["fitted.values"]] <- as.matrix(Xunweighted[, 1:x_rank, drop = FALSE] %*% fit$beta_hat)
+        return_list[["fitted.values"]] <- as.matrix(Xunweighted %*% fit$beta_hat)
       }
     } else {
       if (fes && is.numeric(yoriginal)) {

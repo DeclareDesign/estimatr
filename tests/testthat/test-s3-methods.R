@@ -703,3 +703,175 @@ test_that("predict works with fixed effects", {
   )
 
 })
+
+test_that("predict.iv_robust works with fixed effects", {
+  ro <- lm_robust(mpg ~ hp + vs + factor(cyl), data = mtcars)
+  rfo <- lm_robust(mpg ~ hp + vs, fixed_effects = ~ cyl, data = mtcars)
+  lo <- lm(mpg ~ hp + vs + factor(cyl), data = mtcars)
+
+  plo <- predict(lo, newdata = mtcars)
+
+  expect_equal(
+    predict(ro, newdata = mtcars),
+    predict(rfo, newdata = mtcars)
+  )
+
+  expect_error(
+    predict(rfo, newdata = mtcars, se.fit = TRUE),
+    "Can't set `se.fit`|TRUE with `fixed_effects`"
+  )
+
+  mtcars2 <- data.frame(
+    mpg = 1:3,
+    hp = rnorm(3),
+    vs = rbinom(3, 1, 0.5),
+    cyl = c(4, 2, 4)
+  )
+
+  expect_error(
+    predict(ro, newdata = mtcars2),
+    "factor factor\\(cyl\\) has new levels 2"
+  )
+
+  expect_error(
+    predict(rfo, newdata = mtcars2),
+    "New levels present in `newdata` `fixed_effects` variable"
+  )
+
+  mtcars3 <- data.frame(
+    mpg = 1:3,
+    hp = rnorm(3),
+    vs = rbinom(3, 1, 0.5),
+    cyl = c(4, 6, 4)
+  )
+
+  expect_equal(
+    predict(ro, newdata = mtcars3),
+    predict(rfo, newdata = mtcars3)
+  )
+
+  ## Weights
+  row <- lm_robust(mpg ~ 0 + hp + vs + factor(cyl), weights = wt, data = mtcars)
+  rfow <- lm_robust(mpg ~ hp + vs, fixed_effects = ~ cyl, weights = wt, data = mtcars)
+  low <- lm(mpg ~ hp + vs + factor(cyl), weights = wt, data = mtcars)
+
+  plow <- predict(low, newdata = mtcars)
+  prow <- predict(row, newdata = mtcars)
+  prfow <- predict(rfow, newdata = mtcars)
+
+  expect_error(
+    predict(rfow, newdata = mtcars, se.fit = TRUE),
+    "Can't set `se.fit`|TRUE with `fixed_effects`"
+  )
+
+  expect_equal(
+    prow,
+    prfow
+  )
+
+  expect_equal(
+    prow,
+    plow
+  )
+
+  expect_equivalent(
+    row$fitted.values,
+    low$fitted.values
+  )
+
+  expect_equal(
+    row$fitted.values,
+    rfow$fitted.values
+  )
+
+  mtcars2 <- data.frame(
+    mpg = 1:3,
+    hp = rnorm(3),
+    vs = rbinom(3, 1, 0.5),
+    cyl = c(4, 2, 4)
+  )
+
+  expect_error(
+    predict(row, newdata = mtcars2),
+    "factor factor\\(cyl\\) has new levels 2"
+  )
+
+  expect_error(
+    predict(rfow, newdata = mtcars2),
+    "New levels present in `newdata` `fixed_effects`"
+  )
+
+  mtcars3 <- data.frame(
+    mpg = 1:3,
+    hp = rnorm(3),
+    vs = rbinom(3, 1, 0.5),
+    cyl = c(4, 6, 4)
+  )
+
+  expect_equal(
+    predict(row, newdata = mtcars3),
+    predict(rfow, newdata = mtcars3)
+  )
+
+  ## Clustered
+  roc <- lm_robust(mpg ~ 0 + hp + vs + factor(cyl), clusters = carb, data = mtcars)
+  rfoc <- lm_robust(mpg ~ hp + vs, fixed_effects = ~ cyl, clusters = carb, data = mtcars)
+
+  proc <- predict(roc, newdata = mtcars)
+  prfoc <- predict(rfoc, newdata = mtcars)
+
+  expect_equal(
+    roc$fitted.values,
+    rfoc$fitted.values
+  )
+
+  expect_equivalent(
+    roc$fitted.values,
+    lo$fitted.values # not weighted, just lm predictions
+  )
+
+  expect_equal(
+    proc,
+    prfoc
+  )
+
+  expect_equal(
+    prfoc,
+    plo
+  )
+
+  ## Clustered, weights
+  rocw <- lm_robust(mpg ~ 0 + hp + vs + factor(cyl), weights = wt, clusters = carb, data = mtcars, se_type = "stata")
+  rfocw <- lm_robust(mpg ~ hp + vs, fixed_effects = ~ cyl, weights = wt, clusters = carb, data = mtcars, se_type = "stata")
+
+  procw <- predict(rocw, newdata = mtcars)
+  prfocw <- predict(rfocw, newdata = mtcars)
+
+  expect_equal(
+    rocw$fitted.values,
+    rfocw$fitted.values
+  )
+
+  expect_equivalent(
+    rocw$fitted.values,
+    low$fitted.values # not weighted, just lm predictions
+  )
+
+  expect_equal(
+    procw,
+    prfocw
+  )
+
+  expect_equal(
+    prfocw,
+    plow
+  )
+
+  ## Fails with two fixed effects
+  rfocw <- lm_robust(mpg ~ hp + vs, fixed_effects = ~ cyl + carb, data = mtcars)
+  expect_error(
+    predict(rfocw, newdata = mtcars),
+    "Can't use `predict.lm_robust` with more than one set of `fixed_effects`"
+  )
+
+})
