@@ -110,7 +110,8 @@
 #'   \item{fstatistic}{a vector with the value of the F-statistic with the numerator and denominator degrees of freedom}
 #'   \item{weighted}{whether or not weights were applied}
 #'   \item{call}{the original function call}
-#' We also return \code{terms} and \code{contrasts}, used by \code{predict}.
+#'   \item{fitted.values}{the matrix of predicted means}
+#' We also return \code{terms} and \code{contrasts}, used by \code{predict}. If \code{fixed_effects} are specified, then we return \code{proj_fstatistic}, \code{proj_r.squared}, and \code{proj_adj.r.squared}, which are model fit statistics that are computed on the projected model (after demeaning the fixed effects).
 #'
 #' @references
 #' Abadie, Alberto, Susan Athey, Guido W Imbens, and Jeffrey Wooldridge. 2017. "A Class of Unbiased Estimators of the Average Treatment Effect in Randomized Experiments." arXiv Pre-Print. \url{https://arxiv.org/abs/1710.02926v2}.
@@ -193,6 +194,10 @@
 #'
 #' # One can also choose to set the significance level for different CIs
 #' lm_robust(y ~ x + z, data = dat, alpha = 0.1)
+#'
+#' # We can also specify fixed effects
+#' # Speed gains with fixed effects are greatests with "stata" or "HC1" std.errors
+#' tidy(lm_robust(y ~ x + z, data = dat, fixed_effects = ~ blockID, se_type = "HC1"))
 #'
 #' \dontrun{
 #'   # Can also use 'margins' package if you have it installed to get

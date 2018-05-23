@@ -6,7 +6,7 @@
 \usage{
 lm_robust_fit(y, X, yoriginal = NULL, Xoriginal = NULL, weights, cluster,
   fixed_effects = NULL, ci = TRUE, se_type, has_int, alpha = 0.05,
-  return_vcov = TRUE, return_fit = TRUE, return_unweighted_fit = FALSE,
+  return_vcov = TRUE, return_fit = TRUE, return_unweighted_fit = TRUE,
   try_cholesky = FALSE, X_first_stage = NULL)
 }
 \arguments{

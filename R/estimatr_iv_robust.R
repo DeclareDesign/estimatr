@@ -55,7 +55,7 @@
 #' first-stage (endogenous) regressors. More notes on this can be found at
 #' \href{https://declaredesign.org/R/estimatr/articles/mathematical-notes.html}{the mathematical appendix}.
 #'
-#' If \code{`fixed_effects`} are specified, both the outcome, regressors, and instruments
+#' If \code{fixed_effects} are specified, both the outcome, regressors, and instruments
 #' are centered using the method of alternating projections (Halperin 1962; Gaure 2013). Specifying
 #' fixed effects in this way will result in large speed gains with standard error
 #' estimators that do not need to invert the matrix of fixed effects. This means using
@@ -94,7 +94,8 @@
 #'   \item{fstatistic}{a vector with the value of the second stage F-statistic with the numerator and denominator degrees of freedom}
 #'   \item{weighted}{whether or not weights were applied}
 #'   \item{call}{the original function call}
-#' We also return \code{terms} with the second stage terms and \code{terms_regressors} with the first stage terms, both of which used by \code{predict}.
+#'   \item{fitted.values}{the matrix of predicted means}
+#' We also return \code{terms} with the second stage terms and \code{terms_regressors} with the first stage terms, both of which used by \code{predict}. If \code{fixed_effects} are specified, then we return \code{proj_fstatistic}, \code{proj_r.squared}, and \code{proj_adj.r.squared}, which are model fit statistics that are computed on the projected model (after demeaning the fixed effects).
 #'
 #' @references
 #'
@@ -109,7 +110,8 @@
 #'   Y = rpois(N, lambda = 4),
 #'   Z = rbinom(N, 1, prob = 0.4),
 #'   D  = Z * rbinom(N, 1, prob = 0.8),
-#'   X = rnorm(N)
+#'   X = rnorm(N),
+#'   G = sample(letters[1:4], N, replace = TRUE)
 #' )
 #'
 #' # Instrument for treatment `D` with encouragement `Z`
@@ -125,6 +127,9 @@
 #' # Again, easy to replicate Stata (again with `small` correction in Stata)
 #' tidy(iv_robust(Y ~ D | Z, data = dat, clusters = cl, se_type = "stata"))
 #'
+#' # We can also specify fixed effects, that will be taken as exogenous regressors
+#' # Speed gains with fixed effects are greatests with "stata" or "HC1" std.errors
+#' tidy(iv_robust(Y ~ D | Z, data = dat, fixed_effects = ~ G, se_type = "HC1"))
 #'
 #' @export
 iv_robust <- function(formula,
