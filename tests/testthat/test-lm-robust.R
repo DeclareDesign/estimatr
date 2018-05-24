@@ -689,9 +689,9 @@ test_that("multiple outcomes", {
   lmo <- lm(cbind(mpg, hp) ~ cyl, data = mtcarsmiss)
   lmro <- lm_robust(cbind(mpg, hp) ~ cyl, data = mtcarsmiss, se_type = "classical")
 
-  expect_equal(
-    tidy(lmo)[, c("estimate", "std.error", "p.value")],
-    tidy(lmro)[, c("estimate", "std.error", "p.value")]
+  expect_equivalent(
+    do.call(rbind, lapply(summary(lmo), function(x) x$coefficients[, c(1, 2, 4)])),
+    as.matrix(tidy(lmro)[, c("estimate", "std.error", "p.value")])
   )
 
   expect_equivalent(
