@@ -14,9 +14,15 @@ lm_robust_fit(y, X, yoriginal = NULL, Xoriginal = NULL, weights, cluster,
 
 \item{X}{numeric design matrix}
 
+\item{yoriginal}{numeric outcome vector, unprojected if there are fixed effects}
+
+\item{Xoriginal}{numeric design matrix, unprojected if there are fixed effects}
+
 \item{weights}{numeric weights vector}
 
 \item{cluster}{numeric cluster vector}
+
+\item{fixed_effects}{character matrix of fixed effect groups}
 
 \item{ci}{boolean that when T returns confidence intervals and p-values}
 

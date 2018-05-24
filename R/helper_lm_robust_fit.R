@@ -2,8 +2,11 @@
 #'
 #' @param y numeric outcome vector
 #' @param X numeric design matrix
+#' @param yoriginal numeric outcome vector, unprojected if there are fixed effects
+#' @param Xoriginal numeric design matrix, unprojected if there are fixed effects
 #' @param weights numeric weights vector
 #' @param cluster numeric cluster vector
+#' @param fixed_effects character matrix of fixed effect groups
 #' @param ci boolean that when T returns confidence intervals and p-values
 #' @param se_type character denoting which kind of SEs to return
 #' @param has_int logical, whether the model has an intercept, used for \eqn{R^2}

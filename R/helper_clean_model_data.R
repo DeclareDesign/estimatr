@@ -171,7 +171,7 @@ demean_fes <- function(model_data) {
   demeaned <- demeanMat(
     Y = as.matrix(model_data[["outcome"]]),
     X = model_data[["design_matrix"]],
-    Z = model_data[["instrument_matrix"]],
+    Zmat = model_data[["instrument_matrix"]],
     fes = model_data[["fixed_effects"]],
     weights = if (is.numeric(model_data[["weights"]])) model_data[["weights"]] else rep(1, nrow(model_data[["design_matrix"]])),
     has_int = attr(model_data$terms, "intercept"),
