@@ -32,16 +32,13 @@ clean_model_data <- function(data, datargs, estimator = "") {
   for (da in to_process) {
     name <- sprintf(".__%s%%%d__", da, sample.int(.Machine$integer.max, 1))
     if (da == "fixed_effects") {
-      # get fixed effects factors as integers
-      # Need to cast as integers because "fixed_effects" object needs to be a matrix for
-      # later model.frame call
       m_formula_env[[name]] <- sapply(
         eval_tidy(quo((stats::model.frame.default)(
           mfargs[["fixed_effects"]],
           data = data,
           na.action = NULL
         ))),
-        function(fe) as.factor(fe)
+        FUN = function(fe) as.factor(fe)
       )
       #print(str(m_formula_env[[name]]))
     } else {
