@@ -319,7 +319,7 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
           // Perfect fits cause instability, but we can place 0s for those
           // observations and the rest of the estimation works
           for (int j = 0; j < ny; j++) {
-            if (isnan(new_omega(j)) || isinf(new_omega(j))) {
+            if (std::isnan(new_omega(j)) || std::isinf(new_omega(j))) {
               new_omega(j) = 0.0;
             }
           }

@@ -38,7 +38,7 @@ clean_model_data <- function(data, datargs, estimator = "") {
           data = data,
           na.action = NULL
         ))),
-        FUN = function(fe) as.factor(fe)
+        FUN = as.factor
       )
       #print(str(m_formula_env[[name]]))
     } else {
