@@ -21,30 +21,31 @@ clean_model_data <- function(data, datargs, estimator = "") {
   m_formula <- eval_tidy(mfargs[["formula"]])
   m_formula_env <- environment(m_formula)
 
-  args_ignored <- c("subset", "se_type")
+  args_ignored <- c("fixed_effects", "se_type")
   # For each ... that would go to model.fram .default, early eval, save to formula env, and point to it
   # subset is also non-standard eval
   to_process <- setdiff(
     names(mfargs),
-    setdiff(names(formals(stats::model.frame.default)), args_ignored)
+    c(setdiff(names(formals(stats::model.frame.default)), "subset"), args_ignored)
   )
 
   for (da in to_process) {
     name <- sprintf(".__%s%%%d__", da, sample.int(.Machine$integer.max, 1))
-    if (da == "fixed_effects") {
-      m_formula_env[[name]] <- sapply(
-        eval_tidy(quo((stats::model.frame.default)(
-          mfargs[["fixed_effects"]],
-          data = data,
-          na.action = NULL
-        ))),
-        FUN = as.factor
-      )
-      #print(str(m_formula_env[[name]]))
-    } else {
-      m_formula_env[[name]] <- eval_tidy(mfargs[[da]], data = data)
-    }
+    m_formula_env[[name]] <- eval_tidy(mfargs[[da]], data = data)
     mfargs[[da]] <- sym(name)
+  }
+
+  if ("fixed_effects" %in% names(mfargs)) {
+    name <- sprintf(".__fixed_effects%%%d__", sample.int(.Machine$integer.max, 1))
+    m_formula_env[[name]] <- sapply(
+      eval_tidy(quo((stats::model.frame.default)(
+        mfargs[["fixed_effects"]],
+        data = data,
+        na.action = NULL
+      ))),
+      FUN = as.factor
+    )
+    mfargs[["fixed_effects"]] <- sym(name)
   }
 
   mfargs[["formula"]] <- Formula::as.Formula(m_formula)
