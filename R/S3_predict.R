@@ -72,14 +72,7 @@ predict.lm_robust <- function(object,
                               weights,
                               ...) {
 
-  # Get model matrix
-  rhs_terms <- delete.response(object$terms)
-  mf <- model.frame(rhs_terms, newdata, na.action = na.action)
-
-  # Check class of columns in newdata match those in model fit
-  if (!is.null(cl <- attr(rhs_terms, "dataClasses"))) .checkMFClasses(cl, mf)
-
-  X <- model.matrix(rhs_terms, mf, contrasts.arg = object$contrasts)
+  X <- get_X(object, newdata, na.action)
 
   # lm_lin scaling
   if (!is.null(object$scaled_center)) {
@@ -93,7 +86,6 @@ predict.lm_robust <- function(object,
         center = object$scaled_center,
         scale = FALSE
       )
-
 
     # Interacted with treatment
     treat_name <- attr(object$terms, "term.labels")[1]
@@ -113,14 +105,22 @@ predict.lm_robust <- function(object,
   beta_na <- is.na(coefs[, 1])
 
   # Get predicted values
-  predictor <- drop(X[, !beta_na, drop = FALSE] %*% coefs[!beta_na, ])
+  preds <- X[, !beta_na, drop = FALSE] %*% coefs[!beta_na, ]
+  if (object[["fes"]]) {
+    preds <- add_fes(preds, object, newdata)
+  }
+  predictor <- drop(preds)
 
-  df_resid <- object$N - object$rank
+  df_resid <- object$df.residual
   interval <- match.arg(interval)
 
   if (se.fit || interval != "none") {
     if (ncol(coefs) > 1) {
       stop("Can't set `se.fit` == TRUE with multivariate outcome")
+    }
+
+    if (object[["fes"]]) {
+      stop("Can't set `se.fit` == TRUE with `fixed_effects`")
     }
 
     ret <- list()
@@ -184,20 +184,80 @@ predict.iv_robust <- function(object,
                               na.action = na.pass,
                               ...) {
 
-  # Get model matrix
-  rhs_terms <- delete.response(object$terms_regressors)
-  mf <- model.frame(rhs_terms, newdata, na.action = na.action)
-
-  # Check class of columns in newdata match those in model fit
-  if (!is.null(cl <- attr(rhs_terms, "dataClasses"))) .checkMFClasses(cl, mf)
-
-  X <- model.matrix(rhs_terms, mf, contrasts.arg = object$contrasts)
+  X <- get_X(object, newdata, na.action)
 
   coefs <- as.matrix(coef(object))
 
   beta_na <- is.na(coefs[, 1])
 
   # Get predicted values
-  predictor <- drop(X[, !beta_na, drop = FALSE] %*% coefs[!beta_na, ])
-  return(predictor)
+  preds <- X[, !beta_na, drop = FALSE] %*% coefs[!beta_na, ]
+  if (object[["fes"]]) {
+    preds <- add_fes(preds, object, newdata)
+  }
+  return(drop(preds))
+}
+
+get_X <- function(object, newdata, na.action) {
+  # Get model matrix
+  if (is.null(object[["terms_regressors"]])) {
+    rhs_terms <- delete.response(object[["terms"]])
+  } else {
+    rhs_terms <- delete.response(object[["terms_regressors"]])
+  }
+  mf <- model.frame(rhs_terms, newdata, na.action = na.action, xlev = object[["xlevels"]])
+
+  # Check class of columns in newdata match those in model fit
+  if (!is.null(cl <- attr(rhs_terms, "dataClasses"))) .checkMFClasses(cl, mf)
+
+  if (object[["fes"]]) {
+    attr(rhs_terms, "intercept") <- 0
+  }
+
+  X <- model.matrix(rhs_terms, mf, contrasts.arg = object$contrasts)
+
+  return(X)
+}
+
+add_fes <- function(preds, object, newdata) {
+
+  # Add factors!
+  args <- as.list(object[["call"]])
+
+  if (length(all.vars(rlang::f_rhs(args[["fixed_effects"]]))) > 1) {
+    stop(
+      "Can't use `predict.lm_robust` with more than one set of ",
+      "`fixed_effects`. Can recover fits in `fitted.values` in the model ",
+      "object."
+    )
+  }
+
+  # cast as factor
+  femat <- model.matrix(
+    ~ 0 + .,
+    data = as.data.frame(
+      lapply(
+        stats::model.frame.default(
+          args[["fixed_effects"]],
+          data = newdata,
+          na.action = NULL
+        ),
+        FUN = as.factor
+      )
+    )
+  )
+
+  keep_facs <- intersect(names(object[["fixed_effects"]]), colnames(femat))
+  extra_facs <- setdiff(colnames(femat), names(object[["fixed_effects"]]))
+  if (length(extra_facs)) {
+    stop(
+      "Can't have new levels in `newdata` `fixed_effects` variable, such as: ",
+      paste0(extra_facs, collapse = ", ")
+    )
+  }
+  preds <- preds +
+    femat[, keep_facs] %*%
+    object[["fixed_effects"]][keep_facs]
+
+  return(preds)
 }
