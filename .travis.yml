@@ -9,7 +9,7 @@ matrix:
       r: release
 
     - os: linux
-      r: oldrel
+      r: 3.4
       after_success:
       - echo skipping source packaging on linux/oldrel
 
@@ -24,7 +24,7 @@ matrix:
 
     - os: osx
       osx_image: xcode6.4
-      r: oldrel
+      r: 3.4
       if: branch = master
 
 
