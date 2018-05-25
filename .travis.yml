@@ -45,6 +45,7 @@ r_github_packages:
 - DeclareDesign/DDtools
 - ropensci/git2r
 - DeclareDesign/fabricatr
+- DeclareDesign/randomizr
 
 r_packages:
 - broom
