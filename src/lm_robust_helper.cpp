@@ -305,8 +305,8 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
       if ((se_type == "HC2") || (se_type == "HC3")) {
 
+        Eigen::ArrayXd new_omega(ny);
         for (int i = 0; i < n; i++) {
-          Eigen::ArrayXd new_omega(ny);
           Eigen::VectorXd Xi = X.leftCols(r_fe).row(i);
           // Rcout << i << ":" << Xi << std::endl;
 
@@ -315,14 +315,9 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
           } else if (se_type == "HC3") {
             new_omega = temp_omega.row(i) / (std::pow(1.0 - Xi.transpose() * meatXtX_inv * Xi, 2));
           }
-          // Rcout << i << ":" << new_omega << std::endl;
           // Perfect fits cause instability, but we can place 0s for those
           // observations and the rest of the estimation works
-          for (int j = 0; j < ny; j++) {
-            if (std::isnan(new_omega(j)) || std::isinf(new_omega(j))) {
-              new_omega(j) = 0.0;
-            }
-          }
+          new_omega = new_omega.unaryExpr([](double v) {return std::isfinite(v)? v : 0.0;});
           temp_omega.row(i) = new_omega;
         }
       }

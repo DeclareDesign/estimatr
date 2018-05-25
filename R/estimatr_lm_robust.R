@@ -233,7 +233,7 @@ lm_robust <- function(formula,
   data <- enquo(data)
   model_data <- clean_model_data(data = data, datargs)
 
-  fes <- !is.null(model_data[["fixed_effects"]])
+  fes <- is.character(model_data[["fixed_effects"]])
   if (fes) {
     yoriginal <- model_data[["outcome"]]
     Xoriginal <- model_data[["design_matrix"]]
@@ -264,8 +264,7 @@ lm_robust <- function(formula,
   return_list <- lm_return(
     return_list,
     model_data = model_data,
-    formula = formula,
-    fes = fes
+    formula = formula
   )
 
   return_list[["call"]] <- match.call()

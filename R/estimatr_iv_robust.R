@@ -157,7 +157,7 @@ iv_robust <- function(formula,
     warning("More regressors than instruments")
   }
 
-  fes <- !is.null(model_data[["fixed_effects"]])
+  fes <- is.character(model_data[["fixed_effects"]])
   if (fes) {
     yoriginal <- model_data[["outcome"]]
     Xoriginal <- model_data[["design_matrix"]]

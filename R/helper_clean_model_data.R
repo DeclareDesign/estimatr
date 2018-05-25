@@ -149,14 +149,8 @@ clean_model_data <- function(data, datargs, estimator = "") {
 
   ret[["terms"]] <- attr(mf, "terms")
   ret[["xlevels"]] <- .getXlevels(ret[["terms"]], mf)
-  if (!is.null(ret[["fixed_effects"]])) {
-    ret[["felevels"]] <-
-      setNames(
-        lapply(colnames(ret[["fixed_effects"]]), function(x) {
-          unique(ret[["fixed_effects"]][, x])
-        }),
-        colnames(ret[["fixed_effects"]])
-      )
+  if (is.character(ret[["fixed_effects"]])) {
+    ret[["felevels"]] <- lapply(as.data.frame(ret[["fixed_effects"]]), unique)
   }
 
   return(ret)

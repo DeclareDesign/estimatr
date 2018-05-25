@@ -1,5 +1,5 @@
 # This file has helper functions for returning the lists from various estimators
-lm_return <- function(return_list, model_data, formula, fes = FALSE) {
+lm_return <- function(return_list, model_data, formula) {
   return_list[["contrasts"]] <- attr(model_data$design_matrix, "contrasts")
   return_list[["terms"]] <- model_data$terms
   return_list[["xlevels"]] <- model_data$xlevels
