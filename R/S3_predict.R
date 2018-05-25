@@ -236,22 +236,27 @@ add_fes <- function(preds, object, newdata) {
   femat <- model.matrix(
     ~ 0 + .,
     data = as.data.frame(
-      sapply(
+      lapply(
         stats::model.frame.default(
           args[["fixed_effects"]],
           data = newdata,
           na.action = NULL
         ),
-        function(fe) as.factor(fe)
+        FUN = as.factor
       )
     )
   )
 
-  keep_facs <- names(object[["fixed_effects"]]) %in% colnames(femat)
-  extra_facs <- length(setdiff(colnames(femat), names(object[["fixed_effects"]])))
-  if (extra_facs) stop("New levels present in `newdata` `fixed_effects` variable")
+  keep_facs <- intersect(names(object[["fixed_effects"]]), colnames(femat))
+  extra_facs <- setdiff(colnames(femat), names(object[["fixed_effects"]]))
+  if (length(extra_facs)) {
+    stop(
+      "Can't have new levels in `newdata` `fixed_effects` variable, such as: ",
+      paste0(extra_facs, collapse = ", ")
+    )
+  }
   preds <- preds +
-    femat[, names(object[["fixed_effects"]])[keep_facs]] %*%
+    femat[, keep_facs] %*%
     object[["fixed_effects"]][keep_facs]
 
   return(preds)

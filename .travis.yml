@@ -23,7 +23,6 @@ matrix:
       if: branch = master
 
     - os: osx
-      osx_image: xcode6.4
       r: 3.4
       if: branch = master
 

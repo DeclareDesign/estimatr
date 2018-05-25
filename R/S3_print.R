@@ -33,8 +33,8 @@ print_summary_lm_like <- function(x,
 
   print(coef(x), digits = digits)
 
-  if (!is.null(x$fstatistic)) {
-    fstat <- paste(
+  fstat <- if (is.numeric(x$fstatistic)) {
+    paste(
       "\nF-statistic:", formatC(x$fstatistic[1L], digits = digits),
       "on", x$fstatistic[2L], "and", x$fstatistic[3L],
       "DF,  p-value:",
@@ -45,9 +45,7 @@ print_summary_lm_like <- function(x,
         lower.tail = FALSE
       ), digits = digits)
     )
-  } else {
-    fstat <- NULL
-  }
+  } else NULL
 
   cat(
     "\nMultiple R-squared: ", formatC(x$r.squared, digits = digits),

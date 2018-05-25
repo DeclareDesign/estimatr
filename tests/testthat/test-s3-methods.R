@@ -563,7 +563,7 @@ test_that("predict works with fixed effects", {
 
   expect_error(
     predict(rfo, newdata = mtcars2),
-    "New levels present in `newdata` `fixed_effects` variable"
+    "Can't have new levels in `newdata` `fixed_effects` variable, such as: cyl2"
   )
 
   mtcars3 <- data.frame(
@@ -626,7 +626,7 @@ test_that("predict works with fixed effects", {
 
   expect_error(
     predict(rfow, newdata = mtcars2),
-    "New levels present in `newdata` `fixed_effects`"
+    "Can't have new levels in `newdata` `fixed_effects` variable, such as: cyl2"
   )
 
   mtcars3 <- data.frame(
@@ -748,7 +748,7 @@ test_that("predict.iv_robust works with fixed effects", {
 
   expect_error(
     predict(rfo, newdata = mtcars2),
-    "New levels present in `newdata` `fixed_effects` variable"
+    "Can't have new levels in `newdata` `fixed_effects` variable, such as\\: cyl2"
   )
 
   mtcars3 <- data.frame(
@@ -811,7 +811,7 @@ test_that("predict.iv_robust works with fixed effects", {
 
   expect_error(
     predict(rfow, newdata = mtcars2),
-    "New levels present in `newdata` `fixed_effects`"
+    "Can't have new levels in `newdata` `fixed_effects` variable, such as: cyl2"
   )
 
   mtcars3 <- data.frame(
