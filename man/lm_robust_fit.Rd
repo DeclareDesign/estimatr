@@ -4,8 +4,9 @@
 \alias{lm_robust_fit}
 \title{Internal method that creates linear fits}
 \usage{
-lm_robust_fit(y, X, weights, cluster, ci, se_type, has_int, alpha = 0.05,
-  return_vcov = TRUE, return_fit = FALSE, return_unweighted_fit = FALSE,
+lm_robust_fit(y, X, yoriginal = NULL, Xoriginal = NULL, weights, cluster,
+  fixed_effects = NULL, ci = TRUE, se_type, has_int, alpha = 0.05,
+  return_vcov = TRUE, return_fit = TRUE, return_unweighted_fit = TRUE,
   try_cholesky = FALSE, X_first_stage = NULL)
 }
 \arguments{
@@ -13,9 +14,15 @@ lm_robust_fit(y, X, weights, cluster, ci, se_type, has_int, alpha = 0.05,
 
 \item{X}{numeric design matrix}
 
+\item{yoriginal}{numeric outcome vector, unprojected if there are fixed effects}
+
+\item{Xoriginal}{numeric design matrix, unprojected if there are fixed effects}
+
 \item{weights}{numeric weights vector}
 
 \item{cluster}{numeric cluster vector}
+
+\item{fixed_effects}{character matrix of fixed effect groups}
 
 \item{ci}{boolean that when T returns confidence intervals and p-values}
 

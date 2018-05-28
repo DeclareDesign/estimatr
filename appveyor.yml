@@ -20,12 +20,12 @@ environment:
   - R_VERSION: release
 
   - R_VERSION: oldrel
-    RTOOLS_VERSION: 33
+    RTOOLS_VERSION: 34
 
 build_script:
   - travis-tool.sh install_deps
   - travis-tool.sh install_github DeclareDesign/DDtools
-  - travis-tool.sh install_github DeclareDesign/fabricatr@v0.4.0
+  - travis-tool.sh install_github DeclareDesign/fabricatr
   - travis-tool.sh install_github DeclareDesign/randomizr
 
 
