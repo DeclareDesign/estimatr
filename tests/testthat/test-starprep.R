@@ -2,6 +2,8 @@ context("Helper - commarobust + starprep")
 
 test_that("starprep works", {
 
+  skip_if_not_installed("stargazer")
+
   fit_1 <- lm(mpg ~ hp, data = mtcars)
   fit_2 <- lm(mpg ~ hp, data = mtcars)
 
@@ -9,9 +11,20 @@ test_that("starprep works", {
   fit_2_r <- lm_robust(mpg ~ hp, data = mtcars)
 
   library(stargazer)
-  stargazer(fit_1, fit_2,
-            se = starprep(fit_1_r, fit_2_r),
-            p = starprep(fit_1_r, fit_2_r, stat = "p"))
+  expect_output(
+    stargazer(fit_1, fit_2,
+              type = "text",
+              se = starprep(fit_1_r, fit_2),
+              p = starprep(fit_1_r, fit_2, stat = "p.value")),
+    "\\(0\\.015\\)\\s+\\(0\\.015\\)"
+  )
+
+  expect_output(
+    stargazer(fit_1, fit_2,
+              type = "text",
+              ci.custom = starprep(fit_1_r, fit_2, stat = "ci")),
+    "\\(25\\.620\\, 34\\.578\\)\\s+\\(25\\.620\\, 34\\.578\\)"
+  )
 
 })
 
@@ -107,6 +120,11 @@ test_that("commarobust works with regular lm", {
   ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, se_type = "HC2")
   lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
   clo <- commarobust(lo, se_type = "HC2")
+
+  expect_equal(
+    clo,
+    commarobust(lo)
+  )
 
   expect_equal(
     tidy(ro),
@@ -330,6 +348,15 @@ test_that("commarobust works with weighted lm", {
   lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w)
   clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "stata")
 
+  capture_output(sapply(names(ro),
+      function(x) {
+        if (x == "call")
+          NULL
+        else
+          expect_equal(ro[[x]], clo[[x]])
+      }
+    ))
+
   expect_equal(
     tidy(ro),
     tidy(clo)
@@ -367,9 +394,18 @@ test_that("commarobust works with weighted lm", {
 })
 
 test_that("commarobust works with dependency, weighted lm", {
+  check_obj <- function(ro, clo, x) {
+    if (x != "call") {
+      print(x)
+      expect_equal(ro[[x]], clo[[x]])
+    }
+  }
+
   ro <- lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w, se_type = "classical")
   lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
   clo <- commarobust(lo, se_type = "classical")
+
+  capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
 
   expect_equal(
     tidy(ro),
@@ -391,6 +427,8 @@ test_that("commarobust works with dependency, weighted lm", {
   lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
   clo <- commarobust(lo, se_type = "HC0")
 
+  capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
+
   expect_equal(
     tidy(ro),
     tidy(clo)
@@ -410,6 +448,8 @@ test_that("commarobust works with dependency, weighted lm", {
   ro <- lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w, se_type = "HC1")
   lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
   clo <- commarobust(lo, se_type = "HC1")
+
+  capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
 
   expect_equal(
     tidy(ro),
@@ -431,6 +471,8 @@ test_that("commarobust works with dependency, weighted lm", {
   lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
   clo <- commarobust(lo, se_type = "HC2")
 
+  capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
+
   expect_equal(
     tidy(ro),
     tidy(clo)
@@ -450,6 +492,8 @@ test_that("commarobust works with dependency, weighted lm", {
   ro <- lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w, se_type = "HC3")
   lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
   clo <- commarobust(lo, se_type = "HC3")
+
+  capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
 
   expect_equal(
     tidy(ro),
@@ -471,6 +515,8 @@ test_that("commarobust works with dependency, weighted lm", {
   lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
   clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "CR0")
 
+  capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
+
   expect_equal(
     tidy(ro),
     tidy(clo)
@@ -491,6 +537,8 @@ test_that("commarobust works with dependency, weighted lm", {
   lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
   clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "stata")
 
+  capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
+
   expect_equal(
     tidy(ro),
     tidy(clo)
@@ -510,6 +558,8 @@ test_that("commarobust works with dependency, weighted lm", {
   ro <- lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), clusters = cl, data = datmiss, weights = w, se_type = "CR2")
   lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
   clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "CR2")
+
+  capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
 
   expect_equal(
     tidy(ro),

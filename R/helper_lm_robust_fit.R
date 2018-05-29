@@ -16,6 +16,7 @@
 #' @param return_unweighted_fit logical, whether to return unweighted fitted values in place of weighted fitted values if regression is weighted
 #' @param try_cholesky logical, whether to try using a cholesky decomposition to solve LS instead of a QR decomposition
 #' @param X_first_stage numeric matrix of the first stage design matrix, only use for second stage of 2SLS IV regression, otherwise leave as \code{NULL}
+#' @param iv_first_stage boolean for whether first stage of 2SLS IV regression
 #'
 #' @export
 #'
@@ -34,7 +35,8 @@ lm_robust_fit <- function(y,
                           return_fit = TRUE,
                           return_unweighted_fit = TRUE,
                           try_cholesky = FALSE,
-                          X_first_stage = NULL) {
+                          X_first_stage = NULL,
+                          iv_first_stage = FALSE) {
 
   data <- list(
     y = as.matrix(y),
@@ -228,7 +230,7 @@ lm_robust_fit <- function(y,
       } else {
         return_list[["fitted.values"]] <- as.matrix(fitted.values)
       }
-    } else if ((se_type == "CR2" && weighted)) {
+    } else if (se_type == "CR2" && weighted && (iv_first_stage || !return_unweighted_fit)) {
       # Have to get weighted fits as original fits were unweighted for
       # variance estimation or used wrong regressors in IV
       return_list[["fitted.values"]] <- as.matrix(data[["X"]] %*% fit$beta_hat)

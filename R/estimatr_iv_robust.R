@@ -185,7 +185,8 @@ iv_robust <- function(formula,
       return_fit = TRUE,
       return_unweighted_fit = TRUE,
       return_vcov = return_vcov,
-      try_cholesky = try_cholesky
+      try_cholesky = try_cholesky,
+      iv_first_stage = TRUE
     )
 
   # ------
