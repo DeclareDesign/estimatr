@@ -7,7 +7,7 @@
 lm_robust_fit(y, X, yoriginal = NULL, Xoriginal = NULL, weights, cluster,
   fixed_effects = NULL, ci = TRUE, se_type, has_int, alpha = 0.05,
   return_vcov = TRUE, return_fit = TRUE, return_unweighted_fit = TRUE,
-  try_cholesky = FALSE, X_first_stage = NULL)
+  try_cholesky = FALSE, X_first_stage = NULL, iv_first_stage = FALSE)
 }
 \arguments{
 \item{y}{numeric outcome vector}
@@ -41,6 +41,8 @@ lm_robust_fit(y, X, yoriginal = NULL, Xoriginal = NULL, weights, cluster,
 \item{try_cholesky}{logical, whether to try using a cholesky decomposition to solve LS instead of a QR decomposition}
 
 \item{X_first_stage}{numeric matrix of the first stage design matrix, only use for second stage of 2SLS IV regression, otherwise leave as \code{NULL}}
+
+\item{iv_first_stage}{boolean for whether first stage of 2SLS IV regression}
 }
 \description{
 Internal method that creates linear fits
