@@ -13,7 +13,6 @@
 #' @param alpha numeric denoting the test size for confidence intervals
 #' @param return_vcov logical, whether to return the vcov matrix for later usage
 #' @param return_fit logical, whether to return fitted values
-#' @param return_unweighted_fit logical, whether to return unweighted fitted values in place of weighted fitted values if regression is weighted
 #' @param try_cholesky logical, whether to try using a cholesky decomposition to solve LS instead of a QR decomposition
 #' @param X_first_stage numeric matrix of the first stage design matrix, only use for second stage of 2SLS IV regression, otherwise leave as \code{NULL}
 #' @param iv_first_stage boolean for whether first stage of 2SLS IV regression
@@ -33,7 +32,6 @@ lm_robust_fit <- function(y,
                           alpha = 0.05,
                           return_vcov = TRUE,
                           return_fit = TRUE,
-                          return_unweighted_fit = TRUE,
                           try_cholesky = FALSE,
                           X_first_stage = NULL,
                           iv_first_stage = FALSE) {
@@ -156,33 +154,39 @@ lm_robust_fit <- function(y,
     }
 
     # compute fitted.values and residuals
-    # need unweighted for CR2, as well as X weighted by weights again
-    # so that instead of having X * sqrt(W) we have X * W
     fit_vals <- list()
-    if (se_type == "CR2" && weighted) {
-      if (iv_second_stage) {
-        fit_vals[["fitted.values"]] <-  data[["X_first_stage"]][, 1:x_rank, drop = FALSE] %*% fit$beta_hat
-        fit_vals[["fitted.values.unweighted"]] <- data[["X_first_stage_unweighted"]] %*% fit$beta_hat
-      } else {
-        fit_vals[["fitted.values"]] <-  data[["X"]][, 1:x_rank, drop = FALSE] %*% fit$beta_hat
+    if (iv_second_stage) {
+      fit_vals[["fitted.values"]] <-
+        data[["X_first_stage"]][, 1:x_rank, drop = FALSE] %*% fit$beta_hat
+      if (weighted) {
+        fit_vals[["fitted.values.unweighted"]] <-
+          data[["X_first_stage_unweighted"]] %*% fit$beta_hat
+      }
+    } else {
+      fit_vals[["fitted.values"]] <- data[["X"]][, 1:x_rank, drop = FALSE] %*% fit$beta_hat
+      if (weighted) {
         fit_vals[["fitted.values.unweighted"]] <- data[["Xunweighted"]] %*% fit$beta_hat
       }
-      fit_vals[["ei.unweighted"]] <- as.matrix(data[["yunweighted"]] - fit_vals[["fitted.values.unweighted"]])
-      fit_vals[["ei"]] <- as.matrix(data[["y"]] - fit_vals[["fitted.values"]])
+    }
 
+    fit_vals[["ei"]] <- as.matrix(data[["y"]] - fit_vals[["fitted.values"]])
+
+    if (weighted) {
+      fit_vals[["ei.unweighted"]] <-
+        as.matrix(data[["yunweighted"]] - fit_vals[["fitted.values.unweighted"]])
+    }
+
+
+    # For CR2 need X weighted by weights again
+    # so that instead of having X * sqrt(W) we have X * W
+    if (se_type == "CR2" && weighted) {
       data[["X"]] <- data[["weights"]] * data[["X"]]
       if (fes) {
         data[["femat"]] <- data[["weights"]] * data[["femat"]]
       }
-    } else {
-      if (iv_second_stage) {
-        fit_vals[["fitted.values"]] <- data[["X_first_stage"]] %*% fit$beta_hat
-      } else {
-        fit_vals[["fitted.values"]] <- data[["X"]] %*% fit$beta_hat
-      }
-      fit_vals[["ei"]] <- as.matrix(data[["y"]] - fit_vals[["fitted.values"]])
     }
 
+    # Also need second stage residuals for fstat
     if (iv_second_stage) {
       fit_vals[["fitted.values.iv"]] <- data[["X"]] %*% fit$beta_hat
       if (weighted) {
@@ -225,29 +229,21 @@ lm_robust_fit <- function(y,
 
   if (return_fit) {
 
-    if (weighted && return_unweighted_fit) {
-
-      if (fes && !iv_first_stage) {
-
-        return_list[["fitted.values"]] <- as.matrix(data[["yoriginalunweighted"]] - fit_vals[["ei"]] / data[["weights"]])
-
-      } else if (is.numeric(fit_vals[["fitted.values.unweighted"]]) && se_type != "CR2") {
-        return_list[["fitted.values"]] <- fit_vals[["ei.unweighted"]]
-      } else if (iv_second_stage) {
-        return_list[["fitted.values"]] <- as.matrix(data[["X_first_stage_unweighted"]] %*% fit$beta_hat)
+    if (fes && !iv_first_stage) {
+      # Override previous fitted values with those that take into consideration
+      # the fixed effects (unless IV first stage, where we stay w/ projected model)
+      if (weighted) {
+        return_list[["fitted.values"]] <-
+          as.matrix(data[["yoriginalunweighted"]] - fit_vals[["ei"]] / data[["weights"]])
       } else {
-        return_list[["fitted.values"]] <- as.matrix(data[["Xunweighted"]] %*% fit$beta_hat)
-      }
+        return_list[["fitted.values"]] <-
+          as.matrix(data[["yoriginal"]] - fit_vals[["ei"]])
 
+      }
+    } else if (weighted) {
+      return_list[["fitted.values"]] <- fit_vals[["fitted.values.unweighted"]]
     } else {
-
-      if (fes && !iv_first_stage) {
-        return_list[["fitted.values"]] <- as.matrix(data[["yoriginal"]] - fit_vals[["ei"]])
-      } else if (is.numeric(fit_vals[["fitted.values"]])) {
-        return_list[["fitted.values"]] <- fit_vals[["fitted.values"]]
-      } else {
-        return_list[["fitted.values"]] <- as.matrix(data[["X"]] %*% fit$beta_hat)
-      }
+      return_list[["fitted.values"]] <- fit_vals[["fitted.values"]]
     }
 
     if (fes && (ncol(data[["fixed_effects"]]) == 1) && is.numeric(data[["Xoriginal"]])) {
