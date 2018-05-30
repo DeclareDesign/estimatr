@@ -158,14 +158,17 @@ lm_robust_fit <- function(y,
     # compute fitted.values and residuals
     # need unweighted for CR2, as well as X weighted by weights again
     # so that instead of having X * sqrt(W) we have X * W
+    fit_vals <- list()
     if (se_type == "CR2" && weighted) {
       if (iv_second_stage) {
-        fitted.values <- data[["X_first_stage_unweighted"]] %*% fit$beta_hat
+        fit_vals[["fitted.values"]] <-  data[["X_first_stage"]][, 1:x_rank, drop = FALSE] %*% fit$beta_hat
+        fit_vals[["fitted.values.unweighted"]] <- data[["X_first_stage_unweighted"]] %*% fit$beta_hat
       } else {
-        fitted.values <- data[["Xunweighted"]] %*% fit$beta_hat
+        fit_vals[["fitted.values"]] <-  data[["X"]][, 1:x_rank, drop = FALSE] %*% fit$beta_hat
+        fit_vals[["fitted.values.unweighted"]] <- data[["Xunweighted"]] %*% fit$beta_hat
       }
-      eiunweighted <- as.matrix(data[["yunweighted"]] - fitted.values)
-      ei <- as.matrix(data[["y"]] - data[["X"]][, 1:x_rank, drop = FALSE] %*% fit$beta_hat)
+      fit_vals[["ei.unweighted"]] <- as.matrix(data[["yunweighted"]] - fit_vals[["fitted.values.unweighted"]])
+      fit_vals[["ei"]] <- as.matrix(data[["y"]] - fit_vals[["fitted.values"]])
 
       data[["X"]] <- data[["weights"]] * data[["X"]]
       if (fes) {
@@ -173,23 +176,20 @@ lm_robust_fit <- function(y,
       }
     } else {
       if (iv_second_stage) {
-        fitted.values <- data[["X_first_stage"]] %*% fit$beta_hat
+        fit_vals[["fitted.values"]] <- data[["X_first_stage"]] %*% fit$beta_hat
       } else {
-        fitted.values <- data[["X"]] %*% fit$beta_hat
+        fit_vals[["fitted.values"]] <- data[["X"]] %*% fit$beta_hat
       }
-      ei <- as.matrix(data[["y"]] - fitted.values)
+      fit_vals[["ei"]] <- as.matrix(data[["y"]] - fit_vals[["fitted.values"]])
     }
 
     if (iv_second_stage) {
-      iv_fits <- data[["X"]] %*% fit$beta_hat
+      fit_vals[["fitted.values.iv"]] <- data[["X"]] %*% fit$beta_hat
       if (weighted) {
-        iv_ei <- data[["weights"]] * as.matrix(data[["y"]] - iv_fits)
+        fit_vals[["ei.iv"]] <- data[["weights"]] * as.matrix(data[["y"]] - fit_vals[["fitted.values.iv"]])
       } else {
-        iv_ei <- as.matrix(data[["y"]] - iv_fits)
+        fit_vals[["ei.iv"]] <- as.matrix(data[["y"]] - fit_vals[["fitted.values.iv"]])
       }
-    } else {
-      iv_fits <- NULL
-      iv_ei <- NULL
     }
 
     if (se_type != "none") {
@@ -197,7 +197,7 @@ lm_robust_fit <- function(y,
         X = if (se_type %in% c("HC2", "HC3", "CR2") && fes) cbind(data[["X"]], data[["femat"]]) else data[["X"]],
         Xunweighted = if (se_type %in% c("HC2", "HC3", "CR2") && fes && weighted) cbind(data[["Xunweighted"]], data[["fematunweighted"]]) else data[["Xunweighted"]],
         XtX_inv = fit$XtX_inv,
-        ei = if (se_type == "CR2" && weighted) eiunweighted else ei,
+        ei = if (se_type == "CR2" && weighted) fit_vals[["ei.unweighted"]] else fit_vals[["ei"]],
         weight_mean = data[["weight_mean"]],
         cluster = data[["cluster"]],
         J = data[["J"]],
@@ -224,30 +224,29 @@ lm_robust_fit <- function(y,
   return_list <- add_cis_pvals(return_list, alpha, ci && se_type != "none")
 
   if (return_fit) {
-    if (iv_second_stage && !fes) {
-      if (weighted) {
+
+    if (weighted && return_unweighted_fit) {
+
+      if (fes && !iv_first_stage) {
+
+        return_list[["fitted.values"]] <- as.matrix(data[["yoriginalunweighted"]] - fit_vals[["ei"]] / data[["weights"]])
+
+      } else if (is.numeric(fit_vals[["fitted.values.unweighted"]]) && se_type != "CR2") {
+        return_list[["fitted.values"]] <- fit_vals[["ei.unweighted"]]
+      } else if (iv_second_stage) {
         return_list[["fitted.values"]] <- as.matrix(data[["X_first_stage_unweighted"]] %*% fit$beta_hat)
-      } else {
-        return_list[["fitted.values"]] <- as.matrix(fitted.values)
-      }
-    } else if (se_type == "CR2" && weighted && (iv_first_stage || !return_unweighted_fit)) {
-      # Have to get weighted fits as original fits were unweighted for
-      # variance estimation or used wrong regressors in IV
-      return_list[["fitted.values"]] <- as.matrix(data[["X"]] %*% fit$beta_hat)
-      if (fes) {
-        return_list[["fitted.values"]] <- as.matrix(data[["yoriginal"]] - (data[["y"]] - return_list[["fitted.values"]]))
-      }
-    } else if (weighted && return_unweighted_fit) {
-      if (fes && is.numeric(data[["yoriginal"]])) {
-        return_list[["fitted.values"]] <- as.matrix(data[["yoriginalunweighted"]] - ei / data[["weights"]])
       } else {
         return_list[["fitted.values"]] <- as.matrix(data[["Xunweighted"]] %*% fit$beta_hat)
       }
+
     } else {
-      if (fes && is.numeric(data[["yoriginal"]])) {
-        return_list[["fitted.values"]] <- as.matrix(data[["yoriginal"]] - ei)
+
+      if (fes && !iv_first_stage) {
+        return_list[["fitted.values"]] <- as.matrix(data[["yoriginal"]] - fit_vals[["ei"]])
+      } else if (is.numeric(fit_vals[["fitted.values"]])) {
+        return_list[["fitted.values"]] <- fit_vals[["fitted.values"]]
       } else {
-        return_list[["fitted.values"]] <- as.matrix(fitted.values)
+        return_list[["fitted.values"]] <- as.matrix(data[["X"]] %*% fit$beta_hat)
       }
     }
 
@@ -288,7 +287,7 @@ lm_robust_fit <- function(y,
 
     return_list[["res_var"]] <- get_resvar(
       data = data,
-      ei = ei,
+      ei = fit_vals[["ei"]],
       df.residual = return_list[["df.residual"]],
       vcov_fit = vcov_fit,
       weighted = weighted
@@ -314,7 +313,7 @@ lm_robust_fit <- function(y,
       f <- get_fstat(
         tss_r2s = tss_r2s,
         return_list = return_list,
-        iv_ei = iv_ei,
+        iv_ei = fit_vals[["ei.iv"]],
         nomdf = nomdf,
         dendf = dendf,
         vcov_fit = vcov_fit,

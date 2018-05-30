@@ -99,7 +99,6 @@ commarobust <- function(model, se_type = NULL, clusters = NULL, ci = TRUE, alpha
     }
   }
 
-  print(data[["cluster"]])
   vcov_fit <- lm_variance(
     X = data[["X"]],
     Xunweighted = data[["Xunweighted"]],
