@@ -257,8 +257,12 @@ test_that("vcov works", {
   )
 
   # Instrumental variables
-  library(AER)
-  ivo <- ivreg(y ~ x | z, data = dat)
+  ivo <- AER::ivreg(y ~ x | z, data = dat)
+  ivro <- iv_robust(y ~ x | z, data = dat, se_type = "classical")
+  expect_equal(
+    AER:::vcov.ivreg(ivo),
+    ivro$vcov
+  )
 
 })
 
@@ -705,13 +709,10 @@ test_that("predict works with fixed effects", {
 })
 
 test_that("predict.iv_robust works with fixed effects", {
-  skip_if_not_installed("AER")
-
-  library(AER)
 
   ro <- iv_robust(mpg ~ hp + factor(cyl) | vs + factor(cyl), data = mtcars)
   rfo <- iv_robust(mpg ~ hp | vs, fixed_effects = ~ cyl, data = mtcars)
-  io <- ivreg(mpg ~ hp + factor(cyl) | vs + factor(cyl), data = mtcars)
+  io <- AER::ivreg(mpg ~ hp + factor(cyl) | vs + factor(cyl), data = mtcars)
 
   pio <- predict(io, newdata = mtcars)
   expect_equal(
@@ -771,7 +772,7 @@ test_that("predict.iv_robust works with fixed effects", {
   ## Weights
   row <- iv_robust(mpg ~ hp + factor(cyl) | vs + factor(cyl), weights = wt, data = mtcars)
   rfow <- iv_robust(mpg ~ hp | vs, fixed_effects = ~ cyl, weights = wt, data = mtcars)
-  iow <- ivreg(mpg ~ hp + factor(cyl) | vs + factor(cyl), weights = wt, data = mtcars)
+  iow <- AER::ivreg(mpg ~ hp + factor(cyl) | vs + factor(cyl), weights = wt, data = mtcars)
 
   piow <- predict(iow, newdata = mtcars)
   prow <- predict(row, newdata = mtcars)

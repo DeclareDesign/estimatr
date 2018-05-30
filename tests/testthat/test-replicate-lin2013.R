@@ -7,7 +7,6 @@ context("Verification - lm_lin replicates Lin 2013")
 # https://projecteuclid.org/euclid.aoas/1365527200.
 
 test_that("lm_lin recreates Lin 2013 Table 2", {
-  library(estimatr)
   data("alo_star_men")
 
   ## Table 2

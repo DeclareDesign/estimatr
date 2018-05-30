@@ -23,14 +23,16 @@ LinkingTo: Rcpp, RcppEigen
 RoxygenNote: 6.0.1
 LazyData: true
 Suggests: 
-    testthat,
-    sandwich,
     RcppEigen,
     fabricatr (>= 0.3),
     randomizr (>= 0.15),
+    testthat,
+    sandwich,
+    clubSandwich,
     margins,
     prediction,
-    AER
+    AER,
+    ivpack
 Enhances:
     broom,
     texreg
