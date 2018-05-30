@@ -67,7 +67,7 @@ commarobust <- function(model, se_type = NULL, clusters = NULL, ci = TRUE, alpha
     if (length(clusters) != N) {
       stop("`clusters` must be the same length as the model data.")
     }
-    data[["cluster"]] <- clusters
+    data[["cluster"]] <- as.factor(clusters)
   }
 
   data <- prep_data(
@@ -99,6 +99,7 @@ commarobust <- function(model, se_type = NULL, clusters = NULL, ci = TRUE, alpha
     }
   }
 
+  print(data[["cluster"]])
   vcov_fit <- lm_variance(
     X = data[["X"]],
     Xunweighted = data[["Xunweighted"]],
@@ -229,7 +230,7 @@ commarobust <- function(model, se_type = NULL, clusters = NULL, ci = TRUE, alpha
 #' # Use default "CR2" standard errors with clusters
 #' stargazer(lm1, lm2,
 #'           se = starprep(lm1, lm2, clusters = mtcars$carb),
-#'           p = starprep(lm1, lm2, clusters = mtcars$carb, stat = "p.value),
+#'           p = starprep(lm1, lm2, clusters = mtcars$carb, stat = "p.value"),
 #'           omit.stat = "f")
 #'
 #' # Can also specify significance levels and different standard errors
