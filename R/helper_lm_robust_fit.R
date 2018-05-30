@@ -159,8 +159,8 @@ lm_robust_fit <- function(y,
       X_name <- "X_first_stage"
       X_name_unweighted <- "X_first_stage_unweighted"
     } else {
-      X_name <- "X_first_stage"
-      X_name_unweighted <- "X_first_stage_unweighted"
+      X_name <- "X"
+      X_name_unweighted <- "Xunweighted"
     }
 
     fit_vals[["fitted.values"]] <- data[[X_name]][, 1:x_rank, drop = FALSE] %*% fit$beta_hat
