@@ -241,9 +241,9 @@ lm_robust_fit <- function(y,
 
       }
     } else if (weighted) {
-      return_list[["fitted.values"]] <- fit_vals[["fitted.values.unweighted"]]
+      return_list[["fitted.values"]] <- as.matrix(fit_vals[["fitted.values.unweighted"]])
     } else {
-      return_list[["fitted.values"]] <- fit_vals[["fitted.values"]]
+      return_list[["fitted.values"]] <- as.matrix(fit_vals[["fitted.values"]])
     }
 
     if (fes && (ncol(data[["fixed_effects"]]) == 1) && is.numeric(data[["Xoriginal"]])) {
