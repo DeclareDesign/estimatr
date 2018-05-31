@@ -44,12 +44,12 @@ r_github_packages:
 - DeclareDesign/DDtools
 - ropensci/git2r
 - DeclareDesign/fabricatr
-- DeclareDesign/randomizr
 
 r_packages:
 - broom
 - texreg
 - clubSandwich
+- stargazer
 
 after_success:
 - Rscript -e DDtools::after_build

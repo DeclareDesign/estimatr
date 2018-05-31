@@ -13,9 +13,8 @@
 #' @param alpha numeric denoting the test size for confidence intervals
 #' @param return_vcov logical, whether to return the vcov matrix for later usage
 #' @param return_fit logical, whether to return fitted values
-#' @param return_unweighted_fit logical, whether to return unweighted fitted values in place of weighted fitted values if regression is weighted
 #' @param try_cholesky logical, whether to try using a cholesky decomposition to solve LS instead of a QR decomposition
-#' @param X_first_stage numeric matrix of the first stage design matrix, only use for second stage of 2SLS IV regression, otherwise leave as \code{NULL}
+#' @param iv_stage list of length two, the first element denotes the stage of 2SLS IV estimation, where 0 is used for OLS. The second element is only used for the second stage of 2SLS and has the first stage design matrix. For OLS, the default, \code{list(0)}, for the first stage of 2SLS \code{list(1)}, for second stage of 2SLS \code{list(2, first_stage_design_mat)}.
 #'
 #' @export
 #'
@@ -32,34 +31,46 @@ lm_robust_fit <- function(y,
                           alpha = 0.05,
                           return_vcov = TRUE,
                           return_fit = TRUE,
-                          return_unweighted_fit = TRUE,
                           try_cholesky = FALSE,
-                          X_first_stage = NULL) {
+                          iv_stage = list(0)) {
 
-  y <- as.matrix(y)
-  ny <- ncol(y)
+  data <- list(
+    y = as.matrix(y),
+    X = X
+  )
+  ny <- ncol(data[["y"]])
+  ynames <- colnames(data[["y"]])
   fes <- !is.null(fixed_effects)
   if (fes) {
+    data[["fixed_effects"]] <- fixed_effects
     if (is.numeric(yoriginal)) {
-      yoriginal <- as.matrix(yoriginal)
+      data[["yoriginal"]] <- as.matrix(yoriginal)
     }
     if (is.numeric(Xoriginal)) {
-      Xoriginal <- as.matrix(Xoriginal)
+      data[["Xoriginal"]] <- as.matrix(Xoriginal)
     }
-    fe_rank <- attr(fixed_effects, "fe_rank")
+    fe_rank <- attr(data[["fixed_effects"]], "fe_rank")
   } else {
     fe_rank <- 0
   }
   multivariate <- ny > 1
   weighted <- !is.null(weights)
-  iv_second_stage <- !is.null(X_first_stage)
+  if (weighted) {
+    data[["weights"]] <- weights
+  }
+  if (iv_stage[[1]] == 2) {
+    data[["X_first_stage"]] <- iv_stage[[2]]
+  }
   clustered <- !is.null(cluster)
+  if (clustered) {
+    data[["cluster"]] <- cluster
+  }
 
   # ----------
   # Check se type
   # ----------
 
-  se_type <- check_se_type(se_type, clustered, iv_second_stage)
+  se_type <- check_se_type(se_type, clustered)
 
   if (weighted && se_type == "CR2" && fes) {
     stop(
@@ -72,70 +83,24 @@ lm_robust_fit <- function(y,
   # Prep data for fitting
   # -----------
 
-  k <- ncol(X)
+  k <- ncol(data[["X"]])
 
-  if (is.null(colnames(X))) {
-    colnames(X) <- paste0("X", 1:k)
+  if (is.null(colnames(data[["X"]]))) {
+    colnames(data[["X"]]) <- paste0("X", 1:k)
   }
-  variable_names <- colnames(X)
+  variable_names <- colnames(data[["X"]])
 
   # Legacy, in case we want to only get some covs in the future
-  which_covs <- rep(TRUE, ncol(X))
+  which_covs <- rep(TRUE, ncol(data[["X"]]))
 
-  ## TODO build list with all data and have weight and order helper functions
-  # Reorder if there are clusters and you need the SE or to return the fit
-  if (clustered && se_type != "none") {
-    cl_ord <- order(cluster)
-    cluster <- cluster[cl_ord]
-    y <- y[cl_ord, , drop = FALSE]
-    X <- X[cl_ord, , drop = FALSE]
-
-    if (fes) {
-      fixed_effects <- fixed_effects[cl_ord, , drop = FALSE]
-      yoriginal <- yoriginal[cl_ord, , drop = FALSE]
-      Xoriginal <- Xoriginal[cl_ord, , drop = FALSE]
-    }
-    if (weighted) {
-      weights <- weights[cl_ord]
-    }
-    if (iv_second_stage) {
-      X_first_stage <- X_first_stage[cl_ord, , drop = FALSE]
-    }
-
-    J <- length(unique(cluster))
-  } else {
-    J <- 1
-  }
-
-  if (fes) {
-    femat <- model.matrix(~ 0 + ., data = as.data.frame(fixed_effects))
-  }
-
-  # Weight if there are weights
-  if (weighted) {
-    Xunweighted <- X
-    yunweighted <- y
-    weight_mean <- mean(weights)
-    weights <- sqrt(weights / weight_mean)
-    X <- weights * X
-    y <- weights * y
-    if (fes) {
-      if (is.numeric(yoriginal)) {
-        yoriginalunweighted <- yoriginal
-        yoriginal <- weights * yoriginal
-      }
-      fematunweighted <- femat
-      femat <- weights * femat
-    }
-    if (iv_second_stage) {
-      X_first_stage_unweighted <- X_first_stage
-      X_first_stage <- weights * X_first_stage
-    }
-  } else {
-    weight_mean <- 1
-    yunweighted <- NULL
-    Xunweighted <- NULL
-  }
+  data <- prep_data(
+    data = data,
+    se_type = se_type,
+    clustered = clustered,
+    weighted = weighted,
+    fes = fes,
+    iv_stage = iv_stage
+  )
 
   # -----------
   # Estimate coefficients
@@ -143,18 +108,18 @@ lm_robust_fit <- function(y,
 
   fit <-
     lm_solver(
-      X = X,
-      y = y,
+      X = data[["X"]],
+      y = data[["y"]],
       try_cholesky = try_cholesky
     )
 
   fit$beta_hat <- as.matrix(fit$beta_hat)
-  dimnames(fit$beta_hat) <- list(variable_names, colnames(y))
+  dimnames(fit$beta_hat) <- list(variable_names, ynames)
 
   # Use first model to get linear dependencies
   est_exists <- !is.na(fit$beta_hat)
   covs_used <- which(est_exists[, 1])
-  N <- nrow(X)
+  N <- nrow(data[["X"]])
 
   x_rank <- length(covs_used)
   tot_rank <- x_rank + fe_rank
@@ -180,73 +145,60 @@ lm_robust_fit <- function(y,
   if (se_type != "none" || return_fit) {
 
     # Drop NA columns from data and from beta_hat
-    if (x_rank < ncol(X)) {
-      X <- X[, covs_used, drop = FALSE]
-      if (weighted) {
-        Xunweighted <- Xunweighted[, covs_used, drop = FALSE]
-      }
-      if (iv_second_stage) {
-        X_first_stage <- X_first_stage[, covs_used, drop = FALSE]
-        if (weighted) {
-          X_first_stage_unweighted <- X_first_stage_unweighted[, covs_used, drop = FALSE]
-        }
-      }
-      if (is.numeric(Xoriginal)) {
-        Xoriginal <- Xoriginal[, covs_used, drop = FALSE]
-        if (weighted) {
-          Xoriginal <- Xoriginal[, covs_used, drop = FALSE]
-        }
-      }
-
+    if (x_rank < ncol(data[["X"]])) {
+      data <- drop_collinear(data, covs_used, weighted, iv_stage)
       fit$beta_hat <- fit$beta_hat[covs_used, , drop = FALSE]
     }
 
     # compute fitted.values and residuals
-    # need unweighted for CR2, as well as X weighted by weights again
-    # so that instead of having X * sqrt(W) we have X * W
-    if (se_type == "CR2" && weighted) {
-      if (iv_second_stage) {
-        fitted.values <- X_first_stage_unweighted %*% fit$beta_hat
-      } else {
-        fitted.values <- Xunweighted %*% fit$beta_hat
-      }
-      ei <- as.matrix(yunweighted - fitted.values)
-      ei_weight <- as.matrix(y - X[, 1:x_rank, drop = FALSE] %*% fit$beta_hat)
-      X <- weights * X
-      if (fes) {
-        femat <- weights * femat
-      }
+    fit_vals <- list()
+    if (iv_stage[[1]] == 2) {
+      X_name <- "X_first_stage"
+      X_name_unweighted <- "X_first_stage_unweighted"
     } else {
-      if (iv_second_stage) {
-        fitted.values <- X_first_stage %*% fit$beta_hat
-      } else {
-        fitted.values <- X %*% fit$beta_hat
-      }
-      ei <- as.matrix(y - fitted.values)
+      X_name <- "X"
+      X_name_unweighted <- "Xunweighted"
     }
 
-    if (iv_second_stage) {
-      iv_fits <- X %*% fit$beta_hat
-      if (weighted) {
-        iv_ei <- weights * as.matrix(y - iv_fits)
-      } else {
-        iv_ei <- as.matrix(y - iv_fits)
+    fit_vals[["fitted.values"]] <- as.matrix(data[[X_name]][, 1:x_rank, drop = FALSE] %*% fit$beta_hat)
+    fit_vals[["ei"]] <- as.matrix(data[["y"]] - fit_vals[["fitted.values"]])
+
+    if (weighted) {
+      fit_vals[["fitted.values.unweighted"]] <- as.matrix(data[[X_name_unweighted]] %*% fit$beta_hat)
+      fit_vals[["ei.unweighted"]] <- as.matrix(data[["yunweighted"]] - fit_vals[["fitted.values.unweighted"]])
+
+      # For CR2 need X weighted by weights again
+      # so that instead of having X * sqrt(W) we have X * W
+      if (se_type == "CR2") {
+        data[["X"]] <- data[["weights"]] * data[["X"]]
+        if (fes) {
+          data[["femat"]] <- data[["weights"]] * data[["femat"]]
+        }
       }
-    } else {
-      iv_fits <- NULL
-      iv_ei <- NULL
+
+    }
+
+
+
+    # Also need second stage residuals for fstat
+    if (iv_stage[[1]] == 2) {
+      fit_vals[["fitted.values.iv"]] <- as.matrix(data[["X"]] %*% fit$beta_hat)
+      fit_vals[["ei.iv"]] <- as.matrix(data[["y"]] - fit_vals[["fitted.values.iv"]])
+      if (weighted) {
+        fit_vals[["ei.iv"]] <- data[["weights"]] * fit_vals[["ei.iv"]]
+      }
     }
 
     if (se_type != "none") {
 
       vcov_fit <- lm_variance(
-        X = if (se_type %in% c("HC2", "HC3", "CR2") && fes) cbind(X, femat) else X,
-        Xunweighted = if (se_type %in% c("HC2", "HC3", "CR2") && fes && weighted) cbind(Xunweighted, fematunweighted) else Xunweighted,
+        X = if (se_type %in% c("HC2", "HC3", "CR2") && fes) cbind(data[["X"]], data[["femat"]]) else data[["X"]],
+        Xunweighted = if (se_type %in% c("HC2", "HC3", "CR2") && fes && weighted) cbind(data[["Xunweighted"]], data[["fematunweighted"]]) else data[["Xunweighted"]],
         XtX_inv = fit$XtX_inv,
-        ei = ei,
-        weight_mean = weight_mean,
-        cluster = cluster,
-        J = J,
+        ei = if (se_type == "CR2" && weighted) fit_vals[["ei.unweighted"]] else fit_vals[["ei"]],
+        weight_mean = data[["weight_mean"]],
+        cluster = data[["cluster"]],
+        J = data[["J"]],
         ci = ci,
         se_type = se_type,
         which_covs = which_covs[covs_used],
@@ -270,56 +222,43 @@ lm_robust_fit <- function(y,
   return_list <- add_cis_pvals(return_list, alpha, ci && se_type != "none")
 
   if (return_fit) {
-    if (iv_second_stage && !fes) {
+
+    if (fes && iv_stage[[1]] != 1) {
+      # Override previous fitted values with those that take into consideration
+      # the fixed effects (unless IV first stage, where we stay w/ projected model)
+      return_list[["fitted.values"]] <- as.matrix(data[["yoriginal"]] - fit_vals[["ei"]])
+
       if (weighted) {
-        return_list[["fitted.values"]] <- as.matrix(X_first_stage_unweighted %*% fit$beta_hat)
-      } else {
-        return_list[["fitted.values"]] <- as.matrix(fitted.values)
-      }
-    } else if ((se_type == "CR2" && weighted)) {
-      # Have to get weighted fits as original fits were unweighted for
-      # variance estimation or used wrong regressors in IV
-      return_list[["fitted.values"]] <- as.matrix(X %*% fit$beta_hat)
-      if (fes) {
-        return_list[["fitted.values"]] <- as.matrix(yoriginal - (y - return_list[["fitted.values"]]))
-      }
-    } else if (weighted && return_unweighted_fit) {
-      if (fes && is.numeric(yoriginal)) {
-        return_list[["fitted.values"]] <- as.matrix(yoriginalunweighted - ei / weights)
-      } else {
-        return_list[["fitted.values"]] <- as.matrix(Xunweighted %*% fit$beta_hat)
+        return_list[["fitted.values"]] <- return_list[["fitted.values"]] / data[["weights"]]
       }
     } else {
-      if (fes && is.numeric(yoriginal)) {
-        return_list[["fitted.values"]] <- as.matrix(yoriginal - ei)
-      } else {
-        return_list[["fitted.values"]] <- as.matrix(fitted.values)
-      }
+      fitted.vals_name <- if (weighted) "fitted.values.unweighted" else "fitted.values"
+      return_list[["fitted.values"]] <- as.matrix(fit_vals[[fitted.vals_name]])
     }
 
-    if (fes && (ncol(fixed_effects) == 1) && is.numeric(Xoriginal)) {
+    if (fes && (ncol(data[["fixed_effects"]]) == 1) && is.numeric(data[["Xoriginal"]])) {
       return_list[["fixed_effects"]] <- setNames(
         tapply(
           return_list[["fitted.values"]] -
-            Xoriginal[, variable_names, drop = FALSE] %*% fit$beta_hat,
-          fixed_effects,
+            data[["Xoriginal"]][, variable_names, drop = FALSE] %*% fit$beta_hat,
+          data[["fixed_effects"]],
           `[`,
           1
         ),
-        colnames(femat)
+        colnames(data[["femat"]])
       )
     }
 
     # If we reordered to get SEs earlier, have to fix order
     if (clustered && se_type != "none") {
-      return_list[["fitted.values"]] <- return_list[["fitted.values"]][order(cl_ord), , drop = FALSE]
+      return_list[["fitted.values"]] <- return_list[["fitted.values"]][order(data[["cl_ord"]]), , drop = FALSE]
     }
 
-    colnames(return_list[["fitted.values"]]) <- colnames(y)
+    colnames(return_list[["fitted.values"]]) <- ynames
   }
 
   return_list[["term"]] <- variable_names
-  return_list[["outcome"]] <- colnames(y)
+  return_list[["outcome"]] <- ynames
   return_list[["alpha"]] <- alpha
   return_list[["se_type"]] <- se_type
   return_list[["weighted"]] <- weighted
@@ -332,30 +271,26 @@ lm_robust_fit <- function(y,
 
   if (se_type != "none") {
 
-    if (se_type == "CR2" && weighted) {
-      ei <- ei_weight
-    }
-
-    if (weighted) {
-      return_list[["res_var"]] <-
-        colSums(ei^2 * weight_mean) / (return_list[["df.residual"]])
-    } else {
-      return_list[["res_var"]] <-
-        diag(as.matrix(ifelse(vcov_fit[["res_var"]] < 0, NA, vcov_fit[["res_var"]])))
-    }
+    return_list[["res_var"]] <- get_resvar(
+      data = data,
+      ei = fit_vals[["ei"]],
+      df.residual = return_list[["df.residual"]],
+      vcov_fit = vcov_fit,
+      weighted = weighted
+    )
 
     tss_r2s <- get_r2s(
-      y = y,
+      y = data[["y"]],
       return_list = return_list,
       has_int = has_int,
-      yunweighted = yunweighted,
-      weights = weights,
-      weight_mean = weight_mean
+      yunweighted = data[["yunweighted"]],
+      weights = data[["weights"]],
+      weight_mean = data[["weight_mean"]]
     )
 
     nomdf <- x_rank - as.numeric(!fes) * has_int
     if (clustered) {
-      dendf <- J - 1
+      dendf <- data[["J"]] - 1
     } else {
       dendf <- return_list[["df.residual"]]
     }
@@ -364,13 +299,12 @@ lm_robust_fit <- function(y,
       f <- get_fstat(
         tss_r2s = tss_r2s,
         return_list = return_list,
-        iv_ei = iv_ei,
+        iv_ei = fit_vals[["ei.iv"]],
         nomdf = nomdf,
         dendf = dendf,
-        fit = fit,
         vcov_fit = vcov_fit,
         has_int = has_int,
-        iv_second_stage = iv_second_stage
+        iv_stage = iv_stage
       )
     } else {
       f <- NULL
@@ -384,28 +318,16 @@ lm_robust_fit <- function(y,
       return_list[["proj_fstatistic"]] <- f
 
       tss_r2s <- get_r2s(
-        y = yoriginal,
+        y = data[["yoriginal"]],
         return_list = return_list,
         has_int = has_int,
-        yunweighted = yoriginalunweighted,
-        weights = weights,
-        weight_mean = weight_mean
+        yunweighted = data[["yoriginalunweighted"]],
+        weights = data[["weights"]],
+        weight_mean = data[["weight_mean"]]
       )
 
-      # nomdf <- tot_rank - has_int
-      # f <- get_fstat(
-      #   tss_r2s = tss_r2s,
-      #   return_list = return_list,
-      #   iv_ei = iv_ei,
-      #   nomdf = nomdf,
-      #   dendf = dendf,
-      #   fit = fit,
-      #   vcov_fit = vcov_fit,
-      #   has_int = has_int,
-      #   iv_second_stage = iv_second_stage
-      # )
-
       return_list <- c(return_list, tss_r2s)
+      # TODO (possibly) compute full fstatistic for fe models
       # return_list[["fstatistic"]] <- f
 
     }
@@ -439,7 +361,7 @@ lm_robust_fit <- function(y,
   return(return_list)
 }
 
-check_se_type <- function(se_type, clustered, iv) {
+check_se_type <- function(se_type, clustered) {
 
   # Allowable se_types with clustering
   cl_se_types <- c("CR0", "CR2", "stata")
@@ -481,7 +403,16 @@ check_se_type <- function(se_type, clustered, iv) {
   return(se_type)
 }
 
-get_r2s <- function(y, return_list, has_int, yunweighted, weights, weight_mean, iv_second_stage) {
+get_resvar <- function(data, ei, df.residual, vcov_fit, weighted) {
+  res_var <-
+    if (weighted)
+      colSums(ei^2 * data[["weight_mean"]]) / df.residual
+    else
+      diag(as.matrix(ifelse(vcov_fit[["res_var"]] < 0, NA, vcov_fit[["res_var"]])))
+  return(res_var)
+}
+
+get_r2s <- function(y, return_list, has_int, yunweighted, weights, weight_mean) {
 
   N <- nrow(y)
   if (return_list[["weighted"]]) {
@@ -522,7 +453,9 @@ get_r2s <- function(y, return_list, has_int, yunweighted, weights, weight_mean, 
   ))
 }
 
-get_fstat <- function(tss_r2s, return_list, iv_ei, nomdf, dendf, fit, vcov_fit, has_int, iv_second_stage) {
+get_fstat <- function(tss_r2s, return_list, iv_ei, nomdf, dendf, vcov_fit, has_int, iv_stage) {
+
+  coefs <- as.matrix(return_list$coefficients)
 
   if (length(return_list[["outcome"]]) > 1) {
     fstat_names <- paste0(return_list[["outcome"]], ":value")
@@ -530,22 +463,22 @@ get_fstat <- function(tss_r2s, return_list, iv_ei, nomdf, dendf, fit, vcov_fit, 
     fstat_names <- "value"
   }
 
-  if (!iv_second_stage && return_list[["se_type"]] == "classical") {
+  if (iv_stage[[1]] != 2 && return_list[["se_type"]] == "classical") {
     fstat <- tss_r2s$r.squared * return_list[["df.residual"]] /
         ((1 - tss_r2s$r.squared) * (nomdf))
-  } else if (return_list[["se_type"]] == "classical" && iv_second_stage && !return_list[["weighted"]]) {
+  } else if (return_list[["se_type"]] == "classical" && iv_stage[[1]] == 2 && !return_list[["weighted"]]) {
     ivrss <- colSums(iv_ei^2)
     fstat <- ((tss_r2s$tss - ivrss) / nomdf) / return_list[["res_var"]]
   } else {
     indices <- seq.int(has_int + (!return_list[["fes"]]), return_list[["rank"]], by = 1)
     fstat <-
       tryCatch({
-        sapply(seq_len(ncol(fit$beta_hat)),
+        sapply(seq_len(ncol(coefs)),
                function(x) {
                  vcov_indices <- indices + (x - 1) * return_list[["rank"]]
-                 crossprod(fit$beta_hat[indices, x],
+                 crossprod(coefs[indices, x],
                            chol2inv(chol(vcov_fit$Vcov_hat[vcov_indices, vcov_indices])) %*%
-                             fit$beta_hat[indices, x]) / nomdf
+                             coefs[indices, x]) / nomdf
                })
       }, error = function(e) {
         # warning("Unable to compute f-statistic because variance-covariance matrix cannot be inverted")
@@ -560,4 +493,88 @@ get_fstat <- function(tss_r2s, return_list, iv_ei, nomdf, dendf, fit, vcov_fit, 
   )
 
   return(f)
+}
+
+prep_data <- function(data,
+                      se_type,
+                      clustered,
+                      weighted,
+                      fes,
+                      iv_stage) {
+
+  # The se_type check also prevents first stage IV with clusters
+  # from incorrectly reordering
+  if (clustered && se_type != "none") {
+    data[["cl_ord"]] <- order(data[["cluster"]])
+    data[["cluster"]] <- data[["cluster"]][data[["cl_ord"]]]
+    data[["y"]] <- data[["y"]][data[["cl_ord"]], , drop = FALSE]
+    data[["X"]] <- data[["X"]][data[["cl_ord"]], , drop = FALSE]
+
+    if (fes) {
+      data[["fixed_effects"]] <- data[["fixed_effects"]][data[["cl_ord"]], , drop = FALSE]
+      data[["yoriginal"]] <- data[["yoriginal"]][data[["cl_ord"]], , drop = FALSE]
+      data[["Xoriginal"]] <- data[["Xoriginal"]][data[["cl_ord"]], , drop = FALSE]
+    }
+    if (weighted) {
+      data[["weights"]] <- data[["weights"]][data[["cl_ord"]]]
+    }
+    if (iv_stage[[1]] == 2) {
+      data[["X_first_stage"]] <- data[["X_first_stage"]][data[["cl_ord"]], , drop = FALSE]
+    }
+
+    data[["J"]] <- length(unique(data[["cluster"]]))
+  } else {
+    data[["J"]] <- J <- 1
+  }
+
+  if (fes) {
+    data[["femat"]] <- model.matrix(~ 0 + ., data = as.data.frame(data[["fixed_effects"]]))
+  }
+
+  if (weighted) {
+    data[["Xunweighted"]] <- data[["X"]]
+    data[["yunweighted"]] <- data[["y"]]
+    data[["weight_mean"]] <- mean(data[["weights"]])
+    data[["weights"]] <- sqrt(data[["weights"]] / data[["weight_mean"]])
+    data[["X"]] <- data[["weights"]] * data[["X"]]
+    data[["y"]] <- data[["weights"]] * data[["y"]]
+    if (fes) {
+      if (is.numeric(data[["yoriginal"]])) {
+        data[["yoriginalunweighted"]] <- data[["yoriginal"]]
+        data[["yoriginal"]] <- data[["weights"]] * data[["yoriginal"]]
+      }
+      data[["fematunweighted"]] <- data[["femat"]]
+      data[["femat"]] <- data[["weights"]] * data[["femat"]]
+    }
+    if (iv_stage[[1]] == 2) {
+      data[["X_first_stage_unweighted"]] <- data[["X_first_stage"]]
+      data[["X_first_stage"]] <- data[["weights"]] * data[["X_first_stage"]]
+    }
+
+  } else {
+    data[["weight_mean"]] <- 1
+  }
+
+  return(data)
+}
+
+drop_collinear <- function(data, covs_used, weighted, iv_stage) {
+  data[["X"]] <- data[["X"]][, covs_used, drop = FALSE]
+  if (weighted) {
+    data[["Xunweighted"]] <- data[["Xunweighted"]][, covs_used, drop = FALSE]
+  }
+  if (iv_stage[[1]] == 2) {
+    data[["X_first_stage"]] <- data[["X_first_stage"]][, covs_used, drop = FALSE]
+    if (weighted) {
+      data[["X_first_stage_unweighted"]] <- data[["X_first_stage_unweighted"]][, covs_used, drop = FALSE]
+    }
+  }
+  if (is.numeric(data[["Xoriginal"]])) {
+    data[["Xoriginal"]] <- data[["Xoriginal"]][, covs_used, drop = FALSE]
+    if (weighted) {
+      data[["Xoriginal"]] <- data[["Xoriginal"]][, covs_used, drop = FALSE]
+    }
+  }
+
+  return(data)
 }

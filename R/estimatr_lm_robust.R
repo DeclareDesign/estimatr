@@ -258,7 +258,8 @@ lm_robust <- function(formula,
       alpha = alpha,
       return_vcov = return_vcov,
       try_cholesky = try_cholesky,
-      has_int = attr(model_data$terms, "intercept")
+      has_int = attr(model_data$terms, "intercept"),
+      iv_stage = list(0)
     )
 
   return_list <- lm_return(

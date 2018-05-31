@@ -1,5 +1,6 @@
 ---
 output: github_document
+tite: "estimatr: Fast Estimators for Design-Based Inference""
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -13,8 +14,6 @@ knitr::opts_chunk$set(
 )
 options(digits = 2)
 ```
-
-# estimatr: Fast Estimators for Design-Based Inference
 
 [![CRAN Status](https://www.r-pkg.org/badges/version/estimatr)](cran.r-project.org/package=estimatr)
 [![Travis-CI Build Status](https://travis-ci.org/DeclareDesign/estimatr.svg?branch=master)](https://travis-ci.org/DeclareDesign/estimatr)
