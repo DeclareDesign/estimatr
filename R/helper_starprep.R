@@ -41,11 +41,7 @@ commarobust <- function(model, se_type = NULL, clusters = NULL, ci = TRUE, alpha
   XtX_inv <- chol2inv(Qr$qr[p1, p1, drop = FALSE])
   clustered <- !is.null(clusters)
 
-  se_type <- check_se_type(
-    se_type = se_type,
-    clustered = clustered,
-    iv = FALSE
-  )
+  se_type <- check_se_type(se_type = se_type, clustered = clustered)
 
   X <- model.matrix.lm(model)
   contrasts <- attr(X, "contrasts")
@@ -76,7 +72,7 @@ commarobust <- function(model, se_type = NULL, clusters = NULL, ci = TRUE, alpha
     clustered = clustered,
     weighted = weighted,
     fes = FALSE,
-    iv_second_stage = FALSE
+    iv_stage = list(0)
   )
 
   ei <- as.matrix(resid(model))

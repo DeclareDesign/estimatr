@@ -337,7 +337,8 @@ lm_lin <- function(formula,
       alpha = alpha,
       return_vcov = return_vcov,
       try_cholesky = try_cholesky,
-      has_int = has_intercept
+      has_int = has_intercept,
+      iv_stage = list(0)
     )
 
   # ----------

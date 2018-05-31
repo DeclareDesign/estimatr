@@ -185,7 +185,7 @@ iv_robust <- function(formula,
       return_fit = TRUE,
       return_vcov = return_vcov,
       try_cholesky = try_cholesky,
-      iv_first_stage = TRUE
+      iv_stage = list(1)
     )
 
   # ------
@@ -211,7 +211,7 @@ iv_robust <- function(formula,
       alpha = alpha,
       return_vcov = return_vcov,
       try_cholesky = try_cholesky,
-      X_first_stage = model_data$design_matrix
+      iv_stage = list(2, model_data$design_matrix)
     )
 
   return_list <- lm_return(
