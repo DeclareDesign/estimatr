@@ -178,10 +178,10 @@ lm_robust_fit <- function(y,
           data[["femat"]] <- data[["weights"]] * data[["femat"]]
         }
       }
-    
+
     }
 
-    
+
 
     # Also need second stage residuals for fstat
     if (iv_second_stage) {
@@ -193,6 +193,7 @@ lm_robust_fit <- function(y,
     }
 
     if (se_type != "none") {
+
       vcov_fit <- lm_variance(
         X = if (se_type %in% c("HC2", "HC3", "CR2") && fes) cbind(data[["X"]], data[["femat"]]) else data[["X"]],
         Xunweighted = if (se_type %in% c("HC2", "HC3", "CR2") && fes && weighted) cbind(data[["Xunweighted"]], data[["fematunweighted"]]) else data[["Xunweighted"]],
@@ -231,8 +232,8 @@ lm_robust_fit <- function(y,
       return_list[["fitted.values"]] <- as.matrix(data[["yoriginal"]] - fit_vals[["ei"]])
 
       if (weighted) {
-        return_list[["fitted.values"]] <- return_list[["fitted.values"]] / data[["weights"]])
-      } 
+        return_list[["fitted.values"]] <- return_list[["fitted.values"]] / data[["weights"]]
+      }
     } else {
       fitted.vals_name <- if (weighted) "fitted.values.unweighted" else "fitted.values"
       return_list[["fitted.values"]] <- as.matrix(fit_vals[[fitted.vals_name]])
