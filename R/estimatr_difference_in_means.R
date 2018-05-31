@@ -527,7 +527,8 @@ difference_in_means_internal <- function(condition1 = NULL,
         try_cholesky = TRUE,
         alpha = alpha,
         return_vcov = FALSE,
-        has_int = TRUE
+        has_int = TRUE,
+        iv_stage = list(0)
       )
 
       diff <- coef(w_hc2_out)[2]

@@ -14,7 +14,7 @@
 #' @param return_vcov logical, whether to return the vcov matrix for later usage
 #' @param return_fit logical, whether to return fitted values
 #' @param try_cholesky logical, whether to try using a cholesky decomposition to solve LS instead of a QR decomposition
-#' @param iv_stage list of length two, the first element denotes the stage of 2SLS IV estimation, where 0 is used for OLS. The second element is only used for the second stage of 2SLS and has the first stage design matrix. For OLS, \code{list(0)}, for the first stage of 2SLS \code{list(1)}, for second stage of 2SLS \code{list(2, first_stage_design_mat)}.
+#' @param iv_stage list of length two, the first element denotes the stage of 2SLS IV estimation, where 0 is used for OLS. The second element is only used for the second stage of 2SLS and has the first stage design matrix. For OLS, the default, \code{list(0)}, for the first stage of 2SLS \code{list(1)}, for second stage of 2SLS \code{list(2, first_stage_design_mat)}.
 #'
 #' @export
 #'
@@ -32,7 +32,7 @@ lm_robust_fit <- function(y,
                           return_vcov = TRUE,
                           return_fit = TRUE,
                           try_cholesky = FALSE,
-                          iv_stage = NULL) {
+                          iv_stage = list(0)) {
 
   data <- list(
     y = as.matrix(y),
@@ -160,11 +160,11 @@ lm_robust_fit <- function(y,
       X_name_unweighted <- "Xunweighted"
     }
 
-    fit_vals[["fitted.values"]] <- data[[X_name]][, 1:x_rank, drop = FALSE] %*% fit$beta_hat
+    fit_vals[["fitted.values"]] <- as.matrix(data[[X_name]][, 1:x_rank, drop = FALSE] %*% fit$beta_hat)
     fit_vals[["ei"]] <- as.matrix(data[["y"]] - fit_vals[["fitted.values"]])
 
     if (weighted) {
-      fit_vals[["fitted.values.unweighted"]] <- data[[X_name_unweighted]] %*% fit$beta_hat
+      fit_vals[["fitted.values.unweighted"]] <- as.matrix(data[[X_name_unweighted]] %*% fit$beta_hat)
       fit_vals[["ei.unweighted"]] <- as.matrix(data[["yunweighted"]] - fit_vals[["fitted.values.unweighted"]])
 
       # For CR2 need X weighted by weights again
@@ -182,7 +182,7 @@ lm_robust_fit <- function(y,
 
     # Also need second stage residuals for fstat
     if (iv_stage[[1]] == 2) {
-      fit_vals[["fitted.values.iv"]] <- data[["X"]] %*% fit$beta_hat
+      fit_vals[["fitted.values.iv"]] <- as.matrix(data[["X"]] %*% fit$beta_hat)
       fit_vals[["ei.iv"]] <- as.matrix(data[["y"]] - fit_vals[["fitted.values.iv"]])
       if (weighted) {
         fit_vals[["ei.iv"]] <- data[["weights"]] * fit_vals[["ei.iv"]]
@@ -223,7 +223,7 @@ lm_robust_fit <- function(y,
 
   if (return_fit) {
 
-    if (fes && iv_stage[[1]] != 2) {
+    if (fes && iv_stage[[1]] != 1) {
       # Override previous fitted values with those that take into consideration
       # the fixed effects (unless IV first stage, where we stay w/ projected model)
       return_list[["fitted.values"]] <- as.matrix(data[["yoriginal"]] - fit_vals[["ei"]])
