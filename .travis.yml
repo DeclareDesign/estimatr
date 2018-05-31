@@ -50,6 +50,7 @@ r_packages:
 - texreg
 - clubSandwich
 - stargazer
+- lfe
 
 after_success:
 - Rscript -e DDtools::after_build
