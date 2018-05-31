@@ -321,8 +321,6 @@ test_that("iv_robust different specifications work", {
 
 test_that("S3 methods", {
 
-  skip_if_not_installed("AER")
-
   ivo <- AER::ivreg(mpg ~ hp + cyl | wt + gear, data = mtcars)
   ivro <- iv_robust(mpg ~ hp + cyl | wt + gear, data = mtcars, se_type = "classical")
 
