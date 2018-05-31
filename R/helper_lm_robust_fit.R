@@ -14,8 +14,7 @@
 #' @param return_vcov logical, whether to return the vcov matrix for later usage
 #' @param return_fit logical, whether to return fitted values
 #' @param try_cholesky logical, whether to try using a cholesky decomposition to solve LS instead of a QR decomposition
-#' @param X_first_stage numeric matrix of the first stage design matrix, only use for second stage of 2SLS IV regression, otherwise leave as \code{NULL}
-#' @param iv_first_stage boolean for whether first stage of 2SLS IV regression
+#' @param iv_stage list of length two, the first element denotes the stage of 2SLS IV estimation, where 0 is used for OLS. The second element is only used for the second stage of 2SLS and has the first stage design matrix. For OLS, \code{list(0)}, for the first stage of 2SLS \code{list(1)}, for second stage of 2SLS \code{list(2, first_stage_design_mat)}.
 #'
 #' @export
 #'
@@ -100,7 +99,7 @@ lm_robust_fit <- function(y,
     clustered = clustered,
     weighted = weighted,
     fes = fes,
-    iv_second_stage = iv_stage
+    iv_stage = iv_stage
   )
 
   # -----------
@@ -304,7 +303,8 @@ lm_robust_fit <- function(y,
         nomdf = nomdf,
         dendf = dendf,
         vcov_fit = vcov_fit,
-        has_int = has_int
+        has_int = has_int,
+        iv_stage = iv_stage
       )
     } else {
       f <- NULL
