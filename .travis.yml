@@ -46,11 +46,11 @@ r_github_packages:
 - DeclareDesign/fabricatr
 
 r_packages:
+- stargazer
+- lfe
 - broom
 - texreg
 - clubSandwich
-- stargazer
-- lfe
 
 after_success:
 - Rscript -e DDtools::after_build
