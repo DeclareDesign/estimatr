@@ -416,6 +416,18 @@ test_that("Estimating Horvitz-Thompson can be done two ways with blocks", {
     tidy(ht_declare_mp),
     tidy(ht_condmat_mp)
   )
+
+  # block messages when passing with simple = TRUE flag, not otherwise
+  dat$p <- tapply(dat$z, dat$bl, mean)[dat$bl]
+  expect_message(
+    ht_declare_mp <- horvitz_thompson(y ~ z, data = dat, blocks = bl, condition_prs = p, simple = TRUE),
+    "Assuming complete random assignment of clusters within blocks."
+  )
+
+  expect_message(
+    ht_declare_mp <- horvitz_thompson(y ~ z, data = dat, blocks = bl, condition_prs = p, simple = FALSE),
+    NA
+  )
 })
 
 # errors when arguments are passed that shouldn't be together
