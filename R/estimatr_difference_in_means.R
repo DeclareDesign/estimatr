@@ -472,13 +472,14 @@ difference_in_means_internal <- function(condition1 = NULL,
       y = data$y,
       X = cbind(1, t = as.numeric(data$t == condition2)),
       cluster = data$cluster,
-      se_type = ifelse(se_type == "none", "none", "CR2"),
+      se_type = if(se_type == "none") "none" else "CR2",
       weights = data$weights,
       ci = TRUE,
       try_cholesky = TRUE,
       alpha = alpha,
       return_vcov = FALSE,
-      has_int = TRUE
+      has_int = TRUE,
+      iv_stage = list(0)
     )
 
     diff <- coef(cr2_out)[2]
@@ -526,7 +527,8 @@ difference_in_means_internal <- function(condition1 = NULL,
         try_cholesky = TRUE,
         alpha = alpha,
         return_vcov = FALSE,
-        has_int = TRUE
+        has_int = TRUE,
+        iv_stage = list(0)
       )
 
       diff <- coef(w_hc2_out)[2]

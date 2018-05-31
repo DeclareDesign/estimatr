@@ -479,7 +479,8 @@ test_that("lm_robust_fit adds column names", {
     alpha = 0.05,
     return_vcov = TRUE,
     try_cholesky = TRUE,
-    has_int = FALSE
+    has_int = FALSE,
+    iv_stage = list(0)
   )
 
   expect_equal(
@@ -532,8 +533,6 @@ test_that("lm robust works with rank-deficient X", {
   # )
 
   dat$Z1 <- dat$X1 + 5
-
-  library(RcppEigen)
 
   ## Not the same as LM! Different QR decompositions when dependency isn't just equivalency
   expect_equivalent(

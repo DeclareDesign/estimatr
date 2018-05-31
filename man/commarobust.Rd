@@ -12,8 +12,9 @@ commarobust(model, se_type = NULL, clusters = NULL, ci = TRUE,
 
 \item{se_type}{The sort of standard error sought. If `clusters` is
 not specified the options are "HC0", "HC1" (or "stata", the equivalent),
- "HC2" (default), "HC3", or
-"classical". If `clusters` is specified the options are "CR0", "CR2" (default), or "stata". Can also specify "none", which may speed up estimation of the coefficients.}
+"HC2" (default), "HC3", or "classical". If `clusters` is specified the
+options are "CR0", "CR2" (default), or "stata". Can also specify "none",
+which may speed up estimation of the coefficients.}
 
 \item{clusters}{A vector corresponding to the clusters in the data.}
 
@@ -29,10 +30,9 @@ an \code{\link{lm_robust}} object.
 Build lm_robust object from lm fit
 }
 \examples{
-
 lmo <- lm(mpg ~ hp, data = mtcars)
 
-# Default "HC2"
+# Default HC2
 commarobust(lmo)
 
 commarobust(lmo, se_type = "HC3")

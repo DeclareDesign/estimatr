@@ -220,6 +220,39 @@ test_that("commarobust works with regular lm", {
     clo[c("r.squared", "adj.r.squared")]
   )
 
+  # Works with character, factor, and numeric clusters
+  datmiss$cl_char <- sample(letters, size = nrow(datmiss), replace = TRUE)
+  datmiss$cl_num <- sample(rnorm(3), size = nrow(datmiss), replace = TRUE)
+  datmiss$cl_fac <- as.factor(datmiss$cl_char)
+
+  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl_char, data = datmiss, se_type = "CR2")
+  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
+  clo <- commarobust(lo, clusters = datmiss$cl_char[complete.cases(datmiss)], se_type = "CR2")
+
+  expect_equal(
+    tidy(ro),
+    tidy(clo)
+  )
+
+  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl_num, data = datmiss, se_type = "CR2")
+  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
+  clo <- commarobust(lo, clusters = datmiss$cl_num[complete.cases(datmiss)], se_type = "CR2")
+
+  expect_equal(
+    tidy(ro),
+    tidy(clo)
+  )
+
+  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl_fac, data = datmiss, se_type = "CR2")
+  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
+  clo <- commarobust(lo, clusters = datmiss$cl_fac[complete.cases(datmiss)], se_type = "CR2")
+
+  expect_equal(
+    tidy(ro),
+    tidy(clo)
+  )
+
+
 })
 
 test_that("commarobust works with weighted lm", {
@@ -346,15 +379,6 @@ test_that("commarobust works with weighted lm", {
   ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl, data = datmiss, weights = w, se_type = "stata")
   lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w)
   clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "stata")
-
-  capture_output(sapply(names(ro),
-      function(x) {
-        if (x == "call")
-          NULL
-        else
-          expect_equal(ro[[x]], clo[[x]])
-      }
-    ))
 
   expect_equal(
     tidy(ro),

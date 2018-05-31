@@ -3,8 +3,9 @@
 #' @param model an lm model object
 #' @param se_type The sort of standard error sought. If `clusters` is
 #' not specified the options are "HC0", "HC1" (or "stata", the equivalent),
-#'  "HC2" (default), "HC3", or
-#' "classical". If `clusters` is specified the options are "CR0", "CR2" (default), or "stata". Can also specify "none", which may speed up estimation of the coefficients.
+#' "HC2" (default), "HC3", or "classical". If `clusters` is specified the
+#' options are "CR0", "CR2" (default), or "stata". Can also specify "none",
+#' which may speed up estimation of the coefficients.
 #' @param clusters A vector corresponding to the clusters in the data.
 #' @param ci logical. Whether to compute and return p-values and confidence
 #' intervals, TRUE by default.
@@ -13,10 +14,9 @@
 #' @return an \code{\link{lm_robust}} object.
 #'
 #' @examples
-#'
 #' lmo <- lm(mpg ~ hp, data = mtcars)
 #'
-#' # Default "HC2"
+#' # Default HC2
 #' commarobust(lmo)
 #'
 #' commarobust(lmo, se_type = "HC3")
@@ -41,11 +41,7 @@ commarobust <- function(model, se_type = NULL, clusters = NULL, ci = TRUE, alpha
   XtX_inv <- chol2inv(Qr$qr[p1, p1, drop = FALSE])
   clustered <- !is.null(clusters)
 
-  se_type <- check_se_type(
-    se_type = se_type,
-    clustered = clustered,
-    iv = FALSE
-  )
+  se_type <- check_se_type(se_type = se_type, clustered = clustered)
 
   X <- model.matrix.lm(model)
   contrasts <- attr(X, "contrasts")
@@ -67,7 +63,7 @@ commarobust <- function(model, se_type = NULL, clusters = NULL, ci = TRUE, alpha
     if (length(clusters) != N) {
       stop("`clusters` must be the same length as the model data.")
     }
-    data[["cluster"]] <- clusters
+    data[["cluster"]] <- as.factor(clusters)
   }
 
   data <- prep_data(
@@ -76,7 +72,7 @@ commarobust <- function(model, se_type = NULL, clusters = NULL, ci = TRUE, alpha
     clustered = clustered,
     weighted = weighted,
     fes = FALSE,
-    iv_second_stage = FALSE
+    iv_stage = list(0)
   )
 
   ei <- as.matrix(resid(model))
@@ -173,7 +169,7 @@ commarobust <- function(model, se_type = NULL, clusters = NULL, ci = TRUE, alpha
     dendf = dendf,
     vcov_fit = vcov_fit,
     has_int = attr(model$terms, "intercept"),
-    iv_second_stage = FALSE
+    iv_stage = list(0)
   )
 
   return_list <- c(return_list, tss_r2s)
@@ -229,7 +225,7 @@ commarobust <- function(model, se_type = NULL, clusters = NULL, ci = TRUE, alpha
 #' # Use default "CR2" standard errors with clusters
 #' stargazer(lm1, lm2,
 #'           se = starprep(lm1, lm2, clusters = mtcars$carb),
-#'           p = starprep(lm1, lm2, clusters = mtcars$carb, stat = "p.value),
+#'           p = starprep(lm1, lm2, clusters = mtcars$carb, stat = "p.value"),
 #'           omit.stat = "f")
 #'
 #' # Can also specify significance levels and different standard errors
