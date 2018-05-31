@@ -470,11 +470,13 @@ horvitz_thompson <- function(formula,
       }
     } else {
       # blocked case
-      message(
-        "Assuming complete random assignment of clusters within blocks. ",
-        "User can use `ra_declaration` or `condition_pr_mat` to have full ",
-        "control over the design."
-      )
+      if (simple) {
+        message(
+          "Assuming complete random assignment of clusters within blocks. ",
+          "User can use `ra_declaration` or `condition_pr_mat` to have full ",
+          "control over the design."
+        )
+      }
 
       if (is.null(data$condition_probabilities)) {
         message(
