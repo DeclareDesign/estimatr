@@ -9,6 +9,10 @@
       signature = className("lm_robust", pkgname),
       definition = extract.lm_robust
     )
+    setMethod("extract",
+              signature = className("iv_robust", pkgname),
+              definition = extract.iv_robust
+    )
   }
   invisible()
 }
