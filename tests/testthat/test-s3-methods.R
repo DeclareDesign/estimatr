@@ -265,14 +265,6 @@ test_that("vcov works", {
     "supported|difference_in_means"
   )
 
-  # rank deficient
-  dat$z2 <- dat$z
-  lmro <- lm_robust(y ~ z + z2 + x, data = dat)
-  expect_equivalent(
-    dim(vcov(lmro)),
-    c(3, 3)
-  )
-
   # Instrumental variables
   ivo <- AER::ivreg(y ~ x | z, data = dat)
   ivro <- iv_robust(y ~ x | z, data = dat, se_type = "classical")
