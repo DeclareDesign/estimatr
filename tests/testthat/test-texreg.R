@@ -3,8 +3,6 @@
 context("S3 - texreg builds")
 
 test_that("texreg extension works", {
-  skip_if_not_installed("texreg")
-  library(texreg)
 
   model2 <- lm_robust(extra~group, sleep, clusters = ID)
 

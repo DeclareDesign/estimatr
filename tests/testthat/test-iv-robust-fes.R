@@ -327,15 +327,14 @@ test_that("FE matches with weights", {
 
 test_that("IV FE matches lfe including proj r2", {
 
-  skip_if_not_installed("lfe")
-  library(lfe)
+  skip_on_cran()
 
   ## unweighted
 
   ## Classical
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, se_type = "classical")
-  feo <- felm(Y ~ X2 | B + B2 | (X1 ~ Z), data = dat)
-  sfeo <- summary(feo)
+  feo <- lfe::felm(Y ~ X2 | B + B2 | (X1 ~ Z), data = dat)
+  sfeo <- lfe:::summary.felm(feo)
 
   expect_equivalent(
     tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")],
@@ -355,8 +354,8 @@ test_that("IV FE matches lfe including proj r2", {
   ## HC1
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, se_type = "HC1")
 
-  feo <- felm(Y ~ X2 | B + B2 | (X1 ~ Z), data = dat)
-  sfeo <- summary(feo, robust = T)
+  feo <- lfe::felm(Y ~ X2 | B + B2 | (X1 ~ Z), data = dat)
+  sfeo <- lfe:::summary.felm(feo, robust = T)
 
   expect_equivalent(
     tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")],
@@ -375,9 +374,9 @@ test_that("IV FE matches lfe including proj r2", {
 
   ## CR1stata
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "stata")
-  feo <- felm(Y ~ X2 | B + B2 | (X1 ~ Z) | cl, data = dat)
+  feo <- lfe::felm(Y ~ X2 | B + B2 | (X1 ~ Z) | cl, data = dat)
 
-  sfeo <- summary(feo)
+  sfeo <- lfe:::summary.felm(feo)
 
   expect_equivalent(
     tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")],
@@ -397,8 +396,8 @@ test_that("IV FE matches lfe including proj r2", {
 
   ## Weighted
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "classical")
-  feo <- felm(Y ~ X2 | B + B2 | (X1 ~ Z), data = dat, weights = dat$w)
-  sfeo <- summary(feo)
+  feo <- lfe::felm(Y ~ X2 | B + B2 | (X1 ~ Z), data = dat, weights = dat$w)
+  sfeo <- lfe:::summary.felm(feo)
 
   expect_equivalent(
     tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")],
@@ -418,8 +417,8 @@ test_that("IV FE matches lfe including proj r2", {
   ## HC1
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "HC1")
 
-  feo <- felm(Y ~ X2 | B + B2 | (X1 ~ Z), data = dat,  weights = dat$w)
-  sfeo <- summary(feo, robust = T)
+  feo <- lfe::felm(Y ~ X2 | B + B2 | (X1 ~ Z), data = dat,  weights = dat$w)
+  sfeo <- lfe:::summary.felm(feo, robust = T)
 
   expect_equivalent(
     tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")],
@@ -438,9 +437,9 @@ test_that("IV FE matches lfe including proj r2", {
 
   ## CR1stata
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, weights = w, se_type = "stata")
-  feo <- felm(Y ~ X2 | B + B2 | (X1 ~ Z) | cl, data = dat, weights = dat$w)
+  feo <- lfe::felm(Y ~ X2 | B + B2 | (X1 ~ Z) | cl, data = dat, weights = dat$w)
 
-  sfeo <- summary(feo)
+  sfeo <- lfe:::summary.felm(feo)
 
   expect_equivalent(
     tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")],

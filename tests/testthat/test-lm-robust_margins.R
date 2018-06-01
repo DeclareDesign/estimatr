@@ -18,7 +18,7 @@ test_that("lm robust can work with margins", {
     )
   )
 
-  lmr_sum_marg <- summary(margins::margins(lmr, vce = "delta"))
+  lmr_sum_marg <- margins:::summary.margins(margins::margins(lmr, vce = "delta"))
 
   # Close enough with HC2?
   expect_equal(
@@ -29,8 +29,8 @@ test_that("lm robust can work with margins", {
 
   # Close with classical
   lmr_class <- lm_robust(mpg ~ cyl * hp + wt, data = mtcars, se_type = "classical")
-  lmrc <- summary(margins(lmr_class, vce = "delta"))
-  lmc <- summary(margins(x, vce = "delta"))
+  lmrc <- margins:::summary.margins(margins::margins(lmr_class, vce = "delta"))
+  lmc <- margins:::summary.margins(margins::margins(x, vce = "delta"))
   expect_equal(
     lmc[, mv],
     lmrc[, mv],
@@ -39,11 +39,11 @@ test_that("lm robust can work with margins", {
 
   # Works with other vce
   set.seed(42)
-  lmrc <- summary(margins(lmr_class, vce = "bootstrap", iterations = 10L))
+  lmrc <- margins:::summary.margins(margins::margins(lmr_class, vce = "bootstrap", iterations = 10L))
   expect_true(!any(is.na(lmrc)))
-  lmrc <- summary(margins(lmr_class, vce = "simulation", iterations = 10L))
+  lmrc <- margins:::summary.margins(margins::margins(lmr_class, vce = "simulation", iterations = 10L))
   expect_true(!any(is.na(lmrc)))
-  lmrc <- summary(margins(lmr_class, vce = "simulation", iterations = 10L))
+  lmrc <- margins:::summary.margins(margins::margins(lmr_class, vce = "simulation", iterations = 10L))
   expect_true(!any(is.na(lmrc)))
 })
 
@@ -54,14 +54,13 @@ test_that("lm robust + weights can work with margins", {
 
 
   suppressWarnings(
-    {lmc <- round(summary(margins(x, vce = "delta"))[, mv], 3)}
+    {lmc <- round(margins:::summary.margins(margins::margins(x, vce = "delta"))[, mv], 3)}
   )
 
   suppressWarnings(
-    {lmr <- round(summary(margins(x2, vce = "delta"))[, mv], 3)}
+    {lmr <- round(margins:::summary.margins(margins::margins(x2, vce = "delta"))[, mv], 3)}
   )
 
-  # Have to round quite a bit!
   expect_equal(lmc, lmr)
 })
 
@@ -70,10 +69,10 @@ test_that("lm robust + cluster can work with margins", {
   x <- lm(mpg ~ cyl * hp + wt, data = mtcars)
   x2 <- lm_robust(mpg ~ cyl * hp + wt, data = mtcars, clusters = am)
 
-  lmc <- round(summary(margins(x, vce = "delta"))[, mv], 8)
+  lmc <- round(margins:::summary.margins(margins::margins(x, vce = "delta"))[, mv], 8)
 
   expect_warning(
-    lmr <- round(summary(margins(x2, vce = "delta"))[, mv], 8),
+    lmr <- round(margins:::summary.margins(margins::margins(x2, vce = "delta"))[, mv], 8),
     "cluster"
   )
 
@@ -93,8 +92,8 @@ test_that("lm lin can work with margins", {
 
   lmo <- lm(GPA_year1 ~ ssp * gpa0_tilde, data = alo_star_men)
 
-  lml_sum <- summary(margins(lml, vce = "delta"))
-  lmo_sum <- summary(margins(lmo, vce = "delta"))
+  lml_sum <- margins:::summary.margins(margins::margins(lml, vce = "delta"))
+  lmo_sum <- margins:::summary.margins(margins::margins(lmo, vce = "delta"))
 
   expect_equal(
     round(lml_sum[, 4], 5),
