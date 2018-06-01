@@ -35,8 +35,3 @@ extract.iv_robust(model, include.ci = TRUE, include.rsquared = TRUE,
 
 \item{...}{unused}
 }
-\description{
-Prepares a \code{"lm_robust"} or \code{"iv_robust"} object for the \pkg{texreg}
-package. This is largely a clone of the \code{\link[texreg]{extract.lm}}
-method.
-}
