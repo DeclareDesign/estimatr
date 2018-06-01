@@ -238,8 +238,7 @@ lm_robust <- function(formula,
     yoriginal <- model_data[["outcome"]]
     Xoriginal <- model_data[["design_matrix"]]
     model_data <- demean_fes(model_data)
-    attr(model_data$fixed_effects, "fe_rank") <-
-      sum(model_data[["fe_levels"]]) + 1
+    attr(model_data$fixed_effects, "fe_rank") <- sum(model_data[["fe_levels"]]) + 1
   } else {
     Xoriginal <- NULL
     yoriginal <- NULL
