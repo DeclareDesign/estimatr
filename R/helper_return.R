@@ -6,7 +6,8 @@ lm_return <- function(return_list, model_data, formula) {
     return_list[["xlevels"]] <- model_data$xlevels
     return_list[["felevels"]] <- model_data$felevels
     return_list[["weights"]] <- model_data$weights
-    if (is.matrix(model_data$outcome) && is.character(colnames(model_data$outcome))) {
+    if (is.matrix(model_data$outcome) &&
+        is.character(colnames(model_data$outcome))) {
       return_list[["outcome"]] <- colnames(model_data$outcome)
     } else {
       return_list[["outcome"]] <- deparse(formula[[2]], nlines = 5)
@@ -14,8 +15,10 @@ lm_return <- function(return_list, model_data, formula) {
   }
 
   # Name and flatten objects
-  if (is.matrix(return_list[["std.error"]]) && ncol(return_list[["std.error"]]) > 1) {
-    dimnames(return_list[["std.error"]]) <- dimnames(return_list[["coefficients"]])
+  if (is.matrix(return_list[["std.error"]]) &&
+      ncol(return_list[["std.error"]]) > 1) {
+    dimnames(return_list[["std.error"]]) <-
+      dimnames(return_list[["coefficients"]])
   } else {
     return_list[["coefficients"]] <- drop(return_list[["coefficients"]])
     nms <- c("std.error", "p.value", "df", "ci.lower", "ci.upper")

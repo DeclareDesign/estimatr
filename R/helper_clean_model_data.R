@@ -132,7 +132,8 @@ clean_model_data <- function(data, datargs, estimator = "") {
   }
 
   ret[["cluster"]] <- model.extract(mf, "cluster")
-  if (!(class(ret[["cluster"]]) %in% c("factor", "integer")) && !is.null(ret[["cluster"]])) {
+  if (!(class(ret[["cluster"]]) %in% c("factor", "integer")) &&
+      !is.null(ret[["cluster"]])) {
     ret[["cluster"]] <- as.factor(ret[["cluster"]])
   }
 
@@ -166,7 +167,11 @@ demean_fes <- function(model_data) {
     X = model_data[["design_matrix"]],
     Zmat = model_data[["instrument_matrix"]],
     fes = model_data[["fixed_effects"]],
-    weights = if (is.numeric(model_data[["weights"]])) model_data[["weights"]] else rep(1, nrow(model_data[["design_matrix"]])),
+    weights =
+      if (is.numeric(model_data[["weights"]]))
+        model_data[["weights"]]
+      else
+        rep(1, nrow(model_data[["design_matrix"]])),
     has_int = attr(model_data$terms, "intercept"),
     eps = 1e-8
   )
