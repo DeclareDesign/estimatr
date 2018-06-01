@@ -4,7 +4,7 @@
 #' @rdname extract.lm_robust
 #'
 #' @description Prepares a \code{"lm_robust"} or \code{"iv_robust"} object for the \pkg{texreg}
-#' package. This is largely a clone of the \code{extract.lm}}\
+#' package. This is largely a clone of the \code{extract.lm}
 #' method.
 #'
 #' @param model an object of class \code{\link{lm_robust}} or \code{"iv_robust"}
