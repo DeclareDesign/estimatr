@@ -24,7 +24,11 @@
 #' commarobust(lmo, se_type = "stata", clusters = mtcars$carb)
 #'
 #' @export
-commarobust <- function(model, se_type = NULL, clusters = NULL, ci = TRUE, alpha = 0.05) {
+commarobust <- function(model,
+                        se_type = NULL,
+                        clusters = NULL,
+                        ci = TRUE,
+                        alpha = 0.05) {
 
   if (class(model)[1] != "lm") {
     stop("`model` must be an lm object")
@@ -88,9 +92,10 @@ commarobust <- function(model, se_type = NULL, clusters = NULL, ci = TRUE, alpha
     ei <- data[["weights"]] * ei
     XtX_inv <- data[["weight_mean"]] * XtX_inv
 
-    # Need unweighted resid and need
+    # Need unweighted resid and need to reweight X
     if (se_type == "CR2") {
-      eiunweighted <- as.matrix(data[["yunweighted"]] - data[["Xunweighted"]] %*% coefs)
+      eiunweighted <-
+        as.matrix(data[["yunweighted"]] - data[["Xunweighted"]] %*% coefs)
       data[["X"]] <- data[["weights"]] * data[["X"]]
     }
   }

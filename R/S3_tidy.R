@@ -6,7 +6,10 @@
 #'
 #' @export
 tidy <- function(object, ...) {
-  if (requireNamespace("broom", quietly = TRUE)) broom::tidy(object, ...) else UseMethod("tidy")
+  if (requireNamespace("broom", quietly = TRUE))
+    broom::tidy(object, ...)
+  else
+    UseMethod("tidy")
 }
 
 
@@ -114,6 +117,9 @@ warn_singularities <- function(object) {
   if (object$rank < object$k) {
     singularities <- object$k - object$rank
     plural <- ifelse(singularities > 1, "s", "")
-    message(singularities, " coefficient", plural, " not defined because the design matrix is rank deficient\n")
+    message(
+      singularities, " coefficient", plural,
+      " not defined because the design matrix is rank deficient\n"
+    )
   }
 }
