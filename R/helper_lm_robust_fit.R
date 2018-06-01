@@ -362,7 +362,7 @@ lm_robust_fit <- function(y,
 
         outcome_coef_names <- paste0(
           rep(paste0(return_list[["outcome"]], ":"),
-              times = vapply(coef_names, length, integer(1)),
+              times = vapply(coef_names, length, integer(1))),
           unlist(coef_names, FALSE, FALSE)
         )
 
