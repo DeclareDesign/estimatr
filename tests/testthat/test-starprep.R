@@ -2,8 +2,6 @@ context("Helper - commarobust + starprep")
 
 test_that("starprep works", {
 
-  skip_on_cran()
-
   fit_1 <- lm(mpg ~ hp, data = mtcars)
   fit_2 <- lm(mpg ~ hp, data = mtcars)
 

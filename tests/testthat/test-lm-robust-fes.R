@@ -975,8 +975,6 @@ test_that("test matches stata absorb", {
 
 test_that("FEs give correct projected F-stats", {
 
-  skip_on_cran()
-
   feo <- lfe::felm(Y ~ Z + X | B + B2, data = dat)
   sfeo <- lfe:::summary.felm(feo)
   sfeor <- lfe:::summary.felm(feo, robust = TRUE)

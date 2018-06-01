@@ -326,9 +326,6 @@ test_that("FE matches with weights", {
 })
 
 test_that("IV FE matches lfe including proj r2", {
-
-  skip_on_cran()
-
   ## unweighted
 
   ## Classical

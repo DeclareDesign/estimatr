@@ -45,13 +45,6 @@ r_github_packages:
 - ropensci/git2r
 - DeclareDesign/fabricatr
 
-r_packages:
-- stargazer
-- lfe
-- broom
-- texreg
-- clubSandwich
-
 after_success:
 - Rscript -e DDtools::after_build
 

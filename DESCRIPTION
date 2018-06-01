@@ -22,7 +22,7 @@ Imports:
 LinkingTo: Rcpp, RcppEigen
 RoxygenNote: 6.0.1
 LazyData: true
-Suggests: 
+Suggests:
     RcppEigen,
     fabricatr (>= 0.3),
     randomizr (>= 0.15),
@@ -31,8 +31,10 @@ Suggests:
     clubSandwich,
     margins,
     prediction,
+    lfe,
     AER,
-    ivpack
+    ivpack,
+    stargazer
 Enhances:
     broom,
     texreg
