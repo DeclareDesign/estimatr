@@ -17,24 +17,23 @@ lm_return <- function(return_list, model_data, formula) {
   # Name and flatten objects
   if (is.matrix(return_list[["std.error"]]) &&
       ncol(return_list[["std.error"]]) > 1) {
-    dimnames(return_list[["std.error"]]) <-
-      dimnames(return_list[["coefficients"]])
+    dimnames(return_list[["std.error"]]) <- dimnames(return_list[["coefficients"]])
   } else {
     return_list[["coefficients"]] <- drop(return_list[["coefficients"]])
     nms <- c("std.error", "p.value", "df", "ci.lower", "ci.upper")
     for (nm in nms) {
       if (length(return_list[[nm]]) > 1 || !is.na(return_list[[nm]])) {
-        return_list[[nm]] <-
-          setNames(drop(return_list[[nm]]), names(return_list[["coefficients"]]))
+        return_list[[nm]] <- setNames(
+          drop(return_list[[nm]]),
+          names(return_list[["coefficients"]])
+        )
       }
     }
   }
   if (return_list[["weighted"]]) {
-    names(return_list[["weights"]]) <-
-      if (is.matrix(return_list[["fitted.values"]]))
-        rownames(return_list[["fitted.values"]])
-      else
-        names(return_list[["fitted.values"]])
+    names(return_list[["weights"]]) <- if (is.matrix(return_list[["fitted.values"]]))
+      rownames(return_list[["fitted.values"]])
+      else names(return_list[["fitted.values"]])
   }
   return_list[["fitted.values"]] <- drop(return_list[["fitted.values"]])
   return(return_list)

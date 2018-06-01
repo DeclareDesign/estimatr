@@ -193,8 +193,7 @@ iv_robust <- function(formula,
   # ------
   colnames(first_stage$fitted.values) <- colnames(model_data$design_matrix)
   if (!is.null(model_data$fixed_effects)) {
-    attr(model_data$fixed_effects, "fe_rank") <-
-      sum(model_data[["fe_levels"]]) + 1
+    attr(model_data$fixed_effects, "fe_rank") <- sum(model_data[["fe_levels"]]) + 1
   }
 
   second_stage <-

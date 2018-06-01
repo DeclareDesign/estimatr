@@ -160,15 +160,20 @@ lm_robust_fit <- function(y,
       X_name_unweighted <- "Xunweighted"
     }
 
-    fit_vals[["fitted.values"]] <-
-      as.matrix(data[[X_name]][, 1:x_rank, drop = FALSE] %*% fit$beta_hat)
+    fit_vals[["fitted.values"]] <- as.matrix(
+      data[[X_name]][, 1:x_rank, drop = FALSE] %*% fit$beta_hat
+    )
+
     fit_vals[["ei"]] <- as.matrix(data[["y"]] - fit_vals[["fitted.values"]])
 
     if (weighted) {
-      fit_vals[["fitted.values.unweighted"]] <-
-        as.matrix(data[[X_name_unweighted]] %*% fit$beta_hat)
-      fit_vals[["ei.unweighted"]] <-
-        as.matrix(data[["yunweighted"]] - fit_vals[["fitted.values.unweighted"]])
+      fit_vals[["fitted.values.unweighted"]] <- as.matrix(
+        data[[X_name_unweighted]] %*% fit$beta_hat
+      )
+
+      fit_vals[["ei.unweighted"]] <- as.matrix(
+        data[["yunweighted"]] - fit_vals[["fitted.values.unweighted"]]
+      )
 
       # For CR2 need X weighted by weights again
       # so that instead of having X * sqrt(W) we have X * W
@@ -185,10 +190,8 @@ lm_robust_fit <- function(y,
 
     # Also need second stage residuals for fstat
     if (iv_stage[[1]] == 2) {
-      fit_vals[["fitted.values.iv"]] <-
-        as.matrix(data[["X"]] %*% fit$beta_hat)
-      fit_vals[["ei.iv"]] <-
-        as.matrix(data[["y"]] - fit_vals[["fitted.values.iv"]])
+      fit_vals[["fitted.values.iv"]] <- as.matrix(data[["X"]] %*% fit$beta_hat)
+      fit_vals[["ei.iv"]] <- as.matrix(data[["y"]] - fit_vals[["fitted.values.iv"]])
       if (weighted) {
         fit_vals[["ei.iv"]] <- data[["weights"]] * fit_vals[["ei.iv"]]
       }
@@ -197,20 +200,16 @@ lm_robust_fit <- function(y,
     if (se_type != "none") {
 
       vcov_fit <- lm_variance(
-        X =
-          if (se_type %in% c("HC2", "HC3", "CR2") && fes)
-            cbind(data[["X"]], data[["femat"]])
+        X = if (se_type %in% c("HC2", "HC3", "CR2") && fes)
+          cbind(data[["X"]], data[["femat"]])
           else data[["X"]],
-        Xunweighted =
-          if (se_type %in% c("HC2", "HC3", "CR2") && fes && weighted)
-            cbind(data[["Xunweighted"]], data[["fematunweighted"]])
+        Xunweighted = if (se_type %in% c("HC2", "HC3", "CR2") && fes && weighted)
+          cbind(data[["Xunweighted"]], data[["fematunweighted"]])
           else data[["Xunweighted"]],
         XtX_inv = fit$XtX_inv,
-        ei =
-          if (se_type == "CR2" && weighted)
-            fit_vals[["ei.unweighted"]]
-          else
-            fit_vals[["ei"]],
+        ei = if (se_type == "CR2" && weighted)
+          fit_vals[["ei.unweighted"]]
+          else fit_vals[["ei"]],
         weight_mean = data[["weight_mean"]],
         cluster = data[["cluster"]],
         J = data[["J"]],
@@ -247,10 +246,11 @@ lm_robust_fit <- function(y,
         return_list[["fitted.values"]] <- return_list[["fitted.values"]] / data[["weights"]]
       }
     } else {
-      fitted.vals_name <-
-        if (weighted) "fitted.values.unweighted" else "fitted.values"
-      return_list[["fitted.values"]] <-
-        as.matrix(fit_vals[[fitted.vals_name]])
+      fitted.vals_name <- if (weighted)
+        "fitted.values.unweighted"
+        else "fitted.values"
+
+      return_list[["fitted.values"]] <- as.matrix(fit_vals[[fitted.vals_name]])
     }
 
     if (fes && (ncol(data[["fixed_effects"]]) == 1) && is.numeric(data[["Xoriginal"]])) {
@@ -268,8 +268,7 @@ lm_robust_fit <- function(y,
 
     # If we reordered to get SEs earlier, have to fix order
     if (clustered && se_type != "none") {
-      return_list[["fitted.values"]] <-
-        return_list[["fitted.values"]][order(data[["cl_ord"]]), , drop = FALSE]
+      return_list[["fitted.values"]] <- return_list[["fitted.values"]][order(data[["cl_ord"]]), , drop = FALSE]
     }
 
     colnames(return_list[["fitted.values"]]) <- ynames
@@ -332,8 +331,8 @@ lm_robust_fit <- function(y,
       return_list <- c(return_list, tss_r2s)
       return_list[["fstatistic"]] <- f
     } else {
-      return_list <-
-        c(return_list, setNames(tss_r2s, paste0("proj_", names(tss_r2s))))
+      return_list <- c(return_list,
+                       setNames(tss_r2s, paste0("proj_", names(tss_r2s))))
       return_list[["proj_fstatistic"]] <- f
 
       tss_r2s <- get_r2s(
@@ -566,8 +565,10 @@ prep_data <- function(data,
   }
 
   if (fes) {
-    data[["femat"]] <-
-      model.matrix(~ 0 + ., data = as.data.frame(data[["fixed_effects"]]))
+    data[["femat"]] <- model.matrix(
+      ~ 0 + .,
+      data = as.data.frame(data[["fixed_effects"]])
+    )
   }
 
   if (weighted) {
