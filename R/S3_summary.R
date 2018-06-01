@@ -36,7 +36,8 @@ summary.lm_robust <- function(object, ...) {
           object[[nm]] <- all_models[[nm]][c(i, ny + 1:2)]
         }
       }
-      object$call$formula[[2L]] <- object$terms[[2L]] <- as.name(all_models$outcome[i])
+      object$call$formula[[2L]] <- object$terms[[2L]] <-
+        as.name(all_models$outcome[i])
       ret[[i]] <- summary(object, ...)
     }
 

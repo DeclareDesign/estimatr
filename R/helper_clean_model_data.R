@@ -22,7 +22,8 @@ clean_model_data <- function(data, datargs, estimator = "") {
   m_formula_env <- environment(m_formula)
 
   args_ignored <- c("fixed_effects", "se_type")
-  # For each ... that would go to model.fram .default, early eval, save to formula env, and point to it
+  # For each ... that would go to model.fram .default, early eval,
+  # save to formula env, and point to it
   # subset is also non-standard eval
   to_process <- setdiff(
     names(mfargs),

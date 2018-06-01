@@ -125,8 +125,11 @@ predict.lm_robust <- function(object,
 
     ret <- list()
 
-    var_fit <-
-      apply(X[, !beta_na, drop = FALSE], 1, function(x) tcrossprod(crossprod(x, object$vcov), x))
+    var_fit <- apply(
+      X[, !beta_na, drop = FALSE],
+      1,
+      function(x) tcrossprod(crossprod(x, object$vcov), x)
+    )
 
     if (interval != "none") {
       tval <- qt(alpha / 2, df_resid, lower.tail = FALSE)
@@ -205,7 +208,12 @@ get_X <- function(object, newdata, na.action) {
   } else {
     rhs_terms <- delete.response(object[["terms_regressors"]])
   }
-  mf <- model.frame(rhs_terms, newdata, na.action = na.action, xlev = object[["xlevels"]])
+  mf <- model.frame(
+    rhs_terms,
+    newdata,
+    na.action = na.action,
+    xlev = object[["xlevels"]]
+  )
 
   # Check class of columns in newdata match those in model fit
   if (!is.null(cl <- attr(rhs_terms, "dataClasses"))) .checkMFClasses(cl, mf)

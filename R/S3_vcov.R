@@ -34,7 +34,8 @@ vcov_simple <-
       )
     } else {
       if (complete && (object$rank < object$k)) {
-        vc <- matrix(NA_real_, object$k, object$k, dimnames = list(object$term, object$term))
+        vc <- matrix(NA_real_, object$k, object$k,
+                     dimnames = list(object$term, object$term))
         j <- which(!is.na(coef(object, complete = TRUE)))
         vc[j, j] <- object$vcov
         return(vc)
