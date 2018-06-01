@@ -1,5 +1,13 @@
 # estimatr 0.6.0
 
+* Added support for absorbing fixed effects in `lm_robust` and `iv_robust`
+* Added `commarobust` and `starprep` for stargazer integration
+* Added `texreg` support for 2SLS IV models
+* Fixed bugs for incorrect F-statistics with robust standard errors
+* Refactor of main fitting engine for linear models
+
+# estimatr 0.6.0
+
 * Added support for multivariate linear models
 * Added support for instrumental variables regression
 * Major change to name of object output elements to mostly match with `broom::tidy`

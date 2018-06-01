@@ -34,7 +34,8 @@ Suggests:
     lfe,
     AER,
     ivpack,
-    stargazer
+    stargazer,
+    car
 Enhances:
     broom,
     texreg
