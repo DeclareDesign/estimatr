@@ -307,7 +307,8 @@ lm_lin <- function(formula,
       interacted_covars
     )
   } else {
-    # If no intercept, but treatment is only one column, need to add base terms for covariates
+    # If no intercept, but treatment is only one column,
+    # need to add base terms for covariates
     if (n_treat_cols == 1) {
       X <- cbind(
         treatment,

@@ -222,6 +222,24 @@ test_that("vcov works", {
     vcov(lm(y ~ x, data = dat))
   )
 
+  # support complete with dependencies
+  dat$xdup <- dat$x
+  # save test for 3.5
+  # expect_equal(
+  #   vcov(lm_robust(y ~ x + xdup, data = dat, se_type = "classical")),
+  #   vcov(lm(y ~ x + xdup, data = dat))
+  # )
+
+  expect_equal(
+    coef(lm_robust(y ~ x + xdup, data = dat, se_type = "classical")),
+    coef(lm(y ~ x + xdup, data = dat))
+  )
+
+  expect_equal(
+    coef(lm_robust(y ~ x + xdup, data = dat, se_type = "classical"), complete = FALSE),
+    coef(lm(y ~ x + xdup, data = dat), complete = FALSE)
+  )
+
   expect_equal(
     vcov(lmbo)["z", "z"],
     vcov(lmfo)["z", "z"]
@@ -248,17 +266,13 @@ test_that("vcov works", {
     "supported|difference_in_means"
   )
 
-  # rank deficient
-  dat$z2 <- dat$z
-  lmro <- lm_robust(y ~ z + z2 + x, data = dat)
-  expect_equivalent(
-    dim(vcov(lmro)),
-    c(3, 3)
-  )
-
   # Instrumental variables
-  library(AER)
-  ivo <- ivreg(y ~ x | z, data = dat)
+  ivo <- AER::ivreg(y ~ x | z, data = dat)
+  ivro <- iv_robust(y ~ x | z, data = dat, se_type = "classical")
+  expect_equal(
+    AER:::vcov.ivreg(ivo),
+    ivro$vcov
+  )
 
 })
 
@@ -705,13 +719,10 @@ test_that("predict works with fixed effects", {
 })
 
 test_that("predict.iv_robust works with fixed effects", {
-  skip_if_not_installed("AER")
-
-  library(AER)
 
   ro <- iv_robust(mpg ~ hp + factor(cyl) | vs + factor(cyl), data = mtcars)
   rfo <- iv_robust(mpg ~ hp | vs, fixed_effects = ~ cyl, data = mtcars)
-  io <- ivreg(mpg ~ hp + factor(cyl) | vs + factor(cyl), data = mtcars)
+  io <- AER::ivreg(mpg ~ hp + factor(cyl) | vs + factor(cyl), data = mtcars)
 
   pio <- predict(io, newdata = mtcars)
   expect_equal(
@@ -771,7 +782,7 @@ test_that("predict.iv_robust works with fixed effects", {
   ## Weights
   row <- iv_robust(mpg ~ hp + factor(cyl) | vs + factor(cyl), weights = wt, data = mtcars)
   rfow <- iv_robust(mpg ~ hp | vs, fixed_effects = ~ cyl, weights = wt, data = mtcars)
-  iow <- ivreg(mpg ~ hp + factor(cyl) | vs + factor(cyl), weights = wt, data = mtcars)
+  iow <- AER::ivreg(mpg ~ hp + factor(cyl) | vs + factor(cyl), weights = wt, data = mtcars)
 
   piow <- predict(iow, newdata = mtcars)
   prow <- predict(row, newdata = mtcars)

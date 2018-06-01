@@ -1,8 +1,8 @@
 Package: estimatr
 Type: Package
 Title: Fast Estimators for Design-Based Inference
-Version: 0.7.0
-Date: 2018-03-21
+Version: 0.8.0
+Date: 2018-06-01
 Authors@R: c(person("Graeme", "Blair", email = "graeme.blair@ucla.edu", role = c("aut", "cre")),
              person("Jasper", "Cooper", email = "jjc2247@columbia.edu", role = c("aut")),
              person("Alexander", "Coppock", email = "alex.coppock@yale.edu", role = c("aut")),
@@ -22,16 +22,19 @@ Imports:
 LinkingTo: Rcpp, RcppEigen
 RoxygenNote: 6.0.1
 LazyData: true
-Suggests: 
-    testthat,
-    sandwich,
+Suggests:
     RcppEigen,
     fabricatr (>= 0.3),
     randomizr (>= 0.15),
+    testthat,
+    sandwich,
+    clubSandwich,
     margins,
     prediction,
-    AER
+    lfe,
+    AER,
+    ivpack,
+    stargazer
 Enhances:
     broom,
     texreg
-Additional_Repositories: http://r.declaredesign.org

@@ -74,7 +74,7 @@ following components:
   \item{k}{the number of columns in the design matrix (includes linearly dependent columns!)}
   \item{rank}{the rank of the fitted model}
   \item{vcov}{the fitted variance covariance matrix}
-  \item{r.squared}{the \eqn{R^2} of the second stage regrssion}
+  \item{r.squared}{the \eqn{R^2} of the second stage regression}
   \item{adj.r.squared}{the \eqn{R^2} of the second stage regression, but penalized for having more parameters, \code{rank}}
   \item{fstatistic}{a vector with the value of the second stage F-statistic with the numerator and denominator degrees of freedom}
   \item{weighted}{whether or not weights were applied}

@@ -60,26 +60,26 @@ test_that("iv_robust matches stata", {
 
   stata_ests <- read.table(
     "stata-iv-ests.txt",
-    col.names = c("model", "v1", "v2", "v3", "fstat"),
+    col.names = c("model", "v1", "v2", "v3", "fstat", "r2", "r2_a", "rmse"),
     stringsAsFactors = FALSE
   )
 
   mtcars$w <- mtcars$drat / 5
 
-  estimatr_mat <- matrix(NA, 6, 4)
+  estimatr_mat <- matrix(NA, 6, 7)
   iv_c <- iv_robust(mpg ~ hp + am | wt + gear, data = mtcars, se_type = "classical")
-  estimatr_mat[1, ] <- c(iv_c$std.error ^ 2, iv_c$fstatistic[1])
+  estimatr_mat[1, ] <- c(iv_c$std.error ^ 2, iv_c$fstatistic[1], iv_c$r.squared, iv_c$adj.r.squared, sqrt(iv_c$res_var))
   iv_hc1 <- iv_robust(mpg ~ hp + am | wt + gear, data = mtcars, se_type = "HC1")
-  estimatr_mat[2, ] <- c(iv_hc1$std.error ^ 2, iv_hc1$fstatistic[1])
+  estimatr_mat[2, ] <- c(iv_hc1$std.error ^ 2, iv_hc1$fstatistic[1], iv_hc1$r.squared, iv_hc1$adj.r.squared, sqrt(iv_hc1$res_var))
   iv_stata <- iv_robust(mpg ~ hp + am | wt + gear, clusters = cyl, data = mtcars, se_type = "stata")
-  estimatr_mat[3, ] <- c(iv_stata$std.error ^ 2, iv_stata$fstatistic[1])
+  estimatr_mat[3, ] <- c(iv_stata$std.error ^ 2, iv_stata$fstatistic[1], iv_stata$r.squared, iv_stata$adj.r.squared, sqrt(iv_stata$res_var))
 
   iv_c_w <- iv_robust(mpg ~ hp + am | wt + gear, data = mtcars, weights = w, se_type = "classical")
-  estimatr_mat[4, ] <- c(iv_c_w$std.error ^ 2, iv_c_w$fstatistic[1])
+  estimatr_mat[4, ] <- c(iv_c_w$std.error ^ 2, iv_c_w$fstatistic[1], iv_c_w$r.squared, iv_c_w$adj.r.squared, sqrt(iv_c_w$res_var))
   iv_hc1_w <- iv_robust(mpg ~ hp + am | wt + gear, data = mtcars, weights = w, se_type = "HC1")
-  estimatr_mat[5, ] <- c(iv_hc1_w$std.error ^ 2, iv_hc1_w$fstatistic[1])
+  estimatr_mat[5, ] <- c(iv_hc1_w$std.error ^ 2, iv_hc1_w$fstatistic[1], iv_hc1_w$r.squared, iv_hc1_w$adj.r.squared, sqrt(iv_hc1_w$res_var))
   iv_stata_w <- iv_robust(mpg ~ hp + am | wt + gear, clusters = cyl, weights = w, data = mtcars, se_type = "stata")
-  estimatr_mat[6, ] <- c(iv_stata_w$std.error ^ 2, iv_stata_w$fstatistic[1])
+  estimatr_mat[6, ] <- c(iv_stata_w$std.error ^ 2, iv_stata_w$fstatistic[1], iv_stata_w$r.squared, iv_stata_w$adj.r.squared, sqrt(iv_stata_w$res_var))
 
   expect_true(
     max(abs(estimatr_mat[, 1] - as.numeric(stata_ests[, 4]))) < 2e-05
@@ -87,6 +87,26 @@ test_that("iv_robust matches stata", {
 
   expect_true(
     max(abs(estimatr_mat[, 4] - as.numeric(stata_ests[, 5]))) < 3e-05
+  )
+
+  # Note, RMSE is different for stata with weights than ivreg or iv_robust
+  expect_true(
+    max(abs(estimatr_mat[, 5:6] - stata_ests[, 6:7])) < 4e-08
+  )
+
+  ivrego_w <- AER::ivreg(mpg ~ hp + am | wt + gear, data = mtcars, weights = w)
+
+  expect_equal(
+    ivrego_w$sigma,
+    sqrt(iv_c_w$res_var)
+  )
+  expect_equal(
+    ivrego_w$sigma,
+    sqrt(iv_hc1_w$res_var)
+  )
+  expect_equal(
+    ivrego_w$sigma,
+    sqrt(iv_stata_w$res_var)
   )
 
 })

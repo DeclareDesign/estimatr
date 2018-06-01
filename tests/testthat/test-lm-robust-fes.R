@@ -726,11 +726,11 @@ test_that("FEs handle collinear FEs", {
   ## Classical
   ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), data = dat, se_type = "classical"))
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, data = dat, se_type = "classical"))
-  # lo <- felm(Y ~ Z + X|B + B2 + Bdup, data = dat)
+  # lo <- lfe::felm(Y ~ Z + X|B + B2 + Bdup, data = dat)
   #
   # mtcars$cyl2 <- mtcars$cyl
   # # Doesn't properly deal if collinearity not in first two
-  # summary(felm(mpg ~ hp | cyl + am + cyl2, data = mtcars))$coefficients
+  # lfe:::summary.felm(lfe::felm(mpg ~ hp | cyl + am + cyl2, data = mtcars))$coefficients
   # library(estimatr)
   # mtcars$cyl2 <- mtcars$cyl
   # tidy(lm_robust(mpg ~ hp, fixed_effects = ~ cyl + cyl2 + am, data = mtcars))
@@ -743,7 +743,7 @@ test_that("FEs handle collinear FEs", {
   # tidy(lm_robust(mpg ~ hp + factor(cyl) + factor(am), data = mtcars))[2,]
   #
   # # LFE does the right thing if the dependency is in the first two
-  # summary(felm(mpg ~ hp | cyl + cyl2 + am, data = mtcars))$coefficients
+  # lfe:::summary.felm(lfe::felm(mpg ~ hp | cyl + cyl2 + am, data = mtcars))$coefficients
   # tidy(lm_robust(mpg ~ hp + factor(cyl) + factor(cyl3) + factor(am), data = mtcars, se_type = "classical"))[2,]
 
   expect_equivalent(
@@ -946,7 +946,6 @@ test_that("test matches stata absorb", {
 
   estimatr_mat <- matrix(NA, 6, 1)
 
-  #summary(fo)
   rfo <- lm_robust(mpg ~ hp, mtcars, fixed_effects = ~ carb, se_type = "classical") # areg mpg hp, absorb(carb)
   estimatr_mat[1, ] <- c(rfo$std.error ^ 2)
 
@@ -976,15 +975,12 @@ test_that("test matches stata absorb", {
 
 test_that("FEs give correct projected F-stats", {
 
-  skip_if_not_installed("lfe")
-  library(lfe)
+  feo <- lfe::felm(Y ~ Z + X | B + B2, data = dat)
+  sfeo <- lfe:::summary.felm(feo)
+  sfeor <- lfe:::summary.felm(feo, robust = TRUE)
 
-  feo <- felm(Y ~ Z + X | B + B2, data = dat)
-  sfeo <- summary(feo)
-  sfeor <- summary(feo, robust = TRUE)
-
-  cfeo <- felm(Y ~ Z + X | B + B2 | 0 | cl, data = dat)
-  sfeoc <- summary(cfeo, robust = TRUE)
+  cfeo <- lfe::felm(Y ~ Z + X | B + B2 | 0 | cl, data = dat)
+  sfeoc <- lfe:::summary.felm(cfeo, robust = TRUE)
 
   # classical
   rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "classical")

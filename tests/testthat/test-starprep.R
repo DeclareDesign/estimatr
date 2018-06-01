@@ -2,17 +2,14 @@ context("Helper - commarobust + starprep")
 
 test_that("starprep works", {
 
-  skip_if_not_installed("stargazer")
-
   fit_1 <- lm(mpg ~ hp, data = mtcars)
   fit_2 <- lm(mpg ~ hp, data = mtcars)
 
   fit_1_r <- lm_robust(mpg ~ hp, data = mtcars)
   fit_2_r <- lm_robust(mpg ~ hp, data = mtcars)
 
-  library(stargazer)
   expect_output(
-    stargazer(fit_1, fit_2,
+    stargazer::stargazer(fit_1, fit_2,
               type = "text",
               se = starprep(fit_1_r, fit_2),
               p = starprep(fit_1_r, fit_2, stat = "p.value")),
@@ -20,7 +17,7 @@ test_that("starprep works", {
   )
 
   expect_output(
-    stargazer(fit_1, fit_2,
+    stargazer::stargazer(fit_1, fit_2,
               type = "text",
               ci.custom = starprep(fit_1_r, fit_2, stat = "ci")),
     "\\(25\\.620\\, 34\\.578\\)\\s+\\(25\\.620\\, 34\\.578\\)"

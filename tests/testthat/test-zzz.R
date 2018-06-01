@@ -1,7 +1,6 @@
 context("zzz.R - .onLoad")
 
 test_that("onLoad makes generics if texreg is present", {
-  skip_if_not_installed("texreg")
 
   e <- environment(.onLoad)
 

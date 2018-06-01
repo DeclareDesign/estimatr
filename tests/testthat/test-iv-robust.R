@@ -25,15 +25,8 @@ test_that("iv_robust warnings and errors are correct", {
 
 test_that("iv_robust matches AER + ivpack", {
 
-  skip_if_not_installed("AER")
-  skip_if_not_installed("ivpack")
-  skip_if_not_installed("clubSandwich")
-
-  library(AER)
-  library(ivpack)
-
   ivco <- iv_robust(y ~ x | z, data = dat, se_type = "classical")
-  ivfit <- ivreg(y ~ x | z, data = dat)
+  ivfit <- AER::ivreg(y ~ x | z, data = dat)
   ivo <- summary(ivfit)
 
   expect_equivalent(
@@ -50,7 +43,7 @@ test_that("iv_robust matches AER + ivpack", {
 
   # Stata defaults to HC0 as well, but does HC1 with `small`
   ivro <- iv_robust(y ~ x | z, data = dat, se_type = "HC0")
-  capture_output(ivpackrob <- robust.se(ivfit))
+  capture_output(ivpackrob <- ivpack::robust.se(ivfit))
 
   expect_equivalent(
     as.matrix(tidy(ivro)[, c("estimate", "std.error", "p.value")]),
@@ -64,7 +57,7 @@ test_that("iv_robust matches AER + ivpack", {
 
   # "Stata" clustered SEs are CR0, but they are the same as below with `small`
   ivclusto <- iv_robust(y ~ x | z, data = dat, se_type = "stata", clusters = clust)
-  capture_output(ivpackclust <- cluster.robust.se(ivfit, dat$clust))
+  capture_output(ivpackclust <- ivpack::cluster.robust.se(ivfit, dat$clust))
 
   # Our p-values are bigger (ivpack is be using less conservative DF, we use J - 1 which
   # is what stata uses for clusters w/ `small` and in OLS)
@@ -103,7 +96,7 @@ test_that("iv_robust matches AER + ivpack", {
 
   # Weighting classical
   ivcw <- iv_robust(y ~ x | z, data = dat, weights = w, se_type = "classical")
-  ivw <- ivreg(y ~ x | z, weights = w, data = dat)
+  ivw <- AER::ivreg(y ~ x | z, weights = w, data = dat)
   ivregsum <- summary(ivw)
 
   expect_equivalent(
@@ -118,7 +111,7 @@ test_that("iv_robust matches AER + ivpack", {
 
   # HC0 weighted
   ivrw <- iv_robust(y ~ x | z, data = dat, weights = w, se_type = "HC0")
-  capture_output(ivpackrobw <- robust.se(ivw))
+  capture_output(ivpackrobw <- ivpack::robust.se(ivw))
 
   expect_equivalent(
     as.matrix(tidy(ivrw)[, c("estimate", "std.error", "p.value")]),
@@ -162,8 +155,8 @@ test_that("iv_robust matches AER + ivpack", {
   # HC0
   dat$x1_c <- dat$x
   ivdefr <- iv_robust(y ~ x + x1_c| z + z2, data = dat, se_type = "HC0")
-  ivdef <- ivreg(y ~ x + x1_c| z + z2, data = dat)
-  capture_output(ivdefse <- robust.se(ivdef))
+  ivdef <- AER::ivreg(y ~ x + x1_c| z + z2, data = dat)
+  capture_output(ivdefse <- ivpack::robust.se(ivdef))
 
   expect_equal(
     coef(ivdefr),
@@ -182,8 +175,8 @@ test_that("iv_robust matches AER + ivpack", {
 
   # # Does not work if instrument is collinear with other instrument
   # ivdefri <- iv_robust(y ~ z + z2| x + x1_c, data = dat, se_type = "HC0")
-  # ivdefi <- ivreg(y ~ z + z2| x + x1_c, data = dat)
-  # ivdefsei <- robust.se(ivdefi)
+  # ivdefi <- AER::ivreg(y ~ z + z2| x + x1_c, data = dat)
+  # ivdefsei <- ivpack::robust.se(ivdefi)
   #
   # # No longer equal!
   # expect_equal(
@@ -198,8 +191,8 @@ test_that("iv_robust matches AER + ivpack", {
 
   # Stata
   ivdefclr <- iv_robust(y ~ x + x1_c | z + z2, data = dat, clusters = clust, se_type = "stata")
-  ivdefcl <- ivreg(y ~ x + x1_c | z + z2, data = dat)
-  capture_output(ivdefclse <- cluster.robust.se(ivdefcl, clusterid = dat$clust))
+  ivdefcl <- AER::ivreg(y ~ x + x1_c | z + z2, data = dat)
+  capture_output(ivdefclse <- ivpack::cluster.robust.se(ivdefcl, clusterid = dat$clust))
 
   expect_equal(
     coef(ivdefclr),
@@ -219,7 +212,7 @@ test_that("iv_robust matches AER + ivpack", {
 
   # CR2
   ivdefcl2r <- iv_robust(y ~ x + x1_c | z + z2, data = dat, clusters = clust, se_type = "CR2")
-  ivdefcl2 <- ivreg(y ~ x + x1_c | z + z2, data = dat)
+  ivdefcl2 <- AER::ivreg(y ~ x + x1_c | z + z2, data = dat)
   ivdefcl2se <- clubSandwich::coef_test(ivdefcl2, vcov = "CR2", cluster = dat$clust)
 
 
@@ -235,8 +228,8 @@ test_that("iv_robust matches AER + ivpack", {
 
   # HC0 Weighted
   ivdefrw <- iv_robust(y ~ x + x1_c| z + z2, weights = w, data = dat, se_type = "HC0")
-  ivdefw <- ivreg(y ~ x + x1_c| z + z2, weights = w, data = dat)
-  capture_output(ivdefsew <- robust.se(ivdefw))
+  ivdefw <- AER::ivreg(y ~ x + x1_c| z + z2, weights = w, data = dat)
+  capture_output(ivdefsew <- ivpack::robust.se(ivdefw))
 
   expect_equal(
     coef(ivdefrw),
@@ -255,7 +248,7 @@ test_that("iv_robust matches AER + ivpack", {
 
   # CR2 Weighted
   ivdefclrw <- iv_robust(y ~ x + x1_c | z + z2, data = dat, clusters = clust, weights = w, se_type = "CR2")
-  ivdefclw <- ivreg(y ~ x + x1_c | z + z2, weights = w, data = dat)
+  ivdefclw <- AER::ivreg(y ~ x + x1_c | z + z2, weights = w, data = dat)
   ivdefclsew <- clubSandwich::coef_test(ivdefclw, vcov = "CR2", cluster = dat$clust)
 
   expect_equivalent(
@@ -269,7 +262,7 @@ test_that("iv_robust matches AER + ivpack", {
   )
 
   ivdef2clrw <- iv_robust(y ~ x + z | x + x1_c, data = dat, clusters = clust, weights = w, se_type = "CR2")
-  ivdef2clw <- ivreg(y ~ x + z | x + x1_c, weights = w, data = dat)
+  ivdef2clw <- AER::ivreg(y ~ x + z | x + x1_c, weights = w, data = dat)
   ivdef2clsew <- clubSandwich::coef_test(ivdef2clw, vcov = "CR2", cluster = dat$clust)
 
   expect_equivalent(
@@ -296,14 +289,10 @@ test_that("iv_robust matches AER + ivpack", {
 
 
 test_that("iv_robust different specifications work", {
-  skip_if_not_installed("AER")
-  skip_if_not_installed("ivpack")
-  library(AER)
-
   # More instruments than endog. regressors
   ivro <- iv_robust(mpg ~ wt | hp + cyl, data = mtcars, se_type = "HC0")
-  ivo <- ivreg(mpg ~ wt | hp + cyl, data = mtcars)
-  capture_output(ivpo <- robust.se(ivo))
+  ivo <- AER::ivreg(mpg ~ wt | hp + cyl, data = mtcars)
+  capture_output(ivpo <- ivpack::robust.se(ivo))
   expect_equivalent(
     as.matrix(tidy(ivro)[, c("estimate", "std.error", "p.value")]),
     ivpo[, c(1, 2, 4)]
@@ -311,8 +300,8 @@ test_that("iv_robust different specifications work", {
 
   # . notation for multiple exog, doesnt work!
   # ivro <- iv_robust(mpg ~ wt + hp + vs | . - vs + cyl, data = mtcars, se_type = "HC0")
-  # ivo <- ivreg(mpg ~ wt + hp + vs | . - vs + cyl, data = mtcars)
-  # ivpo <- robust.se(ivo)
+  # ivo <- AER::ivreg(mpg ~ wt + hp + vs | . - vs + cyl, data = mtcars)
+  # ivpo <- ivpack::robust.se(ivo)
   # expect_equivalent(
   #   as.matrix(tidy(ivro)[, c("estimate", "std.error", "p.value")]),
   #   ivpo[, c(1, 2, 4)]
@@ -320,8 +309,8 @@ test_that("iv_robust different specifications work", {
 
   # . notation in general
   ivro <- iv_robust(mpg ~ .| ., data = mtcars, se_type = "HC0")
-  ivo <- ivreg(mpg ~ . | ., data = mtcars)
-  capture_output(ivpo <- robust.se(ivo))
+  ivo <- AER::ivreg(mpg ~ . | ., data = mtcars)
+  capture_output(ivpo <- ivpack::robust.se(ivo))
 
   expect_equivalent(
     as.matrix(tidy(ivro)[, c("estimate", "std.error", "p.value")]),
@@ -331,8 +320,6 @@ test_that("iv_robust different specifications work", {
 })
 
 test_that("S3 methods", {
-
-  skip_if_not_installed("AER")
 
   ivo <- AER::ivreg(mpg ~ hp + cyl | wt + gear, data = mtcars)
   ivro <- iv_robust(mpg ~ hp + cyl | wt + gear, data = mtcars, se_type = "classical")
