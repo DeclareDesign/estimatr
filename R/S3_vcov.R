@@ -27,14 +27,14 @@ vcov_simple <- function(object, complete) {
       "Object must have vcov matrix. Try setting `return_vcov = TRUE` in ",
       "the estimator function."
     )
+  }
+  if (complete && (object$rank < object$k)) {
+    vc <- matrix(NA_real_, object$k, object$k,
+                 dimnames = list(object$term, object$term))
+    j <- which(!is.na(coef(object, complete = TRUE)))
+    vc[j, j] <- object$vcov
+    return(vc)
   } else {
-    if (complete && (object$rank < object$k)) {
-      vc <- matrix(NA_real_, object$k, object$k, dimnames = list(object$term, object$term))
-      j <- which(!is.na(coef(object, complete = TRUE)))
-      vc[j, j] <- object$vcov
-      return(vc)
-    } else {
-      return(object$vcov)
-    }
+    return(object$vcov)
   }
 }
