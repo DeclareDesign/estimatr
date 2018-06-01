@@ -222,6 +222,23 @@ test_that("vcov works", {
     vcov(lm(y ~ x, data = dat))
   )
 
+  # support complete with dependencies
+  dat$xdup <- dat$x
+  expect_equal(
+    vcov(lm_robust(y ~ x + xdup, data = dat, se_type = "classical")),
+    vcov(lm(y ~ x + xdup, data = dat))
+  )
+
+  expect_equal(
+    coef(lm_robust(y ~ x + xdup, data = dat, se_type = "classical")),
+    coef(lm(y ~ x + xdup, data = dat))
+  )
+
+  expect_equal(
+    coef(lm_robust(y ~ x + xdup, data = dat, se_type = "classical"), complete = FALSE),
+    coef(lm(y ~ x + xdup, data = dat), complete = FALSE)
+  )
+
   expect_equal(
     vcov(lmbo)["z", "z"],
     vcov(lmfo)["z", "z"]
