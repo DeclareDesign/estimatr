@@ -51,8 +51,26 @@
     </div>
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-        <li>
-  <a href="../articles/getting-started.html">Getting Started</a>
+        <li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Getting Started
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/getting-started.html">Getting Started with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/regression-tables.html">Regression Tables with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/absorbing-fixed-effects.html">Absorbing Fixed Effects with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/estimatr-in-the-tidyverse.html">estimatr in the Tidyverse</a>
+    </li>
+  </ul>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -123,7 +141,7 @@
       </header>
 
       <div class="page-header">
-  <h1>Articles <small>version&nbsp;0.7.0</small></h1>
+  <h1>Articles <small>version&nbsp;0.8.0</small></h1>
 </div>
 
 <div class="row">
@@ -133,9 +151,12 @@
       <p class="section-desc"></p>
 
       <ul>
+        <li><a href="absorbing-fixed-effects.html">Absorbing Fixed Effects with estimatr</a></li>
         <li><a href="benchmarking-estimatr.html">Benchmarking estimatr</a></li>
+        <li><a href="estimatr-in-the-tidyverse.html">estimatr in the Tidyverse</a></li>
         <li><a href="getting-started.html">Getting started using estimatr</a></li>
         <li><a href="mathematical-notes.html">Mathematical notes for estimatr</a></li>
+        <li><a href="regression-tables.html">Regression Tables with estimatr</a></li>
         <li><a href="simulations-debiasing-dim.html">Simulations - Debiasing Difference-in-Means</a></li>
         <li><a href="simulations-ols-variance.html">Simulations - OLS and Variance</a></li>
         <li><a href="stata-wls-hat.html">How Stata's hat matrix differs with weights</a></li>

@@ -51,8 +51,26 @@
     </div>
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-        <li>
-  <a href="../articles/getting-started.html">Getting Started</a>
+        <li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Getting Started
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/getting-started.html">Getting Started with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/regression-tables.html">Regression Tables with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/absorbing-fixed-effects.html">Absorbing Fixed Effects with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/estimatr-in-the-tidyverse.html">estimatr in the Tidyverse</a>
+    </li>
+  </ul>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -127,7 +145,7 @@
     <div class="page-header">
       <h1>
         Reference
-        <small>version&nbsp;0.7.0</small>
+        <small>version&nbsp;0.8.0</small>
       </h1>
     </div>
 
@@ -155,6 +173,12 @@
         </tr><tr>
           <!--  -->
           <td>
+            <p><code><a href="commarobust.html">commarobust</a></code> </p>
+          </td>
+          <td><p>Build lm_robust object from lm fit</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
             <p><code><a href="declaration_to_condition_pr_mat.html">declaration_to_condition_pr_mat</a></code> </p>
           </td>
           <td><p>Builds condition probability matrices for Horvitz-Thompson estimation from
@@ -174,7 +198,7 @@
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="extract.lm_robust.html">extract.lm_robust</a></code> </p>
+            <p><code><a href="extract.lm_robust.html">extract.robust_default</a></code> <code><a href="extract.lm_robust.html">extract.lm_robust</a></code> <code><a href="extract.lm_robust.html">extract.iv_robust</a></code> </p>
           </td>
           <td><p>Extract model data for <span class="pkg">texreg</span> package</p></td>
         </tr><tr>
@@ -231,7 +255,13 @@ permutation matrix</p></td>
           <td>
             <p><code><a href="predict.lm_robust.html">predict</a></code> </p>
           </td>
-          <td><p>Predict method for <code><a href='reference/lm_robust.html'>lm_robust</a></code> object</p></td>
+          <td><p>Predict method for <code>lm_robust</code> object</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="starprep.html">starprep</a></code> </p>
+          </td>
+          <td><p>Prepare model fits for stargazer</p></td>
         </tr><tr>
           <!--  -->
           <td>

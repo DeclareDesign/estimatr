@@ -1,12 +1,13 @@
 # This code modified from
 # https://github.com/leifeld/texreg/blob/master/R/extract.R (no LICENSE)
 #' Extract model data for \pkg{texreg} package
+#' @rdname extract.lm_robust
 #'
-#' @description Prepares an \code{"lm_robust"} object for the \pkg{texreg}
-#' package. This is largely a clone of the \code{\link[texreg]{extract.lm}}
+#' @description Prepares a \code{"lm_robust"} or \code{"iv_robust"} object for the \pkg{texreg}
+#' package. This is largely a clone of the \code{extract.lm}
 #' method.
 #'
-#' @param model an object of class \code{\link{lm_robust}}
+#' @param model an object of class \code{\link{lm_robust}} or \code{"iv_robust"}
 #' @param include.ci logical. Defaults to TRUE
 #' @param include.rsquared logical. Defaults to TRUE
 #' @param include.adjrs logical. Defaults to TRUE
@@ -15,7 +16,7 @@
 #' @param include.rmse logical. Defaults to TRUE
 #' @param ... unused
 #'
-extract.lm_robust <- function(model,
+extract.robust_default <- function(model,
                               include.ci = TRUE,
                               include.rsquared = TRUE,
                               include.adjrs = TRUE,
@@ -84,3 +85,14 @@ extract.lm_robust <- function(model,
   )
   return(tr)
 }
+
+#' @rdname extract.lm_robust
+#'
+#' @export
+extract.lm_robust <- extract.robust_default
+
+#' @rdname extract.lm_robust
+#'
+#' @export
+extract.iv_robust <- extract.robust_default
+

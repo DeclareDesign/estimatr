@@ -51,8 +51,26 @@
     </div>
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-        <li>
-  <a href="../articles/getting-started.html">Getting Started</a>
+        <li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Getting Started
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/getting-started.html">Getting Started with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/regression-tables.html">Regression Tables with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/absorbing-fixed-effects.html">Absorbing Fixed Effects with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/estimatr-in-the-tidyverse.html">estimatr in the Tidyverse</a>
+    </li>
+  </ul>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -134,8 +152,9 @@ using two-stage least squares with a variety of options for robust
 standard errors</p>
     
 
-    <pre class="usage"><span class='fu'>iv_robust</span>(<span class='no'>formula</span>, <span class='no'>data</span>, <span class='no'>weights</span>, <span class='no'>subset</span>, <span class='no'>clusters</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>return_vcov</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>try_cholesky</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+    <pre class="usage"><span class='fu'>iv_robust</span>(<span class='no'>formula</span>, <span class='no'>data</span>, <span class='no'>weights</span>, <span class='no'>subset</span>, <span class='no'>clusters</span>, <span class='no'>fixed_effects</span>,
+  <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>return_vcov</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>try_cholesky</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -164,6 +183,14 @@ of observations to be used.</p></td>
       <th>clusters</th>
       <td><p>An optional bare (unquoted) name of the variable that
 corresponds to the clusters in the data.</p></td>
+    </tr>
+    <tr>
+      <th>fixed_effects</th>
+      <td><p>An optional right-sided formula containing the fixed
+effects that will be projected out of the data, such as <code>~ blockID</code>. Do not
+pass multiple-fixed effects with intersecting groups. Speed gains are greatest for
+variables with large numbers of groups and when using "HC1" or "stata" standard errors.
+See 'Details'.</p></td>
     </tr>
     <tr>
       <th>se_type</th>
@@ -220,12 +247,13 @@ following components:</p>
   <dt>k</dt><dd><p>the number of columns in the design matrix (includes linearly dependent columns!)</p></dd>
   <dt>rank</dt><dd><p>the rank of the fitted model</p></dd>
   <dt>vcov</dt><dd><p>the fitted variance covariance matrix</p></dd>
-  <dt>r.squared</dt><dd><p>the \(R^2\) of the second stage regrssion</p></dd>
+  <dt>r.squared</dt><dd><p>the \(R^2\) of the second stage regression</p></dd>
   <dt>adj.r.squared</dt><dd><p>the \(R^2\) of the second stage regression, but penalized for having more parameters, <code>rank</code></p></dd>
   <dt>fstatistic</dt><dd><p>a vector with the value of the second stage F-statistic with the numerator and denominator degrees of freedom</p></dd>
   <dt>weighted</dt><dd><p>whether or not weights were applied</p></dd>
   <dt>call</dt><dd><p>the original function call</p></dd>
-We also return terms with the second stage terms and terms_regressors with the first stage terms, both of which used by predict.
+  <dt>fitted.values</dt><dd><p>the matrix of predicted means</p></dd>
+We also return terms with the second stage terms and terms_regressors with the first stage terms, both of which used by predict. If fixed_effects are specified, then we return proj_fstatistic, proj_r.squared, and proj_adj.r.squared, which are model fit statistics that are computed on the projected model (after demeaning the fixed effects).
 
     
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
@@ -246,7 +274,21 @@ design matrix used are the second-stage regressors, which includes the estimated
 endogenous regressors, and the residuals used are the difference
 between the outcome and a fit produced by the second-stage coefficients and the
 first-stage (endogenous) regressors. More notes on this can be found at
-<a href='http://estimatr.declaredesign.org/articles/mathematical-notes.html'>the mathematical appendix</a>.</p>
+<a href='https://declaredesign.org/R/estimatr/articles/mathematical-notes.html'>the mathematical appendix</a>.</p>
+<p>If <code>fixed_effects</code> are specified, both the outcome, regressors, and instruments
+are centered using the method of alternating projections (Halperin 1962; Gaure 2013). Specifying
+fixed effects in this way will result in large speed gains with standard error
+estimators that do not need to invert the matrix of fixed effects. This means using
+"classical", "HC0", "HC1", "CR0", or "stata" standard errors will be faster than other
+standard error estimators. Be wary when specifying fixed effects that may result
+in perfect fits for some observations or if there are intersecting groups across
+multiple fixed effect variables (e.g. if you specify both "year" and "country" fixed effects
+with an unbalanced panel where one year you only have data for one country).</p>
+    
+    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
+
+    <p>Gaure, Simon. 2013. "OLS with multiple high dimensional category variables." Computational Statistics &amp; Data Analysis 66: 8-1. <a href='http://dx.doi.org/10.1016/j.csda.2013.03.024'>http://dx.doi.org/10.1016/j.csda.2013.03.024</a></p>
+<p>Halperin, I. 1962. "The product of projection operators." Acta Scientiarum Mathematicarum (Szeged) 23(1-2): 96-99.</p>
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
@@ -256,7 +298,8 @@ first-stage (endogenous) regressors. More notes on this can be found at
   <span class='kw'>Y</span> <span class='kw'>=</span> <span class='fu'>rpois</span>(<span class='no'>N</span>, <span class='kw'>lambda</span> <span class='kw'>=</span> <span class='fl'>4</span>),
   <span class='kw'>Z</span> <span class='kw'>=</span> <span class='fu'>rbinom</span>(<span class='no'>N</span>, <span class='fl'>1</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.4</span>),
   <span class='kw'>D</span>  <span class='kw'>=</span> <span class='no'>Z</span> * <span class='fu'>rbinom</span>(<span class='no'>N</span>, <span class='fl'>1</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.8</span>),
-  <span class='kw'>X</span> <span class='kw'>=</span> <span class='fu'>rnorm</span>(<span class='no'>N</span>)
+  <span class='kw'>X</span> <span class='kw'>=</span> <span class='fu'>rnorm</span>(<span class='no'>N</span>),
+  <span class='kw'>G</span> <span class='kw'>=</span> <span class='fu'>sample</span>(<span class='no'>letters</span>[<span class='fl'>1</span>:<span class='fl'>4</span>], <span class='no'>N</span>, <span class='kw'>replace</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
 )
 
 <span class='co'># Instrument for treatment `D` with encouragement `Z`</span>
@@ -280,7 +323,10 @@ first-stage (endogenous) regressors. More notes on this can be found at
 <span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='fu'>iv_robust</span>(<span class='no'>Y</span> ~ <span class='no'>D</span> <span class='kw'>|</span> <span class='no'>Z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>cl</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"stata"</span>))</div><div class='output co'>#&gt;          term   estimate std.error      p.value  ci.lower  ci.upper df outcome
 #&gt; 1 (Intercept)  3.6666667 0.2391517 0.0001055703  3.002675 4.3306582  4       Y
 #&gt; 2           D -0.6140351 0.5047569 0.2906673250 -2.015465 0.7873946  4       Y</div><div class='input'>
-
+<span class='co'># We can also specify fixed effects, that will be taken as exogenous regressors</span>
+<span class='co'># Speed gains with fixed effects are greatests with "stata" or "HC1" std.errors</span>
+<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='fu'>iv_robust</span>(<span class='no'>Y</span> ~ <span class='no'>D</span> <span class='kw'>|</span> <span class='no'>Z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>fixed_effects</span> <span class='kw'>=</span> ~ <span class='no'>G</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"HC1"</span>))</div><div class='output co'>#&gt;   term  estimate std.error   p.value  ci.lower ci.upper df outcome
+#&gt; 1    D -0.618551 0.8095842 0.4499664 -2.262094 1.024992 35       Y</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -291,6 +337,8 @@ first-stage (endogenous) regressors. More notes on this can be found at
       <li><a href="#value">Value</a></li>
 
       <li><a href="#details">Details</a></li>
+
+      <li><a href="#references">References</a></li>
       
       <li><a href="#examples">Examples</a></li>
     </ul>

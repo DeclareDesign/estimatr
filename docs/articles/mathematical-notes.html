@@ -28,8 +28,26 @@
     </div>
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Getting Started
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
 <li>
-  <a href="../articles/getting-started.html">Getting Started</a>
+      <a href="../articles/getting-started.html">Getting Started with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/regression-tables.html">Regression Tables with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/absorbing-fixed-effects.html">Absorbing Fixed Effects with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/estimatr-in-the-tidyverse.html">estimatr in the Tidyverse</a>
+    </li>
+  </ul>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -526,7 +544,7 @@ y_i = \tau z_i + \mathbf{\beta}^\top \mathbf{x}^c_i  + \mathbf{\gamma}^\top \mat
 <h2 class="hasAnchor">
 <a href="#horvitz_thompson-notes" class="anchor"></a><code>horvitz_thompson</code> notes</h2>
 <p>We provide Horvitz-Thompson estimators for two-armed trials and can be used to estimate unbiased treatment effects when the randomization is known. Horvitz-Thompson estimators require information about the probability each unit is in treatment and control, as well as the joint probability each unit is in the treatment, in the control, and in opposite treatment conditions.</p>
-<p>The estimator we implement here, <code><a href="../reference/horvitz_thompson.html">horvitz_thompson()</a></code>, can be told the design of an experiment in several ways, and the reference page is a good place to see some of those examples. Users can see a description of the estimator and its properties in <span class="citation">Aronow and Middleton (<a href="#ref-aronowmiddleton2013">2013</a>)</span>, <span class="citation">Middleton and Aronow (<a href="#ref-middletonaronow2015">2015</a>)</span>, and aronowsamii2017.</p>
+<p>The estimator we implement here, <code><a href="../reference/horvitz_thompson.html">horvitz_thompson()</a></code>, can be told the design of an experiment in several ways, and the reference page is a good place to see some of those examples. Users can see a description of the estimator and its properties in <span class="citation">Aronow and Middleton (<a href="#ref-aronowmiddleton2013">2013</a>)</span>, <span class="citation">Middleton and Aronow (<a href="#ref-middletonaronow2015">2015</a>)</span>, and <span class="citation">Aronow and Samii (<a href="#ref-aronowsamii2017">2017</a>)</span>.</p>
 <p>Some definitions used below:</p>
 <ul>
 <li>

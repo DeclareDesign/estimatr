@@ -53,7 +53,7 @@
 #' to \code{\link{lm_robust}} with the appropriate robust standard errors
 #' as weighted difference-in-means estimators are not implemented here.
 #' More details of the about each of the estimators can be found in the
-#' \href{http://estimatr.declaredesign.org/articles/mathematical-notes.html}{mathematical notes}.
+#' \href{https://declaredesign.org/R/estimatr/articles/mathematical-notes.html}{mathematical notes}.
 #'
 #' @return Returns an object of class \code{"difference_in_means"}.
 #'
@@ -461,24 +461,25 @@ difference_in_means_internal <- function(condition1 = NULL,
 
     # For now, all clustered cases go to lm_robust
     # CR2 nests Gerber and Green 2012, p. 83, eq. 3.23 when clusters are
-    # equal sizes (we think) and is more appropriate when clusters are different sizes
+    # equal sizes (we think) and is more appropriate when clusters are of
+    # different sizes
 
     X <- cbind(1, t = as.numeric(data$t == condition2))
 
-    # print("Using lm_robust")
     # TODO currently lm_robust_fit does too much, need to refactor it
     # if it will be used here in the long run
     cr2_out <- lm_robust_fit(
       y = data$y,
       X = cbind(1, t = as.numeric(data$t == condition2)),
       cluster = data$cluster,
-      se_type = ifelse(se_type == "none", "none", "CR2"),
+      se_type = if(se_type == "none") "none" else "CR2",
       weights = data$weights,
       ci = TRUE,
       try_cholesky = TRUE,
       alpha = alpha,
       return_vcov = FALSE,
-      has_int = TRUE
+      has_int = TRUE,
+      iv_stage = list(0)
     )
 
     diff <- coef(cr2_out)[2]
@@ -526,7 +527,8 @@ difference_in_means_internal <- function(condition1 = NULL,
         try_cholesky = TRUE,
         alpha = alpha,
         return_vcov = FALSE,
-        has_int = TRUE
+        has_int = TRUE,
+        iv_stage = list(0)
       )
 
       diff <- coef(w_hc2_out)[2]

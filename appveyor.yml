@@ -5,7 +5,7 @@
 init:
   ps: |
         $ErrorActionPreference = "SilentlyContinue"
-        Invoke-WebRequest http://raw.github.com/nfultz/r-appveyor/master/scripts/appveyor-tool.ps1 -OutFile "..\appveyor-tool.ps1"
+        Invoke-WebRequest http://raw.github.com/krlmlr/r-appveyor/master/scripts/appveyor-tool.ps1 -OutFile "..\appveyor-tool.ps1"
         Import-Module '..\appveyor-tool.ps1'
 
 install:
@@ -20,12 +20,12 @@ environment:
   - R_VERSION: release
 
   - R_VERSION: oldrel
-    RTOOLS_VERSION: 33
+    RTOOLS_VERSION: 34
 
 build_script:
   - travis-tool.sh install_deps
   - travis-tool.sh install_github DeclareDesign/DDtools
-  - travis-tool.sh install_github DeclareDesign/fabricatr@v0.4.0
+  - travis-tool.sh install_github DeclareDesign/fabricatr
   - travis-tool.sh install_github DeclareDesign/randomizr
 
 

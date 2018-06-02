@@ -1,14 +1,41 @@
 # This file has helper functions for returning the lists from various estimators
 lm_return <- function(return_list, model_data, formula) {
-  return_list[["contrasts"]] <- attr(model_data$design_matrix, "contrasts")
-  return_list[["terms"]] <- model_data$terms
-  return_list[["weights"]] <- model_data$weights
-  if (is.matrix(model_data$outcome)) {
-    return_list[["outcome"]] <- colnames(model_data$outcome)
-  } else {
-    return_list[["outcome"]] <- deparse(formula[[2]], nlines = 5)
+  if (!is.null(model_data)) {
+    return_list[["contrasts"]] <- attr(model_data$design_matrix, "contrasts")
+    return_list[["terms"]] <- model_data$terms
+    return_list[["xlevels"]] <- model_data$xlevels
+    return_list[["felevels"]] <- model_data$felevels
+    return_list[["weights"]] <- model_data$weights
+    if (is.matrix(model_data$outcome) &&
+        is.character(colnames(model_data$outcome))) {
+      return_list[["outcome"]] <- colnames(model_data$outcome)
+    } else {
+      return_list[["outcome"]] <- deparse(formula[[2]], nlines = 5)
+    }
   }
 
+  # Name and flatten objects
+  if (is.matrix(return_list[["std.error"]]) &&
+      ncol(return_list[["std.error"]]) > 1) {
+    dimnames(return_list[["std.error"]]) <- dimnames(return_list[["coefficients"]])
+  } else {
+    return_list[["coefficients"]] <- drop(return_list[["coefficients"]])
+    nms <- c("std.error", "p.value", "df", "ci.lower", "ci.upper")
+    for (nm in nms) {
+      if (length(return_list[[nm]]) > 1 || !is.na(return_list[[nm]])) {
+        return_list[[nm]] <- setNames(
+          drop(return_list[[nm]]),
+          names(return_list[["coefficients"]])
+        )
+      }
+    }
+  }
+  if (return_list[["weighted"]]) {
+    names(return_list[["weights"]]) <- if (is.matrix(return_list[["fitted.values"]]))
+      rownames(return_list[["fitted.values"]])
+      else names(return_list[["fitted.values"]])
+  }
+  return_list[["fitted.values"]] <- drop(return_list[["fitted.values"]])
   return(return_list)
 }
 
@@ -43,7 +70,10 @@ dim_like_return <- function(return_list, alpha, formula, conditions) {
 
   return_list[["outcome"]] <- deparse(formula[[2]], nlines = 5)
 
-  names(return_list[["coefficients"]]) <- return_list[["term"]]
+  names(return_list[["coefficients"]]) <-
+    names(return_list[["std.error"]]) <-
+    names(return_list[["p.value"]]) <-
+    names(return_list[["df"]]) <- return_list[["term"]]
 
   return(return_list)
 }

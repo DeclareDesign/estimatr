@@ -21,18 +21,32 @@ clean_model_data <- function(data, datargs, estimator = "") {
   m_formula <- eval_tidy(mfargs[["formula"]])
   m_formula_env <- environment(m_formula)
 
-  args_ignored <- c("subset", "se_type")
-  # For each ... that would go to model.fram .default, early eval, save to formula env, and point to it
+  args_ignored <- c("fixed_effects", "se_type")
+  # For each ... that would go to model.fram .default, early eval,
+  # save to formula env, and point to it
   # subset is also non-standard eval
   to_process <- setdiff(
     names(mfargs),
-    setdiff(names(formals(stats::model.frame.default)), args_ignored)
+    c(setdiff(names(formals(stats::model.frame.default)), "subset"), args_ignored)
   )
 
   for (da in to_process) {
     name <- sprintf(".__%s%%%d__", da, sample.int(.Machine$integer.max, 1))
     m_formula_env[[name]] <- eval_tidy(mfargs[[da]], data = data)
     mfargs[[da]] <- sym(name)
+  }
+
+  if ("fixed_effects" %in% names(mfargs)) {
+    name <- sprintf(".__fixed_effects%%%d__", sample.int(.Machine$integer.max, 1))
+    m_formula_env[[name]] <- sapply(
+      eval_tidy(quo((stats::model.frame.default)(
+        mfargs[["fixed_effects"]],
+        data = data,
+        na.action = NULL
+      ))),
+      FUN = as.factor
+    )
+    mfargs[["fixed_effects"]] <- sym(name)
   }
 
   mfargs[["formula"]] <- Formula::as.Formula(m_formula)
@@ -77,6 +91,13 @@ clean_model_data <- function(data, datargs, estimator = "") {
         "the outcome or covariates. These observations have been dropped."
       )
     }
+
+    if (!is.null(why_omit[["(fixed_effects)"]])) {
+      warning(
+        "Some observations have missingness in the fixed effects but ",
+        "not in the outcome or covariates. These observations have been dropped."
+      )
+    }
   })
 
 
@@ -111,13 +132,16 @@ clean_model_data <- function(data, datargs, estimator = "") {
   }
 
   ret[["cluster"]] <- model.extract(mf, "cluster")
-  if (!(class(ret[["cluster"]]) %in% c("factor", "integer")) && !is.null(ret[["cluster"]])) {
+  if (!(class(ret[["cluster"]]) %in% c("factor", "integer")) &&
+      !is.null(ret[["cluster"]])) {
     ret[["cluster"]] <- as.factor(ret[["cluster"]])
   }
 
   ret[["block"]] <- model.extract(mf, "block")
 
   ret[["condition_pr"]] <- model.extract(mf, "condition_pr")
+
+  ret[["fixed_effects"]] <- model.extract(mf, "fixed_effects")
 
   if (any(ret[["condition_pr"]] <= 0 | ret[["condition_pr"]] > 1)) {
     stop(
@@ -126,6 +150,46 @@ clean_model_data <- function(data, datargs, estimator = "") {
   }
 
   ret[["terms"]] <- attr(mf, "terms")
+  ret[["xlevels"]] <- .getXlevels(ret[["terms"]], mf)
+  if (is.character(ret[["fixed_effects"]])) {
+    ret[["felevels"]] <- lapply(as.data.frame(ret[["fixed_effects"]]), unique)
+  }
 
   return(ret)
+}
+
+demean_fes <- function(model_data) {
+  nfaclevels <-
+    apply(model_data[["fixed_effects"]], 2, function(fe) length(unique((fe)))-1)
+
+  demeaned <- demeanMat(
+    Y = as.matrix(model_data[["outcome"]]),
+    X = model_data[["design_matrix"]],
+    Zmat = model_data[["instrument_matrix"]],
+    fes = model_data[["fixed_effects"]],
+    weights =
+      if (is.numeric(model_data[["weights"]]))
+        model_data[["weights"]]
+      else
+        rep(1, nrow(model_data[["design_matrix"]])),
+    has_int = attr(model_data$terms, "intercept"),
+    eps = 1e-8
+  )
+
+  # save names
+  dimnames(demeaned[["outcome"]]) <- dimnames(model_data[["outcome"]])
+  new_names <- dimnames(model_data[["design_matrix"]])
+  new_names[[2]] <- new_names[[2]][new_names[[2]] != "(Intercept)"]
+  dimnames(demeaned[["design_matrix"]]) <- new_names
+
+  model_data[["outcome"]] <- demeaned[["outcome"]]
+  model_data[["design_matrix"]] <- demeaned[["design_matrix"]]
+  if (is.numeric(model_data[["instrument_matrix"]])) {
+    model_data[["instrument_matrix"]] <- demeaned[["instrument_matrix"]]
+  }
+
+  # model_data[["fixed_effects"]] <- model_data[["fixed_effects"]]
+
+  model_data[["fe_levels"]] <- setNames(nfaclevels, nm = colnames(model_data[["fixed_effects"]]))
+  return(model_data)
 }

@@ -67,7 +67,7 @@
 #' treatment conditions.
 #'
 #' Users interested in more details can see the
-#' \href{http://estimatr.declaredesign.org/articles/mathematical-notes.html}{mathematical notes}
+#' \href{https://declaredesign.org/R/estimatr/articles/mathematical-notes.html}{mathematical notes}
 #' for more information and references, or see the references below.
 #'
 #' There are three distinct ways that users can specify the design to the
@@ -470,11 +470,13 @@ horvitz_thompson <- function(formula,
       }
     } else {
       # blocked case
-      message(
-        "Assuming complete random assignment of clusters within blocks. ",
-        "User can use `ra_declaration` or `condition_pr_mat` to have full ",
-        "control over the design."
-      )
+      if (simple) {
+        message(
+          "Assuming complete random assignment of clusters within blocks. ",
+          "User can use `ra_declaration` or `condition_pr_mat` to have full ",
+          "control over the design."
+        )
+      }
 
       if (is.null(data$condition_probabilities)) {
         message(

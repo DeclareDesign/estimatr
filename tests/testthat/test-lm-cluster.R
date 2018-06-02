@@ -183,8 +183,6 @@ test_that("lm cluster se", {
 })
 
 test_that("Clustered weighted SEs are correct", {
-  skip_if_not_installed("clubSandwich")
-
   lm_cr2 <- lm_robust(mpg ~ hp, data = mtcars, weights = wt, clusters = cyl, se_type = "CR2")
   lm_stata <- lm_robust(mpg ~ hp, data = mtcars, weights = wt, clusters = cyl, se_type = "stata")
   lm_cr0 <- lm_robust(mpg ~ hp, data = mtcars, weights = wt, clusters = cyl, se_type = "CR0")
@@ -323,7 +321,6 @@ test_that("Clustered SEs work with clusters of size 1", {
 
 test_that("multiple outcomes", {
 
-  skip_if_not_installed("clubSandwich")
   lmo <- lm(cbind(mpg, hp) ~ wt, data = mtcars)
   lmro <- lm_robust(cbind(mpg, hp) ~ wt, data = mtcars, clusters = cyl)
 

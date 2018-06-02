@@ -178,7 +178,7 @@ test_that("Horvitz-Thompson works with clustered data", {
     !is.na(ht_crs_decl$coefficients)
   )
 
-  expect_equal(
+  expect_equivalent(
     ht_crs_decl$df,
     NA
   )
@@ -416,6 +416,18 @@ test_that("Estimating Horvitz-Thompson can be done two ways with blocks", {
     tidy(ht_declare_mp),
     tidy(ht_condmat_mp)
   )
+
+  # block messages when passing with simple = TRUE flag, not otherwise
+  dat$p <- tapply(dat$z, dat$bl, mean)[dat$bl]
+  expect_message(
+    ht_declare_mp <- horvitz_thompson(y ~ z, data = dat, blocks = bl, condition_prs = p, simple = TRUE),
+    "Assuming complete random assignment of clusters within blocks."
+  )
+
+  expect_message(
+    ht_declare_mp <- horvitz_thompson(y ~ z, data = dat, blocks = bl, condition_prs = p, simple = FALSE),
+    NA
+  )
 })
 
 # errors when arguments are passed that shouldn't be together
@@ -504,10 +516,10 @@ test_that("Works without variation in treatment", {
 
 
   expect_equivalent(coef(ht_const_1), mean(dat$y))
-  expect_equal(ht_const_1$std.error, 1 / (nrow(dat)) * sqrt(sum(dat$y ^ 2)))
+  expect_equivalent(ht_const_1$std.error, 1 / (nrow(dat)) * sqrt(sum(dat$y ^ 2)))
 
 
-  expect_equal(
+  expect_equivalent(
     ht_const_1$df,
     NA
   )
@@ -519,7 +531,7 @@ test_that("Works without variation in treatment", {
   )
 
   expect_equivalent(coef(ht_const), mean(dat$y / dat$ps))
-  expect_equal(ht_const$std.error, 1 / (nrow(dat)) * sqrt(sum((dat$y / dat$ps) ^ 2)))
+  expect_equivalent(ht_const$std.error, 1 / (nrow(dat)) * sqrt(sum((dat$y / dat$ps) ^ 2)))
 
   ## Blocks and all are treated
   ht_block <- horvitz_thompson(

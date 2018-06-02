@@ -15,7 +15,6 @@ editor_options:
 ---
 
 ```{r, echo = FALSE}
-set.seed(42)
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
@@ -23,9 +22,9 @@ knitr::opts_chunk$set(
 options(digits = 2)
 ```
 
-**estimatr** is a package in R dedicated to providing [fast](/R/estimatr/articles/benchmarking-estimatr.html) estimators that take into consideration designs often used by social scientists. Estimators are statistical methods for estimating quantities of interest like treatment effects or regression parameters. Many of the estimators included with the R programming language or popular R packages are slow and have default settings that lead to statistically inappropriate estimates. Certain estimators that reflect cutting-edge advances in statistics are not yet implemented in R packages for convenient use. **estimatr** is designed to solve these problems and provide estimators tuned for design-based inference.
+**estimatr** is a package in R dedicated to providing [fast](articles/benchmarking-estimatr.html) estimators that take into consideration designs often used by social scientists. Estimators are statistical methods for estimating quantities of interest like treatment effects or regression parameters. Many of the estimators included with the R programming language or popular R packages are slow and have default settings that lead to statistically inappropriate estimates. Certain estimators that reflect cutting-edge advances in statistics are not yet implemented in R packages for convenient use. **estimatr** is designed to solve these problems and provide estimators tuned for design-based inference.
 
-The most up-to-date version of this vignette can be found on the [DeclareDesign website here](/R/estimatr/articles/getting-started.html).
+The most up-to-date version of this vignette can be found on the [DeclareDesign website here](articles/getting-started.html).
 
 # Estimators
 
@@ -43,6 +42,7 @@ I first create some sample data to demonstrate how to use each of these estimato
 library(estimatr)
 
 # Example dataset to be used throughout built using fabricatr and randomizr
+set.seed(42)
 library(fabricatr)
 library(randomizr)
 dat <- fabricate(

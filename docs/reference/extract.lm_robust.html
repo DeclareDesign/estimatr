@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Extract model data for <span class="pkg">texreg</span> package — extract.lm_robust • estimatr</title>
+<title>Extract model data for <span class="pkg">texreg</span> package — extract.robust_default • estimatr</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -51,8 +51,26 @@
     </div>
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-        <li>
-  <a href="../articles/getting-started.html">Getting Started</a>
+        <li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Getting Started
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/getting-started.html">Getting Started with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/regression-tables.html">Regression Tables with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/absorbing-fixed-effects.html">Absorbing Fixed Effects with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/estimatr-in-the-tidyverse.html">estimatr in the Tidyverse</a>
+    </li>
+  </ul>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -129,12 +147,20 @@
     </div>
 
     
-    <p>Prepares an <code>"lm_robust"</code> object for the <span class="pkg">texreg</span>
-package. This is largely a clone of the <code><a href='http://www.rdocumentation.org/packages/texreg/topics/extract'>extract.lm</a></code>
+    <p>Prepares a <code>"lm_robust"</code> or <code>"iv_robust"</code> object for the <span class="pkg">texreg</span>
+package. This is largely a clone of the <code>extract.lm</code>
 method.</p>
     
 
-    <pre class="usage"><span class='fu'>extract.lm_robust</span>(<span class='no'>model</span>, <span class='kw'>include.ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>include.rsquared</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+    <pre class="usage"><span class='fu'>extract.robust_default</span>(<span class='no'>model</span>, <span class='kw'>include.ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>include.rsquared</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>include.adjrs</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>include.nobs</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>include.fstatistic</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>include.rmse</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='no'>...</span>)
+
+<span class='fu'>extract.lm_robust</span>(<span class='no'>model</span>, <span class='kw'>include.ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>include.rsquared</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>include.adjrs</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>include.nobs</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>include.fstatistic</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>include.rmse</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='no'>...</span>)
+
+<span class='fu'>extract.iv_robust</span>(<span class='no'>model</span>, <span class='kw'>include.ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>include.rsquared</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>include.adjrs</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>include.nobs</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>include.fstatistic</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>include.rmse</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='no'>...</span>)</pre>
     
@@ -143,7 +169,7 @@ method.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>model</th>
-      <td><p>an object of class <code><a href='lm_robust.html'>lm_robust</a></code></p></td>
+      <td><p>an object of class <code><a href='lm_robust.html'>lm_robust</a></code> or <code>"iv_robust"</code></p></td>
     </tr>
     <tr>
       <th>include.ci</th>

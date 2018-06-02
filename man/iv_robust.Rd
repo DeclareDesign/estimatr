@@ -4,8 +4,9 @@
 \alias{iv_robust}
 \title{Two-Stage Least Squares Instrumental Variables Regression}
 \usage{
-iv_robust(formula, data, weights, subset, clusters, se_type = NULL,
-  ci = TRUE, alpha = 0.05, return_vcov = TRUE, try_cholesky = FALSE)
+iv_robust(formula, data, weights, subset, clusters, fixed_effects,
+  se_type = NULL, ci = TRUE, alpha = 0.05, return_vcov = TRUE,
+  try_cholesky = FALSE)
 }
 \arguments{
 \item{formula}{an object of class formula of the regression and the instruments.
@@ -22,6 +23,12 @@ of observations to be used.}
 
 \item{clusters}{An optional bare (unquoted) name of the variable that
 corresponds to the clusters in the data.}
+
+\item{fixed_effects}{An optional right-sided formula containing the fixed
+effects that will be projected out of the data, such as \code{~ blockID}. Do not
+pass multiple-fixed effects with intersecting groups. Speed gains are greatest for
+variables with large numbers of groups and when using "HC1" or "stata" standard errors.
+See 'Details'.}
 
 \item{se_type}{The sort of standard error sought. If `clusters` is
 not specified the options are "HC0", "HC1" (or "stata", the equivalent),
@@ -67,12 +74,13 @@ following components:
   \item{k}{the number of columns in the design matrix (includes linearly dependent columns!)}
   \item{rank}{the rank of the fitted model}
   \item{vcov}{the fitted variance covariance matrix}
-  \item{r.squared}{the \eqn{R^2} of the second stage regrssion}
+  \item{r.squared}{the \eqn{R^2} of the second stage regression}
   \item{adj.r.squared}{the \eqn{R^2} of the second stage regression, but penalized for having more parameters, \code{rank}}
   \item{fstatistic}{a vector with the value of the second stage F-statistic with the numerator and denominator degrees of freedom}
   \item{weighted}{whether or not weights were applied}
   \item{call}{the original function call}
-We also return \code{terms} with the second stage terms and \code{terms_regressors} with the first stage terms, both of which used by \code{predict}.
+  \item{fitted.values}{the matrix of predicted means}
+We also return \code{terms} with the second stage terms and \code{terms_regressors} with the first stage terms, both of which used by \code{predict}. If \code{fixed_effects} are specified, then we return \code{proj_fstatistic}, \code{proj_r.squared}, and \code{proj_adj.r.squared}, which are model fit statistics that are computed on the projected model (after demeaning the fixed effects).
 }
 \description{
 This formula estimates an instrumental variables regression
@@ -97,7 +105,17 @@ design matrix used are the second-stage regressors, which includes the estimated
 endogenous regressors, and the residuals used are the difference
 between the outcome and a fit produced by the second-stage coefficients and the
 first-stage (endogenous) regressors. More notes on this can be found at
-\href{http://estimatr.declaredesign.org/articles/mathematical-notes.html}{the mathematical appendix}.
+\href{https://declaredesign.org/R/estimatr/articles/mathematical-notes.html}{the mathematical appendix}.
+
+If \code{fixed_effects} are specified, both the outcome, regressors, and instruments
+are centered using the method of alternating projections (Halperin 1962; Gaure 2013). Specifying
+fixed effects in this way will result in large speed gains with standard error
+estimators that do not need to invert the matrix of fixed effects. This means using
+"classical", "HC0", "HC1", "CR0", or "stata" standard errors will be faster than other
+standard error estimators. Be wary when specifying fixed effects that may result
+in perfect fits for some observations or if there are intersecting groups across
+multiple fixed effect variables (e.g. if you specify both "year" and "country" fixed effects
+with an unbalanced panel where one year you only have data for one country).
 }
 \examples{
 library(fabricatr)
@@ -106,7 +124,8 @@ dat <- fabricate(
   Y = rpois(N, lambda = 4),
   Z = rbinom(N, 1, prob = 0.4),
   D  = Z * rbinom(N, 1, prob = 0.8),
-  X = rnorm(N)
+  X = rnorm(N),
+  G = sample(letters[1:4], N, replace = TRUE)
 )
 
 # Instrument for treatment `D` with encouragement `Z`
@@ -122,5 +141,13 @@ tidy(iv_robust(Y ~ D | Z, data = dat, clusters = cl))
 # Again, easy to replicate Stata (again with `small` correction in Stata)
 tidy(iv_robust(Y ~ D | Z, data = dat, clusters = cl, se_type = "stata"))
 
+# We can also specify fixed effects, that will be taken as exogenous regressors
+# Speed gains with fixed effects are greatests with "stata" or "HC1" std.errors
+tidy(iv_robust(Y ~ D | Z, data = dat, fixed_effects = ~ G, se_type = "HC1"))
 
+}
+\references{
+Gaure, Simon. 2013. "OLS with multiple high dimensional category variables." Computational Statistics & Data Analysis 66: 8-1. \url{http://dx.doi.org/10.1016/j.csda.2013.03.024}
+
+Halperin, I. 1962. "The product of projection operators." Acta Scientiarum Mathematicarum (Szeged) 23(1-2): 96-99.
 }

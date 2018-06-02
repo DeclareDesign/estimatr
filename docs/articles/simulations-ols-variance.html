@@ -28,8 +28,26 @@
     </div>
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Getting Started
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
 <li>
-  <a href="../articles/getting-started.html">Getting Started</a>
+      <a href="../articles/getting-started.html">Getting Started with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/regression-tables.html">Regression Tables with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/absorbing-fixed-effects.html">Absorbing Fixed Effects with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/estimatr-in-the-tidyverse.html">estimatr in the Tidyverse</a>
+    </li>
+  </ul>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -112,11 +130,8 @@
 <div class="contents">
 <p>This document exposes the properties of different variance estimators using <a href="/R/DeclareDesign/"><code>DeclareDesign</code></a> and <a href="/R/estimatr/"><code>estimatr</code></a>. More details about the variance estimators with references can be found in the <a href="/R/estimatr/articles/mathematical-notes.html">mathematical notes</a>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(DeclareDesign)</code></pre></div>
-<pre><code>## Warning: package 'DeclareDesign' was built under R version 3.4.4</code></pre>
 <pre><code>## Loading required package: randomizr</code></pre>
-<pre><code>## Warning: package 'randomizr' was built under R version 3.4.4</code></pre>
 <pre><code>## Loading required package: fabricatr</code></pre>
-<pre><code>## Warning: package 'fabricatr' was built under R version 3.4.4</code></pre>
 <pre><code>## Loading required package: estimatr</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(ggplot2)</code></pre></div>
 <div id="homoskedastic-errors" class="section level1">
