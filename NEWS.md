@@ -1,4 +1,4 @@
-# estimatr 0.6.0
+# estimatr 0.8.0
 
 * Added support for absorbing fixed effects in `lm_robust` and `iv_robust`
 * Added `commarobust` and `starprep` for stargazer integration
