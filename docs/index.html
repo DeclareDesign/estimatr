@@ -155,9 +155,15 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 
 <span class="co"># robust standard errors</span>
 res_rob &lt;-<span class="st"> </span><span class="kw"><a href="reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>z, <span class="dt">data =</span> dat)
+<span class="co"># tidy dataframes on command!</span>
+<span class="kw"><a href="reference/tidy.html">tidy</a></span>(res_rob)
+<span class="co">#&gt;          term estimate std.error p.value ci.lower ci.upper df outcome</span>
+<span class="co">#&gt; 1 (Intercept)     0.27      0.16   0.089   -0.041    0.580 98       y</span>
+<span class="co">#&gt; 2           z    -0.42      0.21   0.044   -0.833   -0.012 98       y</span>
 
 <span class="co"># cluster robust standard errors</span>
 res_cl &lt;-<span class="st"> </span><span class="kw"><a href="reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>z, <span class="dt">data =</span> dat, <span class="dt">clusters =</span> clusterID)
+<span class="co"># standard summary view also available</span>
 <span class="kw">summary</span>(res_cl)
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Call:</span>
@@ -182,19 +188,40 @@ res_dim &lt;-<span class="st"> </span><span class="kw"><a href="reference/differ
 <h2 class="hasAnchor">
 <a href="#fast-to-use" class="anchor"></a>Fast to use</h2>
 <p>Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using <code>lm()</code> and the <code>sandwich</code> package to get HC2 standard errors. More speed comparisons are available <a href="articles/benchmarking-estimatr.html">here</a>. Furthermore, with many blocks (or fixed effects), users can use the <code>fixed_effects</code> argument of <code>lm_robust</code> with HC1 standard errors to greatly improve estimation speed. More on <a href="articles/absorbing-fixed-effects.html">fixed effects here</a>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dat &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">X =</span> <span class="kw">matrix</span>(<span class="dv">2000</span><span class="op">*</span><span class="dv">50</span>, <span class="dv">2000</span>), <span class="dt">y =</span> <span class="kw">rnorm</span>(<span class="dv">2000</span>))
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dat &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">X =</span> <span class="kw">matrix</span>(<span class="kw">rnorm</span>(<span class="dv">2000</span><span class="op">*</span><span class="dv">50</span>), <span class="dv">2000</span>), <span class="dt">y =</span> <span class="kw">rnorm</span>(<span class="dv">2000</span>))
 
 <span class="kw">library</span>(microbenchmark)
 <span class="kw">library</span>(lmtest)
+<span class="co">#&gt; Loading required package: zoo</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Attaching package: 'zoo'</span>
+<span class="co">#&gt; The following objects are masked from 'package:base':</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;     as.Date, as.Date.numeric</span>
 <span class="kw">library</span>(sandwich)
-mb &lt;-<span class="st"> </span><span class="kw">microbenchmark</span>(
-  <span class="st">`</span><span class="dt">estimatr</span><span class="st">`</span> =<span class="st"> </span><span class="kw"><a href="reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>., <span class="dt">data =</span> dat)
-  <span class="st">`</span><span class="dt">lm + sandwich</span><span class="st">`</span> =<span class="st"> </span>{lo &lt;-<span class="st"> </span><span class="kw">lm</span>(y <span class="op">~</span><span class="st"> </span>., <span class="dt">data =</span> dat)}
-)
-
-
-lm_out &lt;-<span class="st"> </span><span class="kw">lm</span>(y <span class="op">~</span><span class="st"> </span>x1 <span class="op">+</span><span class="st"> </span>x2 <span class="op">+</span><span class="st"> </span>x3 <span class="op">+</span><span class="st"> </span>x4, <span class="dt">data =</span> dat)
-<span class="kw">coeftest</span>(lm_out, <span class="dt">vcov =</span> <span class="kw">vcovHC</span>(lm_out, <span class="dt">type =</span> <span class="st">'HC2'</span>))</code></pre></div>
+mb &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/microbenchmark/topics/microbenchmark">microbenchmark</a></span>(
+  <span class="st">`</span><span class="dt">estimatr</span><span class="st">`</span> =<span class="st"> </span><span class="kw"><a href="reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>., <span class="dt">data =</span> dat),
+  <span class="st">`</span><span class="dt">lm + sandwich</span><span class="st">`</span> =<span class="st"> </span>{
+    lo &lt;-<span class="st"> </span><span class="kw">lm</span>(y <span class="op">~</span><span class="st"> </span>., <span class="dt">data =</span> dat)
+    <span class="kw"><a href="http://www.rdocumentation.org/packages/lmtest/topics/coeftest">coeftest</a></span>(lo, <span class="dt">vcov =</span> <span class="kw"><a href="http://www.rdocumentation.org/packages/sandwich/topics/vcovHC">vcovHC</a></span>(lo, <span class="dt">type =</span> <span class="st">'HC2'</span>))
+  }
+)</code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left">estimatr</th>
+<th align="right">median run-time (ms)</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">estimatr</td>
+<td align="right">23</td>
+</tr>
+<tr class="even">
+<td align="left">lm + sandwich</td>
+<td align="right">45</td>
+</tr>
+</tbody>
+</table>
 <hr>
 <p>This project is generously supported by a grant from the <a href="arnoldfoundation.org">Laura and John Arnold Foundation</a> and seed funding from <a href="egap.org">Evidence in Governance and Politics (EGAP)</a>.</p>
 </div>

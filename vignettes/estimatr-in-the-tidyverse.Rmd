@@ -1,6 +1,8 @@
 ---
 title: "estimatr in the Tidyverse"
-output: rmarkdown::html_vignette
+output:
+  html_document:
+    df_print: paged
 vignette: >
   %\VignetteIndexEntry{Vignette Title}
   %\VignetteEngine{knitr::rmarkdown}
@@ -10,7 +12,7 @@ vignette: >
 
 The `estimatr` package estimates linear and instrumental variable regressions quickly and with robust standard errors. We designed the package to play well with the "tidyverse", which is a suite of packages developed by RStudio. The main way we accomplish this is making it easy to turn model fits into data.frames, the data format expected by many tidyverse packages. This vignette will show you how to `estimatr` functions with four tidyverse packages: `broom`, `dplyr`, `purrr`, and `ggplot2`.
 
-# Turning model objects into data.frames
+## Turning model objects into data.frames
 
 ```{r, message=FALSE}
 library(estimatr)
@@ -31,7 +33,7 @@ fit %>%
 
 ```
 
-# Putting robust standard errors in a ggplot
+## Putting robust standard errors in a ggplot
 
 If you want to overlay a regression model on a scatterplot, the `stat_smooth` function in `ggplot2` is great. But if you run `stat_smooth(method = "lm")`, ggplot will add a confidence interval based on classical variance calculations. If you want to use robust standard errors (and you almost certainly do, since homoskedasticity is an unnecessary and often implausible assumption), then use `stat_smooth(method = "lm_robust")`.
 
@@ -43,7 +45,7 @@ ggplot(mtcars, aes(mpg, disp)) +
   theme_bw()
 ```
 
-# Running multiple versions of a model with purrr
+## Running multiple versions of a model with purrr
 
 Sometimes, we want to run multiple versions of a regression mode, perhaps model on subsets of the data. This code runs three regressions on three subsets of the data and stacks the output into a single data.frame. We use the `map` function from the `purrr` package twice.
 
@@ -58,8 +60,7 @@ gg_df <-
 gg_df
 ```
 
-
-# Coefficient plots with ggplot2
+## Coefficient plots with ggplot2
 
 Having multiple models in a data.frame makes it convenient to make coefficient plots. Here we plot the regression estimate of the slope of `mpg` with respect to `disp` for each level of `cyl`:
 
@@ -73,7 +74,7 @@ gg_df %>%
   theme_bw()
 ```
 
-# Multiple outcome variables
+## Multiple outcome variables
 We could do a similar exercise with three different dependent variables. `lm_robust` helpfully returns the name of the outcome variable, which makes plotting these models easy:
 ```{r}
 gg_df <-

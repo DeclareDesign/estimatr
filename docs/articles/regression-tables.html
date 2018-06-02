@@ -170,17 +170,13 @@ fit &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_robu
 <h2 class="hasAnchor">
 <a href="#stargazer" class="anchor"></a>Stargazer</h2>
 <p>Stargazer has to be <em>tricked</em> – there’s unfortunately no way around this unless something in the stargazer package changes. The maintainer has indicated that he has no active plans to update stargazer in the future. First, run the regression using <code>lm</code>. Then you can pass the <code>lm</code> fits to <code>starprep</code> a function which transforms the <code>lm</code> fits into <code>lm_robust</code> fits and then prepare the appropriate statistic you requested. The <code>starprep</code> funciton defaults to returning standard errors and uses <code>lm_robust</code> defaults for standard errors (robust HC2 SEs are the default in both <code>lm_robust</code>). Then you pass the <code>lm</code> fit to stargazer and then pass <code><a href="../reference/starprep.html">starprep(fit)</a></code> to the <code>se</code> argument in <code>stargazer</code>. This process works great with multiple fits.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(stargazer)</code></pre></div>
-<pre><code>## 
-## Please cite as:</code></pre>
-<pre><code>##  Hlavac, Marek (2018). stargazer: Well-Formatted Regression and Summary Statistics Tables.</code></pre>
-<pre><code>##  R package version 5.2.2. https://CRAN.R-project.org/package=stargazer</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">fit_<span class="dv">1</span> &lt;-<span class="st"> </span><span class="kw">lm</span>(mpg <span class="op">~</span><span class="st"> </span>disp, <span class="dt">data =</span> mtcars)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(stargazer)
+fit_<span class="dv">1</span> &lt;-<span class="st"> </span><span class="kw">lm</span>(mpg <span class="op">~</span><span class="st"> </span>disp, <span class="dt">data =</span> mtcars)
 fit_<span class="dv">2</span> &lt;-<span class="st"> </span><span class="kw">lm</span>(mpg <span class="op">~</span><span class="st"> </span>hp, <span class="dt">data =</span> mtcars)
 <span class="kw"><a href="http://www.rdocumentation.org/packages/stargazer/topics/stargazer">stargazer</a></span>(fit_<span class="dv">1</span>, fit_<span class="dv">2</span>, <span class="dt">se =</span> <span class="kw"><a href="../reference/starprep.html">starprep</a></span>(fit_<span class="dv">1</span>, fit_<span class="dv">2</span>))</code></pre></div>
 <pre><code>## 
 ## % Table created by stargazer v.5.2.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
-## % Date and time: Sat, Jun 02, 2018 - 12:12:19
+## % Date and time: Sat, Jun 02, 2018 - 14:49:58
 ## \begin{table}[!htbp] \centering 
 ##   \caption{} 
 ##   \label{} 
@@ -212,123 +208,24 @@ fit_<span class="dv">2</span> &lt;-<span class="st"> </span><span class="kw">lm<
 ## \textit{Note:}  &amp; \multicolumn{2}{r}{$^{*}$p$&lt;$0.1; $^{**}$p$&lt;$0.05; $^{***}$p$&lt;$0.01} \\ 
 ## \end{tabular} 
 ## \end{table}</code></pre>
+<p>Below are some more examples, although we hide the output for brevity.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Can also specify clusters and standard error type</span>
 <span class="kw"><a href="http://www.rdocumentation.org/packages/stargazer/topics/stargazer">stargazer</a></span>(
   fit_<span class="dv">1</span>, fit_<span class="dv">2</span>,
   <span class="dt">se =</span> <span class="kw"><a href="../reference/starprep.html">starprep</a></span>(fit_<span class="dv">1</span>, fit_<span class="dv">2</span>, <span class="dt">clusters =</span> mtcars<span class="op">$</span>cyl, <span class="dt">se_type =</span> <span class="st">"stata"</span>)
-)</code></pre></div>
-<pre><code>## 
-## % Table created by stargazer v.5.2.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
-## % Date and time: Sat, Jun 02, 2018 - 12:12:19
-## \begin{table}[!htbp] \centering 
-##   \caption{} 
-##   \label{} 
-## \begin{tabular}{@{\extracolsep{5pt}}lcc} 
-## \\[-1.8ex]\hline 
-## \hline \\[-1.8ex] 
-##  &amp; \multicolumn{2}{c}{\textit{Dependent variable:}} \\ 
-## \cline{2-3} 
-## \\[-1.8ex] &amp; \multicolumn{2}{c}{mpg} \\ 
-## \\[-1.8ex] &amp; (1) &amp; (2)\\ 
-## \hline \\[-1.8ex] 
-##  disp &amp; $-$0.041$^{***}$ &amp;  \\ 
-##   &amp; (0.008) &amp;  \\ 
-##   &amp; &amp; \\ 
-##  hp &amp;  &amp; $-$0.068$^{***}$ \\ 
-##   &amp;  &amp; (0.019) \\ 
-##   &amp; &amp; \\ 
-##  Constant &amp; 29.600$^{***}$ &amp; 30.099$^{***}$ \\ 
-##   &amp; (2.689) &amp; (3.863) \\ 
-##   &amp; &amp; \\ 
-## \hline \\[-1.8ex] 
-## Observations &amp; 32 &amp; 32 \\ 
-## R$^{2}$ &amp; 0.718 &amp; 0.602 \\ 
-## Adjusted R$^{2}$ &amp; 0.709 &amp; 0.589 \\ 
-## Residual Std. Error (df = 30) &amp; 3.251 &amp; 3.863 \\ 
-## F Statistic (df = 1; 30) &amp; 76.513$^{***}$ &amp; 45.460$^{***}$ \\ 
-## \hline 
-## \hline \\[-1.8ex] 
-## \textit{Note:}  &amp; \multicolumn{2}{r}{$^{*}$p$&lt;$0.1; $^{**}$p$&lt;$0.05; $^{***}$p$&lt;$0.01} \\ 
-## \end{tabular} 
-## \end{table}</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Can also precompute robust objects to save computation time</span>
+)
+
+<span class="co"># Can also precompute robust objects to save computation time</span>
 <span class="co"># using `commarobust`</span>
 fit_1_r &lt;-<span class="st"> </span><span class="kw"><a href="../reference/commarobust.html">commarobust</a></span>(fit_<span class="dv">1</span>)
 fit_2_r &lt;-<span class="st"> </span><span class="kw"><a href="../reference/commarobust.html">commarobust</a></span>(fit_<span class="dv">2</span>)
 <span class="kw"><a href="http://www.rdocumentation.org/packages/stargazer/topics/stargazer">stargazer</a></span>(fit_<span class="dv">1</span>, fit_<span class="dv">2</span>,
           <span class="dt">se =</span> <span class="kw"><a href="../reference/starprep.html">starprep</a></span>(fit_1_r, fit_2_r),
-          <span class="dt">p =</span> <span class="kw"><a href="../reference/starprep.html">starprep</a></span>(fit_1_r, fit_2_r, <span class="dt">stat =</span> <span class="st">"p.value"</span>))</code></pre></div>
-<pre><code>## 
-## % Table created by stargazer v.5.2.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
-## % Date and time: Sat, Jun 02, 2018 - 12:12:19
-## \begin{table}[!htbp] \centering 
-##   \caption{} 
-##   \label{} 
-## \begin{tabular}{@{\extracolsep{5pt}}lcc} 
-## \\[-1.8ex]\hline 
-## \hline \\[-1.8ex] 
-##  &amp; \multicolumn{2}{c}{\textit{Dependent variable:}} \\ 
-## \cline{2-3} 
-## \\[-1.8ex] &amp; \multicolumn{2}{c}{mpg} \\ 
-## \\[-1.8ex] &amp; (1) &amp; (2)\\ 
-## \hline \\[-1.8ex] 
-##  disp &amp; $-$0.041$^{***}$ &amp;  \\ 
-##   &amp; (0.005) &amp;  \\ 
-##   &amp; &amp; \\ 
-##  hp &amp;  &amp; $-$0.068$^{***}$ \\ 
-##   &amp;  &amp; (0.015) \\ 
-##   &amp; &amp; \\ 
-##  Constant &amp; 29.600$^{***}$ &amp; 30.099$^{***}$ \\ 
-##   &amp; (1.490) &amp; (2.193) \\ 
-##   &amp; &amp; \\ 
-## \hline \\[-1.8ex] 
-## Observations &amp; 32 &amp; 32 \\ 
-## R$^{2}$ &amp; 0.718 &amp; 0.602 \\ 
-## Adjusted R$^{2}$ &amp; 0.709 &amp; 0.589 \\ 
-## Residual Std. Error (df = 30) &amp; 3.251 &amp; 3.863 \\ 
-## F Statistic (df = 1; 30) &amp; 76.513$^{***}$ &amp; 45.460$^{***}$ \\ 
-## \hline 
-## \hline \\[-1.8ex] 
-## \textit{Note:}  &amp; \multicolumn{2}{r}{$^{*}$p$&lt;$0.1; $^{**}$p$&lt;$0.05; $^{***}$p$&lt;$0.01} \\ 
-## \end{tabular} 
-## \end{table}</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># can also easily get robust confidence intervals</span>
+          <span class="dt">p =</span> <span class="kw"><a href="../reference/starprep.html">starprep</a></span>(fit_1_r, fit_2_r, <span class="dt">stat =</span> <span class="st">"p.value"</span>))
+
+<span class="co"># can also easily get robust confidence intervals</span>
 <span class="kw"><a href="http://www.rdocumentation.org/packages/stargazer/topics/stargazer">stargazer</a></span>(fit_<span class="dv">1</span>, fit_<span class="dv">2</span>,
           <span class="dt">ci.custom =</span> <span class="kw"><a href="../reference/starprep.html">starprep</a></span>(fit_1_r, fit_2_r, <span class="dt">stat =</span> <span class="st">"ci"</span>))</code></pre></div>
-<pre><code>## 
-## % Table created by stargazer v.5.2.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
-## % Date and time: Sat, Jun 02, 2018 - 12:12:19
-## \begin{table}[!htbp] \centering 
-##   \caption{} 
-##   \label{} 
-## \begin{tabular}{@{\extracolsep{5pt}}lcc} 
-## \\[-1.8ex]\hline 
-## \hline \\[-1.8ex] 
-##  &amp; \multicolumn{2}{c}{\textit{Dependent variable:}} \\ 
-## \cline{2-3} 
-## \\[-1.8ex] &amp; \multicolumn{2}{c}{mpg} \\ 
-## \\[-1.8ex] &amp; (1) &amp; (2)\\ 
-## \hline \\[-1.8ex] 
-##  disp &amp; $-$0.041$^{***}$ &amp;  \\ 
-##   &amp; ($-$0.052, $-$0.031) &amp;  \\ 
-##   &amp; &amp; \\ 
-##  hp &amp;  &amp; $-$0.068$^{***}$ \\ 
-##   &amp;  &amp; ($-$0.098, $-$0.038) \\ 
-##   &amp; &amp; \\ 
-##  Constant &amp; 29.600$^{***}$ &amp; 30.099$^{***}$ \\ 
-##   &amp; (26.556, 32.643) &amp; (25.620, 34.578) \\ 
-##   &amp; &amp; \\ 
-## \hline \\[-1.8ex] 
-## Observations &amp; 32 &amp; 32 \\ 
-## R$^{2}$ &amp; 0.718 &amp; 0.602 \\ 
-## Adjusted R$^{2}$ &amp; 0.709 &amp; 0.589 \\ 
-## Residual Std. Error (df = 30) &amp; 3.251 &amp; 3.863 \\ 
-## F Statistic (df = 1; 30) &amp; 76.513$^{***}$ &amp; 45.460$^{***}$ \\ 
-## \hline 
-## \hline \\[-1.8ex] 
-## \textit{Note:}  &amp; \multicolumn{2}{r}{$^{*}$p$&lt;$0.1; $^{**}$p$&lt;$0.05; $^{***}$p$&lt;$0.01} \\ 
-## \end{tabular} 
-## \end{table}</code></pre>
 </div>
 <div id="xtable" class="section level2">
 <h2 class="hasAnchor">
@@ -338,7 +235,7 @@ fit_2_r &lt;-<span class="st"> </span><span class="kw"><a href="../reference/com
 fit &lt;-<span class="st"> </span><span class="kw">lm</span>(mpg <span class="op">~</span><span class="st"> </span>disp, <span class="dt">data =</span> mtcars)
 fit <span class="op">%&gt;%</span><span class="st"> </span>tidy <span class="op">%&gt;%</span><span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/xtable/topics/xtable">xtable</a></span>()</code></pre></div>
 <pre><code>## % latex table generated in R 3.5.0 by xtable 1.8-2 package
-## % Sat Jun  2 12:12:19 2018
+## % Sat Jun  2 14:49:58 2018
 ## \begin{table}[ht]
 ## \centering
 ## \begin{tabular}{rlrrrr}

@@ -182,14 +182,14 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
   <span class="dt">times =</span> <span class="dv">50</span>
 )</code></pre></div>
 <pre><code>## Unit: milliseconds
-##             expr       min        lq      mean    median        uq
-##  base + sandwich  203.0244  217.0003  231.1021  224.9505  231.7541
-##        lm_robust 1273.1729 1309.9467 1340.1646 1336.0623 1356.7292
-##  lm_robust + fes  841.9807  862.5949  885.9155  876.5294  900.6161
+##             expr       min        lq      mean    median       uq
+##  base + sandwich 203.19701 221.72359 230.83172 229.60220 237.2100
+##        lm_robust  88.56552  99.55515 105.82255 104.09087 109.6277
+##  lm_robust + fes  53.66806  58.09988  64.14826  62.95252  69.6283
 ##        max neval
-##   359.9501    50
-##  1519.3577    50
-##  1052.2834    50</code></pre>
+##  276.77308    50
+##  153.58506    50
+##   81.10266    50</code></pre>
 <p>Speed gains are <em>considerably</em> greater with HC1 standard errors. This is because we need to get the hat matrix for HC2, HC3, and CR2 standard errors, which requires inverting that large matrix of dummies we previously avoided doing. HC0, HC1, CR0, and CRstata standard errors do not require this inversion.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># With HC1</span>
 <span class="kw"><a href="http://www.rdocumentation.org/packages/microbenchmark/topics/microbenchmark">microbenchmark</a></span>(
@@ -211,14 +211,14 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
   <span class="dt">times =</span> <span class="dv">50</span>
 )</code></pre></div>
 <pre><code>## Unit: milliseconds
-##             expr        min         lq      mean     median         uq
-##  base + sandwich 213.397540  221.07700  228.2916  226.39624  233.79512
-##        lm_robust 989.996739 1024.63082 1049.0466 1050.53495 1065.20239
-##  lm_robust + fes   9.882414   10.95119   14.3014   11.54358   14.57994
-##         max neval
-##   264.72397    50
-##  1106.92629    50
-##    77.79723    50</code></pre>
+##             expr        min        lq      mean     median        uq
+##  base + sandwich 206.887651 221.88782 229.81676 229.560035 238.26249
+##        lm_robust  72.001029  80.77514  87.28252  87.137122  91.71412
+##  lm_robust + fes   8.520381   9.05669  12.52473   9.874183  11.17264
+##        max neval
+##  254.95970    50
+##  145.24958    50
+##   80.80258    50</code></pre>
 </div>
 </div>
   </div>

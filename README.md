@@ -42,9 +42,15 @@ dat <- fabricate(
 
 # robust standard errors
 res_rob <- lm_robust(y ~ z, data = dat)
+# tidy dataframes on command!
+tidy(res_rob)
+#>          term estimate std.error p.value ci.lower ci.upper df outcome
+#> 1 (Intercept)     0.27      0.16   0.089   -0.041    0.580 98       y
+#> 2           z    -0.42      0.21   0.044   -0.833   -0.012 98       y
 
 # cluster robust standard errors
 res_cl <- lm_robust(y ~ z, data = dat, clusters = clusterID)
+# standard summary view also available
 summary(res_cl)
 #> 
 #> Call:
@@ -73,20 +79,30 @@ Fast to use
 Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using `lm()` and the `sandwich` package to get HC2 standard errors. More speed comparisons are available [here](articles/benchmarking-estimatr.html). Furthermore, with many blocks (or fixed effects), users can use the `fixed_effects` argument of `lm_robust` with HC1 standard errors to greatly improve estimation speed. More on [fixed effects here](articles/absorbing-fixed-effects.html).
 
 ``` r
-dat <- data.frame(X = matrix(2000*50, 2000), y = rnorm(2000))
+dat <- data.frame(X = matrix(rnorm(2000*50), 2000), y = rnorm(2000))
 
 library(microbenchmark)
 library(lmtest)
+#> Loading required package: zoo
+#> 
+#> Attaching package: 'zoo'
+#> The following objects are masked from 'package:base':
+#> 
+#>     as.Date, as.Date.numeric
 library(sandwich)
 mb <- microbenchmark(
-  `estimatr` = lm_robust(y ~ ., data = dat)
-  `lm + sandwich` = {lo <- lm(y ~ ., data = dat)}
+  `estimatr` = lm_robust(y ~ ., data = dat),
+  `lm + sandwich` = {
+    lo <- lm(y ~ ., data = dat)
+    coeftest(lo, vcov = vcovHC(lo, type = 'HC2'))
+  }
 )
-
-
-lm_out <- lm(y ~ x1 + x2 + x3 + x4, data = dat)
-coeftest(lm_out, vcov = vcovHC(lm_out, type = 'HC2'))
 ```
+
+| estimatr      |  median run-time (ms)|
+|:--------------|---------------------:|
+| estimatr      |                    22|
+| lm + sandwich |                    43|
 
 ------------------------------------------------------------------------
 

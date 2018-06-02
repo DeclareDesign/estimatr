@@ -121,6 +121,7 @@
   <div class="col-md-9">
     <div class="page-header toc-ignore">
       <h1>Benchmarking estimatr</h1>
+                        <h4 class="author">Luke Sonnet</h4>
             
           </div>
 
@@ -128,7 +129,6 @@
     
 <div class="contents">
 <p>We built <code>estimatr</code> to provide accurate standard errors <strong>quickly</strong>. This document benchmarks the speed of or linear regression estimator against other estimators. Our performance is slightly better than base R when using classical standard errors, but most of our improvements come when estimating robust standard errors.</p>
-<p>Furthermore, we provide an option in our <code><a href="../reference/lm_robust.html">lm_robust()</a></code> and <code><a href="../reference/lm_lin.html">lm_lin()</a></code> estimators, <code>try_cholesky</code>, which users should set to <code>TRUE</code> if they are concerned about speed and are certain their analysis does not suffer from perfect multicollinearity (linear dependencies).</p>
 <p>The times are milliseconds and are a median over 200 runs for all but the CR2 case, which was taken on a sample of 50 runs, using the <code>microbenchmark</code> package. This benchmarking was done on a 2017 MacBook Air, with a 1.8 GHz Intel Core i5 CPU and 8 GB of memory.</p>
 <div id="linear-regression" class="section level1">
 <h1 class="hasAnchor">
@@ -170,16 +170,16 @@ CR2 SEs
 <code><a href="http://www.rdocumentation.org/packages/estimatr/topics/lm_robust">estimatr::lm_robust()</a></code>
 </td>
 <td>
-5.8
+7.9
+</td>
+<td>
+7.9
 </td>
 <td>
 7.6
 </td>
 <td>
-7.5
-</td>
-<td>
-<strong>13.1</strong>
+<strong>10.6</strong>
 </td>
 </tr>
 <tr class="even">
@@ -191,16 +191,16 @@ CR2 SEs
 base + sandwich/clubSandwich
 </td>
 <td>
-<strong>1.9</strong>
+<strong>2.3</strong>
 </td>
 <td>
-<strong>6</strong>
+<strong>5</strong>
 </td>
 <td>
-6.6
+<strong>6.7</strong>
 </td>
 <td>
-46.8
+45.9
 </td>
 </tr>
 <tr class="odd">
@@ -230,16 +230,16 @@ base + sandwich/clubSandwich
 <code><a href="http://www.rdocumentation.org/packages/estimatr/topics/lm_robust">estimatr::lm_robust()</a></code>
 </td>
 <td>
-<strong>14.3</strong>
+18.7
 </td>
 <td>
-<strong>19.9</strong>
+<strong>18.8</strong>
 </td>
 <td>
-<strong>17.1</strong>
+<strong>17.8</strong>
 </td>
 <td>
-<strong>325.8</strong>
+<strong>317</strong>
 </td>
 </tr>
 <tr class="odd">
@@ -251,16 +251,16 @@ base + sandwich/clubSandwich
 base + sandwich/clubSandwich
 </td>
 <td>
-<strong>4</strong>
+<strong>6.4</strong>
 </td>
 <td>
-23.2
+26
 </td>
 <td>
 45.9
 </td>
 <td>
-2107.9
+2121.6
 </td>
 </tr>
 <tr class="even">
@@ -290,16 +290,17 @@ base + sandwich/clubSandwich
 <code><a href="http://www.rdocumentation.org/packages/estimatr/topics/lm_robust">estimatr::lm_robust()</a></code>
 </td>
 <td>
-21.7
+24.3
 </td>
 <td>
-<strong>27.1</strong>
+<strong>28.7
+</strong>
 </td>
 <td>
-<strong>23.6</strong>
+<strong>29.5</strong>
 </td>
 <td>
-<strong>260</strong>
+<strong>269</strong>
 </td>
 </tr>
 <tr class="even">
@@ -311,16 +312,16 @@ base + sandwich/clubSandwich
 base + sandwich/clubSandwich
 </td>
 <td>
-<strong>16.5</strong>
+<strong>17.5</strong>
 </td>
 <td>
-41.9
+43.9
 </td>
 <td>
-55.9
+69.5
 </td>
 <td>
-396.4
+404.3
 </td>
 </tr>
 <tr class="odd">
@@ -350,16 +351,16 @@ base + sandwich/clubSandwich
 <code><a href="http://www.rdocumentation.org/packages/estimatr/topics/lm_robust">estimatr::lm_robust()</a></code>
 </td>
 <td>
-<strong>80.1</strong>
+<strong>80.8</strong>
 </td>
 <td>
-<strong>106.7</strong>
+<strong>111.6</strong>
 </td>
 <td>
-<strong>89.1</strong>
+<strong>90.5</strong>
 </td>
 <td>
-<strong>8887</strong>
+<strong>8464</strong>
 </td>
 </tr>
 <tr class="odd">
@@ -371,16 +372,16 @@ base + sandwich/clubSandwich
 base + sandwich/clubSandwich
 </td>
 <td>
-89.5
+88.5
 </td>
 <td>
-276.3
+287
 </td>
 <td>
-542
+480.7
 </td>
 <td>
-2.710^{4}
+2.510^{4}
 </td>
 </tr>
 </tbody>
@@ -424,13 +425,13 @@ CR2 SEs
 <code><a href="http://www.rdocumentation.org/packages/estimatr/topics/iv_robust">estimatr::iv_robust()</a></code>
 </td>
 <td>
-<strong>7.9</strong>
+<strong>8.2</strong>
 </td>
 <td>
-<strong>9.2</strong>
+<strong>8.9</strong>
 </td>
 <td>
-<strong>12.6</strong>
+<strong>11</strong>
 </td>
 <td>
 </td>
@@ -444,13 +445,13 @@ CR2 SEs
 AER + ivpack/clubSandwich
 </td>
 <td>
-10.3
+11.9
 </td>
 <td>
-12.9
+10.1
 </td>
 <td>
-61.4
+49.9
 </td>
 <td>
 </td>
@@ -482,13 +483,13 @@ AER + ivpack/clubSandwich
 <code><a href="http://www.rdocumentation.org/packages/estimatr/topics/lm_robust">estimatr::lm_robust()</a></code>
 </td>
 <td>
-17.6
+17.8
 </td>
 <td>
-<strong>27.8</strong>
+<strong>18.9</strong>
 </td>
 <td>
-<strong>185.1</strong>
+<strong>156.9</strong>
 </td>
 <td>
 </td>
@@ -502,13 +503,13 @@ AER + ivpack/clubSandwich
 AER + ivpack/clubSandwich
 </td>
 <td>
-<strong>14.6</strong>
+<strong>15.7</strong>
 </td>
 <td>
-29.3
+22.6
 </td>
 <td>
-2082.8
+1814.1
 </td>
 <td>
 </td>
@@ -540,13 +541,13 @@ AER + ivpack/clubSandwich
 <code><a href="http://www.rdocumentation.org/packages/estimatr/topics/lm_robust">estimatr::lm_robust()</a></code>
 </td>
 <td>
-<strong>24</strong>
+<strong>25.8</strong>
 </td>
 <td>
-<strong>26.7</strong>
+<strong>26.1</strong>
 </td>
 <td>
-<strong>74.3</strong>
+<strong>80.9</strong>
 </td>
 <td>
 </td>
@@ -560,13 +561,13 @@ AER + ivpack/clubSandwich
 AER + ivpack/clubSandwich
 </td>
 <td>
-42.8
+46.2
 </td>
 <td>
-55.3
+51.8
 </td>
 <td>
-309.3
+310.3
 </td>
 <td>
 </td>
@@ -598,13 +599,13 @@ AER + ivpack/clubSandwich
 <code><a href="http://www.rdocumentation.org/packages/estimatr/topics/lm_robust">estimatr::lm_robust()</a></code>
 </td>
 <td>
-<strong>89.8</strong>
+<strong>85.4</strong>
 </td>
 <td>
-<strong>120.4</strong>
+<strong>93.9</strong>
 </td>
 <td>
-<strong>2685.6</strong>
+<strong>2594.4</strong>
 </td>
 <td>
 </td>
@@ -618,13 +619,13 @@ AER + ivpack/clubSandwich
 AER + ivpack/clubSandwich
 </td>
 <td>
-148.3
+144.7
 </td>
 <td>
-396.8
+316.4
 </td>
 <td>
-1.710^{4}
+1.610^{4}
 </td>
 <td>
 </td>
@@ -651,21 +652,12 @@ data_list &lt;- lapply(
     return(data.frame(y, X))
   }
 )</code></pre>
-<p>First I compare to a couple other methods of the classical standard errors. First, let’s compare against base R, RcppEigen’s <code>fastLm()</code> function (from which we borrow much of our algorithm), and RcppArmadillo’s <code>fastLm()</code> function.</p>
-<pre><code>library(RcppEigen)
-library(RcppArmadillo)
-
-test_base &lt;- lapply(data_list, function(dat) {
+<p>First, we can look at the classical standard errors case. We do a few more computations than <code>summary.lm</code> does, and have a bit more overhead.</p>
+<pre><code>test_base &lt;- lapply(data_list, function(dat) {
   mbo &lt;- summary(microbenchmark(
     'lm_robust' = lm_robust(y ~ ., data = dat, se_type = "classical"),
     'base' = summary(lm(y ~ ., data = dat)),
-    'RcppEigen' = RcppEigen:::summary.fastLm(
-      RcppEigen::fastLm(y ~ ., data = dat)
-    ),
-    "RcppArmadillo" = RcppArmadillo:::summary.fastLm(
-      RcppArmadillo::fastLm(y ~ ., data = dat)
-    ),
-    times = 50L
+    times = 200L
   ),
   unit = "ms")
   return(mbo[, c("expr", "median")])
@@ -695,16 +687,16 @@ N=500, P=50
 lm_robust
 </td>
 <td align="right">
-6
+8
 </td>
 <td align="right">
-14
+19
 </td>
 <td align="right">
-22
+24
 </td>
 <td align="right">
-80
+81
 </td>
 </tr>
 <tr class="even">
@@ -715,47 +707,13 @@ base
 2
 </td>
 <td align="right">
-4
+6
 </td>
 <td align="right">
-16
+18
 </td>
 <td align="right">
-90
-</td>
-</tr>
-<tr class="odd">
-<td align="left">
-RcppEigen
-</td>
-<td align="right">
-2
-</td>
-<td align="right">
-5
-</td>
-<td align="right">
-12
-</td>
-<td align="right">
-90
-</td>
-</tr>
-<tr class="even">
-<td align="left">
-RcppArmadillo
-</td>
-<td align="right">
-2
-</td>
-<td align="right">
-8
-</td>
-<td align="right">
-30
-</td>
-<td align="right">
-173
+88
 </td>
 </tr>
 </tbody>
@@ -771,7 +729,7 @@ test_rob &lt;- lapply(data_list, function(dat) {
       lmo &lt;- lm(y ~ ., data = dat)
       coeftest(lmo, vcov = vcovHC(lmo, type = "HC2"))
     },
-    times = 50L
+    times = 200L
   ),
   unit = "ms")
   return(mbo[, c("expr", "median")])
@@ -803,13 +761,13 @@ lm_robust
 8
 </td>
 <td align="right">
-20
+19
 </td>
 <td align="right">
-27
+29
 </td>
 <td align="right">
-107
+112
 </td>
 </tr>
 <tr class="even">
@@ -817,16 +775,16 @@ lm_robust
 lm + coeftest + sandwich
 </td>
 <td align="right">
-6
+5
 </td>
 <td align="right">
-23
+26
 </td>
 <td align="right">
-42
+44
 </td>
 <td align="right">
-276
+287
 </td>
 </tr>
 </tbody>
@@ -858,7 +816,7 @@ test_cl &lt;- lapply(data_list, function(dat) {
       lmo &lt;- lm(y ~ ., data = dat)
       cluster_robust_se(lmo, cluster)
     },
-    times = 50L
+    times = 200L
   ),
   unit = "ms")
   return(mbo[, c("expr", "median")])
@@ -890,13 +848,13 @@ lm_robust
 8
 </td>
 <td align="right">
-17
+18
 </td>
 <td align="right">
-24
+30
 </td>
 <td align="right">
-89
+90
 </td>
 </tr>
 <tr class="even">
@@ -910,10 +868,10 @@ lm + coeftest + sandwich
 46
 </td>
 <td align="right">
-56
+70
 </td>
 <td align="right">
-542
+481
 </td>
 </tr>
 </tbody>
@@ -934,7 +892,7 @@ test_cr2 &lt;- lapply(data_list, function(dat) {
       lmo &lt;- lm(y ~ ., data = dat)
       coef_test(lmo, vcov = vcovCR(lmo, cluster = cluster, type = "CR2"))
     },
-    times = 20L
+    times = 50L
   ),
   unit = "ms")
   return(mbo[, c("expr", "median")])
@@ -965,16 +923,16 @@ N=500, P=50
 lm_robust
 </td>
 <td align="right">
-13
+11
 </td>
 <td align="right">
-326
+317
 </td>
 <td align="right">
-260
+269
 </td>
 <td align="right">
-8887
+8464
 </td>
 </tr>
 <tr class="even">
@@ -982,16 +940,16 @@ lm_robust
 lm + clubSandwich
 </td>
 <td align="right">
-47
+46
 </td>
 <td align="right">
-2108
+2122
 </td>
 <td align="right">
-396
+404
 </td>
 <td align="right">
-26592
+25266
 </td>
 </tr>
 </tbody>
@@ -1017,7 +975,7 @@ test_iv &lt;- lapply(data_list, function(dat) {
     'AER::ivreg' = {
       ivo &lt;- summary(ivreg(form, data = dat))
     },
-    times = 50L
+    times = 200L
   ),
   unit = "ms")
   return(mbo[, c("expr", "median")])
@@ -1054,10 +1012,10 @@ iv_robust
 18
 </td>
 <td align="right">
-24
+26
 </td>
 <td align="right">
-90
+85
 </td>
 </tr>
 <tr class="even">
@@ -1065,16 +1023,16 @@ iv_robust
 AER::ivreg
 </td>
 <td align="right">
-10
+12
 </td>
 <td align="right">
-15
+16
 </td>
 <td align="right">
-43
+46
 </td>
 <td align="right">
-148
+145
 </td>
 </tr>
 </tbody>
@@ -1095,7 +1053,7 @@ AER::ivreg
     'AER::ivreg + ivpack::robust.se' = {
       ivo &lt;- robust.se(ivreg(form, data = dat))
     },
-    times = 50L
+    times = 200L
   ),
   unit = "ms")
   return(mbo[, c("expr", "median")])
@@ -1129,13 +1087,13 @@ iv_robust
 9
 </td>
 <td align="right">
-28
+19
 </td>
 <td align="right">
-27
+26
 </td>
 <td align="right">
-120
+94
 </td>
 </tr>
 <tr class="even">
@@ -1143,16 +1101,16 @@ iv_robust
 AER::ivreg + ivpack::robust.se
 </td>
 <td align="right">
-13
+10
 </td>
 <td align="right">
-29
+23
 </td>
 <td align="right">
-55
+52
 </td>
 <td align="right">
-397
+316
 </td>
 </tr>
 </tbody>
@@ -1175,7 +1133,7 @@ AER::ivreg + ivpack::robust.se
     'AER::ivreg + clubSandwich' = {
       ivo &lt;- clubSandwich::coef_test(ivreg(form, data = dat), cluster = cluster, vcov = "CR2")
     },
-    times = 20L
+    times = 50L
   ),
   unit = "ms")
   return(mbo[, c("expr", "median")])
@@ -1206,16 +1164,16 @@ N=500, P=50
 iv_robust
 </td>
 <td align="right">
-13
+11
 </td>
 <td align="right">
-185
+157
 </td>
 <td align="right">
-74
+81
 </td>
 <td align="right">
-2686
+2594
 </td>
 </tr>
 <tr class="even">
@@ -1223,16 +1181,16 @@ iv_robust
 AER::ivreg + clubSandwich
 </td>
 <td align="right">
-61
+50
 </td>
 <td align="right">
-2083
+1814
 </td>
 <td align="right">
-309
+310
 </td>
 <td align="right">
-16555
+15589
 </td>
 </tr>
 </tbody>
@@ -1253,17 +1211,17 @@ AER::ivreg + clubSandwich
 #&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     
 #&gt; 
 #&gt; other attached packages:
-#&gt;  [1] ivpack_1.2              AER_1.2-5              
-#&gt;  [3] survival_2.41-3         car_3.0-0              
-#&gt;  [5] carData_3.0-1           clubSandwich_0.3.2     
-#&gt;  [7] lmtest_0.9-36           zoo_1.8-1              
-#&gt;  [9] sandwich_2.4-0          RcppArmadillo_0.8.500.0
+#&gt;  [1] clubSandwich_0.3.2      ivpack_1.2             
+#&gt;  [3] AER_1.2-5               survival_2.41-3        
+#&gt;  [5] sandwich_2.4-0          lmtest_0.9-36          
+#&gt;  [7] zoo_1.8-1               car_3.0-0              
+#&gt;  [9] carData_3.0-1           RcppArmadillo_0.8.500.0
 #&gt; [11] RcppEigen_0.3.3.4.0     microbenchmark_1.4-4   
-#&gt; [13] estimatr_0.7.0         
+#&gt; [13] estimatr_0.8.0         
 #&gt; 
 #&gt; loaded via a namespace (and not attached):
 #&gt;  [1] zip_1.0.0         Rcpp_0.12.17      highr_0.6        
-#&gt;  [4] cellranger_1.1.0  compiler_3.5.0    pillar_1.2.3     
+#&gt;  [4] compiler_3.5.0    pillar_1.2.3      cellranger_1.1.0 
 #&gt;  [7] forcats_0.3.0     tools_3.5.0       digest_0.6.15    
 #&gt; [10] evaluate_0.10.1   tibble_1.4.2      lattice_0.20-35  
 #&gt; [13] texreg_1.36.23    rlang_0.2.1       openxlsx_4.1.0   

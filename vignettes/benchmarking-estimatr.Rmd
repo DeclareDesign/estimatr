@@ -1,5 +1,6 @@
 ---
 title: "Benchmarking estimatr"
+author: "Luke Sonnet"
 output:
   html_document:
     df_print: paged
@@ -14,11 +15,6 @@ This document benchmarks the speed of or linear regression estimator
 against other estimators. Our performance is slightly better than base R
 when using classical standard errors, but most of our improvements come
 when estimating robust standard errors.
-
-Furthermore, we provide an option in our `lm_robust()` and `lm_lin()`
-estimators, `try_cholesky`, which users should set to `TRUE` if they are
-concerned about speed and are certain their analysis does not suffer
-from perfect multicollinearity (linear dependencies).
 
 The times are milliseconds and are a median over 200 runs for all but
 the CR2 case, which was taken on a sample of 50 runs, using the
@@ -57,19 +53,19 @@ errors, `lm_robust()` can reduce your run time by a factor of 10!
 <td>500</td>
 <td>5</td>
 <td><code>estimatr::lm_robust()</code></td>
-<td>5.8</td>
-<td>7.6</strong></td>
-<td>7.5</td>
-<td><strong>13.1</strong></td>
+<td>7.9</td>
+<td>7.9</td>
+<td>7.6</td>
+<td><strong>10.6</strong></td>
 </tr>
 <tr class="even">
 <td></td>
 <td></td>
 <td>base + sandwich/clubSandwich</td>
-<td><strong>1.9</strong></td>
-<td><strong>6</strong></td>
-<td>6.6</td>
-<td>46.8</td>
+<td><strong>2.3</strong></td>
+<td><strong>5</strong></td>
+<td><strong>6.7</strong></td>
+<td>45.9</td>
 </tr>
 <tr class="odd">
 <td></td>
@@ -84,19 +80,19 @@ errors, `lm_robust()` can reduce your run time by a factor of 10!
 <td>5000</td>
 <td>5</td>
 <td><code>estimatr::lm_robust()</code></td>
-<td><strong>14.3</strong></td>
-<td><strong>19.9</strong></td>
-<td><strong>17.1</strong></td>
-<td><strong>325.8</strong></td>
+<td>18.7</td>
+<td><strong>18.8</strong></td>
+<td><strong>17.8</strong></td>
+<td><strong>317</strong></td>
 </tr>
 <tr class="odd">
 <td></td>
 <td></td>
 <td>base + sandwich/clubSandwich</td>
-<td><strong>4</strong></td>
-<td>23.2</td>
+<td><strong>6.4</strong></td>
+<td>26</td>
 <td>45.9</td>
-<td>2107.9</td>
+<td>2121.6</td>
 </tr>
 <tr class="even">
 <td></td>
@@ -111,19 +107,19 @@ errors, `lm_robust()` can reduce your run time by a factor of 10!
 <td>500</td>
 <td>50</td>
 <td><code>estimatr::lm_robust()</code></td>
-<td>21.7</td>
-<td><strong>27.1</strong></td>
-<td><strong>23.6</strong></td>
-<td><strong>260</strong></td>
+<td>24.3</strong></td>
+<td><strong>28.7</td>
+<td><strong>29.5</strong></td>
+<td><strong>269</strong></td>
 </tr>
 <tr class="even">
 <td></td>
 <td></td>
 <td>base + sandwich/clubSandwich</td>
-<td><strong>16.5</strong></td>
-<td>41.9</td>
-<td>55.9</td>
-<td>396.4</td>
+<td><strong>17.5</strong></td>
+<td>43.9</td>
+<td>69.5</td>
+<td>404.3</td>
 </tr>
 <tr class="odd">
 <td></td>
@@ -138,19 +134,19 @@ errors, `lm_robust()` can reduce your run time by a factor of 10!
 <td>5000</td>
 <td>50</td>
 <td><code>estimatr::lm_robust()</code></td>
-<td><strong>80.1</strong></td>
-<td><strong>106.7</strong></td>
-<td><strong>89.1</strong></td>
-<td><strong>8887</strong></td>
+<td><strong>80.8</strong></td>
+<td><strong>111.6</strong></td>
+<td><strong>90.5</strong></td>
+<td><strong>8464</strong></td>
 </tr>
 <tr class="odd">
 <td></td>
 <td></td>
 <td>base + sandwich/clubSandwich</td>
-<td>89.5</td>
-<td>276.3</td>
-<td>542</td>
-<td>2.710^{4}</td>
+<td>88.5</td>
+<td>287</td>
+<td>480.7</td>
+<td>2.510^{4}</td>
 </tr>
 </tbody>
 </table>
@@ -175,18 +171,18 @@ Instrumental variables regression
 <td>500</td>
 <td>5</td>
 <td><code>estimatr::iv_robust()</code></td>
-<td><strong>7.9</strong></td>
-<td><strong>9.2</strong></td>
-<td><strong>12.6</strong></td>
+<td><strong>8.2</strong></td>
+<td><strong>8.9</strong></td>
+<td><strong>11</strong></td>
 <td></td>
 </tr>
 <tr class="even">
 <td></td>
 <td></td>
 <td>AER + ivpack/clubSandwich</td>
-<td>10.3</td>
-<td>12.9</td>
-<td>61.4</td>
+<td>11.9</td>
+<td>10.1</td>
+<td>49.9</td>
 <td></td>
 </tr>
 <tr class="odd">
@@ -202,18 +198,18 @@ Instrumental variables regression
 <td>5000</td>
 <td>5</td>
 <td><code>estimatr::lm_robust()</code></td>
-<td>17.6</td>
-<td><strong>27.8</strong></td>
-<td><strong>185.1</strong></td>
+<td>17.8</td>
+<td><strong>18.9</strong></td>
+<td><strong>156.9</strong></td>
 <td></td>
 </tr>
 <tr class="odd">
 <td></td>
 <td></td>
 <td>AER + ivpack/clubSandwich</td>
-<td><strong>14.6</strong></td>
-<td>29.3</td>
-<td>2082.8</td>
+<td><strong>15.7</strong></td>
+<td>22.6</td>
+<td>1814.1</td>
 <td></td>
 </tr>
 <tr class="even">
@@ -229,18 +225,18 @@ Instrumental variables regression
 <td>500</td>
 <td>50</td>
 <td><code>estimatr::lm_robust()</code></td>
-<td><strong>24</strong></td>
-<td><strong>26.7</strong></td>
-<td><strong>74.3</strong></td>
+<td><strong>25.8</strong></td>
+<td><strong>26.1</strong></td>
+<td><strong>80.9</strong></td>
 <td></td>
 </tr>
 <tr class="even">
 <td></td>
 <td></td>
 <td>AER + ivpack/clubSandwich</td>
-<td>42.8</td>
-<td>55.3</td>
-<td>309.3</td>
+<td>46.2</td>
+<td>51.8</td>
+<td>310.3</td>
 <td></td>
 </tr>
 <tr class="odd">
@@ -256,18 +252,18 @@ Instrumental variables regression
 <td>5000</td>
 <td>50</td>
 <td><code>estimatr::lm_robust()</code></td>
-<td><strong>89.8</strong></td>
-<td><strong>120.4</strong></td>
-<td><strong>2685.6</strong></td>
+<td><strong>85.4</strong></td>
+<td><strong>93.9</strong></td>
+<td><strong>2594.4</strong></td>
 <td></td>
 </tr>
 <tr class="odd">
 <td></td>
 <td></td>
 <td>AER + ivpack/clubSandwich</td>
-<td>148.3</td>
-<td>396.8</td>
-<td>1.710^{4}</td>
+<td>144.7</td>
+<td>316.4</td>
+<td>1.610^{4}</td>
 <td></td>
 </tr>
 </tbody>
@@ -294,25 +290,13 @@ To see the exact comparisons, see below.
       }
     )
 
-First I compare to a couple other methods of the classical standard
-errors. First, let's compare against base R, RcppEigen's `fastLm()`
-function (from which we borrow much of our algorithm), and
-RcppArmadillo's `fastLm()` function.
-
-    library(RcppEigen)
-    library(RcppArmadillo)
+First, we can look at the classical standard errors case. We do a few more computations than `summary.lm` does, and have a bit more overhead.
 
     test_base <- lapply(data_list, function(dat) {
       mbo <- summary(microbenchmark(
         'lm_robust' = lm_robust(y ~ ., data = dat, se_type = "classical"),
         'base' = summary(lm(y ~ ., data = dat)),
-        'RcppEigen' = RcppEigen:::summary.fastLm(
-          RcppEigen::fastLm(y ~ ., data = dat)
-        ),
-        "RcppArmadillo" = RcppArmadillo:::summary.fastLm(
-          RcppArmadillo::fastLm(y ~ ., data = dat)
-        ),
-        times = 50L
+        times = 200L
       ),
       unit = "ms")
       return(mbo[, c("expr", "median")])
@@ -334,31 +318,17 @@ of each estimator for each of the different data sets.
 <tbody>
 <tr class="odd">
 <td align="left">lm_robust</td>
-<td align="right">6</td>
-<td align="right">14</td>
-<td align="right">22</td>
-<td align="right">80</td>
+<td align="right">8</td>
+<td align="right">19</td>
+<td align="right">24</td>
+<td align="right">81</td>
 </tr>
 <tr class="even">
 <td align="left">base</td>
 <td align="right">2</td>
-<td align="right">4</td>
-<td align="right">16</td>
-<td align="right">90</td>
-</tr>
-<tr class="odd">
-<td align="left">RcppEigen</td>
-<td align="right">2</td>
-<td align="right">5</td>
-<td align="right">12</td>
-<td align="right">90</td>
-</tr>
-<tr class="even">
-<td align="left">RcppArmadillo</td>
-<td align="right">2</td>
-<td align="right">8</td>
-<td align="right">30</td>
-<td align="right">173</td>
+<td align="right">6</td>
+<td align="right">18</td>
+<td align="right">88</td>
 </tr>
 </tbody>
 </table>
@@ -377,7 +347,7 @@ using them from the `coeftest` and `sandwich` packages.
           lmo <- lm(y ~ ., data = dat)
           coeftest(lmo, vcov = vcovHC(lmo, type = "HC2"))
         },
-        times = 50L
+        times = 200L
       ),
       unit = "ms")
       return(mbo[, c("expr", "median")])
@@ -397,16 +367,16 @@ using them from the `coeftest` and `sandwich` packages.
 <tr class="odd">
 <td align="left">lm_robust</td>
 <td align="right">8</td>
-<td align="right">20</td>
-<td align="right">27</td>
-<td align="right">107</td>
+<td align="right">19</td>
+<td align="right">29</td>
+<td align="right">112</td>
 </tr>
 <tr class="even">
 <td align="left">lm + coeftest + sandwich</td>
-<td align="right">6</td>
-<td align="right">23</td>
-<td align="right">42</td>
-<td align="right">276</td>
+<td align="right">5</td>
+<td align="right">26</td>
+<td align="right">44</td>
+<td align="right">287</td>
 </tr>
 </tbody>
 </table>
@@ -440,7 +410,7 @@ What about with Stata's clustered standard errors using `tapply` and
           lmo <- lm(y ~ ., data = dat)
           cluster_robust_se(lmo, cluster)
         },
-        times = 50L
+        times = 200L
       ),
       unit = "ms")
       return(mbo[, c("expr", "median")])
@@ -460,16 +430,16 @@ What about with Stata's clustered standard errors using `tapply` and
 <tr class="odd">
 <td align="left">lm_robust</td>
 <td align="right">8</td>
-<td align="right">17</td>
-<td align="right">24</td>
-<td align="right">89</td>
+<td align="right">18</td>
+<td align="right">30</td>
+<td align="right">90</td>
 </tr>
 <tr class="even">
 <td align="left">lm + coeftest + sandwich</td>
 <td align="right">7</td>
 <td align="right">46</td>
-<td align="right">56</td>
-<td align="right">542</td>
+<td align="right">70</td>
+<td align="right">481</td>
 </tr>
 </tbody>
 </table>
@@ -496,7 +466,7 @@ implementation is for simple linear regression.
           lmo <- lm(y ~ ., data = dat)
           coef_test(lmo, vcov = vcovCR(lmo, cluster = cluster, type = "CR2"))
         },
-        times = 20L
+        times = 50L
       ),
       unit = "ms")
       return(mbo[, c("expr", "median")])
@@ -517,17 +487,17 @@ implementation is for simple linear regression.
 <tbody>
 <tr class="odd">
 <td align="left">lm_robust</td>
-<td align="right">13</td>
-<td align="right">326</td>
-<td align="right">260</td>
-<td align="right">8887</td>
+<td align="right">11</td>
+<td align="right">317</td>
+<td align="right">269</td>
+<td align="right">8464</td>
 </tr>
 <tr class="even">
 <td align="left">lm + clubSandwich</td>
-<td align="right">47</td>
-<td align="right">2108</td>
-<td align="right">396</td>
-<td align="right">26592</td>
+<td align="right">46</td>
+<td align="right">2122</td>
+<td align="right">404</td>
+<td align="right">25266</td>
 </tr>
 </tbody>
 </table>
@@ -554,7 +524,7 @@ What about for instrumental variables?
         'AER::ivreg' = {
           ivo <- summary(ivreg(form, data = dat))
         },
-        times = 50L
+        times = 200L
       ),
       unit = "ms")
       return(mbo[, c("expr", "median")])
@@ -577,15 +547,15 @@ What about for instrumental variables?
 <td align="left">iv_robust</td>
 <td align="right">8</td>
 <td align="right">18</td>
-<td align="right">24</td>
-<td align="right">90</td>
+<td align="right">26</td>
+<td align="right">85</td>
 </tr>
 <tr class="even">
 <td align="left">AER::ivreg</td>
-<td align="right">10</td>
-<td align="right">15</td>
-<td align="right">43</td>
-<td align="right">148</td>
+<td align="right">12</td>
+<td align="right">16</td>
+<td align="right">46</td>
+<td align="right">145</td>
 </tr>
 </tbody>
 </table>
@@ -606,7 +576,7 @@ What about for instrumental variables?
         'AER::ivreg + ivpack::robust.se' = {
           ivo <- robust.se(ivreg(form, data = dat))
         },
-        times = 50L
+        times = 200L
       ),
       unit = "ms")
       return(mbo[, c("expr", "median")])
@@ -628,16 +598,16 @@ What about for instrumental variables?
 <tr class="odd">
 <td align="left">iv_robust</td>
 <td align="right">9</td>
-<td align="right">28</td>
-<td align="right">27</td>
-<td align="right">120</td>
+<td align="right">19</td>
+<td align="right">26</td>
+<td align="right">94</td>
 </tr>
 <tr class="even">
 <td align="left">AER::ivreg + ivpack::robust.se</td>
-<td align="right">13</td>
-<td align="right">29</td>
-<td align="right">55</td>
-<td align="right">397</td>
+<td align="right">10</td>
+<td align="right">23</td>
+<td align="right">52</td>
+<td align="right">316</td>
 </tr>
 </tbody>
 </table>
@@ -660,7 +630,7 @@ What about for instrumental variables?
         'AER::ivreg + clubSandwich' = {
           ivo <- clubSandwich::coef_test(ivreg(form, data = dat), cluster = cluster, vcov = "CR2")
         },
-        times = 20L
+        times = 50L
       ),
       unit = "ms")
       return(mbo[, c("expr", "median")])
@@ -681,17 +651,17 @@ What about for instrumental variables?
 <tbody>
 <tr class="odd">
 <td align="left">iv_robust</td>
-<td align="right">13</td>
-<td align="right">185</td>
-<td align="right">74</td>
-<td align="right">2686</td>
+<td align="right">11</td>
+<td align="right">157</td>
+<td align="right">81</td>
+<td align="right">2594</td>
 </tr>
 <tr class="even">
 <td align="left">AER::ivreg + clubSandwich</td>
-<td align="right">61</td>
-<td align="right">2083</td>
-<td align="right">309</td>
-<td align="right">16555</td>
+<td align="right">50</td>
+<td align="right">1814</td>
+<td align="right">310</td>
+<td align="right">15589</td>
 </tr>
 </tbody>
 </table>
@@ -712,17 +682,17 @@ What about for instrumental variables?
     #> [1] stats     graphics  grDevices utils     datasets  methods   base     
     #> 
     #> other attached packages:
-    #>  [1] ivpack_1.2              AER_1.2-5              
-    #>  [3] survival_2.41-3         car_3.0-0              
-    #>  [5] carData_3.0-1           clubSandwich_0.3.2     
-    #>  [7] lmtest_0.9-36           zoo_1.8-1              
-    #>  [9] sandwich_2.4-0          RcppArmadillo_0.8.500.0
+    #>  [1] clubSandwich_0.3.2      ivpack_1.2             
+    #>  [3] AER_1.2-5               survival_2.41-3        
+    #>  [5] sandwich_2.4-0          lmtest_0.9-36          
+    #>  [7] zoo_1.8-1               car_3.0-0              
+    #>  [9] carData_3.0-1           RcppArmadillo_0.8.500.0
     #> [11] RcppEigen_0.3.3.4.0     microbenchmark_1.4-4   
-    #> [13] estimatr_0.7.0         
+    #> [13] estimatr_0.8.0         
     #> 
     #> loaded via a namespace (and not attached):
     #>  [1] zip_1.0.0         Rcpp_0.12.17      highr_0.6        
-    #>  [4] cellranger_1.1.0  compiler_3.5.0    pillar_1.2.3     
+    #>  [4] compiler_3.5.0    pillar_1.2.3      cellranger_1.1.0 
     #>  [7] forcats_0.3.0     tools_3.5.0       digest_0.6.15    
     #> [10] evaluate_0.10.1   tibble_1.4.2      lattice_0.20-35  
     #> [13] texreg_1.36.23    rlang_0.2.1       openxlsx_4.1.0   
