@@ -1,6 +1,6 @@
 ---
 output: github_document
-tite: "estimatr: Fast Estimators for Design-Based Inference"
+title: "estimatr: Fast Estimators for Design-Based Inference"
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
