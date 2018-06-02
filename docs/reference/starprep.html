@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>All news • estimatr</title>
+<title>Prepare model fits for stargazer — starprep • estimatr</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -37,7 +37,7 @@
   </head>
 
   <body>
-    <div class="container template-news">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -123,93 +123,72 @@
       </header>
 
       <div class="row">
-
-  <div class="col-md-9">
+  <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Change log <small>All releases</small></h1>
+    <h1>Prepare model fits for stargazer</h1>
     </div>
 
-    <div class="contents">
-    <div id="estimatr-0-6-0" class="section level1">
-<h1 class="hasAnchor">
-<a href="#estimatr-0-6-0" class="anchor"></a>estimatr 0.6.0</h1>
-<ul>
-<li>Added support for absorbing fixed effects in <code>lm_robust</code> and <code>iv_robust</code>
-</li>
-<li>Added <code>commarobust</code> and <code>starprep</code> for stargazer integration</li>
-<li>Added <code>texreg</code> support for 2SLS IV models</li>
-<li>Fixed bugs for incorrect F-statistics with robust standard errors</li>
-<li>Refactor of main fitting engine for linear models</li>
-</ul>
-</div>
-    <div id="estimatr-0-6-0-1" class="section level1">
-<h1 class="hasAnchor">
-<a href="#estimatr-0-6-0-1" class="anchor"></a>estimatr 0.6.0</h1>
-<ul>
-<li>Added support for multivariate linear models</li>
-<li>Added support for instrumental variables regression</li>
-<li>Major change to name of object output elements to mostly match with <code><a href="http://www.rdocumentation.org/packages/broom/topics/tidy">broom::tidy</a></code>
-</li>
-<li>old -&gt; new</li>
-<li>
-<code>coefficient_names</code> -&gt; <code>term</code>
-</li>
-<li>
-<code>se</code> -&gt; <code>std.error</code>
-</li>
-<li>
-<code>p</code> -&gt; <code>p.values</code>
-</li>
-<li>
-<code>ci_lower</code> -&gt; <code>ci.lower</code>
-</li>
-<li>
-<code>ci_upper</code> -&gt; <code>ci.upper</code>
-</li>
-<li>All of the above changes are also made to the column names on the output of <code>tidy</code>; furthermore for <code>tidy</code> objects one further name change from <code>coefficients</code> -&gt; <code>estimate</code> has been made</li>
-<li>Fixed bug that caused variances, standard errors, and p-values to be wrong for weighted “CR2” variance estimation</li>
-<li>Fixed incorrect estimates when both weights and blocks were passed to <code>difference_in_means</code>
-</li>
-<li>Rewrite NSE handling to be done by <code>rlang</code>
-</li>
-<li>Rewrite <code>na.omit</code> handler in R</li>
-<li>Major refactor of C++ underlying regression estimators</li>
-</ul>
-</div>
-    <div id="estimatr-0-4-0" class="section level1">
-<h1 class="hasAnchor">
-<a href="#estimatr-0-4-0" class="anchor"></a>estimatr 0.4.0</h1>
-<ul>
-<li>Changed suffix added to centered variables in <code><a href="../reference/lm_lin.html">lm_lin()</a></code> from <code>_bar</code> to <code>_c</code>
-</li>
-<li>Added all vignettes to <code>.Rbuildignore</code>, only available on website now</li>
-<li>Fixed <code>lm_robust_helper.cpp</code> algorithm to not catch own exception and to deal with <code>valgrind</code> memory errors</li>
-<li>Bugfix where passing a formula as an object within a function would fail</li>
-<li>Simplified some tests for various CRAN test platforms</li>
-</ul>
-</div>
-    <div id="estimatr-0-2-0" class="section level1">
-<h1 class="hasAnchor">
-<a href="#estimatr-0-2-0" class="anchor"></a>estimatr 0.2.0</h1>
-<ul>
-<li>First <strong>CRAN</strong> upload</li>
-</ul>
-</div>
-    </div>
+    
+    <p>Prepare model fits for stargazer</p>
+    
+
+    <pre class="usage"><span class='fu'>starprep</span>(<span class='no'>...</span>, <span class='kw'>stat</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"std.error"</span>, <span class='st'>"p.value"</span>, <span class='st'>"ci"</span>, <span class='st'>"df"</span>), <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>)</pre>
+    
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>...</th>
+      <td><p>a list of lm_robust or lm objects</p></td>
+    </tr>
+    <tr>
+      <th>stat</th>
+      <td><p>either "std.error" (the default), "p.value", "ci", or "df"</p></td>
+    </tr>
+    <tr>
+      <th>se_type</th>
+      <td><p>(optional) if any of the objects are lm objects, what standard
+errors should be used. Must only be one type and will be used for all lm
+objects passed to starprep. See `commarobust` for more.</p></td>
+    </tr>
+    <tr>
+      <th>clusters</th>
+      <td><p>(optional) if any of the objects are lm objects, what clusters
+should be used, if clusters should be used. Must only be one vector and will
+be used for all lm objects passed to starprep. See `commarobust` for more.</p></td>
+    </tr>
+    <tr>
+      <th>alpha</th>
+      <td><p>(optional) if any of the objects are lm objects, what significance level
+should be used for the p-values or confidence intervals</p></td>
+    </tr>
+    </table>
+    
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>a list of vectors of extracted statistics for stargazers</p>
+    
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>Used to help extract statistics from lists of model fits for stargazer.
+Prefers lm_robust objects, but because `stargazer` does not work with `lm_robust`
+objects, `starprep` can also take `lm` objects and calls `commarobust` to get
+the preferred, robust statistics.</p>
+    
+
   </div>
-
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
-    <div id="tocnav">
-      <h2>Contents</h2>
-      <ul class="nav nav-pills nav-stacked">
-        <li><a href="#estimatr-0-6-0">0.6.0</a></li>
-        <li><a href="#estimatr-0-6-0-1">0.6.0</a></li>
-        <li><a href="#estimatr-0-4-0">0.4.0</a></li>
-        <li><a href="#estimatr-0-2-0">0.2.0</a></li>
-      </ul>
-    </div>
-  </div>
+    <h2>Contents</h2>
+    <ul class="nav nav-pills nav-stacked">
+      <li><a href="#arguments">Arguments</a></li>
+      
+      <li><a href="#value">Value</a></li>
 
+      <li><a href="#details">Details</a></li>
+          </ul>
+
+  </div>
 </div>
 
       <footer>

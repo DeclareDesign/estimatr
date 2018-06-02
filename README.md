@@ -1,26 +1,21 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-estimatr: Fast Estimators for Design-Based Inference
-====================================================
-
 [![CRAN Status](https://www.r-pkg.org/badges/version/estimatr)](cran.r-project.org/package=estimatr) [![Travis-CI Build Status](https://travis-ci.org/DeclareDesign/estimatr.svg?branch=master)](https://travis-ci.org/DeclareDesign/estimatr) [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/DeclareDesign/estimatr?branch=master&svg=true)](https://ci.appveyor.com/project/DeclareDesign/estimatr) [![Coverage Status](https://coveralls.io/repos/github/DeclareDesign/estimatr/badge.svg?branch=master)](https://coveralls.io/github/DeclareDesign/estimatr?branch=master)
 
-Technical papers and textbooks demand complex estimation strategies that are often difficult to implement, even for scientists who are expert coders. The result is slow code copied and pasted from the internet, where the result is taken on faith.
+**estimatr** is an `R` package providing a range of commonly-used linear estimators, designed for speed and for ease-of-use. Users can easily recover robust, cluster-robust, and other design appropriate estimates. We include two functions that implement means estimators, `difference_in_means()` and `horvitz_thompson()`, and three linear regression estimators, `lm_robust()`, `lm_lin()`, and `iv_robust()`. In each case, users can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs. The [Getting Started Guide](articles/getting-started.html) describes each estimator provided by **estimatr** and how it can be used in your analysis.
 
-**estimatr** provides a small set of commonly-used estimators (methods for estimating quantities of interest like treatment effects or regression parameters), using `C++` for speed, and implemented in `R` with simple, accessible syntax. We include two functions that implement means estimators, `difference_in_means()` and `horvitz_thompson()`. In addition, we include three functions for linear regression estimators, `lm_robust()`, `lm_lin()`, and `iv_robust()`. In each case, scientists can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs. The [Getting Started Guide](articles/getting-started.html) describes each estimator provided by **estimatr** and how it can be used in your analysis.
-
-Fast estimators also enable fast simulation of research designs to learn about their properties (see [DeclareDesign](declaredesign.org)).
+You can also see the multiple ways you can [get regression tables out of estimatr](articles/regression-tables.html) using commonly used `R` packages such as `texreg` and `stargazer`. Fast estimators also enable fast simulation of research designs to learn about their properties (see [DeclareDesign](declaredesign.org)).
 
 Installing estimatr
 -------------------
 
-To install the latest stable release of **estimatr**, please ensure that you are running version 3.3 or later of R and run the following code:
+To install the latest stable release of **estimatr**, please ensure that you are running version 3.4 or later of R and run the following code:
 
 ``` r
 install.packages("estimatr")
 ```
 
-If you would like to use the latest development release of **estimatr**, please ensure that you are running version 3.3 or later of R and run the following code:
+If you would like to use the latest development release of **estimatr**, please ensure that you are running version 3.4 or later of R and run the following code:
 
 ``` r
 install.packages("estimatr", dependencies = TRUE,
@@ -37,9 +32,7 @@ library(estimatr)
 
 # sample data from cluster-randomized experiment
 library(fabricatr)
-#> Warning: package 'fabricatr' was built under R version 3.4.4
 library(randomizr)
-#> Warning: package 'randomizr' was built under R version 3.4.4
 dat <- fabricate(
   N = 100,
   y = rnorm(N),
@@ -65,7 +58,7 @@ summary(res_cl)
 #> z             -0.422      0.250     0.14   -1.027    0.182 6.30
 #> 
 #> Multiple R-squared:  0.041 , Adjusted R-squared:  0.0312 
-#> F-statistic: 4.18 on 1 and 98 DF,  p-value: 0.0435
+#> F-statistic: 2.86 on 1 and 9 DF,  p-value: 0.125
 
 # matched-pair design learned from blocks argument
 data(sleep)
@@ -77,23 +70,33 @@ The [Getting Started Guide](articles/getting-started.html) has more examples and
 Fast to use
 -----------
 
-Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using `lm()` and the `sandwich` package to get HC2 standard errors. More speed comparisons are available [here](articles/benchmarking-estimatr.html).
+Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using `lm()` and the `sandwich` package to get HC2 standard errors. More speed comparisons are available [here](articles/benchmarking-estimatr.html). Furthermore, with many blocks (or fixed effects), users can use the `fixed_effects` argument of `lm_robust` with HC1 standard errors to greatly improve estimation speed. More on [fixed effects here](articles/absorbing-fixed-effects.html).
 
 ``` r
-# example code
-# estimatr
-lm_robust(y ~ x1 + x2 + x3 + x4, data = dat)
+dat <- data.frame(X = matrix(rnorm(2000*50), 2000), y = rnorm(2000))
 
-# usual specification (lm + sandwich)
+library(microbenchmark)
 library(lmtest)
+#> Loading required package: zoo
+#> 
+#> Attaching package: 'zoo'
+#> The following objects are masked from 'package:base':
+#> 
+#>     as.Date, as.Date.numeric
 library(sandwich)
-lm_out <- lm(y ~ x1 + x2 + x3 + x4, data = dat)
-coeftest(lm_out, vcov = vcovHC(lm_out, type = 'HC2'))
+mb <- microbenchmark(
+  `estimatr` = lm_robust(y ~ ., data = dat),
+  `lm + sandwich` = {
+    lo <- lm(y ~ ., data = dat)
+    coeftest(lo, vcov = vcovHC(lo, type = 'HC2'))
+  }
+)
 ```
 
-![](vignettes/lm_speed.png)
-
-![](vignettes/lm_speed_covars.png)
+| estimatr      |  median run-time (ms)|
+|:--------------|---------------------:|
+| estimatr      |                    22|
+| lm + sandwich |                    44|
 
 ------------------------------------------------------------------------
 

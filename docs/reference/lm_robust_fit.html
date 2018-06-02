@@ -132,9 +132,10 @@
     <p>Internal method that creates linear fits</p>
     
 
-    <pre class="usage"><span class='fu'>lm_robust_fit</span>(<span class='no'>y</span>, <span class='no'>X</span>, <span class='no'>weights</span>, <span class='no'>cluster</span>, <span class='no'>ci</span>, <span class='no'>se_type</span>, <span class='no'>has_int</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>,
-  <span class='kw'>return_vcov</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>return_fit</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>return_unweighted_fit</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>try_cholesky</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>X_first_stage</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+    <pre class="usage"><span class='fu'>lm_robust_fit</span>(<span class='no'>y</span>, <span class='no'>X</span>, <span class='kw'>yoriginal</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>Xoriginal</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>weights</span>, <span class='no'>cluster</span>,
+  <span class='kw'>fixed_effects</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='no'>se_type</span>, <span class='no'>has_int</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>,
+  <span class='kw'>return_vcov</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>return_fit</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>try_cholesky</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>iv_stage</span> <span class='kw'>=</span> <span class='fu'>list</span>(<span class='fl'>0</span>))</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -148,12 +149,24 @@
       <td><p>numeric design matrix</p></td>
     </tr>
     <tr>
+      <th>yoriginal</th>
+      <td><p>numeric outcome vector, unprojected if there are fixed effects</p></td>
+    </tr>
+    <tr>
+      <th>Xoriginal</th>
+      <td><p>numeric design matrix, unprojected if there are fixed effects</p></td>
+    </tr>
+    <tr>
       <th>weights</th>
       <td><p>numeric weights vector</p></td>
     </tr>
     <tr>
       <th>cluster</th>
       <td><p>numeric cluster vector</p></td>
+    </tr>
+    <tr>
+      <th>fixed_effects</th>
+      <td><p>character matrix of fixed effect groups</p></td>
     </tr>
     <tr>
       <th>ci</th>
@@ -180,16 +193,12 @@
       <td><p>logical, whether to return fitted values</p></td>
     </tr>
     <tr>
-      <th>return_unweighted_fit</th>
-      <td><p>logical, whether to return unweighted fitted values in place of weighted fitted values if regression is weighted</p></td>
-    </tr>
-    <tr>
       <th>try_cholesky</th>
       <td><p>logical, whether to try using a cholesky decomposition to solve LS instead of a QR decomposition</p></td>
     </tr>
     <tr>
-      <th>X_first_stage</th>
-      <td><p>numeric matrix of the first stage design matrix, only use for second stage of 2SLS IV regression, otherwise leave as <code>NULL</code></p></td>
+      <th>iv_stage</th>
+      <td><p>list of length two, the first element denotes the stage of 2SLS IV estimation, where 0 is used for OLS. The second element is only used for the second stage of 2SLS and has the first stage design matrix. For OLS, the default, <code>list(0)</code>, for the first stage of 2SLS <code>list(1)</code>, for second stage of 2SLS <code>list(2, first_stage_design_mat)</code>.</p></td>
     </tr>
     </table>
     

@@ -111,7 +111,7 @@
     
 <div class="contents">
 <p>We built <code>estimatr</code> to provide accurate standard errors <strong>quickly</strong>. This document benchmarks the speed of or linear regression estimator against other estimators. Our performance is slightly better than base R when using classical standard errors, but most of our improvements come when estimating robust standard errors.</p>
-<p>Furthermore, we provide an option in our <code><a href="../reference/lm_robust.html">lm_robust()</a></code> and <code><a href="../reference/lm_lin.html">lm_lin()</a></code> estimators, <code>try_cholesky</code>, which users should set to <code>TRUE</code> if they are concerned about speed and are certain their analysis does not suffer from perfect multicollinearity (linear dependencies).</p>
+<p>The times are milliseconds and are a median over 200 runs for all but the CR2 case, which was taken on a sample of 50 runs, using the <code>microbenchmark</code> package. This benchmarking was done on a 2017 MacBook Air, with a 1.8 GHz Intel Core i5 CPU and 8 GB of memory.</p>
 <div id="linear-regression" class="section level1">
 <h1 class="hasAnchor">
 <a href="#linear-regression" class="anchor"></a>Linear regression</h1>
@@ -152,16 +152,16 @@ CR2 SEs
 <code><a href="http://www.rdocumentation.org/packages/estimatr/topics/lm_robust">estimatr::lm_robust()</a></code>
 </td>
 <td>
-1.9
+7.9
 </td>
 <td>
-<strong>2.3</strong>
+7.9
 </td>
 <td>
-<strong>2</strong>
+7.6
 </td>
 <td>
-<strong>6</strong>
+<strong>10.6</strong>
 </td>
 </tr>
 <tr class="even">
@@ -173,16 +173,16 @@ CR2 SEs
 base + sandwich/clubSandwich
 </td>
 <td>
-<strong>1.7</strong>
+<strong>2.3</strong>
 </td>
 <td>
-5.2
+<strong>5</strong>
 </td>
 <td>
-4.4
+<strong>6.7</strong>
 </td>
 <td>
-66
+45.9
 </td>
 </tr>
 <tr class="odd">
@@ -212,16 +212,16 @@ base + sandwich/clubSandwich
 <code><a href="http://www.rdocumentation.org/packages/estimatr/topics/lm_robust">estimatr::lm_robust()</a></code>
 </td>
 <td>
-<strong>4.6</strong>
+18.7
 </td>
 <td>
-<strong>7.9</strong>
+<strong>18.8</strong>
 </td>
 <td>
-<strong>7.8</strong>
+<strong>17.8</strong>
 </td>
 <td>
-<strong>172</strong>
+<strong>317</strong>
 </td>
 </tr>
 <tr class="odd">
@@ -233,16 +233,16 @@ base + sandwich/clubSandwich
 base + sandwich/clubSandwich
 </td>
 <td>
-<strong>4.6</strong>
+<strong>6.4</strong>
 </td>
 <td>
-22.4
+26
 </td>
 <td>
-21.7
+45.9
 </td>
 <td>
-2268
+2121.6
 </td>
 </tr>
 <tr class="even">
@@ -272,16 +272,17 @@ base + sandwich/clubSandwich
 <code><a href="http://www.rdocumentation.org/packages/estimatr/topics/lm_robust">estimatr::lm_robust()</a></code>
 </td>
 <td>
-<strong>5.8</strong>
+24.3
 </td>
 <td>
-<strong>8.2</strong>
+<strong>28.7
+</strong>
 </td>
 <td>
-<strong>8.2</strong>
+<strong>29.5</strong>
 </td>
 <td>
-<strong>62</strong>
+<strong>269</strong>
 </td>
 </tr>
 <tr class="even">
@@ -293,16 +294,16 @@ base + sandwich/clubSandwich
 base + sandwich/clubSandwich
 </td>
 <td>
-6.7
+<strong>17.5</strong>
 </td>
 <td>
-20.2
+43.9
 </td>
 <td>
-29.2
+69.5
 </td>
 <td>
-160
+404.3
 </td>
 </tr>
 <tr class="odd">
@@ -332,16 +333,16 @@ base + sandwich/clubSandwich
 <code><a href="http://www.rdocumentation.org/packages/estimatr/topics/lm_robust">estimatr::lm_robust()</a></code>
 </td>
 <td>
-<strong>26.3</strong>
+<strong>80.8</strong>
 </td>
 <td>
-<strong>41.9</strong>
+<strong>111.6</strong>
 </td>
 <td>
-<strong>55</strong>
+<strong>90.5</strong>
 </td>
 <td>
-<strong>2504</strong>
+<strong>8464</strong>
 </td>
 </tr>
 <tr class="odd">
@@ -353,21 +354,270 @@ base + sandwich/clubSandwich
 base + sandwich/clubSandwich
 </td>
 <td>
-32.2
+88.5
 </td>
 <td>
-114.8
+287
 </td>
 <td>
-253.8
+480.7
 </td>
 <td>
-10166
+2.510^{4}
 </td>
 </tr>
 </tbody>
 </table>
-<p>The times are milliseconds and are a median over 200 runs for all but the CR2 case, which was taken on a sample of 50 runs, using the <code>microbenchmark</code> package. This benchmarking was done on a 2017 MacBook Air, with a 1.8 GHz Intel Core i5 CPU and 8 GB of memory.</p>
+</div>
+<div id="instrumental-variables-regression" class="section level1">
+<h1 class="hasAnchor">
+<a href="#instrumental-variables-regression" class="anchor"></a>Instrumental variables regression</h1>
+<table class="table">
+<thead><tr class="header">
+<th>
+N. Obs
+</th>
+<th>
+N. Coefs
+</th>
+<th>
+Estimator
+</th>
+<th>
+Classical SEs
+</th>
+<th>
+HC0 SEs
+</th>
+<th>
+CR2 SEs
+</th>
+<th>
+</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>
+500
+</td>
+<td>
+5
+</td>
+<td>
+<code><a href="http://www.rdocumentation.org/packages/estimatr/topics/iv_robust">estimatr::iv_robust()</a></code>
+</td>
+<td>
+<strong>8.2</strong>
+</td>
+<td>
+<strong>8.9</strong>
+</td>
+<td>
+<strong>11</strong>
+</td>
+<td>
+</td>
+</tr>
+<tr class="even">
+<td>
+</td>
+<td>
+</td>
+<td>
+AER + ivpack/clubSandwich
+</td>
+<td>
+11.9
+</td>
+<td>
+10.1
+</td>
+<td>
+49.9
+</td>
+<td>
+</td>
+</tr>
+<tr class="odd">
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr class="even">
+<td>
+5000
+</td>
+<td>
+5
+</td>
+<td>
+<code><a href="http://www.rdocumentation.org/packages/estimatr/topics/lm_robust">estimatr::lm_robust()</a></code>
+</td>
+<td>
+17.8
+</td>
+<td>
+<strong>18.9</strong>
+</td>
+<td>
+<strong>156.9</strong>
+</td>
+<td>
+</td>
+</tr>
+<tr class="odd">
+<td>
+</td>
+<td>
+</td>
+<td>
+AER + ivpack/clubSandwich
+</td>
+<td>
+<strong>15.7</strong>
+</td>
+<td>
+22.6
+</td>
+<td>
+1814.1
+</td>
+<td>
+</td>
+</tr>
+<tr class="even">
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr class="odd">
+<td>
+500
+</td>
+<td>
+50
+</td>
+<td>
+<code><a href="http://www.rdocumentation.org/packages/estimatr/topics/lm_robust">estimatr::lm_robust()</a></code>
+</td>
+<td>
+<strong>25.8</strong>
+</td>
+<td>
+<strong>26.1</strong>
+</td>
+<td>
+<strong>80.9</strong>
+</td>
+<td>
+</td>
+</tr>
+<tr class="even">
+<td>
+</td>
+<td>
+</td>
+<td>
+AER + ivpack/clubSandwich
+</td>
+<td>
+46.2
+</td>
+<td>
+51.8
+</td>
+<td>
+310.3
+</td>
+<td>
+</td>
+</tr>
+<tr class="odd">
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr class="even">
+<td>
+5000
+</td>
+<td>
+50
+</td>
+<td>
+<code><a href="http://www.rdocumentation.org/packages/estimatr/topics/lm_robust">estimatr::lm_robust()</a></code>
+</td>
+<td>
+<strong>85.4</strong>
+</td>
+<td>
+<strong>93.9</strong>
+</td>
+<td>
+<strong>2594.4</strong>
+</td>
+<td>
+</td>
+</tr>
+<tr class="odd">
+<td>
+</td>
+<td>
+</td>
+<td>
+AER + ivpack/clubSandwich
+</td>
+<td>
+144.7
+</td>
+<td>
+316.4
+</td>
+<td>
+1.610^{4}
+</td>
+<td>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="code-that-generated-these-data" class="section level1">
+<h1 class="hasAnchor">
+<a href="#code-that-generated-these-data" class="anchor"></a>Code that generated these data</h1>
 <p>To see the exact comparisons, see below.</p>
 <pre><code>library(estimatr)
 library(microbenchmark)
@@ -384,20 +634,11 @@ data_list &lt;- lapply(
     return(data.frame(y, X))
   }
 )</code></pre>
-<p>First I compare to a couple other methods of the classical standard errors. First, let’s compare against base R, RcppEigen’s <code>fastLm()</code> function (from which we borrow much of our algorithm), and RcppArmadillo’s <code>fastLm()</code> function.</p>
-<pre><code>library(RcppEigen)
-library(RcppArmadillo)
-
-test_base &lt;- lapply(data_list, function(dat) {
+<p>First, we can look at the classical standard errors case. We do a few more computations than <code>summary.lm</code> does, and have a bit more overhead.</p>
+<pre><code>test_base &lt;- lapply(data_list, function(dat) {
   mbo &lt;- summary(microbenchmark(
     'lm_robust' = lm_robust(y ~ ., data = dat, se_type = "classical"),
     'base' = summary(lm(y ~ ., data = dat)),
-    'RcppEigen' = RcppEigen:::summary.fastLm(
-      RcppEigen::fastLm(y ~ ., data = dat)
-    ),
-    "RcppArmadillo" = RcppArmadillo:::summary.fastLm(
-      RcppArmadillo::fastLm(y ~ ., data = dat)
-    ),
     times = 200L
   ),
   unit = "ms")
@@ -428,16 +669,16 @@ N=500, P=50
 lm_robust
 </td>
 <td align="right">
-2
+8
 </td>
 <td align="right">
-5
+19
 </td>
 <td align="right">
-6
+24
 </td>
 <td align="right">
-26
+81
 </td>
 </tr>
 <tr class="even">
@@ -448,47 +689,13 @@ base
 2
 </td>
 <td align="right">
-5
-</td>
-<td align="right">
-7
-</td>
-<td align="right">
-32
-</td>
-</tr>
-<tr class="odd">
-<td align="left">
-RcppEigen
-</td>
-<td align="right">
-1
-</td>
-<td align="right">
-5
-</td>
-<td align="right">
 6
 </td>
 <td align="right">
-32
-</td>
-</tr>
-<tr class="even">
-<td align="left">
-RcppArmadillo
+18
 </td>
 <td align="right">
-2
-</td>
-<td align="right">
-6
-</td>
-<td align="right">
-10
-</td>
-<td align="right">
-54
+88
 </td>
 </tr>
 </tbody>
@@ -533,16 +740,16 @@ N=500, P=50
 lm_robust
 </td>
 <td align="right">
-2
-</td>
-<td align="right">
 8
 </td>
 <td align="right">
-8
+19
 </td>
 <td align="right">
-42
+29
+</td>
+<td align="right">
+112
 </td>
 </tr>
 <tr class="even">
@@ -553,13 +760,13 @@ lm + coeftest + sandwich
 5
 </td>
 <td align="right">
-22
+26
 </td>
 <td align="right">
-20
+44
 </td>
 <td align="right">
-115
+287
 </td>
 </tr>
 </tbody>
@@ -620,16 +827,16 @@ N=500, P=50
 lm_robust
 </td>
 <td align="right">
-2
-</td>
-<td align="right">
 8
 </td>
 <td align="right">
-8
+18
 </td>
 <td align="right">
-55
+30
+</td>
+<td align="right">
+90
 </td>
 </tr>
 <tr class="even">
@@ -637,16 +844,16 @@ lm_robust
 lm + coeftest + sandwich
 </td>
 <td align="right">
-4
+7
 </td>
 <td align="right">
-22
+46
 </td>
 <td align="right">
-29
+70
 </td>
 <td align="right">
-254
+481
 </td>
 </tr>
 </tbody>
@@ -698,16 +905,16 @@ N=500, P=50
 lm_robust
 </td>
 <td align="right">
-6
+11
 </td>
 <td align="right">
-173
+317
 </td>
 <td align="right">
-62
+269
 </td>
 <td align="right">
-2504
+8464
 </td>
 </tr>
 <tr class="even">
@@ -715,28 +922,269 @@ lm_robust
 lm + clubSandwich
 </td>
 <td align="right">
-66
+46
 </td>
 <td align="right">
-2268
+2122
 </td>
 <td align="right">
-160
+404
 </td>
 <td align="right">
-10166
+25266
+</td>
+</tr>
+</tbody>
+</table>
+<p>What about for instrumental variables?</p>
+<pre><code>library(AER)
+library(ivpack)
+library(clubSandwich)
+
+test_iv &lt;- lapply(data_list, function(dat) {
+  form &lt;- as.formula(paste0(
+    "y ~ ",
+    paste(names(dat)[substr(names(dat), 1, 1) == "X"], collapse = " + "),
+    " | ",
+    paste(names(dat)[substr(names(dat), 1, 1) == "Z"], collapse = " + ")
+  ))
+  mbo &lt;- summary(microbenchmark(
+    'iv_robust' = iv_robust(
+      form, 
+      data = dat,
+      se_type = "classical"
+    ),
+    'AER::ivreg' = {
+      ivo &lt;- summary(ivreg(form, data = dat))
+    },
+    times = 200L
+  ),
+  unit = "ms")
+  return(mbo[, c("expr", "median")])
+})
+
+knitr::kable(create_tab(test_iv), col.names = col_names)</code></pre>
+<table class="table">
+<thead><tr class="header">
+<th align="left">
+Estimator
+</th>
+<th align="right">
+N=500, P=5
+</th>
+<th align="right">
+N=500, P=50
+</th>
+<th align="right">
+N=5000, P=5
+</th>
+<th align="right">
+N=500, P=50
+</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">
+iv_robust
+</td>
+<td align="right">
+8
+</td>
+<td align="right">
+18
+</td>
+<td align="right">
+26
+</td>
+<td align="right">
+85
+</td>
+</tr>
+<tr class="even">
+<td align="left">
+AER::ivreg
+</td>
+<td align="right">
+12
+</td>
+<td align="right">
+16
+</td>
+<td align="right">
+46
+</td>
+<td align="right">
+145
+</td>
+</tr>
+</tbody>
+</table>
+<pre><code>test_iv_rob &lt;- lapply(data_list, function(dat) {
+  form &lt;- as.formula(paste0(
+    "y ~ ",
+    paste(names(dat)[substr(names(dat), 1, 1) == "X"], collapse = " + "),
+    " | ",
+    paste(names(dat)[substr(names(dat), 1, 1) == "Z"], collapse = " + ")
+  ))
+  mbo &lt;- summary(microbenchmark(
+    'iv_robust' = iv_robust(
+      form, 
+      data = dat,
+      se_type = "HC0"
+    ),
+    'AER::ivreg + ivpack::robust.se' = {
+      ivo &lt;- robust.se(ivreg(form, data = dat))
+    },
+    times = 200L
+  ),
+  unit = "ms")
+  return(mbo[, c("expr", "median")])
+})
+
+knitr::kable(create_tab(test_iv_rob), col.names = col_names)</code></pre>
+<table class="table">
+<thead><tr class="header">
+<th align="left">
+Estimator
+</th>
+<th align="right">
+N=500, P=5
+</th>
+<th align="right">
+N=500, P=50
+</th>
+<th align="right">
+N=5000, P=5
+</th>
+<th align="right">
+N=500, P=50
+</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">
+iv_robust
+</td>
+<td align="right">
+9
+</td>
+<td align="right">
+19
+</td>
+<td align="right">
+26
+</td>
+<td align="right">
+94
+</td>
+</tr>
+<tr class="even">
+<td align="left">
+AER::ivreg + ivpack::robust.se
+</td>
+<td align="right">
+10
+</td>
+<td align="right">
+23
+</td>
+<td align="right">
+52
+</td>
+<td align="right">
+316
+</td>
+</tr>
+</tbody>
+</table>
+<pre><code>test_iv_cl &lt;- lapply(data_list, function(dat) {
+  cluster &lt;- sample(nrow(dat)/5, size = nrow(dat), replace = TRUE)
+  form &lt;- as.formula(paste0(
+    "y ~ ",
+    paste(names(dat)[substr(names(dat), 1, 1) == "X"], collapse = " + "),
+    " | ",
+    paste(names(dat)[substr(names(dat), 1, 1) == "Z"], collapse = " + ")
+  ))
+  mbo &lt;- summary(microbenchmark(
+    'iv_robust' = iv_robust(
+      form, 
+      data = dat,
+      clusters = cluster,
+      se_type = "CR2"
+    ),
+    'AER::ivreg + clubSandwich' = {
+      ivo &lt;- clubSandwich::coef_test(ivreg(form, data = dat), cluster = cluster, vcov = "CR2")
+    },
+    times = 50L
+  ),
+  unit = "ms")
+  return(mbo[, c("expr", "median")])
+})
+
+knitr::kable(create_tab(test_iv_cl), col.names = col_names)</code></pre>
+<table class="table">
+<thead><tr class="header">
+<th align="left">
+Estimator
+</th>
+<th align="right">
+N=500, P=5
+</th>
+<th align="right">
+N=500, P=50
+</th>
+<th align="right">
+N=5000, P=5
+</th>
+<th align="right">
+N=500, P=50
+</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">
+iv_robust
+</td>
+<td align="right">
+11
+</td>
+<td align="right">
+157
+</td>
+<td align="right">
+81
+</td>
+<td align="right">
+2594
+</td>
+</tr>
+<tr class="even">
+<td align="left">
+AER::ivreg + clubSandwich
+</td>
+<td align="right">
+50
+</td>
+<td align="right">
+1814
+</td>
+<td align="right">
+310
+</td>
+<td align="right">
+15589
 </td>
 </tr>
 </tbody>
 </table>
 <pre><code>sessionInfo()
-#&gt; R version 3.4.3 (2017-11-30)
-#&gt; Platform: x86_64-apple-darwin14.5.0 (64-bit)
-#&gt; Running under: OS X Yosemite 10.10.5
+#&gt; R version 3.5.0 (2018-04-23)
+#&gt; Platform: x86_64-apple-darwin15.6.0 (64-bit)
+#&gt; Running under: macOS High Sierra 10.13.3
 #&gt; 
 #&gt; Matrix products: default
-#&gt; BLAS: /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib
-#&gt; LAPACK: /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libLAPACK.dylib
+#&gt; BLAS: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRblas.0.dylib
+#&gt; LAPACK: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRlapack.dylib
 #&gt; 
 #&gt; locale:
 #&gt; [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -744,11 +1192,28 @@ lm + clubSandwich
 #&gt; attached base packages:
 #&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     
 #&gt; 
+#&gt; other attached packages:
+#&gt;  [1] clubSandwich_0.3.2      ivpack_1.2             
+#&gt;  [3] AER_1.2-5               survival_2.41-3        
+#&gt;  [5] sandwich_2.4-0          lmtest_0.9-36          
+#&gt;  [7] zoo_1.8-1               car_3.0-0              
+#&gt;  [9] carData_3.0-1           RcppArmadillo_0.8.500.0
+#&gt; [11] RcppEigen_0.3.3.4.0     microbenchmark_1.4-4   
+#&gt; [13] estimatr_0.8.0         
+#&gt; 
 #&gt; loaded via a namespace (and not attached):
-#&gt;  [1] compiler_3.4.3  backports_1.1.2 magrittr_1.5    rprojroot_1.3-2
-#&gt;  [5] tools_3.4.3     htmltools_0.3.6 yaml_2.1.15     Rcpp_0.12.15   
-#&gt;  [9] stringi_1.1.6   rmarkdown_1.8   highr_0.6       knitr_1.17     
-#&gt; [13] stringr_1.2.0   digest_0.6.14   evaluate_0.10.1</code></pre>
+#&gt;  [1] zip_1.0.0         Rcpp_0.12.17      highr_0.6        
+#&gt;  [4] compiler_3.5.0    pillar_1.2.3      cellranger_1.1.0 
+#&gt;  [7] forcats_0.3.0     tools_3.5.0       digest_0.6.15    
+#&gt; [10] evaluate_0.10.1   tibble_1.4.2      lattice_0.20-35  
+#&gt; [13] texreg_1.36.23    rlang_0.2.1       openxlsx_4.1.0   
+#&gt; [16] Matrix_1.2-14     curl_3.2          yaml_2.1.19      
+#&gt; [19] haven_1.1.1       rio_0.5.10        stringr_1.3.1    
+#&gt; [22] knitr_1.20        rprojroot_1.3-2   grid_3.5.0       
+#&gt; [25] data.table_1.11.4 readxl_1.1.0      foreign_0.8-70   
+#&gt; [28] rmarkdown_1.9     Formula_1.2-3     magrittr_1.5     
+#&gt; [31] codetools_0.2-15  splines_3.5.0     backports_1.1.2  
+#&gt; [34] htmltools_0.3.6   abind_1.4-5       stringi_1.2.2</code></pre>
 </div>
 </div>
   </div>
@@ -759,6 +1224,8 @@ lm + clubSandwich
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
 <li><a href="#linear-regression">Linear regression</a></li>
+      <li><a href="#instrumental-variables-regression">Instrumental variables regression</a></li>
+      <li><a href="#code-that-generated-these-data">Code that generated these data</a></li>
       </ul>
 </div>
       </div>
