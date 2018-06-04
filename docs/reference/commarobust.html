@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Function reference • estimatr</title>
+<title>Build lm_robust object from lm fit — commarobust • estimatr</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -37,7 +37,7 @@
   </head>
 
   <body>
-    <div class="container template-reference-index">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -141,144 +141,78 @@
       </header>
 
       <div class="row">
-  <div class="col-md-9">
+  <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>
-        Reference
-        <small>version&nbsp;0.8.0</small>
-      </h1>
+    <h1>Build lm_robust object from lm fit</h1>
     </div>
 
-    <div class="contents">
-      <table class="ref-index">
+    
+    <p>Build lm_robust object from lm fit</p>
+    
 
-      <colgroup>
-        <col class="alias" />
-        <col class="title" />
-      </colgroup>
+    <pre class="usage"><span class='fu'>commarobust</span>(<span class='no'>model</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>)</pre>
+    
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>model</th>
+      <td><p>an lm model object</p></td>
+    </tr>
+    <tr>
+      <th>se_type</th>
+      <td><p>The sort of standard error sought. If `clusters` is
+not specified the options are "HC0", "HC1" (or "stata", the equivalent),
+"HC2" (default), "HC3", or "classical". If `clusters` is specified the
+options are "CR0", "CR2" (default), or "stata". Can also specify "none",
+which may speed up estimation of the coefficients.</p></td>
+    </tr>
+    <tr>
+      <th>clusters</th>
+      <td><p>A vector corresponding to the clusters in the data.</p></td>
+    </tr>
+    <tr>
+      <th>ci</th>
+      <td><p>logical. Whether to compute and return p-values and confidence
+intervals, TRUE by default.</p></td>
+    </tr>
+    <tr>
+      <th>alpha</th>
+      <td><p>The significance level, 0.05 by default.</p></td>
+    </tr>
+    </table>
+    
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-      <tbody>
-        <tr>
-          <th colspan="2">
-            <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
-            <p class="section-desc"></p>
-          </th>
-        </tr>
-        <tr>
-          <!--  -->
-          <td>
-            <p><code><a href="alo_star_men.html">alo_star_men</a></code> </p>
-          </td>
-          <td><p>Replication data for Lin 2013</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="commarobust.html">commarobust</a></code> </p>
-          </td>
-          <td><p>Build lm_robust object from lm fit</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="declaration_to_condition_pr_mat.html">declaration_to_condition_pr_mat</a></code> </p>
-          </td>
-          <td><p>Builds condition probability matrices for Horvitz-Thompson estimation from
-<span class="pkg">randomizr</span> declaration</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="difference_in_means.html">difference_in_means</a></code> </p>
-          </td>
-          <td><p>Design-based difference-in-means estimator</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="estimatr.html">estimatr</a></code> </p>
-          </td>
-          <td><p>estimatr</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="extract.lm_robust.html">extract.robust_default</a></code> <code><a href="extract.lm_robust.html">extract.lm_robust</a></code> <code><a href="extract.lm_robust.html">extract.iv_robust</a></code> </p>
-          </td>
-          <td><p>Extract model data for <span class="pkg">texreg</span> package</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="gen_pr_matrix_cluster.html">gen_pr_matrix_cluster</a></code> </p>
-          </td>
-          <td><p>Generate condition probability matrix given clusters and probabilities</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="horvitz_thompson.html">horvitz_thompson</a></code> </p>
-          </td>
-          <td><p>Horvitz-Thompson estimator for two-armed trials</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="iv_robust.html">iv_robust</a></code> </p>
-          </td>
-          <td><p>Two-Stage Least Squares Instrumental Variables Regression</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="lm_lin.html">lm_lin</a></code> </p>
-          </td>
-          <td><p>Linear regression with the Lin (2013) covariate adjustment</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="lm_robust_fit.html">lm_robust_fit</a></code> </p>
-          </td>
-          <td><p>Internal method that creates linear fits</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="lm_robust.html">lm_robust</a></code> </p>
-          </td>
-          <td><p>Ordinary Least Squares with Robust Standard Errors</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="na.omit_detailed.data.frame.html">na.omit_detailed.data.frame</a></code> </p>
-          </td>
-          <td><p>Extra logging on na.omit handler</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="permutations_to_condition_pr_mat.html">permutations_to_condition_pr_mat</a></code> </p>
-          </td>
-          <td><p>Builds condition probability matrices for Horvitz-Thompson estimation from
-permutation matrix</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="predict.lm_robust.html">predict</a></code> </p>
-          </td>
-          <td><p>Predict method for <code>lm_robust</code> object</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="starprep.html">starprep</a></code> </p>
-          </td>
-          <td><p>Prepare model fits for stargazer</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="tidy.html">tidy</a></code> </p>
-          </td>
-          <td><p>Tidy the result of an estimator into a data.frame</p></td>
-        </tr>
-      </tbody>
-      </table>
-    </div>
+    <p>an <code><a href='lm_robust.html'>lm_robust</a></code> object.</p>
+    
+
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='no'>lmo</span> <span class='kw'>&lt;-</span> <span class='fu'>lm</span>(<span class='no'>mpg</span> ~ <span class='no'>hp</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>mtcars</span>)
+
+<span class='co'># Default HC2</span>
+<span class='fu'>commarobust</span>(<span class='no'>lmo</span>)</div><div class='output co'>#&gt;                Estimate Std. Error    Pr(&gt;|t|)    CI Lower    CI Upper DF
+#&gt; (Intercept) 30.09886054 2.19301194 1.81366e-14 25.62013267 34.57758841 30
+#&gt; hp          -0.06822828 0.01471473 6.48546e-05 -0.09827977 -0.03817678 30</div><div class='input'>
+<span class='fu'>commarobust</span>(<span class='no'>lmo</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"HC3"</span>)</div><div class='output co'>#&gt;                Estimate Std. Error     Pr(&gt;|t|)   CI Lower    CI Upper DF
+#&gt; (Intercept) 30.09886054 2.41006671 2.044330e-13 25.1768477 35.02087341 30
+#&gt; hp          -0.06822828 0.01660193 2.822529e-04 -0.1021339 -0.03432261 30</div><div class='input'>
+<span class='fu'>commarobust</span>(<span class='no'>lmo</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"stata"</span>, <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>mtcars</span>$<span class='no'>carb</span>)</div><div class='output co'>#&gt;                Estimate Std. Error     Pr(&gt;|t|)   CI Lower    CI Upper DF
+#&gt; (Intercept) 30.09886054 2.15609050 3.390807e-05 24.5564535 35.64126761  5
+#&gt; hp          -0.06822828 0.01404901 4.647551e-03 -0.1043424 -0.03211416  5</div><div class='input'>
+</div></pre>
   </div>
-
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-      <li><a href="#section-all-functions">All functions</a></li>
+      <li><a href="#arguments">Arguments</a></li>
+      
+      <li><a href="#value">Value</a></li>
+      
+      <li><a href="#examples">Examples</a></li>
     </ul>
+
   </div>
 </div>
 

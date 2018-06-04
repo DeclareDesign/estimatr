@@ -51,8 +51,26 @@
     </div>
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-        <li>
-  <a href="../articles/getting-started.html">Getting Started</a>
+        <li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Getting Started
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/getting-started.html">Getting Started with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/regression-tables.html">Regression Tables with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/absorbing-fixed-effects.html">Absorbing Fixed Effects with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/estimatr-in-the-tidyverse.html">estimatr in the Tidyverse</a>
+    </li>
+  </ul>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -133,8 +151,9 @@
 options for robust standard errors, and conducts coefficient tests</p>
     
 
-    <pre class="usage"><span class='fu'>lm_robust</span>(<span class='no'>formula</span>, <span class='no'>data</span>, <span class='no'>weights</span>, <span class='no'>subset</span>, <span class='no'>clusters</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>return_vcov</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>try_cholesky</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+    <pre class="usage"><span class='fu'>lm_robust</span>(<span class='no'>formula</span>, <span class='no'>data</span>, <span class='no'>weights</span>, <span class='no'>subset</span>, <span class='no'>clusters</span>, <span class='no'>fixed_effects</span>,
+  <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>ci</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>return_vcov</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>try_cholesky</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -161,6 +180,14 @@ of observations to be used.</p></td>
       <th>clusters</th>
       <td><p>An optional bare (unquoted) name of the variable that
 corresponds to the clusters in the data.</p></td>
+    </tr>
+    <tr>
+      <th>fixed_effects</th>
+      <td><p>An optional right-sided formula containing the fixed
+effects that will be projected out of the data, such as <code>~ blockID</code>. Do not
+pass multiple-fixed effects with intersecting groups. Speed gains are greatest for
+variables with large numbers of groups and when using "HC1" or "stata" standard errors.
+See 'Details'.</p></td>
     </tr>
     <tr>
       <th>se_type</th>
@@ -232,7 +259,8 @@ following components:</p>
   <dt>fstatistic</dt><dd><p>a vector with the value of the F-statistic with the numerator and denominator degrees of freedom</p></dd>
   <dt>weighted</dt><dd><p>whether or not weights were applied</p></dd>
   <dt>call</dt><dd><p>the original function call</p></dd>
-We also return terms and contrasts, used by predict.
+  <dt>fitted.values</dt><dd><p>the matrix of predicted means</p></dd>
+We also return terms and contrasts, used by predict. If fixed_effects are specified, then we return proj_fstatistic, proj_r.squared, and proj_adj.r.squared, which are model fit statistics that are computed on the projected model (after demeaning the fixed effects).
 
     
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
@@ -260,11 +288,22 @@ users could get faster solutions by setting <code>`try_cholesky` = TRUE</code> t
 use a Cholesky decomposition instead. This will likely result in quicker
 solutions, but the algorithm does not reliably detect when there are linear
 dependencies in the model and may fail silently if they exist.</p>
+<p>If <code>`fixed_effects`</code> are specified, both the outcome and design matrix
+are centered using the method of alternating projections (Halperin 1962; Gaure 2013). Specifying
+fixed effects in this way will result in large speed gains with standard error
+estimators that do not need to invert the matrix of fixed effects. This means using
+"classical", "HC0", "HC1", "CR0", or "stata" standard errors will be faster than other
+standard error estimators. Be wary when specifying fixed effects that may result
+in perfect fits for some observations or if there are intersecting groups across
+multiple fixed effect variables (e.g. if you specify both "year" and "country" fixed effects
+with an unbalanced panel where one year you only have data for one country).</p>
     
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     <p>Abadie, Alberto, Susan Athey, Guido W Imbens, and Jeffrey Wooldridge. 2017. "A Class of Unbiased Estimators of the Average Treatment Effect in Randomized Experiments." arXiv Pre-Print. <a href='https://arxiv.org/abs/1710.02926v2'>https://arxiv.org/abs/1710.02926v2</a>.</p>
 <p>Bell, Robert M, and Daniel F McCaffrey. 2002. "Bias Reduction in Standard Errors for Linear Regression with Multi-Stage Samples." Survey Methodology 28 (2): 169-82.</p>
+<p>Gaure, Simon. 2013. "OLS with multiple high dimensional category variables." Computational Statistics \&amp; Data Analysis 66: 8-1. <a href='http://dx.doi.org/10.1016/j.csda.2013.03.024'>http://dx.doi.org/10.1016/j.csda.2013.03.024</a></p>
+<p>Halperin, I. 1962. "The product of projection operators." Acta Scientiarum Mathematicarum (Szeged) 23(1-2): 96-99.</p>
 <p>MacKinnon, James, and Halbert White. 1985. "Some Heteroskedasticity-Consistent Covariance Matrix Estimators with Improved Finite Sample Properties." Journal of Econometrics 29 (3): 305-25. <a href='https://doi.org/10.1016/0304-4076(85)90158-7'>https://doi.org/10.1016/0304-4076(85)90158-7</a>.</p>
 <p>Pustejovsky, James E, and Elizabeth Tipton. 2016. "Small Sample Methods for Cluster-Robust Variance Estimation and Hypothesis Testing in Fixed Effects Models." Journal of Business &amp; Economic Statistics. Taylor &amp; Francis. <a href='https://doi.org/10.1080/07350015.2016.1247004'>https://doi.org/10.1080/07350015.2016.1247004</a>.</p>
 <p>Samii, Cyrus, and Peter M Aronow. 2012. "On Equivalencies Between Design-Based and Regression-Based Variance Estimators for Randomized Experiments." Statistics and Probability Letters 82 (2). <a href='https://doi.org/10.1016/j.spl.2011.10.024'>https://doi.org/10.1016/j.spl.2011.10.024</a>.</p>
@@ -283,10 +322,10 @@ dependencies in the model and may fail silently if they exist.</p>
 <span class='no'>lmro</span> <span class='kw'>&lt;-</span> <span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span> + <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)
 
 <span class='co'># Can tidy() the data in to a data.frame</span>
-<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmro</span>)</div><div class='output co'>#&gt;          term   estimate std.error      p.value   ci.lower  ci.upper df outcome
-#&gt; 1 (Intercept)  4.3437473 0.4266670 2.809933e-12  3.4792378 5.2082567 37       y
-#&gt; 2           x  0.1145175 0.2684168 6.721135e-01 -0.4293467 0.6583816 37       y
-#&gt; 3           z -0.7573433 0.6642250 2.615339e-01 -2.1031910 0.5885043 37       y</div><div class='input'><span class='co'># Can use summary() to get more statistics</span>
+<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmro</span>)</div><div class='output co'>#&gt;          term  estimate std.error      p.value   ci.lower ci.upper df outcome
+#&gt; 1 (Intercept) 4.0720980 0.4444853 4.723071e-11  3.1714852 4.972711 37       y
+#&gt; 2           x 0.5004417 0.4023025 2.213436e-01 -0.3147005 1.315584 37       y
+#&gt; 3           z 0.1008780 0.7319296 8.911262e-01 -1.3821521 1.583908 37       y</div><div class='input'><span class='co'># Can use summary() to get more statistics</span>
 <span class='fu'>summary</span>(<span class='no'>lmro</span>)</div><div class='output co'>#&gt; 
 #&gt; Call:
 #&gt; lm_robust(formula = y ~ x + z, data = dat)
@@ -295,40 +334,40 @@ dependencies in the model and may fail silently if they exist.</p>
 #&gt; 
 #&gt; Coefficients:
 #&gt;             Estimate Std. Error  Pr(&gt;|t|) CI Lower CI Upper DF
-#&gt; (Intercept)   4.3437     0.4267 2.810e-12   3.4792   5.2083 37
-#&gt; x             0.1145     0.2684 6.721e-01  -0.4293   0.6584 37
-#&gt; z            -0.7573     0.6642 2.615e-01  -2.1032   0.5885 37
+#&gt; (Intercept)   4.0721     0.4445 4.723e-11   3.1715    4.973 37
+#&gt; x             0.5004     0.4023 2.213e-01  -0.3147    1.316 37
+#&gt; z             0.1009     0.7319 8.911e-01  -1.3822    1.584 37
 #&gt; 
-#&gt; Multiple R-squared:  0.03794 ,	Adjusted R-squared:  -0.01407 
-#&gt; F-statistic: 0.7295 on 2 and 37 DF,  p-value: 0.4889</div><div class='input'><span class='co'># Can also get coefficients three ways</span>
+#&gt; Multiple R-squared:  0.04638 ,	Adjusted R-squared:  -0.00517 
+#&gt; F-statistic: 0.7856 on 2 and 37 DF,  p-value: 0.4633</div><div class='input'><span class='co'># Can also get coefficients three ways</span>
 <span class='no'>lmro</span>$<span class='no'>coefficients</span></div><div class='output co'>#&gt; (Intercept)           x           z 
-#&gt;   4.3437473   0.1145175  -0.7573433 </div><div class='input'><span class='fu'>coef</span>(<span class='no'>lmro</span>)</div><div class='output co'>#&gt; (Intercept)           x           z 
-#&gt;   4.3437473   0.1145175  -0.7573433 </div><div class='input'><span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmro</span>)$<span class='no'>estimate</span></div><div class='output co'>#&gt; [1]  4.3437473  0.1145175 -0.7573433</div><div class='input'><span class='co'># Can also get confidence intervals from object or with new 1 - `alpha`</span>
+#&gt;   4.0720980   0.5004417   0.1008780 </div><div class='input'><span class='fu'>coef</span>(<span class='no'>lmro</span>)</div><div class='output co'>#&gt; (Intercept)           x           z 
+#&gt;   4.0720980   0.5004417   0.1008780 </div><div class='input'><span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmro</span>)$<span class='no'>estimate</span></div><div class='output co'>#&gt; [1] 4.0720980 0.5004417 0.1008780</div><div class='input'><span class='co'># Can also get confidence intervals from object or with new 1 - `alpha`</span>
 <span class='no'>lmro</span>$<span class='no'>ci.lower</span></div><div class='output co'>#&gt; (Intercept)           x           z 
-#&gt;   3.4792378  -0.4293467  -2.1031910 </div><div class='input'><span class='fu'>confint</span>(<span class='no'>lmro</span>, <span class='kw'>level</span> <span class='kw'>=</span> <span class='fl'>0.8</span>)</div><div class='output co'>#&gt;                   10 %      90 %
-#&gt; (Intercept)  3.7870090 4.9004855
-#&gt; x           -0.2357274 0.4647623
-#&gt; z           -1.6240602 0.1093736</div><div class='input'>
+#&gt;   3.1714852  -0.3147005  -1.3821521 </div><div class='input'><span class='fu'>confint</span>(<span class='no'>lmro</span>, <span class='kw'>level</span> <span class='kw'>=</span> <span class='fl'>0.8</span>)</div><div class='output co'>#&gt;                    10 %     90 %
+#&gt; (Intercept)  3.49210937 4.652087
+#&gt; x           -0.02450443 1.025388
+#&gt; z           -0.85418344 1.055940</div><div class='input'>
 <span class='co'># Can recover classical standard errors</span>
 <span class='no'>lmclassic</span> <span class='kw'>&lt;-</span> <span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span> + <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"classical"</span>)
-<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmclassic</span>)</div><div class='output co'>#&gt;          term   estimate std.error      p.value   ci.lower  ci.upper df outcome
-#&gt; 1 (Intercept)  4.3437473 0.4252799 2.568950e-12  3.4820484 5.2054461 37       y
-#&gt; 2           x  0.1145175 0.2797434 6.846313e-01 -0.4522965 0.6813315 37       y
-#&gt; 3           z -0.7573433 0.6453147 2.480535e-01 -2.0648750 0.5501884 37       y</div><div class='input'>
+<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmclassic</span>)</div><div class='output co'>#&gt;          term  estimate std.error      p.value   ci.lower ci.upper df outcome
+#&gt; 1 (Intercept) 4.0720980 0.4916637 5.984029e-10  3.0758928 5.068303 37       y
+#&gt; 2           x 0.5004417 0.3750552 1.902551e-01 -0.2594923 1.260376 37       y
+#&gt; 3           z 0.1008780 0.7477913 8.934211e-01 -1.4142911 1.616047 37       y</div><div class='input'>
 <span class='co'># Can easily match Stata's robust standard errors</span>
 <span class='no'>lmstata</span> <span class='kw'>&lt;-</span> <span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span> + <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"stata"</span>)
-<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmstata</span>)</div><div class='output co'>#&gt;          term   estimate std.error      p.value   ci.lower  ci.upper df outcome
-#&gt; 1 (Intercept)  4.3437473 0.4294666 3.362855e-12  3.4735653 5.2139292 37       y
-#&gt; 2           x  0.1145175 0.2638693 6.668137e-01 -0.4201325 0.6491675 37       y
-#&gt; 3           z -0.7573433 0.6628060 2.605316e-01 -2.1003159 0.5856293 37       y</div><div class='input'>
+<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmstata</span>)</div><div class='output co'>#&gt;          term  estimate std.error      p.value   ci.lower ci.upper df outcome
+#&gt; 1 (Intercept) 4.0720980 0.4415569 3.976890e-11  3.1774187 4.966777 37       y
+#&gt; 2           x 0.5004417 0.3920827 2.097792e-01 -0.2939933 1.294877 37       y
+#&gt; 3           z 0.1008780 0.7320639 8.911461e-01 -1.3824243 1.584180 37       y</div><div class='input'>
 <span class='co'># Easy to specify clusters for cluster-robust inference</span>
 <span class='no'>dat</span>$<span class='no'>clusterID</span> <span class='kw'>&lt;-</span> <span class='fu'>sample</span>(<span class='fl'>1</span>:<span class='fl'>10</span>, <span class='kw'>size</span> <span class='kw'>=</span> <span class='fl'>40</span>, <span class='kw'>replace</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
 
 <span class='no'>lmclust</span> <span class='kw'>&lt;-</span> <span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span> + <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>clusterID</span>)
-<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmclust</span>)</div><div class='output co'>#&gt;          term   estimate std.error      p.value  ci.lower  ci.upper       df
-#&gt; 1 (Intercept)  4.3437473 0.4464744 1.510243e-05  3.304129 5.3833652 7.578772
-#&gt; 2           x  0.1145175 0.3112151 7.282905e-01 -0.691010 0.9200449 4.888419
-#&gt; 3           z -0.7573433 0.6877050 3.103519e-01 -2.413794 0.8991070 6.419560
+<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmclust</span>)</div><div class='output co'>#&gt;          term  estimate std.error      p.value   ci.lower ci.upper       df
+#&gt; 1 (Intercept) 4.0720980 0.3742515 0.0000278716  3.1643042 4.979892 6.225079
+#&gt; 2           x 0.5004417 0.4249444 0.2830728405 -0.5366996 1.537583 6.064140
+#&gt; 3           z 0.1008780 0.6001063 0.8711681416 -1.3125892 1.514345 7.138410
 #&gt;   outcome
 #&gt; 1       y
 #&gt; 2       y
@@ -339,20 +378,20 @@ dependencies in the model and may fail silently if they exist.</p>
   <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>,
   <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>clusterID</span>,
   <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"stata"</span>
-)</div><div class='output co'>#&gt;               Estimate Std. Error     Pr(&gt;|t|)   CI Lower  CI Upper DF
-#&gt; (Intercept)  4.3437473  0.4405516 4.023991e-06  3.3471504 5.3403442  9
-#&gt; x            0.1145175  0.3031343 7.143509e-01 -0.5712199 0.8002548  9
-#&gt; z           -0.7573433  0.6575274 2.790786e-01 -2.2447737 0.7300871  9</div><div class='input'>
+)</div><div class='output co'>#&gt;              Estimate Std. Error     Pr(&gt;|t|)   CI Lower CI Upper DF
+#&gt; (Intercept) 4.0720980  0.3676274 1.518271e-06  3.2404669 4.903729  9
+#&gt; x           0.5004417  0.4095156 2.527346e-01 -0.4259469 1.426830  9
+#&gt; z           0.1008780  0.5910571 8.682555e-01 -1.2361861 1.437942  9</div><div class='input'>
 <span class='co'># Works just as LM does with functions in the formula</span>
 <span class='no'>dat</span>$<span class='no'>blockID</span> <span class='kw'>&lt;-</span> <span class='fu'>rep</span>(<span class='fu'>c</span>(<span class='st'>"A"</span>, <span class='st'>"B"</span>, <span class='st'>"C"</span>, <span class='st'>"D"</span>), <span class='kw'>each</span> <span class='kw'>=</span> <span class='fl'>10</span>)
 
-<span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span> + <span class='no'>z</span> + <span class='fu'>factor</span>(<span class='no'>blockID</span>), <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;                      Estimate Std. Error     Pr(&gt;|t|)   CI Lower  CI Upper DF
-#&gt; (Intercept)       3.514890355  0.5772947 6.611384e-07  2.3416863 4.6880944 34
-#&gt; x                 0.006792508  0.2186290 9.753965e-01 -0.4375152 0.4511002 34
-#&gt; z                -0.778097499  0.6603591 2.468605e-01 -2.1201086 0.5639136 34
-#&gt; factor(blockID)B  1.320814446  0.9111379 1.563234e-01 -0.5308405 3.1724694 34
-#&gt; factor(blockID)C  1.774506204  0.7991346 3.315047e-02  0.1504694 3.3985430 34
-#&gt; factor(blockID)D  0.099756357  0.6652215 8.816826e-01 -1.2521365 1.4516492 34</div><div class='input'>
+<span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span> + <span class='no'>z</span> + <span class='fu'>factor</span>(<span class='no'>blockID</span>), <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;                    Estimate Std. Error     Pr(&gt;|t|)   CI Lower  CI Upper DF
+#&gt; (Intercept)       5.2051154  0.9397759 3.426568e-06  3.2952610 7.1149697 34
+#&gt; x                 0.3043018  0.4435678 4.973446e-01 -0.5971365 1.2057402 34
+#&gt; z                -0.1127011  0.6859705 8.704723e-01 -1.5067609 1.2813587 34
+#&gt; factor(blockID)B -1.2726531  1.3086524 3.376744e-01 -3.9321548 1.3868486 34
+#&gt; factor(blockID)C -1.1121690  1.1621142 3.453120e-01 -3.4738691 1.2495311 34
+#&gt; factor(blockID)D -1.9470029  1.1977093 1.132686e-01 -4.3810411 0.4870352 34</div><div class='input'>
 <span class='co'># Weights are also easily specified</span>
 <span class='no'>dat</span>$<span class='no'>w</span> <span class='kw'>&lt;-</span> <span class='fu'>runif</span>(<span class='fl'>40</span>)
 
@@ -361,19 +400,24 @@ dependencies in the model and may fail silently if they exist.</p>
   <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>,
   <span class='kw'>weights</span> <span class='kw'>=</span> <span class='no'>w</span>,
   <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>clusterID</span>
-)</div><div class='output co'>#&gt;                Estimate Std. Error     Pr(&gt;|t|)  CI Lower CI Upper       DF
-#&gt; (Intercept)  4.02974602  0.4273344 2.518013e-05  3.026224 5.033268 7.247874
-#&gt; x           -0.08489078  0.3546075 8.258011e-01 -1.194862 1.025080 3.090917
-#&gt; z           -0.52984774  0.9463118 5.972174e-01 -2.886426 1.826730 5.596866</div><div class='input'>
+)</div><div class='output co'>#&gt;               Estimate Std. Error   Pr(&gt;|t|)    CI Lower CI Upper       DF
+#&gt; (Intercept)  4.6227047  0.3018606 0.00001978  3.84930971 5.396100 5.055661
+#&gt; x            1.0925247  0.4371912 0.06087351 -0.07647668 2.261526 4.427303
+#&gt; z           -0.9788636  0.8409243 0.28692510 -3.01687836 1.059151 6.248211</div><div class='input'>
 <span class='co'># Subsetting works just as in `lm()`</span>
-<span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>subset</span> <span class='kw'>=</span> <span class='no'>z</span> <span class='kw'>==</span> <span class='fl'>1</span>)</div><div class='output co'>#&gt;               Estimate Std. Error     Pr(&gt;|t|)  CI Lower  CI Upper DF
-#&gt; (Intercept)  3.5392271  0.5544330 1.700539e-05  2.350087 4.7283677 14
-#&gt; x           -0.1114943  0.4294463 7.989333e-01 -1.032565 0.8095764 14</div><div class='input'>
+<span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>subset</span> <span class='kw'>=</span> <span class='no'>z</span> <span class='kw'>==</span> <span class='fl'>1</span>)</div><div class='output co'>#&gt;              Estimate Std. Error     Pr(&gt;|t|)    CI Lower CI Upper DF
+#&gt; (Intercept) 4.3533662  0.6377937 4.075491e-06  3.00130394 5.705429 16
+#&gt; x           0.8954626  0.4586327 6.860710e-02 -0.07679526 1.867721 16</div><div class='input'>
 <span class='co'># One can also choose to set the significance level for different CIs</span>
-<span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span> + <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.1</span>)</div><div class='output co'>#&gt;               Estimate Std. Error     Pr(&gt;|t|)   CI Lower  CI Upper DF
-#&gt; (Intercept)  4.3437473  0.4266670 2.809933e-12  3.6239201 5.0635744 37
-#&gt; x            0.1145175  0.2684168 6.721135e-01 -0.3383268 0.5673618 37
-#&gt; z           -0.7573433  0.6642250 2.615339e-01 -1.8779530 0.3632664 37</div><div class='input'>
+<span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span> + <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>0.1</span>)</div><div class='output co'>#&gt;              Estimate Std. Error     Pr(&gt;|t|)   CI Lower CI Upper DF
+#&gt; (Intercept) 4.0720980  0.4444853 4.723071e-11  3.3222096 4.821986 37
+#&gt; x           0.5004417  0.4023025 2.213436e-01 -0.1782802 1.179164 37
+#&gt; z           0.1008780  0.7319296 8.911262e-01 -1.1339556 1.335712 37</div><div class='input'>
+<span class='co'># We can also specify fixed effects</span>
+<span class='co'># Speed gains with fixed effects are greatests with "stata" or "HC1" std.errors</span>
+<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='fu'>lm_robust</span>(<span class='no'>y</span> ~ <span class='no'>x</span> + <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>fixed_effects</span> <span class='kw'>=</span> ~ <span class='no'>blockID</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"HC1"</span>))</div><div class='output co'>#&gt;   term   estimate std.error   p.value   ci.lower ci.upper df outcome
+#&gt; 1    x  0.3043018 0.4312598 0.4852366 -0.5721235 1.180727 34       y
+#&gt; 2    z -0.1127011 0.6827196 0.8698613 -1.5001543 1.274752 34       y</div><div class='input'>
 </div><span class='co'># NOT RUN {</span>
   <span class='co'># Can also use 'margins' package if you have it installed to get</span>
   <span class='co'># marginal effects</span>

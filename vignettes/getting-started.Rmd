@@ -213,7 +213,7 @@ dim_mps$design
 
 ## `horvitz_thompson`
 
-Horvitz-Thompson estimators can be used to estimate unbiased treatment effects when the randomization is known. This is particularly useful when there are clusters of different sizes being randomized into treatment or when the treatment assignment is complex and there are dependencies across units in the probability of being treated. Horvitz-Thompson estimators require information about the probability each unit is in treatment and control, as well as the joint probability each unit is in the treatment, in the control, and in opposite treatment conditions.
+Horvitz-Thompson estimators yield unbiased treatment effect estimates when the randomization is known. This is particularly useful when there are clusters of different sizes being randomized into treatment or when the treatment assignment is complex and there are dependencies across units in the probability of being treated. Horvitz-Thompson estimators require information about the probability each unit is in treatment and control, as well as the joint probability each unit is in the treatment, in the control, and in opposite treatment conditions.
 
 The estimator we implement here, `horvitz_thompson()` estimates treatment effects for two-armed trials. The easiest way to specify your design and recover the full set of joint and marginal probabilities is to declare your randomization scheme by using [`declare_ra()`](/R/randomizr/reference/declare_ra.html) from the [`randomizr`](/R/randomizr/) package. I show some examples of how to do that below. Again, the technical details for this estimator can be found [here](/R/estimatr/articles/mathematical-notes.html#horvitz_thompson-notes) and in references in those notes.
 

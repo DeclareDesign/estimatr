@@ -14,7 +14,7 @@ URL: https://declaredesign.org/r/estimatr/, https://github.com/DeclareDesign/est
 BugReports: https://github.com/DeclareDesign/estimatr/issues
 License: MIT + file LICENSE
 Depends: R (>= 3.4.0)
-Imports: 
+Imports:
     Rcpp (>= 0.12.16),
     methods,
     Formula,

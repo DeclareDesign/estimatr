@@ -1,0 +1,85 @@
+---
+title: "Regression Tables with estimatr"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Preparing regression tables with estimatr is possible with all of the major r-to-LaTeX packages, including `texreg`, `stargazer`, `xtable` and `huxtable`.
+
+## Setup
+
+First we'll load both `estimatr` and `magrittr` (for pipes).
+
+```{r}
+library(estimatr)
+library(magrittr)
+```
+
+## Texreg
+
+Texreg operates directly on an `lm_robust` object. If you would like standard errors instead of confidence intervals, use `include.ci = FALSE`.
+
+```{r, message = FALSE}
+library(texreg)
+fit <- lm_robust(mpg ~ disp, data = mtcars)
+texreg(fit, include.ci = FALSE)
+```
+
+## Stargazer
+
+Stargazer has to be *tricked* -- there's unfortunately no way around this unless something in the stargazer package changes. The maintainer has indicated that he has no active plans to update stargazer in the future. First, run the regression using `lm`. Then you can pass the `lm` fits to `starprep` a function which transforms the `lm` fits into `lm_robust` fits and then prepare the appropriate statistic you requested. The `starprep` funciton defaults to returning standard errors and uses `lm_robust` defaults for standard errors (robust HC2 SEs are the default in both `lm_robust`).  Then you pass the `lm` fit to stargazer and then pass `starprep(fit)` to the `se` argument in `stargazer`. This process works great with multiple fits.
+
+```{r, message = FALSE}
+library(stargazer)
+fit_1 <- lm(mpg ~ disp, data = mtcars)
+fit_2 <- lm(mpg ~ hp, data = mtcars)
+stargazer(fit_1, fit_2, se = starprep(fit_1, fit_2))
+```
+
+Below are some more examples, although we hide the output for brevity.
+
+```{r, eval = FALSE}
+# Can also specify clusters and standard error type
+stargazer(
+  fit_1, fit_2,
+  se = starprep(fit_1, fit_2, clusters = mtcars$cyl, se_type = "stata")
+)
+
+# Can also precompute robust objects to save computation time
+# using `commarobust`
+fit_1_r <- commarobust(fit_1)
+fit_2_r <- commarobust(fit_2)
+stargazer(fit_1, fit_2,
+          se = starprep(fit_1_r, fit_2_r),
+          p = starprep(fit_1_r, fit_2_r, stat = "p.value"))
+
+# can also easily get robust confidence intervals
+stargazer(fit_1, fit_2,
+          ci.custom = starprep(fit_1_r, fit_2_r, stat = "ci"))
+```
+
+## xtable
+
+`xtable` works directly on a data.frame, so we just have to prep the `lm_robust` output with the `tidy` function.
+
+```{r}
+library(xtable)
+fit <- lm(mpg ~ disp, data = mtcars)
+fit %>% tidy %>% xtable()
+```
+
+## huxtable
+
+`huxtable`, too, works on a data.frame, so all we have to do is prep with `tidy`.
+
+```{r, message=FALSE}
+library(huxtable)
+fit <- lm(mpg ~ disp, data = mtcars)
+fit %>% tidy %>% hux() %>% print_latex()
+```
+
+
+

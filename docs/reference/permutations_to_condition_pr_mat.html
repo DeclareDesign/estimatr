@@ -52,8 +52,26 @@ permutation matrix — permutations_to_condition_pr_mat • estimatr</title>
     </div>
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-        <li>
-  <a href="../articles/getting-started.html">Getting Started</a>
+        <li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Getting Started
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/getting-started.html">Getting Started with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/regression-tables.html">Regression Tables with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/absorbing-fixed-effects.html">Absorbing Fixed Effects with estimatr</a>
+    </li>
+    <li>
+      <a href="../articles/estimatr-in-the-tidyverse.html">estimatr in the Tidyverse</a>
+    </li>
+  </ul>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -187,8 +205,8 @@ of</p>
 <span class='co'># Simulating a column to be realized treatment</span>
 <span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='no'>possible_treats</span>[, <span class='fu'>sample</span>(<span class='fu'>ncol</span>(<span class='no'>possible_treats</span>), <span class='kw'>size</span> <span class='kw'>=</span> <span class='fl'>1</span>)]
 <span class='no'>y</span> <span class='kw'>&lt;-</span> <span class='fu'>rnorm</span>(<span class='fu'>nrow</span>(<span class='no'>possible_treats</span>))
-<span class='fu'><a href='horvitz_thompson.html'>horvitz_thompson</a></span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>arb_pr_mat</span>)</div><div class='output co'>#&gt;     Estimate Std. Error  Pr(&gt;|t|)  CI Lower  CI Upper DF
-#&gt; z -0.6415695  0.7057994 0.3633517 -2.024911 0.7417719 NA</div><div class='input'>
+<span class='fu'><a href='horvitz_thompson.html'>horvitz_thompson</a></span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>arb_pr_mat</span>)</div><div class='output co'>#&gt;     Estimate Std. Error  Pr(&gt;|t|)   CI Lower CI Upper DF
+#&gt; z 0.09096484  0.5375002 0.8656103 -0.9625161 1.144446 NA</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
