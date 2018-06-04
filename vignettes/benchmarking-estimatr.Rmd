@@ -10,8 +10,7 @@ vignette: |
   \usepackage[utf8]{inputenc}
 ---
 
-We built `estimatr` to provide accurate standard errors **quickly**.
-This document benchmarks the speed of or linear regression estimator
+This document benchmarks the speed of `lm_robust`
 against other estimators. Our performance is slightly better than base R
 when using classical standard errors, but most of our improvements come
 when estimating robust standard errors.

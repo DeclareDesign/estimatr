@@ -10,7 +10,7 @@ vignette: >
 ---
 
 
-The `estimatr` package estimates linear and instrumental variable regressions quickly and with robust standard errors. We designed the package to play well with the "tidyverse", which is a suite of packages developed by RStudio. The main way we accomplish this is making it easy to turn model fits into data.frames, the data format expected by many tidyverse packages. This vignette will show you how to `estimatr` functions with four tidyverse packages: `broom`, `dplyr`, `purrr`, and `ggplot2`.
+The `estimatr` package estimates linear and instrumental variable regressions quickly and with robust standard errors. We designed the package to play well with the "tidyverse", which is a suite of packages developed by RStudio. The main way we accomplish this is making it easy to turn model fits into data.frames, the data format expected by many tidyverse packages. This vignette will show you how to use `estimatr` functions with four tidyverse packages: `broom`, `dplyr`, `purrr`, and `ggplot2`.
 
 ## Turning model objects into data.frames
 
@@ -20,7 +20,7 @@ fit <- lm_robust(mpg ~ disp, data = mtcars)
 tidy(fit)
 ```
 
-The `fit` objects is an `lm_robust` object. When you call `tidy(fit)` it turns the fit into a dataframe. This function and behavior are explictly modeled on the `broom` package, a tidyverse package for making model objects into data.frames.
+The `fit` object is an `lm_robust` object. The `tidy()` function takes the fit and returns a data.frame. This function and behavior are explictly modeled on the `broom` package, a tidyverse package for making model objects into data.frames.
 
 Once the model fits are data.frames, it's easy to pipe the output into `dplyr` data manipulation functions:
 
