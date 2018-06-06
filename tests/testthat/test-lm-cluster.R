@@ -40,7 +40,7 @@ test_that("lm cluster se", {
           ci = FALSE,
           data = dat
         )
-      )[, c("p.value", "ci.lower", "ci.upper")]
+      )[, c("p.value", "conf.low", "conf.high")]
     ),
     matrix(NA, nrow = 3, ncol = 3)
   )
@@ -81,12 +81,12 @@ test_that("lm cluster se", {
     qt(0.975, df = length(unique(dat$J)) - 1) * bm_interact$se.Stata["Z:X"] * c(-1, 1)
 
   expect_equivalent(
-    tidy(lm_interact)[4, c("std.error", "ci.lower", "ci.upper")],
+    tidy(lm_interact)[4, c("std.error", "conf.low", "conf.high")],
     c(bm_interact$se["Z:X"], bm_interact_interval)
   )
 
   expect_equivalent(
-    tidy(lm_interact_stata)[4, c("std.error", "ci.lower", "ci.upper")],
+    tidy(lm_interact_stata)[4, c("std.error", "conf.low", "conf.high")],
     c(bm_interact$se.Stata["Z:X"], bm_interact_stata_interval)
   )
 
@@ -112,7 +112,7 @@ test_that("lm cluster se", {
   bm_full_upper <- coef(lm_full_simple) + bm_full_moe
 
   expect_equivalent(
-    as.matrix(tidy(lm_full)[, c("std.error", "ci.lower", "ci.upper")]),
+    as.matrix(tidy(lm_full)[, c("std.error", "conf.low", "conf.high")]),
     cbind(bm_full$se, bm_full_lower, bm_full_upper)
   )
 

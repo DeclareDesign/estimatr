@@ -72,15 +72,15 @@ if (rep_table_3) {
   its <- 250000
   set.seed(161235)
   check_cover <- function(obj, point = 0) {
-    return(obj$ci.lower[2] < point & obj$ci.upper[2] > point)
+    return(obj$conf.low[2] < point & obj$conf.high[2] > point)
   }
   ci_dist <- function(obj) {
-    return(obj$ci.upper[2] - obj$ci.lower[2])
+    return(obj$conf.high[2] - obj$conf.low[2])
   }
   ci_custom <- function(obj) {
     return(list(
-      ci.upper = coef(obj)[2] + obj$std.error[2] * 1.96,
-      ci.lower = coef(obj)[2] - obj$std.error[2] * 1.96
+      conf.high = coef(obj)[2] + obj$std.error[2] * 1.96,
+      conf.low = coef(obj)[2] - obj$std.error[2] * 1.96
     ))
   }
 

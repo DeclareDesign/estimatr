@@ -12,8 +12,8 @@ summary.lm_robust <- function(object, ...) {
       "coefficients",
       "std.error",
       "df",
-      "ci.lower",
-      "ci.upper",
+      "conf.low",
+      "conf.high",
       "p.value"
     )
 
@@ -105,12 +105,12 @@ summarize_tidy <- function(object, test = "t", ...) {
   tidy_out <- tidy(object, ...)
   colnames(tidy_out)[2:7] <-
     c(
-      "Estimate",
-      "Std. Error",
-      paste0("Pr(>|", test, "|)"),
-      "CI Lower",
-      "CI Upper",
-      "DF"
+      "estimate",
+      "std.error",
+      paste0(test, ".value"),
+      "conf.low",
+      "conf.high",
+      "df"
     )
   tidy_mat <- as.matrix(tidy_out[, !(names(tidy_out) %in% remove_cols)])
 

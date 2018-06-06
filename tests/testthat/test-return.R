@@ -17,8 +17,8 @@ test_that("Structure of output is the same", {
       "std.error",
       "df",
       "p.value",
-      "ci.lower",
-      "ci.upper",
+      "conf.low",
+      "conf.high",
       "outcome",
       "alpha",
       "N"
