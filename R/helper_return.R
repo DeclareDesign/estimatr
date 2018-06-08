@@ -20,7 +20,7 @@ lm_return <- function(return_list, model_data, formula) {
     dimnames(return_list[["std.error"]]) <- dimnames(return_list[["coefficients"]])
   } else {
     return_list[["coefficients"]] <- drop(return_list[["coefficients"]])
-    nms <- c("std.error", "p.value", "df", "conf.low", "conf.high")
+    nms <- c("std.error", "statistic", "p.value", "df", "conf.low", "conf.high")
     for (nm in nms) {
       if (length(return_list[[nm]]) > 1 || !is.na(return_list[[nm]])) {
         return_list[[nm]] <- setNames(

@@ -986,8 +986,8 @@ test_that("FEs give correct projected F-stats", {
   rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "classical")
 
   expect_equivalent(
-    tidy(rfo)[rfo$term %in% c("Z", "X"), c("estimate", "std.error", "p.value")],
-    as.data.frame(sfeo$coefficients[, c(1, 2, 4)])
+    tidy(rfo)[rfo$term %in% c("Z", "X"), c("estimate", "std.error", "statistic", "p.value")],
+    as.data.frame(sfeo$coefficients[, 1:4])
   )
 
   expect_equivalent(
@@ -1004,8 +1004,8 @@ test_that("FEs give correct projected F-stats", {
   rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC1")
 
   expect_equivalent(
-    tidy(rfo)[rfo$term %in% c("Z", "X"), c("estimate", "std.error", "p.value")],
-    as.data.frame(sfeor$coefficients[, c(1, 2, 4)])
+    tidy(rfo)[rfo$term %in% c("Z", "X"), c("estimate", "std.error", "statistic", "p.value")],
+    as.data.frame(sfeor$coefficients[, 1:4])
   )
 
   expect_equivalent(

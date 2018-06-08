@@ -27,14 +27,14 @@ extract.robust_default <- function(model,
   s <- summary(model, ...)
 
   names <- rownames(s$coefficients)
-  co <- coef(s)[, 1]
-  se <- coef(s)[, 2]
-  pval <- coef(s)[, 3]
+  co <- coef(s)[, "estimate"]
+  se <- coef(s)[, "std.error"]
+  pval <- coef(s)[, "p.value"]
   cilow <- numeric()
   ciupper <- numeric()
   if (include.ci) {
-    cilow <- coef(s)[, 4]
-    ciupper <- coef(s)[, 5]
+    cilow <- coef(s)[, "conf.low"]
+    ciupper <- coef(s)[, "conf.high"]
   }
 
   rs <- s$r.squared # extract R-squared

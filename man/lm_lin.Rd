@@ -63,10 +63,11 @@ An object of class \code{"lm_robust"} is a list containing at least the
 following components:
   \item{coefficients}{the estimated coefficients}
   \item{std.error}{the estimated standard errors}
+  \item{statistic}{the t-statistic}
   \item{df}{the estimated degrees of freedom}
   \item{p.value}{the p-values from a two-sided t-test using \code{coefficients}, \code{std.error}, and \code{df}}
-  \item{ci.lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
-  \item{ci.upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
+  \item{conf.low}{the lower bound of the \code{1 - alpha} percent confidence interval}
+  \item{conf.high}{the upper bound of the \code{1 - alpha} percent confidence interval}
   \item{term}{a character vector of coefficient names}
   \item{alpha}{the significance level specified by the user}
   \item{se_type}{the standard error type specified by the user}

@@ -67,6 +67,7 @@
 #' least the following components:
 #'   \item{coefficients}{the estimated difference in means}
 #'   \item{std.error}{the estimated standard error}
+#'   \item{statistic}{the t-statistic}
 #'   \item{df}{the estimated degrees of freedom}
 #'   \item{p.value}{the p-value from a two-sided t-test using \code{coefficients}, \code{std.error}, and \code{df}}
 #'   \item{conf.low}{the lower bound of the \code{1 - alpha} percent confidence interval}

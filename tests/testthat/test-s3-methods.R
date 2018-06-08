@@ -138,8 +138,8 @@ test_that("tidy, summary, and print work", {
   )
 
   expect_equivalent(
-    lapply(slmrmo, function(x) coef(x)[, c(1, 2, 3)]),
-    lapply(slmmo, function(x) coef(x)[, c(1, 2, 4)])
+    lapply(slmrmo, function(x) coef(x)[, 1:4]),
+    lapply(slmmo, function(x) coef(x)[, 1:4])
   )
 
   expect_equivalent(
@@ -175,7 +175,7 @@ test_that("tidy, summary, and print work", {
   )
 
   expect_equivalent(
-    as.matrix(tidy(ht)[, c("estimate", "std.error", "p.value", "conf.low", "conf.high", "df")]),
+    as.matrix(tidy(ht)[, c("estimate", "std.error", "statistic", "p.value", "conf.low", "conf.high", "df")]),
     coef(summary(ht))
   )
 

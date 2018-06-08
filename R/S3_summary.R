@@ -11,6 +11,7 @@ summary.lm_robust <- function(object, ...) {
     mat_objs <- c(
       "coefficients",
       "std.error",
+      "statistic",
       "df",
       "conf.low",
       "conf.high",
@@ -103,11 +104,12 @@ summarize_tidy <- function(object, test = "t", ...) {
 
   # This is ugly SO THAT summary(fit)$coefficients returns something like lm does.
   tidy_out <- tidy(object, ...)
-  colnames(tidy_out)[2:7] <-
+  colnames(tidy_out)[2:8] <-
     c(
       "estimate",
       "std.error",
-      paste0(test, ".value"),
+      paste(test, ".statistic"),
+      "p.value",
       "conf.low",
       "conf.high",
       "df"
