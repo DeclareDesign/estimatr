@@ -22,7 +22,7 @@ test_that("DIM arguments parsed correctly", {
   expect_equivalent(
     as.matrix(tidy(difference_in_means(
       Y ~ Z, data = dat, ci = FALSE
-    ))[, c("p.value", "ci.lower", "ci.upper")]),
+    ))[, c("p.value", "conf.low", "conf.high")]),
     matrix(NA, nrow = 1, ncol = 3)
   )
 
@@ -99,7 +99,7 @@ test_that("DIM same as t.test", {
 
   expect_equal(
     unlist(
-      difference_in_means(Y ~ Z, data = dat)[c("p.value", "ci.lower", "ci.upper", "df")],
+      difference_in_means(Y ~ Z, data = dat)[c("p.value", "conf.low", "conf.high", "df")],
       F,
       F
     ),
@@ -147,7 +147,7 @@ test_that("DIM Clustered", {
   dim_05 <- difference_in_means(Y ~ Z, alpha = .05, clusters = J, data = dat)
   dim_10 <- difference_in_means(Y ~ Z, alpha = .10, clusters = J, data = dat)
 
-  expect_true(dim_05$ci.lower < dim_10$ci.lower)
+  expect_true(dim_05$conf.low < dim_10$conf.low)
 
   expect_equal(
     dim_10$design,
@@ -651,7 +651,7 @@ test_that("se_type = none works", {
   )
 
   expect_equivalent(
-    tidy(dim_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    tidy(dim_no)[c("std.error", "p.value", "conf.low", "conf.high")],
     rep(NA_real_, 4)
   )
 
@@ -665,7 +665,7 @@ test_that("se_type = none works", {
   )
 
   expect_equivalent(
-    tidy(dimb_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    tidy(dimb_no)[c("std.error", "p.value", "conf.low", "conf.high")],
     rep(NA_real_, 4)
   )
 
@@ -680,7 +680,7 @@ test_that("se_type = none works", {
   )
 
   expect_equivalent(
-    tidy(dimc_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    tidy(dimc_no)[c("std.error", "p.value", "conf.low", "conf.high")],
     rep(NA_real_, 4)
   )
 
@@ -694,7 +694,7 @@ test_that("se_type = none works", {
   )
 
   expect_equivalent(
-    tidy(dimw_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    tidy(dimw_no)[c("std.error", "p.value", "conf.low", "conf.high")],
     rep(NA_real_, 4)
   )
 
@@ -708,7 +708,7 @@ test_that("se_type = none works", {
   )
 
   expect_equivalent(
-    tidy(dimcw_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    tidy(dimcw_no)[c("std.error", "p.value", "conf.low", "conf.high")],
     rep(NA_real_, 4)
   )
 
@@ -725,7 +725,7 @@ test_that("se_type = none works", {
   )
 
   expect_equivalent(
-    tidy(dimmp_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    tidy(dimmp_no)[c("std.error", "p.value", "conf.low", "conf.high")],
     rep(NA_real_, 4)
   )
 })

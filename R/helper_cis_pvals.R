@@ -32,14 +32,14 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
       return_frame$df <- NA
     }
 
-    return_frame$ci.lower <- with(return_frame, coefficients - crit_se)
-    return_frame$ci.upper <- with(return_frame, coefficients + crit_se)
+    return_frame$conf.low <- with(return_frame, coefficients - crit_se)
+    return_frame$conf.high <- with(return_frame, coefficients + crit_se)
 
     return(as.list(return_frame))
   } else {
     return_frame$p.value <- NA
-    return_frame$ci.lower <- NA
-    return_frame$ci.upper <- NA
+    return_frame$conf.low<- NA
+    return_frame$conf.high <- NA
 
     return(as.list(return_frame))
   }

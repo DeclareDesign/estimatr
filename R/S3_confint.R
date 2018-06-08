@@ -51,13 +51,13 @@ get_ci_mat <- function(object, level, ttest = TRUE) {
   }
 
   cis <- cbind(
-    as.vector(object$ci.lower),
-    as.vector(object$ci.upper)
+    as.vector(object$conf.low),
+    as.vector(object$conf.high)
   )
 
-  if (is.matrix(object$ci.lower)) {
-    ny <- ncol(object$ci.lower)
-    p <- nrow(object$ci.lower)
+  if (is.matrix(object$conf.low)) {
+    ny <- ncol(object$conf.low)
+    p <- nrow(object$conf.low)
     rownames(cis) <- paste0(
       rep(object$outcome, each = p),
       ":",

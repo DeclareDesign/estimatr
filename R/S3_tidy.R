@@ -91,8 +91,8 @@ tidy_data_frame <- function(object, digits = NULL) {
       "coefficients",
       "std.error",
       "p.value",
-      "ci.lower",
-      "ci.upper",
+      "conf.low",
+      "conf.high",
       "df"
     )
 

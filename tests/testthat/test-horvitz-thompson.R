@@ -55,7 +55,7 @@ test_that("Horvitz-Thompson works in simple case", {
   )
 
   expect_equivalent(
-    tidy(ht_simp_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    tidy(ht_simp_no)[c("std.error", "p.value", "conf.low", "conf.high")],
     rep(NA_real_, 4)
   )
 
@@ -123,7 +123,7 @@ test_that("Horvitz-Thompson works in simple case", {
   )
 
   expect_equivalent(
-    tidy(ht_comp_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    tidy(ht_comp_no)[c("std.error", "p.value", "conf.low", "conf.high")],
     rep(NA_real_, 4)
   )
 
@@ -192,7 +192,7 @@ test_that("Horvitz-Thompson works with clustered data", {
   )
 
   expect_equivalent(
-    tidy(ht_crs_decl_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    tidy(ht_crs_decl_no)[c("std.error", "p.value", "conf.low", "conf.high")],
     rep(NA_real_, 4)
   )
 
@@ -229,7 +229,7 @@ test_that("Horvitz-Thompson works with clustered data", {
   )
 
   expect_equivalent(
-    tidy(ht_srs_decl_no)[c("std.error", "p.value", "ci.lower", "ci.upper")],
+    tidy(ht_srs_decl_no)[c("std.error", "p.value", "conf.low", "conf.high")],
     rep(NA_real_, 4)
   )
 
@@ -471,7 +471,7 @@ test_that("Horvitz-Thompson properly checks arguments and data", {
 
   ht_o <- horvitz_thompson(y ~ z, data = dat, ci = FALSE)
   expect_equivalent(
-    as.matrix(tidy(horvitz_thompson(y ~ z, data = dat, ci = FALSE))[, c("p.value", "ci.lower", "ci.upper")]),
+    as.matrix(tidy(horvitz_thompson(y ~ z, data = dat, ci = FALSE))[, c("p.value", "conf.low", "conf.high")]),
     matrix(NA, nrow = 1, ncol = 3)
   )
 

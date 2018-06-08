@@ -257,7 +257,7 @@ starprep <- function(...,
   stat <- match.arg(stat)
 
   if (stat == "ci") {
-    out <- lapply(fitlist, function(x) cbind(x[["ci.lower"]], x[["ci.upper"]]))
+    out <- lapply(fitlist, function(x) cbind(x[["conf.low"]], x[["conf.high"]]))
   } else {
     out <- lapply(fitlist, `[[`, stat)
   }
