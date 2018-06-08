@@ -5,6 +5,8 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
       stop("`alpha` must be numeric between 0 and 1")
     }
 
+    return_frame$statistic <- with(return_frame, coefficients / std.error)
+
     if (ttest) {
       if (any(return_frame$df <= 0, na.rm = TRUE)) {
         warning(
@@ -17,14 +19,14 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
 
       return_frame$p.value <- with(
         return_frame,
-        2 * pt(abs(coefficients / std.error), df = df, lower.tail = FALSE)
+        2 * pt(abs(statistic), df = df, lower.tail = FALSE)
       )
 
       crit_se <- with(return_frame, qt(1 - alpha / 2, df = df) * std.error)
     } else {
       return_frame$p.value <- with(
         return_frame,
-        2 * pnorm(abs(coefficients / std.error), lower.tail = FALSE)
+        2 * pnorm(abs(statistic), lower.tail = FALSE)
       )
 
       crit_se <- with(return_frame, qnorm(1 - alpha / 2) * std.error)
@@ -38,6 +40,7 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
     return(as.list(return_frame))
   } else {
     return_frame$p.value <- NA
+    return_frame$statistic <- NA
     return_frame$conf.low<- NA
     return_frame$conf.high <- NA
 

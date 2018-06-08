@@ -30,8 +30,8 @@ test_that("iv_robust matches AER + ivpack", {
   ivo <- summary(ivfit)
 
   expect_equivalent(
-    as.matrix(tidy(ivco)[, c("estimate", "std.error", "p.value")]),
-    coef(ivo)[, c(1, 2, 4)]
+    as.matrix(tidy(ivco)[, c("estimate", "std.error", "statistic", "p.value")]),
+    coef(ivo)[, 1:4]
   )
   # Same as stata if you specify `small` as a stata option
   # which applies the N / N-k finite sample correction
@@ -46,8 +46,8 @@ test_that("iv_robust matches AER + ivpack", {
   capture_output(ivpackrob <- ivpack::robust.se(ivfit))
 
   expect_equivalent(
-    as.matrix(tidy(ivro)[, c("estimate", "std.error", "p.value")]),
-    ivpackrob[, c(1, 2, 4)]
+    as.matrix(tidy(ivro)[, c("estimate", "std.error", "statistic", "p.value")]),
+    ivpackrob[, 1:4]
   )
 
   expect_equivalent(
@@ -100,8 +100,8 @@ test_that("iv_robust matches AER + ivpack", {
   ivregsum <- summary(ivw)
 
   expect_equivalent(
-    as.matrix(tidy(ivcw)[, c("estimate", "std.error", "p.value")]),
-    coef(ivregsum)[, c(1, 2, 4)]
+    as.matrix(tidy(ivcw)[, c("estimate", "std.error", "statistic", "p.value")]),
+    coef(ivregsum)[, 1:4]
   )
 
   expect_equivalent(
@@ -114,8 +114,8 @@ test_that("iv_robust matches AER + ivpack", {
   capture_output(ivpackrobw <- ivpack::robust.se(ivw))
 
   expect_equivalent(
-    as.matrix(tidy(ivrw)[, c("estimate", "std.error", "p.value")]),
-    ivpackrobw[, c(1, 2, 4)]
+    as.matrix(tidy(ivrw)[, c("estimate", "std.error", "statistic", "p.value")]),
+    ivpackrobw[, 1:4]
   )
 
   expect_equivalent(
@@ -164,8 +164,8 @@ test_that("iv_robust matches AER + ivpack", {
   )
 
   expect_equivalent(
-    as.matrix(tidy(ivdefr)[1:2, c("estimate", "std.error", "p.value")]),
-    ivdefse[, c(1, 2, 4)]
+    as.matrix(tidy(ivdefr)[1:2, c("estimate", "std.error", "statistic", "p.value")]),
+    ivdefse[, 1:4]
   )
 
   expect_equivalent(
@@ -185,8 +185,8 @@ test_that("iv_robust matches AER + ivpack", {
   # )
 
   # expect_equivalent(
-  #   as.matrix(tidy(ivdefri)[1:2, c("estimate", "std.error", "p.value")]),
-  #   ivdefsei[, c(1, 2, 4)]
+  #   as.matrix(tidy(ivdefri)[1:2, c("estimate", "std.error", "statistic", "p.value")]),
+  #   ivdefsei[, 1:4]
   # )
 
   # Stata
@@ -237,8 +237,8 @@ test_that("iv_robust matches AER + ivpack", {
   )
 
   expect_equivalent(
-    as.matrix(tidy(ivdefrw)[1:2, c("estimate", "std.error", "p.value")]),
-    ivdefsew[, c(1, 2, 4)]
+    as.matrix(tidy(ivdefrw)[1:2, c("estimate", "std.error", "statistic", "p.value")]),
+    ivdefsew[, 1:4]
   )
 
   expect_equivalent(
@@ -252,8 +252,8 @@ test_that("iv_robust matches AER + ivpack", {
   ivdefclsew <- clubSandwich::coef_test(ivdefclw, vcov = "CR2", cluster = dat$clust)
 
   expect_equivalent(
-    na.omit(as.matrix(tidy(ivdefclrw)[, c("estimate", "std.error", "p.value")])),
-    na.omit(as.matrix(ivdefclsew)[, c(1, 2, 4)])
+    na.omit(as.matrix(tidy(ivdefclrw)[, c("estimate", "std.error", "df", "p.value")])),
+    na.omit(as.matrix(ivdefclsew)[, 1:4])
   )
 
   expect_equivalent(
@@ -266,8 +266,8 @@ test_that("iv_robust matches AER + ivpack", {
   ivdef2clsew <- clubSandwich::coef_test(ivdef2clw, vcov = "CR2", cluster = dat$clust)
 
   expect_equivalent(
-    na.omit(as.matrix(tidy(ivdef2clrw)[, c("estimate", "std.error", "p.value")])),
-    na.omit(as.matrix(ivdef2clsew)[, c(1, 2, 4)])
+    na.omit(as.matrix(tidy(ivdef2clrw)[, c("estimate", "std.error", "df", "p.value")])),
+    na.omit(as.matrix(ivdef2clsew)[, 1:4])
   )
 
   expect_equivalent(
@@ -294,8 +294,8 @@ test_that("iv_robust different specifications work", {
   ivo <- AER::ivreg(mpg ~ wt | hp + cyl, data = mtcars)
   capture_output(ivpo <- ivpack::robust.se(ivo))
   expect_equivalent(
-    as.matrix(tidy(ivro)[, c("estimate", "std.error", "p.value")]),
-    ivpo[, c(1, 2, 4)]
+    as.matrix(tidy(ivro)[, c("estimate", "std.error", "statistic", "p.value")]),
+    ivpo[, 1:4]
   )
 
   # . notation for multiple exog, doesnt work!
@@ -303,8 +303,8 @@ test_that("iv_robust different specifications work", {
   # ivo <- AER::ivreg(mpg ~ wt + hp + vs | . - vs + cyl, data = mtcars)
   # ivpo <- ivpack::robust.se(ivo)
   # expect_equivalent(
-  #   as.matrix(tidy(ivro)[, c("estimate", "std.error", "p.value")]),
-  #   ivpo[, c(1, 2, 4)]
+  #   as.matrix(tidy(ivro)[, c("estimate", "std.error", "statistic", "p.value")]),
+  #   ivpo[, 1:4]
   # )
 
   # . notation in general
@@ -313,8 +313,8 @@ test_that("iv_robust different specifications work", {
   capture_output(ivpo <- ivpack::robust.se(ivo))
 
   expect_equivalent(
-    as.matrix(tidy(ivro)[, c("estimate", "std.error", "p.value")]),
-    ivpo[, c(1, 2, 4)]
+    as.matrix(tidy(ivro)[, c("estimate", "std.error", "statistic", "p.value")]),
+    ivpo[, 1:4]
   )
 
 })

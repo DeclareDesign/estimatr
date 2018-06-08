@@ -197,7 +197,7 @@ commarobust <- function(model,
 #' Prepare model fits for stargazer
 #'
 #' @param ... a list of lm_robust or lm objects
-#' @param stat either "std.error" (the default), "p.value", "ci", or "df"
+#' @param stat either "std.error" (the default), "statistic" (the t-statistic), "p.value", "ci", or "df"
 #' @param se_type (optional) if any of the objects are lm objects, what standard
 #' errors should be used. Must only be one type and will be used for all lm
 #' objects passed to starprep. See `commarobust` for more.
@@ -240,7 +240,7 @@ commarobust <- function(model,
 #'
 #' @export
 starprep <- function(...,
-                     stat = c("std.error", "p.value", "ci", "df"),
+                     stat = c("std.error", "statistic", "p.value", "ci", "df"),
                      se_type = NULL,
                      clusters = NULL,
                      alpha = 0.05) {

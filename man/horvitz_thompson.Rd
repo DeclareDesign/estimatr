@@ -84,10 +84,11 @@ least the following components:
 
   \item{coefficients}{the estimated difference in totals}
   \item{std.error}{the estimated standard error}
+  \item{statistic}{the z-statistic}
   \item{df}{the estimated degrees of freedom}
   \item{p.value}{the p-value from a two-sided z-test using \code{coefficients} and \code{std.error}}
-  \item{ci.lower}{the lower bound of the \code{1 - alpha} percent confidence interval}
-  \item{ci.upper}{the upper bound of the \code{1 - alpha} percent confidence interval}
+  \item{conf.low}{the lower bound of the \code{1 - alpha} percent confidence interval}
+  \item{conf.high}{the upper bound of the \code{1 - alpha} percent confidence interval}
   \item{term}{a character vector of coefficient names}
   \item{alpha}{the significance level specified by the user}
   \item{N}{the number of observations used}

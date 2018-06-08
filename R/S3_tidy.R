@@ -90,6 +90,7 @@ tidy_data_frame <- function(object, digits = NULL) {
     c(
       "coefficients",
       "std.error",
+      "statistic",
       "p.value",
       "conf.low",
       "conf.high",
