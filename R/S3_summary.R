@@ -106,13 +106,13 @@ summarize_tidy <- function(object, test = "t", ...) {
   tidy_out <- tidy(object, ...)
   colnames(tidy_out)[2:8] <-
     c(
-      "estimate",
-      "std.error",
-      paste(test, ".statistic"),
-      "p.value",
-      "conf.low",
-      "conf.high",
-      "df"
+      "Estimate",
+      "Std. Error",
+      paste0(test, " value"),
+      paste0("Pr(>|", test, "|)"),
+      "CI Lower",
+      "CI Upper",
+      "DF"
     )
   tidy_mat <- as.matrix(tidy_out[, !(names(tidy_out) %in% remove_cols)])
 

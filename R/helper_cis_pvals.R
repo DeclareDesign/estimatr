@@ -41,7 +41,7 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
   } else {
     return_frame$p.value <- NA
     return_frame$statistic <- NA
-    return_frame$conf.low<- NA
+    return_frame$conf.low <- NA
     return_frame$conf.high <- NA
 
     return(as.list(return_frame))

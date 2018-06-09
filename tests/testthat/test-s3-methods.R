@@ -62,6 +62,11 @@ test_that("tidy, summary, and print work", {
     1
   )
 
+  expect_equal(
+    colnames(coef(summary(lmo))),
+    c("Estimate", "Std. Error", "t value", "Pr(>|t|)", "CI Lower", "CI Upper", "DF")
+  )
+
   capture_output(
     expect_equivalent(
       coef(summary(lmo)),
@@ -179,6 +184,11 @@ test_that("tidy, summary, and print work", {
     coef(summary(ht))
   )
 
+  expect_equal(
+    colnames(coef(summary(ht))),
+    c("Estimate", "Std. Error", "z value", "Pr(>|z|)", "CI Lower", "CI Upper", "DF")
+  )
+
 
   capture_output(
     expect_equivalent(
@@ -194,7 +204,10 @@ test_that("tidy, summary, and print work", {
     "data.frame"
   )
 
-  summary(dim)$coefficients
+  expect_equal(
+    colnames(coef(summary(dim))),
+    c("Estimate", "Std. Error", "t value", "Pr(>|t|)", "CI Lower", "CI Upper", "DF")
+  )
 
   capture_output(
     expect_equivalent(
