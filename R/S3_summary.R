@@ -108,7 +108,7 @@ summarize_tidy <- function(object, test = "t", ...) {
     c(
       "estimate",
       "std.error",
-      paste(test, ".statistic"),
+      paste0(test, ".statistic"),
       "p.value",
       "conf.low",
       "conf.high",
