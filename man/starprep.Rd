@@ -4,13 +4,13 @@
 \alias{starprep}
 \title{Prepare model fits for stargazer}
 \usage{
-starprep(..., stat = c("std.error", "p.value", "ci", "df"), se_type = NULL,
-  clusters = NULL, alpha = 0.05)
+starprep(..., stat = c("std.error", "statistic", "p.value", "ci", "df"),
+  se_type = NULL, clusters = NULL, alpha = 0.05)
 }
 \arguments{
 \item{...}{a list of lm_robust or lm objects}
 
-\item{stat}{either "std.error" (the default), "p.value", "ci", or "df"}
+\item{stat}{either "std.error" (the default), "statistic" (the t-statistic), "p.value", "ci", or "df"}
 
 \item{se_type}{(optional) if any of the objects are lm objects, what standard
 errors should be used. Must only be one type and will be used for all lm

@@ -40,12 +40,12 @@ addons:
     packages:
       - libnlopt-dev
 
+r_packages:
+- experiment
+
 r_github_packages:
 - DeclareDesign/DDtools
 - ropensci/git2r
-
-r_packages:
-- experiment
 
 after_success:
 - Rscript -e DDtools::after_build
