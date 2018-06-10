@@ -250,6 +250,34 @@ test_that("DIM Matched Pair Cluster Randomization = Matched Pair when cluster si
   )
 })
 
+test_that("DIM Matched Pair matches experiment package", {
+  skip_on_cran()
+  dat <- data.frame(
+    y = rnorm(8),
+    mp = rep(1:4, each = 2),
+    z_mp = 0:1
+  )
+
+  estmp <- difference_in_means(y ~ z_mp, dat, blocks = mp)
+  expmp <- experiment::ATEnocov(y, z_mp, dat, match = mp)
+  expect_equivalent(
+    tidy(estmp)[, c("estimate", "std.error")],
+    c(expmp$ATE.est, sqrt(expmp$ATE.var))
+  )
+
+  dat$mpcl <- rep(1:2, each = 4)
+  dat$cl <- rep(1:4, each = 2)
+  dat$z_mpcl <- c(0, 0, 1, 1)
+
+  estmpcl <- difference_in_means(y ~ z_mpcl, dat, blocks = mpcl, clusters = cl)
+  expmpcl <- experiment::ATEcluster(y, z_mpcl, grp = cl, data = dat, match = mpcl)
+  expect_equivalent(
+    tidy(estmpcl)[, c("estimate", "std.error")],
+    c(expmpcl$est, sqrt(expmpcl$var))
+  )
+
+})
+
 test_that("DIM works with missingness", {
   dat <- data.frame(
     Y = rnorm(100),
