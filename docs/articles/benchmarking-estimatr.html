@@ -128,7 +128,7 @@
     
     
 <div class="contents">
-<p>We built <code>estimatr</code> to provide accurate standard errors <strong>quickly</strong>. This document benchmarks the speed of or linear regression estimator against other estimators. Our performance is slightly better than base R when using classical standard errors, but most of our improvements come when estimating robust standard errors.</p>
+<p>This document benchmarks the speed of <code>lm_robust</code> against other estimators. Our performance is slightly better than base R when using classical standard errors, but most of our improvements come when estimating robust standard errors.</p>
 <p>The times are milliseconds and are a median over 200 runs for all but the CR2 case, which was taken on a sample of 50 runs, using the <code>microbenchmark</code> package. This benchmarking was done on a 2017 MacBook Air, with a 1.8 GHz Intel Core i5 CPU and 8 GB of memory.</p>
 <div id="linear-regression" class="section level1">
 <h1 class="hasAnchor">

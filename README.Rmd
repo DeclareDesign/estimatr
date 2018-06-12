@@ -9,6 +9,7 @@ title: "estimatr: Fast Estimators for Design-Based Inference"
 set.seed(42)
 knitr::opts_chunk$set(
   collapse = TRUE,
+  message = FALSE,
   comment = "#>",
   fig.path = "README-"  
 )

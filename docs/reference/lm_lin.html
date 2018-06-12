@@ -235,10 +235,11 @@ them can be gotten by passing this object to
 following components:</p>
 <dt>coefficients</dt><dd><p>the estimated coefficients</p></dd>
   <dt>std.error</dt><dd><p>the estimated standard errors</p></dd>
+  <dt>statistic</dt><dd><p>the t-statistic</p></dd>
   <dt>df</dt><dd><p>the estimated degrees of freedom</p></dd>
   <dt>p.value</dt><dd><p>the p-values from a two-sided t-test using <code>coefficients</code>, <code>std.error</code>, and <code>df</code></p></dd>
-  <dt>ci.lower</dt><dd><p>the lower bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
-  <dt>ci.upper</dt><dd><p>the upper bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
+  <dt>conf.low</dt><dd><p>the lower bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
+  <dt>conf.high</dt><dd><p>the upper bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
   <dt>term</dt><dd><p>a character vector of coefficient names</p></dd>
   <dt>alpha</dt><dd><p>the significance level specified by the user</p></dd>
   <dt>se_type</dt><dd><p>the standard error type specified by the user</p></dd>
@@ -298,19 +299,31 @@ Freedman, David A. 2008. "On Regression Adjustments in Experiments with Several 
 
 <span class='co'># Same specification as lm_robust() with one additional argument</span>
 <span class='no'>lmlin_out</span> <span class='kw'>&lt;-</span> <span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>covariates</span> <span class='kw'>=</span> ~ <span class='no'>x</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)
-<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmlin_out</span>)</div><div class='output co'>#&gt;          term  estimate std.error      p.value   ci.lower ci.upper df outcome
-#&gt; 1 (Intercept) 1.8026178 0.2165801 6.569833e-10  1.3633730 2.241863 36       y
-#&gt; 2           z 1.0316029 0.3142429 2.291303e-03  0.3942889 1.668917 36       y
-#&gt; 3         x_c 0.5777179 0.2290022 1.620364e-02  0.1132800 1.042156 36       y
-#&gt; 4       z:x_c 0.4791451 0.2927459 1.104013e-01 -0.1145712 1.072861 36       y</div><div class='input'>
+<span class='fu'><a href='tidy.html'>tidy</a></span>(<span class='no'>lmlin_out</span>)</div><div class='output co'>#&gt;          term  estimate std.error statistic      p.value   conf.low conf.high
+#&gt; 1 (Intercept) 1.8026178 0.2165801  8.323100 6.569833e-10  1.3633730  2.241863
+#&gt; 2           z 1.0316029 0.3142429  3.282821 2.291303e-03  0.3942889  1.668917
+#&gt; 3         x_c 0.5777179 0.2290022  2.522762 1.620364e-02  0.1132800  1.042156
+#&gt; 4       z:x_c 0.4791451 0.2927459  1.636727 1.104013e-01 -0.1145712  1.072861
+#&gt;   df outcome
+#&gt; 1 36       y
+#&gt; 2 36       y
+#&gt; 3 36       y
+#&gt; 4 36       y</div><div class='input'>
 <span class='co'># Works with multiple pre-treatment covariates</span>
-<span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>covariates</span> <span class='kw'>=</span> ~ <span class='no'>x</span> + <span class='no'>x2</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;               Estimate Std. Error     Pr(&gt;|t|)    CI Lower    CI Upper DF
-#&gt; (Intercept)  1.8259819 0.20588206 2.296005e-10  1.40757918  2.24438456 34
-#&gt; z            1.0077530 0.30932172 2.548062e-03  0.37913562  1.63637034 34
-#&gt; x_c          0.6147020 0.22697321 1.051063e-02  0.15343689  1.07596702 34
-#&gt; x2_c        -0.2372305 0.08687123 9.939845e-03 -0.41377409 -0.06068691 34
-#&gt; z:x_c        0.4343617 0.29518481 1.503545e-01 -0.16552603  1.03424941 34
-#&gt; z:x2_c       0.2150855 0.14829333 1.561089e-01 -0.08628277  0.51645385 34</div><div class='input'>
+<span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>covariates</span> <span class='kw'>=</span> ~ <span class='no'>x</span> + <span class='no'>x2</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;               Estimate Std. Error   t value     Pr(&gt;|t|)    CI Lower
+#&gt; (Intercept)  1.8259819 0.20588206  8.869067 2.296005e-10  1.40757918
+#&gt; z            1.0077530 0.30932172  3.257944 2.548062e-03  0.37913562
+#&gt; x_c          0.6147020 0.22697321  2.708258 1.051063e-02  0.15343689
+#&gt; x2_c        -0.2372305 0.08687123 -2.730829 9.939845e-03 -0.41377409
+#&gt; z:x_c        0.4343617 0.29518481  1.471491 1.503545e-01 -0.16552603
+#&gt; z:x2_c       0.2150855 0.14829333  1.450406 1.561089e-01 -0.08628277
+#&gt;                CI Upper DF
+#&gt; (Intercept)  2.24438456 34
+#&gt; z            1.63637034 34
+#&gt; x_c          1.07596702 34
+#&gt; x2_c        -0.06068691 34
+#&gt; z:x_c        1.03424941 34
+#&gt; z:x2_c       0.51645385 34</div><div class='input'>
 <span class='co'># Also centers data AFTER evaluating any functions in formula</span>
 <span class='no'>lmlin_out2</span> <span class='kw'>&lt;-</span> <span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>covariates</span> <span class='kw'>=</span> ~ <span class='no'>x</span> + <span class='fu'>log</span>(<span class='no'>x3</span>), <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)
 <span class='no'>lmlin_out2</span>$<span class='no'>scaled_center</span>[<span class='st'>"log(x3)"</span>]</div><div class='output co'>#&gt;  log(x3) 
@@ -319,46 +332,58 @@ Freedman, David A. 2008. "On Regression Adjustments in Experiments with Several 
 <span class='no'>dat</span>$<span class='no'>clusterID</span> <span class='kw'>&lt;-</span> <span class='fu'>rep</span>(<span class='fl'>1</span>:<span class='fl'>20</span>, <span class='kw'>each</span> <span class='kw'>=</span> <span class='fl'>2</span>)
 <span class='no'>dat</span>$<span class='no'>z_clust</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/cluster_ra'>cluster_ra</a></span>(<span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>clusterID</span>)
 
-<span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z_clust</span>, <span class='kw'>covariates</span> <span class='kw'>=</span> ~ <span class='no'>x</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>clusterID</span>)</div><div class='output co'>#&gt;               Estimate Std. Error     Pr(&gt;|t|)   CI Lower  CI Upper        DF
-#&gt; (Intercept)  2.2858578  0.2499567 1.017325e-05  1.7164169 2.8552986  8.603305
-#&gt; z_clust      0.1645257  0.3942542 6.816056e-01 -0.6664243 0.9954756 17.232425
-#&gt; x_c          1.0041073  0.1938795 4.112009e-03  0.4974237 1.5107910  4.741030
-#&gt; z_clust:x_c -0.1976663  0.3457910 5.790456e-01 -0.9586096 0.5632771 11.016320</div><div class='input'>
+<span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z_clust</span>, <span class='kw'>covariates</span> <span class='kw'>=</span> ~ <span class='no'>x</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>clusterID</span>)</div><div class='output co'>#&gt;               Estimate Std. Error    t value     Pr(&gt;|t|)   CI Lower  CI Upper
+#&gt; (Intercept)  2.2858578  0.2499567  9.1450135 1.017325e-05  1.7164169 2.8552986
+#&gt; z_clust      0.1645257  0.3942542  0.4173085 6.816056e-01 -0.6664243 0.9954756
+#&gt; x_c          1.0041073  0.1938795  5.1790277 4.112009e-03  0.4974237 1.5107910
+#&gt; z_clust:x_c -0.1976663  0.3457910 -0.5716352 5.790456e-01 -0.9586096 0.5632771
+#&gt;                    DF
+#&gt; (Intercept)  8.603305
+#&gt; z_clust     17.232425
+#&gt; x_c          4.741030
+#&gt; z_clust:x_c 11.016320</div><div class='input'>
 <span class='co'># Works with multi-valued treatments</span>
 <span class='no'>dat</span>$<span class='no'>z_multi</span> <span class='kw'>&lt;-</span> <span class='fu'>sample</span>(<span class='fl'>1</span>:<span class='fl'>3</span>, <span class='kw'>size</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>), <span class='kw'>replace</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
-<span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z_multi</span>, <span class='kw'>covariates</span> <span class='kw'>=</span> ~ <span class='no'>x</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;                 Estimate Std. Error     Pr(&gt;|t|)   CI Lower  CI Upper DF
-#&gt; (Intercept)   2.44175655  0.3181705 6.374489e-09  1.7951563 3.0883568 34
-#&gt; z_multi2      0.03881805  0.4732673 9.351107e-01 -0.9229768 1.0006129 34
-#&gt; z_multi3     -0.14277905  0.4336806 7.440042e-01 -1.0241241 0.7385660 34
-#&gt; x_c           1.10254997  0.3469138 3.151395e-03  0.3975363 1.8075636 34
-#&gt; z_multi2:x_c  0.03000709  0.5223335 9.545245e-01 -1.0315022 1.0915164 34
-#&gt; z_multi3:x_c -0.36055874  0.4378240 4.159492e-01 -1.2503242 0.5292067 34</div><div class='input'>
+<span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z_multi</span>, <span class='kw'>covariates</span> <span class='kw'>=</span> ~ <span class='no'>x</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;                 Estimate Std. Error     t value     Pr(&gt;|t|)   CI Lower
+#&gt; (Intercept)   2.44175655  0.3181705  7.67436549 6.374489e-09  1.7951563
+#&gt; z_multi2      0.03881805  0.4732673  0.08202140 9.351107e-01 -0.9229768
+#&gt; z_multi3     -0.14277905  0.4336806 -0.32922626 7.440042e-01 -1.0241241
+#&gt; x_c           1.10254997  0.3469138  3.17816688 3.151395e-03  0.3975363
+#&gt; z_multi2:x_c  0.03000709  0.5223335  0.05744814 9.545245e-01 -1.0315022
+#&gt; z_multi3:x_c -0.36055874  0.4378240 -0.82352440 4.159492e-01 -1.2503242
+#&gt;               CI Upper DF
+#&gt; (Intercept)  3.0883568 34
+#&gt; z_multi2     1.0006129 34
+#&gt; z_multi3     0.7385660 34
+#&gt; x_c          1.8075636 34
+#&gt; z_multi2:x_c 1.0915164 34
+#&gt; z_multi3:x_c 0.5292067 34</div><div class='input'>
 <span class='co'># Stratified estimator with blocks</span>
 <span class='no'>dat</span>$<span class='no'>blockID</span> <span class='kw'>&lt;-</span> <span class='fu'>rep</span>(<span class='fl'>1</span>:<span class='fl'>5</span>, <span class='kw'>each</span> <span class='kw'>=</span> <span class='fl'>8</span>)
 <span class='no'>dat</span>$<span class='no'>z_block</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/block_ra'>block_ra</a></span>(<span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>blockID</span>)
 
-<span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z_block</span>, ~ <span class='fu'>factor</span>(<span class='no'>blockID</span>), <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;                              Estimate Std. Error     Pr(&gt;|t|)   CI Lower
-#&gt; (Intercept)                 2.1666198  0.3125362 1.065456e-07  1.5283357
-#&gt; z_block                     0.3757844  0.4980395 4.564151e-01 -0.6413478
-#&gt; factor(blockID)2_c          0.5941769  0.8270890 4.780717e-01 -1.0949642
-#&gt; factor(blockID)3_c          0.5165867  1.2124479 6.730990e-01 -1.9595622
-#&gt; factor(blockID)4_c          1.2301622  0.8766283 1.707971e-01 -0.5601515
-#&gt; factor(blockID)5_c          1.5991702  0.7227921 3.468740e-02  0.1230318
-#&gt; z_block:factor(blockID)2_c  0.4296514  1.6620499 7.977811e-01 -2.9647073
-#&gt; z_block:factor(blockID)3_c -1.3078623  1.6407573 4.316516e-01 -4.6587357
-#&gt; z_block:factor(blockID)4_c -0.2990054  1.4411165 8.370357e-01 -3.2421579
-#&gt; z_block:factor(blockID)5_c -0.5548165  1.5465141 7.222924e-01 -3.7132197
-#&gt;                            CI Upper DF
-#&gt; (Intercept)                2.804904 30
-#&gt; z_block                    1.392917 30
-#&gt; factor(blockID)2_c         2.283318 30
-#&gt; factor(blockID)3_c         2.992736 30
-#&gt; factor(blockID)4_c         3.020476 30
-#&gt; factor(blockID)5_c         3.075309 30
-#&gt; z_block:factor(blockID)2_c 3.824010 30
-#&gt; z_block:factor(blockID)3_c 2.043011 30
-#&gt; z_block:factor(blockID)4_c 2.644147 30
-#&gt; z_block:factor(blockID)5_c 2.603587 30</div><div class='input'>
+<span class='fu'>lm_lin</span>(<span class='no'>y</span> ~ <span class='no'>z_block</span>, ~ <span class='fu'>factor</span>(<span class='no'>blockID</span>), <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;                              Estimate Std. Error    t value     Pr(&gt;|t|)
+#&gt; (Intercept)                 2.1666198  0.3125362  6.9323807 1.065456e-07
+#&gt; z_block                     0.3757844  0.4980395  0.7545274 4.564151e-01
+#&gt; factor(blockID)2_c          0.5941769  0.8270890  0.7183953 4.780717e-01
+#&gt; factor(blockID)3_c          0.5165867  1.2124479  0.4260692 6.730990e-01
+#&gt; factor(blockID)4_c          1.2301622  0.8766283  1.4032883 1.707971e-01
+#&gt; factor(blockID)5_c          1.5991702  0.7227921  2.2124899 3.468740e-02
+#&gt; z_block:factor(blockID)2_c  0.4296514  1.6620499  0.2585069 7.977811e-01
+#&gt; z_block:factor(blockID)3_c -1.3078623  1.6407573 -0.7971089 4.316516e-01
+#&gt; z_block:factor(blockID)4_c -0.2990054  1.4411165 -0.2074818 8.370357e-01
+#&gt; z_block:factor(blockID)5_c -0.5548165  1.5465141 -0.3587530 7.222924e-01
+#&gt;                              CI Lower CI Upper DF
+#&gt; (Intercept)                 1.5283357 2.804904 30
+#&gt; z_block                    -0.6413478 1.392917 30
+#&gt; factor(blockID)2_c         -1.0949642 2.283318 30
+#&gt; factor(blockID)3_c         -1.9595622 2.992736 30
+#&gt; factor(blockID)4_c         -0.5601515 3.020476 30
+#&gt; factor(blockID)5_c          0.1230318 3.075309 30
+#&gt; z_block:factor(blockID)2_c -2.9647073 3.824010 30
+#&gt; z_block:factor(blockID)3_c -4.6587357 2.043011 30
+#&gt; z_block:factor(blockID)4_c -3.2421579 2.644147 30
+#&gt; z_block:factor(blockID)5_c -3.7132197 2.603587 30</div><div class='input'>
 </div><span class='co'># NOT RUN {</span>
   <span class='co'># Can also use 'margins' package if you have it installed to get</span>
   <span class='co'># marginal effects</span>

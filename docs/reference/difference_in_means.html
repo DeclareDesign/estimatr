@@ -234,10 +234,11 @@ you can use the generic accessor functions <code>coef</code> and
 least the following components:</p>
 <dt>coefficients</dt><dd><p>the estimated difference in means</p></dd>
   <dt>std.error</dt><dd><p>the estimated standard error</p></dd>
+  <dt>statistic</dt><dd><p>the t-statistic</p></dd>
   <dt>df</dt><dd><p>the estimated degrees of freedom</p></dd>
   <dt>p.value</dt><dd><p>the p-value from a two-sided t-test using <code>coefficients</code>, <code>std.error</code>, and <code>df</code></p></dd>
-  <dt>ci.lower</dt><dd><p>the lower bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
-  <dt>ci.upper</dt><dd><p>the upper bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
+  <dt>conf.low</dt><dd><p>the lower bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
+  <dt>conf.high</dt><dd><p>the upper bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
   <dt>term</dt><dd><p>a character vector of coefficient names</p></dd>
   <dt>alpha</dt><dd><p>the significance level specified by the user</p></dd>
   <dt>N</dt><dd><p>the number of observations used</p></dd>
@@ -295,8 +296,8 @@ More details of the about each of the estimators can be found in the
 <span class='fu'>table</span>(<span class='no'>dat</span>$<span class='no'>Z_comp</span>)</div><div class='output co'>#&gt; 
 #&gt;  0  1 
 #&gt; 60 40 </div><div class='input'><span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_comp</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt; Design:  Standard 
-#&gt;        Estimate Std. Error  Pr(&gt;|t|)   CI Lower  CI Upper       DF
-#&gt; Z_comp 0.267286  0.2103627 0.2078724 -0.1519055 0.6864774 73.63443</div><div class='input'>
+#&gt;        Estimate Std. Error  t value  Pr(&gt;|t|)   CI Lower  CI Upper       DF
+#&gt; Z_comp 0.267286  0.2103627 1.270596 0.2078724 -0.1519055 0.6864774 73.63443</div><div class='input'>
 <span class='co'># ----------</span>
 <span class='co'># 2. Cluster randomized</span>
 <span class='co'># ----------</span>
@@ -308,8 +309,10 @@ More details of the about each of the estimators can be found in the
 #&gt;     1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
 #&gt;   0 4 0 0 0 6 6 0 0 0  4  5  0  0  3  2  0  0  0  0  6
 #&gt;   1 0 6 7 7 0 0 3 8 5  0  0  1  8  0  0  3  6  6  4  0</div><div class='input'><span class='fu'>summary</span>(<span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_clust</span>, <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>clust</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>))</div><div class='output co'>#&gt; $coefficients
-#&gt;           Estimate Std. Error  Pr(&gt;|t|)   CI Lower  CI Upper       DF
-#&gt; Z_clust 0.01358764  0.1976157 0.9462553 -0.4144554 0.4416307 12.67362
+#&gt;           Estimate Std. Error    t value  Pr(&gt;|t|)   CI Lower  CI Upper
+#&gt; Z_clust 0.01358764  0.1976157 0.06875792 0.9462553 -0.4144554 0.4416307
+#&gt;               DF
+#&gt; Z_clust 12.67362
 #&gt; 
 #&gt; $design
 #&gt; [1] "Clustered"
@@ -324,8 +327,8 @@ More details of the about each of the estimators can be found in the
 #&gt;     1 2 3 4 5 6 7 8 9 10
 #&gt;   0 5 5 5 5 5 5 5 5 5  5
 #&gt;   1 5 5 5 5 5 5 5 5 5  5</div><div class='input'><span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_block</span>, <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>block</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt; Design:  Blocked 
-#&gt;          Estimate Std. Error  Pr(&gt;|t|)   CI Lower  CI Upper DF
-#&gt; Z_block 0.1179259  0.2042126 0.5652462 -0.2884701 0.5243219 80</div><div class='input'>
+#&gt;          Estimate Std. Error   t value  Pr(&gt;|t|)   CI Lower  CI Upper DF
+#&gt; Z_block 0.1179259  0.2042126 0.5774663 0.5652462 -0.2884701 0.5243219 80</div><div class='input'>
 <span class='co'># ----------</span>
 <span class='co'># 4. Block cluster randomized</span>
 <span class='co'># ----------</span>
@@ -344,8 +347,8 @@ More details of the about each of the estimators can be found in the
   <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>small_clust</span>,
   <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>
  )</div><div class='output co'>#&gt; Design:  Block-clustered 
-#&gt;           Estimate Std. Error  Pr(&gt;|t|)   CI Lower  CI Upper DF
-#&gt; Z_blcl -0.07230072  0.1777591 0.6863714 -0.4315652 0.2869638 40</div><div class='input'>
+#&gt;           Estimate Std. Error    t value  Pr(&gt;|t|)   CI Lower  CI Upper DF
+#&gt; Z_blcl -0.07230072  0.1777591 -0.4067343 0.6863714 -0.4315652 0.2869638 40</div><div class='input'>
 <span class='co'># ----------</span>
 <span class='co'># 5. Matched-pairs</span>
 <span class='co'># ----------</span>
@@ -407,8 +410,8 @@ More details of the about each of the estimators can be found in the
 #&gt;   48 1 1
 #&gt;   49 1 1
 #&gt;   50 1 1</div><div class='input'><span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_pairs</span>, <span class='kw'>blocks</span> <span class='kw'>=</span> <span class='no'>pairs</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt; Design:  Matched-pair 
-#&gt;           Estimate Std. Error  Pr(&gt;|t|)   CI Lower CI Upper DF
-#&gt; Z_pairs 0.08603601  0.2252421 0.7041343 -0.3666049 0.538677 49</div><div class='input'>
+#&gt;           Estimate Std. Error   t value  Pr(&gt;|t|)   CI Lower CI Upper DF
+#&gt; Z_pairs 0.08603601  0.2252421 0.3819713 0.7041343 -0.3666049 0.538677 49</div><div class='input'>
 <span class='co'># ----------</span>
 <span class='co'># 6. Matched-pair cluster randomized</span>
 <span class='co'># ----------</span>
@@ -471,8 +474,8 @@ More details of the about each of the estimators can be found in the
   <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>small_clust</span>,
   <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>
  )</div><div class='output co'>#&gt; Design:  Matched-pair clustered 
-#&gt;         Estimate Std. Error  Pr(&gt;|t|)   CI Lower CI Upper DF
-#&gt; Z_mpcl 0.1053292  0.1740893 0.5508377 -0.2539735 0.464632 24</div><div class='input'>
+#&gt;         Estimate Std. Error   t value  Pr(&gt;|t|)   CI Lower CI Upper DF
+#&gt; Z_mpcl 0.1053292  0.1740893 0.6050296 0.5508377 -0.2539735 0.464632 24</div><div class='input'>
 <span class='co'># ----------</span>
 <span class='co'># Other examples</span>
 <span class='co'># ----------</span>
@@ -493,22 +496,29 @@ More details of the about each of the estimators can be found in the
   <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='st'>"Control"</span>,
   <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>
 )</div><div class='output co'>#&gt; Design:  Standard 
-#&gt;                 Estimate Std. Error  Pr(&gt;|t|)   CI Lower CI Upper       DF
-#&gt; Z_multiControl 0.3235135  0.3268957 0.3343248 -0.3589736 1.006001 19.73174</div><div class='input'><span class='fu'>difference_in_means</span>(
+#&gt;                 Estimate Std. Error   t value  Pr(&gt;|t|)   CI Lower CI Upper
+#&gt; Z_multiControl 0.3235135  0.3268957 0.9896539 0.3343248 -0.3589736 1.006001
+#&gt;                      DF
+#&gt; Z_multiControl 19.73174</div><div class='input'><span class='fu'>difference_in_means</span>(
   <span class='no'>Y</span> ~ <span class='no'>Z_multi</span>,
   <span class='kw'>condition1</span> <span class='kw'>=</span> <span class='st'>"Treatment 1"</span>,
   <span class='kw'>condition2</span> <span class='kw'>=</span> <span class='st'>"Control"</span>,
   <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>
 )</div><div class='output co'>#&gt; Design:  Standard 
-#&gt;                 Estimate Std. Error  Pr(&gt;|t|)   CI Lower CI Upper       DF
-#&gt; Z_multiControl 0.3803983  0.3409199 0.2760514 -0.3249199 1.085717 22.95785</div><div class='input'>
+#&gt;                 Estimate Std. Error t value  Pr(&gt;|t|)   CI Lower CI Upper
+#&gt; Z_multiControl 0.3803983  0.3409199  1.1158 0.2760514 -0.3249199 1.085717
+#&gt;                      DF
+#&gt; Z_multiControl 22.95785</div><div class='input'>
 <span class='co'># Specifying weights will result in estimation via lm_robust()</span>
 <span class='no'>dat</span>$<span class='no'>w</span> <span class='kw'>&lt;-</span> <span class='fu'>runif</span>(<span class='fu'>nrow</span>(<span class='no'>dat</span>))
 <span class='fu'>difference_in_means</span>(<span class='no'>Y</span> ~ <span class='no'>Z_comp</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='no'>w</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt; Design:  Standard (weighted) 
-#&gt;         Estimate Std. Error   Pr(&gt;|t|)    CI Lower  CI Upper DF
-#&gt; Z_comp 0.5011984   0.250709 0.04836406 0.003674594 0.9987222 98</div><div class='input'><span class='fu'><a href='lm_robust.html'>lm_robust</a></span>(<span class='no'>Y</span> ~ <span class='no'>Z_comp</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='no'>w</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;               Estimate Std. Error   Pr(&gt;|t|)     CI Lower  CI Upper DF
-#&gt; (Intercept) -0.1778921  0.1560113 0.25696068 -0.487491513 0.1317073 98
-#&gt; Z_comp       0.5011984  0.2507090 0.04836406  0.003674594 0.9987222 98</div><div class='input'>
+#&gt;         Estimate Std. Error  t value   Pr(&gt;|t|)    CI Lower  CI Upper DF
+#&gt; Z_comp 0.5011984   0.250709 1.999124 0.04836406 0.003674594 0.9987222 98</div><div class='input'><span class='fu'><a href='lm_robust.html'>lm_robust</a></span>(<span class='no'>Y</span> ~ <span class='no'>Z_comp</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='no'>w</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>)</div><div class='output co'>#&gt;               Estimate Std. Error   t value   Pr(&gt;|t|)     CI Lower  CI Upper
+#&gt; (Intercept) -0.1778921  0.1560113 -1.140251 0.25696068 -0.487491513 0.1317073
+#&gt; Z_comp       0.5011984  0.2507090  1.999124 0.04836406  0.003674594 0.9987222
+#&gt;             DF
+#&gt; (Intercept) 98
+#&gt; Z_comp      98</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

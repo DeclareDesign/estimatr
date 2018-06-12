@@ -1,6 +1,6 @@
 
-R version 3.4.1 (2017-06-30) -- "Single Candle"
-Copyright (C) 2017 The R Foundation for Statistical Computing
+R version 3.5.0 (2018-04-23) -- "Joy in Playing"
+Copyright (C) 2018 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin15.6.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -17,10 +17,10 @@ Type 'q()' to quit R.
 
 > library(estimatr)
 > lm_robust(extra~group, sleep)
-            Estimate Std. Error   Pr(>|t|)   CI Lower CI Upper DF
-(Intercept)     0.75  0.5657345 0.20151554 -0.4385641 1.938564 18
-group2          1.58  0.8490910 0.07918671 -0.2038740 3.363874 18
+            Estimate Std. Error  t value   Pr(>|t|)   CI Lower CI Upper DF
+(Intercept)     0.75  0.5657345 1.325710 0.20151554 -0.4385641 1.938564 18
+group2          1.58  0.8490910 1.860813 0.07918671 -0.2038740 3.363874 18
 > 
 > proc.time()
    user  system elapsed 
-  0.819   0.090   1.010 
+  0.782   0.085   0.851 

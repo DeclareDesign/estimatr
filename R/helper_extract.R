@@ -24,21 +24,21 @@ extract.robust_default <- function(model,
                               include.fstatistic = FALSE,
                               include.rmse = TRUE,
                               ...) {
-  s <- summary(model, ...)
+  s <- tidy(model)
 
-  names <- rownames(s$coefficients)
-  co <- coef(s)[, "estimate"]
-  se <- coef(s)[, "std.error"]
-  pval <- coef(s)[, "p.value"]
+  names <- s[["term"]]
+  co <- s[["estimate"]]
+  se <- s[["std.error"]]
+  pval <- s[["p.value"]]
   cilow <- numeric()
   ciupper <- numeric()
   if (include.ci) {
-    cilow <- coef(s)[, "conf.low"]
-    ciupper <- coef(s)[, "conf.high"]
+    cilow <- s[["conf.low"]]
+    ciupper <- s[["conf.high"]]
   }
 
-  rs <- s$r.squared # extract R-squared
-  adj <- s$adj.r.squared # extract adjusted R-squared
+  rs <- model$r.squared # extract R-squared
+  adj <- model$adj.r.squared # extract adjusted R-squared
   n <- nobs(model) # extract number of observations
 
   gof <- numeric()
@@ -60,13 +60,13 @@ extract.robust_default <- function(model,
     gof.decimal <- c(gof.decimal, FALSE)
   }
   if (include.fstatistic) {
-    fstat <- s$fstatistic[[1]]
+    fstat <- model[["fstatistic"]][[1]]
     gof <- c(gof, fstat)
     gof.names <- c(gof.names, "F statistic")
     gof.decimal <- c(gof.decimal, TRUE)
   }
-  if (include.rmse && !is.null(s[["res_var"]])) {
-    rmse <- sqrt(s[["res_var"]])
+  if (include.rmse && !is.null(model[["res_var"]])) {
+    rmse <- sqrt(model[["res_var"]])
     gof <- c(gof, rmse)
     gof.names <- c(gof.names, "RMSE")
     gof.decimal <- c(gof.decimal, TRUE)
