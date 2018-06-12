@@ -1,3 +1,5 @@
+estimatr: Fast Estimators for Design-Based Inference
+================
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 [![CRAN Status](https://www.r-pkg.org/badges/version/estimatr)](cran.r-project.org/package=estimatr) [![Travis-CI Build Status](https://travis-ci.org/DeclareDesign/estimatr.svg?branch=master)](https://travis-ci.org/DeclareDesign/estimatr) [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/DeclareDesign/estimatr?branch=master&svg=true)](https://ci.appveyor.com/project/DeclareDesign/estimatr) [![Coverage Status](https://coveralls.io/repos/github/DeclareDesign/estimatr/badge.svg?branch=master)](https://coveralls.io/github/DeclareDesign/estimatr?branch=master)
@@ -44,9 +46,12 @@ dat <- fabricate(
 res_rob <- lm_robust(y ~ z, data = dat)
 # tidy dataframes on command!
 tidy(res_rob)
-#>          term estimate std.error p.value ci.lower ci.upper df outcome
-#> 1 (Intercept)     0.27      0.16   0.089   -0.041    0.580 98       y
-#> 2           z    -0.42      0.21   0.044   -0.833   -0.012 98       y
+#>          term estimate std.error statistic p.value conf.low conf.high df
+#> 1 (Intercept)     0.27      0.16       1.7   0.089   -0.041     0.580 98
+#> 2           z    -0.42      0.21      -2.0   0.044   -0.833    -0.012 98
+#>   outcome
+#> 1       y
+#> 2       y
 
 # cluster robust standard errors
 res_cl <- lm_robust(y ~ z, data = dat, clusters = clusterID)
@@ -59,9 +64,9 @@ summary(res_cl)
 #> Standard error type:  CR2 
 #> 
 #> Coefficients:
-#>             Estimate Std. Error Pr(>|t|) CI Lower CI Upper   DF
-#> (Intercept)    0.269      0.164     0.20   -0.255    0.793 2.99
-#> z             -0.422      0.250     0.14   -1.027    0.182 6.30
+#>             Estimate Std. Error t value Pr(>|t|) CI Lower CI Upper   DF
+#> (Intercept)    0.269      0.164    1.64     0.20   -0.255    0.793 2.99
+#> z             -0.422      0.250   -1.69     0.14   -1.027    0.182 6.30
 #> 
 #> Multiple R-squared:  0.041 , Adjusted R-squared:  0.0312 
 #> F-statistic: 2.86 on 1 and 9 DF,  p-value: 0.125
@@ -83,12 +88,6 @@ dat <- data.frame(X = matrix(rnorm(2000*50), 2000), y = rnorm(2000))
 
 library(microbenchmark)
 library(lmtest)
-#> Loading required package: zoo
-#> 
-#> Attaching package: 'zoo'
-#> The following objects are masked from 'package:base':
-#> 
-#>     as.Date, as.Date.numeric
 library(sandwich)
 mb <- microbenchmark(
   `estimatr` = lm_robust(y ~ ., data = dat),
@@ -101,8 +100,8 @@ mb <- microbenchmark(
 
 | estimatr      |  median run-time (ms)|
 |:--------------|---------------------:|
-| estimatr      |                    22|
-| lm + sandwich |                    43|
+| estimatr      |                    20|
+| lm + sandwich |                    39|
 
 ------------------------------------------------------------------------
 

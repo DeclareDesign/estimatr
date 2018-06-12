@@ -157,9 +157,12 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 res_rob &lt;-<span class="st"> </span><span class="kw"><a href="reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>z, <span class="dt">data =</span> dat)
 <span class="co"># tidy dataframes on command!</span>
 <span class="kw"><a href="reference/tidy.html">tidy</a></span>(res_rob)
-<span class="co">#&gt;          term estimate std.error p.value ci.lower ci.upper df outcome</span>
-<span class="co">#&gt; 1 (Intercept)     0.27      0.16   0.089   -0.041    0.580 98       y</span>
-<span class="co">#&gt; 2           z    -0.42      0.21   0.044   -0.833   -0.012 98       y</span>
+<span class="co">#&gt;          term estimate std.error statistic p.value conf.low conf.high df</span>
+<span class="co">#&gt; 1 (Intercept)     0.27      0.16       1.7   0.089   -0.041     0.580 98</span>
+<span class="co">#&gt; 2           z    -0.42      0.21      -2.0   0.044   -0.833    -0.012 98</span>
+<span class="co">#&gt;   outcome</span>
+<span class="co">#&gt; 1       y</span>
+<span class="co">#&gt; 2       y</span>
 
 <span class="co"># cluster robust standard errors</span>
 res_cl &lt;-<span class="st"> </span><span class="kw"><a href="reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>z, <span class="dt">data =</span> dat, <span class="dt">clusters =</span> clusterID)
@@ -172,9 +175,9 @@ res_cl &lt;-<span class="st"> </span><span class="kw"><a href="reference/lm_robu
 <span class="co">#&gt; Standard error type:  CR2 </span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Coefficients:</span>
-<span class="co">#&gt;             Estimate Std. Error Pr(&gt;|t|) CI Lower CI Upper   DF</span>
-<span class="co">#&gt; (Intercept)    0.269      0.164     0.20   -0.255    0.793 2.99</span>
-<span class="co">#&gt; z             -0.422      0.250     0.14   -1.027    0.182 6.30</span>
+<span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|) CI Lower CI Upper   DF</span>
+<span class="co">#&gt; (Intercept)    0.269      0.164    1.64     0.20   -0.255    0.793 2.99</span>
+<span class="co">#&gt; z             -0.422      0.250   -1.69     0.14   -1.027    0.182 6.30</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Multiple R-squared:  0.041 , Adjusted R-squared:  0.0312 </span>
 <span class="co">#&gt; F-statistic: 2.86 on 1 and 9 DF,  p-value: 0.125</span>
@@ -192,12 +195,6 @@ res_dim &lt;-<span class="st"> </span><span class="kw"><a href="reference/differ
 
 <span class="kw">library</span>(microbenchmark)
 <span class="kw">library</span>(lmtest)
-<span class="co">#&gt; Loading required package: zoo</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; Attaching package: 'zoo'</span>
-<span class="co">#&gt; The following objects are masked from 'package:base':</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;     as.Date, as.Date.numeric</span>
 <span class="kw">library</span>(sandwich)
 mb &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/microbenchmark/topics/microbenchmark">microbenchmark</a></span>(
   <span class="st">`</span><span class="dt">estimatr</span><span class="st">`</span> =<span class="st"> </span><span class="kw"><a href="reference/lm_robust.html">lm_robust</a></span>(y <span class="op">~</span><span class="st"> </span>., <span class="dt">data =</span> dat),
@@ -214,11 +211,11 @@ mb &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumenta
 <tbody>
 <tr class="odd">
 <td align="left">estimatr</td>
-<td align="right">23</td>
+<td align="right">21</td>
 </tr>
 <tr class="even">
 <td align="left">lm + sandwich</td>
-<td align="right">45</td>
+<td align="right">40</td>
 </tr>
 </tbody>
 </table>

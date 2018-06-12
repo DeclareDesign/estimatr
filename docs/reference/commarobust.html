@@ -192,15 +192,24 @@ intervals, TRUE by default.</p></td>
     <pre class="examples"><div class='input'><span class='no'>lmo</span> <span class='kw'>&lt;-</span> <span class='fu'>lm</span>(<span class='no'>mpg</span> ~ <span class='no'>hp</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>mtcars</span>)
 
 <span class='co'># Default HC2</span>
-<span class='fu'>commarobust</span>(<span class='no'>lmo</span>)</div><div class='output co'>#&gt;                Estimate Std. Error    Pr(&gt;|t|)    CI Lower    CI Upper DF
-#&gt; (Intercept) 30.09886054 2.19301194 1.81366e-14 25.62013267 34.57758841 30
-#&gt; hp          -0.06822828 0.01471473 6.48546e-05 -0.09827977 -0.03817678 30</div><div class='input'>
-<span class='fu'>commarobust</span>(<span class='no'>lmo</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"HC3"</span>)</div><div class='output co'>#&gt;                Estimate Std. Error     Pr(&gt;|t|)   CI Lower    CI Upper DF
-#&gt; (Intercept) 30.09886054 2.41006671 2.044330e-13 25.1768477 35.02087341 30
-#&gt; hp          -0.06822828 0.01660193 2.822529e-04 -0.1021339 -0.03432261 30</div><div class='input'>
-<span class='fu'>commarobust</span>(<span class='no'>lmo</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"stata"</span>, <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>mtcars</span>$<span class='no'>carb</span>)</div><div class='output co'>#&gt;                Estimate Std. Error     Pr(&gt;|t|)   CI Lower    CI Upper DF
-#&gt; (Intercept) 30.09886054 2.15609050 3.390807e-05 24.5564535 35.64126761  5
-#&gt; hp          -0.06822828 0.01404901 4.647551e-03 -0.1043424 -0.03211416  5</div><div class='input'>
+<span class='fu'>commarobust</span>(<span class='no'>lmo</span>)</div><div class='output co'>#&gt;                Estimate Std. Error   t value    Pr(&gt;|t|)    CI Lower
+#&gt; (Intercept) 30.09886054 2.19301194 13.724896 1.81366e-14 25.62013267
+#&gt; hp          -0.06822828 0.01471473 -4.636732 6.48546e-05 -0.09827977
+#&gt;                CI Upper DF
+#&gt; (Intercept) 34.57758841 30
+#&gt; hp          -0.03817678 30</div><div class='input'>
+<span class='fu'>commarobust</span>(<span class='no'>lmo</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"HC3"</span>)</div><div class='output co'>#&gt;                Estimate Std. Error   t value     Pr(&gt;|t|)   CI Lower
+#&gt; (Intercept) 30.09886054 2.41006671 12.488808 2.044330e-13 25.1768477
+#&gt; hp          -0.06822828 0.01660193 -4.109659 2.822529e-04 -0.1021339
+#&gt;                CI Upper DF
+#&gt; (Intercept) 35.02087341 30
+#&gt; hp          -0.03432261 30</div><div class='input'>
+<span class='fu'>commarobust</span>(<span class='no'>lmo</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"stata"</span>, <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>mtcars</span>$<span class='no'>carb</span>)</div><div class='output co'>#&gt;                Estimate Std. Error   t value     Pr(&gt;|t|)   CI Lower
+#&gt; (Intercept) 30.09886054 2.15609050 13.959924 3.390807e-05 24.5564535
+#&gt; hp          -0.06822828 0.01404901 -4.856449 4.647551e-03 -0.1043424
+#&gt;                CI Upper DF
+#&gt; (Intercept) 35.64126761  5
+#&gt; hp          -0.03211416  5</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

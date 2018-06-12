@@ -69,7 +69,7 @@ gg_df %>%
   filter(term == "disp") %>%
   ggplot(aes(x = estimate, y = cyl)) +
   geom_point() +
-  geom_errorbarh(aes(xmin = ci.lower, xmax = ci.upper), height = 0) +
+  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high), height = 0) +
   geom_vline(xintercept = 0, linetype = "dashed") +
   theme_bw()
 ```
@@ -87,7 +87,7 @@ gg_df %>%
   filter(term == "disp") %>%
   ggplot(aes(estimate, outcome)) +
   geom_point() +
-  geom_errorbarh(aes(xmin = ci.lower, xmax = ci.upper), height = 0) +
+  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high), height = 0) +
   geom_vline(xintercept = 0, linetype = "dashed") +
   theme_bw()
 ```

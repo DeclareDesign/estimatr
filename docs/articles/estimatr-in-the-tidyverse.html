@@ -127,32 +127,32 @@
     
     
 <div class="contents">
-<p>The <code>estimatr</code> package estimates linear and instrumental variable regressions quickly and with robust standard errors. We designed the package to play well with the “tidyverse”, which is a suite of packages developed by RStudio. The main way we accomplish this is making it easy to turn model fits into data.frames, the data format expected by many tidyverse packages. This vignette will show you how to <code>estimatr</code> functions with four tidyverse packages: <code>broom</code>, <code>dplyr</code>, <code>purrr</code>, and <code>ggplot2</code>.</p>
+<p>The <code>estimatr</code> package estimates linear and instrumental variable regressions quickly and with robust standard errors. We designed the package to play well with the “tidyverse”, which is a suite of packages developed by RStudio. The main way we accomplish this is making it easy to turn model fits into data.frames, the data format expected by many tidyverse packages. This vignette will show you how to use <code>estimatr</code> functions with four tidyverse packages: <code>broom</code>, <code>dplyr</code>, <code>purrr</code>, and <code>ggplot2</code>.</p>
 <div id="turning-model-objects-into-data-frames" class="section level2">
 <h2 class="hasAnchor">
 <a href="#turning-model-objects-into-data-frames" class="anchor"></a>Turning model objects into data.frames</h2>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(estimatr)
 fit &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(mpg <span class="op">~</span><span class="st"> </span>disp, <span class="dt">data =</span> mtcars)
 <span class="kw"><a href="../reference/tidy.html">tidy</a></span>(fit)</code></pre></div>
-<pre><code>##          term    estimate   std.error      p.value    ci.lower    ci.upper
-## 1 (Intercept) 29.59985476 1.490268903 8.189608e-19 26.55631962 32.64338989
-## 2        disp -0.04121512 0.005170197 6.743097e-09 -0.05177407 -0.03065617
-##   df outcome
-## 1 30     mpg
-## 2 30     mpg</code></pre>
-<p>The <code>fit</code> objects is an <code>lm_robust</code> object. When you call <code><a href="../reference/tidy.html">tidy(fit)</a></code> it turns the fit into a dataframe. This function and behavior are explictly modeled on the <code>broom</code> package, a tidyverse package for making model objects into data.frames.</p>
+<pre><code>##          term    estimate   std.error statistic      p.value    conf.low
+## 1 (Intercept) 29.59985476 1.490268903 19.862090 8.189608e-19 26.55631962
+## 2        disp -0.04121512 0.005170197 -7.971672 6.743097e-09 -0.05177407
+##     conf.high df outcome
+## 1 32.64338989 30     mpg
+## 2 -0.03065617 30     mpg</code></pre>
+<p>The <code>fit</code> object is an <code>lm_robust</code> object. The <code><a href="../reference/tidy.html">tidy()</a></code> function takes the fit and returns a data.frame. This function and behavior are explictly modeled on the <code>broom</code> package, a tidyverse package for making model objects into data.frames.</p>
 <p>Once the model fits are data.frames, it’s easy to pipe the output into <code>dplyr</code> data manipulation functions:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(dplyr)
 fit <span class="op">%&gt;%</span>
 <span class="st">  </span>tidy <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/dplyr/topics/mutate">mutate</a></span>(<span class="dt">t.stat =</span> estimate <span class="op">/</span><span class="st"> </span>std.error,
+<span class="st">  </span><span class="kw"><a href="http://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="dt">t.stat =</span> estimate <span class="op">/</span><span class="st"> </span>std.error,
          <span class="dt">significant =</span> p.value <span class="op">&lt;=</span><span class="st"> </span><span class="fl">0.05</span>)</code></pre></div>
-<pre><code>##          term    estimate   std.error      p.value    ci.lower    ci.upper
-## 1 (Intercept) 29.59985476 1.490268903 8.189608e-19 26.55631962 32.64338989
-## 2        disp -0.04121512 0.005170197 6.743097e-09 -0.05177407 -0.03065617
-##   df outcome    t.stat significant
-## 1 30     mpg 19.862090        TRUE
-## 2 30     mpg -7.971672        TRUE</code></pre>
+<pre><code>##          term    estimate   std.error statistic      p.value    conf.low
+## 1 (Intercept) 29.59985476 1.490268903 19.862090 8.189608e-19 26.55631962
+## 2        disp -0.04121512 0.005170197 -7.971672 6.743097e-09 -0.05177407
+##     conf.high df outcome    t.stat significant
+## 1 32.64338989 30     mpg 19.862090        TRUE
+## 2 -0.03065617 30     mpg -7.971672        TRUE</code></pre>
 </div>
 <div id="putting-robust-standard-errors-in-a-ggplot" class="section level2">
 <h2 class="hasAnchor">
@@ -175,32 +175,32 @@ gg_df &lt;-
 <span class="st">  </span><span class="kw">split</span>(.<span class="op">$</span>cyl) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/purrr/topics/map">map</a></span>(<span class="op">~</span><span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(mpg <span class="op">~</span><span class="st"> </span>disp, <span class="dt">data =</span> .)) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/purrr/topics/map">map</a></span>(tidy) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/dplyr/topics/bind">bind_rows</a></span>(<span class="dt">.id =</span> <span class="st">"cyl"</span>)
+<span class="st">  </span><span class="kw"><a href="http://dplyr.tidyverse.org/reference/bind.html">bind_rows</a></span>(<span class="dt">.id =</span> <span class="st">"cyl"</span>)
 gg_df</code></pre></div>
-<pre><code>##   cyl        term     estimate   std.error      p.value    ci.lower
-## 1   4 (Intercept) 40.871955322 3.507137416 9.875713e-07 32.93825930
-## 2   4        disp -0.135141815 0.033649211 3.035404e-03 -0.21126162
-## 3   6 (Intercept) 19.081987419 3.495964315 2.807248e-03 10.09532505
-## 4   6        disp  0.003605119 0.020548982 8.676173e-01 -0.04921772
-## 5   8 (Intercept) 22.032798914 2.991733959 8.680881e-06 15.51437058
-## 6   8        disp -0.019634095 0.009510531 6.128588e-02 -0.04035576
-##       ci.upper df outcome
-## 1 48.805651347  9     mpg
-## 2 -0.059022011  9     mpg
-## 3 28.068649785  5     mpg
-## 4  0.056427958  5     mpg
-## 5 28.551227247 12     mpg
-## 6  0.001087572 12     mpg</code></pre>
+<pre><code>##   cyl        term     estimate   std.error  statistic      p.value
+## 1   4 (Intercept) 40.871955322 3.507137416 11.6539361 9.875713e-07
+## 2   4        disp -0.135141815 0.033649211 -4.0161957 3.035404e-03
+## 3   6 (Intercept) 19.081987419 3.495964315  5.4582901 2.807248e-03
+## 4   6        disp  0.003605119 0.020548982  0.1754402 8.676173e-01
+## 5   8 (Intercept) 22.032798914 2.991733959  7.3645582 8.680881e-06
+## 6   8        disp -0.019634095 0.009510531 -2.0644583 6.128588e-02
+##      conf.low    conf.high df outcome
+## 1 32.93825930 48.805651347  9     mpg
+## 2 -0.21126162 -0.059022011  9     mpg
+## 3 10.09532505 28.068649785  5     mpg
+## 4 -0.04921772  0.056427958  5     mpg
+## 5 15.51437058 28.551227247 12     mpg
+## 6 -0.04035576  0.001087572 12     mpg</code></pre>
 </div>
 <div id="coefficient-plots-with-ggplot2" class="section level2">
 <h2 class="hasAnchor">
 <a href="#coefficient-plots-with-ggplot2" class="anchor"></a>Coefficient plots with ggplot2</h2>
 <p>Having multiple models in a data.frame makes it convenient to make coefficient plots. Here we plot the regression estimate of the slope of <code>mpg</code> with respect to <code>disp</code> for each level of <code>cyl</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">gg_df <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/dplyr/topics/filter">filter</a></span>(term <span class="op">==</span><span class="st"> "disp"</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="http://dplyr.tidyverse.org/reference/filter.html">filter</a></span>(term <span class="op">==</span><span class="st"> "disp"</span>) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/ggplot">ggplot</a></span>(<span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">x =</span> estimate, <span class="dt">y =</span> cyl)) <span class="op">+</span>
 <span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/geom_point">geom_point</a></span>() <span class="op">+</span>
-<span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/geom_errorbarh">geom_errorbarh</a></span>(<span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">xmin =</span> ci.lower, <span class="dt">xmax =</span> ci.upper), <span class="dt">height =</span> <span class="dv">0</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/geom_errorbarh">geom_errorbarh</a></span>(<span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">xmin =</span> conf.low, <span class="dt">xmax =</span> conf.high), <span class="dt">height =</span> <span class="dv">0</span>) <span class="op">+</span>
 <span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/geom_abline">geom_vline</a></span>(<span class="dt">xintercept =</span> <span class="dv">0</span>, <span class="dt">linetype =</span> <span class="st">"dashed"</span>) <span class="op">+</span>
 <span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/ggtheme">theme_bw</a></span>()</code></pre></div>
 <p><img src="estimatr-in-the-tidyverse_files/figure-html/unnamed-chunk-5-1.png" width="672"></p>
@@ -214,25 +214,25 @@ gg_df</code></pre></div>
 <span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/purrr/topics/map">map</a></span>( <span class="op">~</span><span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(<span class="kw">formula</span>(<span class="kw">paste0</span>(., <span class="st">" ~ disp"</span>)), <span class="dt">data =</span> mtcars)) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/purrr/topics/map">map_df</a></span>(tidy)
 gg_df</code></pre></div>
-<pre><code>##          term     estimate    std.error      p.value     ci.lower
-## 1 (Intercept) 29.599854756 1.490269e+00 8.189608e-19 26.556319624
-## 2        disp -0.041215120 5.170197e-03 6.743097e-09 -0.051774072
-## 3 (Intercept) 45.734532208 1.025433e+01 1.064717e-04 24.792392081
-## 4        disp  0.437552650 5.450129e-02 5.823354e-09  0.326246164
-## 5 (Intercept)  1.599814597 1.675599e-01 1.329415e-10  1.257611729
-## 6        disp  0.007010325 7.385652e-04 1.519591e-10  0.005501974
-##       ci.upper df outcome
-## 1 32.643389889 30     mpg
-## 2 -0.030656168 30     mpg
-## 3 66.676672334 30      hp
-## 4  0.548859136 30      hp
-## 5  1.942017464 30      wt
-## 6  0.008518677 30      wt</code></pre>
+<pre><code>##          term     estimate    std.error statistic      p.value
+## 1 (Intercept) 29.599854756 1.490269e+00 19.862090 8.189608e-19
+## 2        disp -0.041215120 5.170197e-03 -7.971672 6.743097e-09
+## 3 (Intercept) 45.734532208 1.025433e+01  4.460021 1.064717e-04
+## 4        disp  0.437552650 5.450129e-02  8.028299 5.823354e-09
+## 5 (Intercept)  1.599814597 1.675599e-01  9.547720 1.329415e-10
+## 6        disp  0.007010325 7.385652e-04  9.491816 1.519591e-10
+##       conf.low    conf.high df outcome
+## 1 26.556319624 32.643389889 30     mpg
+## 2 -0.051774072 -0.030656168 30     mpg
+## 3 24.792392081 66.676672334 30      hp
+## 4  0.326246164  0.548859136 30      hp
+## 5  1.257611729  1.942017464 30      wt
+## 6  0.005501974  0.008518677 30      wt</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">gg_df <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/dplyr/topics/filter">filter</a></span>(term <span class="op">==</span><span class="st"> "disp"</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw"><a href="http://dplyr.tidyverse.org/reference/filter.html">filter</a></span>(term <span class="op">==</span><span class="st"> "disp"</span>) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/ggplot">ggplot</a></span>(<span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(estimate, outcome)) <span class="op">+</span>
 <span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/geom_point">geom_point</a></span>() <span class="op">+</span>
-<span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/geom_errorbarh">geom_errorbarh</a></span>(<span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">xmin =</span> ci.lower, <span class="dt">xmax =</span> ci.upper), <span class="dt">height =</span> <span class="dv">0</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/geom_errorbarh">geom_errorbarh</a></span>(<span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">xmin =</span> conf.low, <span class="dt">xmax =</span> conf.high), <span class="dt">height =</span> <span class="dv">0</span>) <span class="op">+</span>
 <span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/geom_abline">geom_vline</a></span>(<span class="dt">xintercept =</span> <span class="dv">0</span>, <span class="dt">linetype =</span> <span class="st">"dashed"</span>) <span class="op">+</span>
 <span class="st">  </span><span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/ggtheme">theme_bw</a></span>()</code></pre></div>
 <p><img src="estimatr-in-the-tidyverse_files/figure-html/unnamed-chunk-6-1.png" width="672"></p>

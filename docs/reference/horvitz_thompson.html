@@ -264,10 +264,11 @@ least the following components:</p>
 <p></p>
 <dt>coefficients</dt><dd><p>the estimated difference in totals</p></dd>
   <dt>std.error</dt><dd><p>the estimated standard error</p></dd>
+  <dt>statistic</dt><dd><p>the z-statistic</p></dd>
   <dt>df</dt><dd><p>the estimated degrees of freedom</p></dd>
   <dt>p.value</dt><dd><p>the p-value from a two-sided z-test using <code>coefficients</code> and <code>std.error</code></p></dd>
-  <dt>ci.lower</dt><dd><p>the lower bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
-  <dt>ci.upper</dt><dd><p>the upper bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
+  <dt>conf.low</dt><dd><p>the lower bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
+  <dt>conf.high</dt><dd><p>the upper bound of the <code>1 - alpha</code> percent confidence interval</p></dd>
   <dt>term</dt><dd><p>a character vector of coefficient names</p></dd>
   <dt>alpha</dt><dd><p>the significance level specified by the user</p></dd>
   <dt>N</dt><dd><p>the number of observations used</p></dd>
@@ -361,14 +362,14 @@ only use this option if they are certain they know what they are doing.</p>
 <span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='fu'>rbinom</span>(<span class='no'>n</span>, <span class='kw'>size</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>prob</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>p</span>)
 
 <span class='co'># If you only pass condition_prs, we assume simple random sampling</span>
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_prs</span> <span class='kw'>=</span> <span class='no'>p</span>)</div><div class='output co'>#&gt;     Estimate Std. Error Pr(&gt;|t|)  CI Lower  CI Upper DF
-#&gt; z -0.2532128   0.609167 0.677651 -1.447158 0.9407325 NA</div><div class='input'><span class='co'># Assume constant effects instead</span>
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_prs</span> <span class='kw'>=</span> <span class='no'>p</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"constant"</span>)</div><div class='output co'>#&gt;     Estimate Std. Error  Pr(&gt;|t|)  CI Lower CI Upper DF
-#&gt; z -0.2532128  0.6038814 0.6749904 -1.436799 0.930373 NA</div><div class='input'>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_prs</span> <span class='kw'>=</span> <span class='no'>p</span>)</div><div class='output co'>#&gt;     Estimate Std. Error    t value Pr(&gt;|t|)  CI Lower  CI Upper DF
+#&gt; z -0.2532128   0.609167 -0.4156706 0.677651 -1.447158 0.9407325 NA</div><div class='input'><span class='co'># Assume constant effects instead</span>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_prs</span> <span class='kw'>=</span> <span class='no'>p</span>, <span class='kw'>se_type</span> <span class='kw'>=</span> <span class='st'>"constant"</span>)</div><div class='output co'>#&gt;     Estimate Std. Error    t value  Pr(&gt;|t|)  CI Lower CI Upper DF
+#&gt; z -0.2532128  0.6038814 -0.4193088 0.6749904 -1.436799 0.930373 NA</div><div class='input'>
 <span class='co'># Also can use randomizr to pass a declaration</span>
 <span class='no'>srs_declaration</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/declare_ra'>declare_ra</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>), <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.5</span>, <span class='kw'>simple</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>ra_declaration</span> <span class='kw'>=</span> <span class='no'>srs_declaration</span>)</div><div class='output co'>#&gt;     Estimate Std. Error Pr(&gt;|t|)  CI Lower  CI Upper DF
-#&gt; z -0.2532128   0.609167 0.677651 -1.447158 0.9407325 NA</div><div class='input'>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>ra_declaration</span> <span class='kw'>=</span> <span class='no'>srs_declaration</span>)</div><div class='output co'>#&gt;     Estimate Std. Error    t value Pr(&gt;|t|)  CI Lower  CI Upper DF
+#&gt; z -0.2532128   0.609167 -0.4156706 0.677651 -1.447158 0.9407325 NA</div><div class='input'>
 <span class='co'>#----------</span>
 <span class='co'># 2. Complete random assignment</span>
 <span class='co'>#----------</span>
@@ -376,12 +377,12 @@ only use this option if they are certain they know what they are doing.</p>
 <span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='fu'>sample</span>(<span class='fu'>rep</span>(<span class='fl'>0</span>:<span class='fl'>1</span>, <span class='kw'>each</span> <span class='kw'>=</span> <span class='no'>n</span>/<span class='fl'>2</span>))
 <span class='co'># Can use a declaration</span>
 <span class='no'>crs_declaration</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/randomizr/topics/declare_ra'>declare_ra</a></span>(<span class='kw'>N</span> <span class='kw'>=</span> <span class='fu'>nrow</span>(<span class='no'>dat</span>), <span class='kw'>prob</span> <span class='kw'>=</span> <span class='fl'>0.5</span>, <span class='kw'>simple</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>ra_declaration</span> <span class='kw'>=</span> <span class='no'>crs_declaration</span>)</div><div class='output co'>#&gt;    Estimate Std. Error  Pr(&gt;|t|)   CI Lower CI Upper DF
-#&gt; z 0.6216921  0.5271134 0.2382279 -0.4114311 1.654815 NA</div><div class='input'><span class='co'># Can precompute condition_pr_mat and pass it</span>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>ra_declaration</span> <span class='kw'>=</span> <span class='no'>crs_declaration</span>)</div><div class='output co'>#&gt;    Estimate Std. Error  t value  Pr(&gt;|t|)   CI Lower CI Upper DF
+#&gt; z 0.6216921  0.5271134 1.179428 0.2382279 -0.4114311 1.654815 NA</div><div class='input'><span class='co'># Can precompute condition_pr_mat and pass it</span>
 <span class='co'># (faster for multiple runs with same condition probability matrix)</span>
 <span class='no'>crs_pr_mat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='declaration_to_condition_pr_mat.html'>declaration_to_condition_pr_mat</a></span>(<span class='no'>crs_declaration</span>)
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>crs_pr_mat</span>)</div><div class='output co'>#&gt;    Estimate Std. Error  Pr(&gt;|t|)   CI Lower CI Upper DF
-#&gt; z 0.6216921  0.5271134 0.2382279 -0.4114311 1.654815 NA</div><div class='input'>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>crs_pr_mat</span>)</div><div class='output co'>#&gt;    Estimate Std. Error  t value  Pr(&gt;|t|)   CI Lower CI Upper DF
+#&gt; z 0.6216921  0.5271134 1.179428 0.2382279 -0.4114311 1.654815 NA</div><div class='input'>
 <span class='co'>#----------</span>
 <span class='co'># 3. Clustered treatment, complete random assigment</span>
 <span class='co'>#-----------</span>
@@ -399,9 +400,9 @@ only use this option if they are certain they know what they are doing.</p>
   <span class='kw'>clusters</span> <span class='kw'>=</span> <span class='no'>cl</span>,
   <span class='kw'>condition_prs</span> <span class='kw'>=</span> <span class='no'>prob</span>,
   <span class='kw'>simple</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
-)</div><div class='output co'>#&gt; <span class='message'>`simple` = FALSE, using complete cluster randomization</span></div><div class='input'><span class='no'>ht_cl</span></div><div class='output co'>#&gt;    Estimate Std. Error   Pr(&gt;|t|)   CI Lower     CI Upper DF
-#&gt; z -0.373693   0.189923 0.04911381 -0.7459353 -0.001450693 NA</div><div class='input'><span class='no'>ht_cl_manual</span></div><div class='output co'>#&gt;    Estimate Std. Error   Pr(&gt;|t|)   CI Lower     CI Upper DF
-#&gt; z -0.373693   0.189923 0.04911381 -0.7459353 -0.001450693 NA</div><div class='input'>
+)</div><div class='output co'>#&gt; <span class='message'>`simple` = FALSE, using complete cluster randomization</span></div><div class='input'><span class='no'>ht_cl</span></div><div class='output co'>#&gt;    Estimate Std. Error   t value   Pr(&gt;|t|)   CI Lower     CI Upper DF
+#&gt; z -0.373693   0.189923 -1.967602 0.04911381 -0.7459353 -0.001450693 NA</div><div class='input'><span class='no'>ht_cl_manual</span></div><div class='output co'>#&gt;    Estimate Std. Error   t value   Pr(&gt;|t|)   CI Lower     CI Upper DF
+#&gt; z -0.373693   0.189923 -1.967602 0.04911381 -0.7459353 -0.001450693 NA</div><div class='input'>
 <span class='co'># Blocked estimators specified similarly</span>
 
 <span class='co'>#----------</span>
@@ -417,8 +418,8 @@ only use this option if they are certain they know what they are doing.</p>
 <span class='no'>arb_pr_mat</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='permutations_to_condition_pr_mat.html'>permutations_to_condition_pr_mat</a></span>(<span class='no'>possible_treats</span>)
 <span class='co'># Simulating a column to be realized treatment</span>
 <span class='no'>dat</span>$<span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='no'>possible_treats</span>[, <span class='fu'>sample</span>(<span class='fu'>ncol</span>(<span class='no'>possible_treats</span>), <span class='kw'>size</span> <span class='kw'>=</span> <span class='fl'>1</span>)]
-<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>arb_pr_mat</span>)</div><div class='output co'>#&gt;    Estimate Std. Error  Pr(&gt;|t|)   CI Lower CI Upper DF
-#&gt; z 0.7576713  0.7715048 0.3260656 -0.7544502 2.269793 NA</div><div class='input'>
+<span class='fu'>horvitz_thompson</span>(<span class='no'>y</span> ~ <span class='no'>z</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>dat</span>, <span class='kw'>condition_pr_mat</span> <span class='kw'>=</span> <span class='no'>arb_pr_mat</span>)</div><div class='output co'>#&gt;    Estimate Std. Error   t value  Pr(&gt;|t|)   CI Lower CI Upper DF
+#&gt; z 0.7576713  0.7715048 0.9820695 0.3260656 -0.7544502 2.269793 NA</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

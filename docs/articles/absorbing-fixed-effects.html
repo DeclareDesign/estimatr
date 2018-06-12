@@ -131,15 +131,15 @@
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(estimatr)
 lmr_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_robust.html">lm_robust</a></span>(mpg <span class="op">~</span><span class="st"> </span>hp, <span class="dt">data =</span> mtcars, <span class="dt">fixed_effects =</span> <span class="op">~</span><span class="st"> </span>cyl)
 lmr_out</code></pre></div>
-<pre><code>##       Estimate Std. Error  Pr(&gt;|t|)    CI Lower    CI Upper DF
-## hp -0.02403883 0.01503818 0.1211523 -0.05484314 0.006765475 28</code></pre>
+<pre><code>##       Estimate Std. Error   t value  Pr(&gt;|t|)    CI Lower    CI Upper DF
+## hp -0.02403883 0.01503818 -1.598521 0.1211523 -0.05484314 0.006765475 28</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">lmr_out<span class="op">$</span>fixed_effects</code></pre></div>
 <pre><code>##     cyl4     cyl6     cyl8 
 ## 28.65012 22.68246 20.12927</code></pre>
 <p>Before proceeding, three quick notes:</p>
 <ul>
 <li>Most of the speed gains occur when estimating “HC1” robust standard errors, or “stata” standard errors when there is clustering. This is because most of the speed gains come from avoiding inverting a large matrix of group dummies, but this step is still necessary for “HC2”, “HC3”, and “CR2” standard errors.</li>
-<li>While you can specify multiple sets of fixed effects, such as <code>fixed_effects = ~ year + country</code>, please ensure that your model is well-specified if you do so. If there are dependencies or overlapping groups across multiple sets of fixed effects, we may not count the exact degrees of freedom.</li>
+<li>While you can specify multiple sets of fixed effects, such as <code>fixed_effects = ~ year + country</code>, please ensure that your model is well-specified if you do so. If there are dependencies or overlapping groups across multiple sets of fixed effects, we cannot guarantee the correct degrees of freedom.</li>
 <li>For now, weighted “CR2” estimation is not possible with fixed_effects.</li>
 </ul>
 <div id="speed-gains" class="section level2">
@@ -149,14 +149,9 @@ lmr_out</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Load packages for comparison</span>
 <span class="kw">library</span>(microbenchmark)
 <span class="kw">library</span>(sandwich)
-<span class="kw">library</span>(lmtest)</code></pre></div>
-<pre><code>## Loading required package: zoo</code></pre>
-<pre><code>## 
-## Attaching package: 'zoo'</code></pre>
-<pre><code>## The following objects are masked from 'package:base':
-## 
-##     as.Date, as.Date.numeric</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Create matched-pairs dataset using fabricatr</span>
+<span class="kw">library</span>(lmtest)
+
+<span class="co"># Create matched-pairs dataset using fabricatr</span>
 <span class="kw">set.seed</span>(<span class="dv">40</span>)
 <span class="kw">library</span>(fabricatr)
 dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/fabricatr/topics/fabricate">fabricate</a></span>(
@@ -182,14 +177,14 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
   <span class="dt">times =</span> <span class="dv">50</span>
 )</code></pre></div>
 <pre><code>## Unit: milliseconds
-##             expr       min        lq      mean    median       uq
-##  base + sandwich 203.19701 221.72359 230.83172 229.60220 237.2100
-##        lm_robust  88.56552  99.55515 105.82255 104.09087 109.6277
-##  lm_robust + fes  53.66806  58.09988  64.14826  62.95252  69.6283
+##             expr       min        lq      mean    median        uq
+##  base + sandwich 194.84725 206.94936 216.18093 214.37812 220.10542
+##        lm_robust  84.81398  91.84078  96.23636  94.78807 100.10949
+##  lm_robust + fes  52.80776  54.67562  59.91537  59.07194  63.71819
 ##        max neval
-##  276.77308    50
-##  153.58506    50
-##   81.10266    50</code></pre>
+##  263.31671    50
+##  116.25991    50
+##   76.47296    50</code></pre>
 <p>Speed gains are <em>considerably</em> greater with HC1 standard errors. This is because we need to get the hat matrix for HC2, HC3, and CR2 standard errors, which requires inverting that large matrix of dummies we previously avoided doing. HC0, HC1, CR0, and CRstata standard errors do not require this inversion.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># With HC1</span>
 <span class="kw"><a href="http://www.rdocumentation.org/packages/microbenchmark/topics/microbenchmark">microbenchmark</a></span>(
@@ -211,14 +206,14 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
   <span class="dt">times =</span> <span class="dv">50</span>
 )</code></pre></div>
 <pre><code>## Unit: milliseconds
-##             expr        min        lq      mean     median        uq
-##  base + sandwich 206.887651 221.88782 229.81676 229.560035 238.26249
-##        lm_robust  72.001029  80.77514  87.28252  87.137122  91.71412
-##  lm_robust + fes   8.520381   9.05669  12.52473   9.874183  11.17264
+##             expr        min         lq      mean    median        uq
+##  base + sandwich 192.555011 204.960864 213.61333 212.21380 217.27308
+##        lm_robust  68.684290  76.086913  79.33959  78.37613  83.10529
+##  lm_robust + fes   8.374632   9.336324  10.77951  10.17672  11.56546
 ##        max neval
-##  254.95970    50
-##  145.24958    50
-##   80.80258    50</code></pre>
+##  264.66845    50
+##   93.69662    50
+##   17.22306    50</code></pre>
 </div>
 </div>
   </div>

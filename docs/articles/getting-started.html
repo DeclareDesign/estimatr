@@ -264,10 +264,10 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 <span class="co">#&gt; Standard error type:  HC2 </span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Coefficients:</span>
-<span class="co">#&gt;             Estimate Std. Error Pr(&gt;|t|) CI Lower CI Upper DF</span>
-<span class="co">#&gt; (Intercept)   -0.318      0.201 1.17e-01   -0.716   0.0806 97</span>
-<span class="co">#&gt; z              0.454      0.188 1.79e-02    0.080   0.8281 97</span>
-<span class="co">#&gt; x              1.459      0.289 2.13e-06    0.885   2.0327 97</span>
+<span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|) CI Lower CI Upper DF</span>
+<span class="co">#&gt; (Intercept)   -0.318      0.201   -1.58 1.17e-01   -0.716   0.0806 97</span>
+<span class="co">#&gt; z              0.454      0.188    2.41 1.79e-02    0.080   0.8281 97</span>
+<span class="co">#&gt; x              1.459      0.289    5.04 2.13e-06    0.885   2.0327 97</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Multiple R-squared:  0.206 , Adjusted R-squared:  0.19 </span>
 <span class="co">#&gt; F-statistic: 13.9 on 2 and 97 DF,  p-value: 5.08e-06</span></code></pre></div>
@@ -278,9 +278,10 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 <th align="left">term</th>
 <th align="right">estimate</th>
 <th align="right">std.error</th>
+<th align="right">statistic</th>
 <th align="right">p.value</th>
-<th align="right">ci.lower</th>
-<th align="right">ci.upper</th>
+<th align="right">conf.low</th>
+<th align="right">conf.high</th>
 <th align="right">df</th>
 <th align="left">outcome</th>
 </tr></thead>
@@ -289,6 +290,7 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 <td align="left">(Intercept)</td>
 <td align="right">-0.32</td>
 <td align="right">0.20</td>
+<td align="right">-1.6</td>
 <td align="right">0.12</td>
 <td align="right">-0.72</td>
 <td align="right">0.08</td>
@@ -299,6 +301,7 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 <td align="left">z</td>
 <td align="right">0.45</td>
 <td align="right">0.19</td>
+<td align="right">2.4</td>
 <td align="right">0.02</td>
 <td align="right">0.08</td>
 <td align="right">0.83</td>
@@ -309,6 +312,7 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 <td align="left">x</td>
 <td align="right">1.46</td>
 <td align="right">0.29</td>
+<td align="right">5.0</td>
 <td align="right">0.00</td>
 <td align="right">0.88</td>
 <td align="right">2.03</td>
@@ -328,9 +332,10 @@ lmout &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_ro
 <th align="left">term</th>
 <th align="right">estimate</th>
 <th align="right">std.error</th>
+<th align="right">statistic</th>
 <th align="right">p.value</th>
-<th align="right">ci.lower</th>
-<th align="right">ci.upper</th>
+<th align="right">conf.low</th>
+<th align="right">conf.high</th>
 <th align="right">df</th>
 <th align="left">outcome</th>
 </tr></thead>
@@ -339,6 +344,7 @@ lmout &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_ro
 <td align="left">(Intercept)</td>
 <td align="right">-0.41</td>
 <td align="right">0.18</td>
+<td align="right">-2.2</td>
 <td align="right">0.03</td>
 <td align="right">-0.77</td>
 <td align="right">-0.05</td>
@@ -349,6 +355,7 @@ lmout &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_ro
 <td align="left">z_clust</td>
 <td align="right">0.66</td>
 <td align="right">0.18</td>
+<td align="right">3.6</td>
 <td align="right">0.00</td>
 <td align="right">0.29</td>
 <td align="right">1.02</td>
@@ -359,6 +366,7 @@ lmout &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm_ro
 <td align="left">x</td>
 <td align="right">1.44</td>
 <td align="right">0.28</td>
+<td align="right">5.1</td>
 <td align="right">0.00</td>
 <td align="right">0.88</td>
 <td align="right">2.01</td>
@@ -379,9 +387,10 @@ lmout_cl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm
 <th align="left">term</th>
 <th align="right">estimate</th>
 <th align="right">std.error</th>
+<th align="right">statistic</th>
 <th align="right">p.value</th>
-<th align="right">ci.lower</th>
-<th align="right">ci.upper</th>
+<th align="right">conf.low</th>
+<th align="right">conf.high</th>
 <th align="right">df</th>
 <th align="left">outcome</th>
 </tr></thead>
@@ -390,6 +399,7 @@ lmout_cl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm
 <td align="left">(Intercept)</td>
 <td align="right">-0.41</td>
 <td align="right">0.21</td>
+<td align="right">-2.0</td>
 <td align="right">0.07</td>
 <td align="right">-0.87</td>
 <td align="right">0.05</td>
@@ -400,6 +410,7 @@ lmout_cl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm
 <td align="left">z_clust</td>
 <td align="right">0.66</td>
 <td align="right">0.20</td>
+<td align="right">3.3</td>
 <td align="right">0.00</td>
 <td align="right">0.23</td>
 <td align="right">1.08</td>
@@ -410,6 +421,7 @@ lmout_cl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm
 <td align="left">x</td>
 <td align="right">1.44</td>
 <td align="right">0.36</td>
+<td align="right">4.0</td>
 <td align="right">0.00</td>
 <td align="right">0.69</td>
 <td align="right">2.20</td>
@@ -431,9 +443,10 @@ lmout_cl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm
 <th align="left">term</th>
 <th align="right">estimate</th>
 <th align="right">std.error</th>
+<th align="right">statistic</th>
 <th align="right">p.value</th>
-<th align="right">ci.lower</th>
-<th align="right">ci.upper</th>
+<th align="right">conf.low</th>
+<th align="right">conf.high</th>
 <th align="right">df</th>
 <th align="left">outcome</th>
 </tr></thead>
@@ -442,6 +455,7 @@ lmout_cl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm
 <td align="left">(Intercept)</td>
 <td align="right">-0.41</td>
 <td align="right">0.21</td>
+<td align="right">-2.0</td>
 <td align="right">0.06</td>
 <td align="right">-0.84</td>
 <td align="right">0.02</td>
@@ -452,6 +466,7 @@ lmout_cl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm
 <td align="left">z_clust</td>
 <td align="right">0.66</td>
 <td align="right">0.19</td>
+<td align="right">3.4</td>
 <td align="right">0.00</td>
 <td align="right">0.25</td>
 <td align="right">1.06</td>
@@ -462,6 +477,7 @@ lmout_cl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/lm
 <td align="left">x</td>
 <td align="right">1.44</td>
 <td align="right">0.35</td>
+<td align="right">4.1</td>
 <td align="right">0.00</td>
 <td align="right">0.70</td>
 <td align="right">2.19</td>
@@ -512,9 +528,10 @@ mar_int &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocu
 <th align="left">term</th>
 <th align="right">estimate</th>
 <th align="right">std.error</th>
+<th align="right">statistic</th>
 <th align="right">p.value</th>
-<th align="right">ci.lower</th>
-<th align="right">ci.upper</th>
+<th align="right">conf.low</th>
+<th align="right">conf.high</th>
 <th align="right">df</th>
 <th align="left">outcome</th>
 </tr></thead>
@@ -523,6 +540,7 @@ mar_int &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocu
 <td align="left">(Intercept)</td>
 <td align="right">0.46</td>
 <td align="right">0.13</td>
+<td align="right">3.5</td>
 <td align="right">0.00</td>
 <td align="right">0.20</td>
 <td align="right">0.72</td>
@@ -533,6 +551,7 @@ mar_int &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocu
 <td align="left">z</td>
 <td align="right">0.46</td>
 <td align="right">0.19</td>
+<td align="right">2.4</td>
 <td align="right">0.02</td>
 <td align="right">0.08</td>
 <td align="right">0.83</td>
@@ -543,6 +562,7 @@ mar_int &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocu
 <td align="left">x_c</td>
 <td align="right">1.15</td>
 <td align="right">0.35</td>
+<td align="right">3.3</td>
 <td align="right">0.00</td>
 <td align="right">0.46</td>
 <td align="right">1.83</td>
@@ -553,6 +573,7 @@ mar_int &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocu
 <td align="left">z:x_c</td>
 <td align="right">0.68</td>
 <td align="right">0.60</td>
+<td align="right">1.1</td>
 <td align="right">0.26</td>
 <td align="right">-0.50</td>
 <td align="right">1.86</td>
@@ -578,9 +599,9 @@ iv_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/iv_r
 <span class="co">#&gt; Standard error type:  HC2 </span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Coefficients:</span>
-<span class="co">#&gt;             Estimate Std. Error Pr(&gt;|t|) CI Lower CI Upper DF</span>
-<span class="co">#&gt; (Intercept)     2.90       2.58    0.264    -2.23     8.03 98</span>
-<span class="co">#&gt; x              -4.25       4.90    0.388   -13.98     5.48 98</span>
+<span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|) CI Lower CI Upper DF</span>
+<span class="co">#&gt; (Intercept)     2.90       2.58   1.123    0.264    -2.23     8.03 98</span>
+<span class="co">#&gt; x              -4.25       4.90  -0.867    0.388   -13.98     5.48 98</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Multiple R-squared:  -2.54 , Adjusted R-squared:  -2.57 </span>
 <span class="co">#&gt; F-statistic: 0.751 on 1 and 98 DF,  p-value: 0.388</span></code></pre></div>
@@ -601,9 +622,10 @@ dim_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dif
 <th align="left">term</th>
 <th align="right">estimate</th>
 <th align="right">std.error</th>
+<th align="right">statistic</th>
 <th align="right">p.value</th>
-<th align="right">ci.lower</th>
-<th align="right">ci.upper</th>
+<th align="right">conf.low</th>
+<th align="right">conf.high</th>
 <th align="right">df</th>
 <th align="left">outcome</th>
 </tr></thead>
@@ -611,6 +633,7 @@ dim_out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dif
 <td align="left">z</td>
 <td align="right">0.34</td>
 <td align="right">0.2</td>
+<td align="right">1.6</td>
 <td align="right">0.1</td>
 <td align="right">-0.07</td>
 <td align="right">0.74</td>
@@ -630,9 +653,10 @@ dim_out_cl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <th align="left">term</th>
 <th align="right">estimate</th>
 <th align="right">std.error</th>
+<th align="right">statistic</th>
 <th align="right">p.value</th>
-<th align="right">ci.lower</th>
-<th align="right">ci.upper</th>
+<th align="right">conf.low</th>
+<th align="right">conf.high</th>
 <th align="right">df</th>
 <th align="left">outcome</th>
 </tr></thead>
@@ -640,6 +664,7 @@ dim_out_cl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/
 <td align="left">z_clust</td>
 <td align="right">0.64</td>
 <td align="right">0.2</td>
+<td align="right">3.2</td>
 <td align="right">0</td>
 <td align="right">0.22</td>
 <td align="right">1.1</td>
@@ -657,7 +682,7 @@ dim_mps<span class="op">$</span>design
 <h2 class="hasAnchor">
 <a href="#horvitz_thompson" class="anchor"></a><code>horvitz_thompson</code>
 </h2>
-<p>Horvitz-Thompson estimators can be used to estimate unbiased treatment effects when the randomization is known. This is particularly useful when there are clusters of different sizes being randomized into treatment or when the treatment assignment is complex and there are dependencies across units in the probability of being treated. Horvitz-Thompson estimators require information about the probability each unit is in treatment and control, as well as the joint probability each unit is in the treatment, in the control, and in opposite treatment conditions.</p>
+<p>Horvitz-Thompson estimators yield unbiased treatment effect estimates when the randomization is known. This is particularly useful when there are clusters of different sizes being randomized into treatment or when the treatment assignment is complex and there are dependencies across units in the probability of being treated. Horvitz-Thompson estimators require information about the probability each unit is in treatment and control, as well as the joint probability each unit is in the treatment, in the control, and in opposite treatment conditions.</p>
 <p>The estimator we implement here, <code><a href="../reference/horvitz_thompson.html">horvitz_thompson()</a></code> estimates treatment effects for two-armed trials. The easiest way to specify your design and recover the full set of joint and marginal probabilities is to declare your randomization scheme by using <a href="/R/randomizr/reference/declare_ra.html"><code><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">declare_ra()</a></code></a> from the <a href="/R/randomizr/"><code>randomizr</code></a> package. I show some examples of how to do that below. Again, the technical details for this estimator can be found <a href="/R/estimatr/articles/mathematical-notes.html#horvitz_thompson-notes">here</a> and in references in those notes.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Complete random assignment declaration</span>
 crs_decl &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">declare_ra</a></span>(
@@ -677,9 +702,10 @@ ht_comp &lt;-<span class="st"> </span><span class="kw"><a href="../reference/hor
 <th align="left">term</th>
 <th align="right">estimate</th>
 <th align="right">std.error</th>
+<th align="right">statistic</th>
 <th align="right">p.value</th>
-<th align="right">ci.lower</th>
-<th align="right">ci.upper</th>
+<th align="right">conf.low</th>
+<th align="right">conf.high</th>
 <th align="right">df</th>
 <th align="left">outcome</th>
 </tr></thead>
@@ -687,6 +713,7 @@ ht_comp &lt;-<span class="st"> </span><span class="kw"><a href="../reference/hor
 <td align="left">z</td>
 <td align="right">0.34</td>
 <td align="right">0.21</td>
+<td align="right">1.6</td>
 <td align="right">0.1</td>
 <td align="right">-0.07</td>
 <td align="right">0.74</td>
@@ -714,9 +741,10 @@ ht_clust &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ho
 <th align="left">term</th>
 <th align="right">estimate</th>
 <th align="right">std.error</th>
+<th align="right">statistic</th>
 <th align="right">p.value</th>
-<th align="right">ci.lower</th>
-<th align="right">ci.upper</th>
+<th align="right">conf.low</th>
+<th align="right">conf.high</th>
 <th align="right">df</th>
 <th align="left">outcome</th>
 </tr></thead>
@@ -724,6 +752,7 @@ ht_clust &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ho
 <td align="left">z_clust</td>
 <td align="right">0.64</td>
 <td align="right">0.24</td>
+<td align="right">2.6</td>
 <td align="right">0.01</td>
 <td align="right">0.17</td>
 <td align="right">1.1</td>
@@ -757,9 +786,10 @@ ht_arb &lt;-<span class="st"> </span><span class="kw"><a href="../reference/horv
 <th align="left">term</th>
 <th align="right">estimate</th>
 <th align="right">std.error</th>
+<th align="right">statistic</th>
 <th align="right">p.value</th>
-<th align="right">ci.lower</th>
-<th align="right">ci.upper</th>
+<th align="right">conf.low</th>
+<th align="right">conf.high</th>
 <th align="right">df</th>
 <th align="left">outcome</th>
 </tr></thead>
@@ -767,6 +797,7 @@ ht_arb &lt;-<span class="st"> </span><span class="kw"><a href="../reference/horv
 <td align="left">z</td>
 <td align="right">-0.56</td>
 <td align="right">0.49</td>
+<td align="right">-1.1</td>
 <td align="right">0.25</td>
 <td align="right">-1.5</td>
 <td align="right">0.4</td>

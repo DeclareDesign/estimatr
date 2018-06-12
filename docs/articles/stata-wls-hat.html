@@ -197,9 +197,12 @@ y_i = \mathbf{x}_i^\top \mathbf{\beta} + \epsilon_i,
   <span class="dt">weights =</span> wt,
   <span class="dt">se_type =</span> <span class="st">"HC2"</span>
 )
-<span class="co">#&gt;                Estimate Std. Error     Pr(&gt;|t|)    CI Lower    CI Upper DF</span>
-<span class="co">#&gt; (Intercept) 28.54864505 2.16281844 4.975934e-14 24.13158053 32.96570958 30</span>
-<span class="co">#&gt; hp          -0.06249413 0.01445662 1.561752e-04 -0.09201849 -0.03296977 30</span></code></pre></div>
+<span class="co">#&gt;                Estimate Std. Error   t value     Pr(&gt;|t|)    CI Lower</span>
+<span class="co">#&gt; (Intercept) 28.54864505 2.16281844 13.199742 4.975934e-14 24.13158053</span>
+<span class="co">#&gt; hp          -0.06249413 0.01445662 -4.322872 1.561752e-04 -0.09201849</span>
+<span class="co">#&gt;                CI Upper DF</span>
+<span class="co">#&gt; (Intercept) 32.96570958 30</span>
+<span class="co">#&gt; hp          -0.03296977 30</span></code></pre></div>
 <p>We can also see that Python’s <a href="http://www.statsmodels.org/stable/index.html"><code>statsmodels</code></a> provides the same results as the methods in R (and in fact they note the difference in an <a href="https://github.com/statsmodels/statsmodels/issues/1209">issue on GitHub</a>).</p>
 <div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="im">import</span> statsmodels.api <span class="im">as</span> sm
 <span class="im">import</span> pandas <span class="im">as</span> pd
