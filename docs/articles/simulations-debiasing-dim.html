@@ -190,7 +190,7 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">42</span>)
 simp_bl_dig &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/diagnose_design">diagnose_design</a></span>(
   simp_bl_des,
-  <span class="dt">sims =</span> <span class="dv">5</span>,
+  <span class="dt">sims =</span> <span class="dv">500</span>,
   <span class="dt">diagnosands =</span> my_diagnosands
 )</code></pre></div>
 <table class="table">
@@ -284,7 +284,7 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">44</span>)
 corr_bl_dig &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/diagnose_design">diagnose_design</a></span>(
   corr_bl_des,
-  <span class="dt">sims =</span> <span class="dv">5</span>,
+  <span class="dt">sims =</span> <span class="dv">500</span>,
   <span class="dt">diagnosands =</span> my_diagnosands
 )
 corr_bl_dig<span class="op">$</span>simulations &lt;-<span class="st"> </span><span class="ot">NULL</span></code></pre></div>
@@ -398,7 +398,7 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">46</span>)
 simp_cl_dig &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/diagnose_design">diagnose_design</a></span>(
   simp_cl_des,
-  <span class="dt">sims =</span> <span class="dv">5</span>,
+  <span class="dt">sims =</span> <span class="dv">500</span>,
   <span class="dt">diagnosands =</span> my_diagnosands
 )</code></pre></div>
 <table class="table">
@@ -456,7 +456,7 @@ simp_cl_dig &lt;-<span class="st"> </span><span class="kw"><a href="http://www.r
 <h2 class="hasAnchor">
 <a href="#clusters-of-different-sizes" class="anchor"></a>Clusters of different sizes</h2>
 <p>When clusters are different sizes, and potential outcomes are correlated with cluster size, the difference-in-means estimator is no longer appropriate as it is biased. One solution is to use the Horvitz-Thompson estimator, which is actually a difference-in-totals estimator.</p>
-<p>In the below, I use simulation to show that the difference-in-means estimator cannot account for the correlation between cluster size and potential outcomes, while the Horvitz-Thompson estimator can. I will use simple random assignment for the clusters as this estimation is faster.</p>
+<p>In the below, I use simulation to show that the difference-in-means estimator cannot account for the correlation between cluster size and potential outcomes, while the Horvitz-Thompson estimator can.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Correlated cluster size and potential outcomes</span>
 diff_size_cls &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_population">declare_population</a></span>(
   <span class="dt">clusters =</span> <span class="kw">add_level</span>(
@@ -506,7 +506,7 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">47</span>)
 diff_cl_dig &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/diagnose_design">diagnose_design</a></span>(
   diff_cl_des,
-  <span class="dt">sims =</span> <span class="dv">50</span>,
+  <span class="dt">sims =</span> <span class="dv">500</span>,
   <span class="dt">diagnosands =</span> my_diagnosands
 )</code></pre></div>
 <table class="table">
