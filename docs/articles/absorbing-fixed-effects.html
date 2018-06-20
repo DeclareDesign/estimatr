@@ -178,13 +178,13 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 )</code></pre></div>
 <pre><code>## Unit: milliseconds
 ##             expr       min        lq      mean    median        uq
-##  base + sandwich 194.84725 206.94936 216.18093 214.37812 220.10542
-##        lm_robust  84.81398  91.84078  96.23636  94.78807 100.10949
-##  lm_robust + fes  52.80776  54.67562  59.91537  59.07194  63.71819
+##  base + sandwich 197.75105 205.44060 217.20556 212.58914 223.70460
+##        lm_robust  85.52110  90.33517  96.47126  94.57620 102.76491
+##  lm_robust + fes  53.16971  56.06677  61.37108  58.66726  66.40364
 ##        max neval
-##  263.31671    50
-##  116.25991    50
-##   76.47296    50</code></pre>
+##  273.58482    50
+##  117.40561    50
+##   75.98683    50</code></pre>
 <p>Speed gains are <em>considerably</em> greater with HC1 standard errors. This is because we need to get the hat matrix for HC2, HC3, and CR2 standard errors, which requires inverting that large matrix of dummies we previously avoided doing. HC0, HC1, CR0, and CRstata standard errors do not require this inversion.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># With HC1</span>
 <span class="kw"><a href="http://www.rdocumentation.org/packages/microbenchmark/topics/microbenchmark">microbenchmark</a></span>(
@@ -207,13 +207,13 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 )</code></pre></div>
 <pre><code>## Unit: milliseconds
 ##             expr        min         lq      mean    median        uq
-##  base + sandwich 192.555011 204.960864 213.61333 212.21380 217.27308
-##        lm_robust  68.684290  76.086913  79.33959  78.37613  83.10529
-##  lm_robust + fes   8.374632   9.336324  10.77951  10.17672  11.56546
-##        max neval
-##  264.66845    50
-##   93.69662    50
-##   17.22306    50</code></pre>
+##  base + sandwich 194.908183 204.961861 213.68319 211.81267 217.56317
+##        lm_robust  68.724877  73.349200  79.50274  78.40044  85.28220
+##  lm_robust + fes   8.502048   9.163421  11.78490  10.35571  13.13016
+##       max neval
+##  266.1544    50
+##   95.9065    50
+##   21.6956    50</code></pre>
 </div>
 </div>
   </div>
