@@ -190,17 +190,14 @@ true_varb</code></pre></div>
 <p>Now, we want to test for a few results using Monte Carlo simulation. Our main goal is to show that our estimated variance is unbiased for the true variance (our estimand). We can do this by comparing the mean of our estimated variances across our Monto Carlo simulations to the true variance. We can also show that the standard error of our coefficient estimate is the same as the standard deviation of the sampling distribution of our coefficient. Lastly, we also measure the coverage of our 95 percent confidence intervals across simulations to test whether the they cover the true coefficient 95 percent of the time.</p>
 <p>Let’s first set up the design and our diagnosands.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># First declare all the steps of our design, starting with our fixed data</span>
-classical_design &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/DeclareDesign-deprecated">declare_design</a></span>(
+classical_design &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_design">declare_design</a></span>(
   dat,
   simp_pop,
   varb_estimand,
   lmc
-)</code></pre></div>
-<pre><code>## Warning: 
-## DeclareDesign no longer includes the declare_design() function from development versions. Please use the + operator to create designs. For your design, you can try:
-## 
-## dat + simp_pop + varb_estimand + lmc</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Declare a set of diagnosands that help us check if</span>
+)
+
+<span class="co"># Declare a set of diagnosands that help us check if</span>
 <span class="co"># we have unbiasedness</span>
 my_diagnosands &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_diagnosands">declare_diagnosands</a></span>(
   <span class="st">`</span><span class="dt">Bias of Estimated Variance</span><span class="st">`</span> =<span class="st"> </span><span class="kw">mean</span>(se<span class="op">^</span><span class="dv">2</span> <span class="op">-</span><span class="st"> </span>estimand),
@@ -349,7 +346,7 @@ fixed_dat_het_design_temp &lt;-<span class="st"> </span><span class="cf">functio
 
   <span class="co"># We return the design so we can diagnose it</span>
   <span class="kw">return</span>(
-    <span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/DeclareDesign-deprecated">declare_design</a></span>(
+    <span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_design">declare_design</a></span>(
       dat,
       simp_pop,
       varb_het_estimand,

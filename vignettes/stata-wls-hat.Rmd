@@ -155,7 +155,7 @@ Stata's standard errors are somewhat different. The only documentation of Stata'
 
 #### Which should we prefer?
 
-Just because Stata is not documenting their HC2 and HC3 estimator does not mean they're wrong. Also the differences tend to be minor. In fact, it is unclear which we should prefer given that there is not a strong literature supporting one or the other. However, there are several arguments to be made for $\matbf{H}_{R}$.
+Just because Stata is not documenting their HC2 and HC3 estimator does not mean they're wrong. Also the differences tend to be minor. In fact, it is unclear which we should prefer given that there is not a strong literature supporting one or the other. However, there are several arguments to be made for $\mathbf{H}_{R}$.
 
 1. It's the estimator you get when you weight your data by the square root of the weights ($\mathbf{X} \rightarrow \widetilde{\mathbf{X}}$ and $\mathbf{y} \rightarrow \widetilde{\mathbf{y}}$) and fit regular ordinary least squares. If one considers the weighted model as simply a rescaled version of the unweighted model, then users should prefer $\mathbf{H}_{R}$.
 2. The diagonal of $\mathbf{H}_{R}$ are the weighted leverages [@livalliant2009], while $\mathbf{H}_{Stata}$ would need to be weighted again for the diagonal to recover the weighted leverage.

@@ -165,14 +165,19 @@ ate &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 dim_bl &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_estimator">declare_estimator</a></span>(Y <span class="op">~</span><span class="st"> </span>Z, <span class="dt">blocks =</span> blocks, <span class="dt">label =</span> <span class="st">"DIM blocked"</span>)
 
 <span class="co"># Our design</span>
-simp_bl_des &lt;-<span class="st"> </span>simp_blocks <span class="op">+</span>
-<span class="st">  </span>blocked_pos <span class="op">+</span>
-<span class="st">  </span>blocked_assign <span class="op">+</span>
-<span class="st">  </span>ate <span class="op">+</span>
-<span class="st">  </span>dim <span class="op">+</span>
-<span class="st">  </span>dim_bl
-
-<span class="co"># Our diagnosands of interest</span>
+simp_bl_des &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_design">declare_design</a></span>(
+  simp_blocks,
+  blocked_pos,
+  blocked_assign,
+  ate,
+  dim,
+  dim_bl
+)</code></pre></div>
+<pre><code>## Warning: Outcome variables (Y) were declared in a Potential Outcome step
+## (), but never later revealed.</code></pre>
+<pre><code>## Warning: Attempting to inject a `declare_reveal(Y, Z)` step after
+## Assignment step ()</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Our diagnosands of interest</span>
 my_diagnosands &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_diagnosands">declare_diagnosands</a></span>(
   <span class="st">`</span><span class="dt">Bias</span><span class="st">`</span> =<span class="st"> </span><span class="kw">mean</span>(est <span class="op">-</span><span class="st"> </span>estimand),
   <span class="st">`</span><span class="dt">Coverage</span><span class="st">`</span> =<span class="st">  </span><span class="kw">mean</span>(estimand <span class="op">&lt;=</span><span class="st"> </span>ci_upper <span class="op">&amp;</span><span class="st"> </span>estimand <span class="op">&gt;=</span><span class="st"> </span>ci_lower),
@@ -190,7 +195,7 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">42</span>)
 simp_bl_dig &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/diagnose_design">diagnose_design</a></span>(
   simp_bl_des,
-  <span class="dt">sims =</span> <span class="dv">500</span>,
+  <span class="dt">sims =</span> <span class="dv">5000</span>,
   <span class="dt">diagnosands =</span> my_diagnosands
 )</code></pre></div>
 <table class="table">
@@ -268,12 +273,18 @@ corr_blocked_assign &lt;-<span class="st"> </span><span class="kw"><a href="http
   <span class="co"># the first unit in that block</span>
   <span class="dt">block_m =</span> m_treat[<span class="op">!</span><span class="kw">duplicated</span>(blocks)]
 )
-corr_bl_des &lt;-<span class="st"> </span>corr_blocks <span class="op">+</span>
-<span class="st">  </span>blocked_pos <span class="op">+</span>
-<span class="st">  </span>corr_blocked_assign <span class="op">+</span>
-<span class="st">  </span>ate <span class="op">+</span>
-<span class="st">  </span>dim <span class="op">+</span>
-<span class="st">  </span>dim_bl</code></pre></div>
+corr_bl_des &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_design">declare_design</a></span>(
+  corr_blocks,
+  blocked_pos,
+  corr_blocked_assign,
+  ate,
+  dim,
+  dim_bl
+)</code></pre></div>
+<pre><code>## Warning: Outcome variables (Y) were declared in a Potential Outcome step
+## (), but never later revealed.</code></pre>
+<pre><code>## Warning: Attempting to inject a `declare_reveal(Y, Z)` step after
+## Assignment step ()</code></pre>
 <p>As you can see below, the probability of treatment is strongly correlated with the treatment effect.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">43</span>)
 dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/post_design">draw_data</a></span>(corr_bl_des)
@@ -284,10 +295,10 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">44</span>)
 corr_bl_dig &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/diagnose_design">diagnose_design</a></span>(
   corr_bl_des,
-  <span class="dt">sims =</span> <span class="dv">500</span>,
-  <span class="dt">diagnosands =</span> my_diagnosands
-)
-corr_bl_dig<span class="op">$</span>simulations &lt;-<span class="st"> </span><span class="ot">NULL</span></code></pre></div>
+  <span class="dt">sims =</span> <span class="dv">5000</span>,
+  <span class="dt">diagnosands =</span> my_diagnosands,
+  <span class="dt">parallel =</span> <span class="ot">TRUE</span>
+)</code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th></th>
@@ -372,12 +383,18 @@ ate &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 dim &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_estimator">declare_estimator</a></span>(Y <span class="op">~</span><span class="st"> </span>Z, <span class="dt">label =</span> <span class="st">"DIM"</span>)
 dim_cl &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_estimator">declare_estimator</a></span>(Y <span class="op">~</span><span class="st"> </span>Z, <span class="dt">clusters =</span> clusters, <span class="dt">label =</span> <span class="st">"DIM clustered"</span>)
 
-simp_cl_des &lt;-<span class="st"> </span>simp_clusts <span class="op">+</span>
-<span class="st">  </span>clustered_POs <span class="op">+</span>
-<span class="st">  </span>clustered_assign <span class="op">+</span>
-<span class="st">  </span>ate <span class="op">+</span>
-<span class="st">  </span>dim <span class="op">+</span>
-<span class="st">  </span>dim_cl</code></pre></div>
+simp_cl_des &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_design">declare_design</a></span>(
+  simp_clusts,
+  clustered_POs,
+  clustered_assign,
+  ate,
+  dim,
+  dim_cl
+)</code></pre></div>
+<pre><code>## Warning: Outcome variables (Y) were declared in a Potential Outcome step
+## (), but never later revealed.</code></pre>
+<pre><code>## Warning: Attempting to inject a `declare_reveal(Y, Z)` step after
+## Assignment step ()</code></pre>
 <p>Let’s look at an example of the data generated by this design. As you can see, treatment is clustered.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">45</span>)
 dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/post_design">draw_data</a></span>(simp_cl_des)
@@ -398,7 +415,7 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">46</span>)
 simp_cl_dig &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/diagnose_design">diagnose_design</a></span>(
   simp_cl_des,
-  <span class="dt">sims =</span> <span class="dv">500</span>,
+  <span class="dt">sims =</span> <span class="dv">5000</span>,
   <span class="dt">diagnosands =</span> my_diagnosands
 )</code></pre></div>
 <table class="table">
@@ -456,7 +473,7 @@ simp_cl_dig &lt;-<span class="st"> </span><span class="kw"><a href="http://www.r
 <h2 class="hasAnchor">
 <a href="#clusters-of-different-sizes" class="anchor"></a>Clusters of different sizes</h2>
 <p>When clusters are different sizes, and potential outcomes are correlated with cluster size, the difference-in-means estimator is no longer appropriate as it is biased. One solution is to use the Horvitz-Thompson estimator, which is actually a difference-in-totals estimator.</p>
-<p>In the below, I use simulation to show that the difference-in-means estimator cannot account for the correlation between cluster size and potential outcomes, while the Horvitz-Thompson estimator can.</p>
+<p>In the below, I use simulation to show that the difference-in-means estimator cannot account for the correlation between cluster size and potential outcomes, while the Horvitz-Thompson estimator can. I will use simple random assignment for the clusters as this estimation is faster.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Correlated cluster size and potential outcomes</span>
 diff_size_cls &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_population">declare_population</a></span>(
   <span class="dt">clusters =</span> <span class="kw">add_level</span>(
@@ -471,42 +488,32 @@ diff_size_cls &lt;-<span class="st"> </span><span class="kw"><a href="http://www
   )
 )
 clustered_POs &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_potential_outcomes">declare_potential_outcomes</a></span>(Y <span class="op">~</span><span class="st"> </span>Z <span class="op">*</span><span class="st"> </span><span class="fl">0.4</span> <span class="op">*</span><span class="st"> </span>clust_shock <span class="op">+</span><span class="st"> </span>epsilon)
-clustered_assign &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_assignment">declare_assignment</a></span>(<span class="dt">clusters =</span> clusters, <span class="dt">prob =</span> <span class="fl">0.5</span>)
 
 ht_cl &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_estimator">declare_estimator</a></span>(
   <span class="dt">formula =</span> Y <span class="op">~</span><span class="st"> </span>Z,
-  <span class="dt">clusters =</span> clusters,
-  <span class="dt">condition_prs =</span> condition_pr,
-  <span class="dt">simple =</span> <span class="ot">FALSE</span>,
+  <span class="co"># Give your randomization declaration to HT and it sorts it out!</span>
+  <span class="dt">ra_declaration =</span> randomizr<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/randomizr/topics/declare_ra">declare_ra</a></span>(<span class="dt">clusters =</span> <span class="kw">with</span>(data, clusters), <span class="dt">prob =</span> <span class="fl">0.5</span>),
   <span class="dt">model =</span> estimatr<span class="op">::</span>horvitz_thompson,
   <span class="dt">label =</span> <span class="st">"Horvitz-Thompson Clustered"</span>
 )
 
-ate &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_estimand">declare_estimand</a></span>(<span class="dt">ATE =</span> <span class="kw">mean</span>(Y_Z_<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>Y_Z_<span class="dv">0</span>))
-
-diff_cl_des &lt;-<span class="st"> </span>diff_size_cls <span class="op">+</span><span class="st"> </span>
-<span class="st">  </span>clustered_POs <span class="op">+</span><span class="st"> </span>
-<span class="st">  </span>clustered_assign <span class="op">+</span><span class="st"> </span>
-<span class="st">  </span>ate
-
-dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/post_design">draw_data</a></span>(diff_cl_des)
-<span class="kw">ht_cl</span>(dat)</code></pre></div>
-<pre><code>## `simple` = FALSE, using complete cluster randomization</code></pre>
-<pre><code>##              estimator_label coefficient      est        se          p
-## 1 Horvitz-Thompson Clustered           Z 2.013795 0.9765354 0.03919034
-##     ci_lower ci_upper
-## 1 0.09982026 3.927769</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">diff_cl_des &lt;-<span class="st"> </span>diff_size_cls <span class="op">+</span><span class="st"> </span>
-<span class="st">  </span>clustered_POs <span class="op">+</span><span class="st"> </span>
-<span class="st">  </span>clustered_assign <span class="op">+</span><span class="st"> </span>
-<span class="st">  </span>ate <span class="op">+</span><span class="st"> </span>
-<span class="st">  </span>dim_cl <span class="op">+</span><span class="st"> </span>
-<span class="st">  </span>ht_cl</code></pre></div>
+diff_cl_des &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/declare_design">declare_design</a></span>(
+  diff_size_cls,
+  clustered_POs,
+  clustered_assign,
+  ate,
+  dim_cl,
+  ht_cl
+)</code></pre></div>
+<pre><code>## Warning: Outcome variables (Y) were declared in a Potential Outcome step
+## (), but never later revealed.</code></pre>
+<pre><code>## Warning: Attempting to inject a `declare_reveal(Y, Z)` step after
+## Assignment step ()</code></pre>
 <p>Now let’s diagnose!</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">47</span>)
 diff_cl_dig &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/DeclareDesign/topics/diagnose_design">diagnose_design</a></span>(
   diff_cl_des,
-  <span class="dt">sims =</span> <span class="dv">500</span>,
+  <span class="dt">sims =</span> <span class="dv">50000</span>,
   <span class="dt">diagnosands =</span> my_diagnosands
 )</code></pre></div>
 <table class="table">

@@ -178,13 +178,13 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 )</code></pre></div>
 <pre><code>## Unit: milliseconds
 ##             expr       min        lq      mean    median        uq
-##  base + sandwich 195.59275 209.81159 219.24240 217.35922 225.63997
-##        lm_robust  85.36861  90.92141  96.62574  95.18862 100.50766
-##  lm_robust + fes  52.67907  56.24784  60.17194  60.30979  62.69774
+##  base + sandwich 194.84725 206.94936 216.18093 214.37812 220.10542
+##        lm_robust  84.81398  91.84078  96.23636  94.78807 100.10949
+##  lm_robust + fes  52.80776  54.67562  59.91537  59.07194  63.71819
 ##        max neval
-##  277.63258    50
-##  113.86913    50
-##   73.59198    50</code></pre>
+##  263.31671    50
+##  116.25991    50
+##   76.47296    50</code></pre>
 <p>Speed gains are <em>considerably</em> greater with HC1 standard errors. This is because we need to get the hat matrix for HC2, HC3, and CR2 standard errors, which requires inverting that large matrix of dummies we previously avoided doing. HC0, HC1, CR0, and CRstata standard errors do not require this inversion.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># With HC1</span>
 <span class="kw"><a href="http://www.rdocumentation.org/packages/microbenchmark/topics/microbenchmark">microbenchmark</a></span>(
@@ -207,13 +207,13 @@ dat &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocument
 )</code></pre></div>
 <pre><code>## Unit: milliseconds
 ##             expr        min         lq      mean    median        uq
-##  base + sandwich 194.979418 207.383234 214.50206 210.90124 218.10445
-##        lm_robust  68.085511  75.316219  81.17257  79.80612  86.70727
-##  lm_robust + fes   8.284809   9.095577  11.18323  10.12290  12.96004
+##  base + sandwich 192.555011 204.960864 213.61333 212.21380 217.27308
+##        lm_robust  68.684290  76.086913  79.33959  78.37613  83.10529
+##  lm_robust + fes   8.374632   9.336324  10.77951  10.17672  11.56546
 ##        max neval
-##  270.66784    50
-##   98.69560    50
-##   18.46223    50</code></pre>
+##  264.66845    50
+##   93.69662    50
+##   17.22306    50</code></pre>
 </div>
 </div>
   </div>
