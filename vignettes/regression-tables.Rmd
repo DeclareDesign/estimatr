@@ -32,11 +32,16 @@ texreg(fit, include.ci = FALSE)
 
 Stargazer has to be *tricked* -- there's unfortunately no way around this unless something in the stargazer package changes. The maintainer has indicated that he has no active plans to update stargazer in the future. First, run the regression using `lm`. Then you can pass the `lm` fits to `starprep` a function which transforms the `lm` fits into `lm_robust` fits and then prepare the appropriate statistic you requested. The `starprep` funciton defaults to returning standard errors and uses `lm_robust` defaults for standard errors (robust HC2 SEs are the default in both `lm_robust`).  Then you pass the `lm` fit to stargazer and then pass `starprep(fit)` to the `se` argument in `stargazer`. This process works great with multiple fits.
 
-```{r, message = FALSE, echo=1:4, eval=c(1:3, 5)}
+```{r, message = FALSE, eval = FALSE}
 library(stargazer)
 fit_1 <- lm(mpg ~ disp, data = mtcars)
 fit_2 <- lm(mpg ~ hp, data = mtcars)
 stargazer(fit_1, fit_2, se = starprep(fit_1, fit_2))
+```
+```{r, message = FALSE, echo = FALSE}
+library(stargazer)
+fit_1 <- lm(mpg ~ disp, data = mtcars)
+fit_2 <- lm(mpg ~ hp, data = mtcars)
 stargazer(fit_1, fit_2, se = starprep(fit_1, fit_2), header = FALSE)
 ```
 
