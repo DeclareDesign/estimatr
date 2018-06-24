@@ -27,7 +27,7 @@ This document shows how providing [`estimatr`](/R/estimatr/) with the appropriat
 
 I am going to skip simple difference-in-means, and just straight to the case with blocks. Throughout I will use [`DeclareDesign`](/R/DeclareDesign/) to help diagnose the properties of the various estimators.
 
-```{r}
+```{r, message = FALSE}
 library(DeclareDesign)
 ```
 
