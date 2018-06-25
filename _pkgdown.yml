@@ -23,10 +23,10 @@ navbar:
     menu:
       - text: Getting Started with estimatr
         href: articles/getting-started.html
-      - text: Regression Tables with estimatr
-        href: articles/regression-tables.html
       - text: Absorbing Fixed Effects with estimatr
         href: articles/absorbing-fixed-effects.html
+      - text: Regression Tables with estimatr
+        href: articles/regression-tables.html
       - text: estimatr in the Tidyverse
         href: articles/estimatr-in-the-tidyverse.html
   - text: Technical Notes

@@ -100,8 +100,8 @@ mb <- microbenchmark(
 
 | estimatr      |  median run-time (ms)|
 |:--------------|---------------------:|
-| estimatr      |                    22|
-| lm + sandwich |                    40|
+| estimatr      |                    20|
+| lm + sandwich |                    38|
 
 ------------------------------------------------------------------------
 
