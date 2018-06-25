@@ -9,6 +9,7 @@
 vignettes/*.html
 vignettes/*.pdf
 vignettes/.*
+docs/
 .Rproj.user
 tests/testthat/*.pdf
 .DS_Store
