@@ -248,6 +248,7 @@ horvitz_thompson <- function(formula,
     )
   }
 
+  simple_specified <- is.logical(simple)
   se_type <- match.arg(se_type)
 
   # -----
@@ -433,10 +434,12 @@ horvitz_thompson <- function(formula,
       }
     } else if (is.null(data$blocks)) {
       # clustered case
-      message(
-        "`simple` = ", simple, ", using ",
-        ifelse(simple, "simple", "complete"), " cluster randomization"
-      )
+      if (!simple_specified) {
+        message(
+          "Assuming ", ifelse(simple, "simple", "complete"),
+          " cluster randomization"
+        )
+      }
 
       if (is.null(data$condition_probabilities)) {
 

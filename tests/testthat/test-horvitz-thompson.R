@@ -196,6 +196,16 @@ test_that("Horvitz-Thompson works with clustered data", {
     rep(NA_real_, 4)
   )
 
+  expect_message(
+    horvitz_thompson(y ~ z, data = dat, clusters = cl),
+    "`simple` = TRUE"
+  )
+
+  expect_message(
+    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = rep(0.5, nrow(dat)), simple = FALSE),
+    NA
+  )
+
   # Can infer probabilities as well
   expect_equal(
     ht_crs_decl,
