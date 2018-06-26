@@ -77,7 +77,7 @@ The [Getting Started Guide](/R/estimatr/articles/getting-started.html) has more 
 
 ## Fast to use
 
-Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using `lm()` and the `sandwich` package to get HC2 standard errors. More speed comparisons are available [here](/R/estimatr/articles/benchmarking-estimatr.html). Furthermore, with many blocks (or fixed effects), users can use the `fixed_effects` argument of `lm_robust` with HC1 standard errors to greatly improve estimation speed. More on [fixed effects here](/R/estimatr/article/absorbing-fixed-effects.html).
+Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using `lm()` and the `sandwich` package to get HC2 standard errors. More speed comparisons are available [here](/R/estimatr/articles/benchmarking-estimatr.html). Furthermore, with many blocks (or fixed effects), users can use the `fixed_effects` argument of `lm_robust` with HC1 standard errors to greatly improve estimation speed. More on [fixed effects here](/R/estimatr/articles/absorbing-fixed-effects.html).
 
 ```{r, echo=-1}
 set.seed(1)
