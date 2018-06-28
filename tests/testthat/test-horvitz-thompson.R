@@ -197,8 +197,8 @@ test_that("Horvitz-Thompson works with clustered data", {
   )
 
   expect_message(
-    horvitz_thompson(y ~ z, data = dat, clusters = cl),
-    "`simple` = TRUE"
+    horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = rep(0.5, nrow(dat))),
+    "Assuming simple cluster randomization"
   )
 
   expect_message(
