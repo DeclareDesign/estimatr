@@ -565,28 +565,21 @@ prep_data <- function(data,
   }
 
   if (fes) {
-    data[["femat"]] <- tryCatch({
-      model.matrix(
-        ~ 0 + .,
-        data = as.data.frame(data[["fixed_effects"]])
-      )},
-      error = function(e) {
-        msg <- conditionMessage(e)
-        if (msg == "contrasts can be applied only to factors with 2 or more levels") {
-          if (ncol(data[["fixed_effects"]]) == 1) {
-            matrix(
-              rep(1, nrow(data[["fixed_effects"]])),
-              dimnames = list(attr(data[["fixed_effects"]], "names"),
-                              paste0(colnames(data[["fixed_effects"]], data[["fixed_effects"]][1])))
-            )
-          } else {
-            stop("`fixed_effects` with only one group only allowed with one fixed effect")
-          }
-        } else {
-          stop(e)
-        }
+    fe_dat <- as.data.frame(data[["fixed_effects"]])
+    fe_levels <- vapply(fe_dat, nlevels, numeric(1))
+    if (any(fe_levels == 1)) {
+      if (ncol(fe_dat) == 1) {
+        data[["femat"]] <- matrix(
+          rep(1, nrow(data[["fixed_effects"]])),
+          dimnames = list(attr(data[["fixed_effects"]], "names"),
+                          paste0(colnames(data[["fixed_effects"]]), data[["fixed_effects"]][1]))
+        )
+      } else {
+        stop("Can't have a fixed effect with only one group AND multiple fixed effect variables")
       }
-    )
+    } else {
+      data[["femat"]] <- model.matrix( ~ 0 + ., data = fe_dat)
+    }
   }
 
   if (weighted) {

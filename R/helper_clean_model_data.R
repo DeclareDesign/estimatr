@@ -142,6 +142,11 @@ clean_model_data <- function(data, datargs, estimator = "") {
   ret[["condition_pr"]] <- model.extract(mf, "condition_pr")
 
   ret[["fixed_effects"]] <- model.extract(mf, "fixed_effects")
+  # If there is NA in the blocks and only one block, returns vector not matrix
+  # so coerce to matrix
+  if (is.character(ret[["fixed_effects"]])) {
+    ret[["fixed_effects"]] <- as.matrix(ret[["fixed_effects"]])
+  }
 
   if (any(ret[["condition_pr"]] <= 0 | ret[["condition_pr"]] > 1)) {
     stop(
