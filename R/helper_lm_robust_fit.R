@@ -568,7 +568,7 @@ prep_data <- function(data,
     fe_dat <- as.data.frame(data[["fixed_effects"]])
     fe_levels <- vapply(fe_dat, nlevels, 0L)
     if (any(fe_levels == 1)) {
-      if (ncol(fe_dat) == 1) {
+      if (ncol(fe_dat) != 1) {
         stop(
           "Can't have a fixed effect with only one group AND multiple fixed ",
           "effect variables"
