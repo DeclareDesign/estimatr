@@ -566,17 +566,19 @@ prep_data <- function(data,
 
   if (fes) {
     fe_dat <- as.data.frame(data[["fixed_effects"]])
-    fe_levels <- vapply(fe_dat, nlevels, numeric(1))
+    fe_levels <- vapply(fe_dat, nlevels, 0L)
     if (any(fe_levels == 1)) {
       if (ncol(fe_dat) == 1) {
-        data[["femat"]] <- matrix(
-          rep(1, nrow(data[["fixed_effects"]])),
-          dimnames = list(attr(data[["fixed_effects"]], "names"),
-                          paste0(colnames(data[["fixed_effects"]]), data[["fixed_effects"]][1]))
+        stop(
+          "Can't have a fixed effect with only one group AND multiple fixed ",
+          "effect variables"
         )
-      } else {
-        stop("Can't have a fixed effect with only one group AND multiple fixed effect variables")
       }
+      data[["femat"]] <- matrix(
+        rep(1, nrow(data[["fixed_effects"]])),
+        dimnames = list(attr(data[["fixed_effects"]], "names"),
+                        paste0(colnames(data[["fixed_effects"]]), data[["fixed_effects"]][1]))
+      )
     } else {
       data[["femat"]] <- model.matrix( ~ 0 + ., data = fe_dat)
     }
