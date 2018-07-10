@@ -45,11 +45,8 @@ tidy.default <- function(object, ...) {
 #' @export tidy.lm_robust
 #' @export
 tidy.lm_robust <- function(object, ...) {
-  return_frame <- tidy_data_frame(object)
-
   warn_singularities(object)
-
-  return(return_frame)
+  tidy_data_frame(object)
 }
 
 #' @rdname tidy
@@ -57,11 +54,8 @@ tidy.lm_robust <- function(object, ...) {
 #' @export tidy.iv_robust
 #' @export
 tidy.iv_robust <- function(object, ...) {
-  return_frame <- tidy_data_frame(object)
-
   warn_singularities(object)
-
-  return(return_frame)
+  tidy_data_frame(object)
 }
 
 
@@ -70,8 +64,7 @@ tidy.iv_robust <- function(object, ...) {
 #' @export tidy.difference_in_means
 #' @export
 tidy.difference_in_means <- function(object, ...) {
-  return_frame <- tidy_data_frame(object)
-  return(return_frame)
+  tidy_data_frame(object)
 }
 
 
@@ -80,14 +73,12 @@ tidy.difference_in_means <- function(object, ...) {
 #' @export tidy.horvitz_thompson
 #' @export
 tidy.horvitz_thompson <- function(object, ...) {
-  return_frame <- tidy_data_frame(object)
-  return(return_frame)
+  tidy_data_frame(object)
 }
 
 
 tidy_data_frame <- function(object, digits = NULL) {
-  vec_cols <-
-    c(
+  vec_cols <- c(
       "coefficients",
       "std.error",
       "statistic",
@@ -95,12 +86,10 @@ tidy_data_frame <- function(object, digits = NULL) {
       "conf.low",
       "conf.high",
       "df"
-    )
+  )
 
-  tidy_mat <- do.call("cbind", lapply(vec_cols, function(x) {
-    as.vector(object[[x]])
-  }))
-  vec_cols[which(vec_cols == "coefficients")] <- "estimate"
+  tidy_mat <- do.call("cbind", lapply(object[vec_cols], as.vector))
+  vec_cols[vec_cols == "coefficients"] <- "estimate"
   colnames(tidy_mat) <- vec_cols
   return_frame <- data.frame(
     term = object[["term"]],
@@ -117,9 +106,9 @@ tidy_data_frame <- function(object, digits = NULL) {
 warn_singularities <- function(object) {
   if (object$rank < object$k) {
     singularities <- object$k - object$rank
-    plural <- ifelse(singularities > 1, "s", "")
+    what <- ifelse(singularities > 1, " coefficients ", " coefficient ")
     message(
-      singularities, " coefficient", plural,
+      singularities, what,
       " not defined because the design matrix is rank deficient\n"
     )
   }
