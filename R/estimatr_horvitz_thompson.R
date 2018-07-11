@@ -7,7 +7,8 @@
 #' \code{Y ~ Z} with only one variable on the right-hand side, the treatment.
 #' @param data A data.frame.
 #' @param condition_prs An optional bare (unquoted) name of the variable with
-#' the condition 2 (treatment) probabilities. See details.
+#' the condition 2 (treatment) probabilities. See details. May also use a single
+#' number for the condition 2 probability if it is constant.
 #' @param blocks An optional bare (unquoted) name of the block variable. Use
 #' for blocked designs only. See details.
 #' @param clusters An optional bare (unquoted) name of the variable that
