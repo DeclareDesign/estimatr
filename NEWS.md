@@ -1,3 +1,11 @@
+# estimatr 0.10.0
+
+* Changed names of confidence interval columns in tidied data from `ci.lower` and `ci.upper` to `conf.low` and `conf.high` to be in line with other tidy methods
+* Added support for `fixed_effects` that are just one block
+* Added support for specifing `condition_prs` in `horvitz_thompson()` as a single number
+* Added t- and z-statistics to output
+* Limit unnecessary messaging in `horvitz_thompson()`
+
 # estimatr 0.8.0
 
 * Added support for absorbing fixed effects in `lm_robust` and `iv_robust`
