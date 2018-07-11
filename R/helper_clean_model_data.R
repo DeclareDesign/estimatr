@@ -27,7 +27,10 @@ clean_model_data <- function(data, datargs, estimator = "") {
   # subset is also non-standard eval
   to_process <- setdiff(
     names(mfargs),
-    c(setdiff(names(formals(stats::model.frame.default)), "subset"), args_ignored)
+    c(
+      setdiff(names(formals(stats::model.frame.default)), "subset"),
+      args_ignored
+    )
   )
 
   for (da in to_process) {

@@ -274,7 +274,8 @@ horvitz_thompson <- function(formula,
       )
     }
 
-    # Add clusters, blocks, and treatment probabilities to data so they can be cleaned with clean_model_data
+    # Add clusters, blocks, and treatment probabilities to data so they
+    # can be cleaned with clean_model_data
     if (!is.null(ra_declaration$clusters)) {
       .clusters_ddinternal <- ra_declaration$clusters
       clusters <- quo(.clusters_ddinternal)
@@ -322,7 +323,8 @@ horvitz_thompson <- function(formula,
   model_data <- clean_model_data(data = data, datargs, estimator = "ht")
 
   ## condition_pr_mat, if supplied, must be same length
-  if (!is.null(condition_pr_mat) && (2 * length(model_data$outcome) != nrow(condition_pr_mat))) {
+  if (!is.null(condition_pr_mat) &&
+      (2 * length(model_data$outcome) != nrow(condition_pr_mat))) {
     stop(
       "After cleaning the data, it has ", length(model_data$outcome), " ",
       "while `condition_pr_mat` has ", nrow(condition_pr_mat), ". ",
@@ -408,8 +410,8 @@ horvitz_thompson <- function(formula,
         if (is.null(data$condition_probabilities)) {
           data$condition_probabilities <- mean(data$t == condition2)
           message(
-            "Learning probability of complete random assignment from data with ",
-            "prob = ", round(data$condition_probabilities[1], 3)
+            "Learning probability of complete random assignment from data ",
+            "with prob = ", round(data$condition_probabilities[1], 3)
           )
 
           if (se_type != "none") {
@@ -444,7 +446,8 @@ horvitz_thompson <- function(formula,
 
       if (is.null(data$condition_probabilities)) {
 
-        # Split by cluster and get complete randomized values within each cluster
+        # Split by cluster and get complete randomized values
+        # within each cluster
         cluster_treats <- get_cluster_treats(data, condition2)
         data$condition_probabilities <- mean(cluster_treats$treat_clust)
 
@@ -553,7 +556,8 @@ horvitz_thompson <- function(formula,
         data = x,
         condition1 = condition1,
         condition2 = condition2,
-        condition_pr_mat = condition_pr_mat[c(x$index, N + x$index), c(x$index, N + x$index)],
+        condition_pr_mat = condition_pr_mat[c(x$index, N + x$index),
+                                            c(x$index, N + x$index)],
         se_type = se_type,
         alpha = alpha
       )
@@ -568,7 +572,10 @@ horvitz_thompson <- function(formula,
     diff <- with(block_estimates, sum(coefficients * N / N_overall))
 
     if (se_type != "none") {
-      std.error <- with(block_estimates, sqrt(sum(std.error^2 * (N / N_overall)^2)))
+      std.error <- with(
+        block_estimates,
+        sqrt(sum(std.error^2 * (N / N_overall)^2))
+      )
     } else {
       std.error <- NA
     }

@@ -355,7 +355,12 @@ gen_pr_matrix_cluster <- function(clusters, treat_probs, simple) {
 }
 
 
-gen_pr_matrix_block <- function(blocks, clusters, p2 = NULL, p1 = NULL, t = NULL, condition2 = NULL) {
+gen_pr_matrix_block <- function(blocks,
+                                clusters,
+                                p2 = NULL,
+                                p1 = NULL,
+                                t = NULL,
+                                condition2 = NULL) {
   n <- length(blocks)
   # Assume complete randomization
   condition_pr_matrix <- matrix(NA, nrow = 2 * n, ncol = 2 * n)
