@@ -575,7 +575,8 @@ prep_data <- function(data,
         )
       }
       data[["femat"]] <- matrix(
-        rep(1, nrow(data[["fixed_effects"]])),
+        1,
+        nrow(data[["fixed_effects"]]),
         dimnames = list(attr(data[["fixed_effects"]], "names"),
                         paste0(colnames(data[["fixed_effects"]]), data[["fixed_effects"]][1]))
       )
