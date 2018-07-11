@@ -63,7 +63,7 @@ test_that("DIM arguments parsed correctly", {
   y <- rnorm(8)
   expect_error(
     difference_in_means(y ~ z, blocks = bl),
-    "Must have least two treated/control"
+    "If design is not pair\\-matched\\, every block must"
   )
 })
 

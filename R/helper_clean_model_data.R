@@ -27,7 +27,10 @@ clean_model_data <- function(data, datargs, estimator = "") {
   # subset is also non-standard eval
   to_process <- setdiff(
     names(mfargs),
-    c(setdiff(names(formals(stats::model.frame.default)), "subset"), args_ignored)
+    c(
+      setdiff(names(formals(stats::model.frame.default)), "subset"),
+      args_ignored
+    )
   )
 
   for (da in to_process) {
@@ -47,6 +50,13 @@ clean_model_data <- function(data, datargs, estimator = "") {
       FUN = as.factor
     )
     mfargs[["fixed_effects"]] <- sym(name)
+  }
+
+  condition_pr <- NULL
+  if ("condition_pr" %in% names(mfargs) &&
+      length(eval(mfargs[["condition_pr"]], m_formula_env)) == 1) {
+    condition_pr <- eval(mfargs[["condition_pr"]], m_formula_env)
+    mfargs[["condition_pr"]] <- NULL
   }
 
   mfargs[["formula"]] <- Formula::as.Formula(m_formula)
@@ -139,7 +149,10 @@ clean_model_data <- function(data, datargs, estimator = "") {
 
   ret[["block"]] <- model.extract(mf, "block")
 
-  ret[["condition_pr"]] <- model.extract(mf, "condition_pr")
+  ret[["condition_pr"]] <- if (is.numeric(condition_pr))
+    rep(condition_pr, nrow(ret[["design_matrix"]]))
+  else
+    model.extract(mf, "condition_pr")
 
   ret[["fixed_effects"]] <- model.extract(mf, "fixed_effects")
   # If there is NA in the blocks and only one block, returns vector not matrix

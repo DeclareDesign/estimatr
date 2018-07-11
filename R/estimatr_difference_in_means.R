@@ -288,7 +288,8 @@ difference_in_means <- function(formula,
   } else {
     pair_matched <- FALSE
 
-    # When learning whether it is matched pairs, should only use relevant conditions
+    # When learning whether design is matched pairs,
+    # should only use rows in relevant conditions
     data <- subset.data.frame(data, t %in% c(condition1, condition2))
 
     clust_per_block <- check_clusters_blocks(data)
@@ -341,7 +342,10 @@ difference_in_means <- function(formula,
           std.error <-
             with(
               block_estimates,
-              sqrt((1 / (n_blocks * (n_blocks - 1))) * sum((coefficients - diff)^2))
+              sqrt(
+                (1 / (n_blocks * (n_blocks - 1))) *
+                  sum((coefficients - diff)^2)
+              )
             )
         }
       } else {
@@ -447,12 +451,11 @@ difference_in_means_internal <- function(condition1 = NULL,
     stop("Must have units with both treatment conditions within each block.")
   }
 
-  ## Check to make sure multiple in each group if pair matched is false
+  # Check to make sure multiple in each group if pair matched is false
   if (!pair_matched & (N2 == 1 | N1 == 1)) {
     stop(
-      "Must have least two treated/control units in each block if design is not ",
-      "pair-matched (i.e., every block is of size two). Only one treated or ",
-      "control unit in a block makes standard errors impossible to calculate"
+      "If design is not pair-matched, every block must have at least two ",
+      "treated and control units."
     )
   }
 

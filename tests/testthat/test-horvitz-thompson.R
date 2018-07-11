@@ -145,10 +145,16 @@ test_that("Horvitz-Thompson works in simple case", {
   y <- dat$y
   z_comp <- dat$z_comp
   ht_glob <- horvitz_thompson(y ~ z_comp, simple = FALSE, condition_prs = pr_comp)
+  ht_rec <- horvitz_thompson(y ~ z_comp, simple = FALSE, condition_prs = 0.4)
 
   expect_equal(
     ht_with,
     ht_glob
+  )
+
+  expect_equal(
+    ht_with,
+    ht_rec
   )
 
   # with declaration
@@ -350,12 +356,19 @@ test_that("Horvitz-Thompson works with missingness", {
   dat$z <- randomizr::conduct_ra(decl)
   missing_dat <- dat
   missing_dat$y[1] <- NA
-  decl$probabilities_matrix
-  nrow(missing_dat)
+
   expect_error(
-    horvitz_thompson(y ~ z, data = missing_dat, ra_declaration = decl),
+    ht_miss <- horvitz_thompson(y ~ z, data = missing_dat, ra_declaration = decl),
     NA
   )
+
+  expect_error(
+    ht_miss_pr <- horvitz_thompson(y ~ z, data = missing_dat, condition_prs = 0.35, simple = FALSE),
+    NA
+  )
+
+  expect_equal(ht_miss, ht_miss_pr)
+
   # Test that we didn't edit the declaration in the users env
   # Should work a second time
   expect_error(
