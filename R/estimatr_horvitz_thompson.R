@@ -777,7 +777,8 @@ horvitz_thompson_internal <- function(condition_pr_mat = NULL,
           }
         } else {
           warning(
-            "Variance is NaN. This is likely the result of a complex condition probability matrix"
+            "Variance is NaN. This is likely the result ",
+            "of a complex condition probability matrix"
           )
           std.error <- NA
         }

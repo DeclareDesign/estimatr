@@ -21,7 +21,7 @@ clean_model_data <- function(data, datargs, estimator = "") {
   m_formula <- eval_tidy(mfargs[["formula"]])
   m_formula_env <- environment(m_formula)
 
-  args_ignored <- c("fixed_effects", "condition_pr", "se_type")
+  args_ignored <- c("fixed_effects", "se_type")
   # For each ... that would go to model.fram .default, early eval,
   # save to formula env, and point to it
   # subset is also non-standard eval
@@ -52,17 +52,11 @@ clean_model_data <- function(data, datargs, estimator = "") {
     mfargs[["fixed_effects"]] <- sym(name)
   }
 
-  recycle_prs <- FALSE
-  if ("condition_pr" %in% names(mfargs)) {
-    condition_pr <- eval_tidy(mfargs[["condition_pr"]], data = data)
-    if (length(condition_pr) == 1) {
-      recycle_prs <- TRUE
-      mfargs[["condition_pr"]] <- NULL
-    } else {
-      name <- sprintf(".__condition_pr%%%d__", sample.int(.Machine$integer.max, 1))
-      m_formula_env[[name]] <- condition_pr
-      mfargs[["condition_pr"]] <- sym(name)
-    }
+  condition_pr <- NULL
+  if ("condition_pr" %in% names(mfargs) &&
+      length(eval(mfargs[["condition_pr"]], m_formula_env)) == 1) {
+    condition_pr <- eval(mfargs[["condition_pr"]], m_formula_env)
+    mfargs[["condition_pr"]] <- NULL
   }
 
   mfargs[["formula"]] <- Formula::as.Formula(m_formula)
@@ -155,7 +149,7 @@ clean_model_data <- function(data, datargs, estimator = "") {
 
   ret[["block"]] <- model.extract(mf, "block")
 
-  ret[["condition_pr"]] <- if (recycle_prs)
+  ret[["condition_pr"]] <- if (is.numeric(condition_pr))
     rep(condition_pr, nrow(ret[["design_matrix"]]))
   else
     model.extract(mf, "condition_pr")

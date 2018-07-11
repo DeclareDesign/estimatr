@@ -102,8 +102,7 @@ summary.horvitz_thompson <- function(object, ...) {
 summarize_tidy <- function(object, test = "t", ...) {
   remove_cols <- c("term", "outcome")
 
-  # This is ugly SO THAT summary(fit)$coefficients returns
-  # something like lm does.
+  # Ugly so that summary(fit)$coefficients matches lm()
   tidy_out <- tidy(object, ...)
   colnames(tidy_out)[2:8] <-
     c(

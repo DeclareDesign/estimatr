@@ -454,10 +454,8 @@ difference_in_means_internal <- function(condition1 = NULL,
   # Check to make sure multiple in each group if pair matched is false
   if (!pair_matched & (N2 == 1 | N1 == 1)) {
     stop(
-      "Must have least two treated/control units in each block if design is ",
-      "not pair-matched (i.e., every block is of size two). Only one treated ",
-      "or control unit in a block makes standard errors impossible to ",
-      "calculate"
+      "If design is not pair-matched, every block must have at least two ",
+      "treated and control units."
     )
   }
 

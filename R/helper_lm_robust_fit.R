@@ -580,7 +580,7 @@ prep_data <- function(data,
         1,
         nrow(data[["fixed_effects"]]),
         dimnames = list(
-          attr(data[["fixed_effects"]], "names"),
+          names(data[["fixed_effects"]]),
           paste0(colnames(data[["fixed_effects"]]), data[["fixed_effects"]][1])
         )
       )
