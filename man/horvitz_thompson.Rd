@@ -29,7 +29,8 @@ as all blocked designs use complete randomization, or either
 defaults to \code{TRUE}.}
 
 \item{condition_prs}{An optional bare (unquoted) name of the variable with
-the condition 2 (treatment) probabilities. See details.}
+the condition 2 (treatment) probabilities. See details. May also use a single
+number for the condition 2 probability if it is constant.}
 
 \item{condition_pr_mat}{An optional 2n * 2n matrix of marginal and joint
 probabilities of all units in condition1 and condition2. See details.}
