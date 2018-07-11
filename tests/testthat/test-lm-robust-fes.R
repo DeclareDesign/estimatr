@@ -636,6 +636,12 @@ test_that("FEs work with missingness", {
     "Some observations have missingness in the fixed effects but not in the outcome or covariates."
   )
 
+  # Check to make sure with only one FE when missingness works
+  expect_warning(
+    lm_robust(Y ~ Z + X, fixed_effects = ~ B, data = datmiss, se_type = "HC2"),
+    "Some observations have missingness in the fixed effects but not in the outcome or covariates."
+  )
+
   expect_equivalent(
     tidy(ro)[ro$term %in% c("Z", "X"), ],
     tidy(rfo)[rfo$term %in% c("Z", "X"), ]
@@ -1039,6 +1045,136 @@ test_that("FEs give correct projected F-stats", {
 
 })
 
+test_that("FE matches lm_robust with one block", {
+  # In outcome
+  datmiss <- dat
+  datmiss$Y[5] <- NA
+  datmiss$oneB <- "A"
+
+  ## Classical
+  ro <- lm_robust(Y ~ Z + X, data = datmiss, se_type = "classical")
+  rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ oneB, data = datmiss, se_type = "classical")
+
+  expect_equivalent(
+    tidy(ro)[ro$term %in% c("Z", "X"), ],
+    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+  )
+
+  expect_equal(
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
+  )
+
+  ## HC0
+  ro <- lm_robust(Y ~ Z + X, data = datmiss, se_type = "HC0")
+  rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ oneB, data = datmiss, se_type = "HC0")
+
+  expect_equivalent(
+    tidy(ro)[ro$term %in% c("Z", "X"), ],
+    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+  )
+
+  expect_equal(
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
+  )
+
+  ## HC1
+  ro <- lm_robust(Y ~ Z + X, data = datmiss, se_type = "HC1")
+  rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ oneB, data = datmiss, se_type = "HC1")
+
+  expect_equivalent(
+    tidy(ro)[ro$term %in% c("Z", "X"), ],
+    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+  )
+
+  expect_equal(
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
+  )
+
+  ## HC2
+  ro <- lm_robust(Y ~ Z + X, data = datmiss, se_type = "HC2")
+  rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ oneB, data = datmiss, se_type = "HC2")
+
+  expect_equivalent(
+    tidy(ro)[ro$term %in% c("Z", "X"), ],
+    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+  )
+
+  expect_equal(
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
+  )
+
+  ## HC3
+  ro <- lm_robust(Y ~ Z + X, data = datmiss, se_type = "HC3")
+  rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ oneB, data = datmiss, se_type = "HC3")
+  lfo <- lm(Y ~ Z + X, data = datmiss)
+
+  expect_equivalent(
+    tidy(ro)[ro$term %in% c("Z", "X"), ],
+    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+  )
+
+  expect_equivalent(
+    tidy(rfo)[rfo$term %in% c("Z", "X"), c("std.error")],
+    sqrt(diag(sandwich::vcovHC(lfo, type = "HC3"))[2:3])
+  )
+
+  expect_equal(
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
+  )
+
+  ## CR0
+  ro <- lm_robust(Y ~ Z + X, clusters = cl, data = datmiss, se_type = "CR0")
+  rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ oneB, clusters = cl, data = datmiss, se_type = "CR0")
+
+  expect_equivalent(
+    tidy(ro)[ro$term %in% c("Z", "X"), ],
+    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+  )
+
+  expect_equal(
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
+  )
+
+  ## CR stata
+  ro <- lm_robust(Y ~ Z + X, clusters = cl, data = datmiss, se_type = "stata")
+  rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ oneB, clusters = cl, data = datmiss, se_type = "stata")
+
+  expect_equivalent(
+    tidy(ro)[ro$term %in% c("Z", "X"), ],
+    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+  )
+
+  expect_equal(
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
+  )
+
+  ## CR2
+  ro <- lm_robust(Y ~ Z + X, clusters = cl, data = datmiss, se_type = "CR2")
+  rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ oneB, clusters = cl, data = datmiss, se_type = "CR2")
+
+  expect_equivalent(
+    tidy(ro)[ro$term %in% c("Z", "X"), ],
+    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+  )
+
+  expect_equal(
+    ro[c("r.squared", "adj.r.squared")],
+    rfo[c("r.squared", "adj.r.squared")]
+  )
+
+  ## Error when combined with other blocks
+  expect_error(
+    lm_robust(Y ~ Z + X, fixed_effects = ~ oneB + B, data = datmiss),
+    "Can't have a fixed effect with only one group AND multiple fixed effect variables"
+  )
+})
 
 test_that("Handle perfect fits appropriately", {
   dat$Bsingle <- c(1, 2, rep(3:4, each = 9))
