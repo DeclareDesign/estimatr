@@ -73,7 +73,7 @@ test_that("lm robust + cluster can work with margins", {
 
   expect_warning(
     lmr <- round(margins:::summary.margins(margins::margins(x2, vce = "delta"))[, mv], 8),
-    "cluster"
+    NA
   )
 
   # With rounding
