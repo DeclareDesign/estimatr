@@ -168,6 +168,10 @@ clean_model_data <- function(data, datargs, estimator = "") {
   }
 
   ret[["terms"]] <- attr(mf, "terms")
+  dcs <- attr(ret[["terms"]], "dataClasses")
+  # Clobber auxiliary variables in dataClasses for margins
+  drop_vars <- c("(fixed_effects)", "(condition_pr)", "(block)", "(cluster)")
+  attr(ret[["terms"]], "dataClasses") <- dcs[setdiff(names(dcs), drop_vars)]
   ret[["xlevels"]] <- .getXlevels(ret[["terms"]], mf)
   if (is.character(ret[["fixed_effects"]])) {
     ret[["felevels"]] <- lapply(as.data.frame(ret[["fixed_effects"]]), unique)
