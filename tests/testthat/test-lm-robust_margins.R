@@ -73,13 +73,20 @@ test_that("lm robust + cluster can work with margins", {
 
   expect_warning(
     lmr <- round(margins:::summary.margins(margins::margins(x2, vce = "delta"))[, mv], 8),
-    "cluster"
+    NA
   )
 
   # With rounding
   expect_equal(lmc[, 1], lmr[, 1])
   expect_true(
     !any(lmc[, 2] == lmr[, 2])
+  )
+
+  # Works with character cluster (avoided terms(mod) "dataClasses" problem)
+  mtcars$testc <- letters[1:4]
+  expect_error(
+    margins::margins(lm_robust(mpg ~ cyl * hp + wt, data = mtcars, clusters = testc)),
+    NA
   )
 })
 
