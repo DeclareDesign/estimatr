@@ -23,9 +23,9 @@ if (!rerun) {
 }
 ```
 
-This document shows how providing [`estimatr`](/R/estimatr/) with the appropriate blocks and clusters that define a research design can eliminate bias when estimating treatment effects using `difference_in_means()`. More details about the estimators with references can be found in the [mathematical notes](/R/estimatr/articles/mathematical-notes.html).
+This document shows how providing [`estimatr`](/r/estimatr/) with the appropriate blocks and clusters that define a research design can eliminate bias when estimating treatment effects using `difference_in_means()`. More details about the estimators with references can be found in the [mathematical notes](/r/estimatr/articles/mathematical-notes.html).
 
-I am going to skip simple difference-in-means, and just straight to the case with blocks. Throughout I will use [`DeclareDesign`](/R/DeclareDesign/) to help diagnose the properties of the various estimators.
+I am going to skip simple difference-in-means, and just straight to the case with blocks. Throughout I will use [`DeclareDesign`](/r/DeclareDesign/) to help diagnose the properties of the various estimators.
 
 ```{r, message = FALSE}
 library(DeclareDesign)
@@ -60,7 +60,7 @@ blocked_assign <- declare_assignment(blocks = blocks, prob = 0.5)
 ate <- declare_estimand(ATE = mean(Y_Z_1 - Y_Z_0))
 ```
 
-Now let's define our two estimators, one that doesn't account for blocking and one that does. The estimator that accounts for blocking essentially will compute treatment effects within blocks and then will take a weighted average across blocks. Details and references can be found in the [mathematical notes](/R/estimatr/articles/mathematical-notes.html#difference_in_means-notes).
+Now let's define our two estimators, one that doesn't account for blocking and one that does. The estimator that accounts for blocking essentially will compute treatment effects within blocks and then will take a weighted average across blocks. Details and references can be found in the [mathematical notes](/r/estimatr/articles/mathematical-notes.html#difference_in_means-notes).
 
 ```{r}
 dim <- declare_estimator(Y ~ Z, label = "DIM")
