@@ -41,9 +41,9 @@
 #' multiple values, a series of dummies for each value is created and each of
 #' those is interacted with the demeaned covariates. More details can be found
 #' in the
-#' \href{https://declaredesign.org/R/estimatr/articles/getting-started.html}{Getting Started vignette}
+#' \href{https://declaredesign.org/r/estimatr/articles/getting-started.html}{Getting Started vignette}
 #' and the
-#' \href{https://declaredesign.org/R/estimatr/articles/mathematical-notes.html}{mathematical notes}.
+#' \href{https://declaredesign.org/r/estimatr/articles/mathematical-notes.html}{mathematical notes}.
 #'
 #' @return An object of class \code{"lm_robust"}.
 #'

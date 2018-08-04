@@ -38,10 +38,10 @@
 #' does, and all auxiliary variables, such as clusters and weights, can be
 #' passed either as quoted names of columns, as bare column names, or
 #' as a self-contained vector. Examples of usage can be seen below and in the
-#' \href{https://declaredesign.org/R/estimatr/articles/getting-started.html}{Getting Started vignette}.
+#' \href{https://declaredesign.org/r/estimatr/articles/getting-started.html}{Getting Started vignette}.
 #'
 #' The mathematical notes in
-#' \href{https://declaredesign.org/R/estimatr/articles/mathematical-notes.html}{this vignette}
+#' \href{https://declaredesign.org/r/estimatr/articles/mathematical-notes.html}{this vignette}
 #' specify the exact estimators used by this function.
 #' The default variance estimators have been chosen largely in accordance with the
 #' procedures in

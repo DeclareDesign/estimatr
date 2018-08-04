@@ -22,7 +22,7 @@ knitr::opts_chunk$set(
 options(digits = 2)
 ```
 
-This document provides the mathematical notes for each of the estimators in `estimatr`. The most up-to-date version of this can be found on the [DeclareDesign website here](/R/estimatr/articles/mathematical-notes.html).
+This document provides the mathematical notes for each of the estimators in `estimatr`. The most up-to-date version of this can be found on the [DeclareDesign website here](/r/estimatr/articles/mathematical-notes.html).
 
 # Estimators
 
@@ -60,15 +60,15 @@ Weighted:
 
 The transformed data are then used in the analysis below, where $(\mathbf{X}^{\top}\mathbf{X})^{-1}$ is now $(\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1}$ and $\mathbf{X}$ is now $\mathbf{X} \mathrm{sqrt}[W]$, where $\mathrm{sqrt}[.]$ is an operator that applies a square root to the coefficients of some matrix.
 
-We should note that this transformation yields the same standard errors as specifying weights using `aweight` in Stata for the "classical", "HC0", and "HC1" ("stata") variance estimators. Furthermore, in the clustered case, our weighted estimator for the "stata" cluster-robust variance also matches Stata. Thus Stata's main robust standard error estimators, "HC1" and their clustered estimator, match our package when weights are applied. Nonetheless, Stata uses a slightly different Hat matrix and thus "HC2" and "HC3" estimates in Stata when weights are specified may differ from our estimates---[more on that here](/R/estimatr/articles/stata-wls-hat.html).
+We should note that this transformation yields the same standard errors as specifying weights using `aweight` in Stata for the "classical", "HC0", and "HC1" ("stata") variance estimators. Furthermore, in the clustered case, our weighted estimator for the "stata" cluster-robust variance also matches Stata. Thus Stata's main robust standard error estimators, "HC1" and their clustered estimator, match our package when weights are applied. Nonetheless, Stata uses a slightly different Hat matrix and thus "HC2" and "HC3" estimates in Stata when weights are specified may differ from our estimates---[more on that here](/r/estimatr/articles/stata-wls-hat.html).
 
 ### Variance
 
-In addition to solving for OLS coefficients faster than `lm`, we provide a variety of robust variance estimators. Below we outline them for the non-clustered and clustered cases. You can see some simulations about the unbiasedness of the classical variance estimators with homoskedasticity and the consistency of the HC2 estimators with heteroskedasticity in [these simulations](/R/estimatr/articles/simulations-ols-variance.html).
+In addition to solving for OLS coefficients faster than `lm`, we provide a variety of robust variance estimators. Below we outline them for the non-clustered and clustered cases. You can see some simulations about the unbiasedness of the classical variance estimators with homoskedasticity and the consistency of the HC2 estimators with heteroskedasticity in [these simulations](/r/estimatr/articles/simulations-ols-variance.html).
 
 #### Heteroskedasticity-Robust Variance and Degrees of Freedom
 
-The default variance estimator without clusters is the HC2 variance, first proposed by @mackinnonwhite1985. This estimator has the advantage of being equivalent to a conservative randomization-based "Neyman" estimator of the variance [@samiiaronow2012]. Furthermore, while it is somewhat less efficient than the HC1 variance estimator, the default in Stata, it tends to perform better in small samples (evidence for that can be found in our simulations [here](/R/estimatr/articles/simulations-ols-variance.html#hc1-and-hc2-in-small-samples)).
+The default variance estimator without clusters is the HC2 variance, first proposed by @mackinnonwhite1985. This estimator has the advantage of being equivalent to a conservative randomization-based "Neyman" estimator of the variance [@samiiaronow2012]. Furthermore, while it is somewhat less efficient than the HC1 variance estimator, the default in Stata, it tends to perform better in small samples (evidence for that can be found in our simulations [here](/r/estimatr/articles/simulations-ols-variance.html#hc1-and-hc2-in-small-samples)).
 
 | `se_type = `      | Variance Estimator ($\widehat{\mathbb{V}}[\widehat{\beta}]$)                                   | Degrees of Freedom | Notes |
 |----------|--------------------------|------|----------------------------|

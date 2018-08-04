@@ -106,7 +106,7 @@ design matrix used are the second-stage regressors, which includes the estimated
 endogenous regressors, and the residuals used are the difference
 between the outcome and a fit produced by the second-stage coefficients and the
 first-stage (endogenous) regressors. More notes on this can be found at
-\href{https://declaredesign.org/R/estimatr/articles/mathematical-notes.html}{the mathematical appendix}.
+\href{https://declaredesign.org/r/estimatr/articles/mathematical-notes.html}{the mathematical appendix}.
 
 If \code{fixed_effects} are specified, both the outcome, regressors, and instruments
 are centered using the method of alternating projections (Halperin 1962; Gaure 2013). Specifying

@@ -21,9 +21,9 @@ options(digits = 2)
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/DeclareDesign/estimatr?branch=master&svg=true)](https://ci.appveyor.com/project/DeclareDesign/estimatr)
 [![Coverage Status](https://coveralls.io/repos/github/DeclareDesign/estimatr/badge.svg?branch=master)](https://coveralls.io/github/DeclareDesign/estimatr?branch=master)
 
-**estimatr** is an `R` package providing a range of commonly-used linear estimators, designed for speed and for ease-of-use. Users can easily recover robust, cluster-robust, and other design appropriate estimates. We include two functions that implement means estimators, `difference_in_means()` and `horvitz_thompson()`, and three linear regression estimators, `lm_robust()`, `lm_lin()`, and `iv_robust()`. In each case, users can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs. The [Getting Started Guide](/R/estimatr/articles/getting-started.html) describes each estimator provided by **estimatr** and how it can be used in your analysis.
+**estimatr** is an `R` package providing a range of commonly-used linear estimators, designed for speed and for ease-of-use. Users can easily recover robust, cluster-robust, and other design appropriate estimates. We include two functions that implement means estimators, `difference_in_means()` and `horvitz_thompson()`, and three linear regression estimators, `lm_robust()`, `lm_lin()`, and `iv_robust()`. In each case, users can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs. The [Getting Started Guide](/r/estimatr/articles/getting-started.html) describes each estimator provided by **estimatr** and how it can be used in your analysis.
 
-You can also see the multiple ways you can [get regression tables out of estimatr](/R/estimatr/articles/regression-tables.html) using commonly used `R` packages such as `texreg` and `stargazer`. Fast estimators also enable fast simulation of research designs to learn about their properties (see [DeclareDesign](https://declaredesign.org)).
+You can also see the multiple ways you can [get regression tables out of estimatr](/r/estimatr/articles/regression-tables.html) using commonly used `R` packages such as `texreg` and `stargazer`. Fast estimators also enable fast simulation of research designs to learn about their properties (see [DeclareDesign](https://declaredesign.org)).
 
 ## Installing estimatr
 
@@ -73,11 +73,11 @@ data(sleep)
 res_dim <- difference_in_means(extra ~ group, data = sleep, blocks = ID)
 ```
 
-The [Getting Started Guide](/R/estimatr/articles/getting-started.html) has more examples and uses, as do the reference pages. The [Mathematical Notes](/R/estimatr/articles/mathematical-notes.html) provide more information about what each estimator is doing under the hood.
+The [Getting Started Guide](/r/estimatr/articles/getting-started.html) has more examples and uses, as do the reference pages. The [Mathematical Notes](/r/estimatr/articles/mathematical-notes.html) provide more information about what each estimator is doing under the hood.
 
 ## Fast to use
 
-Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using `lm()` and the `sandwich` package to get HC2 standard errors. More speed comparisons are available [here](/R/estimatr/articles/benchmarking-estimatr.html). Furthermore, with many blocks (or fixed effects), users can use the `fixed_effects` argument of `lm_robust` with HC1 standard errors to greatly improve estimation speed. More on [fixed effects here](/R/estimatr/articles/absorbing-fixed-effects.html).
+Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using `lm()` and the `sandwich` package to get HC2 standard errors. More speed comparisons are available [here](/r/estimatr/articles/benchmarking-estimatr.html). Furthermore, with many blocks (or fixed effects), users can use the `fixed_effects` argument of `lm_robust` with HC1 standard errors to greatly improve estimation speed. More on [fixed effects here](/r/estimatr/articles/absorbing-fixed-effects.html).
 
 ```{r, echo=-1}
 set.seed(1)
