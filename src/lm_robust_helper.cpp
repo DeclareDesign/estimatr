@@ -323,8 +323,14 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
       }
       // Rcout << "temp_omega:" << std::endl << temp_omega << std::endl;
 
+
       for (int m = 0; m < ny; m++) {
-        half_meat.block(0, r*m, n, r) = X.leftCols(r).array().colwise() * temp_omega.col(m).array().sqrt();
+        if (ny > 1) {
+          // Preserve signs for off-diagonal vcov blocks in mlm
+          half_meat.block(0, r*m, n, r) =  X.leftCols(r).array().colwise() * (ei.col(m).array().sign() * temp_omega.col(m).array().sqrt());
+        } else {
+          half_meat.block(0, r*m, n, r) =  X.leftCols(r).array().colwise() * temp_omega.col(m).array().sqrt();
+        }
       }
 
     } else {

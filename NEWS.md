@@ -1,3 +1,8 @@
+# estimatr 0.11.0
+
+* Fixed bug preventing integration with latest version of `margins`
+* Fixed bug pointed out by James Pustejovsky via the `sandwich` version 2.5-0 and off-diagonal blocks of multivariate regression vcov matrices
+
 # estimatr 0.10.0
 
 * Changed names of confidence interval columns in tidied data from `ci.lower` and `ci.upper` to `conf.low` and `conf.high` to be in line with other tidy methods
