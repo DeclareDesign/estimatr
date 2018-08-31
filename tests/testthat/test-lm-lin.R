@@ -368,3 +368,38 @@ test_that("weighted lm_lin same as with two covar sampling view", {
     coef(lmw2o)["am"]
   )
 })
+
+test_that("lm_lin properly renames trickily named variables", {
+
+  # lm_lin should add parentheses around variables that have colons in their name
+  # or that have parentheses in the name that are not in the first position
+  lo <- lm_lin(mpg ~ am, ~ wt*cyl + log(wt), mtcars)
+
+  expect_equal(
+    lo$term,
+    c("(Intercept)", "am", "wt_c", "cyl_c", "(log(wt))_c", "(wt:cyl)_c",
+      "am:wt_c", "am:cyl_c", "am:(log(wt))_c", "am:(wt:cyl)_c")
+  )
+})
+
+test_that("lm_lin works with multiple outcomes", {
+
+  lmpg <- lm_lin(mpg ~ am, ~ cyl, mtcars)
+  lwt <- lm_lin(wt ~ am, ~ cyl, mtcars)
+  lboth <- lm_lin(cbind(mpg, wt) ~ am, ~ cyl, mtcars)
+
+  expect_equivalent(
+    tidy(lmpg),
+    tidy(lboth)[1:4, ]
+  )
+
+  expect_equivalent(
+    tidy(lwt),
+    tidy(lboth)[5:8, ]
+  )
+
+  expect_equivalent(
+    lboth$fstatistic[1:2],
+    c(lmpg$fstatistic[1], lwt$fstatistic[1])
+  )
+})

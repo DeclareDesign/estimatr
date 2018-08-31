@@ -219,8 +219,8 @@ lm_lin <- function(formula,
   data <- enquo(data)
   model_data <- clean_model_data(data = data, datargs)
 
-  outcome <- model_data$outcome
-  n <- length(outcome)
+  outcome <- as.matrix(model_data$outcome)
+  n <- nrow(outcome)
   design_matrix <- model_data$design_matrix
   weights <- model_data$weights
   cluster <- model_data$cluster
@@ -279,8 +279,15 @@ lm_lin <- function(formula,
 
   original_covar_names <- colnames(demeaned_covars)
 
-  # Change name of centered covariates to end in bar
-  colnames(demeaned_covars) <- paste0(colnames(demeaned_covars), "_c")
+  # Change name of centered covariates to end in "_c"
+  # If covar name has `:` or a `(` not in the first position,
+  # wrap the whole var name in parentheses first
+  colnames(demeaned_covars) <- paste0(
+    ifelse(grepl("\\:|(^.+\\()", colnames(demeaned_covars)),
+           paste0("(", colnames(demeaned_covars), ")"),
+           colnames(demeaned_covars)),
+    "_c"
+  )
 
   n_treat_cols <- ncol(treatment)
   n_covars <- ncol(demeaned_covars)
