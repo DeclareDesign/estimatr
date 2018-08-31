@@ -368,3 +368,16 @@ test_that("weighted lm_lin same as with two covar sampling view", {
     coef(lmw2o)["am"]
   )
 })
+
+test_that("lm_lin properly renames trickily named variables", {
+
+  # lm_lin should add parentheses around variables that have colons in their name
+  # or that have parentheses in the name that are not in the first position
+  lo <- lm_lin(mpg ~ am, ~ wt*cyl + log(wt), mtcars)
+
+  expect_equal(
+    lo$term,
+    c("(Intercept)", "am", "wt_c", "cyl_c", "(log(wt))_c", "(wt:cyl)_c",
+      "am:wt_c", "am:cyl_c", "am:(log(wt))_c", "am:(wt:cyl)_c")
+  )
+})

@@ -279,8 +279,15 @@ lm_lin <- function(formula,
 
   original_covar_names <- colnames(demeaned_covars)
 
-  # Change name of centered covariates to end in bar
-  colnames(demeaned_covars) <- paste0(colnames(demeaned_covars), "_c")
+  # Change name of centered covariates to end in "_c"
+  # If covar name has `:` or a `(` not in the first position,
+  # wrap the whole var name in parentheses first
+  colnames(demeaned_covars) <- paste0(
+    ifelse(grepl("\\:|(^.+\\()", colnames(demeaned_covars)),
+           paste0("(", colnames(demeaned_covars), ")"),
+           colnames(demeaned_covars)),
+    "_c"
+  )
 
   n_treat_cols <- ncol(treatment)
   n_covars <- ncol(demeaned_covars)
