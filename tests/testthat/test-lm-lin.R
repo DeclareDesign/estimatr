@@ -381,3 +381,25 @@ test_that("lm_lin properly renames trickily named variables", {
       "am:wt_c", "am:cyl_c", "am:(log(wt))_c", "am:(wt:cyl)_c")
   )
 })
+
+test_that("lm_lin works with multiple outcomes", {
+
+  lmpg <- lm_lin(mpg ~ am, ~ cyl, mtcars)
+  lwt <- lm_lin(wt ~ am, ~ cyl, mtcars)
+  lboth <- lm_lin(cbind(mpg, wt) ~ am, ~ cyl, mtcars)
+
+  expect_equivalent(
+    tidy(lmpg),
+    tidy(lboth)[1:4, ]
+  )
+
+  expect_equivalent(
+    tidy(lwt),
+    tidy(lboth)[5:8, ]
+  )
+
+  expect_equivalent(
+    lboth$fstatistic[1:2],
+    c(lmpg$fstatistic[1], lwt$fstatistic[1])
+  )
+})

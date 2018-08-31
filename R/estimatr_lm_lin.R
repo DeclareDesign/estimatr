@@ -219,8 +219,8 @@ lm_lin <- function(formula,
   data <- enquo(data)
   model_data <- clean_model_data(data = data, datargs)
 
-  outcome <- model_data$outcome
-  n <- length(outcome)
+  outcome <- as.matrix(model_data$outcome)
+  n <- nrow(outcome)
   design_matrix <- model_data$design_matrix
   weights <- model_data$weights
   cluster <- model_data$cluster
