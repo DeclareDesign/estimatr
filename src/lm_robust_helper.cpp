@@ -267,19 +267,20 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
   Eigen::MatrixXd Vcov_hat;
   Eigen::VectorXd dof = Eigen::VectorXd::Constant(npars, -99.0);
-  Eigen::MatrixXd s2 = Eigen::MatrixXd::Constant(ny, ny, -99.0);
+  Eigen::VectorXd res_var = Eigen::VectorXd::Constant(ny, -99.0);
 
     // Standard error calculations
   if (se_type == "classical") {
     // Classical
-    s2 = AtA(ei)/((double)n - (double)r_fe);
+    Eigen::MatrixXd s2 = AtA(ei)/((double)n - (double)r_fe);
     Vcov_hat = Kr(s2, XtX_inv);
+    res_var = s2.diagonal();
 
   } else {
     // Robust
     Eigen::MatrixXd temp_omega = ei.array().pow(2);
 
-    s2 = temp_omega.colwise().sum()/((double)n - (double)r_fe);
+    res_var = temp_omega.colwise().sum()/((double)n - (double)r_fe);
 
     Eigen::MatrixXd bread(npars, npars);
     Eigen::MatrixXd half_meat(sandwich_size, npars);
@@ -516,7 +517,10 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
           Eigen::MatrixXd P_row = P_diags.row(j).asDiagonal();
           Eigen::MatrixXd P_array = (H3t.transpose()*H3t - uf - uf.transpose()) + P_row;
 
-          dof(j) = std::pow(P_array.trace(), 2) / P_array.array().pow(2).sum();
+          double dof_j = std::pow(P_array.trace(), 2) / P_array.array().pow(2).sum();
+          for (int outcome_ix = 0; outcome_ix < ny; outcome_ix++) {
+            dof(j + outcome_ix * r) = dof_j;
+          }
         }
       }
     }
@@ -524,5 +528,5 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
   return List::create(_["Vcov_hat"]= Vcov_hat,
                       _["dof"]= dof,
-                      _["res_var"]= s2);
+                      _["res_var"]= res_var);
 }

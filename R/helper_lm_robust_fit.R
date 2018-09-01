@@ -432,7 +432,7 @@ get_resvar <- function(data, ei, df.residual, vcov_fit, weighted) {
     if (weighted)
       colSums(ei^2 * data[["weight_mean"]]) / df.residual
     else
-      diag(as.matrix(ifelse(vcov_fit[["res_var"]] < 0, NA, vcov_fit[["res_var"]])))
+      as.vector(ifelse(vcov_fit[["res_var"]] < 0, NA, vcov_fit[["res_var"]]))
   return(res_var)
 }
 

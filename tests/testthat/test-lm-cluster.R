@@ -334,6 +334,22 @@ test_that("multiple outcomes", {
     vcov(lm_robust(cbind(mpg, hp) ~ wt, data = mtcars, clusters = cyl, se_type = "CR0"))
   )
 
+  lmmpg <- lm_robust(mpg ~ wt, data = mtcars, clusters = cyl)
+  lmhp <- lm_robust(hp ~ wt, data = mtcars, clusters = cyl)
+
+  expect_equivalent(
+    tidy(lmro)$df[1:2],
+    lmmpg$df
+  )
+
+  expect_equivalent(
+    tidy(lmro)$df[3:4],
+    lmhp$df
+  )
+
+  expect_equivalent(lmro$r.squared[1], lmmpg$r.squared)
+  expect_equivalent(lmro$r.squared[2], lmhp$r.squared)
+
   J <- length(unique(mtcars$cyl))
   n <- nrow(mtcars)
   r <- 2
