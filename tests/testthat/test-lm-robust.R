@@ -614,6 +614,14 @@ test_that("r squared is right", {
     c(lmow$r.squared, lmow$adj.r.squared),
     c(lmrowclust$r.squared, lmrowclust$adj.r.squared)
   )
+
+  # multiple outcomes
+  lmro <- lm_robust(cbind(mpg, hp) ~ cyl, data = mtcars)
+  lmmpg <- lm_robust(mpg ~ cyl, data = mtcars)
+  lmhp <- lm_robust(hp ~ cyl, data = mtcars)
+  expect_equivalent(lmro$r.squared[1], lmmpg$r.squared)
+  expect_equivalent(lmro$r.squared[2], lmhp$r.squared)
+
 })
 
 test_that("multiple outcomes", {
@@ -698,4 +706,5 @@ test_that("multiple outcomes", {
     sapply(summary(lmo)[[2]][c("r.squared", "adj.r.squared", "fstatistic")], `[`, 1),
     sapply(lmro[c("r.squared", "adj.r.squared", "fstatistic")], `[`, 2)
   )
+
 })
