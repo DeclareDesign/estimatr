@@ -1,12 +1,15 @@
-# estimatr 0.11.0
+# estimatr 0.11.1
 
-* Fixed bug preventing integration with latest version of `margins`
 * Fixed ambiguity about how interacted covariates were centered in `lm_lin`
 * A series of fixes for bugs that occurred with multiple outcomes (multivariate regression):
   * Fixed bug pointed out by James Pustejovsky via the `sandwich` version 2.5-0 and off-diagonal blocks of multivariate regression vcov matrices
   * Fixed bugs in `lm_lin` preventing multivariate regression
   * Fixed bug that truncated degrees of freedom with "CR2"  standard errors
   * Fixed bug that returned incorrect R-squared for the second or later outcomes
+
+# estimatr 0.11.0
+
+* Fixed bug preventing integration with latest version of `margins`
 
 # estimatr 0.10.0
 
