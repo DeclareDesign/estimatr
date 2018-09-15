@@ -441,8 +441,6 @@ difference_in_means_internal <- function(condition1 = NULL,
         "All units within a cluster must have the same treatment condition."
       )
     }
-
-
   }
 
   Y2 <- data$y[data$t == condition2]
