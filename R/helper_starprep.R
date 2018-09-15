@@ -47,7 +47,7 @@ commarobust <- function(model,
 
   se_type <- check_se_type(se_type = se_type, clustered = clustered)
 
-  X <- model.matrix.lm(model)
+  X <- model.matrix.default(model)
   contrasts <- attr(X, "contrasts")
   N <- nrow(X)
 

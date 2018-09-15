@@ -271,6 +271,9 @@ difference_in_means <- function(formula,
     condition1 <- condition_names[[1]]
   }
 
+  # subset data
+  data <- subset.data.frame(data, t %in% c(condition1, condition2))
+
   if (is.null(data$block)) {
     return_frame <- difference_in_means_internal(
       condition1 = condition1,

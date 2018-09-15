@@ -7,6 +7,7 @@
   * Fixed bug that truncated degrees of freedom with "CR2"  standard errors
   * Fixed bug that returned incorrect R-squared for the second or later outcomes
 * Fixed bug preventing integration with latest version of `margins`
+* Fixed bug with `difference_in_means` when using `condition1` and `condition2` to subset a treatment vector with more than two treatment conditions. Previous estimates and standard errors were incorrect.
 
 # estimatr 0.10.0
 
