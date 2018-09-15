@@ -90,6 +90,41 @@ test_that("DIM Blocked", {
     dim_normal$design,
     "Blocked"
   )
+
+  # Blocks and conditions works
+  dat <- data.frame(
+    y = 1:12,
+    z = rep(0:2, each = 4),
+    bl = rep(1:2, times = 6)
+  )
+
+  dim_01 <- difference_in_means(y ~ z, blocks = bl, data = dat, condition1 = "0", condition2 = "1")
+
+  dim_01_num <- difference_in_means(y ~ z, blocks = bl, data = dat, condition1 = 0, condition2 = 1)
+
+  expect_equal(
+    rmcall(dim_01),
+    rmcall(dim_01_num)
+  )
+
+  expect_equivalent(dim_01$coefficients, 4)
+
+  expect_equivalent(
+    tidy(dim_01),
+    tidy(
+      difference_in_means(y ~ z, blocks = bl, data = dat, subset = z < 2)
+    )
+  )
+
+  dim_02 <- difference_in_means(y ~ z, blocks = bl, data = dat, condition1 = 0, condition2 = 2)
+  expect_equivalent(dim_02$coefficients, 8)
+
+  expect_equivalent(
+    tidy(dim_02),
+    tidy(
+      difference_in_means(y ~ z, blocks = bl, data = dat, subset = z != 1)
+    )
+  )
 })
 
 test_that("DIM same as t.test", {
@@ -130,6 +165,32 @@ test_that("DIM Weighted", {
     dimbw$design,
     "Blocked (weighted)"
   )
+
+  # Weights and conditions works
+  dat <- data.frame(
+    y = 1:12,
+    z = rep(0:2, each = 4),
+    w = rep(1:6, each = 2)
+  )
+
+  dim_01 <- difference_in_means(y ~ z, weights = w, data = dat, condition1 = "0", condition2 = "1")
+
+  expect_equivalent(
+    tidy(dim_01),
+    tidy(
+      difference_in_means(y ~ z, weights = w, data = dat, subset = z < 2)
+    )
+  )
+
+  dim_02 <- difference_in_means(y ~ z, weights = w, data = dat, condition1 = 0, condition2 = 2)
+
+  expect_equivalent(
+    tidy(dim_02),
+    tidy(
+      difference_in_means(y ~ z, weights = w, data = dat, subset = z != 1)
+    )
+  )
+
 })
 
 
@@ -153,6 +214,42 @@ test_that("DIM Clustered", {
     dim_10$design,
     "Clustered"
   )
+
+  # Clusters and conditions works
+  dat <- data.frame(
+    y = 1:12,
+    z = rep(0:2, each = 4),
+    cl = rep(1:6, each = 2)
+  )
+
+  dim_01 <- difference_in_means(y ~ z, clusters = cl, data = dat, condition1 = "0", condition2 = "1")
+
+  dim_01_num <- difference_in_means(y ~ z, clusters = cl, data = dat, condition1 = 0, condition2 = 1)
+
+  expect_equal(
+    rmcall(dim_01),
+    rmcall(dim_01_num)
+  )
+
+  expect_equivalent(
+    tidy(dim_01),
+    tidy(
+      difference_in_means(y ~ z, clusters = cl, data = dat, subset = z < 2)
+    )
+  )
+
+  expect_equivalent(dim_01$coefficients, 4)
+
+  dim_02 <- difference_in_means(y ~ z, clusters = cl, data = dat, condition1 = 0, condition2 = 2)
+  expect_equivalent(dim_02$coefficients, 8)
+
+  expect_equivalent(
+    tidy(dim_02),
+    tidy(
+      difference_in_means(y ~ z, clusters = cl, data = dat, subset = z != 1)
+    )
+  )
+
 })
 
 test_that("DIM Pair Matched", {
