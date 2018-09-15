@@ -1,5 +1,6 @@
 ---
 title: "estimatr in the Tidyverse"
+author: "Shikhar Singh"
 output:
   html_document:
     df_print: paged
@@ -10,86 +11,161 @@ vignette: >
 ---
 
 
-The `estimatr` package estimates linear and instrumental variable regressions quickly and with robust standard errors. We designed the package to play well with the "tidyverse", which is a suite of packages developed by RStudio. The main way we accomplish this is making it easy to turn model fits into data.frames, the data format expected by many tidyverse packages. This vignette will show you how to use `estimatr` functions with four tidyverse packages: `broom`, `dplyr`, `purrr`, and `ggplot2`.
+```{r, echo=FALSE}
+library(knitr)
+```
 
-## Turning model objects into data.frames
+`estimatr` is for (fast) OLS and IV regression with robust standard errors. This document shows how `estimatr` integrates with RStudio's `tidyverse` suite of packages.
 
-```{r, message=FALSE}
+We use the Swiss Fertility and Socioeconomic Indicators data (available in <tt>R</tt>, description [here](https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/swiss.html)) to show how `lm_robust` works with `broom`, `dplyr`, `ggplot2`, and `purrr`. What is shown for `lm_robust` here typically applies to all the other `estimatr` functions (`lm_robust`, `difference_in_mean`, `lm_lin`, `iv_robust`, and `horovitz_thompson`).
+
+# Getting tidy
+
+The first step to the tidyverse is turning model output into data we can manipulate. The `tidy` function converts an `lm_robust` object into a data.frame.
+
+```{r, tidy = T, message = F, warning=T}
 library(estimatr)
-fit <- lm_robust(mpg ~ disp, data = mtcars)
+fit <- lm_robust(Fertility ~ Agriculture + Catholic, data = swiss)
 tidy(fit)
 ```
 
-The `fit` object is an `lm_robust` object. The `tidy()` function takes the fit and returns a data.frame. This function and behavior are explictly modeled on the `broom` package, a tidyverse package for making model objects into data.frames.
+# Data manipulation with `dplyr` 
 
-Once the model fits are data.frames, it's easy to pipe the output into `dplyr` data manipulation functions:
+Once a regression fit is a data.frame, you can use any of the `dplyr` "verbs" for data manipulation, like `mutate`,`filter`, `select`, `summarise`, `group_by`, and `arrange` (more on this [here](https://dplyr.tidyverse.org)). 
 
-```{r, message=FALSE}
-library(dplyr)
-fit %>%
-  tidy %>%
-  mutate(t.stat = estimate / std.error,
-         significant = p.value <= 0.05)
+```{r, tidy = TRUE, message = FALSE, warning = FALSE}
+library(tidyverse)
 
+# lm_robust and filter
+fit %>% tidy %>% filter(term == "Agriculture")
+
+# lm_robust and select
+fit %>% tidy %>% select(term, estimate, std.error)
+
+# lm_robust and mutate
+fit %>% tidy %>% mutate(t_stat = estimate/ std.error,
+                        significant = p.value <= 0.05)
 ```
 
-## Putting robust standard errors in a ggplot
+# Data visualization with `ggplot2` 
 
-If you want to overlay a regression model on a scatterplot, the `stat_smooth` function in `ggplot2` is great. But if you run `stat_smooth(method = "lm")`, ggplot will add a confidence interval based on classical variance calculations. If you want to use robust standard errors (and you almost certainly do, since homoskedasticity is an unnecessary and often implausible assumption), then use `stat_smooth(method = "lm_robust")`.
+`ggplot2` offers a number of data visualization tools that are compatible with `estimatr`
 
-```{r, message=FALSE}
-library(ggplot2)
-ggplot(mtcars, aes(mpg, disp)) +
-  geom_point() +
-  stat_smooth(method = "lm_robust") +
+1. Make a coefficient plot:
+
+```{r, tidy = T, message=F, warning=F}
+fit %>% 
+  tidy %>% 
+  filter(term != "(Intercept)") %>%
+  ggplot(aes(y = term, x = estimate)) + 
+  geom_vline(xintercept = 0, linetype = 2) + 
+  geom_point() + 
+  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high, height = 0.1)) + 
   theme_bw()
 ```
 
-## Running multiple versions of a model with purrr
+2. Put CIs based on robust variance estimates (rather than the "classical" variance estimates) with the `geom_smooth` and `stat_smooth` functions. 
 
-Sometimes, we want to run multiple versions of a regression mode, perhaps model on subsets of the data. This code runs three regressions on three subsets of the data and stacks the output into a single data.frame. We use the `map` function from the `purrr` package twice.
+```{r, tidy = T, message=F, warning=F}
+library(ggplot2)
+ggplot(swiss, aes(x = Agriculture, y = Fertility)) +
+  geom_point() +
+  geom_smooth(method = "lm_robust") +
+  theme_bw()
+```
+
+Note that the functional form can include polynomials. For instance, if the model is $Fertility \sim Agriculture + Agriculture^2 + Agriculture^3$, we can model this in the following way:  
+
+```{r, tidy = T, message=F, warning=F}
+library(ggplot2)
+ggplot(swiss, aes(x = Agriculture, y = Fertility)) +
+  geom_point() +
+  geom_smooth(method = "lm_robust",
+              formula = y ~ poly(x, 3, raw = TRUE)) +
+  theme_bw()
+```
+
+# Bootstrap using `rsample`
+
+The `rsample` pacakage provides tools for bootstrapping:
+
+```{r, tidy =T, message = F, warning=F}
+library(rsample)
+
+boot_out <-
+  bootstraps(data = swiss, 500)$splits %>%
+  map(~ lm_robust(Fertility ~ Catholic + Agriculture, data = analysis(.))) %>% 
+  map(tidy) %>%
+  bind_rows(.id = "bootstrap_replicate")
+kable(head(boot_out))
+```
+
+`boot_out` is a data.frame that contains estimates from each boostrapped sample. We can then use `dplyr` functions to summarize the bootstraps, `tidyr` functions to reshape the estimates, and `GGally::ggpairs` to visualize them.
+
+```{r, tidy =T, message = F, warning=F}
+boot_out %>%
+  group_by(term) %>%
+  summarise(boot_se = sd(estimate))
+
+# To visualize the sampling distribution
+
+library(GGally)
+boot_out %>% 
+  select(bootstrap_replicate, term, estimate) %>%
+  spread(key = term, value = estimate) %>%
+  select(-bootstrap_replicate) %>%
+  ggpairs(lower = list(continuous = wrap("points", alpha = 0.1))) +
+  theme_bw()
+```
+
+# Multiple models using `purrr`
+
+`purrr` provides tools to perform the same operation on every element of a vector. For instance, we may want to estimate a model on different subsets of data. We can use the `map` function to do this.
 
 ```{r}
 library(purrr)
-gg_df <-
-  mtcars %>%
-  split(.$cyl) %>%
-  map(~ lm_robust(mpg ~ disp, data = .)) %>% 
+
+# Running the same model for highly educated and less educated cantons/districts
+
+two_subsets <- 
+  swiss %>%
+  mutate(HighlyEducated = as.numeric(Education > 8)) %>%
+  split(.$HighlyEducated) %>%
+  map( ~ lm_robust(Fertility ~ Catholic, data = .)) %>%
   map(tidy) %>%
-  bind_rows(.id = "cyl")
-gg_df
+  bind_rows(.id = "HighlyEducated")
+
+kable(two_subsets, digits =2)
 ```
 
-## Coefficient plots with ggplot2
+Alternatively, we might want to regress different dependent variables on the same independent variable. `map` can be used alongwith `estimatr` functions for this purpose as well. 
 
-Having multiple models in a data.frame makes it convenient to make coefficient plots. Here we plot the regression estimate of the slope of `mpg` with respect to `disp` for each level of `cyl`:
-
-```{r}
-gg_df %>%
-  filter(term == "disp") %>%
-  ggplot(aes(x = estimate, y = cyl)) +
-  geom_point() +
-  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high), height = 0) +
-  geom_vline(xintercept = 0, linetype = "dashed") +
-  theme_bw()
-```
-
-## Multiple outcome variables
-We could do a similar exercise with three different dependent variables. `lm_robust` helpfully returns the name of the outcome variable, which makes plotting these models easy:
-```{r}
-gg_df <-
-  c("mpg", "hp", "wt") %>%
-  map( ~ lm_robust(formula(paste0(., " ~ disp")), data = mtcars)) %>%
+```{r, tidy = T, message=F, warning=F}
+three_outcomes <-
+  c("Fertility", "Education", "Agriculture") %>%
+  map(~ formula(paste0(., " ~ Catholic"))) %>%
+  map(~ lm_robust(., data = swiss)) %>%
   map_df(tidy)
-gg_df
 
-gg_df %>%
-  filter(term == "disp") %>%
-  ggplot(aes(estimate, outcome)) +
-  geom_point() +
-  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high), height = 0) +
-  geom_vline(xintercept = 0, linetype = "dashed") +
+kable(three_outcomes, digits =2)
+```
+
+Using `ggplot2`, we can make a coefficient plot:
+
+```{r, tidy= T}
+
+three_outcomes %>%
+  filter(term == "Catholic") %>%
+  ggplot(aes(x = estimate, y = outcome)) +
+  geom_vline(xintercept = 0, linetype = 2) +
+  geom_point() + 
+  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high, height = 0.1)) + 
+  ggtitle("Slopes with respect to `Catholic`") + 
   theme_bw()
 ```
+
+# Concluding thoughts
+
+Using `estimatr` functions in the tidyverse is easy once the model outputs have been turned into data.frames. We accomplish this with the `tidy` function.  After that, so many summary and visualization possibilities open up. Happy tidying!
 
 
