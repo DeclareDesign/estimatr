@@ -11,5 +11,6 @@
 #' @importFrom methods setGeneric setMethod isGeneric className
 #' @importFrom Formula as.Formula
 #' @importFrom rlang enquos enquo eval_tidy quo_get_expr quo_set_expr quo_is_missing sym quo
+#' @importFrom broom tidy
 #' @name estimatr
 NULL

@@ -81,15 +81,14 @@ test_that("lm cluster se", {
     qt(0.975, df = length(unique(dat$J)) - 1) * bm_interact$se.Stata["Z:X"] * c(-1, 1)
 
   expect_equivalent(
-    tidy(lm_interact)[4, c("std.error", "conf.low", "conf.high")],
+    as.numeric(tidy(lm_interact)[4, c("std.error", "conf.low", "conf.high")]),
     c(bm_interact$se["Z:X"], bm_interact_interval)
   )
 
   expect_equivalent(
-    tidy(lm_interact_stata)[4, c("std.error", "conf.low", "conf.high")],
+    as.numeric(tidy(lm_interact_stata)[4, c("std.error", "conf.low", "conf.high")]),
     c(bm_interact$se.Stata["Z:X"], bm_interact_stata_interval)
   )
-
 
   lm_full <-
     lm_robust(

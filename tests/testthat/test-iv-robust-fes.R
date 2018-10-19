@@ -21,8 +21,8 @@ test_that("FE matches with multiple FEs and covars", {
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, se_type = "classical")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("X1", "X2"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), ])
   )
 
   expect_equivalent(
@@ -40,8 +40,8 @@ test_that("FE matches with multiple FEs and covars", {
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, se_type = "HC0")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("X1", "X2"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), ])
   )
 
   expect_equivalent(
@@ -59,8 +59,8 @@ test_that("FE matches with multiple FEs and covars", {
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, se_type = "HC1")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("X1", "X2"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), ])
   )
 
   expect_equivalent(
@@ -78,8 +78,8 @@ test_that("FE matches with multiple FEs and covars", {
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, se_type = "HC2")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("X1", "X2"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), ])
   )
 
   expect_equivalent(
@@ -97,8 +97,8 @@ test_that("FE matches with multiple FEs and covars", {
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, se_type = "HC3")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("X1", "X2"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), ])
   )
 
   expect_equivalent(
@@ -116,8 +116,8 @@ test_that("FE matches with multiple FEs and covars", {
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "CR0")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("X1", "X2"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), ])
   )
 
   expect_equivalent(
@@ -135,8 +135,8 @@ test_that("FE matches with multiple FEs and covars", {
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "stata")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("X1", "X2"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), ])
   )
 
   expect_equivalent(
@@ -154,8 +154,8 @@ test_that("FE matches with multiple FEs and covars", {
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "CR2")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("X1", "X2"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), ])
   )
 
   expect_equivalent(
@@ -176,8 +176,8 @@ test_that("FE matches with weights", {
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "classical")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("X1", "X2"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), ])
   )
 
   expect_equivalent(
@@ -195,8 +195,8 @@ test_that("FE matches with weights", {
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "HC0")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("X1", "X2"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), ])
   )
 
   expect_equivalent(
@@ -214,8 +214,8 @@ test_that("FE matches with weights", {
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "HC1")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("X1", "X2"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), ])
   )
 
   expect_equivalent(
@@ -233,8 +233,8 @@ test_that("FE matches with weights", {
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "HC2")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("X1", "X2"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), ])
   )
 
   expect_equivalent(
@@ -252,8 +252,8 @@ test_that("FE matches with weights", {
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "HC3")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("X1", "X2"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), ])
   )
 
   expect_equivalent(
@@ -271,8 +271,8 @@ test_that("FE matches with weights", {
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, weights = w, se_type = "CR0")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("X1", "X2"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), ])
   )
 
   expect_equivalent(
@@ -290,8 +290,8 @@ test_that("FE matches with weights", {
   rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, weights = w, se_type = "stata")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("X1", "X2"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), ])
   )
 
   expect_equivalent(
@@ -314,8 +314,8 @@ test_that("FE matches with weights", {
   # ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), clusters = cl, data = dat, weights = w, se_type = "CR2")
   #
   # expect_equivalent(
-  #   tidy(ro)[ro$term %in% c("X1", "X2"), ],
-  #   tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+  #   as.data.frame(tidy(ro)[ro$term %in% c("X1", "X2"), ]),
+  #   as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), ])
   # )
   #
   # expect_equal(
@@ -334,7 +334,7 @@ test_that("IV FE matches lfe including proj r2", {
   sfeo <- lfe:::summary.felm(feo)
 
   expect_equivalent(
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")],
+    as.data.frame(as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")])),
     data.frame(feo$coefficients, feo$se)[c(2, 1), ]
   )
 
@@ -355,7 +355,7 @@ test_that("IV FE matches lfe including proj r2", {
   sfeo <- lfe:::summary.felm(feo, robust = T)
 
   expect_equivalent(
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")],
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")]),
     data.frame(feo$coefficients, sqrt(diag(feo$robustvcv)))[c(2, 1), ]
   )
 
@@ -376,7 +376,7 @@ test_that("IV FE matches lfe including proj r2", {
   sfeo <- lfe:::summary.felm(feo)
 
   expect_equivalent(
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")],
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")]),
     data.frame(feo$coefficients, sqrt(diag(feo$clustervcv)))[c(2, 1), ]
   )
 
@@ -397,7 +397,7 @@ test_that("IV FE matches lfe including proj r2", {
   sfeo <- lfe:::summary.felm(feo)
 
   expect_equivalent(
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")],
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")]),
     data.frame(feo$coefficients, feo$se)[c(2, 1), ]
   )
 
@@ -418,7 +418,7 @@ test_that("IV FE matches lfe including proj r2", {
   sfeo <- lfe:::summary.felm(feo, robust = T)
 
   expect_equivalent(
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")],
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")]),
     data.frame(feo$coefficients, sqrt(diag(feo$robustvcv)))[c(2, 1), ]
   )
 
@@ -439,7 +439,7 @@ test_that("IV FE matches lfe including proj r2", {
   sfeo <- lfe:::summary.felm(feo)
 
   expect_equivalent(
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")],
+    as.data.frame(tidy(rfo)[rfo$term %in% c("X1", "X2"), c("estimate", "std.error")]),
     data.frame(feo$coefficients, sqrt(diag(feo$clustervcv)))[c(2, 1), ]
   )
 

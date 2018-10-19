@@ -79,8 +79,8 @@ test_that("DIM Blocked", {
   dim_reverse <- difference_in_means(Y ~ Z, condition1 = 1, condition2 = 0, blocks = block, data = dat)
 
   expect_equal(
-    tidy(dim_normal)[c("estimate", "std.error")],
-    tidy(dim_reverse)[c("estimate", "std.error")] * c(-1, 1)
+    as.data.frame(tidy(dim_normal)[c("estimate", "std.error")]),
+    as.data.frame(tidy(dim_reverse)[c("estimate", "std.error")] * c(-1, 1))
   )
 
   difference_in_means(Y ~ Z, alpha = .05, blocks = block, data = dat)
@@ -110,20 +110,20 @@ test_that("DIM Blocked", {
   expect_equivalent(dim_01$coefficients, 4)
 
   expect_equivalent(
-    tidy(dim_01),
-    tidy(
+    as.data.frame(tidy(dim_01)),
+    as.data.frame(tidy(
       difference_in_means(y ~ z, blocks = bl, data = dat, subset = z < 2)
-    )
+    ))
   )
 
   dim_02 <- difference_in_means(y ~ z, blocks = bl, data = dat, condition1 = 0, condition2 = 2)
   expect_equivalent(dim_02$coefficients, 8)
 
   expect_equivalent(
-    tidy(dim_02),
-    tidy(
+    as.data.frame(tidy(dim_02)),
+    as.data.frame(tidy(
       difference_in_means(y ~ z, blocks = bl, data = dat, subset = z != 1)
-    )
+    ))
   )
 })
 
@@ -176,19 +176,19 @@ test_that("DIM Weighted", {
   dim_01 <- difference_in_means(y ~ z, weights = w, data = dat, condition1 = "0", condition2 = "1")
 
   expect_equivalent(
-    tidy(dim_01),
-    tidy(
+    as.data.frame(tidy(dim_01)),
+    as.data.frame(tidy(
       difference_in_means(y ~ z, weights = w, data = dat, subset = z < 2)
-    )
+    ))
   )
 
   dim_02 <- difference_in_means(y ~ z, weights = w, data = dat, condition1 = 0, condition2 = 2)
 
   expect_equivalent(
-    tidy(dim_02),
-    tidy(
+    as.data.frame(tidy(dim_02)),
+    as.data.frame(tidy(
       difference_in_means(y ~ z, weights = w, data = dat, subset = z != 1)
-    )
+    ))
   )
 
 })
@@ -232,10 +232,10 @@ test_that("DIM Clustered", {
   )
 
   expect_equivalent(
-    tidy(dim_01),
-    tidy(
+    as.data.frame(tidy(dim_01)),
+    as.data.frame(tidy(
       difference_in_means(y ~ z, clusters = cl, data = dat, subset = z < 2)
-    )
+    ))
   )
 
   expect_equivalent(dim_01$coefficients, 4)
@@ -244,10 +244,10 @@ test_that("DIM Clustered", {
   expect_equivalent(dim_02$coefficients, 8)
 
   expect_equivalent(
-    tidy(dim_02),
-    tidy(
+    as.data.frame(tidy(dim_02)),
+    as.data.frame(tidy(
       difference_in_means(y ~ z, clusters = cl, data = dat, subset = z != 1)
-    )
+    ))
   )
 
 })
@@ -331,19 +331,19 @@ test_that("DIM Matched Pair Cluster Randomization = Matched Pair when cluster si
   )
 
   expect_equal(
-    tidy(difference_in_means(
+    as.data.frame(tidy(difference_in_means(
       Y ~ Z,
       alpha = .05,
       blocks = block,
       clusters = cluster,
       data = dat
-    )),
-    tidy(difference_in_means(
+    ))),
+    as.data.frame(tidy(difference_in_means(
       Y ~ Z,
       alpha = .05,
       blocks = block,
       data = dat
-    ))
+    )))
   )
 })
 
@@ -635,8 +635,8 @@ test_that("DIM matches lm_robust under certain conditions", {
   lm_o <- lm_robust(Y ~ z, data = dat)
   dim_o <- difference_in_means(Y ~ z, data = dat)
   expect_equivalent(
-    tidy(lm_o)[2, 1:3],
-    tidy(dim_o)[, 1:3]
+    as.data.frame(tidy(lm_o)[2, 1:3]),
+    as.data.frame(tidy(dim_o)[, 1:3])
   )
 
   ## DIM and lm_robust agree with clustering becuase DIM just uses lm_robust w/ CR2!
@@ -646,8 +646,8 @@ test_that("DIM matches lm_robust under certain conditions", {
   lm_cl_o <- lm_robust(Y ~ z_clustered, clusters = cl_diff_size, data = dat)
   dim_cl_o <- difference_in_means(Y ~ z_clustered, clusters = cl_diff_size, data = dat)
   expect_equivalent(
-    tidy(lm_cl_o)[2, ],
-    tidy(dim_cl_o)
+    as.data.frame(tidy(lm_cl_o)[2, ]),
+    as.data.frame(tidy(dim_cl_o))
   )
 
   ## Blocked design is equivalent to lm_lin
@@ -659,8 +659,8 @@ test_that("DIM matches lm_robust under certain conditions", {
 
   # Not identical since row name of lm_bl_o is 2 due to the intercept
   expect_equivalent(
-    tidy(lm_bl_o)[2, ],
-    tidy(dim_bl_o)
+    as.data.frame(tidy(lm_bl_o)[2, ]),
+    as.data.frame(tidy(dim_bl_o))
   )
 
   ## Block-clustered is equivalent to lm_lin
@@ -672,8 +672,8 @@ test_that("DIM matches lm_robust under certain conditions", {
 
   # Not identical since row name of lm_bl_o is 2 due to the intercept
   expect_equivalent(
-    tidy(lm_blcl_o)[2, ],
-    tidy(dim_blcl_o)
+    as.data.frame(tidy(lm_blcl_o)[2, ]),
+    as.data.frame(tidy(dim_blcl_o))
   )
 
   # With weights now, identical to lm_robust, HC2 by force! except for matched pairs which fails
@@ -681,14 +681,14 @@ test_that("DIM matches lm_robust under certain conditions", {
 
   # simple W
   expect_equivalent(
-    tidy(lm_robust(Y ~ z, data = dat, weights = w))[2, ],
-    tidy(difference_in_means(Y ~ z, data = dat, weights = w))
+    as.data.frame(tidy(lm_robust(Y ~ z, data = dat, weights = w))[2, ]),
+    as.data.frame(tidy(difference_in_means(Y ~ z, data = dat, weights = w)))
   )
 
   # blocked W
   expect_equivalent(
-    tidy(lm_lin(Y ~ z_blocked, ~ factor(bl), weights = w, data = dat))[2, ],
-    tidy(difference_in_means(Y ~ z_blocked, data = dat, blocks = bl, weights = w))
+    as.data.frame(tidy(lm_lin(Y ~ z_blocked, ~ factor(bl), weights = w, data = dat))[2, ]),
+    as.data.frame(tidy(difference_in_means(Y ~ z_blocked, data = dat, blocks = bl, weights = w)))
   )
 
   # blocked-clustered W (goes to CR2)
@@ -702,8 +702,8 @@ test_that("DIM matches lm_robust under certain conditions", {
   )
 
   expect_equivalent(
-    tidy(lm_lin(Y ~ z_blocked, ~ factor(bl), clusters = cl, weights = w, data = dat))[2, 1:3],
-    tidy(dim_bl_cl_w)[, 1:3]
+    as.data.frame(tidy(lm_lin(Y ~ z_blocked, ~ factor(bl), clusters = cl, weights = w, data = dat))[2, 1:3]),
+    as.data.frame(tidy(dim_bl_cl_w)[, 1:3])
   )
 
   expect_equal(
@@ -720,8 +720,8 @@ test_that("DIM matches lm_robust under certain conditions", {
   )
 
   expect_equivalent(
-    tidy(lm_robust(Y ~ z_clustered, clusters = cl_diff_size, weights = w, data = dat))[2, 1:3],
-    tidy(dim_cl_w)[, 1:3]
+    as.data.frame(tidy(lm_robust(Y ~ z_clustered, clusters = cl_diff_size, weights = w, data = dat))[2, 1:3]),
+    as.data.frame(tidy(dim_cl_w)[, 1:3])
   )
   expect_equal(
     dim_cl_w$design,
@@ -748,7 +748,7 @@ test_that("se_type = none works", {
   )
 
   expect_equivalent(
-    tidy(dim_no)[c("std.error", "p.value", "conf.low", "conf.high")],
+    as.numeric(tidy(dim_no)[c("std.error", "p.value", "conf.low", "conf.high")]),
     rep(NA_real_, 4)
   )
 
@@ -762,7 +762,7 @@ test_that("se_type = none works", {
   )
 
   expect_equivalent(
-    tidy(dimb_no)[c("std.error", "p.value", "conf.low", "conf.high")],
+    as.numeric(tidy(dimb_no)[c("std.error", "p.value", "conf.low", "conf.high")]),
     rep(NA_real_, 4)
   )
 
@@ -777,7 +777,7 @@ test_that("se_type = none works", {
   )
 
   expect_equivalent(
-    tidy(dimc_no)[c("std.error", "p.value", "conf.low", "conf.high")],
+    as.numeric(tidy(dimc_no)[c("std.error", "p.value", "conf.low", "conf.high")]),
     rep(NA_real_, 4)
   )
 
@@ -791,7 +791,7 @@ test_that("se_type = none works", {
   )
 
   expect_equivalent(
-    tidy(dimw_no)[c("std.error", "p.value", "conf.low", "conf.high")],
+    as.numeric(tidy(dimw_no)[c("std.error", "p.value", "conf.low", "conf.high")]),
     rep(NA_real_, 4)
   )
 
@@ -805,7 +805,7 @@ test_that("se_type = none works", {
   )
 
   expect_equivalent(
-    tidy(dimcw_no)[c("std.error", "p.value", "conf.low", "conf.high")],
+    as.numeric(tidy(dimcw_no)[c("std.error", "p.value", "conf.low", "conf.high")]),
     rep(NA_real_, 4)
   )
 
@@ -822,7 +822,7 @@ test_that("se_type = none works", {
   )
 
   expect_equivalent(
-    tidy(dimmp_no)[c("std.error", "p.value", "conf.low", "conf.high")],
+    as.numeric(tidy(dimmp_no)[c("std.error", "p.value", "conf.low", "conf.high")]),
     rep(NA_real_, 4)
   )
 })

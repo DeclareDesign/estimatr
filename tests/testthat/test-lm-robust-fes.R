@@ -23,8 +23,8 @@ test_that("FE matches lm_robust with dummies", {
   rfo <- tidy(lm_robust(Y ~ Z, fixed_effects = ~ B, data = dat, se_type = "classical"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z"), ],
-    rfo[rfo$term %in% c("Z"), ]
+    as.data.frame(ro[ro$term %in% c("Z"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z"), ])
   )
 
   ## HC0
@@ -32,8 +32,8 @@ test_that("FE matches lm_robust with dummies", {
   rfo <- tidy(lm_robust(Y ~ Z, fixed_effects = ~ B, data = dat, se_type = "HC0"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z"), ],
-    rfo[rfo$term %in% c("Z"), ]
+    as.data.frame(ro[ro$term %in% c("Z"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z"), ])
   )
 
   ## HC1
@@ -41,8 +41,8 @@ test_that("FE matches lm_robust with dummies", {
   rfo <- tidy(lm_robust(Y ~ Z, fixed_effects = ~ B, data = dat, se_type = "HC1"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z"), ],
-    rfo[rfo$term %in% c("Z"), ]
+    as.data.frame(ro[ro$term %in% c("Z"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z"), ])
   )
 
   ## HC2
@@ -50,8 +50,8 @@ test_that("FE matches lm_robust with dummies", {
   rfo <- tidy(lm_robust(Y ~ Z, fixed_effects = ~ B, data = dat, se_type = "HC2"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z"), ],
-    rfo[rfo$term %in% c("Z"), ]
+    as.data.frame(ro[ro$term %in% c("Z"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z"), ])
   )
 
   ## HC3
@@ -59,8 +59,8 @@ test_that("FE matches lm_robust with dummies", {
   rfo <- tidy(lm_robust(Y ~ Z, fixed_effects = ~ B, data = dat, se_type = "HC3"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z"), ],
-    rfo[rfo$term %in% c("Z"), ]
+    as.data.frame(ro[ro$term %in% c("Z"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z"), ])
   )
 
   ## CR0
@@ -68,8 +68,8 @@ test_that("FE matches lm_robust with dummies", {
   rfo <- tidy(lm_robust(Y ~ Z, fixed_effects = ~ B, clusters = cl, data = dat, se_type = "CR0"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z"), ],
-    rfo[rfo$term %in% c("Z"), ]
+    as.data.frame(ro[ro$term %in% c("Z"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z"), ])
   )
 
   ## CR stata
@@ -77,8 +77,8 @@ test_that("FE matches lm_robust with dummies", {
   rfo <- tidy(lm_robust(Y ~ Z, fixed_effects = ~ B, clusters = cl, data = dat, se_type = "stata"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z"), ],
-    rfo[rfo$term %in% c("Z"), ]
+    as.data.frame(ro[ro$term %in% c("Z"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z"), ])
   )
 
   ## CR2
@@ -86,8 +86,8 @@ test_that("FE matches lm_robust with dummies", {
   rfo <- tidy(lm_robust(Y ~ Z, fixed_effects = ~ B, clusters = cl, data = dat, se_type = "CR2"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z"), ],
-    rfo[rfo$term %in% c("Z"), ]
+    as.data.frame(ro[ro$term %in% c("Z"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z"), ])
   )
 })
 
@@ -99,8 +99,8 @@ test_that("FE matches with multiple FEs and covars", {
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "classical"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   )
 
   ## HC0
@@ -108,8 +108,8 @@ test_that("FE matches with multiple FEs and covars", {
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC0"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   )
 
   ## HC1
@@ -117,8 +117,8 @@ test_that("FE matches with multiple FEs and covars", {
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC1"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   )
 
   ## HC2
@@ -126,8 +126,8 @@ test_that("FE matches with multiple FEs and covars", {
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC2"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   )
 
   ## HC3
@@ -151,8 +151,8 @@ test_that("FE matches with multiple FEs and covars", {
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC3"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   )
 
   ## CR0
@@ -160,8 +160,8 @@ test_that("FE matches with multiple FEs and covars", {
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "CR0"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   )
 
   ## CR stata
@@ -169,8 +169,8 @@ test_that("FE matches with multiple FEs and covars", {
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "stata"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   )
 
   ## CR2
@@ -178,8 +178,8 @@ test_that("FE matches with multiple FEs and covars", {
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "CR2"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   )
 })
 
@@ -188,8 +188,8 @@ test_that("FE matches with weights", { ## Classical
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "classical"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   )
 
   ## HC0
@@ -197,8 +197,8 @@ test_that("FE matches with weights", { ## Classical
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "HC0"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   )
 
   ## HC1
@@ -206,8 +206,8 @@ test_that("FE matches with weights", { ## Classical
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "HC1"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   )
 
   ## HC2
@@ -215,8 +215,8 @@ test_that("FE matches with weights", { ## Classical
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "HC2"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   )
 
   ## HC3
@@ -224,8 +224,8 @@ test_that("FE matches with weights", { ## Classical
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "HC3"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   )
 
   ## CR0
@@ -233,8 +233,8 @@ test_that("FE matches with weights", { ## Classical
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, clusters = cl, data = dat, weights = w, se_type = "CR0"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   )
 
   ## CR stata
@@ -242,8 +242,8 @@ test_that("FE matches with weights", { ## Classical
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, clusters = cl, data = dat, weights = w, se_type = "stata"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   )
 
   ## CR2
@@ -255,8 +255,8 @@ test_that("FE matches with weights", { ## Classical
   # ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl, data = dat, weights = w, se_type = "CR2"))
   #
   # expect_equivalent(
-  #   ro[ro$term %in% c("Z", "X"), ],
-  #   rfo[rfo$term %in% c("Z", "X"), ]
+  #   as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+  #   as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   # )
 })
 
@@ -268,8 +268,8 @@ test_that("FEs work with multiple outcomes", {
   rfo <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "classical")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ])),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equivalent(
@@ -287,8 +287,8 @@ test_that("FEs work with multiple outcomes", {
   rfo <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC0")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equivalent(
@@ -306,8 +306,8 @@ test_that("FEs work with multiple outcomes", {
   rfo <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC1")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equivalent(
@@ -325,8 +325,8 @@ test_that("FEs work with multiple outcomes", {
   rfo <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC2")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equivalent(
@@ -344,8 +344,8 @@ test_that("FEs work with multiple outcomes", {
   rfo <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC3")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equivalent(
@@ -363,8 +363,8 @@ test_that("FEs work with multiple outcomes", {
   rfo <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "CR0")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equivalent(
@@ -382,8 +382,8 @@ test_that("FEs work with multiple outcomes", {
   rfo <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "stata")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equivalent(
@@ -401,8 +401,8 @@ test_that("FEs work with multiple outcomes", {
   rfo <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "CR2")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equivalent(
@@ -421,8 +421,8 @@ test_that("FEs work with multiple outcomes", {
   rfo <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "classical")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equivalent(
@@ -440,8 +440,8 @@ test_that("FEs work with multiple outcomes", {
   rfo <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "HC0")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equivalent(
@@ -459,8 +459,8 @@ test_that("FEs work with multiple outcomes", {
   rfo <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "HC1")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equivalent(
@@ -478,8 +478,8 @@ test_that("FEs work with multiple outcomes", {
   rfo <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "HC2")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equivalent(
@@ -497,8 +497,8 @@ test_that("FEs work with multiple outcomes", {
   rfo <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "HC3")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equivalent(
@@ -516,8 +516,8 @@ test_that("FEs work with multiple outcomes", {
   rfo <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, clusters = cl, data = dat, weights = w, se_type = "CR0")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equivalent(
@@ -535,8 +535,8 @@ test_that("FEs work with multiple outcomes", {
   rfo <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B + B2, clusters = cl, data = dat, weights = w, se_type = "stata")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equivalent(
@@ -557,8 +557,8 @@ test_that("FEs work with multiple outcomes", {
   # ro <- lm_robust(cbind(Y, Y2) ~ Z + X + factor(B) + factor(B2), clusters = cl, data = dat, weights = w, se_type = "CR2")
   #
   # expect_equivalent(
-  #   tidy(ro)[ro$term %in% c("Z", "X"), ],
-  #   tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+  #   as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+  #   as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   # )
   #
   # expect_true(
@@ -586,8 +586,8 @@ test_that("FEs work with missingness", {
   )
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equal(
@@ -603,8 +603,8 @@ test_that("FEs work with missingness", {
 )
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equal(
@@ -620,8 +620,8 @@ test_that("FEs work with missingness", {
   )
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equal(
@@ -643,8 +643,8 @@ test_that("FEs work with missingness", {
   )
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equal(
@@ -661,12 +661,12 @@ test_that("FEs work with missingness", {
   lfo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equivalent(
-    tidy(rfo)[rfo$term %in% c("Z", "X"), c("std.error")],
+    rfo$std.error[rfo$term %in% c("Z", "X")],
     sqrt(diag(sandwich::vcovHC(lfo, type = "HC3"))[2:3])
   )
 
@@ -683,8 +683,8 @@ test_that("FEs work with missingness", {
   )
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equal(
@@ -700,8 +700,8 @@ test_that("FEs work with missingness", {
   )
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equal(
@@ -717,8 +717,8 @@ test_that("FEs work with missingness", {
   )
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equal(
@@ -771,8 +771,8 @@ test_that("FEs handle collinear FEs", {
 
   # SE is right for HC0 (as there is no finite sample correction), but DoF is still wrong
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), c("estimate", "std.error")],
-    rfo[rfo$term %in% c("Z", "X"), c("estimate", "std.error")]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), c("estimate", "std.error")]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), c("estimate", "std.error")])
   )
 
   # SE is right, but FE is wrong because we count the FEs incorrectly for the finite sample correction
@@ -807,8 +807,8 @@ test_that("FEs handle collinear FEs", {
   # HC2 or HC3 work because we can get the collinearity in the FEs for free as we have to invert
   # UtU anyways (where U is cbind(X, FE_dummy_mat))
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   )
 
   ## HC3
@@ -816,8 +816,8 @@ test_that("FEs handle collinear FEs", {
   rfo <- tidy(lm_robust(Y ~ Z + X, fixed_effects = ~ B + Bdup + B2, data = dat, se_type = "HC3"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   )
 
   ## CR0
@@ -826,8 +826,8 @@ test_that("FEs handle collinear FEs", {
 
   # DoF for CR0 works, unlike HC0, because our DoF for CR0 is N_clust - 1, not N - total_rank
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   )
 
   ## CR stata
@@ -853,8 +853,8 @@ test_that("FEs handle collinear FEs", {
 
   # As with HC2, we get the count of FEs here for free
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X"), ],
-    rfo[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X"), ])
   )
 })
 
@@ -866,8 +866,8 @@ test_that("FEs work with collinear covariates", {
   rfo <- tidy(lm_robust(Y ~ Z + X + Xdup, fixed_effects = ~ B + B2, data = dat, se_type = "classical"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X", "Xdup"), ],
-    rfo[rfo$term %in% c("Z", "X", "Xdup"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X", "Xdup"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X", "Xdup"), ])
   )
 
   ## HC0
@@ -875,8 +875,8 @@ test_that("FEs work with collinear covariates", {
   rfo <- tidy(lm_robust(Y ~ Z + X + Xdup, fixed_effects = ~ B + B2, data = dat, se_type = "HC0"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X", "Xdup"), ],
-    rfo[rfo$term %in% c("Z", "X", "Xdup"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X", "Xdup"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X", "Xdup"), ])
   )
 
   ## HC1
@@ -884,8 +884,8 @@ test_that("FEs work with collinear covariates", {
   rfo <- tidy(lm_robust(Y ~ Z + X + Xdup, fixed_effects = ~ B + B2, data = dat, se_type = "HC1"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X", "Xdup"), ],
-    rfo[rfo$term %in% c("Z", "X", "Xdup"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X", "Xdup"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X", "Xdup"), ])
   )
 
   ## HC2
@@ -893,8 +893,8 @@ test_that("FEs work with collinear covariates", {
   rfo <- tidy(lm_robust(Y ~ Z + X + Xdup, fixed_effects = ~ B + B2, data = dat, se_type = "HC2"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X", "Xdup"), ],
-    rfo[rfo$term %in% c("Z", "X", "Xdup"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X", "Xdup"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X", "Xdup"), ])
   )
 
   ## HC3
@@ -903,8 +903,8 @@ test_that("FEs work with collinear covariates", {
   rfo <- tidy(lm_robust(Y ~ Z + X + Xdup, fixed_effects = ~ B + B2, data = dat, se_type = "HC3"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X", "Xdup"), ],
-    rfo[rfo$term %in% c("Z", "X", "Xdup"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X", "Xdup"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X", "Xdup"), ])
   )
 
   ## CR0
@@ -912,8 +912,8 @@ test_that("FEs work with collinear covariates", {
   rfo <- tidy(lm_robust(Y ~ Z + X + Xdup, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "CR0"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X", "Xdup"), ],
-    rfo[rfo$term %in% c("Z", "X", "Xdup"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X", "Xdup"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X", "Xdup"), ])
   )
 
   ## CR stata
@@ -921,8 +921,8 @@ test_that("FEs work with collinear covariates", {
   rfo <- tidy(lm_robust(Y ~ Z + X + Xdup, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "stata"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X", "Xdup"), ],
-    rfo[rfo$term %in% c("Z", "X", "Xdup"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X", "Xdup"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X", "Xdup"), ])
   )
 
   ## CR2
@@ -930,8 +930,8 @@ test_that("FEs work with collinear covariates", {
   rfo <- tidy(lm_robust(Y ~ Z + X + Xdup, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "CR2"))
 
   expect_equivalent(
-    ro[ro$term %in% c("Z", "X", "Xdup"), ],
-    rfo[rfo$term %in% c("Z", "X", "Xdup"), ]
+    as.data.frame(ro[ro$term %in% c("Z", "X", "Xdup"), ]),
+    as.data.frame(rfo[rfo$term %in% c("Z", "X", "Xdup"), ])
   )
 })
 
@@ -992,7 +992,7 @@ test_that("FEs give correct projected F-stats", {
   rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "classical")
 
   expect_equivalent(
-    tidy(rfo)[rfo$term %in% c("Z", "X"), c("estimate", "std.error", "statistic", "p.value")],
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), c("estimate", "std.error", "statistic", "p.value")]),
     as.data.frame(sfeo$coefficients[, 1:4])
   )
 
@@ -1010,7 +1010,7 @@ test_that("FEs give correct projected F-stats", {
   rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC1")
 
   expect_equivalent(
-    tidy(rfo)[rfo$term %in% c("Z", "X"), c("estimate", "std.error", "statistic", "p.value")],
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), c("estimate", "std.error", "statistic", "p.value")]),
     as.data.frame(sfeor$coefficients[, 1:4])
   )
 
@@ -1029,7 +1029,7 @@ test_that("FEs give correct projected F-stats", {
 
   # Different pval because lfe doesn't use J-1 as it's DoF
   expect_equivalent(
-    tidy(rfo)[rfo$term %in% c("Z", "X"), c("estimate", "std.error")],
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), c("estimate", "std.error")]),
     as.data.frame(sfeoc$coefficients[, c(1, 2)])
   )
 
@@ -1056,8 +1056,8 @@ test_that("FE matches lm_robust with one block", {
   rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ oneB, data = datmiss, se_type = "classical")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equal(
@@ -1070,8 +1070,8 @@ test_that("FE matches lm_robust with one block", {
   rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ oneB, data = datmiss, se_type = "HC0")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equal(
@@ -1084,8 +1084,8 @@ test_that("FE matches lm_robust with one block", {
   rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ oneB, data = datmiss, se_type = "HC1")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equal(
@@ -1098,8 +1098,8 @@ test_that("FE matches lm_robust with one block", {
   rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ oneB, data = datmiss, se_type = "HC2")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equal(
@@ -1113,12 +1113,12 @@ test_that("FE matches lm_robust with one block", {
   lfo <- lm(Y ~ Z + X, data = datmiss)
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equivalent(
-    tidy(rfo)[rfo$term %in% c("Z", "X"), c("std.error")],
+    rfo$std.error[rfo$term %in% c("Z", "X")],
     sqrt(diag(sandwich::vcovHC(lfo, type = "HC3"))[2:3])
   )
 
@@ -1132,8 +1132,8 @@ test_that("FE matches lm_robust with one block", {
   rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ oneB, clusters = cl, data = datmiss, se_type = "CR0")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equal(
@@ -1146,8 +1146,8 @@ test_that("FE matches lm_robust with one block", {
   rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ oneB, clusters = cl, data = datmiss, se_type = "stata")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equal(
@@ -1160,8 +1160,8 @@ test_that("FE matches lm_robust with one block", {
   rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ oneB, clusters = cl, data = datmiss, se_type = "CR2")
 
   expect_equivalent(
-    tidy(ro)[ro$term %in% c("Z", "X"), ],
-    tidy(rfo)[rfo$term %in% c("Z", "X"), ]
+    as.data.frame(tidy(ro)[ro$term %in% c("Z", "X"), ]),
+    as.data.frame(tidy(rfo)[rfo$term %in% c("Z", "X"), ])
   )
 
   expect_equal(
@@ -1182,7 +1182,7 @@ test_that("Handle perfect fits appropriately", {
   ro <- lm_robust(Y ~ X + factor(Bsingle), data = dat)
 
   expect_equivalent(
-    tidy(rfo)[rfo$term == "X", ],
-    tidy(ro)[ro$term == "X", ]
+    as.data.frame(tidy(rfo)[rfo$term == "X", ]),
+    as.data.frame(tidy(ro)[ro$term == "X", ])
   )
 })

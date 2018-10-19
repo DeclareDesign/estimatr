@@ -15,13 +15,13 @@ test_that("lm_lin recreates Lin 2013 Table 2", {
   # unadjusted, Lin est = -0.036, se = 0.158
   expect_equivalent(
     round(
-      tidy(
+      as.numeric(tidy(
         lm_robust(
           GPA_year1 ~ sfsp,
           data = alo_star_men,
           se_type = "HC0"
         )
-      )[2, c("estimate", "std.error")],
+      )[2, c("estimate", "std.error")]),
       3
     ),
     c(-0.036, 0.158)

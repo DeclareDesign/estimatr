@@ -1,4 +1,8 @@
-# estimatr 0.12.0
+# estimatr 0.13.0
+
+* Move `tidy` methods to `broom` package
+
+# estimatr 0.12.0 (CRAN)
 
 * Fixed ambiguity about how interacted covariates were centered in `lm_lin`
 * A series of fixes for bugs that occurred with multiple outcomes (multivariate regression):

@@ -79,8 +79,8 @@ test_that("Test LM Lin", {
   lm_rob_out <- lm_robust(Y ~ Z + Z * X1_c + Z * X2_c, data = dat)
 
   expect_equal(
-    tidy(lm_lin_out),
-    tidy(lm_rob_out)
+    as.data.frame(tidy(lm_lin_out)),
+    as.data.frame(tidy(lm_rob_out))
   )
 
   expect_equivalent(
@@ -123,21 +123,21 @@ test_that("Test LM Lin", {
     )
 
     expect_equal(
-      tidy(mult_out)[, -1],
-      tidy(fact_mult_out)[, -1]
+      as.data.frame(tidy(mult_out)[, -1]),
+      as.data.frame(tidy(fact_mult_out)[, -1])
     )
 
     rob_fact_mult_out <- lm_robust(Y ~ factor(Z_mult) * X1_c + factor(Z_mult) * X2_c, data = dat)
 
     expect_equal(
-      tidy(fact_mult_out),
-      tidy(rob_fact_mult_out)
+      as.data.frame(tidy(fact_mult_out)),
+      as.data.frame(tidy(rob_fact_mult_out))
     )
 
     # Also works with no intercept!
     expect_equal(
-      tidy(noint_mult_out)[, -1],
-      tidy(noint_fact_mult_out)[, -1]
+      as.data.frame(tidy(noint_mult_out)[, -1]),
+      as.data.frame(tidy(noint_fact_mult_out)[, -1])
     )
   }
 
@@ -152,30 +152,30 @@ test_that("Test LM Lin", {
   dat$X2_c <- dat$X2 - mean(dat$X2[-23])
 
   expect_equal(
-    tidy(lm_lin(
+    as.data.frame(tidy(lm_lin(
       Y ~ Z,
       covariates = ~ X1 + X2,
       data = dat
-    )),
-    tidy(lm_robust(
+    ))),
+    as.data.frame(tidy(lm_robust(
       Y ~ Z + Z * X1_c + Z * X2_c,
       data = dat
-    ))
+    )))
   )
 
   ## Test cluster passes through
   expect_equal(
-    tidy(lm_lin(
+    as.data.frame(tidy(lm_lin(
       Y ~ Z,
       covariates = ~ X1 + X2,
       data = dat,
       clusters = cluster
-    )),
-    tidy(lm_robust(
+    ))),
+    as.data.frame(tidy(lm_robust(
       Y ~ Z + Z * X1_c + Z * X2_c,
       data = dat,
       clusters = cluster
-    ))
+    )))
   )
 
   ## Test that it works with subset
@@ -184,19 +184,19 @@ test_that("Test LM Lin", {
   dat$X2_c <- dat$X2 - mean(dat$X2[keep])
 
   expect_equal(
-    tidy(lm_lin(
+    as.data.frame(tidy(lm_lin(
       Y ~ Z,
       covariates = ~ X1 + X2,
       data = dat,
       clusters = cluster,
       subset = Y > 0
-    )),
-    tidy(lm_robust(
+    ))),
+    as.data.frame(tidy(lm_robust(
       Y ~ Z + Z * X1_c + Z * X2_c,
       data = dat,
       clusters = cluster,
       subset = Y > 0
-    ))
+    )))
   )
 
   # Works with factors
@@ -212,17 +212,17 @@ test_that("Test LM Lin", {
   dat$X21_c <- as.numeric(dat$X2 == 1) - mean(dat$X2 == 1)
 
   expect_equivalent(
-    tidy(lm_lin(
+    as.data.frame(tidy(lm_lin(
       Y ~ treat,
       covariates = ~ X1 + X2,
       data = dat,
       clusters = cluster
-    )),
-    tidy(lm_robust(
+    ))),
+    as.data.frame(tidy(lm_robust(
       Y ~ treat + treat * X1_c + treat * X21_c,
       data = dat,
       clusters = cluster
-    ))
+    )))
   )
 
   ## Works with a factor with spaces in the name (often the case for clusters)
@@ -237,21 +237,21 @@ test_that("Test LM Lin", {
 
   ## Names will differ
   expect_equivalent(
-    tidy(
+    as.data.frame(tidy(
       lm_lin(
         Y ~ treat,
         covariates = ~ X1 + X2,
         data = dat,
         clusters = cluster
       )
-    )[, -1],
-    tidy(
+    )[, -1]),
+    as.data.frame(tidy(
       lm_robust(
         Y ~ treat + treat * X1_c + treat * X2_c,
         data = dat,
         clusters = cluster
       )
-    )[, -1]
+    )[, -1])
   )
 
   ## Works with missingness on cluster
@@ -281,8 +281,8 @@ test_that("Test LM Lin", {
 
   # drop coefficient name because names will differ
   expect_equivalent(
-    tidy(lin_out)[, -1],
-    tidy(rob_out)[, -1]
+    as.data.frame(tidy(lin_out)[, -1]),
+    as.data.frame(tidy(rob_out)[, -1])
   )
 
   # rank deficient cases
@@ -389,13 +389,13 @@ test_that("lm_lin works with multiple outcomes", {
   lboth <- lm_lin(cbind(mpg, wt) ~ am, ~ cyl, mtcars)
 
   expect_equivalent(
-    tidy(lmpg),
-    tidy(lboth)[1:4, ]
+    as.data.frame(tidy(lmpg)),
+    as.data.frame(tidy(lboth)[1:4, ])
   )
 
   expect_equivalent(
-    tidy(lwt),
-    tidy(lboth)[5:8, ]
+    as.data.frame(tidy(lwt)),
+    as.data.frame(tidy(lboth)[5:8, ])
   )
 
   expect_equivalent(

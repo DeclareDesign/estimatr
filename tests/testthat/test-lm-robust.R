@@ -104,8 +104,8 @@ test_that("lm robust se", {
 
   # pvals and cis diff because dof are diff
   expect_equal(
-    tidy(lmall)[1:2, 1:3],
-    tidy(lm1)[, 1:3]
+    as.data.frame(tidy(lmall)[1:2, 1:3]),
+    as.data.frame(tidy(lm1)[, 1:3])
   )
 
   # rlang works

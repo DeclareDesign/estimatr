@@ -59,8 +59,8 @@ test_that("commarobust works with regular lm", {
   clo <- commarobust(lo, se_type = "classical")
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -79,8 +79,8 @@ test_that("commarobust works with regular lm", {
   clo <- commarobust(lo, se_type = "HC0")
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -99,8 +99,8 @@ test_that("commarobust works with regular lm", {
   clo <- commarobust(lo, se_type = "HC1")
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -124,8 +124,8 @@ test_that("commarobust works with regular lm", {
   )
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -144,8 +144,8 @@ test_that("commarobust works with regular lm", {
   clo <- commarobust(lo, se_type = "HC3")
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -164,8 +164,8 @@ test_that("commarobust works with regular lm", {
   clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "CR0")
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -184,8 +184,8 @@ test_that("commarobust works with regular lm", {
   clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "stata")
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -204,8 +204,8 @@ test_that("commarobust works with regular lm", {
   clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "CR2")
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -228,8 +228,8 @@ test_that("commarobust works with regular lm", {
   clo <- commarobust(lo, clusters = datmiss$cl_char[complete.cases(datmiss)], se_type = "CR2")
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl_num, data = datmiss, se_type = "CR2")
@@ -237,8 +237,8 @@ test_that("commarobust works with regular lm", {
   clo <- commarobust(lo, clusters = datmiss$cl_num[complete.cases(datmiss)], se_type = "CR2")
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl_fac, data = datmiss, se_type = "CR2")
@@ -246,8 +246,8 @@ test_that("commarobust works with regular lm", {
   clo <- commarobust(lo, clusters = datmiss$cl_fac[complete.cases(datmiss)], se_type = "CR2")
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
 
@@ -259,8 +259,8 @@ test_that("commarobust works with weighted lm", {
   clo <- commarobust(lo, se_type = "classical")
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -279,8 +279,8 @@ test_that("commarobust works with weighted lm", {
   clo <- commarobust(lo, se_type = "HC0")
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -299,8 +299,8 @@ test_that("commarobust works with weighted lm", {
   clo <- commarobust(lo, se_type = "HC1")
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -319,8 +319,8 @@ test_that("commarobust works with weighted lm", {
   clo <- commarobust(lo, se_type = "HC2")
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -339,8 +339,8 @@ test_that("commarobust works with weighted lm", {
   clo <- commarobust(lo, se_type = "HC3")
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -359,8 +359,8 @@ test_that("commarobust works with weighted lm", {
   clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "CR0")
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -379,8 +379,8 @@ test_that("commarobust works with weighted lm", {
   clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "stata")
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -399,8 +399,8 @@ test_that("commarobust works with weighted lm", {
   clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "CR2")
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -429,8 +429,8 @@ test_that("commarobust works with dependency, weighted lm", {
   capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -451,8 +451,8 @@ test_that("commarobust works with dependency, weighted lm", {
   capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -473,8 +473,8 @@ test_that("commarobust works with dependency, weighted lm", {
   capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -495,8 +495,8 @@ test_that("commarobust works with dependency, weighted lm", {
   capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -517,8 +517,8 @@ test_that("commarobust works with dependency, weighted lm", {
   capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -539,8 +539,8 @@ test_that("commarobust works with dependency, weighted lm", {
   capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -561,8 +561,8 @@ test_that("commarobust works with dependency, weighted lm", {
   capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
@@ -583,8 +583,8 @@ test_that("commarobust works with dependency, weighted lm", {
   capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
 
   expect_equal(
-    tidy(ro),
-    tidy(clo)
+    as.data.frame(tidy(ro)),
+    as.data.frame(tidy(clo))
   )
 
   expect_equal(
