@@ -15,6 +15,7 @@ BugReports: https://github.com/DeclareDesign/estimatr/issues
 License: MIT + file LICENSE
 Depends: R (>= 3.4.0)
 Imports:
+    broom,
     methods,
     Formula,
     Rcpp (>= 0.12.16),
@@ -26,7 +27,6 @@ Suggests:
     fabricatr (>= 0.4),
     randomizr (>= 0.16),
     AER,
-    broom,
     car,
     clubSandwich,
     ivpack,
