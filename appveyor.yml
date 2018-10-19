@@ -25,9 +25,7 @@ environment:
 build_script:
   - travis-tool.sh install_deps
   - travis-tool.sh install_github DeclareDesign/DDtools
-  - travis-tool.sh install_github DeclareDesign/fabricatr
-  - travis-tool.sh install_github DeclareDesign/randomizr
-
+  - travis-tool.sh install_github DeclareDesign/broom  
 
 test_script:
   - travis-tool.sh run_tests
