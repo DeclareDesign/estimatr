@@ -175,7 +175,6 @@ lm_robust_fit <- function(y,
         data[["yunweighted"]] - fit_vals[["fitted.values.unweighted"]]
       )
 
-      print(se_type)
       # For CR2 need X weighted by weights again
       # so that instead of having X * sqrt(W) we have X * W
       if (se_type %in% c("CR2", "CR3")) {
@@ -186,8 +185,6 @@ lm_robust_fit <- function(y,
       }
 
     }
-
-
 
     # Also need second stage residuals for fstat
     if (iv_stage[[1]] == 2) {
@@ -219,7 +216,23 @@ lm_robust_fit <- function(y,
         which_covs = which_covs[covs_used],
         fe_rank = fe_rank
       )
-
+      return_list$thing <- list(        X = if (se_type %in% c("HC2", "HC3", "CR2", "CR3") && fes)
+        cbind(data[["X"]], data[["femat"]])
+        else data[["X"]],
+        Xunweighted = if (se_type %in% c("HC2", "HC3", "CR2", "CR3") && fes && weighted)
+          cbind(data[["Xunweighted"]], data[["fematunweighted"]])
+        else data[["Xunweighted"]],
+        XtX_inv = fit$XtX_inv,
+        ei = if (se_type %in% c("CR2", "CR3") && weighted)
+          fit_vals[["ei.unweighted"]]
+        else fit_vals[["ei"]],
+        weight_mean = data[["weight_mean"]],
+        cluster = data[["cluster"]],
+        J = data[["J"]],
+        ci = ci,
+        se_type = se_type,
+        which_covs = which_covs[covs_used],
+        fe_rank = fe_rank)
       return_list$std.error[est_exists] <- sqrt(diag(vcov_fit$Vcov_hat))
 
       if (ci) {

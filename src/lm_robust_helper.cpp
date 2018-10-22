@@ -357,6 +357,7 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
       }
 
       Eigen::Map<Eigen::ArrayXi> clusters = Rcpp::as<Eigen::Map<Eigen::ArrayXi> >(cluster);
+      // Rcout << "clusters: "<< std::endl << clusters << std::endl;
 
       double current_cluster = clusters(0);
       int clust_num = 0;
@@ -430,20 +431,56 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
           } else if (se_type == "CR3") {
 
-            Eigen::ColPivHouseholderQR<Eigen::MatrixXd> At(
+            // TODO numerical instability in XtX_inv is causing large differences
+            // in vcov_CR3 in commarobust
+            Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> At(
                 Eigen::MatrixXd::Identity(len, len) -
                   Xoriginal.block(start_pos, 0, len, r_fe) *
                   meatXtX_inv *
                   X.block(start_pos, 0, len, r_fe).transpose()
             );
 
-            if (Xunweighted.isNotNull()) {
-              At_WX_inv =  At.solve(Eigen::MatrixXd::Identity(len, len)).transpose() * X.block(start_pos, 0, len, r_fe);
-            } else {
-              // Could speed up using LLT instead of QR for unweighted case as At is symmetric in that case
-              At_WX_inv =  At.solve(X.block(start_pos, 0, len, r_fe));
+            Eigen::VectorXd eigvals = At.eigenvalues();
+            //Rcout << "eigvals: " << std::endl << eigvals << std::endl;
+
+            for (int m = 0; m < eigvals.size(); ++m) {
+              if (eigvals(m) > std::pow(10.0, -12.0)) {
+                eigvals(m) = 1.0 / eigvals(m);
+              } else {
+                eigvals(m) = 0;
+              }
             }
 
+            if (Xunweighted.isNotNull()) {
+              At_WX_inv =
+                At.eigenvectors() *
+                eigvals.asDiagonal() *
+                At.eigenvectors().inverse() *
+                X.block(start_pos, 0, len, r_fe);
+            } else {
+              // Could speed up using LLT instead of QR for unweighted case as At is symmetric in that case
+
+              At_WX_inv =
+                At.eigenvectors() *
+                eigvals.asDiagonal() *
+                At.eigenvectors().transpose() *
+                X.block(start_pos, 0, len, r_fe);
+            }
+
+            // Eigen::ColPivHouseholderQR<Eigen::MatrixXd> At(
+            //     Eigen::MatrixXd::Identity(len, len) -
+            //       Xoriginal.block(start_pos, 0, len, r_fe) *
+            //       meatXtX_inv *
+            //       X.block(start_pos, 0, len, r_fe).transpose()
+            // );
+            // if (Xunweighted.isNotNull()) {
+            //   At_WX_inv =  At.solve(Eigen::MatrixXd::Identity(len, len)).transpose() * X.block(start_pos, 0, len, r_fe);
+            // } else {
+            //   // Could speed up using LLT instead of QR for unweighted case as At is symmetric in that case
+            //   At_WX_inv =  At.solve(X.block(start_pos, 0, len, r_fe));
+            // }
+
+            // Rcout << "At_WX_inv: " << std::endl << At_WX_inv << std::endl;
 
           }
 
