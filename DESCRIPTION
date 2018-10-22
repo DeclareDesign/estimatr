@@ -39,3 +39,5 @@ Suggests:
     testthat
 Enhances:
     texreg
+Remotes:
+    tidymodels/broom

@@ -43,7 +43,6 @@ addons:
 r_github_packages:
 - DeclareDesign/DDtools
 - ropensci/git2r
-- DeclareDesign/broom
 
 after_success:
 - Rscript -e DDtools::after_build
