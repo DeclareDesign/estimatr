@@ -72,9 +72,9 @@ lm_robust_fit <- function(y,
 
   se_type <- check_se_type(se_type, clustered)
 
-  if (weighted && se_type == "CR2" && fes) {
+  if (weighted && se_type %in% c("CR2", "CR3") && fes) {
     stop(
-      "Cannot use `fixed_effects` with weighted CR2 estimation at the moment. ",
+      "Cannot use `fixed_effects` with weighted CR2 or CR3 estimation at the moment. ",
       "Try setting `se_type` = \"stata\""
     )
   }
@@ -175,9 +175,10 @@ lm_robust_fit <- function(y,
         data[["yunweighted"]] - fit_vals[["fitted.values.unweighted"]]
       )
 
+      print(se_type)
       # For CR2 need X weighted by weights again
       # so that instead of having X * sqrt(W) we have X * W
-      if (se_type == "CR2") {
+      if (se_type %in% c("CR2", "CR3")) {
         data[["X"]] <- data[["weights"]] * data[["X"]]
         if (fes) {
           data[["femat"]] <- data[["weights"]] * data[["femat"]]
@@ -200,14 +201,14 @@ lm_robust_fit <- function(y,
     if (se_type != "none") {
 
       vcov_fit <- lm_variance(
-        X = if (se_type %in% c("HC2", "HC3", "CR2") && fes)
+        X = if (se_type %in% c("HC2", "HC3", "CR2", "CR3") && fes)
           cbind(data[["X"]], data[["femat"]])
           else data[["X"]],
-        Xunweighted = if (se_type %in% c("HC2", "HC3", "CR2") && fes && weighted)
+        Xunweighted = if (se_type %in% c("HC2", "HC3", "CR2", "CR3") && fes && weighted)
           cbind(data[["Xunweighted"]], data[["fematunweighted"]])
           else data[["Xunweighted"]],
         XtX_inv = fit$XtX_inv,
-        ei = if (se_type == "CR2" && weighted)
+        ei = if (se_type %in% c("CR2", "CR3") && weighted)
           fit_vals[["ei.unweighted"]]
           else fit_vals[["ei"]],
         weight_mean = data[["weight_mean"]],
@@ -388,7 +389,7 @@ lm_robust_fit <- function(y,
 check_se_type <- function(se_type, clustered) {
 
   # Allowable se_types with clustering
-  cl_se_types <- c("CR0", "CR2", "stata")
+  cl_se_types <- c("CR0", "CR2", "CR3", "CR1s", "stata")
   rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata")
 
   # Parse cluster variable

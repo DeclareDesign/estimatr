@@ -81,15 +81,14 @@ test_that("lm cluster se", {
     qt(0.975, df = length(unique(dat$J)) - 1) * bm_interact$se.Stata["Z:X"] * c(-1, 1)
 
   expect_equivalent(
-    tidy(lm_interact)[4, c("std.error", "conf.low", "conf.high")],
+    as.numeric(tidy(lm_interact)[4, c("std.error", "conf.low", "conf.high")]),
     c(bm_interact$se["Z:X"], bm_interact_interval)
   )
 
   expect_equivalent(
-    tidy(lm_interact_stata)[4, c("std.error", "conf.low", "conf.high")],
+    as.numeric(tidy(lm_interact_stata)[4, c("std.error", "conf.low", "conf.high")]),
     c(bm_interact$se.Stata["Z:X"], bm_interact_stata_interval)
   )
-
 
   lm_full <-
     lm_robust(
@@ -183,6 +182,7 @@ test_that("lm cluster se", {
 })
 
 test_that("Clustered weighted SEs are correct", {
+  lm_cr3 <- lm_robust(mpg ~ hp, data = mtcars, weights = wt, clusters = cyl, se_type = "CR3")
   lm_cr2 <- lm_robust(mpg ~ hp, data = mtcars, weights = wt, clusters = cyl, se_type = "CR2")
   lm_stata <- lm_robust(mpg ~ hp, data = mtcars, weights = wt, clusters = cyl, se_type = "stata")
   lm_cr0 <- lm_robust(mpg ~ hp, data = mtcars, weights = wt, clusters = cyl, se_type = "CR0")
@@ -192,6 +192,36 @@ test_that("Clustered weighted SEs are correct", {
   expect_equivalent(
     vcov(lm_cr2),
     as.matrix(clubSandwich::vcovCR(lm_o, cluster = mtcars$cyl, type = "CR2"))
+  )
+  expect_equivalent(
+    vcov(lm_cr3),
+    as.matrix(clubSandwich::vcovCR(lm_o, cluster = mtcars$cyl, type = "CR3"))
+  )
+  expect_equivalent(
+    vcov(lm_cr0),
+    as.matrix(clubSandwich::vcovCR(lm_o, cluster = mtcars$cyl, type = "CR0"))
+  )
+  expect_equivalent(
+    vcov(lm_stata),
+    as.matrix(clubSandwich::vcovCR(lm_o, cluster = mtcars$cyl, type = "CR1S"))
+  )
+})
+
+test_that("Clustered SEs match clubSandwich", {
+  lm_cr3 <- lm_robust(mpg ~ hp, data = mtcars, clusters = cyl, se_type = "CR3")
+  lm_cr2 <- lm_robust(mpg ~ hp, data = mtcars, clusters = cyl, se_type = "CR2")
+  lm_stata <- lm_robust(mpg ~ hp, data = mtcars, clusters = cyl, se_type = "stata")
+  lm_cr0 <- lm_robust(mpg ~ hp, data = mtcars, clusters = cyl, se_type = "CR0")
+
+  lm_o <- lm(mpg ~ hp, data = mtcars)
+
+  expect_equivalent(
+    vcov(lm_cr2),
+    as.matrix(clubSandwich::vcovCR(lm_o, cluster = mtcars$cyl, type = "CR2"))
+  )
+  expect_equivalent(
+    vcov(lm_cr3),
+    as.matrix(clubSandwich::vcovCR(lm_o, cluster = mtcars$cyl, type = "CR3"))
   )
   expect_equivalent(
     vcov(lm_cr0),
