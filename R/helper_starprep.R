@@ -113,22 +113,9 @@ commarobust <- function(model,
     which_covs = rep(TRUE, model$rank),
     fe_rank = 0
   )
-  #print(vcov_fit)
 
   ## Build return_list
   return_list <- list(
-    thing = list(    X = data[["X"]],
-                     Xunweighted = data[["Xunweighted"]],
-                     XtX_inv = XtX_inv,
-                     ei = if (se_type %in% c("CR2", "CR3") && weighted) eiunweighted else ei,
-                     weight_mean = data[["weight_mean"]],
-                     cluster = data[["cluster"]],
-                     J = data[["J"]],
-                     ci = ci,
-                     se_type = se_type,
-                     which_covs = rep(TRUE, model$rank),
-                     fe_rank = 0
-    ),
     coefficients = as.matrix(coef(model)),
     std.error = NA,
     df = NA,

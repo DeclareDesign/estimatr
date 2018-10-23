@@ -25,9 +25,6 @@ test_that("starprep works", {
 
 })
 
-se_types <- c("classical", "HC0", "HC1", "HC2", "HC3")
-cr_se_types <- c("CR0", "stata", "CR2", "CR3")
-
 set.seed(43)
 N <- 20
 dat <- data.frame(
@@ -80,17 +77,11 @@ test_that("commarobust works with regular lm", {
 
   ## Test clustered SEs
   for (se_type in cr_se_types) {
-    # se_type <- "CR3"
-    # debugonce(estimatr::lm_robust_fit)
-    # datmiss <- datmiss[order(datmiss$cl),]
+
     ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl, data = datmiss, se_type = se_type)
     lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
     clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = se_type)
-    # setdiff(names(ro$thing), names(clo$thing))
-    # setdiff(names(clo$thing), names(ro$thing))
-    #
-    # purrr::map(names(ro$thing), ~identical(ro$thing[[.x]], clo$thing[[.x]]))
-    # ro$thing$cluster == clo$thing$cluster
+
     expect_equal(
       tidy(ro),
       tidy(clo)

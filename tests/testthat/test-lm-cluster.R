@@ -1,7 +1,5 @@
 context("Estimator - lm_robust, clustered")
 
-cr_se_types <- c("CR0", "stata", "CR2", "CR3")
-
 test_that("lm cluster se", {
   N <- 100
   dat <- data.frame(
@@ -155,6 +153,7 @@ test_that("lm cluster se", {
     lm_cr0 <- lm_robust(Y ~ Z + X, data = dat, weights = w, clusters = J, se_type = "CR0")
     lm_stata <- lm_robust(Y ~ Z + X, data = dat, weights = w, clusters = J, se_type = "stata")
     lm_cr2 <- lm_robust(Y ~ Z + X, data = dat, weights = w, clusters = J, se_type = "CR2")
+    lm_cr3 <- lm_robust(Y ~ Z + X, data = dat, weights = w, clusters = J, se_type = "CR3")
 
     # Stata is the same as CR0 but with finite sample
     expect_equivalent(
@@ -184,10 +183,9 @@ test_that("Clustered SEs match clubSandwich", {
   lm_ow <- lm(mpg ~ hp, data = mtcars, weights = wt)
 
   for (se_type in cr_se_types) {
-    se_type <- "CR3"
     lm_r <- lm_robust(mpg ~ hp, data = mtcars, clusters = cyl, se_type = se_type)
     lm_rw <- lm_robust(mpg ~ hp, data = mtcars, weights = wt, clusters = cyl, se_type = se_type)
-    print(se_type)
+
     expect_equivalent(
       vcov(lm_r),
       as.matrix(clubSandwich::vcovCR(
@@ -314,11 +312,10 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
 
   lmr <- lm_robust(Y~Z, data = dat, weights = W)
   lmrq <- lm_robust(Y~Z, data = dat, weights = W)
-  lmr[["call"]] <- NULL
-  lmrq[["call"]] <- NULL
+
   expect_equal(
-    lmr,
-    lmrq
+    rmcall(lmr),
+    rmcall(lmrq)
   )
 
   # works with char
@@ -326,21 +323,19 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
 
   lmrc <- lm_robust(Y~Z, data = dat, clusters = J)
   lmrcq <- lm_robust(Y~Z, data = dat, clusters = J)
-  lmrc[["call"]] <- NULL
-  lmrcq[["call"]] <- NULL
+
   expect_equal(
-    lmrc,
-    lmrcq
+    rmcall(lmrc),
+    rmcall(lmrcq)
   )
 
   # works with num
   dat$J_num <- as.numeric(dat$J)
 
   lmrc_qnum <- lm_robust(Y~Z, data = dat, clusters = J_num)
-  lmrc_qnum[["call"]] <- NULL
   expect_equal(
-    lmrc,
-    lmrc_qnum
+    rmcall(lmrc),
+    rmcall(lmrc_qnum)
   )
 
 
