@@ -431,31 +431,18 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
           } else if (se_type == "CR3") {
 
-            //if (Xunweighted.isNotNull()) {
+            Eigen::CompleteOrthogonalDecomposition<Eigen::MatrixXd> At(
+                Eigen::MatrixXd::Identity(len, len) -
+                  Xoriginal.block(start_pos, 0, len, r_fe) *
+                  meatXtX_inv *
+                  X.block(start_pos, 0, len, r_fe).transpose()
+            );
 
-              Eigen::CompleteOrthogonalDecomposition<Eigen::MatrixXd> At(
-                  Eigen::MatrixXd::Identity(len, len) -
-                    Xoriginal.block(start_pos, 0, len, r_fe) *
-                    meatXtX_inv *
-                    X.block(start_pos, 0, len, r_fe).transpose()
-              );
-
-            //}
-
-            // Eigen::ColPivHouseholderQR<Eigen::MatrixXd> At(
-            //     Eigen::MatrixXd::Identity(len, len) -
-            //       Xoriginal.block(start_pos, 0, len, r_fe) *
-            //       meatXtX_inv *
-            //       X.block(start_pos, 0, len, r_fe).transpose()
-            // );
             if (Xunweighted.isNotNull()) {
               At_WX_inv =  At.solve(Eigen::MatrixXd::Identity(len, len)).transpose() * X.block(start_pos, 0, len, r_fe);
             } else {
-              // Could speed up using LLT instead of QR for unweighted case as At is symmetric in that case
               At_WX_inv =  At.solve(X.block(start_pos, 0, len, r_fe));
             }
-
-            // Rcout << "At_WX_inv: " << std::endl << At_WX_inv << std::endl;
 
           }
 

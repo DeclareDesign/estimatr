@@ -93,30 +93,42 @@ For cluster-robust inference, we provide several estimators that are essentially
 | `"CR0"`           | $(\mathbf{X}^{\top}\mathbf{X})^{-1} \sum^S_{s=1} \left[\mathbf{X}^\top_s \mathbf{e}_s\mathbf{e}^\top_s \mathbf{X}_s \right] (\mathbf{X}^{\top}\mathbf{X})^{-1}$                              | $S - 1$                                                                    |                                                                                                                                                                                                                         |
 | `"stata"`         | $\frac{N-1}{N-K}\frac{S}{S-1} (\mathbf{X}^{\top}\mathbf{X})^{-1} \sum^S_{s=1} \left[\mathbf{X}^\top_s \mathbf{e}_s\mathbf{e}^\top_s \mathbf{X}_s \right] (\mathbf{X}^{\top}\mathbf{X})^{-1}$ | $S - 1$                                                                    | The Stata variance estimator is the same as the CR0 estimate but with a special finite-sample correction.                                                                                                               |
 | `"CR2"` (default) | $(\mathbf{X}^{\top}\mathbf{X})^{-1} \sum^S_{s=1} \left[\mathbf{X}^\top_s \mathbf{A}_s \mathbf{e}_s\mathbf{e}^\top_s \mathbf{A}^\top_s \mathbf{X}_s \right] (\mathbf{X}^{\top}\mathbf{X})^{-1}$                 | $\frac{\left(\sum^S_{i = 1} \mathbf{p}^\top_i \mathbf{p}_i \right)^2}{\sum^S_{i=1}\sum^S_{j=1} \left(\mathbf{p}^\top_i \mathbf{p}_j \right)^2}$ | These estimates of the variance and degrees of freedom come from @pustejovskytipton2016, which is an extension to certain models with a particular set of dummy variables of the method proposed by @bellmccaffrey2002. Note that the degrees of freedom can vary for each coefficient. See below for more complete notation. |
+| `"CR3"` | $(\mathbf{X}^{\top}\mathbf{X})^{-1} \sum^S_{s=1} \left[\mathbf{X}^\top_s \mathbf{A}_s \mathbf{e}_s\mathbf{e}^\top_s \mathbf{A}^\top_s \mathbf{X}_s \right] (\mathbf{X}^{\top}\mathbf{X})^{-1}$ | $S - 1$
 * $S$ is the number of clusters
 * $\mathbf{X}_s$ is the rows of $\mathbf{X}$ that belong to cluster $s$
 * $I_n$ is an identity matrix of size $n\times n$
 * $\mathbf{e}_s$ is the elements of the residual matrix $\mathbf{e}$ in cluster $s$, or $\mathbf{e}_s = \mathbf{y}_s - \mathbf{X}_s \widehat{\beta}$
 * $\mathbf{A}_s$ and $\mathbf{p}$ are defined in the notes below
 
-**Further notes on CR2:** The variance estimator we implement is shown in equations (4) and (5) in @pustejovskytipton2016 and equation (11), where we set $\mathbf{\Phi}$ to be $I$, following @bellmccaffrey2002. Further note that the @pustejovskytipton2016 CR2 estimator and the  @bellmccaffrey2002 estimator are identical when $\mathbf{B_s}$ is full rank. It could be rank-deficient if there were dummy variables, or fixed effects, that were also your clusters. In this case, the original @bellmccaffrey2002 estimator could not be computed. You can see the simpler @bellmccaffrey2002 estimator written up plainly on page 709 of @imbenskolesar2016 along with the degrees of freedom denoted as $K_{BM}$.
+**Further notes on CR2 and CR3:** The variance estimator we implement for CR2 is shown in equations (4) and (5) in @pustejovskytipton2016 and equation (11), where we set $\mathbf{\Phi}$ to be $I$, following @bellmccaffrey2002. Further note that the @pustejovskytipton2016 CR2 estimator and the  @bellmccaffrey2002 estimator are identical when $\mathbf{B_s}$ is full rank. It could be rank-deficient if there were dummy variables, or fixed effects, that were also your clusters. In this case, the original @bellmccaffrey2002 estimator could not be computed. You can see the simpler @bellmccaffrey2002 estimator written up plainly on page 709 of @imbenskolesar2016 along with the degrees of freedom denoted as $K_{BM}$.
 
 In the CR2 variance calculation, we get $\mathbf{A}_s$ as follows:
 
 $$
 \begin{aligned}
 \mathbf{H} &= \mathbf{X}(\mathbf{X}^{\top}\mathbf{X})^{-1}\mathbf{X}^\top \\\\\\
-\mathbf{B}_s &= (I_{N} - \mathbf{H})_s (I_{N} - \mathbf{H})^\top_s \\\\\\
+\mathbf{B}_s &= (\mathbf{I}_{N} - \mathbf{H})_s (I_{N} - \mathbf{H})^\top_s \\\\\\
 \mathbf{A}_s &= \mathbf{B}^{+1/2}_s
 \end{aligned}
 $$
 
-where $\mathbf{B}^{+1/2}_s$ is the symmetric square root of the Moore–Penrose inverse of $\mathbf{B}_s$ and $(I - \mathbf{H})_s$ are the $N_s$ columns that correspond to cluster $s$. To get the corresponding degrees of freedom, note that
+where $\mathbf{B}^{+1/2}_s$ is the symmetric square root of the Moore–Penrose inverse of $\mathbf{B}_s$ and $(\mathbf{I}_{N} - \mathbf{H})_s$ are the $N_s$ columns that correspond to cluster $s$. To get the corresponding degrees of freedom, note that
 
 \[
-\mathbf{p}_s = (I_N - \mathbf{H})^\top_s \mathbf{A}_s \mathbf{X}_s (\mathbf{X}^{\top}\mathbf{X})^{-1} \mathbf{z}_{k}
+\mathbf{p}_s = (\mathbf{I}_N - \mathbf{H})^\top_s \mathbf{A}_s \mathbf{X}_s (\mathbf{X}^{\top}\mathbf{X})^{-1} \mathbf{z}_{k}
 \]
 where $\mathbf{z}_{k}$ is a vector of length $K$, the number of coefficients, where the $k$th element is 1 and all other elements are 0. The $k$ signifies the coefficient for which we are computing the degrees of freedom.
+
+In the CR3 variance calculation, we get $\mathbf{A}_s$ as follows:
+
+$$
+\begin{aligned}
+\mathbf{H}_s &= \mathbf{X}_s(\mathbf{X}^{\top}\mathbf{X})^{-1}\mathbf{X}_s^\top \\\\\\
+\mathbf{A}_s &= (\mathbf{I}_{N_s} - \mathbf{H}_s)^{-1}
+\end{aligned}
+$$
+
+where $(\mathbf{I}_{N_s} - \mathbf{H}_s)^{-1}$ is the Moore–Penrose inverse and $\mathbf{X}_s$ are the $N_s$ rows of $\mathbf{X}$ that correspond to cluster $s$.
 
 ### Confidence intervals and hypothesis testing
 
@@ -194,6 +206,7 @@ Because Stata does not default to using finite sample corrections and tests with
 | `iv_robust(y ~ x | z, clusters = clust,` `se_type = "CR0")`          | `ivregress 2sls y (x = z), vce(cl clust)`       | Stata uses z-tests here.                                                                                                                 |
 | `iv_robust(y ~ x | z, clusters = clust,` `se_type = "stata")`        | `ivregress 2sls y (x = z), vce(cl clust) small` |                                                                                                                                          |
 | `iv_robust(y ~ x | z, clusters = clust,` `se_type = "CR2")` (default) | N/A                                             |                                                                                                                                          |
+| `iv_robust(y ~ x | z, clusters = clust,` `se_type = "CR3")` | N/A                                             |                                                                                                                                          |
 
 ### Confidence intervals and hypothesis testing
 

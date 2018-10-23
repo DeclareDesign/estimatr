@@ -4,10 +4,10 @@
 \alias{lm_robust_fit}
 \title{Internal method that creates linear fits}
 \usage{
-lm_robust_fit(y, X, yoriginal = NULL, Xoriginal = NULL, weights, cluster,
-  fixed_effects = NULL, ci = TRUE, se_type, has_int, alpha = 0.05,
-  return_vcov = TRUE, return_fit = TRUE, try_cholesky = FALSE,
-  iv_stage = list(0))
+lm_robust_fit(y, X, yoriginal = NULL, Xoriginal = NULL, weights,
+  cluster, fixed_effects = NULL, ci = TRUE, se_type, has_int,
+  alpha = 0.05, return_vcov = TRUE, return_fit = TRUE,
+  try_cholesky = FALSE, iv_stage = list(0))
 }
 \arguments{
 \item{y}{numeric outcome vector}
