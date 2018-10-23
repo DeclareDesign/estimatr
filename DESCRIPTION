@@ -15,27 +15,28 @@ BugReports: https://github.com/DeclareDesign/estimatr/issues
 License: MIT + file LICENSE
 Depends: R (>= 3.4.0)
 Imports:
-    Rcpp (>= 0.12.16),
-    methods,
     Formula,
-    rlang (>= 0.2.0)
+    generics,
+    methods,
+    Rcpp (>= 0.12.16),
+    rlang (>= 0.2.0),
+    tibble
 LinkingTo: Rcpp, RcppEigen
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
 LazyData: true
 Suggests:
-    RcppEigen,
     fabricatr (>= 0.4),
     randomizr (>= 0.16),
-    testthat,
-    sandwich,
+    AER,
+    car,
     clubSandwich,
+    ivpack,
+    lfe,
     margins,
     prediction,
-    lfe,
-    AER,
-    ivpack,
+    RcppEigen,
+    sandwich,
     stargazer,
-    car
+    testthat
 Enhances:
-    broom,
     texreg
