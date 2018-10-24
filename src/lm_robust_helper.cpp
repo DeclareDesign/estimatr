@@ -439,6 +439,10 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
             );
 
             if (Xunweighted.isNotNull()) {
+              // We require the transpose in both cases, but in the unweighted
+              // case `A` is symmetric and is not needed to be transposed first
+              // Solve against the identity matrix and then transpose in order
+              // to allow the more common unweighted case to be simpler
               At_WX_inv =  At.solve(Eigen::MatrixXd::Identity(len, len)).transpose() * X.block(start_pos, 0, len, r_fe);
             } else {
               At_WX_inv =  At.solve(X.block(start_pos, 0, len, r_fe));
@@ -463,7 +467,7 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
           } else {
 
-            if (se_type == "CR2" || se_type == "CR3") {
+            if ((se_type == "CR2") || (se_type == "CR3")) {
               half_meat.row(clust_num) =
                 ei.block(start_pos, 0, len, 1).transpose() *
                 At_WX_inv.leftCols(r);
