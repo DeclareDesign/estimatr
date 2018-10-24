@@ -93,7 +93,7 @@ commarobust <- function(model,
     XtX_inv <- data[["weight_mean"]] * XtX_inv
 
     # Need unweighted resid and need to reweight X
-    if (se_type == "CR2") {
+    if (se_type %in% c("CR2", "CR3")) {
       eiunweighted <-
         as.matrix(data[["yunweighted"]] - data[["Xunweighted"]] %*% coefs)
       data[["X"]] <- data[["weights"]] * data[["X"]]
@@ -104,7 +104,7 @@ commarobust <- function(model,
     X = data[["X"]],
     Xunweighted = data[["Xunweighted"]],
     XtX_inv = XtX_inv,
-    ei = if (se_type == "CR2" && weighted) eiunweighted else ei,
+    ei = if (se_type %in% c("CR2", "CR3") && weighted) eiunweighted else ei,
     weight_mean = data[["weight_mean"]],
     cluster = data[["cluster"]],
     J = data[["J"]],
@@ -113,7 +113,6 @@ commarobust <- function(model,
     which_covs = rep(TRUE, model$rank),
     fe_rank = 0
   )
-
 
   ## Build return_list
   return_list <- list(

@@ -53,170 +53,50 @@ test_that("commarobust works with regular lm", {
     "`clusters` must be the same length as the model data."
   )
 
-  ## Classical
-  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, se_type = "classical")
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
-  clo <- commarobust(lo, se_type = "classical")
+  ## Test unclustered SEs
+  for (se_type in se_types) {
+    ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, se_type = se_type)
+    lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
+    clo <- commarobust(lo, se_type = se_type)
 
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
+    expect_equal(
+      tidy(ro),
+      tidy(clo)
+    )
 
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
+    expect_equal(
+      ro$fstatistic,
+      clo$fstatistic
+    )
 
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
+    expect_equal(
+      ro[c("r.squared", "adj.r.squared")],
+      clo[c("r.squared", "adj.r.squared")]
+    )
+  }
 
-  ## HC0
-  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, se_type = "HC0")
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
-  clo <- commarobust(lo, se_type = "HC0")
+  ## Test clustered SEs
+  for (se_type in cr_se_types) {
 
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
+    ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl, data = datmiss, se_type = se_type)
+    lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
+    clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = se_type)
 
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
+    expect_equal(
+      tidy(ro),
+      tidy(clo)
+    )
 
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
+    expect_equal(
+      ro$fstatistic,
+      clo$fstatistic
+    )
 
-  ## HC1
-  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, se_type = "HC1")
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
-  clo <- commarobust(lo, se_type = "HC1")
-
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
-
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## HC2
-  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, se_type = "HC2")
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
-  clo <- commarobust(lo, se_type = "HC2")
-
-  expect_equal(
-    clo,
-    commarobust(lo)
-  )
-
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
-
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## HC3
-  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, se_type = "HC3")
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
-  clo <- commarobust(lo, se_type = "HC3")
-
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
-
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## CR0
-  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl, data = datmiss, se_type = "CR0")
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
-  clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "CR0")
-
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
-
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## CR stata
-  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl, data = datmiss, se_type = "stata")
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
-  clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "stata")
-
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
-
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## CR2
-  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl, data = datmiss, se_type = "CR2")
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
-  clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "CR2")
-
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
-
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
+    expect_equal(
+      ro[c("r.squared", "adj.r.squared")],
+      clo[c("r.squared", "adj.r.squared")]
+    )
+  }
 
   # Works with character, factor, and numeric clusters
   datmiss$cl_char <- sample(letters, size = nrow(datmiss), replace = TRUE)
@@ -254,164 +134,51 @@ test_that("commarobust works with regular lm", {
 })
 
 test_that("commarobust works with weighted lm", {
-  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w, se_type = "classical")
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w)
-  clo <- commarobust(lo, se_type = "classical")
+  # Test unclustered SEs
+  for (se_type in se_types) {
+    ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w, se_type = se_type)
+    lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w)
+    clo <- commarobust(lo, se_type = se_type)
 
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
+    expect_equal(
+      tidy(ro),
+      tidy(clo)
+    )
 
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
+    expect_equal(
+      ro$fstatistic,
+      clo$fstatistic
+    )
 
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
+    expect_equal(
+      ro[c("r.squared", "adj.r.squared")],
+      clo[c("r.squared", "adj.r.squared")]
+    )
+  }
 
-  ## HC0
-  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w, se_type = "HC0")
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w)
-  clo <- commarobust(lo, se_type = "HC0")
+  ## Test clustered SEs
+  for (se_type in cr_se_types) {
 
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
+    ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl, data = datmiss, weights = w, se_type = se_type)
+    lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w)
+    clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = se_type)
 
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
+    expect_equal(
+      tidy(ro),
+      tidy(clo)
+    )
 
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
+    expect_equal(
+      ro$fstatistic,
+      clo$fstatistic
+    )
 
-  ## HC1
-  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w, se_type = "HC1")
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w)
-  clo <- commarobust(lo, se_type = "HC1")
+    expect_equal(
+      ro[c("r.squared", "adj.r.squared")],
+      clo[c("r.squared", "adj.r.squared")]
+    )
+  }
 
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
-
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## HC2
-  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w, se_type = "HC2")
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w)
-  clo <- commarobust(lo, se_type = "HC2")
-
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
-
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## HC3
-  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w, se_type = "HC3")
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w)
-  clo <- commarobust(lo, se_type = "HC3")
-
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
-
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## CR0
-  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl, data = datmiss, weights = w, se_type = "CR0")
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w)
-  clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "CR0")
-
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
-
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## CR stata
-  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl, data = datmiss, weights = w, se_type = "stata")
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w)
-  clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "stata")
-
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
-
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## CR2
-  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl, data = datmiss, weights = w, se_type = "CR2")
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w)
-  clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "CR2")
-
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
-
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
 })
 
 test_that("commarobust works with dependency, weighted lm", {
@@ -422,180 +189,51 @@ test_that("commarobust works with dependency, weighted lm", {
     }
   }
 
-  ro <- lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w, se_type = "classical")
-  lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
-  clo <- commarobust(lo, se_type = "classical")
+  for (se_type in se_types) {
+    ro <- lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w, se_type = se_type)
+    lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
+    clo <- commarobust(lo, se_type = se_type)
 
-  capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
+    capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
 
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
+    expect_equal(
+      tidy(ro),
+      tidy(clo)
+    )
 
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
+    expect_equal(
+      ro$fstatistic,
+      clo$fstatistic
+    )
 
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
+    expect_equal(
+      ro[c("r.squared", "adj.r.squared")],
+      clo[c("r.squared", "adj.r.squared")]
+    )
+  }
 
-  ## HC0
-  ro <- lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w, se_type = "HC0")
-  lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
-  clo <- commarobust(lo, se_type = "HC0")
+  for (se_type in cr_se_types) {
+    ro <- lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), clusters = cl, data = datmiss, weights = w, se_type = se_type)
+    lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
+    clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = se_type)
 
-  capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
+    capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
 
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
+    expect_equal(
+      tidy(ro),
+      tidy(clo)
+    )
 
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
+    expect_equal(
+      ro$fstatistic,
+      clo$fstatistic
+    )
 
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## HC1
-  ro <- lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w, se_type = "HC1")
-  lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
-  clo <- commarobust(lo, se_type = "HC1")
-
-  capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
-
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
-
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## HC2
-  ro <- lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w, se_type = "HC2")
-  lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
-  clo <- commarobust(lo, se_type = "HC2")
-
-  capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
-
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
-
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## HC3
-  ro <- lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w, se_type = "HC3")
-  lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
-  clo <- commarobust(lo, se_type = "HC3")
-
-  capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
-
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
-
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## CR0
-  ro <- lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), clusters = cl, data = datmiss, weights = w, se_type = "CR0")
-  lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
-  clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "CR0")
-
-  capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
-
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
-
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## CR stata
-  ro <- lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), clusters = cl, data = datmiss, weights = w, se_type = "stata")
-  lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
-  clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "stata")
-
-  capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
-
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
-
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## CR2
-  ro <- lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), clusters = cl, data = datmiss, weights = w, se_type = "CR2")
-  lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
-  clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = "CR2")
-
-  capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
-
-  expect_equal(
-    tidy(ro),
-    tidy(clo)
-  )
-
-  expect_equal(
-    ro$fstatistic,
-    clo$fstatistic
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    clo[c("r.squared", "adj.r.squared")]
-  )
+    expect_equal(
+      ro[c("r.squared", "adj.r.squared")],
+      clo[c("r.squared", "adj.r.squared")]
+    )
+  }
 })
 
 test_that("Only works with lm, not mlm or glm", {

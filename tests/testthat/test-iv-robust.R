@@ -10,6 +10,7 @@ dat <- data.frame(
   clust = sample(letters[1:3], size = N, replace = TRUE)
 )
 dat$z <- dat$x * 0.5 + rnorm(N)
+dat$x1_c <- dat$x
 
 test_that("iv_robust warnings and errors are correct", {
   expect_warning(
@@ -71,33 +72,10 @@ test_that("iv_robust matches AER + ivpack", {
     ivclusto$fitted.values
   )
 
-  # CR2
-  ivcr2o <- iv_robust(y ~ x | z, data = dat, clusters = clust)
-  clubsando <- clubSandwich::coef_test(ivfit, vcov = "CR2", cluster = dat$clust)
-
-  expect_equivalent(
-    as.matrix(tidy(ivcr2o)[, c("estimate", "std.error", "df", "p.value")]),
-    as.matrix(clubsando)
-  )
-
-  expect_equivalent(
-    ivfit$fitted.values,
-    ivcr2o$fitted.values
-  )
-
-  # CR0
-  ivcr0o <- iv_robust(y ~ x | z, data = dat, clusters = clust, se_type = "CR0")
-  clubsandCR0o <- clubSandwich::coef_test(ivfit, vcov = "CR0", cluster = dat$clust, test = "naive-t")
-
-  expect_equivalent(
-    as.matrix(tidy(ivcr0o)[, c("estimate", "std.error", "p.value")]),
-    as.matrix(clubsandCR0o)
-  )
-
   # Weighting classical
+  ivw <- AER::ivreg(y ~ x | z, data = dat, weights = w)
   ivcw <- iv_robust(y ~ x | z, data = dat, weights = w, se_type = "classical")
-  ivw <- AER::ivreg(y ~ x | z, weights = w, data = dat)
-  ivregsum <- summary(ivw)
+  ivregsum <- summary(ivcw)
 
   expect_equivalent(
     as.matrix(tidy(ivcw)[, c("estimate", "std.error", "statistic", "p.value")]),
@@ -123,37 +101,23 @@ test_that("iv_robust matches AER + ivpack", {
     ivcw$fitted.values
   )
 
-  # CR2 weighted
-  ivcr2wo <- iv_robust(y ~ x | z, data = dat, clusters = clust, weights = w)
-  clubsandwo <- clubSandwich::coef_test(ivw, vcov = "CR2", cluster = dat$clust)
+  # Stata weighted
+  ivclrw <- iv_robust(y ~ x | z, data = dat, clusters = clust, weights = w, se_type = "stata")
+  ivclw <- AER::ivreg(y ~ x | z, data = dat, weights = w)
+  capture_output(ivclwse <- ivpack::cluster.robust.se(ivclw, clusterid = dat$clust))
 
   expect_equivalent(
-    as.matrix(tidy(ivcr2wo)[, c("estimate", "std.error", "df", "p.value")]),
-    as.matrix(clubsandwo)
+    as.matrix(tidy(ivclrw)[1:2, c("estimate", "std.error")]),
+    ivclwse[, c(1, 2)]
   )
 
   expect_equivalent(
-    ivcr2wo$fitted.values,
-    ivcw$fitted.values
-  )
-
-  # CR0 weighted
-  ivcr0wo <- iv_robust(y ~ x | z, data = dat, clusters = clust, weights = w, se_type = "CR0")
-  clubsandCR0wo <- clubSandwich::coef_test(ivw, vcov = "CR0", cluster = dat$clust, test = "naive-t")
-
-  expect_equivalent(
-    as.matrix(tidy(ivcr0wo)[, c("estimate", "std.error", "p.value")]),
-    as.matrix(clubsandCR0wo)
-  )
-
-  expect_equivalent(
-    ivcr0wo$fitted.values,
-    ivcw$fitted.values
+    ivclrw$fitted.values,
+    ivclw$fitted.values
   )
 
   # Rank-deficiency
   # HC0
-  dat$x1_c <- dat$x
   ivdefr <- iv_robust(y ~ x + x1_c| z + z2, data = dat, se_type = "HC0")
   ivdef <- AER::ivreg(y ~ x + x1_c| z + z2, data = dat)
   capture_output(ivdefse <- ivpack::robust.se(ivdef))
@@ -204,26 +168,9 @@ test_that("iv_robust matches AER + ivpack", {
     ivdefclse[, c(1, 2)]
   )
 
-
   expect_equivalent(
     ivdefclr$fitted.values,
     ivdefcl$fitted.values
-  )
-
-  # CR2
-  ivdefcl2r <- iv_robust(y ~ x + x1_c | z + z2, data = dat, clusters = clust, se_type = "CR2")
-  ivdefcl2 <- AER::ivreg(y ~ x + x1_c | z + z2, data = dat)
-  ivdefcl2se <- clubSandwich::coef_test(ivdefcl2, vcov = "CR2", cluster = dat$clust)
-
-
-  expect_equivalent(
-    na.omit(as.matrix(tidy(ivdefcl2r)[, c("estimate", "std.error", "df", "p.value")])),
-    na.omit(as.matrix(ivdefcl2se))
-  )
-
-  expect_equivalent(
-    ivdefcl2r$fitted.values,
-    ivdefcl2$fitted.values
   )
 
   # HC0 Weighted
@@ -246,33 +193,24 @@ test_that("iv_robust matches AER + ivpack", {
     ivdefw$fitted.values
   )
 
-  # CR2 Weighted
-  ivdefclrw <- iv_robust(y ~ x + x1_c | z + z2, data = dat, clusters = clust, weights = w, se_type = "CR2")
-  ivdefclw <- AER::ivreg(y ~ x + x1_c | z + z2, weights = w, data = dat)
-  ivdefclsew <- clubSandwich::coef_test(ivdefclw, vcov = "CR2", cluster = dat$clust)
+  # Stata weighted
+  ivdefclr <- iv_robust(y ~ x + x1_c | z + z2, data = dat, weights = w, clusters = clust, se_type = "stata")
+  ivdefcl <- AER::ivreg(y ~ x + x1_c | z + z2, data = dat, weights = w)
+  capture_output(ivdefclse <- ivpack::cluster.robust.se(ivdefcl, clusterid = dat$clust))
 
-  expect_equivalent(
-    na.omit(as.matrix(tidy(ivdefclrw)[, c("estimate", "std.error", "df", "p.value")])),
-    na.omit(as.matrix(ivdefclsew)[, 1:4])
+  expect_equal(
+    coef(ivdefclr),
+    coef(ivdefcl)
   )
 
   expect_equivalent(
-    ivdefclrw$fitted.values,
-    ivdefclw$fitted.values
-  )
-
-  ivdef2clrw <- iv_robust(y ~ x + z | x + x1_c, data = dat, clusters = clust, weights = w, se_type = "CR2")
-  ivdef2clw <- AER::ivreg(y ~ x + z | x + x1_c, weights = w, data = dat)
-  ivdef2clsew <- clubSandwich::coef_test(ivdef2clw, vcov = "CR2", cluster = dat$clust)
-
-  expect_equivalent(
-    na.omit(as.matrix(tidy(ivdef2clrw)[, c("estimate", "std.error", "df", "p.value")])),
-    na.omit(as.matrix(ivdef2clsew)[, 1:4])
+    as.matrix(tidy(ivdefclr)[1:2, c("estimate", "std.error")]),
+    ivdefclse[, c(1, 2)]
   )
 
   expect_equivalent(
-    ivdef2clrw$fitted.values,
-    ivdef2clw$fitted.values
+    ivdefclr$fitted.values,
+    ivdefcl$fitted.values
   )
 
   # F-stat fails properly with blocks of size 1
@@ -287,6 +225,88 @@ test_that("iv_robust matches AER + ivpack", {
 
 })
 
+test_that("iv_robust matches AER + clubSandwich", {
+
+  # ClubSandwich IV tests
+  for (se_type in cr_se_types) {
+
+    ivfit <- AER::ivreg(y ~ x | z, data = dat)
+    ivfitw <- AER::ivreg(y ~ x | z, weights = w, data = dat)
+
+    # Standard IV models
+    ivcr <- iv_robust(y ~ x | z, data = dat, clusters = clust, se_type = se_type)
+    clubsand <- clubSandwich::coef_test(ivfit,
+                                        vcov = ifelse(se_type == "stata", "CR1S", se_type),
+                                        cluster = dat$clust,
+                                        test = ifelse(se_type == "CR2", "Satterthwaite", "naive-t"))
+
+    cols <- if (se_type == "CR2") c("estimate", "std.error", "df", "p.value") else c("estimate", "std.error", "p.value")
+
+    expect_equivalent(
+      as.matrix(tidy(ivcr)[, cols]),
+      as.matrix(clubsand)
+    )
+
+    expect_equivalent(
+      ivfit$fitted.values,
+      ivcr$fitted.values
+    )
+
+    # Weighted IV models
+    ivcrw <- iv_robust(y ~ x | z, data = dat, clusters = clust, weights = w, se_type = se_type)
+    clubsandw <- clubSandwich::coef_test(ivfitw,
+                                         vcov = ifelse(se_type == "stata", "CR1S", se_type),
+                                         cluster = dat$clust,
+                                         test = ifelse(se_type == "CR2", "Satterthwaite", "naive-t"))
+
+    expect_equivalent(
+      as.matrix(tidy(ivcrw)[, cols]),
+      as.matrix(clubsandw)
+    )
+
+    expect_equivalent(
+      ivfitw$fitted.values,
+      ivcrw$fitted.values
+    )
+
+    # Rank-deficiency
+    ivfit_rd <- AER::ivreg(y ~ x + x1_c | z + z2, data = dat)
+    ivcr_rd <- iv_robust(y ~ x + x1_c | z + z2, data = dat, clusters = clust, se_type = se_type)
+    clubsand_rd <- clubSandwich::coef_test(ivfit_rd,
+                                           vcov = ifelse(se_type == "stata", "CR1S", se_type),
+                                           cluster = dat$clust,
+                                           test = ifelse(se_type == "CR2", "Satterthwaite", "naive-t"))
+
+    expect_equivalent(
+      na.omit(as.matrix(tidy(ivcr_rd)[, cols])),
+      na.omit(as.matrix(clubsand_rd))
+    )
+
+    expect_equivalent(
+      ivfit_rd$fitted.values,
+      ivcr_rd$fitted.values
+    )
+
+    # Rank-deficient, weighted
+    ivfitw_rd <- AER::ivreg(y ~ x + x1_c | z + z2, weights = w, data = dat)
+    ivcrw_rd <- iv_robust(y ~ x + x1_c | z + z2, data = dat, weights = w, clusters = clust, se_type = se_type)
+    clubsandw_rd <- clubSandwich::coef_test(ivfitw_rd,
+                                            vcov = ifelse(se_type == "stata", "CR1S", se_type),
+                                            cluster = dat$clust,
+                                            test = ifelse(se_type == "CR2", "Satterthwaite", "naive-t"))
+
+    expect_equivalent(
+      na.omit(as.matrix(tidy(ivcrw_rd)[, cols])),
+      na.omit(as.matrix(clubsandw_rd))
+    )
+
+    expect_equivalent(
+      ivfitw_rd$fitted.values,
+      ivcrw_rd$fitted.values
+    )
+  }
+
+})
 
 test_that("iv_robust different specifications work", {
   # More instruments than endog. regressors

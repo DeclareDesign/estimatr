@@ -247,7 +247,7 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
   const int n(X.rows()), r(XtX_inv.cols()), ny(ei.cols());
   // Rcout << "X:" << std::endl << X << std::endl;
   int r_fe = r + fe_rank;
-  const bool clustered = ((se_type == "stata") || (se_type == "CR0") || (se_type == "CR2"));
+  const bool clustered = ((se_type == "stata") || (se_type == "CR0") || (se_type == "CR2") || (se_type == "CR3"));
   const int npars = r * ny;
   int sandwich_size = n;
   if (clustered) {
@@ -291,7 +291,7 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
     }
 
     Eigen::MatrixXd meatXtX_inv;
-    if ((se_type == "HC2") || (se_type == "HC3") || (se_type == "CR2")) {
+    if ((se_type == "HC2") || (se_type == "HC3") || (se_type == "CR2") || (se_type == "CR3")) {
       if (X.cols() > r) {
         meatXtX_inv = getMeatXtX(X, XtX_inv);
         r_fe = meatXtX_inv.cols();
@@ -324,7 +324,6 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
       }
       // Rcout << "temp_omega:" << std::endl << temp_omega << std::endl;
 
-
       for (int m = 0; m < ny; m++) {
         if (ny > 1) {
           // Preserve signs for off-diagonal vcov blocks in mlm
@@ -337,7 +336,7 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
     } else {
       // clustered
 
-      if (se_type == "CR2") {
+      if ((se_type == "CR2") || (se_type == "CR3")) {
         Xoriginal.resize(n, r);
         if (Xunweighted.isNotNull()) {
           Xoriginal = Rcpp::as<Eigen::Map<Eigen::MatrixXd> >(Xunweighted);
@@ -345,17 +344,20 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
           Xoriginal = X;
         }
 
-        H1s.resize(r_fe, r_fe*J);
-        H2s.resize(r_fe, r_fe*J);
-        H3s.resize(r_fe, r_fe*J);
-        P_diags.resize(r_fe, J);
+        if (se_type == "CR2") {
+          H1s.resize(r_fe, r_fe*J);
+          H2s.resize(r_fe, r_fe*J);
+          H3s.resize(r_fe, r_fe*J);
+          P_diags.resize(r_fe, J);
 
-        M_U_ct = meatXtX_inv.llt().matrixL();
-        MUWTWUM = meatXtX_inv * X.leftCols(r_fe).transpose() * X.leftCols(r_fe) * meatXtX_inv;
-        Omega_ct = MUWTWUM.llt().matrixL();
+          M_U_ct = meatXtX_inv.llt().matrixL();
+          MUWTWUM = meatXtX_inv * X.leftCols(r_fe).transpose() * X.leftCols(r_fe) * meatXtX_inv;
+          Omega_ct = MUWTWUM.llt().matrixL();
+        }
       }
 
       Eigen::Map<Eigen::ArrayXi> clusters = Rcpp::as<Eigen::Map<Eigen::ArrayXi> >(cluster);
+      // Rcout << "clusters: "<< std::endl << clusters << std::endl;
 
       double current_cluster = clusters(0);
       int clust_num = 0;
@@ -426,16 +428,34 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
               H2s.block(0, p_pos, r_fe, r_fe) = ME * X.block(start_pos, 0, len, r_fe) * M_U_ct;
               H3s.block(0, p_pos, r_fe, r_fe) = MEU * Omega_ct;
             }
+
+          } else if (se_type == "CR3") {
+
+            Eigen::CompleteOrthogonalDecomposition<Eigen::MatrixXd> At(
+                Eigen::MatrixXd::Identity(len, len) -
+                  Xoriginal.block(start_pos, 0, len, r_fe) *
+                  meatXtX_inv *
+                  X.block(start_pos, 0, len, r_fe).transpose()
+            );
+
+            if (Xunweighted.isNotNull()) {
+              // We require the transpose in both cases, but in the unweighted
+              // case `A` is symmetric and is not needed to be transposed first
+              // Solve against the identity matrix and then transpose in order
+              // to allow the more common unweighted case to be simpler
+              At_WX_inv =  At.solve(Eigen::MatrixXd::Identity(len, len)).transpose() * X.block(start_pos, 0, len, r_fe);
+            } else {
+              At_WX_inv =  At.solve(X.block(start_pos, 0, len, r_fe));
+            }
+
           }
 
           if (ny > 1) {
-
             // Stack residuals for this cluster from each model
-            // Rcout << "len: " << len << std::endl;
             Eigen::MatrixXd ei_block = ei.block(start_pos, 0, len, ny);
             Eigen::Map<const Eigen::MatrixXd> ei_long(ei_block.data(), 1, len*ny);
 
-            if (se_type == "CR2") {
+            if ((se_type == "CR2") || (se_type == "CR3")) {
               half_meat.block(clust_num, 0, 1, npars) =
                 ei_long *
                 Kr(Eigen::MatrixXd::Identity(ny, ny), At_WX_inv.leftCols(r));
@@ -447,7 +467,7 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
           } else {
 
-            if (se_type == "CR2") {
+            if ((se_type == "CR2") || (se_type == "CR3")) {
               half_meat.row(clust_num) =
                 ei.block(start_pos, 0, len, 1).transpose() *
                 At_WX_inv.leftCols(r);
@@ -456,7 +476,6 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
                 ei.block(start_pos, 0, len, 1).transpose() *
                 X.block(start_pos, 0, len, r);
             }
-
           }
           if (i < n) {
             current_cluster = clusters(i);
