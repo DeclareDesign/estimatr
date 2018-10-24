@@ -1,5 +1,10 @@
 # This fn removes calls from function returns to make testing easier
-rmcall <- function(obj) {structure(obj, call = NULL)}
+rmcall <- function(obj) {
+  if (!is.null(obj[["call"]])) {
+    obj[["call"]] <- NULL
+  }
+  return(obj)
+}
 
 # This fn casts tibbles as data.frames for equivalency tests
 # TODO implement this everywhere
