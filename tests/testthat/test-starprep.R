@@ -86,7 +86,9 @@ test_that("commarobust works with regular lm", {
       tidy(ro),
       tidy(clo)
     )
-
+    print(se_type)
+    print(ro$fstatistic)
+    print(clo$fstatistic)
     expect_equal(
       ro$fstatistic,
       clo$fstatistic
