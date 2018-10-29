@@ -1,4 +1,9 @@
-# estimatr 0.12.0
+# estimatr 0.13.0 (GitHub)
+
+* Removes `broom` hack for `tidy` method and instead relies on importing `generics`
+* `tidy.*` methods now return a `tibble` (`tbl_df`) rather than a `data.frame`
+
+# estimatr 0.12.0 (CRAN)
 
 * Fixed ambiguity about how interacted covariates were centered in `lm_lin`
 * A series of fixes for bugs that occurred with multiple outcomes (multivariate regression):
