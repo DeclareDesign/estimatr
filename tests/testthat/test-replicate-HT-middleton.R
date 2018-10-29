@@ -84,7 +84,7 @@ test_that("We match Joel's estimator", {
     tidy(ht_prob_o)[, c("estimate", "std.error")]
   )
   expect_equivalent(
-    tidy(ht_decl_o)[, c("estimate", "std.error")],
+    as.numeric(tidy(ht_decl_o)[, c("estimate", "std.error")]),
     c(ht_est, se_ht)
   )
 
@@ -101,7 +101,7 @@ test_that("We match Joel's estimator", {
   )
 
   expect_equivalent(
-    tidy(ht_const_o)[, c("estimate", "std.error")],
+    as.numeric(tidy(ht_const_o)[, c("estimate", "std.error")]),
     c(ht_est, se_constant_ht)
   )
 
@@ -145,7 +145,7 @@ test_that("We match Joel's estimator", {
     condition_pr_mat = pmat.CR.true
   )
   expect_equivalent(
-    tidy(ht_comp_decl_o)[, c("estimate", "std.error")],
+    as.numeric(tidy(ht_comp_decl_o)[, c("estimate", "std.error")]),
     c(ht_comp_est, se_comp_ht)
   )
 

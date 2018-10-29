@@ -14,15 +14,7 @@ test_that("tidy, summary, and print work", {
 
   expect_is(
     tidy(NULL),
-    "data.frame"
-  )
-
-  # Might need to force this test of tidy.default
-
-  d <- date()
-  expect_warning(
-    estimatr:::tidy.default(d),
-    "using as.data.frame"
+    "tbl_df"
   )
 
   ## lm_robust
@@ -43,12 +35,12 @@ test_that("tidy, summary, and print work", {
 
   expect_is(
     tidy(lmo),
-    "data.frame"
+    "tbl_df"
   )
 
   expect_is(
     tidy(lmfo),
-    "data.frame"
+    "tbl_df"
   )
 
 
@@ -161,7 +153,7 @@ test_that("tidy, summary, and print work", {
   lmlo <- lm_lin(y ~ x, ~ z, data = dat)
   expect_is(
     tidy(lmlo),
-    "data.frame"
+    "tbl_df"
   )
 
 
@@ -176,7 +168,7 @@ test_that("tidy, summary, and print work", {
   ht <- horvitz_thompson(y ~ x, condition_prs = p, data = dat)
   expect_is(
     tidy(ht),
-    "data.frame"
+    "tbl_df"
   )
 
   expect_equivalent(
@@ -201,7 +193,7 @@ test_that("tidy, summary, and print work", {
   dim <- difference_in_means(y ~ x, data = dat)
   expect_is(
     tidy(dim),
-    "data.frame"
+    "tbl_df"
   )
 
   expect_equal(

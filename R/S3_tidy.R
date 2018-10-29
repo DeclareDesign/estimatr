@@ -2,10 +2,11 @@
 # https://github.com/tidyverse/broom
 
 #' @importFrom generics tidy
+#' @importFrom tibble as_tibble
 #' @export
 generics::tidy
 
-tidy_data_frame <- function(object, digits = NULL) {
+tidy_data_frame <- function(object, ...) {
   vec_cols <- c(
     "coefficients",
     "std.error",
@@ -22,13 +23,11 @@ tidy_data_frame <- function(object, digits = NULL) {
   return_frame <- data.frame(
     term = object[["term"]],
     tidy_mat,
+    outcome = rep(object[["outcome"]], each = length(object[["term"]])),
     stringsAsFactors = FALSE
   )
 
-  return_frame$outcome <- rep(object[["outcome"]], each = length(object[["term"]]))
-
-  rownames(return_frame) <- NULL
-  tibble::tibble(return_frame)
+  tibble::as_tibble(return_frame)
 }
 
 warn_singularities <- function(object) {

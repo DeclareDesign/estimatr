@@ -12,9 +12,9 @@
 
 \method{tidy}{iv_robust}(object, ...)
 
-\method{tidy}{difference_in_means}(object, digits = NULL)
+\method{tidy}{difference_in_means}(object, ...)
 
-\method{tidy}{horvitz_thompson}(object, digits = NULL)
+\method{tidy}{horvitz_thompson}(object, ...)
 }
 \arguments{
 \item{object}{An object returned by one of the estimators}

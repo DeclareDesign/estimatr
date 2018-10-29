@@ -78,7 +78,7 @@ test_that("DIM Blocked", {
   dim_normal <- difference_in_means(Y ~ Z, condition1 = 0, condition2 = 1, blocks = block, data = dat)
   dim_reverse <- difference_in_means(Y ~ Z, condition1 = 1, condition2 = 0, blocks = block, data = dat)
 
-  expect_equal(
+  expect_equal_tbl(
     tidy(dim_normal)[c("estimate", "std.error")],
     tidy(dim_reverse)[c("estimate", "std.error")] * c(-1, 1)
   )

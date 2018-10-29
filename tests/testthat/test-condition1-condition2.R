@@ -29,7 +29,7 @@ test_that("Condition arguments behave as expected", {
   )
 
   # Subsetting and just selecting two conditions
-  expect_identical(
+  expect_identical_tbl(
     tidy(horvitz_thompson(
       y ~ z,
       data = dat,
@@ -46,7 +46,7 @@ test_that("Condition arguments behave as expected", {
     ))[c("estimate", "std.error")] * c(-1, 1)
   )
 
-  expect_identical(
+  expect_identical_tbl(
     tidy(difference_in_means(
       y ~ z,
       data = dat,
