@@ -1,8 +1,4 @@
-# some code taken from the "broom" package
-# https://github.com/tidyverse/broom
-
 #' @importFrom generics tidy
-#' @importFrom tibble as_tibble
 #' @export
 generics::tidy
 
@@ -27,7 +23,9 @@ tidy_data_frame <- function(object, ...) {
     stringsAsFactors = FALSE
   )
 
-  tibble::as_tibble(return_frame)
+  rownames(return_frame) <- NULL
+
+  return(return_frame)
 }
 
 warn_singularities <- function(object) {
@@ -44,7 +42,7 @@ warn_singularities <- function(object) {
 #' Tidy an estimatr object
 #' @name estimatr_tidiers
 #' @templateVar class lm_robust
-#' @return A [tibble::tibble()] with columns for coefficient names, estimates, standard
+#' @return A data.frame with columns for coefficient names, estimates, standard
 #' errors, confidence intervals, p-values, degrees of freedom, and the
 #' name of the outcome variable
 #'
@@ -52,8 +50,9 @@ warn_singularities <- function(object) {
 #' @param ... extra arguments (not used)
 #'
 #' @export
-#' @seealso [tidy()], [estimatr::lm_robust()], [estimatr::iv_robust()],  [estimatr::difference_in_means()], [estimatr::horvitz_thompson()]
 #' @family estimatr tidiers
+#' @seealso [generics::tidy()], [estimatr::lm_robust()], [estimatr::iv_robust()],  [estimatr::difference_in_means()], [estimatr::horvitz_thompson()]
+#' @md
 tidy.lm_robust <- function(object, ...) {
   warn_singularities(object)
   tidy_data_frame(object)
@@ -82,9 +81,3 @@ tidy.difference_in_means <- tidy_data_frame
 #' @export
 #' @family estimatr tidiers
 tidy.horvitz_thompson <- tidy_data_frame
-
-#' @export
-#' @family estimatr tidiers
-tidy.NULL <- function(object, ...) {
-  tibble::tibble()
-}

@@ -59,7 +59,7 @@ test_that("commarobust works with regular lm", {
     lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
     clo <- commarobust(lo, se_type = se_type)
 
-    expect_equal_tbl(
+    expect_equal(
       tidy(ro),
       tidy(clo)
     )
@@ -82,7 +82,7 @@ test_that("commarobust works with regular lm", {
     lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
     clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = se_type)
 
-    expect_equal_tbl(
+    expect_equal(
       tidy(ro),
       tidy(clo)
     )
@@ -107,7 +107,7 @@ test_that("commarobust works with regular lm", {
   lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
   clo <- commarobust(lo, clusters = datmiss$cl_char[complete.cases(datmiss)], se_type = "CR2")
 
-  expect_equal_tbl(
+  expect_equal(
     tidy(ro),
     tidy(clo)
   )
@@ -116,7 +116,7 @@ test_that("commarobust works with regular lm", {
   lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
   clo <- commarobust(lo, clusters = datmiss$cl_num[complete.cases(datmiss)], se_type = "CR2")
 
-  expect_equal_tbl(
+  expect_equal(
     tidy(ro),
     tidy(clo)
   )
@@ -125,7 +125,7 @@ test_that("commarobust works with regular lm", {
   lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
   clo <- commarobust(lo, clusters = datmiss$cl_fac[complete.cases(datmiss)], se_type = "CR2")
 
-  expect_equal_tbl(
+  expect_equal(
     tidy(ro),
     tidy(clo)
   )
@@ -140,7 +140,7 @@ test_that("commarobust works with weighted lm", {
     lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w)
     clo <- commarobust(lo, se_type = se_type)
 
-    expect_equal_tbl(
+    expect_equal(
       tidy(ro),
       tidy(clo)
     )
@@ -163,7 +163,7 @@ test_that("commarobust works with weighted lm", {
     lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w)
     clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = se_type)
 
-    expect_equal_tbl(
+    expect_equal(
       tidy(ro),
       tidy(clo)
     )
@@ -196,7 +196,7 @@ test_that("commarobust works with dependency, weighted lm", {
 
     capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
 
-    expect_equal_tbl(
+    expect_equal(
       tidy(ro),
       tidy(clo)
     )
@@ -219,7 +219,7 @@ test_that("commarobust works with dependency, weighted lm", {
 
     capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
 
-    expect_equal_tbl(
+    expect_equal(
       tidy(ro),
       tidy(clo)
     )

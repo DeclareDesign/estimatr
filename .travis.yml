@@ -21,12 +21,10 @@ matrix:
     - os: osx
       r: release
       if: branch = master
-      fortran: false
 
     - os: osx
       r: 3.4
       if: branch = master
-      fortran: false
 
 env:
   global:

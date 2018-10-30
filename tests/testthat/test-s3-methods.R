@@ -12,11 +12,6 @@ lmfo <- lm_robust(y ~ z, data = dat, fixed_effects = ~ x)
 
 test_that("tidy, summary, and print work", {
 
-  expect_is(
-    tidy(NULL),
-    "tbl_df"
-  )
-
   ## lm_robust
   lmo <- lm_robust(y ~ x, data = dat, se_type = "classical")
 
@@ -35,12 +30,12 @@ test_that("tidy, summary, and print work", {
 
   expect_is(
     tidy(lmo),
-    "tbl_df"
+    "data.frame"
   )
 
   expect_is(
     tidy(lmfo),
-    "tbl_df"
+    "data.frame"
   )
 
 
@@ -153,7 +148,7 @@ test_that("tidy, summary, and print work", {
   lmlo <- lm_lin(y ~ x, ~ z, data = dat)
   expect_is(
     tidy(lmlo),
-    "tbl_df"
+    "data.frame"
   )
 
 
@@ -168,7 +163,7 @@ test_that("tidy, summary, and print work", {
   ht <- horvitz_thompson(y ~ x, condition_prs = p, data = dat)
   expect_is(
     tidy(ht),
-    "tbl_df"
+    "data.frame"
   )
 
   expect_equivalent(
@@ -193,7 +188,7 @@ test_that("tidy, summary, and print work", {
   dim <- difference_in_means(y ~ x, data = dat)
   expect_is(
     tidy(dim),
-    "tbl_df"
+    "data.frame"
   )
 
   expect_equal(

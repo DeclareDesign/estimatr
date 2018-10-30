@@ -89,7 +89,7 @@ test_that("Horvitz-Thompson works in simple case", {
     )
   )
 
-  expect_equal_tbl(
+  expect_equal(
     tidy(ht_simp)[, c("estimate", "std.error")],
     tidy(ht_rev)[, c("estimate", "std.error")] * c(-1, 1)
   )
@@ -160,7 +160,7 @@ test_that("Horvitz-Thompson works in simple case", {
   # with declaration
   ht_nod <- horvitz_thompson(y ~ z_comp, ra_declaration = comp_decl)
   ht_d <- horvitz_thompson(y ~ z_comp, data = dat, ra_declaration = comp_decl)
-  expect_equal_tbl(
+  expect_equal(
     tidy(ht_nod),
     tidy(ht_d)
   )
@@ -408,7 +408,7 @@ test_that("Estimating Horvitz-Thompson can be done two ways with blocks", {
   # This estimates the treatment effect at once using only condition_pr_mat
   ht_condmat_bl <- horvitz_thompson(y ~ z, data = dat, condition_pr_mat = bl_pr_mat)
 
-  expect_equivalent_tbl(
+  expect_equivalent(
     tidy(ht_declare_bl),
     tidy(ht_condmat_bl)
   )
@@ -435,7 +435,7 @@ test_that("Estimating Horvitz-Thompson can be done two ways with blocks", {
   # This estimates the treatment effect at once using only condition_pr_mat
   ht_condmat_mp <- horvitz_thompson(y ~ z, data = dat, condition_pr_mat = mp_pr_mat)
 
-  expect_equivalent_tbl(
+  expect_equivalent(
     tidy(ht_declare_mp),
     tidy(ht_condmat_mp)
   )
@@ -603,7 +603,7 @@ test_that("Works without variation in treatment", {
   expect_identical(ht_rev$term, "z")
 
   # This is only true because condition prs are 0.5
-  expect_identical_tbl(
+  expect_identical(
     tidy(ht_zero)[c("estimate", "std.error")],
     tidy(ht_rev)[c("estimate", "std.error")] * c(-1, 1)
   )

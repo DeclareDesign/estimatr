@@ -19,8 +19,7 @@ Imports:
     generics,
     methods,
     Rcpp (>= 0.12.16),
-    rlang (>= 0.2.0),
-    tibble
+    rlang (>= 0.2.0)
 LinkingTo: Rcpp, RcppEigen
 RoxygenNote: 6.1.0
 LazyData: true

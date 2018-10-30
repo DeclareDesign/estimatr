@@ -22,7 +22,7 @@
 \item{...}{extra arguments (not used)}
 }
 \value{
-A [tibble::tibble()] with columns for coefficient names, estimates, standard
+A data.frame with columns for coefficient names, estimates, standard
 errors, confidence intervals, p-values, degrees of freedom, and the
 name of the outcome variable
 }
@@ -30,6 +30,6 @@ name of the outcome variable
 Tidy an estimatr object
 }
 \seealso{
-[tidy()], [estimatr::lm_robust()], [estimatr::iv_robust()],  [estimatr::difference_in_means()], [estimatr::horvitz_thompson()]
+\code{\link[generics:tidy]{generics::tidy()}}, \code{\link[estimatr:lm_robust]{estimatr::lm_robust()}}, \code{\link[estimatr:iv_robust]{estimatr::iv_robust()}},  \code{\link[estimatr:difference_in_means]{estimatr::difference_in_means()}}, \code{\link[estimatr:horvitz_thompson]{estimatr::horvitz_thompson()}}
 }
 \concept{estimatr tidiers}
