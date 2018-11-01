@@ -1,8 +1,8 @@
 Package: estimatr
 Type: Package
 Title: Fast Estimators for Design-Based Inference
-Version: 0.12
-Date: 2018-09-05
+Version: 0.14
+Date: 2018-10-29
 Authors@R: c(person("Graeme", "Blair", email = "graeme.blair@ucla.edu", role = c("aut", "cre")),
              person("Jasper", "Cooper", email = "jjc2247@columbia.edu", role = c("aut")),
              person("Alexander", "Coppock", email = "alex.coppock@yale.edu", role = c("aut")),
@@ -15,27 +15,27 @@ BugReports: https://github.com/DeclareDesign/estimatr/issues
 License: MIT + file LICENSE
 Depends: R (>= 3.4.0)
 Imports:
-    Rcpp (>= 0.12.16),
-    methods,
     Formula,
+    generics,
+    methods,
+    Rcpp (>= 0.12.16),
     rlang (>= 0.2.0)
 LinkingTo: Rcpp, RcppEigen
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
 LazyData: true
 Suggests:
-    RcppEigen,
     fabricatr (>= 0.4),
     randomizr (>= 0.16),
-    testthat,
-    sandwich,
+    AER,
+    car,
     clubSandwich,
+    ivpack,
+    lfe,
     margins,
     prediction,
-    lfe,
-    AER,
-    ivpack,
+    RcppEigen,
+    sandwich,
     stargazer,
-    car
+    testthat
 Enhances:
-    broom,
     texreg

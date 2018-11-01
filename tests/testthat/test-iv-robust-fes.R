@@ -16,313 +16,92 @@ dat$Xdup <- dat$X
 dat$Bdup <- dat$B
 
 test_that("FE matches with multiple FEs and covars", {
-  ## Classical
-  ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), data = dat, se_type = "classical")
-  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, se_type = "classical")
-
-  expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
-  )
-
-  expect_equivalent(
-    ro$fitted.values,
-    rfo$fitted.values
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    rfo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## HC0
-  ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), data = dat, se_type = "HC0")
-  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, se_type = "HC0")
-
-  expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
-  )
-
-  expect_equivalent(
-    ro$fitted.values,
-    rfo$fitted.values
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    rfo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## HC1
-  ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), data = dat, se_type = "HC1")
-  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, se_type = "HC1")
-
-  expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
-  )
-
-  expect_equivalent(
-    ro$fitted.values,
-    rfo$fitted.values
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    rfo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## HC2
-  ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), data = dat, se_type = "HC2")
-  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, se_type = "HC2")
-
-  expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
-  )
-
-  expect_equivalent(
-    ro$fitted.values,
-    rfo$fitted.values
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    rfo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## HC3
-  ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), data = dat, se_type = "HC3")
-  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, se_type = "HC3")
-
-  expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
-  )
-
-  expect_equivalent(
-    ro$fitted.values,
-    rfo$fitted.values
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    rfo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## CR0
-  ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), clusters = cl, data = dat, se_type = "CR0")
-  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "CR0")
-
-  expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
-  )
-
-  expect_equivalent(
-    ro$fitted.values,
-    rfo$fitted.values
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    rfo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## CR stata
-  ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), clusters = cl, data = dat, se_type = "stata")
-  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "stata")
-
-  expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
-  )
-
-  expect_equivalent(
-    ro$fitted.values,
-    rfo$fitted.values
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    rfo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## CR2
-  ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), clusters = cl, data = dat, se_type = "CR2")
-  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "CR2")
-
-  expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
-  )
-
-  expect_equivalent(
-    ro$fitted.values,
-    rfo$fitted.values
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    rfo[c("r.squared", "adj.r.squared")]
-  )
-
-})
-
-test_that("FE matches with weights", {
-  ## Classical
-  ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), data = dat, weights = w, se_type = "classical")
-  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "classical")
-
-  expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
-  )
-
-  expect_equivalent(
-    ro$fitted.values,
-    rfo$fitted.values
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    rfo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## HC0
-  ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), data = dat, weights = w, se_type = "HC0")
-  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "HC0")
-
-  expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
-  )
-
-  expect_equivalent(
-    ro$fitted.values,
-    rfo$fitted.values
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    rfo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## HC1
-  ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), data = dat, weights = w, se_type = "HC1")
-  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "HC1")
-
-  expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
-  )
-
-  expect_equivalent(
-    ro$fitted.values,
-    rfo$fitted.values
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    rfo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## HC2
-  ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), data = dat, weights = w, se_type = "HC2")
-  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "HC2")
-
-  expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
-  )
-
-  expect_equivalent(
-    ro$fitted.values,
-    rfo$fitted.values
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    rfo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## HC3
-  ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), data = dat, weights = w, se_type = "HC3")
-  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = "HC3")
-
-  expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
-  )
-
-  expect_equivalent(
-    ro$fitted.values,
-    rfo$fitted.values
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    rfo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## CR0
-  ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), clusters = cl, data = dat, weights = w, se_type = "CR0")
-  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, weights = w, se_type = "CR0")
-
-  expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
-  )
-
-  expect_equivalent(
-    ro$fitted.values,
-    rfo$fitted.values
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    rfo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## CR stata
-  ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), clusters = cl, data = dat, weights = w, se_type = "stata")
-  rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, weights = w, se_type = "stata")
-
-  expect_equivalent(
-    tidy(ro)[ro$term %in% c("X1", "X2"), ],
-    tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
-  )
-
-  expect_equivalent(
-    ro$fitted.values,
-    rfo$fitted.values
-  )
-
-  expect_equal(
-    ro[c("r.squared", "adj.r.squared")],
-    rfo[c("r.squared", "adj.r.squared")]
-  )
-
-  ## CR2
-  expect_error(
-    rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, weights = w, se_type = "CR2"),
-    "Cannot use `fixed_effects` with weighted"
-  )
-
-
-  # ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), clusters = cl, data = dat, weights = w, se_type = "CR2")
-  #
-  # expect_equivalent(
-  #   tidy(ro)[ro$term %in% c("X1", "X2"), ],
-  #   tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
-  # )
-  #
-  # expect_equal(
-  #   ro[c("r.squared", "adj.r.squared")],
-  #   rfo[c("r.squared", "adj.r.squared")]
-  # )
 
+  for (se_type in se_types) {
+    ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), data = dat, se_type = se_type)
+    rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, se_type = se_type)
+
+
+    expect_equivalent(
+      tidy(ro)[ro$term %in% c("X1", "X2"), ],
+      tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+    )
+
+    expect_equivalent(
+      ro$fitted.values,
+      rfo$fitted.values
+    )
+
+    expect_equal(
+      ro[c("r.squared", "adj.r.squared")],
+      rfo[c("r.squared", "adj.r.squared")]
+    )
+
+    # weights
+    ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), data = dat, weights = w, se_type = se_type)
+    rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, data = dat, weights = w, se_type = se_type)
+
+    expect_equivalent(
+      tidy(ro)[ro$term %in% c("X1", "X2"), ],
+      tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+    )
+
+    expect_equivalent(
+      ro$fitted.values,
+      rfo$fitted.values
+    )
+
+    expect_equal(
+      ro[c("r.squared", "adj.r.squared")],
+      rfo[c("r.squared", "adj.r.squared")]
+    )
+  }
+
+  for (se_type in cr_se_types) {
+    ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), clusters = cl, data = dat, se_type = se_type)
+    rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = se_type)
+
+    expect_equivalent(
+      tidy(ro)[ro$term %in% c("X1", "X2"), ],
+      tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+    )
+
+    expect_equivalent(
+      ro$fitted.values,
+      rfo$fitted.values
+    )
+
+    expect_equal(
+      ro[c("r.squared", "adj.r.squared")],
+      rfo[c("r.squared", "adj.r.squared")]
+    )
+
+    # weights
+    if (se_type %in% c("CR2", "CR3")) {
+      expect_error(
+        rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, weights = w, se_type = se_type),
+        "Cannot use `fixed_effects` with weighted CR2"
+      )
+    } else {
+      ro <- iv_robust(Y ~ X1 + X2 + factor(B) + factor(B2) | Z + X2 + factor(B) + factor(B2), clusters = cl, data = dat, weights = w, se_type = se_type)
+      rfo <- iv_robust(Y ~ X1 + X2 | Z + X2, fixed_effects = ~ B + B2, clusters = cl, data = dat, weights = w, se_type = se_type)
+
+      expect_equivalent(
+        tidy(ro)[ro$term %in% c("X1", "X2"), ],
+        tidy(rfo)[rfo$term %in% c("X1", "X2"), ]
+      )
+
+      expect_equivalent(
+        ro$fitted.values,
+        rfo$fitted.values
+      )
+
+      expect_equal(
+        ro[c("r.squared", "adj.r.squared")],
+        rfo[c("r.squared", "adj.r.squared")]
+      )
+    }
+  }
 })
 
 test_that("IV FE matches lfe including proj r2", {

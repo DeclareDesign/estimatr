@@ -55,7 +55,7 @@ test_that("Horvitz-Thompson works in simple case", {
   )
 
   expect_equivalent(
-    tidy(ht_simp_no)[c("std.error", "p.value", "conf.low", "conf.high")],
+    as.numeric(tidy(ht_simp_no)[c("std.error", "p.value", "conf.low", "conf.high")]),
     rep(NA_real_, 4)
   )
 
@@ -123,7 +123,7 @@ test_that("Horvitz-Thompson works in simple case", {
   )
 
   expect_equivalent(
-    tidy(ht_comp_no)[c("std.error", "p.value", "conf.low", "conf.high")],
+    as.numeric(tidy(ht_comp_no)[c("std.error", "p.value", "conf.low", "conf.high")]),
     rep(NA_real_, 4)
   )
 
@@ -198,7 +198,7 @@ test_that("Horvitz-Thompson works with clustered data", {
   )
 
   expect_equivalent(
-    tidy(ht_crs_decl_no)[c("std.error", "p.value", "conf.low", "conf.high")],
+    as.numeric(tidy(ht_crs_decl_no)[c("std.error", "p.value", "conf.low", "conf.high")]),
     rep(NA_real_, 4)
   )
 
@@ -245,7 +245,7 @@ test_that("Horvitz-Thompson works with clustered data", {
   )
 
   expect_equivalent(
-    tidy(ht_srs_decl_no)[c("std.error", "p.value", "conf.low", "conf.high")],
+    as.numeric(tidy(ht_srs_decl_no)[c("std.error", "p.value", "conf.low", "conf.high")]),
     rep(NA_real_, 4)
   )
 

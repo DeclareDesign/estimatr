@@ -26,7 +26,6 @@ matrix:
       r: 3.4
       if: branch = master
 
-
 env:
   global:
   - OS=$(uname -s)

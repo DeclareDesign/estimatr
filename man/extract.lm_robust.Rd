@@ -6,17 +6,17 @@
 \alias{extract.iv_robust}
 \title{Extract model data for \pkg{texreg} package}
 \usage{
-extract.robust_default(model, include.ci = TRUE, include.rsquared = TRUE,
-  include.adjrs = TRUE, include.nobs = TRUE, include.fstatistic = FALSE,
-  include.rmse = TRUE, ...)
+extract.robust_default(model, include.ci = TRUE,
+  include.rsquared = TRUE, include.adjrs = TRUE, include.nobs = TRUE,
+  include.fstatistic = FALSE, include.rmse = TRUE, ...)
 
 extract.lm_robust(model, include.ci = TRUE, include.rsquared = TRUE,
-  include.adjrs = TRUE, include.nobs = TRUE, include.fstatistic = FALSE,
-  include.rmse = TRUE, ...)
+  include.adjrs = TRUE, include.nobs = TRUE,
+  include.fstatistic = FALSE, include.rmse = TRUE, ...)
 
 extract.iv_robust(model, include.ci = TRUE, include.rsquared = TRUE,
-  include.adjrs = TRUE, include.nobs = TRUE, include.fstatistic = FALSE,
-  include.rmse = TRUE, ...)
+  include.adjrs = TRUE, include.nobs = TRUE,
+  include.fstatistic = FALSE, include.rmse = TRUE, ...)
 }
 \arguments{
 \item{model}{an object of class \code{\link{lm_robust}} or \code{"iv_robust"}}

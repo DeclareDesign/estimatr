@@ -1,3 +1,7 @@
+# estimatr 0.14.0
+
+* Removes `broom` hack for `tidy` method and instead relies on importing `generics`
+
 # estimatr 0.12.0
 
 * Fixed ambiguity about how interacted covariates were centered in `lm_lin`

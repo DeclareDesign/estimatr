@@ -5,9 +5,10 @@
 \title{Horvitz-Thompson estimator for two-armed trials}
 \usage{
 horvitz_thompson(formula, data, blocks, clusters, simple = NULL,
-  condition_prs, condition_pr_mat = NULL, ra_declaration = NULL, subset,
-  condition1 = NULL, condition2 = NULL, se_type = c("youngs", "constant",
-  "none"), ci = TRUE, alpha = 0.05, return_condition_pr_mat = FALSE)
+  condition_prs, condition_pr_mat = NULL, ra_declaration = NULL,
+  subset, condition1 = NULL, condition2 = NULL, se_type = c("youngs",
+  "constant", "none"), ci = TRUE, alpha = 0.05,
+  return_condition_pr_mat = FALSE)
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}, such as

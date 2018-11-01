@@ -5,8 +5,8 @@
 \title{Design-based difference-in-means estimator}
 \usage{
 difference_in_means(formula, data, blocks, clusters, weights, subset,
-  se_type = c("default", "none"), condition1 = NULL, condition2 = NULL,
-  ci = TRUE, alpha = 0.05)
+  se_type = c("default", "none"), condition1 = NULL,
+  condition2 = NULL, ci = TRUE, alpha = 0.05)
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}, such as
