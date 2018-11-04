@@ -14,5 +14,13 @@
               definition = extract.iv_robust
     )
   }
+
+  if (isNamespaceLoaded("broom") && packageVersion("broom") <= "0.5.0") {
+    packageStartupMessage(
+      "Warning: the `broom` package version 0.5.0 or earlier is loaded.\n",
+      "Please upgrade `broom` or `tidy` methods may not work as expected."
+    )
+  }
+
   invisible()
 }
