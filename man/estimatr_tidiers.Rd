@@ -8,16 +8,16 @@
 \alias{tidy.horvitz_thompson}
 \title{Tidy an estimatr object}
 \usage{
-\method{tidy}{lm_robust}(object, ...)
+\method{tidy}{lm_robust}(x, ...)
 
-\method{tidy}{iv_robust}(object, ...)
+\method{tidy}{iv_robust}(x, ...)
 
-\method{tidy}{difference_in_means}(object, ...)
+\method{tidy}{difference_in_means}(x, ...)
 
-\method{tidy}{horvitz_thompson}(object, ...)
+\method{tidy}{horvitz_thompson}(x, ...)
 }
 \arguments{
-\item{object}{An object returned by one of the estimators}
+\item{x}{An x returned by one of the estimators}
 
 \item{...}{extra arguments (not used)}
 }
