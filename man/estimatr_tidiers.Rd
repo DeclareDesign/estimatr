@@ -17,7 +17,7 @@
 \method{tidy}{horvitz_thompson}(x, ...)
 }
 \arguments{
-\item{x}{An x returned by one of the estimators}
+\item{x}{An object returned by one of the estimators}
 
 \item{...}{extra arguments (not used)}
 }

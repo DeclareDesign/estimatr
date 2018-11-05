@@ -46,7 +46,7 @@ warn_singularities <- function(x) {
 #' errors, confidence intervals, p-values, degrees of freedom, and the
 #' name of the outcome variable
 #'
-#' @param x An x returned by one of the estimators
+#' @param x An object returned by one of the estimators
 #' @param ... extra arguments (not used)
 #'
 #' @export
