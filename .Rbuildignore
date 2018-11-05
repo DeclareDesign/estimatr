@@ -18,7 +18,7 @@ update_repo.R
 ^_pkgdown\.yml$
 ^tests/testthat/mtcars\.csv$
 ^tests/testthat/run-stata-models\.do$
-^tests/testthat/test-zzzzzzbroom\.R$
+^tests/testthat/test-zzzbroom\.R$
 ^estimatr_.*\.tar\.gz$
 ^tests/testthat/test-texreg\.R$
 ^cran-comments\.md$
