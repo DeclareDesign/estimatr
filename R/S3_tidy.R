@@ -2,7 +2,7 @@
 #' @export
 generics::tidy
 
-tidy_data_frame <- function(object, ...) {
+tidy_data_frame <- function(x, ...) {
   vec_cols <- c(
     "coefficients",
     "std.error",
@@ -13,13 +13,13 @@ tidy_data_frame <- function(object, ...) {
     "df"
   )
 
-  tidy_mat <- do.call("cbind", lapply(object[vec_cols], as.vector))
+  tidy_mat <- do.call("cbind", lapply(x[vec_cols], as.vector))
   vec_cols[vec_cols == "coefficients"] <- "estimate"
   colnames(tidy_mat) <- vec_cols
   return_frame <- data.frame(
-    term = object[["term"]],
+    term = x[["term"]],
     tidy_mat,
-    outcome = rep(object[["outcome"]], each = length(object[["term"]])),
+    outcome = rep(x[["outcome"]], each = length(x[["term"]])),
     stringsAsFactors = FALSE
   )
 
@@ -28,9 +28,9 @@ tidy_data_frame <- function(object, ...) {
   return(return_frame)
 }
 
-warn_singularities <- function(object) {
-  if (object$rank < object$k) {
-    singularities <- object$k - object$rank
+warn_singularities <- function(x) {
+  if (x$rank < x$k) {
+    singularities <- x$k - x$rank
     what <- ifelse(singularities > 1, " coefficients ", " coefficient ")
     message(
       singularities, what,
@@ -46,16 +46,16 @@ warn_singularities <- function(object) {
 #' errors, confidence intervals, p-values, degrees of freedom, and the
 #' name of the outcome variable
 #'
-#' @param object An object returned by one of the estimators
+#' @param x An x returned by one of the estimators
 #' @param ... extra arguments (not used)
 #'
 #' @export
 #' @family estimatr tidiers
 #' @seealso [generics::tidy()], [estimatr::lm_robust()], [estimatr::iv_robust()],  [estimatr::difference_in_means()], [estimatr::horvitz_thompson()]
 #' @md
-tidy.lm_robust <- function(object, ...) {
-  warn_singularities(object)
-  tidy_data_frame(object)
+tidy.lm_robust <- function(x, ...) {
+  warn_singularities(x)
+  tidy_data_frame(x)
 }
 
 #' @rdname estimatr_tidiers
@@ -63,9 +63,9 @@ tidy.lm_robust <- function(object, ...) {
 #'
 #' @export
 #' @family estimatr tidiers
-tidy.iv_robust <- function(object, ...) {
-  warn_singularities(object)
-  tidy_data_frame(object)
+tidy.iv_robust <- function(x, ...) {
+  warn_singularities(x)
+  tidy_data_frame(x)
 }
 
 #' @rdname estimatr_tidiers

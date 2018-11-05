@@ -1,4 +1,4 @@
-# This code modified from
+# Some of this is code modified from
 # https://github.com/atahk/bucky/blob/master/R/zzz.R (GPL 3.0)
 .onLoad <- function(libname, pkgname) {
   if (suppressWarnings(requireNamespace("texreg", quietly = TRUE))) {
@@ -12,6 +12,17 @@
     setMethod("extract",
               signature = className("iv_robust", pkgname),
               definition = extract.iv_robust
+    )
+  }
+  invisible()
+}
+
+#' @importFrom utils packageVersion
+.onAttach <- function(libname, pkgname) {
+  if (isNamespaceLoaded("broom") && packageVersion("broom") <= "0.5.0") {
+    packageStartupMessage(
+      "Warning: the `broom` package version 0.5.0 or earlier is loaded.\n",
+      "Please upgrade `broom` or `tidy` methods may not work as expected."
     )
   }
   invisible()
