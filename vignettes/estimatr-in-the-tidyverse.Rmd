@@ -17,7 +17,7 @@ library(knitr)
 
 `estimatr` is for (fast) OLS and IV regression with robust standard errors. This document shows how `estimatr` integrates with RStudio's `tidyverse` suite of packages.
 
-We use the Swiss Fertility and Socioeconomic Indicators data (available in <tt>R</tt>, description [here](https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/swiss.html)) to show how `lm_robust` works with `broom`, `dplyr`, `ggplot2`, and `purrr`. What is shown for `lm_robust` here typically applies to all the other `estimatr` functions (`lm_robust`, `difference_in_mean`, `lm_lin`, `iv_robust`, and `horovitz_thompson`).
+We use the Swiss Fertility and Socioeconomic Indicators data (available in <tt>R</tt>, description [here](https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/swiss.html)) to show how `lm_robust` works with `dplyr`, `ggplot2`, and `purrr`. What is shown for `lm_robust` here typically applies to all the other `estimatr` functions (`lm_robust`, `difference_in_mean`, `lm_lin`, `iv_robust`, and `horovitz_thompson`).
 
 # Getting tidy
 

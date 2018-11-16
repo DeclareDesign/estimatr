@@ -73,7 +73,7 @@ stargazer(fit_1, fit_2,
 
 ```{r}
 library(xtable)
-fit <- lm(mpg ~ disp, data = mtcars)
+fit <- lm_robust(mpg ~ disp, data = mtcars)
 fit %>% tidy %>% xtable()
 ```
 
@@ -83,7 +83,7 @@ fit %>% tidy %>% xtable()
 
 ```{r, message=FALSE}
 library(huxtable)
-fit <- lm(mpg ~ disp, data = mtcars)
+fit <- lm_robust(mpg ~ disp, data = mtcars)
 fit %>% tidy %>% hux() %>% print_latex()
 ```
 
