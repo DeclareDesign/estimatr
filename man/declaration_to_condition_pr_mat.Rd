@@ -15,15 +15,15 @@ object contains the experimental design that will be represented in a
 condition probability matrix}
 
 \item{condition1}{The name of the first condition, often the control group. If \code{NULL},
-defaults to first condition in randomizr declaration. Either both `condition1`
-and `condition2` have to be specified or both left as \code{NULL}.}
+defaults to first condition in randomizr declaration. Either both \code{condition1}
+and \code{condition2} have to be specified or both left as \code{NULL}.}
 
 \item{condition2}{The name of the second condition, often the treatment group. If \code{NULL},
-defaults to second condition in randomizr declaration. Either both `condition1`
-and `condition2` have to be specified or both left as \code{NULL}.}
+defaults to second condition in randomizr declaration. Either both \code{condition1}
+and \code{condition2} have to be specified or both left as \code{NULL}.}
 
 \item{prob_matrix}{An optional probability matrix to override the one in
-`ra_declaration`}
+\code{ra_declaration}}
 }
 \value{
 a numeric 2n*2n matrix of marginal and joint condition treatment

@@ -26,9 +26,9 @@ of observations to be used.}
 \item{clusters}{An optional bare (unquoted) name of the variable that
 corresponds to the clusters in the data.}
 
-\item{se_type}{The sort of standard error sought. If `clusters` is
+\item{se_type}{The sort of standard error sought. If \code{clusters} is
 not specified the options are "HC0", "HC1" (or "stata", the equivalent),
-"HC2" (default), "HC3", or  "classical". If `clusters` is specified the
+"HC2" (default), "HC3", or  "classical". If \code{clusters} is specified the
 options are "CR0", "CR2" (default), or "stata" are
 permissible.}
 
