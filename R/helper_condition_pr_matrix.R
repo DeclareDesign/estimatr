@@ -14,13 +14,13 @@ obtain <- function(ra_declaration, condition) {
 #' object contains the experimental design that will be represented in a
 #' condition probability matrix
 #' @param condition1 The name of the first condition, often the control group. If \code{NULL},
-#' defaults to first condition in randomizr declaration. Either both `condition1`
-#' and `condition2` have to be specified or both left as \code{NULL}.
+#' defaults to first condition in randomizr declaration. Either both \code{condition1}
+#' and \code{condition2} have to be specified or both left as \code{NULL}.
 #' @param condition2 The name of the second condition, often the treatment group. If \code{NULL},
-#' defaults to second condition in randomizr declaration. Either both `condition1`
-#' and `condition2` have to be specified or both left as \code{NULL}.
+#' defaults to second condition in randomizr declaration. Either both \code{condition1}
+#' and \code{condition2} have to be specified or both left as \code{NULL}.
 #' @param prob_matrix An optional probability matrix to override the one in
-#' `ra_declaration`
+#' \code{ra_declaration}
 #'
 #' @details This function takes a \code{"ra_declaration"}, generated
 #' by the \code{\link[randomizr]{declare_ra}} function in \pkg{randomizr} and

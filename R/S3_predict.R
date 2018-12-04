@@ -15,7 +15,7 @@
 #' @param ... other arguments, unused
 #'
 #' @details Produces predicted values, obtained by evaluating the regression
-#' function in the frame `newdata`` for fits from \code{lm_robust} and
+#' function in the frame \code{newdata} for fits from \code{lm_robust} and
 #' \code{lm_lin}. If the logical se.fit is TRUE, standard errors of the
 #' predictions are calculated. Setting intervals specifies computation of
 #' confidence or prediction (tolerance) intervals at the specified level,
@@ -30,7 +30,7 @@
 #' \code{lm_robust}.
 #'
 #' The prediction intervals are for a single observation at each case in
-#' `newdata` with error variance(s) `pred.var`. The the default is to assume
+#' \code{newdata} with error variance(s) \code{pred.var}. The the default is to assume
 #' that future observations have the same error variance as those used for
 #' fitting, which is gotten from the fit \code{\link{lm_robust}} object. If
 #' weights is supplied, the inverse of this is used as a scale factor. If the

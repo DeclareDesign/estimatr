@@ -14,11 +14,11 @@ starprep(..., stat = c("std.error", "statistic", "p.value", "ci", "df"),
 
 \item{se_type}{(optional) if any of the objects are lm objects, what standard
 errors should be used. Must only be one type and will be used for all lm
-objects passed to starprep. See `commarobust` for more.}
+objects passed to starprep. See \code{commarobust} for more.}
 
 \item{clusters}{(optional) if any of the objects are lm objects, what clusters
 should be used, if clusters should be used. Must only be one vector and will
-be used for all lm objects passed to starprep. See `commarobust` for more.}
+be used for all lm objects passed to starprep. See \code{commarobust} for more.}
 
 \item{alpha}{(optional) if any of the objects are lm objects, what significance level
 should be used for the p-values or confidence intervals}
@@ -31,7 +31,7 @@ Prepare model fits for stargazer
 }
 \details{
 Used to help extract statistics from lists of model fits for stargazer.
-Prefers lm_robust objects, but because `stargazer` does not work with `lm_robust`
-objects, `starprep` can also take `lm` objects and calls `commarobust` to get
+Prefers lm_robust objects, but because \code{stargazer} does not work with \code{lm_robust}
+objects, \code{starprep} can also take \code{lm} objects and calls \code{commarobust} to get
 the preferred, robust statistics.
 }

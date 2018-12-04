@@ -30,10 +30,10 @@ pass multiple-fixed effects with intersecting groups. Speed gains are greatest f
 variables with large numbers of groups and when using "HC1" or "stata" standard errors.
 See 'Details'.}
 
-\item{se_type}{The sort of standard error sought. If `clusters` is
+\item{se_type}{The sort of standard error sought. If \code{clusters} is
 not specified the options are "HC0", "HC1" (or "stata", the equivalent),
  "HC2" (default), "HC3", or
-"classical". If `clusters` is specified the options are "CR0", "CR2" (default), or "stata". Can also specify "none", which may speed up estimation of the coefficients.}
+"classical". If \code{clusters} is specified the options are "CR0", "CR2" (default), or "stata". Can also specify "none", which may speed up estimation of the coefficients.}
 
 \item{ci}{logical. Whether to compute and return p-values and confidence
 intervals, TRUE by default.}

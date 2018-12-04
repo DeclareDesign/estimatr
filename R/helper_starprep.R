@@ -1,9 +1,9 @@
 #' Build lm_robust object from lm fit
 #'
 #' @param model an lm model object
-#' @param se_type The sort of standard error sought. If `clusters` is
+#' @param se_type The sort of standard error sought. If \code{clusters} is
 #' not specified the options are "HC0", "HC1" (or "stata", the equivalent),
-#' "HC2" (default), "HC3", or "classical". If `clusters` is specified the
+#' "HC2" (default), "HC3", or "classical". If \code{clusters} is specified the
 #' options are "CR0", "CR2" (default), or "stata". Can also specify "none",
 #' which may speed up estimation of the coefficients.
 #' @param clusters A vector corresponding to the clusters in the data.
@@ -200,16 +200,16 @@ commarobust <- function(model,
 #' @param stat either "std.error" (the default), "statistic" (the t-statistic), "p.value", "ci", or "df"
 #' @param se_type (optional) if any of the objects are lm objects, what standard
 #' errors should be used. Must only be one type and will be used for all lm
-#' objects passed to starprep. See `commarobust` for more.
+#' objects passed to starprep. See \code{commarobust} for more.
 #' @param clusters (optional) if any of the objects are lm objects, what clusters
 #' should be used, if clusters should be used. Must only be one vector and will
-#' be used for all lm objects passed to starprep. See `commarobust` for more.
+#' be used for all lm objects passed to starprep. See \code{commarobust} for more.
 #' @param alpha (optional) if any of the objects are lm objects, what significance level
 #' should be used for the p-values or confidence intervals
 #'
 #' @details Used to help extract statistics from lists of model fits for stargazer.
-#' Prefers lm_robust objects, but because `stargazer` does not work with `lm_robust`
-#' objects, `starprep` can also take `lm` objects and calls `commarobust` to get
+#' Prefers lm_robust objects, but because \code{stargazer} does not work with \code{lm_robust}
+#' objects, \code{starprep} can also take \code{lm} objects and calls \code{commarobust} to get
 #' the preferred, robust statistics.
 #'
 #' @return a list of vectors of extracted statistics for stargazers

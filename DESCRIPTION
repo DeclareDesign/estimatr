@@ -21,7 +21,7 @@ Imports:
     Rcpp (>= 0.12.16),
     rlang (>= 0.2.0)
 LinkingTo: Rcpp, RcppEigen
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
 LazyData: true
 Suggests:
     fabricatr (>= 0.4),

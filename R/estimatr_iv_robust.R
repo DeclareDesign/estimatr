@@ -19,10 +19,10 @@
 #' pass multiple-fixed effects with intersecting groups. Speed gains are greatest for
 #' variables with large numbers of groups and when using "HC1" or "stata" standard errors.
 #' See 'Details'.
-#' @param se_type The sort of standard error sought. If `clusters` is
+#' @param se_type The sort of standard error sought. If \code{clusters} is
 #' not specified the options are "HC0", "HC1" (or "stata", the equivalent),
 #'  "HC2" (default), "HC3", or
-#' "classical". If `clusters` is specified the options are "CR0", "CR2" (default), or "stata". Can also specify "none", which may speed up estimation of the coefficients.
+#' "classical". If \code{clusters} is specified the options are "CR0", "CR2" (default), or "stata". Can also specify "none", which may speed up estimation of the coefficients.
 #' @param ci logical. Whether to compute and return p-values and confidence
 #' intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
