@@ -16,15 +16,11 @@ combine_coefficients <- function(model, combined_coefficients, level = 0.95, ...
  conf.high <-  ci[,2]
  outcome <- rownames(attr(model$terms, "factors"))[1]
 
- data.frame(estimator_label = estimator_label,
-            term = combined_coefficient,
-            estimate = estimate,
+ data.frame(estimate = estimate,
             std.error =  std.error,
             p.value = p.value ,
             conf.low = conf.low,
             conf.high = conf.high,
-            df = df,
-            outcome =  outcome,
-            estimand_label = estimand_label
+            df = df
             )
 }
