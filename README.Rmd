@@ -20,6 +20,7 @@ options(digits = 2)
 [![Travis-CI Build Status](https://travis-ci.org/DeclareDesign/estimatr.svg?branch=master)](https://travis-ci.org/DeclareDesign/estimatr)
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/DeclareDesign/estimatr?branch=master&svg=true)](https://ci.appveyor.com/project/DeclareDesign/estimatr)
 [![Coverage Status](https://coveralls.io/repos/github/DeclareDesign/estimatr/badge.svg?branch=master)](https://coveralls.io/github/DeclareDesign/estimatr?branch=master)
+![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/estimatr)
 
 **estimatr** is an `R` package providing a range of commonly-used linear estimators, designed for speed and for ease-of-use. Users can easily recover robust, cluster-robust, and other design appropriate estimates. We include two functions that implement means estimators, `difference_in_means()` and `horvitz_thompson()`, and three linear regression estimators, `lm_robust()`, `lm_lin()`, and `iv_robust()`. In each case, users can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs. The [Getting Started Guide](/r/estimatr/articles/getting-started.html) describes each estimator provided by **estimatr** and how it can be used in your analysis.
 
