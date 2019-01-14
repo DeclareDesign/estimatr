@@ -111,3 +111,8 @@ print.horvitz_thompson <- function(x, ...) {
 print.lh_robust <- function(x, ...) {
   print(summarize_tidy(x))
 }
+
+print.wrapper <- function(x, ...) {
+  print(summarize_tidy(x))
+}
+

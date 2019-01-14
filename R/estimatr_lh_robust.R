@@ -153,7 +153,7 @@ lh_robust <- function(formula,
   return_list <- list(lm_robust =  return_lm_robust,
                       lh_robust = return_lh_robust )
 
-  attr( return_lh_robust , "class") <- "lh_wrapper"
+  attr(   return_list , "class") <- "lh_wrapper"
 
   return(return_list)
 
