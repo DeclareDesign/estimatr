@@ -6,6 +6,8 @@
 \alias{tidy.iv_robust}
 \alias{tidy.difference_in_means}
 \alias{tidy.horvitz_thompson}
+\alias{tidy.lh_wrapper}
+\alias{tidy.lh_robust}
 \title{Tidy an estimatr object}
 \usage{
 \method{tidy}{lm_robust}(x, ...)
@@ -15,6 +17,10 @@
 \method{tidy}{difference_in_means}(x, ...)
 
 \method{tidy}{horvitz_thompson}(x, ...)
+
+\method{tidy}{lh_wrapper}(x, ...)
+
+\method{tidy}{lh_robust}(x, ...)
 }
 \arguments{
 \item{x}{An object returned by one of the estimators}

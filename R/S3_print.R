@@ -3,6 +3,8 @@ print.lm_robust <- function(x, ...) {
   print(summarize_tidy(x))
 }
 
+
+
 #' @export
 print.iv_robust <- function(x, ...) {
   print(summarize_tidy(x))
@@ -102,5 +104,10 @@ print.difference_in_means <- function(x, ...) {
 
 #' @export
 print.horvitz_thompson <- function(x, ...) {
+  print(summarize_tidy(x))
+}
+
+#' @export
+print.lh_robust <- function(x, ...) {
   print(summarize_tidy(x))
 }
