@@ -108,11 +108,18 @@ print.horvitz_thompson <- function(x, ...) {
 }
 
 #' @export
-print.lh_robust <- function(x, ...) {
+print.lh <- function(x, ...) {
   print(summarize_tidy(x))
 }
 
-print.wrapper <- function(x, ...) {
-  print(summarize_tidy(x))
+#' @export
+print.lh_robust <- function(x, ...) {
+  lnames <- names(x)
+  for (i in 1:length(x)) {
+    cat("$", lnames[i], "\n", sep = "")
+    print(x[[i]])
+    cat("\n")
+  }
+  invisible(x)
 }
 

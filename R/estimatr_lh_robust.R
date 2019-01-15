@@ -35,14 +35,14 @@
 #' @param lh_term A character string indicating the name of term to be assigned to the linear combination.
 #' @details
 #'
-#' This function is simply a wrapper for \code{\link{lm_robust}} and for
-#' \code{\link{linearHypothesis}}. It first runs \code{lm_robust} and
-#' then passes \code{"lm_robust"} object as an argument to \code{linearHypothesis}.
+#' This function is a wrapper for \code{\link{lm_robust}} and for
+#' \code{\link{car::linearHypothesis}}. It first runs \code{lm_robust} and
+#' then passes \code{"lm_robust"} object as an argument to \code{car::linearHypothesis}.
 #'
-#' @return An object of class \code{"lm_robust"} (see \code{\link{lm_robust}}) and \code{"lh_robust"}.
+#' @return An object of class \code{"lm_robust"} and \code{"lh"}.
 #'
 #'
-#' An object of class \code{"lh_robust"} is a list containing the
+#' Both objects are a list containing the
 #' following components:
 #'   \item{coefficients}{the estimated linear combination of coefficients}
 #'   \item{std.error}{the estimated standard errors of the linear combination}
@@ -134,7 +134,7 @@ lh_robust <- function(formula,
   ci <- estimate + std.error %o% qt(alpha_, df)
   if(is.null(lh_term)) lh_term <- linearHypothesis
 
-  return_lh_robust <- list(   coefficients =  estimate,
+  return_lh <- list(   coefficients =  estimate,
                                 std.error =  std.error,
                                 statistic = abs(tt),
                                 p.value = p.value,
@@ -143,17 +143,18 @@ lh_robust <- function(formula,
                                 conf.high =  ci[,2],
                                 df = df,
                                 term = lh_term,
-                                outcome =  return_lm_robust$outcome)
+                                outcome =  return_lm_robust$outcome,
+                                linearHypothesis = out)
 
 
 
-  attr( return_lh_robust , "class") <- "lh_robust"
+  attr( return_lh , "class") <- "lh"
 
 
   return_list <- list(lm_robust =  return_lm_robust,
-                      lh_robust = return_lh_robust )
+                      linearHypothesis =  return_lh )
 
-  attr(   return_list , "class") <- "lh_wrapper"
+  attr(   return_list , "class") <- "lh_robust"
 
   return(return_list)
 

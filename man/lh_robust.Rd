@@ -53,10 +53,10 @@ See \code{\link{linearHypothesis}} for more details.}
 \item{lh_term}{A character string indicating the name of term to be assigned to the linear combination.}
 }
 \value{
-An object of class \code{"lm_robust"} (see \code{\link{lm_robust}}) and \code{"lh_robust"}.
+An object of class \code{"lm_robust"} and \code{"lh"}.
 
 
-An object of class \code{"lh_robust"} is a list containing the
+Both objects are a list containing the
 following components:
   \item{coefficients}{the estimated linear combination of coefficients}
   \item{std.error}{the estimated standard errors of the linear combination}
@@ -73,7 +73,7 @@ This function is a wrapper for \code{\link{lm_robust}} that
 is useful for estimating linear combination of coefficients.
 }
 \details{
-This function is simply a wrapper for \code{\link{lm_robust}} and for
-\code{\link{linearHypothesis}}. It first runs \code{lm_robust} and
-then passes \code{"lm_robust"} object as an argument to \code{linearHypothesis}.
+This function is a wrapper for \code{\link{lm_robust}} and for
+\code{\link{car::linearHypothesis}}. It first runs \code{lm_robust} and
+then passes \code{"lm_robust"} object as an argument to \code{car::linearHypothesis}.
 }

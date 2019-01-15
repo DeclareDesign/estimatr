@@ -88,7 +88,7 @@ tidy.horvitz_thompson <- tidy_data_frame
 #'
 #' @export
 #' @family estimatr tidiers
-tidy.lh_wrapper <- function(x, ...) {
+tidy.lh_robust <- function(x, ...) {
    do.call(rbind, lapply(x, tidy_data_frame))
 }
 
@@ -97,5 +97,5 @@ tidy.lh_wrapper <- function(x, ...) {
 #'
 #' @export
 #' @family estimatr tidiers
-tidy.lh_robust <- tidy_data_frame
+tidy.lh <- tidy_data_frame
 
