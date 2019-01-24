@@ -10,7 +10,7 @@ dat <- data.frame(
 lmbo <- lm_robust(y ~ z + as.factor(x), data = dat)
 lmfo <- lm_robust(y ~ z, data = dat, fixed_effects = ~ x)
 
-test_that("tidy, summary, and print work", {
+test_that("tidy, glance, summary, and print work", {
 
   ## lm_robust
   lmo <- lm_robust(y ~ x, data = dat, se_type = "classical")
@@ -38,7 +38,6 @@ test_that("tidy, summary, and print work", {
     "data.frame"
   )
 
-
   expect_equal(
     nrow(tidy(lm_robust(y ~ x, data = dat, se_type = "classical"))),
     2
@@ -47,6 +46,18 @@ test_that("tidy, summary, and print work", {
   expect_equal(
     nrow(tidy(lmfo)),
     1
+  )
+
+  capture_output(glance(lmo))
+
+  expect_is(glance(lmo), "data.frame")
+
+  expect_equal(nrow(glance(lmo)), 1)
+
+
+  expect_equal(
+    colnames(glance(lmo)),
+    c("r.squared", "adj.r.squared", "statistic", "p.value", "df.residual", "N")
   )
 
   expect_equal(

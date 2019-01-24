@@ -56,7 +56,7 @@ print_summary_lm_like <- function(x,
     fstat
   )
 
-  if (!is.null(x$proj_fstatistic)) {
+  if (exists("proj_fstatistic", x)) {
     cat(
       "\nMultiple R-squared (proj. model): ",
       formatC(x$proj_r.squared, digits = digits),
