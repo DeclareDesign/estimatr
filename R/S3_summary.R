@@ -131,17 +131,10 @@ summarize_tidy <- function(object, test = "t", ...) {
   return(tidy_mat)
 }
 
-#' @export
-summary.lh <- function(x,...){
-  print(x)
-  cat("\n")
-  print(x$linearHypothesis)
-}
+
 
 #' @export
 summary.lh_robust <- function(x,...){
-  cat("$lm_robust \n ")
-  print(summary(x$lm_robust))
-  cat("\n\n$linearHypothesis \n \n")
-  summary(x$linearHypothesis)
+  class(x) <- "summary.lh_robust"
+  x
 }

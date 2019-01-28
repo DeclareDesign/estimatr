@@ -89,13 +89,15 @@ tidy.horvitz_thompson <- tidy_data_frame
 #' @export
 #' @family estimatr tidiers
 tidy.lh_robust <- function(x, ...) {
-   do.call(rbind, lapply(x, tidy_data_frame))
-}
 
+   rbind(tidy(x$lm_robust), tidy(x$linearHypothesis))
+
+}
+#'
 #' @rdname estimatr_tidiers
 #' @templateVar class lh_robust
 #'
 #' @export
 #' @family estimatr tidiers
-tidy.lh <- tidy_data_frame
+ tidy.lh <- tidy_data_frame
 

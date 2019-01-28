@@ -66,60 +66,12 @@ lh_robust <- function(formula,
                       alpha = .05,
                       return_vcov = TRUE,
                       try_cholesky = FALSE,
-                      linearHypothesis = NULL,
-                      lh_term = NULL
+                      linearHypothesis = NULL, ...
                       ) {
 
-  return_list <- list()
 
 
-  datargs <- enquos(
-    formula = formula,
-    weights = weights,
-    subset = subset,
-    cluster = clusters,
-    fixed_effects = fixed_effects
-  )
-  data <- enquo(data)
-  model_data <- clean_model_data(data = data, datargs)
-
-  fes <- is.character(model_data[["fixed_effects"]])
-  if (fes) {
-    yoriginal <- model_data[["outcome"]]
-    Xoriginal <- model_data[["design_matrix"]]
-    model_data <- demean_fes(model_data)
-    attr(model_data$fixed_effects, "fe_rank") <- sum(model_data[["fe_levels"]]) + 1
-  } else {
-    Xoriginal <- NULL
-    yoriginal <- NULL
-  }
-
-  return_list <-
-    lm_robust_fit(
-      y = model_data$outcome,
-      X = model_data$design_matrix,
-      yoriginal = yoriginal,
-      Xoriginal = Xoriginal,
-      weights = model_data$weights,
-      cluster = model_data$cluster,
-      fixed_effects = model_data$fixed_effects,
-      ci = ci,
-      se_type = se_type,
-      alpha = alpha,
-      return_vcov = return_vcov,
-      try_cholesky = try_cholesky,
-      has_int = attr(model_data$terms, "intercept"),
-      iv_stage = list(0)
-    )
-
-  return_lm_robust <- lm_return(
-    return_list,
-    model_data = model_data,
-    formula = formula
-  )
-
-
-  model <- return_lm_robust
+  model <- lm_robust(formula, data, ...)
 
   out <- car::linearHypothesis(model, linearHypothesis,
                                level = 1-alpha)
@@ -132,29 +84,29 @@ lh_robust <- function(formula,
   alpha_ <- alpha/2
   alpha_ <- c(alpha_, 1 - alpha_)
   ci <- estimate + std.error %o% qt(alpha_, df)
-  if(is.null(lh_term)) lh_term <- linearHypothesis
 
-  return_lh <- list(   coefficients =  estimate,
-                                std.error =  std.error,
-                                statistic = abs(tt),
-                                p.value = p.value,
-                                alpha = alpha,
-                                conf.low  =  ci[,1],
-                                conf.high =  ci[,2],
-                                df = df,
-                                term = lh_term,
-                                outcome =  return_lm_robust$outcome,
-                                linearHypothesis = out)
+  return_lh <-  list( coefficients =  estimate,
+                      std.error =  std.error,
+                      statistic = abs(tt),
+                      p.value = p.value,
+                      alpha = alpha,
+                      conf.low  =  ci[,1],
+                      conf.high =  ci[,2],
+                      df = df,
+                      term = linearHypothesis,
+                      outcome =  model$outcome,
+                      linearHypothesis = out)
 
 
 
   attr( return_lh , "class") <- "lh"
 
 
-  return_list <- list(lm_robust =  return_lm_robust,
+  return_list <- list(lm_robust =  model,
                       linearHypothesis =  return_lh )
 
   attr(   return_list , "class") <- "lh_robust"
+
 
   return(return_list)
 

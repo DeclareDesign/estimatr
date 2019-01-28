@@ -123,3 +123,15 @@ print.lh_robust <- function(x, ...) {
   invisible(x)
 }
 
+
+
+
+#' @export
+print.summary.lh_robust <- function(x,...){
+  cat("$lm_robust \n ")
+  print(summary(x$lm_robust))
+  cat("\n\n$linearHypothesis \n \n")
+  x <- x[[2]]
+  print(x$linearHypothesis)
+}
+

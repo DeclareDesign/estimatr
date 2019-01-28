@@ -6,7 +6,7 @@
 \usage{
 lh_robust(formula, data, weights, subset, clusters, fixed_effects,
   se_type = NULL, ci = TRUE, alpha = 0.05, return_vcov = TRUE,
-  try_cholesky = FALSE, linearHypothesis = NULL, lh_term = NULL)
+  try_cholesky = FALSE, linearHypothesis = NULL, ...)
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}}
