@@ -53,6 +53,33 @@
 #'   \item{conf.high}{the upper bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{term}{a character vector of coefficient names}
 #'   \item{alpha}{the significance level specified by the user}
+#' @examples
+#'
+#' library(fabricatr)
+#' dat <- fabricate(
+#'   N = 40,
+#'   y = rpois(N, lambda = 4),
+#'   x = rnorm(N),
+#'   z = rbinom(N, 1, prob = 0.4)
+#'   clusterID = sample(1:4, 40, replace = TRUE)
+#' )
+#'
+#' # Default variance estimator is HC2 robust standard errors
+#' lhro <- lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0")
+#'
+#' # Also recovers other sorts of standard erorrs just as specified in \code{\link{lm_robust}}
+#' lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0", se_types = classical", ")
+#' lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0", se_types = "HC0")
+#' # Can specify clusters for cluster-robust inference
+#' lh_robust(y ~ x + z,
+#'           data = dat,
+#'           linearHypothesis = "z + 2x = 0",
+#'           clusters = clusterID )
+#'
+#' #  Can tidy() the data in to a data.frame
+#' tidy(lmro)
+#' # Can use summary() to get more statistics
+#' summary(lmro)
 #' @export
 #'
 lh_robust <- function(formula,
@@ -74,6 +101,9 @@ lh_robust <- function(formula,
     args$linearHypothesis <- NULL
     model <- do.call(lm_robust, args)
 
+  if(is.null(linearHypothesis)){
+    warning("No linear hypothesis test performed")
+    return(model)}
 
   out <- car::linearHypothesis(model, linearHypothesis,
                                level = 1-alpha)
