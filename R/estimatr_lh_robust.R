@@ -66,12 +66,14 @@ lh_robust <- function(formula,
                       alpha = .05,
                       return_vcov = TRUE,
                       try_cholesky = FALSE,
-                      linearHypothesis = NULL, ...
+                      linearHypothesis = NULL
                       ) {
+    call <- match.call()
+    args <- as.list(call)
+    args[[1]] <- NULL
+    args$linearHypothesis <- NULL
+    model <- do.call(lm_robust, args)
 
-
-
-  model <- lm_robust(formula, data, ...)
 
   out <- car::linearHypothesis(model, linearHypothesis,
                                level = 1-alpha)

@@ -84,7 +84,7 @@ tidy.horvitz_thompson <- tidy_data_frame
 
 
 #' @rdname estimatr_tidiers
-#' @templateVar class lh_wrapper
+#' @templateVar class lh_robust
 #'
 #' @export
 #' @family estimatr tidiers
@@ -95,7 +95,7 @@ tidy.lh_robust <- function(x, ...) {
 }
 #'
 #' @rdname estimatr_tidiers
-#' @templateVar class lh_robust
+#' @templateVar class lh
 #'
 #' @export
 #' @family estimatr tidiers
