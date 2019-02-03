@@ -5,8 +5,8 @@
 \title{Two-Stage Least Squares Instrumental Variables Regression}
 \usage{
 iv_robust(formula, data, weights, subset, clusters, fixed_effects,
-  se_type = NULL, ci = TRUE, alpha = 0.05, return_vcov = TRUE,
-  try_cholesky = FALSE)
+  se_type = NULL, ci = TRUE, alpha = 0.05, diagnostics = TRUE,
+  return_vcov = TRUE, try_cholesky = FALSE)
 }
 \arguments{
 \item{formula}{an object of class formula of the regression and the instruments.
@@ -78,6 +78,7 @@ following components:
   \item{r.squared}{the \eqn{R^2} of the second stage regression}
   \item{adj.r.squared}{the \eqn{R^2} of the second stage regression, but penalized for having more parameters, \code{rank}}
   \item{fstatistic}{a vector with the value of the second stage F-statistic with the numerator and denominator degrees of freedom}
+  \item{firststage_fstatistic}{a vector with the value of the first stage F-statistic with the numerator and denominator degrees of freedom, useful for a test for weak instruments}
   \item{weighted}{whether or not weights were applied}
   \item{call}{the original function call}
   \item{fitted.values}{the matrix of predicted means}

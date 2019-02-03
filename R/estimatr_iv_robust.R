@@ -93,6 +93,7 @@
 #'   \item{r.squared}{the \eqn{R^2} of the second stage regression}
 #'   \item{adj.r.squared}{the \eqn{R^2} of the second stage regression, but penalized for having more parameters, \code{rank}}
 #'   \item{fstatistic}{a vector with the value of the second stage F-statistic with the numerator and denominator degrees of freedom}
+#'   \item{firststage_fstatistic}{a vector with the value of the first stage F-statistic with the numerator and denominator degrees of freedom, useful for a test for weak instruments}
 #'   \item{weighted}{whether or not weights were applied}
 #'   \item{call}{the original function call}
 #'   \item{fitted.values}{the matrix of predicted means}
@@ -142,6 +143,7 @@ iv_robust <- function(formula,
                       se_type = NULL,
                       ci = TRUE,
                       alpha = .05,
+                      diagnostics = TRUE,
                       return_vcov = TRUE,
                       try_cholesky = FALSE) {
   datargs <- enquos(
@@ -172,6 +174,7 @@ iv_robust <- function(formula,
   # First stage
   # -----------
 
+  has_int <- attr(model_data$terms, "intercept")
   first_stage <-
     lm_robust_fit(
       y = model_data$design_matrix,
@@ -180,11 +183,11 @@ iv_robust <- function(formula,
       cluster = model_data$cluster,
       fixed_effects = model_data$fixed_effects,
       ci = FALSE,
-      se_type = "none",
-      has_int = attr(model_data$terms, "intercept"),
+      se_type = if (diagnostics) se_type else "none",
+      has_int = has_int,
       alpha = alpha,
       return_fit = TRUE,
-      return_vcov = return_vcov,
+      return_vcov = FALSE,
       try_cholesky = try_cholesky,
       iv_stage = list(1)
     )
@@ -215,12 +218,135 @@ iv_robust <- function(formula,
       iv_stage = list(2, model_data$design_matrix)
     )
 
+
   return_list <- lm_return(
     second_stage,
     model_data = model_data,
     formula = formula
   )
 
+  if (diagnostics) {
+
+
+    # DWF statistic
+    lmo <- lm_robust_fit(
+      y = model_data$outcome,
+      X = model_data$design_matrix,
+      weights = model_data$weights,
+      cluster = model_data$cluster,
+      fixed_effects = model_data$fixed_effects,
+      ci = FALSE,
+      se_type = "none",
+      has_int = has_int,
+      alpha = alpha,
+      return_fit = TRUE,
+      return_vcov = FALSE,
+      try_cholesky = try_cholesky
+    )
+    lme <- lm_robust_fit(
+      y = model_data$outcome,
+      X = cbind(model_data$design_matrix, first_stage[["fitted.values"]]),
+      weights = model_data$weights,
+      cluster = model_data$cluster,
+      fixed_effects = model_data$fixed_effects,
+      ci = FALSE,
+      se_type = se_type,
+      has_int = has_int,
+      alpha = alpha,
+      return_fit = TRUE,
+      return_vcov = TRUE,
+      try_cholesky = try_cholesky
+    )
+
+    coef_drop <- -1 * seq.int(1, ncol(model_data$design_matrix) + has_int, 1)
+    vcov_drop <- -1 * seq.int(1, ncol(model_data$design_matrix), 1)
+    wu_hausman_nomdf <- lmo[["rank"]] - as.numeric(!fes) * has_int
+    wu_hausman_fstat <- as.numeric(compute_fstat(
+      coefs = lme$coefficients[coef_drop],
+      vcov = lme$vcov[vcov_drop, vcov_drop],
+      nomdf =wu_hausman_nomdf
+    ))
+
+    wu_hausman <- c(
+      "value" = wu_hausman_fstat,
+      "numdf" = wu_hausman_nomdf,
+      "dendf" = lme[["df.residual"]],
+      "p.value" = pf(wu_hausman_fstat, wu_hausman_nomdf, lme[["df.residual"]], lower.tail = FALSE)
+    )
+
+    # Sargan statistic (only computed if n(instruments) > n(endog regressors)
+    n_instruments <- length(setdiff(
+      colnames(model_data$instrument_matrix),
+      colnames(model_data$design_matrix)
+    ))
+    n_endog <- length(setdiff(
+      colnames(model_data$design_matrix),
+      colnames(model_data$instrument_matrix)
+    ))
+
+    extra_instruments <- n_instruments - n_endog
+
+    if (extra_instruments) {
+      residuals <- second_stage[["residuals"]]
+
+      lmr <- lm_robust_fit(
+        y = residuals,
+        X = model_data$instrument_matrix,
+        weights = model_data$weights,
+        cluster = model_data$cluster,
+        fixed_effects = model_data$fixed_effects,
+        ci = FALSE,
+        se_type = se_type,
+        has_int = has_int,
+        alpha = alpha,
+        return_fit = TRUE,
+        return_vcov = TRUE,
+        try_cholesky = try_cholesky
+      )
+
+      rss <- lmr[["df.residual"]] * lmr[["res_var"]]
+
+      sargan_chisq =  lmr[["N"]] * (1 -  rss/ sum((residuals - mean(residuals))^2))
+      sargan <- c(
+        sargan_chisq,
+        extra_instruments,
+        pchisq(sargan_chisq, extra_instruments, lower.tail = FALSE)
+      )
+
+    } else {
+      sargan <- rep(NA_real_, 3)
+    }
+
+    names(sargan) <- c("value", "df", "p.value")
+
+    # weak instrument (first stage f-test)
+    first_stage_fstatistic <- first_stage[["fstatistic"]]
+    first_stage_fstatistic <- first_stage_fstatistic[!grepl("(Intercept)", names(first_stage_fstatistic))]
+    first_stage_numdf <- first_stage_fstatistic[length(first_stage_fstatistic) - 1]
+    first_stage_dendf <- first_stage_fstatistic[length(first_stage_fstatistic)]
+    for (endog in seq_len(length(first_stage_fstatistic) - 2)) {
+      pval <- pf(
+        first_stage_fstatistic[endog],
+        first_stage_numdf,
+        first_stage_dendf,
+        lower.tail = FALSE
+      )
+
+      names(pval) <- paste0(
+        gsub("\\:value", "", names(first_stage_fstatistic)[endog]),
+        ":p.value"
+      )
+
+      first_stage_fstatistic <- c(
+        first_stage_fstatistic,
+        pval
+      )
+    }
+
+    return_list[["diagnostic_first_stage_fstatistic"]] <- first_stage_fstatistic
+    return_list[["diagnostic_wu_hausman_test"]] <- wu_hausman
+    return_list[["diagnostic_sargan_test"]] <- sargan
+  }
   return_list[["call"]] <- match.call()
 
   return_list[["terms_regressors"]] <- model_data[["terms_regressors"]]
