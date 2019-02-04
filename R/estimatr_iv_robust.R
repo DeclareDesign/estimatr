@@ -227,8 +227,16 @@ iv_robust <- function(formula,
 
   if (diagnostics) {
 
+    instruments <- setdiff(
+      colnames(model_data$instrument_matrix),
+      colnames(model_data$design_matrix)
+    )
+    endog <- setdiff(
+      colnames(model_data$design_matrix),
+      colnames(model_data$instrument_matrix)
+    )
 
-    # DWF statistic
+    # DWH statistic
     lmo <- lm_robust_fit(
       y = model_data$outcome,
       X = model_data$design_matrix,
@@ -243,9 +251,13 @@ iv_robust <- function(formula,
       return_vcov = FALSE,
       try_cholesky = try_cholesky
     )
+
+    firststage_fits <- first_stage[["fitted.values"]][, endog, drop = FALSE]
+    colnames(firststage_fits) <- paste0("fit_", colnames(firststage_fits))
+
     lme <- lm_robust_fit(
       y = model_data$outcome,
-      X = cbind(model_data$design_matrix, first_stage[["fitted.values"]]),
+      X = cbind(model_data$design_matrix, firststage_fits),
       weights = model_data$weights,
       cluster = model_data$cluster,
       fixed_effects = model_data$fixed_effects,
@@ -258,13 +270,15 @@ iv_robust <- function(formula,
       try_cholesky = try_cholesky
     )
 
-    coef_drop <- -1 * seq.int(1, ncol(model_data$design_matrix) + has_int, 1)
-    vcov_drop <- -1 * seq.int(1, ncol(model_data$design_matrix), 1)
-    wu_hausman_nomdf <- lmo[["rank"]] - as.numeric(!fes) * has_int
+
+    cf0 <- na.omit(lmo[["coefficients"]])
+    cf1 <- na.omit(lme[["coefficients"]])
+    ovar <- which(!(names(cf1) %in% names(cf0)))
+    wu_hausman_nomdf <- lme[["rank"]] - lmo[["rank"]]
     wu_hausman_fstat <- as.numeric(compute_fstat(
-      coefs = lme$coefficients[coef_drop],
-      vcov = lme$vcov[vcov_drop, vcov_drop],
-      nomdf =wu_hausman_nomdf
+      coefs = cf1[ovar],
+      vcov = lme$vcov[ovar, ovar],
+      nomdf = wu_hausman_nomdf
     ))
 
     wu_hausman <- c(
@@ -275,16 +289,7 @@ iv_robust <- function(formula,
     )
 
     # Sargan statistic (only computed if n(instruments) > n(endog regressors)
-    n_instruments <- length(setdiff(
-      colnames(model_data$instrument_matrix),
-      colnames(model_data$design_matrix)
-    ))
-    n_endog <- length(setdiff(
-      colnames(model_data$design_matrix),
-      colnames(model_data$instrument_matrix)
-    ))
-
-    extra_instruments <- n_instruments - n_endog
+    extra_instruments <- length(instruments) - length(endog)
 
     if (extra_instruments) {
       residuals <- second_stage[["residuals"]]
@@ -320,27 +325,33 @@ iv_robust <- function(formula,
     names(sargan) <- c("value", "df", "p.value")
 
     # weak instrument (first stage f-test)
+    # Corresponds to Stata first stage f-test, not ivreg first stage f-test
     first_stage_fstatistic <- first_stage[["fstatistic"]]
     first_stage_fstatistic <- first_stage_fstatistic[!grepl("(Intercept)", names(first_stage_fstatistic))]
     first_stage_numdf <- first_stage_fstatistic[length(first_stage_fstatistic) - 1]
     first_stage_dendf <- first_stage_fstatistic[length(first_stage_fstatistic)]
     for (endog in seq_len(length(first_stage_fstatistic) - 2)) {
-      pval <- pf(
-        first_stage_fstatistic[endog],
-        first_stage_numdf,
-        first_stage_dendf,
-        lower.tail = FALSE
-      )
 
-      names(pval) <- paste0(
-        gsub("\\:value", "", names(first_stage_fstatistic)[endog]),
-        ":p.value"
-      )
+      # Infinite f-stat for regressors in both equations
+      # Ignore those
+      if (is.finite(first_stage_fstatistic[endog]) && first_stage_fstatistic[endog] < 1e32) {
+        pval <- pf(
+          first_stage_fstatistic[endog],
+          first_stage_numdf,
+          first_stage_dendf,
+          lower.tail = FALSE
+        )
 
-      first_stage_fstatistic <- c(
-        first_stage_fstatistic,
-        pval
-      )
+        names(pval) <- paste0(
+          gsub("\\:value", "", names(first_stage_fstatistic)[endog]),
+          ":p.value"
+        )
+
+        first_stage_fstatistic <- c(
+          first_stage_fstatistic,
+          pval
+        )
+      }
     }
 
     return_list[["diagnostic_first_stage_fstatistic"]] <- first_stage_fstatistic

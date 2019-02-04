@@ -3,31 +3,75 @@
 \name{estimatr_glancers}
 \alias{estimatr_glancers}
 \alias{glance.lm_robust}
+\alias{glance.iv_robust}
+\alias{glance.difference_in_means}
 \title{Glance at an estimatr object}
 \usage{
 \method{glance}{lm_robust}(x, ...)
+
+\method{glance}{iv_robust}(x, ...)
+
+\method{glance}{difference_in_means}(x, ...)
 }
 \arguments{
+\item{x}{An object returned by one of the estimators}
+
+\item{...}{extra arguments (not used)}
+
+\item{x}{An object returned by one of the estimators}
+
+\item{...}{extra arguments (not used)}
+
 \item{x}{An object returned by one of the estimators}
 
 \item{...}{extra arguments (not used)}
 }
 \value{
 A data.frame with columns:
-\item{r.squared}{The \eqn{R^2},
+\item{r.squared}{the \eqn{R^2},
 \deqn{R^2 = 1 - Sum(e[i]^2) / Sum((y[i] - y^*)^2),} where \eqn{y^*}
 is the mean of \eqn{y[i]} if there is an intercept and zero otherwise,
 and \eqn{e[i]} is the ith residual.}
-\item{adj.r.squared}{The \eqn{R^2} but penalized for having more parameters, \code{rank}}
-\item{statistic}{a vector with the value of the F-statistic with the numerator and denominator degrees of freedom}
+\item{adj.r.squared}{the \eqn{R^2} but penalized for having more parameters, \code{rank}}
+\item{se_type}{the standard error type specified by the user}
+\item{statistic}{the value of the F-statistic}
 \item{p.value}{p-value from the F test}
 \item{df.residual}{residual degrees of freedom}
 \item{N}{the number of observations used}
+
+A data.frame with columns:
+\item{r.squared}{The \eqn{R^2} of the second stage regression}
+\item{adj.r.squared}{The \eqn{R^2} but penalized for having more parameters, \code{rank}}
+\item{df.residual}{residual degrees of freedom}
+\item{N}{the number of observations used}
+\item{se_type}{the standard error type specified by the user}
+\item{statistic}{the value of the F-statistic}
+\item{p.value}{p-value from the F test}
+\item{statistic.weakinst}{the value of the first stage F-statistic, useful for the weak instruments test}
+\item{p.value.weakinst}{p-value from the first-stage F test, a test of weak instruments}
+
+A data.frame with columns:
+\item{r.squared}{The \eqn{R^2} of the second stage regression}
+\item{adj.r.squared}{The \eqn{R^2} but penalized for having more parameters, \code{rank}}
+\item{df.residual}{residual degrees of freedom}
+\item{N}{the number of observations used}
+\item{statistic}{the value of the F-statistic}
+\item{p.value}{p-value from the F test}
+\item{statistic.weakinst}{the value of the first stage F-statistic, useful for the weak instruments test}
+\item{p.value.weakinst}{p-value from the first-stage F test, a test of weak instruments}
 }
 \description{
+Glance at an estimatr object
+
+Glance at an estimatr object
+
 Glance at an estimatr object
 }
 \seealso{
 \code{\link[generics:glance]{generics::glance()}}, \code{\link[estimatr:lm_robust]{estimatr::lm_robust()}}, \code{\link[estimatr:lm_lin]{estimatr::lm_lin()}}
+
+\code{\link[generics:glance]{generics::glance()}}, \code{\link[estimatr:iv_robust]{estimatr::iv_robust()}}
+
+\code{\link[generics:glance]{generics::glance()}}, \code{\link[estimatr:difference_in_means]{estimatr::difference_in_means()}}
 }
 \concept{estimatr glancers}

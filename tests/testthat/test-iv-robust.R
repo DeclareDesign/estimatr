@@ -408,3 +408,9 @@ test_that("S3 methods", {
 
 })
 
+test_that("IV diagnostics", {
+
+  ivro <- iv_robust(mpg ~ hp + am | qsec + wt + hp, data = mtcars, se_type = "classical")
+
+
+})
