@@ -510,20 +510,15 @@ get_fstat <- function(tss_r2s,
   } else {
     indices <-
       seq.int(has_int + (!return_list[["fes"]]), return_list[["rank"]], by = 1)
-    fstat <- tryCatch({
-      sapply(seq_len(ncol(coefs)),
-             function(x) {
-               vcov_indices <- indices + (x - 1) * return_list[["rank"]]
-               compute_fstat(
-                 coefs = coefs[indices, x],
-                 vcov_fit = vcov_fit$Vcov_hat[vcov_indices, vcov_indices],
-                 nomdf = nomdf
-               )
-             })
-    },
-    error = function(e) {
-      rep(NA, length(fstat_names))
-    })
+
+    fstat <- compute_fstat(
+      coef_matrix = coefs,
+      coef_indices = indices,
+      vcov_fit = vcov_fit$Vcov_hat,
+      rank = return_list[["rank"]],
+      nomdf = nomdf
+    )
+
   }
 
   f <- c(
@@ -535,8 +530,24 @@ get_fstat <- function(tss_r2s,
   return(f)
 }
 
-compute_fstat <- function(coefs, vcov_fit, nomdf) {
-  crossprod(coefs, chol2inv(chol(vcov_fit)) %*% coefs) / nomdf
+compute_fstat <- function(coef_matrix, coef_indices, vcov_fit, rank, nomdf) {
+  fstat <- tryCatch({
+    vapply(seq_len(ncol(coef_matrix)),
+           function(x) {
+             vcov_indices <- coef_indices + (x - 1) * rank
+             crossprod(
+               coef_matrix[coef_indices, x],
+               chol2inv(chol(vcov_fit[vcov_indices, vcov_indices])) %*%
+                 coef_matrix[coef_indices, x]
+             ) / nomdf
+           },
+           numeric(1))
+  },
+  error = function(e) {
+    rep(NA_real_, length(ncol(coef_matrix)))
+  })
+
+  fstat
 }
 
 prep_data <- function(data,
