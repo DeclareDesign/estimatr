@@ -544,7 +544,7 @@ compute_fstat <- function(coef_matrix, coef_indices, vcov_fit, rank, nomdf) {
            numeric(1))
   },
   error = function(e) {
-    rep(NA_real_, length(ncol(coef_matrix)))
+    rep(NA_real_, ncol(coef_matrix))
   })
 
   fstat

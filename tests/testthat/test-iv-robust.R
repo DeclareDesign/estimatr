@@ -410,7 +410,60 @@ test_that("S3 methods", {
 
 test_that("IV diagnostics", {
 
-  ivro <- iv_robust(mpg ~ hp + am | qsec + wt + hp, data = mtcars, se_type = "classical")
 
+  formulae <- c(
+    mpg ~ hp | wt,
+    mpg ~ 0 + hp | wt,
+    mpg ~ 0 + hp | 0 + wt,
+    mpg ~ hp + mpg | wt + qsec,
+    mpg ~ 0 + hp + mpg | wt + qsec,
+    mpg ~ 0 + hp + mpg | 0 + wt + qsec,
+    mpg ~ hp + qsec | wt + qsec,
+    mpg ~ 0 + hp + qsec | wt + qsec,
+    mpg ~ 0 + hp + qsec | 0 + wt + qsec,
+    mpg ~ hp + qsec | wt + qsec + am,
+    mpg ~ 0 + hp + qsec | wt + qsec + am,
+    mpg ~ hp + qsec | 0 + wt + qsec + am,
+    mpg ~ 0 + hp + qsec | 0 + wt + qsec + am
+  )
+
+  build_ivreg_diagnostics_mat <- function(iv_robust_out) {
+    weakinst <- iv_robust_out[["diagnostic_first_stage_fstatistic"]]
+    wu_hausman <- iv_robust_out[["diagnostic_wu_hausman_test"]]
+    sargan <- iv_robust_out[["diagnostic_sargan_test"]]
+    n_weak_inst_fstats <- (length(weakinst) - 2) / 2
+
+    rbind(
+      matrix(
+        c(
+          weakinst[seq_len(n_weak_inst_fstats)],
+          rep(weakinst["nomdf"], n_weak_inst_fstats),
+          rep(weakinst["dendf"], n_weak_inst_fstats),
+          weakinst[n_weak_inst_fstats + 2 + seq_len(n_weak_inst_fstats)]
+        ),
+        nrow = n_weak_inst_fstats
+      ),
+      wu_hausman,
+      c(sargan[1], sargan[2], NA, sargan[3])
+    )[, c(2, 3, 1, 4)]
+  }
+
+  for (f in formulae) {
+    ivro <- iv_robust(f, data = mtcars, se_type = "classical", diagnostics = TRUE)
+    aer_ivro <- summary(ivreg(f, data = mtcars), diagnostics = TRUE)
+
+    expect_equivalent(
+      build_ivreg_diagnostics_mat(ivro),
+      aer_ivro[["diagnostics"]]
+    )
+
+    ivro_hc0 <- iv_robust(f, data = mtcars, se_type = "HC0", diagnostics = TRUE)
+    aer_ivro_hc0 <- summary(ivreg(f, data = mtcars), diagnostics = TRUE, vcov. = sandwich)
+
+    expect_equivalent(
+      build_ivreg_diagnostics_mat(ivro_hc0),
+      aer_ivro_hc0[["diagnostics"]]
+    )
+  }
 
 })

@@ -320,31 +320,12 @@ iv_robust <- function(formula,
       )
 
     } else {
-      sargan <- rep(NA_real_, 3)
+      sargan <- c(NA_real_, 0, NA_real_)
     }
 
     names(sargan) <- c("value", "df", "p.value")
 
     # weak instrument (first stage f-test)
-    lm_noinstruments <- lm_robust_fit(
-      y = model_data$design_matrix[, endog, drop = FALSE],
-      X = model_data$instrument_matrix[
-        ,
-        !(colnames(model_data$instrument_matrix) %in% instruments),
-        drop = FALSE
-      ],
-      weights = model_data$weights,
-      cluster = model_data$cluster,
-      fixed_effects = model_data$fixed_effects,
-      ci = FALSE,
-      se_type = "none",
-      has_int = has_int,
-      alpha = alpha,
-      return_fit = TRUE,
-      return_vcov = FALSE,
-      try_cholesky = try_cholesky
-    )
-
     lm_instruments <- lm_robust_fit(
       y = model_data$design_matrix[, endog, drop = FALSE],
       X = model_data$instrument_matrix,
@@ -359,18 +340,44 @@ iv_robust <- function(formula,
       return_vcov = TRUE,
       try_cholesky = try_cholesky
     )
-
-    coef_noinst <- as.matrix(lm_noinstruments[["coefficients"]])
     coef_inst <- as.matrix(lm_instruments[["coefficients"]])
-    inst_indices <- which(!(rownames(coef_inst) %in% rownames(coef_noinst)))
-    firststage_nomdf <- lm_instruments[["rank"]] - lm_noinstruments[["rank"]]
-    firststage_fstat_value <- compute_fstat(
-      coef_matrix = coef_inst,
-      coef_indices = inst_indices,
-      vcov_fit = lm_instruments[["vcov"]],
-      rank = lm_instruments[["rank"]],
-      nomdf = firststage_nomdf
-    )
+
+
+    if (all(colnames(model_data$instrument_matrix) %in% instruments)) {
+      # if all instruments (including intercept!) are only instruments
+      firststage_nomdf <- lm_instruments[["rank"]]
+      firststage_fstat_value <- lm_instruments[["fstatistic"]][seq_len(length(endog))]
+    } else {
+      lm_noinstruments <- lm_robust_fit(
+        y = model_data$design_matrix[, endog, drop = FALSE],
+        X = model_data$instrument_matrix[
+          ,
+          !(colnames(model_data$instrument_matrix) %in% instruments),
+          drop = FALSE
+          ],
+        weights = model_data$weights,
+        cluster = model_data$cluster,
+        fixed_effects = model_data$fixed_effects,
+        ci = FALSE,
+        se_type = "none",
+        has_int = has_int,
+        alpha = alpha,
+        return_fit = TRUE,
+        return_vcov = FALSE,
+        try_cholesky = try_cholesky
+      )
+
+      coef_noinst <- as.matrix(lm_noinstruments[["coefficients"]])
+      inst_indices <- which(!(rownames(coef_inst) %in% rownames(coef_noinst)))
+      firststage_nomdf <- lm_instruments[["rank"]] - lm_noinstruments[["rank"]]
+      firststage_fstat_value <- compute_fstat(
+        coef_matrix = coef_inst,
+        coef_indices = inst_indices,
+        vcov_fit = lm_instruments[["vcov"]],
+        rank = lm_instruments[["rank"]],
+        nomdf = firststage_nomdf
+      )
+    }
 
     if (ncol(coef_inst) > 1) {
       fstat_names <- paste0(colnames(coef_inst), ":value")
@@ -390,7 +397,7 @@ iv_robust <- function(formula,
           },
           numeric(1)
         ),
-        gsub("\\:value", ":p.value", fstat_names)
+        gsub("value", "p.value", fstat_names)
       )
     )
 
