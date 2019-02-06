@@ -143,7 +143,7 @@ iv_robust <- function(formula,
                       se_type = NULL,
                       ci = TRUE,
                       alpha = .05,
-                      diagnostics = TRUE,
+                      diagnostics = FALSE,
                       return_vcov = TRUE,
                       try_cholesky = FALSE) {
   datargs <- enquos(
