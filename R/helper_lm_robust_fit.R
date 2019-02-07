@@ -251,7 +251,6 @@ lm_robust_fit <- function(y,
         else "fitted.values"
 
       return_list[["fitted.values"]] <- as.matrix(fit_vals[[fitted.vals_name]])
-      return_list[["residuals"]] <- as.matrix(fit_vals[["ei"]])
     }
 
     if (fes &&

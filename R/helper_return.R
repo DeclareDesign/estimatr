@@ -36,6 +36,7 @@ lm_return <- function(return_list, model_data, formula) {
       else names(return_list[["fitted.values"]])
   }
   return_list[["fitted.values"]] <- drop(return_list[["fitted.values"]])
+  return_list[["residuals"]] <- drop(return_list[["residuals"]])
   return(return_list)
 }
 

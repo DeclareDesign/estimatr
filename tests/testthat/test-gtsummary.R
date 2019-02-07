@@ -15,6 +15,6 @@ test_that("gtsummary works with glance", {
 
   expect_equal(ncol(gto), 3L)
 
-  expect_equal(nrow(gto), 14L)
+  expect_equal(nrow(gto), 15L)
 
 })

@@ -293,10 +293,10 @@ iv_robust <- function(formula,
     extra_instruments <- length(instruments) - length(endog)
 
     if (extra_instruments) {
-      residuals <- second_stage[["residuals"]]
+      ss_residuals <- model_data$outcome - second_stage[["fitted.values"]]
 
       lmr <- lm_robust_fit(
-        y = residuals,
+        y = as.matrix(ss_residuals),
         X = model_data$instrument_matrix,
         weights = model_data$weights,
         cluster = model_data$cluster,
@@ -312,7 +312,7 @@ iv_robust <- function(formula,
 
       rss <- lmr[["df.residual"]] * lmr[["res_var"]]
 
-      sargan_chisq =  lmr[["N"]] * (1 -  rss/ sum((residuals - mean(residuals))^2))
+      sargan_chisq =  lmr[["N"]] * (1 -  rss / sum((ss_residuals - mean(ss_residuals))^2))
       sargan <- c(
         sargan_chisq,
         extra_instruments,

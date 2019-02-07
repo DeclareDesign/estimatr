@@ -415,9 +415,9 @@ test_that("IV diagnostics", {
     mpg ~ hp | wt,
     mpg ~ 0 + hp | wt,
     mpg ~ 0 + hp | 0 + wt,
-    mpg ~ hp + mpg | wt + qsec,
-    mpg ~ 0 + hp + mpg | wt + qsec,
-    mpg ~ 0 + hp + mpg | 0 + wt + qsec,
+    mpg ~ hp + am | wt + qsec,
+    mpg ~ 0 + hp + am | wt + qsec,
+    mpg ~ 0 + hp + am | 0 + wt + qsec,
     mpg ~ hp + qsec | wt + qsec,
     mpg ~ 0 + hp + qsec | wt + qsec,
     mpg ~ 0 + hp + qsec | 0 + wt + qsec,
@@ -450,7 +450,7 @@ test_that("IV diagnostics", {
 
   for (f in formulae) {
     ivro <- iv_robust(f, data = mtcars, se_type = "classical", diagnostics = TRUE)
-    aer_ivro <- summary(ivreg(f, data = mtcars), diagnostics = TRUE)
+    aer_ivro <- summary(AER::ivreg(f, data = mtcars), diagnostics = TRUE)
 
     expect_equivalent(
       build_ivreg_diagnostics_mat(ivro),
@@ -458,7 +458,7 @@ test_that("IV diagnostics", {
     )
 
     ivro_hc0 <- iv_robust(f, data = mtcars, se_type = "HC0", diagnostics = TRUE)
-    aer_ivro_hc0 <- summary(ivreg(f, data = mtcars), diagnostics = TRUE, vcov. = sandwich)
+    aer_ivro_hc0 <- summary(AER::ivreg(f, data = mtcars), diagnostics = TRUE, vcov. = sandwich::sandwich)
 
     expect_equivalent(
       build_ivreg_diagnostics_mat(ivro_hc0),

@@ -28,8 +28,7 @@ glance.lm_robust <- function(x, ...) {
   ret <- cbind(
     data.frame(
       r.squared = x[["r.squared"]],
-      adj.r.squared = x[["adj.r.squared"]],
-      se_type = x[["se_type"]]
+      adj.r.squared = x[["adj.r.squared"]]
     ),
     if (exists("fstatistic", x)) {
       data.frame(
@@ -41,7 +40,8 @@ glance.lm_robust <- function(x, ...) {
     },
     data.frame(
       df.residual = x[["df"]][1],
-      N = x[["N"]]
+      N = x[["N"]],
+      se_type = x[["se_type"]]
     )
   )
 

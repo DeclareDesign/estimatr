@@ -332,6 +332,7 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
   dat$J_num <- as.numeric(dat$J)
 
   lmrc_qnum <- lm_robust(Y~Z, data = dat, clusters = J_num)
+
   expect_equal(
     rmcall(lmrc),
     rmcall(lmrc_qnum)

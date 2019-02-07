@@ -48,16 +48,15 @@ test_that("tidy, glance, summary, and print work", {
     1
   )
 
-  capture_output(glance(lmo))
+  glance_lmo <- glance(lmo)
 
-  expect_is(glance(lmo), "data.frame")
+  expect_is(glance_lmo , "data.frame")
 
-  expect_equal(nrow(glance(lmo)), 1)
-
+  expect_equal(nrow(glance_lmo), 1)
 
   expect_equal(
     colnames(glance(lmo)),
-    c("r.squared", "adj.r.squared", "statistic", "p.value", "df.residual", "N")
+    c("r.squared", "adj.r.squared", "statistic", "p.value", "df.residual", "N", "se_type")
   )
 
   expect_equal(
