@@ -225,8 +225,12 @@ iv_robust <- function(formula,
     formula = formula
   )
 
+  # ------
+  # diagnostics
+  # ------
   if (diagnostics) {
 
+    # values for use by multiple diagnostic tests
     instruments <- setdiff(
       colnames(model_data$instrument_matrix),
       colnames(model_data$design_matrix)
@@ -236,174 +240,41 @@ iv_robust <- function(formula,
       colnames(model_data$instrument_matrix)
     )
 
-    # DWH statistic
-    lm_nofits <- lm_robust_fit(
-      y = model_data$outcome,
-      X = model_data$design_matrix,
-      weights = model_data$weights,
-      cluster = model_data$cluster,
-      fixed_effects = model_data$fixed_effects,
-      ci = FALSE,
-      se_type = "none",
-      has_int = has_int,
-      alpha = alpha,
-      return_fit = TRUE,
-      return_vcov = FALSE,
-      try_cholesky = try_cholesky
-    )
+    first_stage_fits <- first_stage[["fitted.values"]][, endog, drop = FALSE]
+    colnames(first_stage_fits) <- paste0("fit_", colnames(first_stage_fits))
 
-    firststage_fits <- first_stage[["fitted.values"]][, endog, drop = FALSE]
-    colnames(firststage_fits) <- paste0("fit_", colnames(firststage_fits))
+    # Wu-Hausman f-test for endogeneity
+    wu_hausman_ftest_val <- wu_hausman_ftest(model_data, first_stage_fits, se_type)
 
-    lm_fits <- lm_robust_fit(
-      y = model_data$outcome,
-      X = cbind(model_data$design_matrix, firststage_fits),
-      weights = model_data$weights,
-      cluster = model_data$cluster,
-      fixed_effects = model_data$fixed_effects,
-      ci = FALSE,
-      se_type = se_type,
-      has_int = has_int,
-      alpha = alpha,
-      return_fit = TRUE,
-      return_vcov = TRUE,
-      try_cholesky = try_cholesky
-    )
-
-    coef_nofits <- na.omit(lm_nofits[["coefficients"]])
-    coef_fits <- na.omit(lm_fits[["coefficients"]])
-    ovar <- which(!(names(coef_fits) %in% names(coef_nofits)))
-    wu_hausman_nomdf <- lm_fits[["rank"]] - lm_nofits[["rank"]]
-    wu_hausman_fstat <- compute_fstat(
-      coef_matrix = as.matrix(coef_fits),
-      coef_indices = ovar,
-      vcov_fit = lm_fits[["vcov"]],
-      rank = lm_fits[["rank"]],
-      nomdf = wu_hausman_nomdf
-    )
-
-    wu_hausman <- c(
-      "value" = wu_hausman_fstat,
-      "numdf" = wu_hausman_nomdf,
-      "dendf" = lm_fits[["df.residual"]],
-      "p.value" = pf(wu_hausman_fstat, wu_hausman_nomdf, lm_fits[["df.residual"]], lower.tail = FALSE)
-    )
-
-    # Sargan statistic (only computed if n(instruments) > n(endog regressors)
+    # Overidentification test (only computed if n(instruments) > n(endog regressors)
     extra_instruments <- length(instruments) - length(endog)
 
     if (extra_instruments) {
       ss_residuals <- model_data$outcome - second_stage[["fitted.values"]]
 
-      lmr <- lm_robust_fit(
-        y = as.matrix(ss_residuals),
-        X = model_data$instrument_matrix,
-        weights = model_data$weights,
-        cluster = model_data$cluster,
-        fixed_effects = model_data$fixed_effects,
-        ci = FALSE,
-        se_type = se_type,
-        has_int = has_int,
-        alpha = alpha,
-        return_fit = TRUE,
-        return_vcov = TRUE,
-        try_cholesky = try_cholesky
-      )
+      if (se_type == "classical") {
+        overid_chisq_val <- sargan_chisq(model_data, ss_residuals)
+      } else {
+        overid_chisq_val <- wooldridge_score_chisq(model_data, endog, instruments, ss_residuals, first_stage_fits)
+      }
 
-      rss <- lmr[["df.residual"]] * lmr[["res_var"]]
-
-      sargan_chisq =  lmr[["N"]] * (1 -  rss / sum((ss_residuals - mean(ss_residuals))^2))
-      sargan <- c(
-        sargan_chisq,
+      overid_chisqtest_val <- c(
+        overid_chisq_val,
         extra_instruments,
-        pchisq(sargan_chisq, extra_instruments, lower.tail = FALSE)
+        pchisq(overid_chisq_val, extra_instruments, lower.tail = FALSE)
       )
 
     } else {
-      sargan <- c(NA_real_, 0, NA_real_)
+      overid_chisqtest_val <- c(NA_real_, 0, NA_real_)
     }
+    names(overid_chisqtest_val) <- c("value", "df", "p.value")
 
-    names(sargan) <- c("value", "df", "p.value")
+    # Weak instrument test (first stage f-test)
+    first_stage_ftest_val <- first_stage_ftest(model_data, endog, instruments, se_type)
 
-    # weak instrument (first stage f-test)
-    lm_instruments <- lm_robust_fit(
-      y = model_data$design_matrix[, endog, drop = FALSE],
-      X = model_data$instrument_matrix,
-      weights = model_data$weights,
-      cluster = model_data$cluster,
-      fixed_effects = model_data$fixed_effects,
-      ci = FALSE,
-      se_type = se_type,
-      has_int = has_int,
-      alpha = alpha,
-      return_fit = TRUE,
-      return_vcov = TRUE,
-      try_cholesky = try_cholesky
-    )
-    coef_inst <- as.matrix(lm_instruments[["coefficients"]])
-
-
-    if (all(colnames(model_data$instrument_matrix) %in% instruments)) {
-      # if all instruments (including intercept!) are only instruments
-      firststage_nomdf <- lm_instruments[["rank"]]
-      firststage_fstat_value <- lm_instruments[["fstatistic"]][seq_len(length(endog))]
-    } else {
-      lm_noinstruments <- lm_robust_fit(
-        y = model_data$design_matrix[, endog, drop = FALSE],
-        X = model_data$instrument_matrix[
-          ,
-          !(colnames(model_data$instrument_matrix) %in% instruments),
-          drop = FALSE
-          ],
-        weights = model_data$weights,
-        cluster = model_data$cluster,
-        fixed_effects = model_data$fixed_effects,
-        ci = FALSE,
-        se_type = "none",
-        has_int = has_int,
-        alpha = alpha,
-        return_fit = TRUE,
-        return_vcov = FALSE,
-        try_cholesky = try_cholesky
-      )
-
-      coef_noinst <- as.matrix(lm_noinstruments[["coefficients"]])
-      inst_indices <- which(!(rownames(coef_inst) %in% rownames(coef_noinst)))
-      firststage_nomdf <- lm_instruments[["rank"]] - lm_noinstruments[["rank"]]
-      firststage_fstat_value <- compute_fstat(
-        coef_matrix = coef_inst,
-        coef_indices = inst_indices,
-        vcov_fit = lm_instruments[["vcov"]],
-        rank = lm_instruments[["rank"]],
-        nomdf = firststage_nomdf
-      )
-    }
-
-    if (ncol(coef_inst) > 1) {
-      fstat_names <- paste0(colnames(coef_inst), ":value")
-    } else {
-      fstat_names <- "value"
-    }
-
-    firststage_fstat <- c(
-      setNames(firststage_fstat_value, fstat_names),
-      nomdf = firststage_nomdf,
-      dendf = lm_instruments[["df.residual"]],
-      setNames(
-        vapply(
-          firststage_fstat_value,
-          function(x) {
-            pf(x, firststage_nomdf, lm_instruments[["df.residual"]], lower.tail = FALSE)
-          },
-          numeric(1)
-        ),
-        gsub("value", "p.value", fstat_names)
-      )
-    )
-
-    return_list[["diagnostic_first_stage_fstatistic"]] <- firststage_fstat
-    return_list[["diagnostic_wu_hausman_test"]] <- wu_hausman
-    return_list[["diagnostic_sargan_test"]] <- sargan
+    return_list[["diagnostic_first_stage_fstatistic"]] <- first_stage_ftest_val
+    return_list[["diagnostic_wu_hausman_test"]] <- wu_hausman_ftest_val
+    return_list[["diagnostic_overid_test"]] <- overid_chisqtest_val
   }
   return_list[["call"]] <- match.call()
 
@@ -411,4 +282,179 @@ iv_robust <- function(formula,
   class(return_list) <- "iv_robust"
 
   return(return_list)
+}
+
+# IV diagnostic test functions
+
+# Weak first-stage ftest
+first_stage_ftest <- function(model_data, endog, instruments, se_type) {
+
+  lm_instruments <- lm_robust_fit(
+    y = model_data$design_matrix[, endog, drop = FALSE],
+    X = model_data$instrument_matrix,
+    weights = model_data$weights,
+    cluster = model_data$cluster,
+    fixed_effects = model_data$fixed_effects,
+    se_type = se_type,
+    has_int = 0 %in% attr(model_data$instrument_matrix, "assign"),
+    return_fit = TRUE,
+    return_vcov = TRUE,
+    ci = FALSE
+  )
+  coef_inst <- as.matrix(lm_instruments[["coefficients"]])
+
+  if (all(colnames(model_data$instrument_matrix) %in% instruments)) {
+    # if all instruments (including intercept!) are only instruments
+    firststage_nomdf <- lm_instruments[["rank"]]
+    firststage_fstat_value <- lm_instruments[["fstatistic"]][seq_len(length(endog))]
+  } else {
+    lm_noinstruments <- lm_robust_fit(
+      y = model_data$design_matrix[, endog, drop = FALSE],
+      X = model_data$instrument_matrix[
+        ,
+        !(colnames(model_data$instrument_matrix) %in% instruments),
+        drop = FALSE
+      ],
+      weights = model_data$weights,
+      cluster = model_data$cluster,
+      fixed_effects = model_data$fixed_effects,
+      se_type = "none",
+      has_int = FALSE,
+      ci = FALSE,
+      return_fit = TRUE,
+      return_vcov = FALSE
+    )
+
+    coef_noinst <- as.matrix(lm_noinstruments[["coefficients"]])
+    inst_indices <- which(!(rownames(coef_inst) %in% rownames(coef_noinst)))
+    firststage_nomdf <- lm_instruments[["rank"]] - lm_noinstruments[["rank"]]
+    firststage_fstat_value <- compute_fstat(
+      coef_matrix = coef_inst,
+      coef_indices = inst_indices,
+      vcov_fit = lm_instruments[["vcov"]],
+      rank = lm_instruments[["rank"]],
+      nomdf = firststage_nomdf
+    )
+  }
+
+  if (ncol(coef_inst) > 1) {
+    fstat_names <- paste0(colnames(coef_inst), ":value")
+  } else {
+    fstat_names <- "value"
+  }
+
+  c(
+    setNames(firststage_fstat_value, fstat_names),
+    nomdf = firststage_nomdf,
+    dendf = lm_instruments[["df.residual"]],
+    setNames(
+      vapply(
+        firststage_fstat_value,
+        function(x) {
+          pf(x, firststage_nomdf, lm_instruments[["df.residual"]], lower.tail = FALSE)
+        },
+        numeric(1)
+      ),
+      gsub("value", "p.value", fstat_names)
+    )
+  )
+}
+
+# Wu-Hausman f-test for endogeneity
+wu_hausman_ftest <- function(model_data, first_stage_fits, se_type) {
+
+  lm_nofits <- lm_robust_fit(
+    y = model_data$outcome,
+    X = model_data$design_matrix,
+    weights = model_data$weights,
+    cluster = model_data$cluster,
+    fixed_effects = model_data$fixed_effects,
+    se_type = "none",
+    has_int = 0 %in% attr(model_data$design_matrix, "assign"),
+    ci = FALSE,
+    return_fit = TRUE,
+    return_vcov = FALSE
+  )
+
+  lm_fits <- lm_robust_fit(
+    y = model_data$outcome,
+    X = cbind(model_data$design_matrix, first_stage_fits),
+    weights = model_data$weights,
+    cluster = model_data$cluster,
+    fixed_effects = model_data$fixed_effects,
+    se_type = se_type,
+    has_int = 0 %in% attr(model_data$design_matrix, "assign"),
+    ci = FALSE,
+    return_fit = TRUE,
+    return_vcov = TRUE
+  )
+
+  coef_nofits <- na.omit(lm_nofits[["coefficients"]])
+  coef_fits <- na.omit(lm_fits[["coefficients"]])
+  ovar <- which(!(names(coef_fits) %in% names(coef_nofits)))
+  wu_hausman_nomdf <- lm_fits[["rank"]] - lm_nofits[["rank"]]
+  wu_hausman_fstat <- compute_fstat(
+    coef_matrix = as.matrix(coef_fits),
+    coef_indices = ovar,
+    vcov_fit = lm_fits[["vcov"]],
+    rank = lm_fits[["rank"]],
+    nomdf = wu_hausman_nomdf
+  )
+
+  c(
+    "value" = wu_hausman_fstat,
+    "numdf" = wu_hausman_nomdf,
+    "dendf" = lm_fits[["df.residual"]],
+    "p.value" = pf(wu_hausman_fstat, wu_hausman_nomdf, lm_fits[["df.residual"]], lower.tail = FALSE)
+  )
+}
+
+
+# Overidentification tests
+# Sargan (classical ses)
+sargan_chisq <- function(model_data, ss_residuals) {
+  lmr <- lm_robust_fit(
+    y = as.matrix(ss_residuals),
+    X = model_data$instrument_matrix,
+    weights = model_data$weights,
+    cluster = model_data$cluster,
+    fixed_effects = model_data$fixed_effects,
+    se_type = "classical",
+    has_int = 0 %in% attr(model_data, "assign"),
+    ci = FALSE,
+    return_fit = FALSE,
+    return_vcov = FALSE
+  )
+
+  lmr[["r.squared"]] * lmr[["N"]]
+}
+
+# wooldridge score test (robust SEs)
+wooldridge_score_chisq <- function(model_data, endog, instruments, ss_residuals, first_stage_fits) {
+  m <- ncol(model_data$instrument_matrix) - length(endog)
+
+  # Using notation following stata ivregress postestimation help
+  qhat_fit <- lm_robust_fit(
+    y = model_data$instrument_matrix[, instruments[seq_len(m)], drop = FALSE],
+    X = cbind(
+      model_data$design_matrix[, -which(colnames(model_data$design_matrix) %in% endog), drop = FALSE],
+      first_stage_fits
+    ),
+    weights = model_data$weights,
+    cluster = model_data$cluster,
+    fixed_effects = model_data$fixed_effects,
+    se_type = "none",
+    has_int = has_int,
+    ci = FALSE,
+    return_fit = TRUE,
+    return_vcov = FALSE
+  )
+
+  kmat <- as.matrix(
+    model_data$instrument_matrix[, instruments[seq_len(m)], drop = FALSE] - qhat_fit[["fitted.values"]]
+    ) * as.vector(ss_residuals)
+
+  kmat_fit <- lm.fit(kmat, as.matrix(rep(1, times = length(ss_residuals))))
+
+  return(length(ss_residuals) - sum(residuals(kmat_fit)))
 }

@@ -410,27 +410,26 @@ test_that("S3 methods", {
 
 test_that("IV diagnostics", {
 
-
   formulae <- c(
     mpg ~ hp | wt,
     mpg ~ 0 + hp | wt,
     mpg ~ 0 + hp | 0 + wt,
-    mpg ~ hp + am | wt + qsec,
-    mpg ~ 0 + hp + am | wt + qsec,
-    mpg ~ 0 + hp + am | 0 + wt + qsec,
-    mpg ~ hp + qsec | wt + qsec,
-    mpg ~ 0 + hp + qsec | wt + qsec,
-    mpg ~ 0 + hp + qsec | 0 + wt + qsec,
-    mpg ~ hp + qsec | wt + qsec + am,
-    mpg ~ 0 + hp + qsec | wt + qsec + am,
-    mpg ~ hp + qsec | 0 + wt + qsec + am,
-    mpg ~ 0 + hp + qsec | 0 + wt + qsec + am
+    mpg ~ hp + am | wt + gear,
+    mpg ~ 0 + hp + am | wt + gear,
+    mpg ~ 0 + hp + am | 0 + wt + gear,
+    mpg ~ hp + gear | wt + gear,
+    mpg ~ 0 + hp + gear | wt + gear,
+    mpg ~ 0 + hp + gear | 0 + wt + gear,
+    mpg ~ hp + gear | wt + gear + am,
+    mpg ~ 0 + hp + gear | wt + gear + am,
+    mpg ~ hp + gear | 0 + wt + gear + am,
+    mpg ~ 0 + hp + gear | 0 + wt + gear + am
   )
 
   build_ivreg_diagnostics_mat <- function(iv_robust_out) {
     weakinst <- iv_robust_out[["diagnostic_first_stage_fstatistic"]]
     wu_hausman <- iv_robust_out[["diagnostic_wu_hausman_test"]]
-    sargan <- iv_robust_out[["diagnostic_sargan_test"]]
+    overid <- iv_robust_out[["diagnostic_overid_test"]]
     n_weak_inst_fstats <- (length(weakinst) - 2) / 2
 
     rbind(
@@ -444,11 +443,12 @@ test_that("IV diagnostics", {
         nrow = n_weak_inst_fstats
       ),
       wu_hausman,
-      c(sargan[1], sargan[2], NA, sargan[3])
+      c(overid[1], overid[2], NA, overid[3])
     )[, c(2, 3, 1, 4)]
   }
 
   for (f in formulae) {
+    print(f)
     ivro <- iv_robust(f, data = mtcars, se_type = "classical", diagnostics = TRUE)
     aer_ivro <- summary(AER::ivreg(f, data = mtcars), diagnostics = TRUE)
 
@@ -457,12 +457,29 @@ test_that("IV diagnostics", {
       aer_ivro[["diagnostics"]]
     )
 
+    debugonce(estimatr:::iv_robust)
     ivro_hc0 <- iv_robust(f, data = mtcars, se_type = "HC0", diagnostics = TRUE)
     aer_ivro_hc0 <- summary(AER::ivreg(f, data = mtcars), diagnostics = TRUE, vcov. = sandwich::sandwich)
 
     expect_equivalent(
       build_ivreg_diagnostics_mat(ivro_hc0),
       aer_ivro_hc0[["diagnostics"]]
+    )
+
+    ivrow <- iv_robust(f, data = mtcars, se_type = "classical", diagnostics = TRUE, weights = gear)
+    aer_ivrow <- summary(AER::ivreg(f, data = mtcars, weights = gear), diagnostics = TRUE)
+
+    expect_equivalent(
+      build_ivreg_diagnostics_mat(ivrow),
+      aer_ivrow[["diagnostics"]]
+    )
+
+    ivrow_hc0 <- iv_robust(f, data = mtcars, se_type = "HC1", diagnostics = TRUE, weights = gear)
+    aer_ivrow_hc0 <- summary(AER::ivreg(f, data = mtcars, weights = gear), diagnostics = TRUE, vcov. = sandwich::sandwich)
+
+    expect_equivalent(
+      build_ivreg_diagnostics_mat(ivrow_hc0),
+      aer_ivrow_hc0[["diagnostics"]]
     )
   }
 

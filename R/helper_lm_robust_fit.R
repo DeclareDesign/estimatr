@@ -195,6 +195,7 @@ lm_robust_fit <- function(y,
       if (weighted) {
         fit_vals[["ei.iv"]] <- data[["weights"]] * fit_vals[["ei.iv"]]
       }
+      return_list[["ei.iv"]] <- fit_vals[["ei.iv"]]
     }
 
     if (se_type != "none") {
