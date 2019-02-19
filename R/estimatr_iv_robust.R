@@ -243,8 +243,11 @@ iv_robust <- function(formula,
     first_stage_fits <- first_stage[["fitted.values"]][, endog, drop = FALSE]
     colnames(first_stage_fits) <- paste0("fit_", colnames(first_stage_fits))
 
+    first_stage_residuals <- model_data$design_matrix - first_stage[["fitted.values"]]
+    colnames(first_stage_residuals) <- paste0("resid_", colnames(first_stage_residuals))
+
     # Wu-Hausman f-test for endogeneity
-    wu_hausman_ftest_val <- wu_hausman_ftest(model_data, first_stage_fits, se_type)
+    wu_hausman_ftest_val <- wu_hausman_reg_ftest(model_data, first_stage_residuals, se_type)
 
     # Overidentification test (only computed if n(instruments) > n(endog regressors)
     extra_instruments <- length(instruments) - length(endog)
@@ -361,9 +364,9 @@ first_stage_ftest <- function(model_data, endog, instruments, se_type) {
 }
 
 # Wu-Hausman f-test for endogeneity
-wu_hausman_ftest <- function(model_data, first_stage_fits, se_type) {
+wu_hausman_reg_ftest <- function(model_data, first_stage_residuals, se_type) {
 
-  lm_nofits <- lm_robust_fit(
+  lm_noresids <- lm_robust_fit(
     y = model_data$outcome,
     X = model_data$design_matrix,
     weights = model_data$weights,
@@ -376,9 +379,9 @@ wu_hausman_ftest <- function(model_data, first_stage_fits, se_type) {
     return_vcov = FALSE
   )
 
-  lm_fits <- lm_robust_fit(
+  lm_resids <- lm_robust_fit(
     y = model_data$outcome,
-    X = cbind(model_data$design_matrix, first_stage_fits),
+    X = cbind(model_data$design_matrix, first_stage_residuals),
     weights = model_data$weights,
     cluster = model_data$cluster,
     fixed_effects = model_data$fixed_effects,
@@ -389,25 +392,26 @@ wu_hausman_ftest <- function(model_data, first_stage_fits, se_type) {
     return_vcov = TRUE
   )
 
-  coef_nofits <- na.omit(lm_nofits[["coefficients"]])
-  coef_fits <- na.omit(lm_fits[["coefficients"]])
-  ovar <- which(!(names(coef_fits) %in% names(coef_nofits)))
-  wu_hausman_nomdf <- lm_fits[["rank"]] - lm_nofits[["rank"]]
+  coef_noresids <- na.omit(lm_noresids[["coefficients"]])
+  coef_resids <- na.omit(lm_resids[["coefficients"]])
+  ovar <- which(!(names(coef_resids) %in% names(coef_noresids)))
+  wu_hausman_nomdf <- lm_resids[["rank"]] - lm_noresids[["rank"]]
   wu_hausman_fstat <- compute_fstat(
-    coef_matrix = as.matrix(coef_fits),
+    coef_matrix = as.matrix(coef_resids),
     coef_indices = ovar,
-    vcov_fit = lm_fits[["vcov"]],
-    rank = lm_fits[["rank"]],
+    vcov_fit = lm_resids[["vcov"]],
+    rank = lm_resids[["rank"]],
     nomdf = wu_hausman_nomdf
   )
 
   c(
     "value" = wu_hausman_fstat,
     "numdf" = wu_hausman_nomdf,
-    "dendf" = lm_fits[["df.residual"]],
-    "p.value" = pf(wu_hausman_fstat, wu_hausman_nomdf, lm_fits[["df.residual"]], lower.tail = FALSE)
+    "dendf" = lm_resids[["df.residual"]],
+    "p.value" = pf(wu_hausman_fstat, wu_hausman_nomdf, lm_resids[["df.residual"]], lower.tail = FALSE)
   )
 }
+
 
 
 # Overidentification tests
