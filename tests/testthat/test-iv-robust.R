@@ -412,7 +412,7 @@ test_that("IV diagnostics", {
 
   # Load stata diagnostics
   stata_diags <- read.table(
-    "tests/testthat/stata-iv-diagnostics.txt",
+    "stata-iv-diagnostics.txt",
     col.names = c("formula", "options", "diag", "df1", "df2", "val", "pval"),
     sep = ";",
     na = ".",
@@ -512,9 +512,12 @@ test_that("IV diagnostics", {
 
     for (cr_se_type in cr_se_types) {
       ivro <- iv_robust(f, data = mtcars, se_type = cr_se_types, clusters = cyl, diagnostics = TRUE)
+      diagnostic_mat <- build_ivreg_diagnostics_mat(ivro)
+      expect_true(
+        all(diagnostic_mat[1:2, ] > 0) & all(diagnostic_mat[3, ] >= 0 | is.na(diagnostic_mat[3, ]))
+      )
     }
 
   }
-
 
 })
