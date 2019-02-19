@@ -500,6 +500,21 @@ test_that("IV diagnostics", {
       tolerance = 1e-3
     )
 
+
+    # Sanity check unmatched diagnostics
+    for (se_type in se_types) {
+      ivro <- iv_robust(f, data = mtcars, se_type = se_type, diagnostics = TRUE)
+      diagnostic_mat <- build_ivreg_diagnostics_mat(ivro)
+      expect_true(
+        all(diagnostic_mat[1:2, ] > 0) & all(diagnostic_mat[3, ] >= 0 | is.na(diagnostic_mat[3, ]))
+      )
+    }
+
+    for (cr_se_type in cr_se_types) {
+      ivro <- iv_robust(f, data = mtcars, se_type = cr_se_types, clusters = cyl, diagnostics = TRUE)
+    }
+
   }
+
 
 })
