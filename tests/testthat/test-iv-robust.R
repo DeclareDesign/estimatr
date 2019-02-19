@@ -397,6 +397,18 @@ test_that("S3 methods", {
     predict(ivo)
   )
 
+  glance_ivro <- glance(ivro)
+
+  expect_equal(nrow(glance_ivro), 1)
+
+  expect_equal(
+    colnames(glance(ivro)),
+    c("r.squared", "adj.r.squared", "df.residual", "N", "se_type",
+      "statistic", "p.value", "statistic.weakinst", "p.value.weakinst",
+      "statistic.endogeneity", "p.value.endogeneity", "statistic.overid",
+      "p.value.overid")
+  )
+
   # no intercept
   ivo <- AER::ivreg(mpg ~ hp + cyl + 0 | wt + gear, data = mtcars)
   ivro <- iv_robust(mpg ~ hp + cyl + 0 | wt + gear, data = mtcars, se_type = "classical")

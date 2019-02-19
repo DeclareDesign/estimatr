@@ -234,6 +234,7 @@ test_that("tidy, glance, summary, and print work", {
       print(dim)
     )
   )
+
   glance_dim <- glance(dim)
 
   expect_equal(nrow(glance_dim), 1)
