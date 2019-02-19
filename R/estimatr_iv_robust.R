@@ -258,7 +258,7 @@ iv_robust <- function(formula,
       if (se_type == "classical") {
         overid_chisq_val <- sargan_chisq(model_data, ss_residuals)
       } else {
-        overid_chisq_val <- wooldridge_score_chisq(model_data, endog, instruments, ss_residuals, first_stage_fits)
+        overid_chisq_val <- wooldridge_score_chisq(model_data, endog, instruments, ss_residuals, first_stage_fits, m = extra_instruments)
       }
 
       overid_chisqtest_val <- c(
@@ -276,7 +276,7 @@ iv_robust <- function(formula,
     first_stage_ftest_val <- first_stage_ftest(model_data, endog, instruments, se_type)
 
     return_list[["diagnostic_first_stage_fstatistic"]] <- first_stage_ftest_val
-    return_list[["diagnostic_wu_hausman_test"]] <- wu_hausman_ftest_val
+    return_list[["diagnostic_endogeneity_test"]] <- wu_hausman_ftest_val
     return_list[["diagnostic_overid_test"]] <- overid_chisqtest_val
   }
   return_list[["call"]] <- match.call()
@@ -346,15 +346,17 @@ first_stage_ftest <- function(model_data, endog, instruments, se_type) {
     fstat_names <- "value"
   }
 
+  dendf <- if (is.numeric(lm_instruments[["N_clusters"]])) lm_instruments[["N_clusters"]] - 1 else lm_instruments[["df.residual"]]
+
   c(
     setNames(firststage_fstat_value, fstat_names),
     nomdf = firststage_nomdf,
-    dendf = lm_instruments[["df.residual"]],
+    dendf = dendf,
     setNames(
       vapply(
         firststage_fstat_value,
         function(x) {
-          pf(x, firststage_nomdf, lm_instruments[["df.residual"]], lower.tail = FALSE)
+          pf(x, firststage_nomdf, dendf, lower.tail = FALSE)
         },
         numeric(1)
       ),
@@ -404,11 +406,12 @@ wu_hausman_reg_ftest <- function(model_data, first_stage_residuals, se_type) {
     nomdf = wu_hausman_nomdf
   )
 
+  dendf <- if (is.numeric(lm_resids[["N_clusters"]])) lm_resids[["N_clusters"]] - 1 else lm_resids[["df.residual"]]
   c(
     "value" = wu_hausman_fstat,
     "numdf" = wu_hausman_nomdf,
-    "dendf" = lm_resids[["df.residual"]],
-    "p.value" = pf(wu_hausman_fstat, wu_hausman_nomdf, lm_resids[["df.residual"]], lower.tail = FALSE)
+    "dendf" = dendf,
+    "p.value" = pf(wu_hausman_fstat, wu_hausman_nomdf, dendf, lower.tail = FALSE)
   )
 }
 
@@ -434,8 +437,7 @@ sargan_chisq <- function(model_data, ss_residuals) {
 }
 
 # wooldridge score test (robust SEs)
-wooldridge_score_chisq <- function(model_data, endog, instruments, ss_residuals, first_stage_fits) {
-  m <- ncol(model_data$instrument_matrix) - length(endog)
+wooldridge_score_chisq <- function(model_data, endog, instruments, ss_residuals, first_stage_fits, m) {
 
   # Using notation following stata ivregress postestimation help
   qhat_fit <- lm_robust_fit(

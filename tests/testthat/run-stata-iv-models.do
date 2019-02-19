@@ -68,12 +68,12 @@ foreach f in `formulae' {
 		if strpos("`opt'", "rob") > 0 | strpos("`opt'", "cluster") > 0 {
 			file write outfdiag "`f'" ";" "`opt'" ";" "endog" ";" (r(regFdf_n)) ";" (r(regFdf_d)) ";" (r(regF)) ";" (r(p_regF)) _n 
 			cap estat overid
-			file write outfdiag "`f'" ";" "`opt'" ";" "overid" ";" (r(df)) ";" (r(score)) ";" (r(p_score)) _n 
+			file write outfdiag "`f'" ";" "`opt'" ";" "overid" ";" (r(df)) ";.;" (r(score)) ";" (r(p_score)) _n 
 		} 
 		else {
 			file write outfdiag "`f'" ";" "`opt'" ";" "endog" ";" (r(df)) ";" (r(wudf_r)) ";" (r(wu)) ";" (r(p_wu)) _n 
 			cap estat overid
-			file write outfdiag "`f'" ";" "`opt'" ";" "overid" ";" (r(df)) ";" (r(sargan)) ";" (r(p_sargan)) _n 
+			file write outfdiag "`f'" ";" "`opt'" ";" "overid" ";" (r(df)) ";.;" (r(sargan)) ";" (r(p_sargan)) _n 
 		}
 	}
 

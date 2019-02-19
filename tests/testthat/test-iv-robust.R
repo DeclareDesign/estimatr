@@ -410,25 +410,34 @@ test_that("S3 methods", {
 
 test_that("IV diagnostics", {
 
-  formulae <- c(
-    mpg ~ hp | wt,
-    # mpg ~ 0 + hp | wt,
-    mpg ~ 0 + hp | 0 + wt,
-    mpg ~ hp + am | wt + gear,
-    # mpg ~ 0 + hp + am | wt + gear,
-    mpg ~ 0 + hp + am | 0 + wt + gear,
-    mpg ~ hp + gear | wt + gear,
-    # mpg ~ 0 + hp + gear | wt + gear,
-    mpg ~ 0 + hp + gear | 0 + wt + gear,
-    mpg ~ hp + gear | wt + gear + am,
-    # mpg ~ 0 + hp + gear | wt + gear + am,
-    mpg ~ hp + gear | 0 + wt + gear + am,
-    mpg ~ 0 + hp + gear | 0 + wt + gear + am
+  # Load stata diagnostics
+  stata_diags <- read.table(
+    "tests/testthat/stata-iv-diagnostics.txt",
+    col.names = c("formula", "options", "diag", "df1", "df2", "val", "pval"),
+    sep = ";",
+    na = ".",
+    stringsAsFactors = FALSE
   )
 
-  build_ivreg_diagnostics_mat <- function(iv_robust_out) {
+  formulae <- c(
+    "(hp = wt)" = mpg ~ hp | wt,
+    # mpg ~ 0 + hp | wt,
+    "(hp = wt)0" = mpg ~ 0 + hp | 0 + wt,
+    "(hp am = wt gear)" = mpg ~ hp + am | wt + gear,
+    # mpg ~ 0 + hp + am | wt + gear,
+    "(hp am = wt gear)0" = mpg ~ 0 + hp + am | 0 + wt + gear,
+    "gear (hp = wt)" = mpg ~ hp + gear | wt + gear,
+    # mpg ~ 0 + hp + gear | wt + gear,
+    "gear (hp = wt)0" = mpg ~ 0 + hp + gear | 0 + wt + gear,
+    "gear (hp = wt am)" = mpg ~ hp + gear | wt + gear + am,
+    # mpg ~ 0 + hp + gear | wt + gear + am,
+    # mpg ~ hp + gear | 0 + wt + gear + am,
+    "gear (hp = wt am)0" = mpg ~ 0 + hp + gear | 0 + wt + gear + am
+  )
+
+  build_ivreg_diagnostics_mat <- function(iv_robust_out, stata = FALSE) {
     weakinst <- iv_robust_out[["diagnostic_first_stage_fstatistic"]]
-    wu_hausman <- iv_robust_out[["diagnostic_wu_hausman_test"]]
+    wu_hausman <- iv_robust_out[["diagnostic_endogeneity_test"]]
     overid <- iv_robust_out[["diagnostic_overid_test"]]
     n_weak_inst_fstats <- (length(weakinst) - 2) / 2
 
@@ -443,43 +452,54 @@ test_that("IV diagnostics", {
         nrow = n_weak_inst_fstats
       ),
       wu_hausman,
-      c(overid[1], overid[2], NA, overid[3])
+      c(overid[1], if (stata & overid[2] == 0) NA else overid[2], NA, overid[3])
     )[, c(2, 3, 1, 4)]
   }
 
-  for (f in formulae) {
-    print(f)
+  for (f_n in names(formulae)) {
+    f <- formulae[[f_n]]
     ivro <- iv_robust(f, data = mtcars, se_type = "classical", diagnostics = TRUE)
     aer_ivro <- summary(AER::ivreg(f, data = mtcars), diagnostics = TRUE)
 
-    expect_equivalent(
-      build_ivreg_diagnostics_mat(ivro),
-      aer_ivro[["diagnostics"]]
+    # Sargan stat seems to be wrong for AER for this model (-ve critical value)
+    if (f_n == "gear (hp = wt am)0") {
+      expect_equivalent(
+        build_ivreg_diagnostics_mat(ivro)[1:2, ],
+        aer_ivro[["diagnostics"]][1:2, ]
+      )
+    } else {
+      expect_equivalent(
+        build_ivreg_diagnostics_mat(ivro),
+        aer_ivro[["diagnostics"]]
+      )
+    }
+
+    stata_diag <- subset(
+      stata_diags,
+      formula == gsub("0", "", f_n) & (grepl("noconstant", options) == grepl("0", f_n))
     )
 
-    # ivro_hc0 <- iv_robust(f, data = mtcars, se_type = "HC0", diagnostics = TRUE)
-    # aer_ivro_hc0 <- summary(AER::ivreg(f, data = mtcars), diagnostics = TRUE, vcov. = sandwich::sandwich)
-    #
-    # expect_equivalent(
-    #   build_ivreg_diagnostics_mat(ivro_hc0),
-    #   aer_ivro_hc0[["diagnostics"]]
-    # )
-    #
-    # ivrow <- iv_robust(f, data = mtcars, se_type = "classical", diagnostics = TRUE, weights = gear)
-    # aer_ivrow <- summary(AER::ivreg(f, data = mtcars, weights = gear), diagnostics = TRUE)
-    #
-    # expect_equivalent(
-    #   build_ivreg_diagnostics_mat(ivrow),
-    #   aer_ivrow[["diagnostics"]]
-    # )
-    #
-    # ivrow_hc0 <- iv_robust(f, data = mtcars, se_type = "HC1", diagnostics = TRUE, weights = gear)
-    # aer_ivrow_hc0 <- summary(AER::ivreg(f, data = mtcars, weights = gear), diagnostics = TRUE, vcov. = sandwich::sandwich)
-    #
-    # expect_equivalent(
-    #   build_ivreg_diagnostics_mat(ivrow_hc0),
-    #   aer_ivrow_hc0[["diagnostics"]]
-    # )
+    expect_equivalent(
+      build_ivreg_diagnostics_mat(ivro, stata = TRUE),
+      as.matrix(stata_diag[grepl("small", stata_diag$options), c("df1", "df2", "val", "pval")]),
+      tolerance = 1e-6
+    )
+
+    ivro_hc1 <- iv_robust(f, data = mtcars, se_type = "HC1", diagnostics = TRUE)
+    expect_equivalent(
+      build_ivreg_diagnostics_mat(ivro_hc1, stata = TRUE),
+      as.matrix(stata_diag[grepl("rob", stata_diag$options), c("df1", "df2", "val", "pval")]),
+      tolerance = 1e-6
+    )
+
+    # tolerance higher here due to larger values in general
+    ivro_crs <- iv_robust(f, data = mtcars, se_type = "stata", clusters = cyl, diagnostics = TRUE)
+    expect_equivalent(
+      build_ivreg_diagnostics_mat(ivro_crs, stata = TRUE)[1:2, ],
+      as.matrix(stata_diag[grepl("cluster", stata_diag$options), c("df1", "df2", "val", "pval")])[1:2, ],
+      tolerance = 1e-3
+    )
+
   }
 
 })
