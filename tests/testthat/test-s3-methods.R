@@ -126,6 +126,11 @@ test_that("tidy, glance, summary, and print work", {
     NA
   )
 
+  expect_error(
+    glance(lmrmo),
+    "Cannot use `glance` on linear models with multiple responses."
+  )
+
   lmroy <- lm_robust(y ~ z, data = dat, se_type = "classical")
   lmrox <- lm_robust(x ~ z, data = dat, se_type = "classical")
 
@@ -161,12 +166,20 @@ test_that("tidy, glance, summary, and print work", {
     "data.frame"
   )
 
-
   capture_output(
     expect_equivalent(
       coef(summary(lmlo)),
       print(lmlo)
     )
+  )
+
+  glance_lmlo <- glance(lmlo)
+
+  expect_equal(nrow(glance_lmlo), 1)
+
+  expect_equal(
+    colnames(glance(lmlo)),
+    c("r.squared", "adj.r.squared", "statistic", "p.value", "df.residual", "N", "se_type")
   )
 
   ## horvitz_thompson
@@ -194,6 +207,15 @@ test_that("tidy, glance, summary, and print work", {
     )
   )
 
+  glance_ht <- glance(ht)
+
+  expect_equal(nrow(glance_ht), 1)
+
+  expect_equal(
+    colnames(glance(ht)),
+    c("N")
+  )
+
   ## difference_in_means
   dim <- difference_in_means(y ~ x, data = dat)
   expect_is(
@@ -211,6 +233,14 @@ test_that("tidy, glance, summary, and print work", {
       coef(summary(dim)),
       print(dim)
     )
+  )
+  glance_dim <- glance(dim)
+
+  expect_equal(nrow(glance_dim), 1)
+
+  expect_equal(
+    colnames(glance(dim)),
+    c("design", "df", "N", "N_blocks", "N_clusters")
   )
 
   # rank deficient

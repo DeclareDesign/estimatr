@@ -25,6 +25,11 @@ generics::glance
 #' @seealso [generics::glance()], [estimatr::lm_robust()], [estimatr::lm_lin()]
 #' @md
 glance.lm_robust <- function(x, ...) {
+
+  if (length(x[["outcome"]]) > 1) {
+    stop("Cannot use `glance` on linear models with multiple responses.")
+  }
+
   ret <- cbind(
     data.frame(
       r.squared = x[["r.squared"]],
@@ -72,6 +77,11 @@ glance.lm_robust <- function(x, ...) {
 #' @seealso [generics::glance()], [estimatr::iv_robust()]
 #' @md
 glance.iv_robust <- function(x, ...) {
+
+  if (length(x[["outcome"]]) > 1) {
+    stop("Cannot use `glance` on linear models with multiple responses.")
+  }
+
   ret <- cbind(
     data.frame(
       r.squared = x[["r.squared"]],
@@ -88,13 +98,29 @@ glance.iv_robust <- function(x, ...) {
     } else {
       data.frame(statistic = NA_real_, p.value = NA_real_)
     },
-    if (exists("firststage_fstatistic", x)) {
+    if (exists("diagnostic_firststage_fstatistic", x) && length(x[["diagnostic_firststage_fstatistic"]] == 4)) {
       data.frame(
-        statistic.weakinst = x[["firststage_fstatistic"]][1],
-        p.value.weakinst = pf(x[["firststage_fstatistic"]][1], x[["firststage_fstatistic"]][2], x[["firststage_fstatistic"]][3], lower.tail = FALSE)
+        statistic.weakinst = x[["diagnostic_firststage_fstatistic"]]["value"],
+        p.value.weakinst = x[["diagnostic_firststage_fstatistic"]]["p.value"]
       )
     } else {
       data.frame(statistic.weakinst = NA_real_, p.value.weakinst = NA_real_)
+    },
+    if (exists("diagnostic_endogeneity_fstatistic", x)) {
+      data.frame(
+        statistic.endogeneity = x[["diagnostic_endogeneity_fstatistic"]]["value"],
+        p.value.endogeneity = x[["diagnostic_endogeneity_fstatistic"]]["p.value"]
+      )
+    } else {
+      data.frame(statistic.endogeneity = NA_real_, p.value.endogeneity = NA_real_)
+    },
+    if (exists("diagnostic_overid_fstatistic", x)) {
+      data.frame(
+        statistic.overid = x[["diagnostic_overid_fstatistic"]]["value"],
+        p.value.overid = x[["diagnostic_overid_fstatistic"]]["p.value"]
+      )
+    } else {
+      data.frame(statistic.overid = NA_real_, p.value.overid = NA_real_)
     }
   )
 
@@ -139,6 +165,20 @@ glance.difference_in_means <- function(x, ...) {
       data.frame(N_clusters = NA_real_)
     }
   )
+
+  as.data.frame(ret)
+}
+
+
+#' @export
+#' @family estimatr glancers
+#' @seealso [generics::glance()], [estimatr::horvitz_thompson()]
+#' @md
+glance.horvitz_thompson <- function(x, ...) {
+  ret <- data.frame(
+      N = x[["N"]]
+  )
+  # TODO: add standard error type
 
   as.data.frame(ret)
 }
