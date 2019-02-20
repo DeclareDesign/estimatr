@@ -163,7 +163,11 @@ glance.difference_in_means <- function(x, ...) {
       data.frame(N_clusters = x[["N_clusters"]])
     } else {
       data.frame(N_clusters = NA_real_)
-    }
+    },
+    data.frame(
+      condition2 = x[["condition2"]],
+      condition1 = x[["condition1"]]
+    )
   )
 
   as.data.frame(ret)
@@ -176,8 +180,10 @@ glance.difference_in_means <- function(x, ...) {
 #' @md
 glance.horvitz_thompson <- function(x, ...) {
   ret <- data.frame(
-      N = x[["N"]],
-      se_type = x[["se_type"]]
+    N = x[["N"]],
+    se_type = x[["se_type"]],
+    condition2 = x[["condition2"]],
+    condition1 = x[["condition1"]]
   )
 
   as.data.frame(ret)

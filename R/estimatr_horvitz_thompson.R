@@ -605,6 +605,7 @@ horvitz_thompson <- function(formula,
   if (return_condition_pr_mat) {
     return_list[["condition_pr_mat"]] <- condition_pr_mat
   }
+  return_list[["se_type"]] <- se_type
 
   attr(return_list, "class") <- "horvitz_thompson"
 

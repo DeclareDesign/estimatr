@@ -213,7 +213,7 @@ test_that("tidy, glance, summary, and print work", {
 
   expect_equal(
     colnames(glance(ht)),
-    c("N", "se_type")
+    c("N", "se_type", "condition2", "condition1")
   )
 
   ## difference_in_means
@@ -241,7 +241,7 @@ test_that("tidy, glance, summary, and print work", {
 
   expect_equal(
     colnames(glance(dim)),
-    c("design", "df", "N", "N_blocks", "N_clusters")
+    c("design", "df", "N", "N_blocks", "N_clusters", "condition2", "condition1")
   )
 
   # rank deficient

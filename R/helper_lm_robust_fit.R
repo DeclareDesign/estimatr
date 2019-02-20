@@ -531,21 +531,24 @@ get_fstat <- function(tss_r2s,
 }
 
 compute_fstat <- function(coef_matrix, coef_indices, vcov_fit, rank, nomdf) {
-  fstat <- tryCatch({
-    vapply(seq_len(ncol(coef_matrix)),
-           function(x) {
-             vcov_indices <- coef_indices + (x - 1) * rank
-             crossprod(
-               coef_matrix[coef_indices, x],
-               chol2inv(chol(vcov_fit[vcov_indices, vcov_indices])) %*%
-                 coef_matrix[coef_indices, x]
-             ) / nomdf
-           },
-           numeric(1))
-  },
-  error = function(e) {
-    rep(NA_real_, ncol(coef_matrix))
-  })
+
+  fstat <- numeric(ncol(coef_matrix))
+
+  for (i in seq_along(fstat)) {
+    vcov_indices <- coef_indices + (i - 1) * rank
+    fstat[i] <- tryCatch(
+      {
+        crossprod(
+          coef_matrix[coef_indices, i],
+          chol2inv(chol(vcov_fit[vcov_indices, vcov_indices])) %*%
+            coef_matrix[coef_indices, i]
+        ) / nomdf
+      },
+      error = function(e) {
+        NA_real_
+      }
+    )
+  }
 
   fstat
 }
