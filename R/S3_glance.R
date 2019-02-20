@@ -176,9 +176,9 @@ glance.difference_in_means <- function(x, ...) {
 #' @md
 glance.horvitz_thompson <- function(x, ...) {
   ret <- data.frame(
-      N = x[["N"]]
+      N = x[["N"]],
+      se_type = x[["se_type"]]
   )
-  # TODO: add standard error type
 
   as.data.frame(ret)
 }

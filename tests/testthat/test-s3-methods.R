@@ -213,7 +213,7 @@ test_that("tidy, glance, summary, and print work", {
 
   expect_equal(
     colnames(glance(ht)),
-    c("N")
+    c("N", "se_type")
   )
 
   ## difference_in_means
