@@ -5,7 +5,7 @@ generics::glance
 #' Glance at an estimatr object
 #' @name estimatr_glancers
 #' @templateVar class lm_robust
-#' @return A data.frame with columns:
+#' @return For \code{glance.lm_robust}, a data.frame with columns:
 #'   \item{r.squared}{the \eqn{R^2},
 #'   \deqn{R^2 = 1 - Sum(e[i]^2) / Sum((y[i] - y^*)^2),} where \eqn{y^*}
 #'   is the mean of \eqn{y[i]} if there is an intercept and zero otherwise,
@@ -22,7 +22,7 @@ generics::glance
 #'
 #' @export
 #' @family estimatr glancers
-#' @seealso [generics::glance()], [estimatr::lm_robust()], [estimatr::lm_lin()]
+#' @seealso [generics::glance()], [estimatr::lm_robust()], [estimatr::lm_lin()], [estimatr::iv_robust()], [estimatr::difference_in_means()], [estimatr::horvitz_thompson()]
 #' @md
 glance.lm_robust <- function(x, ...) {
 
@@ -55,10 +55,9 @@ glance.lm_robust <- function(x, ...) {
   as.data.frame(ret)
 }
 
-#' Glance at an estimatr object
 #' @name estimatr_glancers
 #' @templateVar class iv_robust
-#' @return A data.frame with columns:
+#' @return For \code{glance.iv_robust}, a data.frame with columns:
 #'   \item{r.squared}{The \eqn{R^2} of the second stage regression}
 #'   \item{adj.r.squared}{The \eqn{R^2} but penalized for having more parameters, \code{rank}}
 #'   \item{df.residual}{residual degrees of freedom}
@@ -66,15 +65,17 @@ glance.lm_robust <- function(x, ...) {
 #'   \item{se_type}{the standard error type specified by the user}
 #'   \item{statistic}{the value of the F-statistic}
 #'   \item{p.value}{p-value from the F test}
-#'   \item{statistic.weakinst}{the value of the first stage F-statistic, useful for the weak instruments test}
-#'   \item{p.value.weakinst}{p-value from the first-stage F test, a test of weak instruments}
+#'   \item{statistic.weakinst}{the value of the first stage F-statistic, useful for the weak instruments test; only reported if there is only one endogenous variable}
+#'   \item{p.value.weakinst}{p-value from the first-stage F test, a test of weak instruments; only reported if there is only one endogenous variable}
+#'   \item{statistic.endogeneity}{the value of the F-statistic for the test of endogeneity; often called the Wu-Hausman statistic, with robust standard errors, we employ the regression based test}
+#'   \item{p.value.endogeneity}{p-value from the F-test for endogeneity}
+#'   \item{statistic.overid}{the value of the chi-squared statistic for the test of instrument correlation with the error term; only reported with overidentification}
+#'   \item{p.value.overid}{p-value from the chi-squared test; only reported with overidentification}
 #'
-#' @param x An object returned by one of the estimators
-#' @param ... extra arguments (not used)
+#' @inheritParams glance.lm_robust
 #'
 #' @export
 #' @family estimatr glancers
-#' @seealso [generics::glance()], [estimatr::iv_robust()]
 #' @md
 glance.iv_robust <- function(x, ...) {
 
@@ -127,25 +128,21 @@ glance.iv_robust <- function(x, ...) {
   as.data.frame(ret)
 }
 
-#' Glance at an estimatr object
 #' @name estimatr_glancers
 #' @templateVar class difference_in_means
-#' @return A data.frame with columns:
-#'   \item{r.squared}{The \eqn{R^2} of the second stage regression}
-#'   \item{adj.r.squared}{The \eqn{R^2} but penalized for having more parameters, \code{rank}}
-#'   \item{df.residual}{residual degrees of freedom}
+#' @return For \code{glance.difference_in_means}, a data.frame with columns:
+#'   \item{design}{the design used, and therefore the estimator used}
+#'   \item{df}{the degrees of freedom}
 #'   \item{N}{the number of observations used}
-#'   \item{statistic}{the value of the F-statistic}
-#'   \item{p.value}{p-value from the F test}
-#'   \item{statistic.weakinst}{the value of the first stage F-statistic, useful for the weak instruments test}
-#'   \item{p.value.weakinst}{p-value from the first-stage F test, a test of weak instruments}
+#'   \item{N_blocks}{the number of blocks, if used}
+#'   \item{N_clusters}{the number of clusters, if used}
+#'   \item{condition2}{the second, "treatment", condition}
+#'   \item{condition1}{the first, "control", condition}
 #'
-#' @param x An object returned by one of the estimators
-#' @param ... extra arguments (not used)
+#' @inheritParams glance.lm_robust
 #'
 #' @export
 #' @family estimatr glancers
-#' @seealso [generics::glance()], [estimatr::difference_in_means()]
 #' @md
 glance.difference_in_means <- function(x, ...) {
   ret <- cbind(
@@ -173,10 +170,18 @@ glance.difference_in_means <- function(x, ...) {
   as.data.frame(ret)
 }
 
-
+#' @name estimatr_glancers
+#' @templateVar class horvitz_thompson
+#' @return For \code{glance.horvitz_thompson}, a data.frame with columns:
+#'   \item{N}{the number of observations used}
+#'   \item{se_type}{the type of standard error estimator used}
+#'   \item{condition2}{the second, "treatment", condition}
+#'   \item{condition1}{the first, "control", condition}
+#'
+#' @inheritParams glance.lm_robust
+#'
 #' @export
 #' @family estimatr glancers
-#' @seealso [generics::glance()], [estimatr::horvitz_thompson()]
 #' @md
 glance.horvitz_thompson <- function(x, ...) {
   ret <- data.frame(

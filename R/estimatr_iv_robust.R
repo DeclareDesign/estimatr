@@ -26,6 +26,7 @@
 #' @param ci logical. Whether to compute and return p-values and confidence
 #' intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
+#' @param diagnostics logical. Whether to compute and return instrumental variable diagnostic statistics and tests.
 #' @param return_vcov logical. Whether to return the variance-covariance
 #' matrix for later usage, TRUE by default.
 #' @param try_cholesky logical. Whether to try using a Cholesky
@@ -64,6 +65,20 @@
 #' in perfect fits for some observations or if there are intersecting groups across
 #' multiple fixed effect variables (e.g. if you specify both "year" and "country" fixed effects
 #' with an unbalanced panel where one year you only have data for one country).
+#'
+#' If \code{diagnostics} are requested, we compute and return three sets of diagnostics.
+#' First, we return tests for weak instruments using first-stage F-statistics. Specifically,
+#' the F-statistics reported compare the model regressing each endogeneous variable on both the
+#' included exogenous variables and the instruments to a model where each endogenous variable is
+#' regressed only on the included exogenous variables (without the instruments). A significant F-test
+#' for weak instruments provides evidence against the null hypothesis that the instruments are weak.
+#' Second, we return tests for the endogeneity of the endogenous variables, often called the Wu-Hausman
+#' test. We implement the regression test from Hausman (1978), which allows for robust variance estimation.
+#' A significant endogeneity test provides evidence against the null that all the variables are exogenous.
+#' Third, we return a test for the correlation between the instruments and the error term. We implement
+#' the Wooldridge (1995) robust score test, which is identical to Sargan's (1958) test with classical
+#' standard errors. This test is only reported if the model is overidentified (i.e. the number of
+#' instruments is greater than the number of endogenous regressors).
 #'
 #' @return An object of class \code{"iv_robust"}.
 #'
@@ -463,4 +478,39 @@ wooldridge_score_chisq <- function(model_data, endog, instruments, ss_residuals,
   kmat_fit <- lm.fit(kmat, as.matrix(rep(1, times = length(ss_residuals))))
 
   return(length(ss_residuals) - sum(residuals(kmat_fit)))
+}
+
+build_ivreg_diagnostics_mat <- function(iv_robust_out, stata = FALSE) {
+  weakinst <- iv_robust_out[["diagnostic_first_stage_fstatistic"]]
+  wu_hausman <- iv_robust_out[["diagnostic_endogeneity_test"]]
+  overid <- iv_robust_out[["diagnostic_overid_test"]]
+  n_weak_inst_fstats <- (length(weakinst) - 2) / 2
+
+  diag_mat <- rbind(
+    matrix(
+      c(
+        weakinst[seq_len(n_weak_inst_fstats)],
+        rep(weakinst["nomdf"], n_weak_inst_fstats),
+        rep(weakinst["dendf"], n_weak_inst_fstats),
+        weakinst[n_weak_inst_fstats + 2 + seq_len(n_weak_inst_fstats)]
+      ),
+      nrow = n_weak_inst_fstats
+    ),
+    wu_hausman,
+    c(overid[1], if (stata & overid[2] == 0) NA else overid[2], NA, overid[3])
+  )[, c(2, 3, 1, 4)]
+
+  if (n_weak_inst_fstats > 1) {
+    weak_names <- paste0("Weak instruments (", gsub("\\:*value", "", names(weakinst[seq_len(n_weak_inst_fstats)])), ")")
+  } else {
+    weak_names <- "Weak instruments"
+  }
+
+  rownames(diag_mat) <- c(
+    weak_names,
+    "Wu-Hausman",
+    "Overidentifying"
+  )
+
+  diag_mat
 }

@@ -5,7 +5,7 @@
 \title{Two-Stage Least Squares Instrumental Variables Regression}
 \usage{
 iv_robust(formula, data, weights, subset, clusters, fixed_effects,
-  se_type = NULL, ci = TRUE, alpha = 0.05, diagnostics = TRUE,
+  se_type = NULL, ci = TRUE, alpha = 0.05, diagnostics = FALSE,
   return_vcov = TRUE, try_cholesky = FALSE)
 }
 \arguments{

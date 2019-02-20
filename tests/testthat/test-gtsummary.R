@@ -13,8 +13,25 @@ test_that("gtsummary works with glance", {
 
   gto <- gtsummary(list(model1, model2, model3))
 
-  expect_equal(ncol(gto), 3L)
+  expect_equal(colnames(gto), c("Model 1", "Model 2", "Model 3"))
 
   expect_equal(nrow(gto), 15L)
 
+  # iv_robust
+  model1 <- iv_robust(mpg ~ am | gear, mtcars)
+  model2 <- iv_robust(mpg ~ am | gear, mtcars, clusters = cyl, diagnostics = TRUE)
+
+  gtsummary(list(model1, model2))
+
+  # difference_in_means
+  model1 <- difference_in_means(mpg ~ am, mtcars)
+  model2 <- difference_in_means(mpg ~ am, mtcars, blocks = vs)
+
+  gtsummary(list(model1, model2))
+
+  # horvitz_thompson
+  model1 <- horvitz_thompson(mpg ~ am, mtcars)
+  model2 <- horvitz_thompson(mpg ~ am, mtcars, blocks = vs)
+
+  gtsummary(list(model1, model2))
 })

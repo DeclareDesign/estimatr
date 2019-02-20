@@ -81,6 +81,16 @@ summary_lm_model <- function(object) {
     )
   }
 
+  # Different returns if fixed effects in the output
+  if (is.numeric(object[["diagnostic_endogeneity_test"]])) {
+    out_values <- c(
+      out_values,
+      "diagnostic_first_stage_fstatistic",
+      "diagnostic_endogeneity_test",
+      "diagnostic_overid_test"
+    )
+  }
+
   return_list <- object[out_values]
 
   # Split into two lists if multivariate linear model
