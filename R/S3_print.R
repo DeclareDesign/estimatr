@@ -109,6 +109,7 @@ print.horvitz_thompson <- function(x, ...) {
 
 #' @export
 print.lh <- function(x, ...) {
+
   print(summarize_tidy(x))
 }
 
@@ -132,6 +133,11 @@ print.summary.lh_robust <- function(x,...){
   print(summary(x$lm_robust))
   cat("\n\n$linearHypothesis \n \n")
   x <- x[[2]]
-  print(x$linearHypothesis)
-}
 
+  print(attr(x, "linearHypothesis"))
+}
+#' @export
+print.summary.lh <- function(x, ...){
+
+  print(x)
+}

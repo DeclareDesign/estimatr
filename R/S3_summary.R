@@ -138,3 +138,10 @@ summary.lh_robust <- function(x,...){
   class(x) <- "summary.lh_robust"
   x
 }
+
+#' @export
+summary.lh <- function(x,...){
+  attr(x, "linearHypothesis")
+
+}
+

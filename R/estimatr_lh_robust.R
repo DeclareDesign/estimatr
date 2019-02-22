@@ -32,17 +32,16 @@
 #' perfect multi-collinearity)
 #' @param linearHypothesis A character string or a matrix specifying combination.
 #' See \code{\link{linearHypothesis}} for more details.
-#' @param lh_term A character string indicating the name of term to be assigned to the linear combination.
 #' @details
 #'
 #' This function is a wrapper for \code{\link{lm_robust}} and for
 #' \code{\link{car::linearHypothesis}}. It first runs \code{lm_robust} and
 #' then passes \code{"lm_robust"} object as an argument to \code{car::linearHypothesis}.
 #'
-#' @return An object of class \code{"lm_robust"} and \code{"lh"}.
+#' @return An object of class \code{"lh_robust"} comprised of two objects: one class \code{"lh_robust"},  and the other a tidy output for the class \code{linearHypothesis}.
 #'
 #'
-#' Both objects are a list containing the
+#'  \code{"lh_robust"} contains two lists containing that subsequently contain the
 #' following components:
 #'   \item{coefficients}{the estimated linear combination of coefficients}
 #'   \item{std.error}{the estimated standard errors of the linear combination}
@@ -60,7 +59,7 @@
 #'   N = 40,
 #'   y = rpois(N, lambda = 4),
 #'   x = rnorm(N),
-#'   z = rbinom(N, 1, prob = 0.4)
+#'   z = rbinom(N, 1, prob = 0.4),
 #'   clusterID = sample(1:4, 40, replace = TRUE)
 #' )
 #'
@@ -96,10 +95,10 @@ lh_robust <- function(formula,
                       linearHypothesis = NULL
                       ) {
     call <- match.call()
-    args <- as.list(call)
-    args[[1]] <- NULL
-    args$linearHypothesis <- NULL
-    model <- do.call(lm_robust, args)
+    arguments <- as.list(call)
+    arguments[[1]] <- NULL
+    arguments$linearHypothesis <- NULL
+    model <- do.call(lm_robust, arguments)
 
   if(is.null(linearHypothesis)){
     warning("No linear hypothesis test performed")
@@ -126,18 +125,17 @@ lh_robust <- function(formula,
                       conf.high =  ci[,2],
                       df = df,
                       term = linearHypothesis,
-                      outcome =  model$outcome,
-                      linearHypothesis = out)
+                      outcome =  model$outcome)
 
 
-
-  attr( return_lh , "class") <- "lh"
+  attr(return_lh, "linearHypothesis") <- out
+  class( return_lh) <- "lh"
 
 
   return_list <- list(lm_robust =  model,
                       linearHypothesis =  return_lh )
 
-  attr(   return_list , "class") <- "lh_robust"
+  class(return_list)  <- "lh_robust"
 
 
   return(return_list)

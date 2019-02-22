@@ -49,14 +49,12 @@ perfect multi-collinearity)}
 
 \item{linearHypothesis}{A character string or a matrix specifying combination.
 See \code{\link{linearHypothesis}} for more details.}
-
-\item{lh_term}{A character string indicating the name of term to be assigned to the linear combination.}
 }
 \value{
-An object of class \code{"lm_robust"} and \code{"lh"}.
+An object of class \code{"lh_robust"} comprised of two objects: one class \code{"lh_robust"},  and the other a tidy output for the class \code{linearHypothesis}.
 
 
-Both objects are a list containing the
+ \code{"lh_robust"} contains two lists containing that subsequently contain the
 following components:
   \item{coefficients}{the estimated linear combination of coefficients}
   \item{std.error}{the estimated standard errors of the linear combination}
@@ -76,4 +74,32 @@ is useful for estimating linear combination of coefficients.
 This function is a wrapper for \code{\link{lm_robust}} and for
 \code{\link{car::linearHypothesis}}. It first runs \code{lm_robust} and
 then passes \code{"lm_robust"} object as an argument to \code{car::linearHypothesis}.
+}
+\examples{
+
+library(fabricatr)
+dat <- fabricate(
+  N = 40,
+  y = rpois(N, lambda = 4),
+  x = rnorm(N),
+  z = rbinom(N, 1, prob = 0.4),
+  clusterID = sample(1:4, 40, replace = TRUE)
+)
+
+# Default variance estimator is HC2 robust standard errors
+lhro <- lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0")
+
+# Also recovers other sorts of standard erorrs just as specified in \\code{\\link{lm_robust}}
+lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0", se_types = classical", ")
+lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0", se_types = "HC0")
+# Can specify clusters for cluster-robust inference
+lh_robust(y ~ x + z,
+          data = dat,
+          linearHypothesis = "z + 2x = 0",
+          clusters = clusterID )
+
+#  Can tidy() the data in to a data.frame
+tidy(lmro)
+# Can use summary() to get more statistics
+summary(lmro)
 }
