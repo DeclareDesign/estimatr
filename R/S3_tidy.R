@@ -90,7 +90,7 @@ tidy.horvitz_thompson <- tidy_data_frame
 #' @family estimatr tidiers
 tidy.lh_robust <- function(x, ...) {
 
-   rbind(tidy(x$lm_robust), tidy(x$linearHypothesis))
+   rbind(tidy(x$lm_robust), tidy(x$lh))
 
 }
 #'

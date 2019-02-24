@@ -23,7 +23,7 @@ of observations to be used.}
 corresponds to the clusters in the data.}
 
 \item{fixed_effects}{An optional right-sided formula containing the fixed
-effects that will be projected out of the data, such as \code{~ blockID}. Do not
+effects that will be projected car_lht of the data, such as \code{~ blockID}. Do not
 pass multiple-fixed effects with intersecting groups. Speed gains are greatest for
 variables with large numbers of groups and when using "HC1" or "stata" standard errors.
 See 'Details'.}
@@ -51,20 +51,15 @@ perfect multi-collinearity)}
 See \code{\link{linearHypothesis}} for more details.}
 }
 \value{
-An object of class \code{"lh_robust"} comprised of two objects: one class \code{"lh_robust"},  and the other a tidy output for the class \code{linearHypothesis}.
+An object of class \code{"lh_robust"} containing the two following components:
 
+ \item{lm_robust} {an object as returned by \code{lm_robust()}}
+ \item{lh} {A data frame with most of its columns pulled from \code{car::linearHypothesis}' output.}
 
- \code{"lh_robust"} contains two lists containing that subsequently contain the
-following components:
-  \item{coefficients}{the estimated linear combination of coefficients}
-  \item{std.error}{the estimated standard errors of the linear combination}
-  \item{statistic}{the t-statistic}
-  \item{df}{the estimated degrees of freedom}
-  \item{p.value}{the p-values from a two-sided t-test using \code{coefficients}, \code{std.error}, and \code{df}}
-  \item{conf.low}{the lower bound of the \code{1 - alpha} percent confidence interval}
-  \item{conf.high}{the upper bound of the \code{1 - alpha} percent confidence interval}
-  \item{term}{a character vector of coefficient names}
-  \item{alpha}{the significance level specified by the user}
+This function solely performs a \code{t-test} for the null hypothesis of no effects of the linear combination of coefficients specified by the user.
+All other components are obtained by calling \code{linearHypothesis()} and \code{lm_robust()}
+
+The original output returned by  \code{car::linearHypothesis} is added as an attribute.
 }
 \description{
 This function is a wrapper for \code{\link{lm_robust}} that
@@ -73,7 +68,7 @@ is useful for estimating linear combination of coefficients.
 \details{
 This function is a wrapper for \code{\link{lm_robust}} and for
 \code{\link{car::linearHypothesis}}. It first runs \code{lm_robust} and
-then passes \code{"lm_robust"} object as an argument to \code{car::linearHypothesis}.
+next passes \code{"lm_robust"} object as an argument to \code{car::linearHypothesis}.
 }
 \examples{
 
@@ -90,16 +85,16 @@ dat <- fabricate(
 lhro <- lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0")
 
 # Also recovers other sorts of standard erorrs just as specified in \\code{\\link{lm_robust}}
-lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0", se_types = classical", ")
-lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0", se_types = "HC0")
-# Can specify clusters for cluster-robust inference
-lh_robust(y ~ x + z,
-          data = dat,
-          linearHypothesis = "z + 2x = 0",
-          clusters = clusterID )
+lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0", se_type = "classical")
+lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0", se_type =  "HC1")
+#  Can tidy() main output and subcomponents in to a data.frame
+lhro <- lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0")
+tidy(lhro )
+tidy(lhro$lm_robust)
+tidy(lhro$lh)
+# Can use summary() to get more statistics on the main output and subcomponents.
+summary(lhro)
+summary(lhro$lm_robust)
+summary(lhro$lh)
 
-#  Can tidy() the data in to a data.frame
-tidy(lmro)
-# Can use summary() to get more statistics
-summary(lmro)
 }
