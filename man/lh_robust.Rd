@@ -48,18 +48,18 @@ be used if users are sure their model is full-rank (i.e., there is no
 perfect multi-collinearity)}
 
 \item{linearHypothesis}{A character string or a matrix specifying combination.
-See \code{\link{linearHypothesis}} for more details.}
+See \code{\link[car]{linearHypothesis}} for more details.}
 }
 \value{
 An object of class \code{"lh_robust"} containing the two following components:
 
- \item{lm_robust} {an object as returned by \code{lm_robust()}}
- \item{lh} {A data frame with most of its columns pulled from \code{car::linearHypothesis}' output.}
+\item{lm_robust}{an object as returned by \code{lm_robust}}.
+\item{lh}{A data frame with most of its columns pulled from \code{linearHypothesis}' output.}
 
-This function solely performs a \code{t-test} for the null hypothesis of no effects of the linear combination of coefficients specified by the user.
-All other components are obtained by calling \code{linearHypothesis()} and \code{lm_robust()}
+The only analyis directly performed by \code{lh_robust} is a \code{t-test} for the null hypothesis of no effects of the linear combination of coefficients as specified by the user.
+All other output components are either extract from \code{linearHypothesis} or \code{lm_robust}.
 
-The original output returned by  \code{car::linearHypothesis} is added as an attribute.
+The original output returned by  \code{linearHypothesis} is added as an attribute.
 }
 \description{
 This function is a wrapper for \code{\link{lm_robust}} that
@@ -67,8 +67,8 @@ is useful for estimating linear combination of coefficients.
 }
 \details{
 This function is a wrapper for \code{\link{lm_robust}} and for
-\code{\link{car::linearHypothesis}}. It first runs \code{lm_robust} and
-next passes \code{"lm_robust"} object as an argument to \code{car::linearHypothesis}.
+\code{\link[car]{linearHypothesis}}. It first runs \code{lm_robust} and
+next passes \code{"lm_robust"} object as an argument to \code{linearHypothesis}.
 }
 \examples{
 
@@ -87,11 +87,13 @@ lhro <- lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0")
 # Also recovers other sorts of standard erorrs just as specified in \\code{\\link{lm_robust}}
 lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0", se_type = "classical")
 lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0", se_type =  "HC1")
+
 #  Can tidy() main output and subcomponents in to a data.frame
 lhro <- lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0")
 tidy(lhro )
 tidy(lhro$lm_robust)
 tidy(lhro$lh)
+
 # Can use summary() to get more statistics on the main output and subcomponents.
 summary(lhro)
 summary(lhro$lm_robust)
