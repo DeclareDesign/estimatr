@@ -78,7 +78,7 @@
 #' Third, we return a test for the correlation between the instruments and the error term. We implement
 #' the Wooldridge (1995) robust score test, which is identical to Sargan's (1958) test with classical
 #' standard errors. This test is only reported if the model is overidentified (i.e. the number of
-#' instruments is greater than the number of endogenous regressors).
+#' instruments is greater than the number of endogenous regressors), and if no weights are specified.
 #'
 #' @return An object of class \code{"iv_robust"}.
 #'
@@ -177,6 +177,10 @@ iv_robust <- function(formula,
 
   fes <- is.character(model_data[["fixed_effects"]])
   if (fes) {
+    if (diagnostics) {
+      warning("Will not return `diagnostics` if `fixed_effects` are used.")
+      diagnostics <- FALSE
+    }
     yoriginal <- model_data[["outcome"]]
     Xoriginal <- model_data[["design_matrix"]]
     model_data <- demean_fes(model_data)
@@ -198,7 +202,7 @@ iv_robust <- function(formula,
       cluster = model_data$cluster,
       fixed_effects = model_data$fixed_effects,
       ci = FALSE,
-      se_type = if (diagnostics) se_type else "none",
+      se_type = "none",
       has_int = has_int,
       alpha = alpha,
       return_fit = TRUE,
@@ -267,7 +271,7 @@ iv_robust <- function(formula,
     # Overidentification test (only computed if n(instruments) > n(endog regressors)
     extra_instruments <- length(instruments) - length(endog)
 
-    if (extra_instruments) {
+    if (extra_instruments && is.null(model_data$weights)) {
       ss_residuals <- model_data$outcome - second_stage[["fitted.values"]]
 
       if (se_type == "classical") {
@@ -473,9 +477,13 @@ wooldridge_score_chisq <- function(model_data, endog, instruments, ss_residuals,
 
   kmat <- as.matrix(
     model_data$instrument_matrix[, instruments[seq_len(m)], drop = FALSE] - qhat_fit[["fitted.values"]]
-    ) * as.vector(ss_residuals)
+    ) *  as.vector(ss_residuals)
 
-  kmat_fit <- lm.fit(kmat, as.matrix(rep(1, times = length(ss_residuals))))
+  if (!is.null(model_data[["weights"]])) {
+    kmat_fit <- lm.fit(kmat * model_data[["weights"]], as.matrix(rep(1, times = length(ss_residuals))))
+  } else {
+    kmat_fit <- lm.fit(kmat, as.matrix(rep(1, times = length(ss_residuals))))
+  }
 
   return(length(ss_residuals) - sum(residuals(kmat_fit)))
 }

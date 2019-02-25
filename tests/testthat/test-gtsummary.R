@@ -21,7 +21,7 @@ test_that("gtsummary works with glance", {
   model1 <- iv_robust(mpg ~ am | gear, mtcars)
   model2 <- iv_robust(mpg ~ am | gear, mtcars, clusters = cyl, diagnostics = TRUE)
 
-  gtsummary(list(model1, model2))
+  gtsummary(list(model1, model2), gof_omit = c("N|[sS]tatistic|p.value|p{1}"))
 
   # difference_in_means
   model1 <- difference_in_means(mpg ~ am, mtcars)

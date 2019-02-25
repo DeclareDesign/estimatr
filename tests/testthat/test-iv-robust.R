@@ -425,7 +425,7 @@ test_that("IV diagnostics", {
   # Load stata diagnostics
   stata_diags <- read.table(
     "stata-iv-diagnostics.txt",
-    col.names = c("formula", "options", "diag", "df1", "df2", "val", "pval"),
+    col.names = c("formula", "weights", "options", "diag", "df1", "df2", "val", "pval"),
     sep = ";",
     na = ".",
     stringsAsFactors = FALSE
@@ -446,27 +446,6 @@ test_that("IV diagnostics", {
     # mpg ~ hp + gear | 0 + wt + gear + am,
     "gear (hp = wt am)0" = mpg ~ 0 + hp + gear | 0 + wt + gear + am
   )
-
-  build_ivreg_diagnostics_mat <- function(iv_robust_out, stata = FALSE) {
-    weakinst <- iv_robust_out[["diagnostic_first_stage_fstatistic"]]
-    wu_hausman <- iv_robust_out[["diagnostic_endogeneity_test"]]
-    overid <- iv_robust_out[["diagnostic_overid_test"]]
-    n_weak_inst_fstats <- (length(weakinst) - 2) / 2
-
-    rbind(
-      matrix(
-        c(
-          weakinst[seq_len(n_weak_inst_fstats)],
-          rep(weakinst["nomdf"], n_weak_inst_fstats),
-          rep(weakinst["dendf"], n_weak_inst_fstats),
-          weakinst[n_weak_inst_fstats + 2 + seq_len(n_weak_inst_fstats)]
-        ),
-        nrow = n_weak_inst_fstats
-      ),
-      wu_hausman,
-      c(overid[1], if (stata & overid[2] == 0) NA else overid[2], NA, overid[3])
-    )[, c(2, 3, 1, 4)]
-  }
 
   for (f_n in names(formulae)) {
     f <- formulae[[f_n]]
@@ -493,22 +472,76 @@ test_that("IV diagnostics", {
 
     expect_equivalent(
       build_ivreg_diagnostics_mat(ivro, stata = TRUE),
-      as.matrix(stata_diag[grepl("small", stata_diag$options), c("df1", "df2", "val", "pval")]),
+      as.matrix(stata_diag[
+        grepl("small", stata_diag$options) & nchar(stata_diag$weights) == 0,
+        c("df1", "df2", "val", "pval")
+      ]),
+      tolerance = 1e-6
+    )
+
+    # With weights, don't match `overid` test, as we don't report it
+    ivrow <- iv_robust(f, data = mtcars, se_type = "classical", weights = drat, diagnostics = TRUE)
+    ivrow_diag_mat <- build_ivreg_diagnostics_mat(ivrow, stata = TRUE)
+    expect_equivalent(ivrow_diag_mat[nrow(ivrow_diag_mat), ], rep(NA_real_, 4))
+
+    expect_equivalent(
+      ivrow_diag_mat[-nrow(ivrow_diag_mat), ],
+      as.matrix(stata_diag[
+        grepl("small", stata_diag$options) & nchar(stata_diag$weights) > 0 & stata_diag$diag != "overid",
+        c("df1", "df2", "val", "pval")
+      ]),
       tolerance = 1e-6
     )
 
     ivro_hc1 <- iv_robust(f, data = mtcars, se_type = "HC1", diagnostics = TRUE)
+    ivrow_hc1 <- iv_robust(f, data = mtcars, se_type = "HC1", weights = drat, diagnostics = TRUE)
+
     expect_equivalent(
       build_ivreg_diagnostics_mat(ivro_hc1, stata = TRUE),
-      as.matrix(stata_diag[grepl("rob", stata_diag$options), c("df1", "df2", "val", "pval")]),
+      as.matrix(stata_diag[
+        grepl("rob", stata_diag$options) & nchar(stata_diag$weights) == 0,
+        c("df1", "df2", "val", "pval")
+      ]),
+      tolerance = 1e-6
+    )
+
+    # Again, no overid test reported with weights
+    ivrow_hc1_diag_mat <- build_ivreg_diagnostics_mat(ivrow_hc1, stata = TRUE)
+    expect_equivalent(ivrow_hc1_diag_mat[nrow(ivrow_hc1_diag_mat), ], rep(NA_real_, 4))
+
+    expect_equivalent(
+      ivrow_hc1_diag_mat[-nrow(ivrow_hc1_diag_mat), ],
+      as.matrix(stata_diag[
+        grepl("rob", stata_diag$options) & nchar(stata_diag$weights) > 0 & stata_diag$diag != "overid",
+        c("df1", "df2", "val", "pval")
+      ]),
       tolerance = 1e-6
     )
 
     # tolerance higher here due to larger values in general
     ivro_crs <- iv_robust(f, data = mtcars, se_type = "stata", clusters = cyl, diagnostics = TRUE)
+    ivro_crs_diag_mat <- build_ivreg_diagnostics_mat(ivro_crs, stata = TRUE)
+
+    ivrow_crs <- iv_robust(f, data = mtcars, se_type = "stata", clusters = cyl, weights = drat, diagnostics = TRUE)
+    ivrow_crs_diag_mat <- build_ivreg_diagnostics_mat(ivrow_crs, stata = TRUE)
+    expect_equivalent(ivrow_crs_diag_mat[nrow(ivrow_crs_diag_mat), ], rep(NA_real_, 4))
+
     expect_equivalent(
-      build_ivreg_diagnostics_mat(ivro_crs, stata = TRUE)[1:2, ],
-      as.matrix(stata_diag[grepl("cluster", stata_diag$options), c("df1", "df2", "val", "pval")])[1:2, ],
+      ivro_crs_diag_mat[-nrow(ivro_crs_diag_mat), ],
+      as.matrix(stata_diag[
+        grepl("cluster", stata_diag$options) & nchar(stata_diag$weights) == 0 & stata_diag$diag != "overid",
+        c("df1", "df2", "val", "pval")
+      ]),
+      tolerance = 1e-3
+    )
+
+    # Stata doesn't report overid test with clusters
+    expect_equivalent(
+      ivrow_crs_diag_mat[-nrow(ivrow_crs_diag_mat), ],
+      as.matrix(stata_diag[
+        grepl("cluster", stata_diag$options) & nchar(stata_diag$weights) > 0 & stata_diag$diag != "overid",
+        c("df1", "df2", "val", "pval")
+        ]),
       tolerance = 1e-3
     )
 

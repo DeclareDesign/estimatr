@@ -45,7 +45,7 @@ glance.lm_robust <- function(x, ...) {
     },
     data.frame(
       df.residual = x[["df"]][1],
-      N = x[["N"]],
+      N = as.integer(x[["N"]]),
       se_type = x[["se_type"]]
     )
   )
@@ -88,7 +88,7 @@ glance.iv_robust <- function(x, ...) {
       r.squared = x[["r.squared"]],
       adj.r.squared = x[["adj.r.squared"]],
       df.residual = x[["df.residual"]],
-      N = x[["N"]],
+      N = as.integer(x[["N"]]),
       se_type = x[["se_type"]]
     ),
     if (exists("fstatistic", x)) {
@@ -149,7 +149,7 @@ glance.difference_in_means <- function(x, ...) {
     data.frame(
       design = x[["design"]],
       df = x[["df"]],
-      N = x[["N"]]
+      N = as.integer(x[["N"]])
     ),
     if (exists("N_blocks", x)) {
       data.frame(N_blocks = x[["N_blocks"]])
@@ -185,7 +185,7 @@ glance.difference_in_means <- function(x, ...) {
 #' @md
 glance.horvitz_thompson <- function(x, ...) {
   ret <- data.frame(
-    N = x[["N"]],
+    N = as.integer(x[["N"]]),
     se_type = x[["se_type"]],
     condition2 = x[["condition2"]],
     condition1 = x[["condition1"]]
