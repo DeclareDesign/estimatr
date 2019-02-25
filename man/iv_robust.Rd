@@ -40,6 +40,8 @@ intervals, TRUE by default.}
 
 \item{alpha}{The significance level, 0.05 by default.}
 
+\item{diagnostics}{logical. Whether to compute and return instrumental variable diagnostic statistics and tests.}
+
 \item{return_vcov}{logical. Whether to return the variance-covariance
 matrix for later usage, TRUE by default.}
 
@@ -118,6 +120,20 @@ standard error estimators. Be wary when specifying fixed effects that may result
 in perfect fits for some observations or if there are intersecting groups across
 multiple fixed effect variables (e.g. if you specify both "year" and "country" fixed effects
 with an unbalanced panel where one year you only have data for one country).
+
+If \code{diagnostics} are requested, we compute and return three sets of diagnostics.
+First, we return tests for weak instruments using first-stage F-statistics. Specifically,
+the F-statistics reported compare the model regressing each endogeneous variable on both the
+included exogenous variables and the instruments to a model where each endogenous variable is
+regressed only on the included exogenous variables (without the instruments). A significant F-test
+for weak instruments provides evidence against the null hypothesis that the instruments are weak.
+Second, we return tests for the endogeneity of the endogenous variables, often called the Wu-Hausman
+test. We implement the regression test from Hausman (1978), which allows for robust variance estimation.
+A significant endogeneity test provides evidence against the null that all the variables are exogenous.
+Third, we return a test for the correlation between the instruments and the error term. We implement
+the Wooldridge (1995) robust score test, which is identical to Sargan's (1958) test with classical
+standard errors. This test is only reported if the model is overidentified (i.e. the number of
+instruments is greater than the number of endogenous regressors), and if no weights are specified.
 }
 \examples{
 library(fabricatr)
