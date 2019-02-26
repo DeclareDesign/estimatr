@@ -26,10 +26,12 @@ matrix:
     - os: osx
       r: release
       if: branch = master
+      brew_packages: libgit2
 
     - os: osx
       r: 3.4
       if: branch = master
+      brew_packages: libgit2
 
 env:
   global:
