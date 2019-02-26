@@ -443,9 +443,8 @@ difference_in_means_internal <- function(condition1 = NULL,
 
   # Check that treatment status is uniform within cluster, checked here
   # so that the treatment vector t doesn't have to be built anywhere else
-  clustered <- FALSE
-  if (!is.null(data$cluster)) {
-    clustered <- TRUE
+  clustered <- !is.null(data$cluster)
+  if (clustered) {
     if (is.factor(data$cluster)) {
       data$cluster <- droplevels(data$cluster)
     }
