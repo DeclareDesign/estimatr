@@ -375,9 +375,9 @@ test_that("coef and confint work", {
 
 test_that("predict works", {
   set.seed(42)
-  n <- 10
+  n <- 20
   dat <- data.frame(
-    x = rep(0:1, times = 5),
+    x = rep(0:1, times = 10),
     w = runif(n),
     z = rnorm(n),
     cl = as.factor(sample(letters[1:3], size = n, replace = T)),
@@ -404,9 +404,9 @@ test_that("predict works", {
   )
 
   # missingness
-  n <- 11
+  n <- 21
   new_dat <- data.frame(
-    x = rep(0:1, times = c(5, 6)),
+    x = rep(0:1, times = c(10, 11)),
     w = runif(n),
     z = rnorm(n),
     cl = as.factor(sample(letters[1:3], size = n, replace = T)),
@@ -487,9 +487,9 @@ test_that("predict works", {
   )
 
   # lm_lin
-  n <- 11
+  n <- 21
   new_dat <- data.frame(
-    x = rep(0:1, times = c(5, 6)),
+    x = rep(0:1, times = c(10, 11)),
     z = rnorm(n),
     cl = as.factor(sample(letters[1:3], size = n, replace = TRUE)),
     y = rnorm(n)
