@@ -75,7 +75,7 @@ print_summary_lm_like <- function(x, digits, signif.stars = getOption("show.sign
   cat("\n")
 
   if (is.numeric(x[["diagnostic_endogeneity_test"]])) {
-    cat("\nDiagnostic tests:\n")
+    cat("\nDiagnostics:\n")
     printCoefmat(
       build_ivreg_diagnostics_mat(x),
       cs.ind = 1L:2L,
