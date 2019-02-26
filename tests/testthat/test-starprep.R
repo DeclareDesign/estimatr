@@ -26,7 +26,7 @@ test_that("starprep works", {
 })
 
 set.seed(43)
-N <- 20
+N <- 40
 dat <- data.frame(
   Y = rnorm(N),
   Y2 = rnorm(N),
@@ -130,7 +130,6 @@ test_that("commarobust works with regular lm", {
     tidy(clo)
   )
 
-
 })
 
 test_that("commarobust works with weighted lm", {
@@ -163,6 +162,8 @@ test_that("commarobust works with weighted lm", {
     lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w)
     clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = se_type)
 
+
+    max(abs(clo$vcov - ro$vcov))
     expect_equal(
       tidy(ro),
       tidy(clo)
