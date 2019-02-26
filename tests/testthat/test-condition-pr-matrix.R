@@ -192,6 +192,7 @@ test_that("Clustered ra", {
     "character"
   )
 
+  set.seed(42)
   cl_simp_sim_perms <- replicate(10000, randomizr::conduct_ra(cl_simp_ra))
 
   expect_equal(
