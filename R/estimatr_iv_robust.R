@@ -471,7 +471,7 @@ wooldridge_score_chisq <- function(model_data, endog, instruments, ss_residuals,
     cluster = model_data$cluster,
     fixed_effects = model_data$fixed_effects,
     se_type = "none",
-    has_int = has_int,
+    has_int = TRUE,
     ci = FALSE,
     return_fit = TRUE,
     return_vcov = FALSE
