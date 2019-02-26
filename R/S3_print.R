@@ -94,6 +94,7 @@ print_summary_lm_like <- function(x, digits, signif.stars = getOption("show.sign
 #' @export
 print.summary.lm_robust <- function(x,
                                     digits = max(3L, getOption("digits") - 3L),
+                                    signif.stars = getOption("show.signif.stars"),
                                     ...) {
   print_summary_lm_like(x, digits, ...)
 }
@@ -103,7 +104,7 @@ print.summary.iv_robust <- function(x,
                                     digits = max(3L, getOption("digits") - 3L),
                                     signif.stars = getOption("show.signif.stars"),
                                     ...) {
-  print_summary_lm_like(x, digits, ...)
+  print_summary_lm_like(x, digits, signif.stars, ...)
 }
 
 #' @export
