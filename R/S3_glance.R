@@ -1,3 +1,16 @@
+# Helpers to retrieve values
+retrieve_value <- function(x, what) if(exists(what, x)) x[[what]] else NA_real_
+retrieve_fstatistic <- function(x) {
+  if (exists("fstatistic", x)) {
+    data.frame(
+      statistic = x[["fstatistic"]][1],
+      p.value = pf(x[["fstatistic"]][1], x[["fstatistic"]][2], x[["fstatistic"]][3], lower.tail = FALSE)
+    )
+  } else {
+    data.frame(statistic = NA_real_, p.value = NA_real_)
+  }
+}
+
 #' @importFrom generics glance
 #' @export
 generics::glance
@@ -35,24 +48,18 @@ glance.lm_robust <- function(x, ...) {
       r.squared = x[["r.squared"]],
       adj.r.squared = x[["adj.r.squared"]]
     ),
-    if (exists("fstatistic", x)) {
-      data.frame(
-        statistic = x[["fstatistic"]][1],
-        p.value = pf(x[["fstatistic"]][1], x[["fstatistic"]][2], x[["fstatistic"]][3], lower.tail = FALSE)
-      )
-    } else {
-      data.frame(statistic = NA_real_, p.value = NA_real_)
-    },
+    retrieve_fstatistic(x),
     data.frame(
       df.residual = x[["df"]][1],
       N = as.integer(x[["N"]]),
-      se_type = x[["se_type"]]
+      se_type = x[["se_type"]],
+      stringsAsFactors = FALSE
     )
   )
 
   rownames(ret) <- NULL
 
-  as.data.frame(ret)
+  ret
 }
 
 #' @name estimatr_glancers
@@ -89,16 +96,10 @@ glance.iv_robust <- function(x, ...) {
       adj.r.squared = x[["adj.r.squared"]],
       df.residual = x[["df.residual"]],
       N = as.integer(x[["N"]]),
-      se_type = x[["se_type"]]
+      se_type = x[["se_type"]],
+      stringsAsFactors = FALSE
     ),
-    if (exists("fstatistic", x)) {
-      data.frame(
-        statistic = x[["fstatistic"]][1],
-        p.value = pf(x[["fstatistic"]][1], x[["fstatistic"]][2], x[["fstatistic"]][3], lower.tail = FALSE)
-      )
-    } else {
-      data.frame(statistic = NA_real_, p.value = NA_real_)
-    },
+    retrieve_fstatistic(x),
     if (exists("diagnostic_firststage_fstatistic", x) && length(x[["diagnostic_firststage_fstatistic"]] == 4)) {
       data.frame(
         statistic.weakinst = x[["diagnostic_firststage_fstatistic"]]["value"],
@@ -125,7 +126,7 @@ glance.iv_robust <- function(x, ...) {
     }
   )
 
-  as.data.frame(ret)
+  ret
 }
 
 #' @name estimatr_glancers
@@ -145,29 +146,16 @@ glance.iv_robust <- function(x, ...) {
 #' @family estimatr glancers
 #' @md
 glance.difference_in_means <- function(x, ...) {
-  ret <- cbind(
-    data.frame(
-      design = x[["design"]],
-      df = x[["df"]],
-      N = as.integer(x[["N"]])
-    ),
-    if (exists("N_blocks", x)) {
-      data.frame(N_blocks = x[["N_blocks"]])
-    } else {
-      data.frame(N_blocks = NA_real_)
-    },
-    if (exists("N_clusters", x)) {
-      data.frame(N_clusters = x[["N_clusters"]])
-    } else {
-      data.frame(N_clusters = NA_real_)
-    },
-    data.frame(
-      condition2 = x[["condition2"]],
-      condition1 = x[["condition1"]]
-    )
+  data.frame(
+    design = x[["design"]],
+    df = x[["df"]],
+    N = as.integer(x[["N"]]),
+    N_blocks = retrieve_value(x, "N_blocks"),
+    N_clusters = retrieve_value(x, "N_clusters"),
+    condition2 = x[["condition2"]],
+    condition1 = x[["condition1"]],
+    stringsAsFactors = FALSE
   )
-
-  as.data.frame(ret)
 }
 
 #' @name estimatr_glancers
@@ -184,12 +172,11 @@ glance.difference_in_means <- function(x, ...) {
 #' @family estimatr glancers
 #' @md
 glance.horvitz_thompson <- function(x, ...) {
-  ret <- data.frame(
+  data.frame(
     N = as.integer(x[["N"]]),
     se_type = x[["se_type"]],
     condition2 = x[["condition2"]],
-    condition1 = x[["condition1"]]
+    condition1 = x[["condition1"]],
+    stringsAsFactors = FALSE
   )
-
-  as.data.frame(ret)
 }
