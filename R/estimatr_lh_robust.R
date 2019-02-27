@@ -1,7 +1,7 @@
 #' Linear Hypothesis for Ordinary Least Squares with Robust Standard Errors
 #'
 #' @description This function fits a linear model with robust standard errors and performs linear hypothesis test.
-#' @param ... arguments to be passed to  \code{\link{lm_robust}}
+#' @param ... Other arguments to be passed to  \code{\link{lm_robust}}
 #' @param linear_hypothesis A character string or a matrix specifying combination.
 #' See \code{\link[car]{linearHypothesis}} for more details.
 #' @details

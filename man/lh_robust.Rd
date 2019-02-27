@@ -7,7 +7,7 @@
 lh_robust(..., linear_hypothesis, alpha = 0.05)
 }
 \arguments{
-\item{...}{arguments to be passed to  \code{\link{lm_robust}}}
+\item{...}{Other arguments to be passed to  \code{\link{lm_robust}}}
 
 \item{linear_hypothesis}{A character string or a matrix specifying combination.
 See \code{\link[car]{linearHypothesis}} for more details.}
