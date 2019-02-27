@@ -85,7 +85,7 @@ test_that("Complete randomization with non 0.5 as remainder", {
   decl_cond_pr_mat <- declaration_to_condition_pr_mat(comp_odd_ra)
 
   set.seed(40)
-  get_perms <- replicate(5000, randomizr::conduct_ra(comp_odd_ra))
+  get_perms <- replicate(10000, randomizr::conduct_ra(comp_odd_ra))
   expect_equal(
     decl_cond_pr_mat,
     permutations_to_condition_pr_mat(get_perms),
@@ -192,7 +192,8 @@ test_that("Clustered ra", {
     "character"
   )
 
-  cl_simp_sim_perms <- replicate(5000, randomizr::conduct_ra(cl_simp_ra))
+  set.seed(42)
+  cl_simp_sim_perms <- replicate(10000, randomizr::conduct_ra(cl_simp_ra))
 
   expect_equal(
     cl_simp_cpm,
