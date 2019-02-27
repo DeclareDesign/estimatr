@@ -133,13 +133,13 @@ print.summary.lh_robust <- function(x,...){
   print(summary(x$lm_robust))
   x <- x[[2]]
 
-cat("\n\n$linearHypothesis \n \n")
+cat("\n\n$lh \n \n")
 
-print(attr(x, "linearHypothesis"))
+print(attr(x, "linear_hypothesis"))
 }
 #' @export
 print.summary.lh <- function(x, ...){
 
-  print(attr(x, "linearHypothesis"))
+  print(attr(x, "linear_hypothesis"))
 
 }

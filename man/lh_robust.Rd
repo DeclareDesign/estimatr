@@ -4,56 +4,18 @@
 \alias{lh_robust}
 \title{Linear Hypothesis for Ordinary Least Squares with Robust Standard Errors}
 \usage{
-lh_robust(formula, data, weights, subset, clusters, fixed_effects,
-  se_type = NULL, ci = TRUE, alpha = 0.05, return_vcov = TRUE,
-  try_cholesky = FALSE, linearHypothesis = NULL)
+lh_robust(..., linear_hypothesis, alpha = 0.05)
 }
 \arguments{
-\item{formula}{an object of class formula, as in \code{\link{lm}}}
+\item{...}{arguments to be passed to  \code{\link{lm_robust}}}
 
-\item{data}{A \code{data.frame}}
-
-\item{weights}{the bare (unquoted) names of the weights variable in the
-supplied data.}
-
-\item{subset}{An optional bare (unquoted) expression specifying a subset
-of observations to be used.}
-
-\item{clusters}{An optional bare (unquoted) name of the variable that
-corresponds to the clusters in the data.}
-
-\item{fixed_effects}{An optional right-sided formula containing the fixed
-effects that will be projected car_lht of the data, such as \code{~ blockID}. Do not
-pass multiple-fixed effects with intersecting groups. Speed gains are greatest for
-variables with large numbers of groups and when using "HC1" or "stata" standard errors.
-See 'Details'.}
-
-\item{se_type}{The sort of standard error sought. If \code{clusters} is
-not specified the options are "HC0", "HC1" (or "stata", the equivalent),
- "HC2" (default), "HC3", or
-"classical". If \code{clusters} is specified the options are "CR0", "CR2" (default), or "stata". Can also specify "none", which may speed up estimation of the coefficients.}
-
-\item{ci}{logical. Whether to compute and return p-values and confidence
-intervals, TRUE by default.}
-
-\item{alpha}{The significance level, 0.05 by default.}
-
-\item{return_vcov}{logical. Whether to return the variance-covariance
-matrix for later usage, TRUE by default.}
-
-\item{try_cholesky}{logical. Whether to try using a Cholesky
-decomposition to solve least squares instead of a QR decomposition,
-FALSE by default. Using a Cholesky decomposition may result in speed gains, but should only
-be used if users are sure their model is full-rank (i.e., there is no
-perfect multi-collinearity)}
-
-\item{linearHypothesis}{A character string or a matrix specifying combination.
+\item{linear_hypothesis}{A character string or a matrix specifying combination.
 See \code{\link[car]{linearHypothesis}} for more details.}
 }
 \value{
 An object of class \code{"lh_robust"} containing the two following components:
 
-\item{lm_robust}{an object as returned by \code{lm_robust}}.
+\item{lm_robust}{an object as returned by \code{lm_robust}.}
 \item{lh}{A data frame with most of its columns pulled from \code{linearHypothesis}' output.}
 
 The only analyis directly performed by \code{lh_robust} is a \code{t-test} for the null hypothesis of no effects of the linear combination of coefficients as specified by the user.
@@ -62,8 +24,7 @@ All other output components are either extract from \code{linearHypothesis} or \
 The original output returned by  \code{linearHypothesis} is added as an attribute.
 }
 \description{
-This function is a wrapper for \code{\link{lm_robust}} that
-is useful for estimating linear combination of coefficients.
+This function fits a linear model with robust standard errors and performs linear hypothesis test.
 }
 \details{
 This function is a wrapper for \code{\link{lm_robust}} and for
@@ -82,14 +43,22 @@ dat <- fabricate(
 )
 
 # Default variance estimator is HC2 robust standard errors
-lhro <- lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0")
+lhro <- lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z + 2x = 0")
+
+# The linear hypothesis argument can be specified as following
+lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z = 2x")
+lh_robust(y ~ x + z, data = dat, linear_hypothesis = c("z = 1", "x = 2"))
+lh_robust(y ~ x + z, data = dat, linear_hypothesis = "2*x +1*z")
+
+# which are alle equivalent to
+lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z + 2x = 0")
 
 # Also recovers other sorts of standard erorrs just as specified in \\code{\\link{lm_robust}}
-lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0", se_type = "classical")
-lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0", se_type =  "HC1")
+lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z + 2x = 0", se_type = "classical")
+lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z + 2x = 0", se_type =  "HC1")
 
 #  Can tidy() main output and subcomponents in to a data.frame
-lhro <- lh_robust(y ~ x + z, data = dat, linearHypothesis = "z + 2x = 0")
+lhro <- lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z + 2x = 0")
 tidy(lhro )
 tidy(lhro$lm_robust)
 tidy(lhro$lh)
