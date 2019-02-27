@@ -69,8 +69,6 @@ lh_robust <- function(...,
   if(is.null(linear_hypothesis)){
    stop("No linear hypothesis test performed")}
 
- # dots <- list2(...)
- # return_list <- eval_bare(expr(lm_robust(!!!dots,  alpha = alpha)))
   return_list <- lm_robust(..., alpha = alpha)
   return_list[["call"]] <- match.call()
 
@@ -81,14 +79,14 @@ lh_robust <- function(...,
   std.error <- sqrt(diag(attr(car_lht, "vcov")))
   df <- return_list$df.residual
   tt <- estimate/std.error
-  p.value <-  2 * pt(abs(tt), df)
+  p.value <-  2 * pt(abs(tt), df, lower.tail = FALSE)
   alpha_ <- alpha/2
   alpha_ <- c(alpha_, 1 - alpha_)
   ci <- estimate + std.error %o% qt(alpha_, df)
 
   return_lh <-  data.frame( coefficients =  estimate,
                       std.error =  std.error,
-                      statistic = abs(tt),
+                      statistic = tt,
                       p.value = p.value,
                       alpha = alpha,
                       conf.low  =  ci[,1],
