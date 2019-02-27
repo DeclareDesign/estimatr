@@ -1,4 +1,9 @@
-# estimatr 0.14.0
+# estimatr 0.15.0 (GitHub)
+
+* Add `diagnostics` to `iv_robust()`
+* Add `glance()` methods for all estimators
+
+# estimatr 0.14.0 (CRAN)
 
 * Removes `broom` hack for `tidy` method and instead relies on importing `generics`
 

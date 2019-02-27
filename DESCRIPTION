@@ -1,8 +1,8 @@
 Package: estimatr
 Type: Package
 Title: Fast Estimators for Design-Based Inference
-Version: 0.14
-Date: 2018-10-29
+Version: 0.15
+Date: 2019-02-27
 Authors@R: c(person("Graeme", "Blair", email = "graeme.blair@ucla.edu", role = c("aut", "cre")),
              person("Jasper", "Cooper", email = "jjc2247@columbia.edu", role = c("aut")),
              person("Alexander", "Coppock", email = "alex.coppock@yale.edu", role = c("aut")),
