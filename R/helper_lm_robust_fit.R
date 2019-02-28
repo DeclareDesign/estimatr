@@ -195,6 +195,7 @@ lm_robust_fit <- function(y,
       if (weighted) {
         fit_vals[["ei.iv"]] <- data[["weights"]] * fit_vals[["ei.iv"]]
       }
+      return_list[["ei.iv"]] <- fit_vals[["ei.iv"]]
     }
 
     if (se_type != "none") {
@@ -285,6 +286,9 @@ lm_robust_fit <- function(y,
   return_list[["clustered"]] <- clustered
   return_list[["df.residual"]] <- N - tot_rank
   return_list[["N"]] <- N
+  if (clustered) {
+    return_list[["N_clusters"]] <- data[["J"]]
+  }
   return_list[["k"]] <- k
   return_list[["rank"]] <- x_rank
 
@@ -494,6 +498,7 @@ get_fstat <- function(tss_r2s,
     fstat_names <- "value"
   }
 
+
   if (iv_stage[[1]] != 2 && return_list[["se_type"]] == "classical") {
     fstat <- tss_r2s$r.squared * return_list[["df.residual"]] /
         ((1 - tss_r2s$r.squared) * (nomdf))
@@ -505,20 +510,15 @@ get_fstat <- function(tss_r2s,
   } else {
     indices <-
       seq.int(has_int + (!return_list[["fes"]]), return_list[["rank"]], by = 1)
-    fstat <- tryCatch({
-      sapply(seq_len(ncol(coefs)),
-             function(x) {
-               vcov_indices <- indices + (x - 1) * return_list[["rank"]]
-               crossprod(
-                 coefs[indices, x],
-                 chol2inv(chol(vcov_fit$Vcov_hat[vcov_indices, vcov_indices])) %*%
-                   coefs[indices, x]
-               ) / nomdf
-             })
-    },
-    error = function(e) {
-      rep(NA, length(fstat_names))
-    })
+
+    fstat <- compute_fstat(
+      coef_matrix = coefs,
+      coef_indices = indices,
+      vcov_fit = vcov_fit$Vcov_hat,
+      rank = return_list[["rank"]],
+      nomdf = nomdf
+    )
+
   }
 
   f <- c(
@@ -528,6 +528,29 @@ get_fstat <- function(tss_r2s,
   )
 
   return(f)
+}
+
+compute_fstat <- function(coef_matrix, coef_indices, vcov_fit, rank, nomdf) {
+
+  fstat <- numeric(ncol(coef_matrix))
+
+  for (i in seq_along(fstat)) {
+    vcov_indices <- coef_indices + (i - 1) * rank
+    fstat[i] <- tryCatch(
+      {
+        crossprod(
+          coef_matrix[coef_indices, i],
+          chol2inv(chol(vcov_fit[vcov_indices, vcov_indices])) %*%
+            coef_matrix[coef_indices, i]
+        ) / nomdf
+      },
+      error = function(e) {
+        NA_real_
+      }
+    )
+  }
+
+  fstat
 }
 
 prep_data <- function(data,
@@ -563,7 +586,7 @@ prep_data <- function(data,
 
     data[["J"]] <- length(unique(data[["cluster"]]))
   } else {
-    data[["J"]] <- J <- 1
+    data[["J"]] <- 1
   }
 
   if (fes) {

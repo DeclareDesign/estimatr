@@ -7,7 +7,8 @@
 #' vcov model.frame.default model.response complete.cases terms reformulate
 #' update model.extract setNames delete.response .checkMFClasses model.frame
 #' model.matrix na.pass nobs coef pf .getXlevels df.residual fitted.values
-#' formula model.matrix.lm resid weights
+#' formula model.matrix.lm resid weights lm.fit na.omit pchisq printCoefmat
+#' residuals
 #' @importFrom methods setGeneric setMethod isGeneric className
 #' @importFrom Formula as.Formula
 #' @importFrom rlang enquos enquo eval_tidy quo_get_expr quo_set_expr quo_is_missing sym quo

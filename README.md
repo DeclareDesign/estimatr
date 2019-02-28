@@ -6,7 +6,7 @@ estimatr: Fast Estimators for Design-Based Inference
 [![CRAN
 Status](https://www.r-pkg.org/badges/version/estimatr)](https://cran.r-project.org/package=estimatr)
 [![Travis-CI Build
-Status](https://travis-ci.org/DeclareDesign/estimatr.svg?branch=master)](https://travis-ci.org/DeclareDesign/estimatr)
+Status](https://travis-ci.com/DeclareDesign/estimatr.svg?branch=master)
 [![AppVeyor Build
 Status](https://ci.appveyor.com/api/projects/status/github/DeclareDesign/estimatr?branch=master&svg=true)](https://ci.appveyor.com/project/DeclareDesign/estimatr)
 [![Coverage

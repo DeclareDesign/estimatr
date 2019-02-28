@@ -8,9 +8,7 @@ print.iv_robust <- function(x, ...) {
   print(summarize_tidy(x))
 }
 
-print_summary_lm_like <- function(x,
-                                  digits,
-                                  ...) {
+print_summary_lm_like <- function(x, digits, signif.stars = getOption("show.signif.stars"), ...) {
   cat(
     "\nCall:\n",
     paste(deparse(x$call, nlines = 5), sep = "\n", collapse = "\n"),
@@ -36,7 +34,7 @@ print_summary_lm_like <- function(x,
 
   print(coef(x), digits = digits)
 
-  fstat <- if (is.numeric(x$fstatistic)) {
+  fstat <- if (is.numeric(x[["fstatistic"]])) {
     paste(
       "\nF-statistic:", formatC(x$fstatistic[1L], digits = digits),
       "on", x$fstatistic[2L], "and", x$fstatistic[3L],
@@ -56,7 +54,7 @@ print_summary_lm_like <- function(x,
     fstat
   )
 
-  if (!is.null(x$proj_fstatistic)) {
+  if (is.numeric(x[["proj_fstatistic"]])) {
     cat(
       "\nMultiple R-squared (proj. model): ",
       formatC(x$proj_r.squared, digits = digits),
@@ -76,12 +74,27 @@ print_summary_lm_like <- function(x,
   }
   cat("\n")
 
+  if (is.numeric(x[["diagnostic_endogeneity_test"]])) {
+    cat("\nDiagnostics:\n")
+    printCoefmat(
+      build_ivreg_diagnostics_mat(x),
+      cs.ind = 1L:2L,
+      tst.ind = 3L,
+      has.Pvalue = TRUE,
+      P.values = TRUE,
+      digits = digits,
+      signif.stars = signif.stars,
+      na.print = "NA",
+      ...
+    )
+  }
   invisible(x)
 }
 
 #' @export
 print.summary.lm_robust <- function(x,
                                     digits = max(3L, getOption("digits") - 3L),
+                                    signif.stars = getOption("show.signif.stars"),
                                     ...) {
   print_summary_lm_like(x, digits, ...)
 }
@@ -89,8 +102,9 @@ print.summary.lm_robust <- function(x,
 #' @export
 print.summary.iv_robust <- function(x,
                                     digits = max(3L, getOption("digits") - 3L),
+                                    signif.stars = getOption("show.signif.stars"),
                                     ...) {
-  print_summary_lm_like(x, digits, ...)
+  print_summary_lm_like(x, digits, signif.stars, ...)
 }
 
 #' @export

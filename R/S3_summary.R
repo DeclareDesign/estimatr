@@ -57,23 +57,41 @@ summary.iv_robust <- function(object, ...) {
 
 
 summary_lm_model <- function(object) {
-  return_list <-
-    object[c(
-      "call",
-      "k",
-      "rank",
-      "df.residual",
-      "r.squared",
-      "adj.r.squared",
-      "fstatistic",
+
+  out_values <- c(
+    "call",
+    "k",
+    "rank",
+    "df.residual",
+    "res_var",
+    "weighted",
+    "se_type",
+    "fes",
+    "r.squared",
+    "adj.r.squared",
+    "fstatistic"
+  )
+  # Different returns if fixed effects in the output
+  if (object[["fes"]]) {
+    out_values <- c(
+      out_values,
       "proj_r.squared",
       "proj_adj.r.squared",
-      "proj_fstatistic",
-      "res_var",
-      "weighted",
-      "se_type",
-      "fes"
-    )]
+      "proj_fstatistic"
+    )
+  }
+
+  # Different returns if fixed effects in the output
+  if (is.numeric(object[["diagnostic_endogeneity_test"]])) {
+    out_values <- c(
+      out_values,
+      "diagnostic_first_stage_fstatistic",
+      "diagnostic_endogeneity_test",
+      "diagnostic_overid_test"
+    )
+  }
+
+  return_list <- object[out_values]
 
   # Split into two lists if multivariate linear model
 

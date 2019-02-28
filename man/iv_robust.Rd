@@ -5,8 +5,8 @@
 \title{Two-Stage Least Squares Instrumental Variables Regression}
 \usage{
 iv_robust(formula, data, weights, subset, clusters, fixed_effects,
-  se_type = NULL, ci = TRUE, alpha = 0.05, return_vcov = TRUE,
-  try_cholesky = FALSE)
+  se_type = NULL, ci = TRUE, alpha = 0.05, diagnostics = FALSE,
+  return_vcov = TRUE, try_cholesky = FALSE)
 }
 \arguments{
 \item{formula}{an object of class formula of the regression and the instruments.
@@ -39,6 +39,8 @@ not specified the options are "HC0", "HC1" (or "stata", the equivalent),
 intervals, TRUE by default.}
 
 \item{alpha}{The significance level, 0.05 by default.}
+
+\item{diagnostics}{logical. Whether to compute and return instrumental variable diagnostic statistics and tests.}
 
 \item{return_vcov}{logical. Whether to return the variance-covariance
 matrix for later usage, TRUE by default.}
@@ -78,10 +80,13 @@ following components:
   \item{r.squared}{the \eqn{R^2} of the second stage regression}
   \item{adj.r.squared}{the \eqn{R^2} of the second stage regression, but penalized for having more parameters, \code{rank}}
   \item{fstatistic}{a vector with the value of the second stage F-statistic with the numerator and denominator degrees of freedom}
+  \item{firststage_fstatistic}{a vector with the value of the first stage F-statistic with the numerator and denominator degrees of freedom, useful for a test for weak instruments}
   \item{weighted}{whether or not weights were applied}
   \item{call}{the original function call}
   \item{fitted.values}{the matrix of predicted means}
 We also return \code{terms} with the second stage terms and \code{terms_regressors} with the first stage terms, both of which used by \code{predict}. If \code{fixed_effects} are specified, then we return \code{proj_fstatistic}, \code{proj_r.squared}, and \code{proj_adj.r.squared}, which are model fit statistics that are computed on the projected model (after demeaning the fixed effects).
+
+We also return various diagnostics when \code{`diagnostics` == TRUE}. These are stored in \code{diagnostic_first_stage_fstatistic}, \code{diagnostic_endogeneity_test}, and \code{diagnostic_overid_test}. They have the test statistic, relevant degrees of freedom, and p.value in a named vector. See 'Details' for more. These are printed in a formatted table when the model object is passed to \code{summary()}.
 }
 \description{
 This formula estimates an instrumental variables regression
@@ -117,6 +122,20 @@ standard error estimators. Be wary when specifying fixed effects that may result
 in perfect fits for some observations or if there are intersecting groups across
 multiple fixed effect variables (e.g. if you specify both "year" and "country" fixed effects
 with an unbalanced panel where one year you only have data for one country).
+
+If \code{diagnostics} are requested, we compute and return three sets of diagnostics.
+First, we return tests for weak instruments using first-stage F-statistics (\code{diagnostic_first_stage_fstatistic}). Specifically,
+the F-statistics reported compare the model regressing each endogeneous variable on both the
+included exogenous variables and the instruments to a model where each endogenous variable is
+regressed only on the included exogenous variables (without the instruments). A significant F-test
+for weak instruments provides evidence against the null hypothesis that the instruments are weak.
+Second, we return tests for the endogeneity of the endogenous variables, often called the Wu-Hausman
+test  (\code{diagnostic_endogeneity_test}). We implement the regression test from Hausman (1978), which allows for robust variance estimation.
+A significant endogeneity test provides evidence against the null that all the variables are exogenous.
+Third, we return a test for the correlation between the instruments and the error term  (\code{diagnostic_overid_test}). We implement
+the Wooldridge (1995) robust score test, which is identical to Sargan's (1958) test with classical
+standard errors. This test is only reported if the model is overidentified (i.e. the number of
+instruments is greater than the number of endogenous regressors), and if no weights are specified.
 }
 \examples{
 library(fabricatr)

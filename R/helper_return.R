@@ -36,6 +36,8 @@ lm_return <- function(return_list, model_data, formula) {
       else names(return_list[["fitted.values"]])
   }
   return_list[["fitted.values"]] <- drop(return_list[["fitted.values"]])
+  return_list[["ei.iv"]] <- drop(return_list[["ei.iv"]])
+  return_list[["residuals"]] <- drop(return_list[["residuals"]])
   return(return_list)
 }
 
@@ -49,9 +51,8 @@ dim_like_return <- function(return_list, alpha, formula, conditions) {
 
   # Only add label if conditions aren't 0/1
   add_label <- !(conditions[[2]] == 1 && conditions[[1]] == 0)
-  # If one of the two conditions is NULL, add_label will be NA
-  # In this case, we always add label only if condntion2 is the nonnull
-  # value
+  # If horvitz_thompson and there is only one treatment, add_label will be NA
+  # In this case, we add the non-null value if it's condition 2
   if (is.na(add_label)) {
     add_label <- !is.null(conditions[[2]])
   }
@@ -74,6 +75,9 @@ dim_like_return <- function(return_list, alpha, formula, conditions) {
     names(return_list[["std.error"]]) <-
     names(return_list[["p.value"]]) <-
     names(return_list[["df"]]) <- return_list[["term"]]
+
+  return_list[["condition2"]] <- conditions[[2]]
+  return_list[["condition1"]] <- conditions[[1]]
 
   return(return_list)
 }

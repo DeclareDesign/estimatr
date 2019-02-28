@@ -26,6 +26,7 @@
 #' @param ci logical. Whether to compute and return p-values and confidence
 #' intervals, TRUE by default.
 #' @param alpha The significance level, 0.05 by default.
+#' @param diagnostics logical. Whether to compute and return instrumental variable diagnostic statistics and tests.
 #' @param return_vcov logical. Whether to return the variance-covariance
 #' matrix for later usage, TRUE by default.
 #' @param try_cholesky logical. Whether to try using a Cholesky
@@ -65,6 +66,20 @@
 #' multiple fixed effect variables (e.g. if you specify both "year" and "country" fixed effects
 #' with an unbalanced panel where one year you only have data for one country).
 #'
+#' If \code{diagnostics} are requested, we compute and return three sets of diagnostics.
+#' First, we return tests for weak instruments using first-stage F-statistics (\code{diagnostic_first_stage_fstatistic}). Specifically,
+#' the F-statistics reported compare the model regressing each endogeneous variable on both the
+#' included exogenous variables and the instruments to a model where each endogenous variable is
+#' regressed only on the included exogenous variables (without the instruments). A significant F-test
+#' for weak instruments provides evidence against the null hypothesis that the instruments are weak.
+#' Second, we return tests for the endogeneity of the endogenous variables, often called the Wu-Hausman
+#' test  (\code{diagnostic_endogeneity_test}). We implement the regression test from Hausman (1978), which allows for robust variance estimation.
+#' A significant endogeneity test provides evidence against the null that all the variables are exogenous.
+#' Third, we return a test for the correlation between the instruments and the error term  (\code{diagnostic_overid_test}). We implement
+#' the Wooldridge (1995) robust score test, which is identical to Sargan's (1958) test with classical
+#' standard errors. This test is only reported if the model is overidentified (i.e. the number of
+#' instruments is greater than the number of endogenous regressors), and if no weights are specified.
+#'
 #' @return An object of class \code{"iv_robust"}.
 #'
 #' The post-estimation commands functions \code{summary} and \code{\link{tidy}}
@@ -93,10 +108,13 @@
 #'   \item{r.squared}{the \eqn{R^2} of the second stage regression}
 #'   \item{adj.r.squared}{the \eqn{R^2} of the second stage regression, but penalized for having more parameters, \code{rank}}
 #'   \item{fstatistic}{a vector with the value of the second stage F-statistic with the numerator and denominator degrees of freedom}
+#'   \item{firststage_fstatistic}{a vector with the value of the first stage F-statistic with the numerator and denominator degrees of freedom, useful for a test for weak instruments}
 #'   \item{weighted}{whether or not weights were applied}
 #'   \item{call}{the original function call}
 #'   \item{fitted.values}{the matrix of predicted means}
 #' We also return \code{terms} with the second stage terms and \code{terms_regressors} with the first stage terms, both of which used by \code{predict}. If \code{fixed_effects} are specified, then we return \code{proj_fstatistic}, \code{proj_r.squared}, and \code{proj_adj.r.squared}, which are model fit statistics that are computed on the projected model (after demeaning the fixed effects).
+#'
+#' We also return various diagnostics when \code{`diagnostics` == TRUE}. These are stored in \code{diagnostic_first_stage_fstatistic}, \code{diagnostic_endogeneity_test}, and \code{diagnostic_overid_test}. They have the test statistic, relevant degrees of freedom, and p.value in a named vector. See 'Details' for more. These are printed in a formatted table when the model object is passed to \code{summary()}.
 #'
 #' @references
 #'
@@ -142,6 +160,7 @@ iv_robust <- function(formula,
                       se_type = NULL,
                       ci = TRUE,
                       alpha = .05,
+                      diagnostics = FALSE,
                       return_vcov = TRUE,
                       try_cholesky = FALSE) {
   datargs <- enquos(
@@ -160,6 +179,10 @@ iv_robust <- function(formula,
 
   fes <- is.character(model_data[["fixed_effects"]])
   if (fes) {
+    if (diagnostics) {
+      warning("Will not return `diagnostics` if `fixed_effects` are used.")
+      diagnostics <- FALSE
+    }
     yoriginal <- model_data[["outcome"]]
     Xoriginal <- model_data[["design_matrix"]]
     model_data <- demean_fes(model_data)
@@ -172,6 +195,7 @@ iv_robust <- function(formula,
   # First stage
   # -----------
 
+  has_int <- attr(model_data$terms, "intercept")
   first_stage <-
     lm_robust_fit(
       y = model_data$design_matrix,
@@ -181,10 +205,10 @@ iv_robust <- function(formula,
       fixed_effects = model_data$fixed_effects,
       ci = FALSE,
       se_type = "none",
-      has_int = attr(model_data$terms, "intercept"),
+      has_int = has_int,
       alpha = alpha,
       return_fit = TRUE,
-      return_vcov = return_vcov,
+      return_vcov = FALSE,
       try_cholesky = try_cholesky,
       iv_stage = list(1)
     )
@@ -215,16 +239,288 @@ iv_robust <- function(formula,
       iv_stage = list(2, model_data$design_matrix)
     )
 
+
   return_list <- lm_return(
     second_stage,
     model_data = model_data,
     formula = formula
   )
 
+  # ------
+  # diagnostics
+  # ------
+  if (diagnostics) {
+
+    # values for use by multiple diagnostic tests
+    instruments <- setdiff(
+      colnames(model_data$instrument_matrix),
+      colnames(model_data$design_matrix)
+    )
+    endog <- setdiff(
+      colnames(model_data$design_matrix),
+      colnames(model_data$instrument_matrix)
+    )
+
+    first_stage_fits <- first_stage[["fitted.values"]][, endog, drop = FALSE]
+    colnames(first_stage_fits) <- paste0("fit_", colnames(first_stage_fits))
+
+    first_stage_residuals <- model_data$design_matrix - first_stage[["fitted.values"]]
+    colnames(first_stage_residuals) <- paste0("resid_", colnames(first_stage_residuals))
+
+    # Wu-Hausman f-test for endogeneity
+    wu_hausman_ftest_val <- wu_hausman_reg_ftest(model_data, first_stage_residuals, se_type)
+
+    # Overidentification test (only computed if n(instruments) > n(endog regressors)
+    extra_instruments <- length(instruments) - length(endog)
+
+    if (extra_instruments && is.null(model_data$weights)) {
+      ss_residuals <- model_data$outcome - second_stage[["fitted.values"]]
+
+      if (se_type == "classical") {
+        overid_chisq_val <- sargan_chisq(model_data, ss_residuals)
+      } else {
+        overid_chisq_val <- wooldridge_score_chisq(model_data, endog, instruments, ss_residuals, first_stage_fits, m = extra_instruments)
+      }
+
+      overid_chisqtest_val <- c(
+        overid_chisq_val,
+        extra_instruments,
+        pchisq(overid_chisq_val, extra_instruments, lower.tail = FALSE)
+      )
+
+    } else {
+      overid_chisqtest_val <- c(NA_real_, 0, NA_real_)
+    }
+    names(overid_chisqtest_val) <- c("value", "df", "p.value")
+
+    # Weak instrument test (first stage f-test)
+    first_stage_ftest_val <- first_stage_ftest(model_data, endog, instruments, se_type)
+
+    return_list[["diagnostic_first_stage_fstatistic"]] <- first_stage_ftest_val
+    return_list[["diagnostic_endogeneity_test"]] <- wu_hausman_ftest_val
+    return_list[["diagnostic_overid_test"]] <- overid_chisqtest_val
+  }
   return_list[["call"]] <- match.call()
 
   return_list[["terms_regressors"]] <- model_data[["terms_regressors"]]
   class(return_list) <- "iv_robust"
 
   return(return_list)
+}
+
+# IV diagnostic test functions
+
+# Weak first-stage ftest
+first_stage_ftest <- function(model_data, endog, instruments, se_type) {
+
+  lm_instruments <- lm_robust_fit(
+    y = model_data$design_matrix[, endog, drop = FALSE],
+    X = model_data$instrument_matrix,
+    weights = model_data$weights,
+    cluster = model_data$cluster,
+    fixed_effects = model_data$fixed_effects,
+    se_type = se_type,
+    has_int = 0 %in% attr(model_data$instrument_matrix, "assign"),
+    return_fit = TRUE,
+    return_vcov = TRUE,
+    ci = FALSE
+  )
+  coef_inst <- as.matrix(lm_instruments[["coefficients"]])
+
+  if (all(colnames(model_data$instrument_matrix) %in% instruments)) {
+    # if all instruments (including intercept!) are only instruments
+    firststage_nomdf <- lm_instruments[["rank"]]
+    firststage_fstat_value <- lm_instruments[["fstatistic"]][seq_len(length(endog))]
+  } else {
+    lm_noinstruments <- lm_robust_fit(
+      y = model_data$design_matrix[, endog, drop = FALSE],
+      X = model_data$instrument_matrix[
+        ,
+        !(colnames(model_data$instrument_matrix) %in% instruments),
+        drop = FALSE
+      ],
+      weights = model_data$weights,
+      cluster = model_data$cluster,
+      fixed_effects = model_data$fixed_effects,
+      se_type = "none",
+      has_int = FALSE,
+      ci = FALSE,
+      return_fit = TRUE,
+      return_vcov = FALSE
+    )
+
+    coef_noinst <- as.matrix(lm_noinstruments[["coefficients"]])
+    inst_indices <- which(!(rownames(coef_inst) %in% rownames(coef_noinst)))
+    firststage_nomdf <- lm_instruments[["rank"]] - lm_noinstruments[["rank"]]
+    firststage_fstat_value <- compute_fstat(
+      coef_matrix = coef_inst,
+      coef_indices = inst_indices,
+      vcov_fit = lm_instruments[["vcov"]],
+      rank = lm_instruments[["rank"]],
+      nomdf = firststage_nomdf
+    )
+  }
+
+  if (ncol(coef_inst) > 1) {
+    fstat_names <- paste0(colnames(coef_inst), ":value")
+  } else {
+    fstat_names <- "value"
+  }
+
+  dendf <- if (is.numeric(lm_instruments[["N_clusters"]])) lm_instruments[["N_clusters"]] - 1 else lm_instruments[["df.residual"]]
+
+  c(
+    setNames(firststage_fstat_value, fstat_names),
+    nomdf = firststage_nomdf,
+    dendf = dendf,
+    setNames(
+      vapply(
+        firststage_fstat_value,
+        function(x) {
+          pf(x, firststage_nomdf, dendf, lower.tail = FALSE)
+        },
+        numeric(1)
+      ),
+      gsub("value", "p.value", fstat_names)
+    )
+  )
+}
+
+# Wu-Hausman f-test for endogeneity
+wu_hausman_reg_ftest <- function(model_data, first_stage_residuals, se_type) {
+
+  lm_noresids <- lm_robust_fit(
+    y = model_data$outcome,
+    X = model_data$design_matrix,
+    weights = model_data$weights,
+    cluster = model_data$cluster,
+    fixed_effects = model_data$fixed_effects,
+    se_type = "none",
+    has_int = 0 %in% attr(model_data$design_matrix, "assign"),
+    ci = FALSE,
+    return_fit = TRUE,
+    return_vcov = FALSE
+  )
+
+  lm_resids <- lm_robust_fit(
+    y = model_data$outcome,
+    X = cbind(model_data$design_matrix, first_stage_residuals),
+    weights = model_data$weights,
+    cluster = model_data$cluster,
+    fixed_effects = model_data$fixed_effects,
+    se_type = se_type,
+    has_int = 0 %in% attr(model_data$design_matrix, "assign"),
+    ci = FALSE,
+    return_fit = TRUE,
+    return_vcov = TRUE
+  )
+
+  coef_noresids <- na.omit(lm_noresids[["coefficients"]])
+  coef_resids <- na.omit(lm_resids[["coefficients"]])
+  ovar <- which(!(names(coef_resids) %in% names(coef_noresids)))
+  wu_hausman_nomdf <- lm_resids[["rank"]] - lm_noresids[["rank"]]
+  wu_hausman_fstat <- compute_fstat(
+    coef_matrix = as.matrix(coef_resids),
+    coef_indices = ovar,
+    vcov_fit = lm_resids[["vcov"]],
+    rank = lm_resids[["rank"]],
+    nomdf = wu_hausman_nomdf
+  )
+
+  dendf <- if (is.numeric(lm_resids[["N_clusters"]])) lm_resids[["N_clusters"]] - 1 else lm_resids[["df.residual"]]
+  c(
+    "value" = wu_hausman_fstat,
+    "numdf" = wu_hausman_nomdf,
+    "dendf" = dendf,
+    "p.value" = pf(wu_hausman_fstat, wu_hausman_nomdf, dendf, lower.tail = FALSE)
+  )
+}
+
+
+
+# Overidentification tests
+# Sargan (classical ses)
+sargan_chisq <- function(model_data, ss_residuals) {
+  lmr <- lm_robust_fit(
+    y = as.matrix(ss_residuals),
+    X = model_data$instrument_matrix,
+    weights = model_data$weights,
+    cluster = model_data$cluster,
+    fixed_effects = model_data$fixed_effects,
+    se_type = "classical",
+    has_int = 0 %in% attr(model_data, "assign"),
+    ci = FALSE,
+    return_fit = FALSE,
+    return_vcov = FALSE
+  )
+
+  lmr[["r.squared"]] * lmr[["N"]]
+}
+
+# wooldridge score test (robust SEs)
+wooldridge_score_chisq <- function(model_data, endog, instruments, ss_residuals, first_stage_fits, m) {
+
+  # Using notation following stata ivregress postestimation help
+  qhat_fit <- lm_robust_fit(
+    y = model_data$instrument_matrix[, instruments[seq_len(m)], drop = FALSE],
+    X = cbind(
+      model_data$design_matrix[, -which(colnames(model_data$design_matrix) %in% endog), drop = FALSE],
+      first_stage_fits
+    ),
+    weights = model_data$weights,
+    cluster = model_data$cluster,
+    fixed_effects = model_data$fixed_effects,
+    se_type = "none",
+    has_int = TRUE,
+    ci = FALSE,
+    return_fit = TRUE,
+    return_vcov = FALSE
+  )
+
+  kmat <- as.matrix(
+    model_data$instrument_matrix[, instruments[seq_len(m)], drop = FALSE] - qhat_fit[["fitted.values"]]
+    ) *  as.vector(ss_residuals)
+
+  if (!is.null(model_data[["weights"]])) {
+    kmat_fit <- lm.fit(kmat * model_data[["weights"]], as.matrix(rep(1, times = length(ss_residuals))))
+  } else {
+    kmat_fit <- lm.fit(kmat, as.matrix(rep(1, times = length(ss_residuals))))
+  }
+
+  return(length(ss_residuals) - sum(residuals(kmat_fit)))
+}
+
+build_ivreg_diagnostics_mat <- function(iv_robust_out, stata = FALSE) {
+  weakinst <- iv_robust_out[["diagnostic_first_stage_fstatistic"]]
+  wu_hausman <- iv_robust_out[["diagnostic_endogeneity_test"]]
+  overid <- iv_robust_out[["diagnostic_overid_test"]]
+  n_weak_inst_fstats <- (length(weakinst) - 2) / 2
+
+  diag_mat <- rbind(
+    matrix(
+      c(
+        weakinst[seq_len(n_weak_inst_fstats)],
+        rep(weakinst["nomdf"], n_weak_inst_fstats),
+        rep(weakinst["dendf"], n_weak_inst_fstats),
+        weakinst[n_weak_inst_fstats + 2 + seq_len(n_weak_inst_fstats)]
+      ),
+      nrow = n_weak_inst_fstats
+    ),
+    wu_hausman,
+    c(overid[1], if (stata & overid[2] == 0) NA else overid[2], NA, overid[3])
+  )[, c(2, 3, 1, 4)]
+
+  if (n_weak_inst_fstats > 1) {
+    weak_names <- paste0("Weak instruments (", gsub("\\:*value", "", names(weakinst[seq_len(n_weak_inst_fstats)])), ")")
+  } else {
+    weak_names <- "Weak instruments"
+  }
+
+  rownames(diag_mat) <- c(
+    weak_names,
+    "Wu-Hausman",
+    "Overidentifying"
+  )
+
+  diag_mat
 }

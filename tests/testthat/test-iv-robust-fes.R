@@ -234,3 +234,12 @@ test_that("IV FE matches lfe including proj r2", {
   )
 
 })
+
+test_that("IV FE warns about diagnostics", {
+
+  expect_warning(
+    iv_robust(mpg ~ hp | wt, data = mtcars, fixed_effects = cyl, diagnostics = TRUE),
+    "Will not return `diagnostics` if `fixed_effects` are used."
+  )
+
+})

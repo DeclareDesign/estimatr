@@ -397,6 +397,18 @@ test_that("S3 methods", {
     predict(ivo)
   )
 
+  glance_ivro <- glance(ivro)
+
+  expect_equal(nrow(glance_ivro), 1)
+
+  expect_equal(
+    colnames(glance(ivro)),
+    c("r.squared", "adj.r.squared", "df.residual", "N", "se_type",
+      "statistic", "p.value", "statistic.weakinst", "p.value.weakinst",
+      "statistic.endogeneity", "p.value.endogeneity", "statistic.overid",
+      "p.value.overid")
+  )
+
   # no intercept
   ivo <- AER::ivreg(mpg ~ hp + cyl + 0 | wt + gear, data = mtcars)
   ivro <- iv_robust(mpg ~ hp + cyl + 0 | wt + gear, data = mtcars, se_type = "classical")
@@ -408,3 +420,149 @@ test_that("S3 methods", {
 
 })
 
+test_that("IV diagnostics", {
+
+  # Load stata diagnostics
+  stata_diags <- read.table(
+    "stata-iv-diagnostics.txt",
+    col.names = c("formula", "weights", "options", "diag", "df1", "df2", "val", "pval"),
+    sep = ";",
+    na = ".",
+    stringsAsFactors = FALSE
+  )
+
+  formulae <- c(
+    "(hp = wt)" = mpg ~ hp | wt,
+    # mpg ~ 0 + hp | wt,
+    "(hp = wt)0" = mpg ~ 0 + hp | 0 + wt,
+    "(hp am = wt gear)" = mpg ~ hp + am | wt + gear,
+    # mpg ~ 0 + hp + am | wt + gear,
+    "(hp am = wt gear)0" = mpg ~ 0 + hp + am | 0 + wt + gear,
+    "gear (hp = wt)" = mpg ~ hp + gear | wt + gear,
+    # mpg ~ 0 + hp + gear | wt + gear,
+    "gear (hp = wt)0" = mpg ~ 0 + hp + gear | 0 + wt + gear,
+    "gear (hp = wt am)" = mpg ~ hp + gear | wt + gear + am,
+    # mpg ~ 0 + hp + gear | wt + gear + am,
+    # mpg ~ hp + gear | 0 + wt + gear + am,
+    "gear (hp = wt am)0" = mpg ~ 0 + hp + gear | 0 + wt + gear + am
+  )
+
+  for (f_n in names(formulae)) {
+    f <- formulae[[f_n]]
+    ivro <- iv_robust(f, data = mtcars, se_type = "classical", diagnostics = TRUE)
+    aer_ivro <- summary(AER::ivreg(f, data = mtcars), diagnostics = TRUE)
+
+    # Sargan stat seems to be wrong for AER for this model (-ve critical value)
+    if (f_n == "gear (hp = wt am)0") {
+      expect_equivalent(
+        build_ivreg_diagnostics_mat(ivro)[1:2, ],
+        aer_ivro[["diagnostics"]][1:2, ]
+      )
+    } else {
+      expect_equivalent(
+        build_ivreg_diagnostics_mat(ivro),
+        aer_ivro[["diagnostics"]]
+      )
+    }
+
+    stata_diag <- subset(
+      stata_diags,
+      formula == gsub("0", "", f_n) & (grepl("noconstant", options) == grepl("0", f_n))
+    )
+
+    expect_equivalent(
+      build_ivreg_diagnostics_mat(ivro, stata = TRUE),
+      as.matrix(stata_diag[
+        grepl("small", stata_diag$options) & nchar(stata_diag$weights) == 0,
+        c("df1", "df2", "val", "pval")
+      ]),
+      tolerance = 1e-6
+    )
+
+    # With weights, don't match `overid` test, as we don't report it
+    ivrow <- iv_robust(f, data = mtcars, se_type = "classical", weights = drat, diagnostics = TRUE)
+    ivrow_diag_mat <- build_ivreg_diagnostics_mat(ivrow, stata = TRUE)
+    expect_equivalent(ivrow_diag_mat[nrow(ivrow_diag_mat), ], rep(NA_real_, 4))
+
+    expect_equivalent(
+      ivrow_diag_mat[-nrow(ivrow_diag_mat), ],
+      as.matrix(stata_diag[
+        grepl("small", stata_diag$options) & nchar(stata_diag$weights) > 0 & stata_diag$diag != "overid",
+        c("df1", "df2", "val", "pval")
+      ]),
+      tolerance = 1e-6
+    )
+
+    ivro_hc1 <- iv_robust(f, data = mtcars, se_type = "HC1", diagnostics = TRUE)
+    ivrow_hc1 <- iv_robust(f, data = mtcars, se_type = "HC1", weights = drat, diagnostics = TRUE)
+
+    expect_equivalent(
+      build_ivreg_diagnostics_mat(ivro_hc1, stata = TRUE),
+      as.matrix(stata_diag[
+        grepl("rob", stata_diag$options) & nchar(stata_diag$weights) == 0,
+        c("df1", "df2", "val", "pval")
+      ]),
+      tolerance = 1e-6
+    )
+
+    # Again, no overid test reported with weights
+    ivrow_hc1_diag_mat <- build_ivreg_diagnostics_mat(ivrow_hc1, stata = TRUE)
+    expect_equivalent(ivrow_hc1_diag_mat[nrow(ivrow_hc1_diag_mat), ], rep(NA_real_, 4))
+
+    expect_equivalent(
+      ivrow_hc1_diag_mat[-nrow(ivrow_hc1_diag_mat), ],
+      as.matrix(stata_diag[
+        grepl("rob", stata_diag$options) & nchar(stata_diag$weights) > 0 & stata_diag$diag != "overid",
+        c("df1", "df2", "val", "pval")
+      ]),
+      tolerance = 1e-6
+    )
+
+    # tolerance higher here due to larger values in general
+    ivro_crs <- iv_robust(f, data = mtcars, se_type = "stata", clusters = cyl, diagnostics = TRUE)
+    ivro_crs_diag_mat <- build_ivreg_diagnostics_mat(ivro_crs, stata = TRUE)
+
+    ivrow_crs <- iv_robust(f, data = mtcars, se_type = "stata", clusters = cyl, weights = drat, diagnostics = TRUE)
+    ivrow_crs_diag_mat <- build_ivreg_diagnostics_mat(ivrow_crs, stata = TRUE)
+    expect_equivalent(ivrow_crs_diag_mat[nrow(ivrow_crs_diag_mat), ], rep(NA_real_, 4))
+
+    expect_equivalent(
+      ivro_crs_diag_mat[-nrow(ivro_crs_diag_mat), ],
+      as.matrix(stata_diag[
+        grepl("cluster", stata_diag$options) & nchar(stata_diag$weights) == 0 & stata_diag$diag != "overid",
+        c("df1", "df2", "val", "pval")
+      ]),
+      tolerance = 1e-3
+    )
+
+    # Stata doesn't report overid test with clusters
+    expect_equivalent(
+      ivrow_crs_diag_mat[-nrow(ivrow_crs_diag_mat), ],
+      as.matrix(stata_diag[
+        grepl("cluster", stata_diag$options) & nchar(stata_diag$weights) > 0 & stata_diag$diag != "overid",
+        c("df1", "df2", "val", "pval")
+        ]),
+      tolerance = 1e-3
+    )
+
+
+    # Sanity check unmatched diagnostics
+    for (se_type in se_types) {
+      ivro <- iv_robust(f, data = mtcars, se_type = se_type, diagnostics = TRUE)
+      diagnostic_mat <- build_ivreg_diagnostics_mat(ivro)
+      expect_true(
+        all(diagnostic_mat[1:2, ] > 0) & all(diagnostic_mat[3, ] >= 0 | is.na(diagnostic_mat[3, ]))
+      )
+    }
+
+    for (cr_se_type in cr_se_types) {
+      ivro <- iv_robust(f, data = mtcars, se_type = cr_se_type, clusters = cyl, diagnostics = TRUE)
+      diagnostic_mat <- build_ivreg_diagnostics_mat(ivro)
+      expect_true(
+        all(diagnostic_mat[1:2, ] > 0) & all(diagnostic_mat[3, ] >= 0 | is.na(diagnostic_mat[3, ]))
+      )
+    }
+
+  }
+
+})

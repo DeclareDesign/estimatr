@@ -103,8 +103,8 @@ test_that("DIM Blocked", {
   dim_01_num <- difference_in_means(y ~ z, blocks = bl, data = dat, condition1 = 0, condition2 = 1)
 
   expect_equal(
-    rmcall(dim_01),
-    rmcall(dim_01_num)
+    condchr(rmcall(dim_01)),
+    condchr(rmcall(dim_01_num))
   )
 
   expect_equivalent(dim_01$coefficients, 4)
@@ -227,8 +227,8 @@ test_that("DIM Clustered", {
   dim_01_num <- difference_in_means(y ~ z, clusters = cl, data = dat, condition1 = 0, condition2 = 1)
 
   expect_equal(
-    rmcall(dim_01),
-    rmcall(dim_01_num)
+    condchr(rmcall(dim_01)),
+    condchr(rmcall(dim_01_num))
   )
 
   expect_equivalent(

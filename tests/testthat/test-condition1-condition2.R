@@ -15,17 +15,17 @@ test_that("Condition arguments behave as expected", {
   # Subsetting and just selecting two conditions
   expect_identical(
     horvitz_thompson(y ~ z, data = dat, subset = z <= 2, condition_prs = ps),
-    horvitz_thompson(y ~ z, data = dat, condition1 = 1, condition2 = 2, condition_prs = ps)
+    horvitz_thompson(y ~ z, data = dat, condition1 = 1L, condition2 = 2L, condition_prs = ps)
   )
 
   expect_identical(
     difference_in_means(y ~ z, data = dat, subset = z <= 2),
-    difference_in_means(y ~ z, data = dat, condition1 = 1, condition2 = 2)
+    difference_in_means(y ~ z, data = dat, condition1 = 1L, condition2 = 2L)
   )
 
   expect_identical(
     difference_in_means(y ~ z, data = dat, subset = z <= 2, blocks = bl),
-    difference_in_means(y ~ z, data = dat, condition1 = 1, condition2 = 2, blocks = bl)
+    difference_in_means(y ~ z, data = dat, condition1 = 1L, condition2 = 2L, blocks = bl)
   )
 
   # Subsetting and just selecting two conditions

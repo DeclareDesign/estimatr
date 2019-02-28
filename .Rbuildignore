@@ -21,5 +21,6 @@ update_repo.R
 ^tests/testthat/test-zzzbroom\.R$
 ^estimatr_.*\.tar\.gz$
 ^tests/testthat/test-texreg\.R$
+^tests/testthat/test-gtsummary\.R$
 ^cran-comments\.md$
 
