@@ -4,9 +4,9 @@ estimatr: Fast Estimators for Design-Based Inference
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 [![CRAN
-Status](https://www.r-pkg.org/badges/version/estimatr)](https://cran.r-project.org/package=estimatr)
+Status](https://r-pkg.org/badges/version/estimatr)](https://cran.r-project.org/package=estimatr)
 [![Travis-CI Build
-Status](https://travis-ci.com/DeclareDesign/estimatr.svg?branch=master)
+Status](https://travis-ci.com/DeclareDesign/estimatr.svg?branch=master)](https://travis-ci.com/DeclareDesign/estimatr)
 [![AppVeyor Build
 Status](https://ci.appveyor.com/api/projects/status/github/DeclareDesign/estimatr?branch=master&svg=true)](https://ci.appveyor.com/project/DeclareDesign/estimatr)
 [![Coverage
@@ -21,15 +21,16 @@ We include two functions that implement means estimators,
 regression estimators, `lm_robust()`, `lm_lin()`, and `iv_robust()`. In
 each case, users can choose an estimator to reflect cluster-randomized,
 block-randomized, and block-and-cluster-randomized designs. The [Getting
-Started Guide](/r/estimatr/articles/getting-started.html) describes each
-estimator provided by **estimatr** and how it can be used in your
-analysis.
+Started
+Guide](https://declaredesign.org/r/estimatr/articles/getting-started.html)
+describes each estimator provided by **estimatr** and how it can be used
+in your analysis.
 
 You can also see the multiple ways you can [get regression tables out of
-estimatr](/r/estimatr/articles/regression-tables.html) using commonly
-used `R` packages such as `texreg` and `stargazer`. Fast estimators also
-enable fast simulation of research designs to learn about their
-properties (see [DeclareDesign](https://declaredesign.org)).
+estimatr](https://declaredesign.org/r/estimatr/articles/regression-tables.html)
+using commonly used `R` packages such as `texreg` and `stargazer`. Fast
+estimators also enable fast simulation of research designs to learn
+about their properties (see [DeclareDesign](https://declaredesign.org)).
 
 ## Installing estimatr
 
@@ -111,11 +112,11 @@ information about what each estimator is doing under the hood.
 Getting estimates and robust standard errors is also faster than it used
 to be. Compare our package to using `lm()` and the `sandwich` package to
 get HC2 standard errors. More speed comparisons are available
-[here](/r/estimatr/articles/benchmarking-estimatr.html). Furthermore,
-with many blocks (or fixed effects), users can use the `fixed_effects`
-argument of `lm_robust` with HC1 standard errors to greatly improve
-estimation speed. More on [fixed effects
-here](/r/estimatr/articles/absorbing-fixed-effects.html).
+[here](https://declaredesign.org/r/estimatr/articles/benchmarking-estimatr.html).
+Furthermore, with many blocks (or fixed effects), users can use the
+`fixed_effects` argument of `lm_robust` with HC1 standard errors to
+greatly improve estimation speed. More on [fixed effects
+here](https://declaredesign.org/r/estimatr/articles/absorbing-fixed-effects.html).
 
 ``` r
 dat <- data.frame(X = matrix(rnorm(2000*50), 2000), y = rnorm(2000))
@@ -135,7 +136,7 @@ mb <- microbenchmark(
 | estimatr      | median run-time (ms) |
 | :------------ | -------------------: |
 | estimatr      |                   22 |
-| lm + sandwich |                   45 |
+| lm + sandwich |                   43 |
 
 -----
 
