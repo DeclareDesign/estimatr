@@ -35,12 +35,10 @@
 #' # Default variance estimator is HC2 robust standard errors
 #' lhro <- lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z + 2x = 0")
 #'
-#' # The linear hypothesis argument can be specified as following
+#' # The linear hypothesis argument can be specified equivalently as:
 #' lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z = 2x")
 #' lh_robust(y ~ x + z, data = dat, linear_hypothesis = c("z = 1", "x = 2"))
 #' lh_robust(y ~ x + z, data = dat, linear_hypothesis = "2*x +1*z")
-#'
-#' # which are alle equivalent to
 #' lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z + 2x = 0")
 #'
 #' # Also recovers other sorts of standard erorrs just as specified in \code{\link{lm_robust}}
@@ -58,24 +56,24 @@
 #' summary(lhro$lm_robust)
 #' summary(lhro$lh)
 #'
-#' @importFrom car linearHypothesis
+#' @importFrom rlang quos eval_tidy
 #'
 #' @export
 #'
 lh_robust <- function(..., data, linear_hypothesis) {
 
-  args_list <- list(...)
-
-  alpha <- args_list$alpha
-  if (is.null(alpha)) {
-    alpha <- 0.05
-  }
+  requireNamespace("car")
 
   # fit lm_robust model
   lm_robust_fit <- lm_robust(..., data = data)
 
+  alpha <- eval_tidy(quos(...)$alpha)
+  if (is.null(alpha)) {
+    alpha <- 0.05
+  }
+
   # calculate linear hypothesis
-  car_lht <- linearHypothesis(
+  car_lht <- car::linearHypothesis(
     lm_robust_fit, hypothesis.matrix = linear_hypothesis, level = 1 - alpha)
 
   estimate  <- drop(attr(car_lht, "value"))
@@ -101,6 +99,7 @@ lh_robust <- function(..., data, linear_hypothesis) {
     outcome =  lm_robust_fit$outcome
   )
 
+  attr(return_lh_robust, "linearHypothesis") <- car_lht
   class(return_lh_robust) <- c("lh", "data.frame")
 
   return_lm_robust <- lm_robust_fit

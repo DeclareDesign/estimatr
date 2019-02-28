@@ -20,8 +20,7 @@ Imports:
     generics,
     methods,
     Rcpp (>= 0.12.16),
-    rlang (>= 0.2.0),
-    car
+    rlang (>= 0.2.0)
 LinkingTo: Rcpp, RcppEigen
 RoxygenNote: 6.1.1
 LazyData: true
@@ -37,6 +36,7 @@ Suggests:
     RcppEigen,
     sandwich,
     stargazer,
-    testthat
+    testthat,
+    car
 Enhances:
     texreg

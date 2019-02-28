@@ -47,12 +47,10 @@ dat <- fabricate(
 # Default variance estimator is HC2 robust standard errors
 lhro <- lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z + 2x = 0")
 
-# The linear hypothesis argument can be specified as following
+# The linear hypothesis argument can be specified equivalently as:
 lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z = 2x")
 lh_robust(y ~ x + z, data = dat, linear_hypothesis = c("z = 1", "x = 2"))
 lh_robust(y ~ x + z, data = dat, linear_hypothesis = "2*x +1*z")
-
-# which are alle equivalent to
 lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z + 2x = 0")
 
 # Also recovers other sorts of standard erorrs just as specified in \\code{\\link{lm_robust}}
