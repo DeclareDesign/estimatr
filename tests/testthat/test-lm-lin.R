@@ -310,6 +310,13 @@ test_that("Test LM Lin", {
     lmlo$term,
     c("z", "X1_c", "z:X1_c")
   )
+
+  # behaves correctly with "odd" covariates (see issue #283)
+  lmlo <- lm_lin(Y ~ z, ~ is.na(X1), data = dat)
+  expect_equal(
+    lmlo$term,
+    c("(Intercept)", "z", "(is.na(X1)TRUE)_c", "z:(is.na(X1)TRUE)_c")
+  )
 })
 
 test_that("lm_lin same as sampling perspective", {
