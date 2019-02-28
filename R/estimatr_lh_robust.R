@@ -2,7 +2,8 @@
 #'
 #' @description This function fits a linear model with robust standard errors and performs linear hypothesis test.
 #' @param ... Other arguments to be passed to  \code{\link{lm_robust}}
-#' @param linear_hypothesis A character string or a matrix specifying combination.
+#' @param data A \code{data.frame}
+#' @param linear_hypothesis A character string or a matrix specifying combination, to be passed to the hypothesis.matrix argument of car::linearHypothesis
 #' See \code{\link[car]{linearHypothesis}} for more details.
 #' @details
 #'
@@ -18,7 +19,7 @@
 #' The only analyis directly performed by \code{lh_robust} is a \code{t-test} for the null hypothesis of no effects of the linear combination of coefficients as specified by the user.
 #' All other output components are either extract from \code{linearHypothesis} or \code{lm_robust}.
 #'
-#' The original output returned by  \code{linearHypothesis} is added as an attribute.
+#' The original output returned by \code{linearHypothesis} is added as an attribute.
 #'
 #' @examples
 #'
@@ -57,55 +58,57 @@
 #' summary(lhro$lm_robust)
 #' summary(lhro$lh)
 #'
+#' @importFrom car linearHypothesis
+#'
 #' @export
 #'
-lh_robust <- function(...,
-                      linear_hypothesis,
-                      alpha = 0.05
-                      ) {
+lh_robust <- function(..., data, linear_hypothesis) {
 
+  args_list <- list(...)
 
+  alpha <- args_list$alpha
+  if (is.null(alpha)) {
+    alpha <- 0.05
+  }
 
-  if(is.null(linear_hypothesis)){
-   stop("No linear hypothesis test performed")}
+  # fit lm_robust model
+  lm_robust_fit <- lm_robust(..., data = data)
 
-  return_list <- lm_robust(..., alpha = alpha)
-  return_list[["call"]] <- match.call()
-
-  car_lht <- car::linearHypothesis(return_list, linear_hypothesis,
-                               level = 1-alpha)
+  # calculate linear hypothesis
+  car_lht <- linearHypothesis(
+    lm_robust_fit, hypothesis.matrix = linear_hypothesis, level = 1 - alpha)
 
   estimate  <- drop(attr(car_lht, "value"))
   std.error <- sqrt(diag(attr(car_lht, "vcov")))
-  df <- return_list$df.residual
-  tt <- estimate/std.error
-  p.value <-  2 * pt(abs(tt), df, lower.tail = FALSE)
-  alpha_ <- alpha/2
-  alpha_ <- c(alpha_, 1 - alpha_)
-  ci <- estimate + std.error %o% qt(alpha_, df)
 
-  return_lh <-  data.frame( coefficients =  estimate,
-                      std.error =  std.error,
-                      statistic = tt,
-                      p.value = p.value,
-                      alpha = alpha,
-                      conf.low  =  ci[,1],
-                      conf.high =  ci[,2],
-                      df = df,
-                      term = linear_hypothesis,
-                      outcome =  return_list$outcome)
+  # this df is not in general correct, but unclear what to replace it with
+  df <- lm_robust_fit$df.residual
 
+  statistic <- estimate / std.error
+  p.value <-  2 * pt(abs(statistic), df, lower.tail = FALSE)
+  ci <- estimate + std.error %o% qt(c(alpha / 2, 1 - alpha / 2), df)
 
-  attr(return_lh, "linear_hypothesis") <-   car_lht
-  class( return_lh) <- c("lh", "data.frame")
+  return_lh_robust <- data.frame(
+    coefficients = estimate,
+    std.error = std.error,
+    statistic = statistic,
+    p.value = p.value,
+    alpha = alpha,
+    conf.low  = ci[, 1],
+    conf.high = ci[, 2],
+    df = df,
+    term = linear_hypothesis,
+    outcome =  lm_robust_fit$outcome
+  )
 
+  class(return_lh_robust) <- c("lh", "data.frame")
 
-  return_list <- list(lm_robust =  return_list,
-                      lh =  return_lh )
+  return_lm_robust <- lm_robust_fit
+  return_lm_robust[["call"]] <- match.call()
 
-  class(return_list)  <- "lh_robust"
-
-
-  return(return_list)
+  return(structure(
+    list(lm_robust = return_lm_robust, lh = return_lh_robust),
+    class = "lh_robust"
+  ))
 
 }

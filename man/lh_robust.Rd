@@ -4,12 +4,14 @@
 \alias{lh_robust}
 \title{Linear Hypothesis for Ordinary Least Squares with Robust Standard Errors}
 \usage{
-lh_robust(..., linear_hypothesis, alpha = 0.05)
+lh_robust(..., data, linear_hypothesis)
 }
 \arguments{
 \item{...}{Other arguments to be passed to  \code{\link{lm_robust}}}
 
-\item{linear_hypothesis}{A character string or a matrix specifying combination.
+\item{data}{A \code{data.frame}}
+
+\item{linear_hypothesis}{A character string or a matrix specifying combination, to be passed to the hypothesis.matrix argument of car::linearHypothesis
 See \code{\link[car]{linearHypothesis}} for more details.}
 }
 \value{
@@ -21,7 +23,7 @@ An object of class \code{"lh_robust"} containing the two following components:
 The only analyis directly performed by \code{lh_robust} is a \code{t-test} for the null hypothesis of no effects of the linear combination of coefficients as specified by the user.
 All other output components are either extract from \code{linearHypothesis} or \code{lm_robust}.
 
-The original output returned by  \code{linearHypothesis} is added as an attribute.
+The original output returned by \code{linearHypothesis} is added as an attribute.
 }
 \description{
 This function fits a linear model with robust standard errors and performs linear hypothesis test.

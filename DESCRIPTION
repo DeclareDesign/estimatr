@@ -20,7 +20,8 @@ Imports:
     generics,
     methods,
     Rcpp (>= 0.12.16),
-    rlang (>= 0.2.0)
+    rlang (>= 0.2.0),
+    car
 LinkingTo: Rcpp, RcppEigen
 RoxygenNote: 6.1.1
 LazyData: true
@@ -28,7 +29,6 @@ Suggests:
     fabricatr (>= 0.4),
     randomizr (>= 0.16),
     AER,
-    car,
     clubSandwich,
     ivpack,
     lfe,
