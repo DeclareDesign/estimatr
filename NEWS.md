@@ -3,7 +3,7 @@
 * Add `diagnostics` to `iv_robust()`
 * Add `glance()` methods for all estimators
 * Add `lh_robust()` for easy interface to `car::linearHypothesis()`
-* Minor bug with `covariates` needing to be evaluated in `lm_lin()` 
+* Fixed minor bug with a formula such as `is.na(var)` in the `covariates` formula in `lm_lin()` 
 
 # estimatr 0.14.0
 
