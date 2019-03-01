@@ -81,3 +81,21 @@ tidy.difference_in_means <- tidy_data_frame
 #' @export
 #' @family estimatr tidiers
 tidy.horvitz_thompson <- tidy_data_frame
+
+
+#' @rdname estimatr_tidiers
+#' @templateVar class lh_robust
+#'
+#' @export
+#' @family estimatr tidiers
+tidy.lh_robust <- function(x, ...) {
+  rbind(tidy(x$lm_robust), tidy(x$lh))
+}
+#'
+#' @rdname estimatr_tidiers
+#' @templateVar class lh
+#'
+#' @export
+#' @family estimatr tidiers
+tidy.lh <- tidy_data_frame
+

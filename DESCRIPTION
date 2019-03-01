@@ -8,7 +8,8 @@ Authors@R: c(person("Graeme", "Blair", email = "graeme.blair@ucla.edu", role = c
              person("Alexander", "Coppock", email = "alex.coppock@yale.edu", role = c("aut")),
              person("Macartan", "Humphreys", email = "macartan@gmail.com", role = c("aut")),
              person("Luke", "Sonnet", email = "luke.sonnet@gmail.com", role = c("aut")),
-             person("Neal", "Fultz", email = "nfultz@gmail.com", role = c("ctb")))
+             person("Neal", "Fultz", email = "nfultz@gmail.com", role = c("ctb")),
+             person("Lily", "Medina", email = "lilymiru@gmail.com", role = c("ctb")))
 Description: Fast procedures for small set of commonly-used, design-appropriate estimators with robust standard errors and confidence intervals. Includes estimators for linear regression, instrumental variables regression, difference-in-means, Horvitz-Thompson estimation, and regression improving precision of experimental estimates by interacting treatment with centered pre-treatment covariates introduced by Lin (2013) <doi:10.1214/12-AOAS583>.
 URL: https://declaredesign.org/r/estimatr/, https://github.com/DeclareDesign/estimatr
 BugReports: https://github.com/DeclareDesign/estimatr/issues
@@ -27,7 +28,6 @@ Suggests:
     fabricatr (>= 0.4),
     randomizr (>= 0.16),
     AER,
-    car,
     clubSandwich,
     ivpack,
     lfe,
@@ -36,6 +36,7 @@ Suggests:
     RcppEigen,
     sandwich,
     stargazer,
-    testthat
+    testthat,
+    car
 Enhances:
     texreg

@@ -3,6 +3,8 @@ print.lm_robust <- function(x, ...) {
   print(summarize_tidy(x))
 }
 
+
+
 #' @export
 print.iv_robust <- function(x, ...) {
   print(summarize_tidy(x))
@@ -117,4 +119,41 @@ print.difference_in_means <- function(x, ...) {
 #' @export
 print.horvitz_thompson <- function(x, ...) {
   print(summarize_tidy(x))
+}
+
+#' @export
+print.lh <- function(x, ...) {
+
+  print(summarize_tidy(x))
+}
+
+#' @export
+print.lh_robust <- function(x, ...) {
+  lnames <- names(x)
+  for (i in 1:length(x)) {
+    cat("$", lnames[i], "\n", sep = "")
+    print(x[[i]])
+    cat("\n")
+  }
+  invisible(x)
+}
+
+
+
+
+#' @export
+print.summary.lh_robust <- function(x,...){
+  cat("$lm_robust \n ")
+  print(summary(x$lm_robust))
+  x <- x[[2]]
+
+cat("\n\n$lh \n \n")
+
+print(attr(x, "linear_hypothesis"))
+}
+#' @export
+print.summary.lh <- function(x, ...){
+
+  print(attr(x, "linear_hypothesis"))
+
 }

@@ -148,3 +148,17 @@ summarize_tidy <- function(object, test = "t", ...) {
 
   return(tidy_mat)
 }
+
+
+
+#' @export
+summary.lh_robust <- function(object,...){
+  class(object) <- "summary.lh_robust"
+  object
+}
+
+#' @export
+summary.lh <- function(object,...){
+  attr(object, "linearHypothesis")
+}
+
