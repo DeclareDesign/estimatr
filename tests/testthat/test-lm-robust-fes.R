@@ -220,10 +220,13 @@ test_that("FEs work with missingness", {
   datmiss$B[1] <- NA
 
   for (se_type in se_types) {
+
+    expected_warning <- "Some observations have missingness in the fixed_effects variable(s) but not in the outcome or covariates. These observations have been dropped."
     ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, se_type = se_type)
     expect_warning(
       rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = datmiss, se_type = se_type),
-      "Some observations have missingness in the fixed effects but not in the outcome or covariates."
+      expected_warning,
+      fixed = TRUE
     )
 
     expect_equivalent(
@@ -240,7 +243,8 @@ test_that("FEs work with missingness", {
   # Check to make sure with only one FE when missingness works
   expect_warning(
     lm_robust(Y ~ Z + X, fixed_effects = ~ B, data = datmiss, se_type = "HC2"),
-    "Some observations have missingness in the fixed effects but not in the outcome or covariates."
+    expected_warning,
+    fixed = TRUE
   )
 
   expect_equivalent(
@@ -257,7 +261,8 @@ test_that("FEs work with missingness", {
   ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, se_type = "HC3")
   expect_warning(
     rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = datmiss, se_type = "HC3"),
-    "Some observations have missingness in the fixed effects but not in the outcome or covariates."
+    expected_warning,
+    fixed = TRUE
   )
   lfo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
 
@@ -270,7 +275,8 @@ test_that("FEs work with missingness", {
     ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl, data = datmiss, se_type = se_type)
     expect_warning(
       rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, clusters = cl, data = datmiss, se_type = se_type),
-      "Some observations have missingness in the fixed effects but not in the outcome or covariates."
+      expected_warning,
+      fixed = TRUE
     )
 
     expect_equivalent(

@@ -73,43 +73,22 @@ clean_model_data <- function(data, datargs, estimator = "") {
     na.action <- attr(mf, "na.action")
     why_omit <- attr(na.action, "why_omit")
 
-    # Todo generalize to all extra components
-    if (!is.null(why_omit[["(cluster)"]])) {
-      warning(
-        "Some observations have missingness in the cluster variable but not ",
-        "in the outcome or covariates. These observations have been dropped."
-      )
-    }
+    # Warn if missingness in ancillary variables
+    missing_warning <- c(
+      "Some observations have missingness in the %s variable(s) but not in ",
+      "the outcome or covariates. These observations have been dropped."
+    )
 
-    if (!is.null(why_omit[["(condition_pr)"]])) {
-      warning(
-        "Some observations have missingness in the condition_pr variable but ",
-        "not in the outcome or covariates. These observations have been dropped."
-      )
-    }
+    to_check_if_missing <- c(
+      "cluster", "condition_pr", "block", "weights", "fixed_effects"
+    )
 
-    if (!is.null(why_omit[["(block)"]])) {
-      warning(
-        "Some observations have missingness in the block variable but not in ",
-        "the outcome or covariates. These observations have been dropped."
-      )
-    }
-
-    if (!is.null(why_omit[["(weights)"]])) {
-      warning(
-        "Some observations have missingness in the weights variable but not in ",
-        "the outcome or covariates. These observations have been dropped."
-      )
-    }
-
-    if (!is.null(why_omit[["(fixed_effects)"]])) {
-      warning(
-        "Some observations have missingness in the fixed effects but ",
-        "not in the outcome or covariates. These observations have been dropped."
-      )
+    for (x in to_check_if_missing) {
+      if (!is.null(why_omit[[sprintf("(%s)", x)]])) {
+        warning(sprintf(missing_warning, x))
+      }
     }
   })
-
 
   if (!is.null(attr(terms(mf), "Formula_without_dot"))) {
     formula <- attr(terms(mf), "Formula_without_dot")
@@ -212,6 +191,6 @@ demean_fes <- function(model_data) {
 
   # model_data[["fixed_effects"]] <- model_data[["fixed_effects"]]
 
-  model_data[["fe_levels"]] <- setNames(nfaclevels, nm = colnames(model_data[["fixed_effects"]]))
+  model_data[["fe_levels"]] <- setNames(nfaclevels, colnames(model_data[["fixed_effects"]]))
   return(model_data)
 }
