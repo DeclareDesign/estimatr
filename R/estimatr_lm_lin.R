@@ -202,13 +202,10 @@ lm_lin <- function(formula,
   # Get design matrix including `covariates` for centering
   # ----------
 
-  full_formula <-
-    update(
-      formula,
-      reformulate(
-        c(".", labels(cov_terms), response = ".")
-      )
-    )
+  full_formula <- update(
+    formula,
+    reformulate(c(".", labels(cov_terms)))
+  )
 
   datargs <- enquos(
     formula = full_formula,
