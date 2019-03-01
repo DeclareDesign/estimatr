@@ -4,7 +4,12 @@ retrieve_fstatistic <- function(x) {
   if (exists("fstatistic", x)) {
     data.frame(
       statistic = x[["fstatistic"]][1],
-      p.value = pf(x[["fstatistic"]][1], x[["fstatistic"]][2], x[["fstatistic"]][3], lower.tail = FALSE)
+      p.value = pf(
+        x[["fstatistic"]][1],
+        x[["fstatistic"]][2],
+        x[["fstatistic"]][3],
+        lower.tail = FALSE
+      )
     )
   } else {
     data.frame(statistic = NA_real_, p.value = NA_real_)

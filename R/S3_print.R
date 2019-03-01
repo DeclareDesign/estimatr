@@ -10,7 +10,10 @@ print.iv_robust <- function(x, ...) {
   print(summarize_tidy(x))
 }
 
-print_summary_lm_like <- function(x, digits, signif.stars = getOption("show.signif.stars"), ...) {
+print_summary_lm_like <- function(x,
+                                  digits,
+                                  signif.stars = getOption("show.signif.stars"),
+                                  ...) {
   cat(
     "\nCall:\n",
     paste(deparse(x$call, nlines = 5), sep = "\n", collapse = "\n"),
@@ -130,7 +133,7 @@ print.lh <- function(x, ...) {
 #' @export
 print.lh_robust <- function(x, ...) {
   lnames <- names(x)
-  for (i in 1:length(x)) {
+  for (i in seq_along(x)) {
     cat("$", lnames[i], "\n", sep = "")
     print(x[[i]])
     cat("\n")
