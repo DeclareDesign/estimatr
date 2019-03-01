@@ -181,7 +181,7 @@ When weights are applied, we use the same estimation strategy as in `lm_robust` 
 
 The variances estimates for `iv_robust` are the same as the estimates for `lm_robust` although two changes are made. First, we replace $\mathbf{X}$ with the second stage regressors, $\widehat{\mathbf{X}}$, and we replace the residuals, $e_i$, with $\mathbf{y} - \mathbf{X} \beta_{2SLS}$. That is, we use the residuals from the final coefficients and the endogenous, uninstrumented regressors $\mathbf{X}$.
 
-Because Stata does not default to using finite sample corrections and tests with its `ivregress 2sls` estimator, the correspondence between our instrumental variables estimator and theirs can be a bit confulsing. The following table shows the options in Stata that correspond to our estimators.
+Because Stata does not default to using finite sample corrections and tests with its `ivregress 2sls` estimator, the correspondence between our instrumental variables estimator and theirs can be a bit unclear. The following table shows the options in Stata that correspond to our estimators.
 
 | `estimatr`                                                           | Stata                                           | Notes                                                                                                                                    |
 |----------------------------------------------------------------------|-------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|

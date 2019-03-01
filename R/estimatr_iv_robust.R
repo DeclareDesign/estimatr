@@ -279,7 +279,14 @@ iv_robust <- function(formula,
       if (se_type == "classical") {
         overid_chisq_val <- sargan_chisq(model_data, ss_residuals)
       } else {
-        overid_chisq_val <- wooldridge_score_chisq(model_data, endog, instruments, ss_residuals, first_stage_fits, m = extra_instruments)
+        overid_chisq_val <- wooldridge_score_chisq(
+          model_data = model_data,
+          endog = endog,
+          instruments = instruments,
+          ss_residuals = ss_residuals,
+          first_stage_fits = first_stage_fits,
+          m = extra_instruments
+        )
       }
 
       overid_chisqtest_val <- c(
@@ -309,6 +316,14 @@ iv_robust <- function(formula,
 }
 
 # IV diagnostic test functions
+# helper to get denominator degress of freedom
+get_dendf <- function(lm_fit) {
+  if (is.numeric(lm_fit[["N_clusters"]])) {
+    lm_fit[["N_clusters"]] - 1
+  } else {
+    lm_fit[["df.residual"]]
+  }
+}
 
 # Weak first-stage ftest
 first_stage_ftest <- function(model_data, endog, instruments, se_type) {
@@ -361,13 +376,13 @@ first_stage_ftest <- function(model_data, endog, instruments, se_type) {
     )
   }
 
-  if (ncol(coef_inst) > 1) {
-    fstat_names <- paste0(colnames(coef_inst), ":value")
+  fstat_names <- if (ncol(coef_inst) > 1) {
+    paste0(colnames(coef_inst), ":value")
   } else {
-    fstat_names <- "value"
+    "value"
   }
 
-  dendf <- if (is.numeric(lm_instruments[["N_clusters"]])) lm_instruments[["N_clusters"]] - 1 else lm_instruments[["df.residual"]]
+  dendf <- get_dendf(lm_instruments)
 
   c(
     setNames(firststage_fstat_value, fstat_names),
@@ -427,7 +442,8 @@ wu_hausman_reg_ftest <- function(model_data, first_stage_residuals, se_type) {
     nomdf = wu_hausman_nomdf
   )
 
-  dendf <- if (is.numeric(lm_resids[["N_clusters"]])) lm_resids[["N_clusters"]] - 1 else lm_resids[["df.residual"]]
+  dendf <- get_dendf(lm_resids)
+
   c(
     "value" = wu_hausman_fstat,
     "numdf" = wu_hausman_nomdf,
@@ -435,8 +451,6 @@ wu_hausman_reg_ftest <- function(model_data, first_stage_residuals, se_type) {
     "p.value" = pf(wu_hausman_fstat, wu_hausman_nomdf, dendf, lower.tail = FALSE)
   )
 }
-
-
 
 # Overidentification tests
 # Sargan (classical ses)
@@ -478,7 +492,8 @@ wooldridge_score_chisq <- function(model_data, endog, instruments, ss_residuals,
   )
 
   kmat <- as.matrix(
-    model_data$instrument_matrix[, instruments[seq_len(m)], drop = FALSE] - qhat_fit[["fitted.values"]]
+      model_data$instrument_matrix[, instruments[seq_len(m)], drop = FALSE] -
+      qhat_fit[["fitted.values"]]
     ) *  as.vector(ss_residuals)
 
   if (!is.null(model_data[["weights"]])) {
@@ -510,10 +525,14 @@ build_ivreg_diagnostics_mat <- function(iv_robust_out, stata = FALSE) {
     c(overid[1], if (stata & overid[2] == 0) NA else overid[2], NA, overid[3])
   )[, c(2, 3, 1, 4)]
 
+  weak_names <- "Weak instruments"
   if (n_weak_inst_fstats > 1) {
-    weak_names <- paste0("Weak instruments (", gsub("\\:*value", "", names(weakinst[seq_len(n_weak_inst_fstats)])), ")")
-  } else {
-    weak_names <- "Weak instruments"
+    weak_names <- paste0(
+      weak_names,
+      " (",
+      gsub("\\:*value", "", names(weakinst[seq_len(n_weak_inst_fstats)])),
+      ")"
+    )
   }
 
   rownames(diag_mat) <- c(
