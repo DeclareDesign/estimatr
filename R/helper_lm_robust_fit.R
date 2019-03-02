@@ -88,7 +88,7 @@ lm_robust_fit <- function(y,
   if (is.null(colnames(data[["X"]]))) {
     colnames(data[["X"]]) <- paste0("X", 1:k)
   }
-  variable_names <- colnames(data[["X"]])
+  all_variable_names <- colnames(data[["X"]])
 
   # Legacy, in case we want to only get some covs in the future
   which_covs <- rep(TRUE, ncol(data[["X"]]))
@@ -114,7 +114,7 @@ lm_robust_fit <- function(y,
     )
 
   fit$beta_hat <- as.matrix(fit$beta_hat)
-  dimnames(fit$beta_hat) <- list(variable_names, ynames)
+  dimnames(fit$beta_hat) <- list(all_variable_names, ynames)
 
   # Use first model to get linear dependencies
   est_exists <- !is.na(fit$beta_hat)
@@ -132,7 +132,7 @@ lm_robust_fit <- function(y,
     )
   } else {
     return_list <- list(
-      coefficients = setNames(as.vector(fit$beta_hat), variable_names),
+      coefficients = setNames(as.vector(fit$beta_hat), all_variable_names),
       std.error = NA,
       df = NA
     )
@@ -260,7 +260,11 @@ lm_robust_fit <- function(y,
       return_list[["fixed_effects"]] <- setNames(
         tapply(
           return_list[["fitted.values"]] -
-            data[["Xoriginal"]][, variable_names, drop = FALSE] %*% fit$beta_hat,
+            data[["Xoriginal"]][
+              ,
+              colnames(data[["X"]]),
+              drop = FALSE
+          ] %*% fit$beta_hat,
           data[["fixed_effects"]],
           `[`,
           1
@@ -277,7 +281,7 @@ lm_robust_fit <- function(y,
     colnames(return_list[["fitted.values"]]) <- ynames
   }
 
-  return_list[["term"]] <- variable_names
+  return_list[["term"]] <- all_variable_names
   return_list[["outcome"]] <- ynames
   return_list[["alpha"]] <- alpha
   return_list[["se_type"]] <- se_type
@@ -649,12 +653,6 @@ drop_collinear <- function(data, covs_used, weighted, iv_stage) {
     if (weighted) {
       data[["X_first_stage_unweighted"]] <-
         data[["X_first_stage_unweighted"]][, covs_used, drop = FALSE]
-    }
-  }
-  if (is.numeric(data[["Xoriginal"]])) {
-    data[["Xoriginal"]] <- data[["Xoriginal"]][, covs_used, drop = FALSE]
-    if (weighted) {
-      data[["Xoriginal"]] <- data[["Xoriginal"]][, covs_used, drop = FALSE]
     }
   }
 
