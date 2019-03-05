@@ -16,7 +16,7 @@ lm_robust_fit(y, X, yoriginal = NULL, Xoriginal = NULL, weights,
 
 \item{yoriginal}{numeric outcome vector, unprojected if there are fixed effects}
 
-\item{Xoriginal}{numeric design matrix, unprojected if there are fixed effects}
+\item{Xoriginal}{numeric design matrix, unprojected if there are fixed effects. Any column named \code{"(Intercept)" will be dropped}}
 
 \item{weights}{numeric weights vector}
 

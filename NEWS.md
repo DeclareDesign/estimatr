@@ -1,4 +1,8 @@
-# estimatr 0.16.0
+# estimatr 0.17.0 (GitHub)
+
+* Fixed minor bug with collinearity in covariates with fixed effects estimators (issue #294)
+
+# estimatr 0.16.0 (CRAN)
 
 * Add `diagnostics` to `iv_robust()`
 * Add `glance()` methods for all estimators

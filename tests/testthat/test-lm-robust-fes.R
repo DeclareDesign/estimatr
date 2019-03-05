@@ -648,6 +648,32 @@ test_that("FE matches lm_robust with one block", {
   )
 })
 
+test_that("FEs handle collinear covariates", {
+
+  mtcars2 <- mtcars
+  mtcars2$cyl2 <- mtcars2$cyl
+  for (se_type in se_types) {
+    lmo <- lm_robust(mpg ~ cyl + cyl2 + factor(gear), data = mtcars2)
+    lmfo <- lm_robust(mpg ~ cyl + cyl2, fixed_effects = ~ gear, data = mtcars2)
+
+    expect_equivalent(
+      tidy(lmo)[grepl("cyl", lmo$term), ],
+      tidy(lmfo)[grepl("cyl", lmfo$term), ]
+    )
+  }
+
+  for (se_type in cr_se_types) {
+    lmo <- lm_robust(mpg ~ cyl + cyl2 + factor(gear), clusters = am, data = mtcars2)
+    lmfo <- lm_robust(mpg ~ cyl + cyl2, fixed_effects = ~ gear,  clusters = am, data = mtcars2)
+
+    expect_equivalent(
+      tidy(lmo)[grepl("cyl", lmo$term), ],
+      tidy(lmfo)[grepl("cyl", lmfo$term), ]
+    )
+  }
+
+})
+
 test_that("Handle perfect fits appropriately", {
   dat$Bsingle <- c(1, 2, rep(3:4, each = 9))
   rfo <- lm_robust(Y ~ X, fixed_effects = ~ Bsingle, data = dat)
