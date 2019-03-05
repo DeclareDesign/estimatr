@@ -3,7 +3,7 @@
 #' @param y numeric outcome vector
 #' @param X numeric design matrix
 #' @param yoriginal numeric outcome vector, unprojected if there are fixed effects
-#' @param Xoriginal numeric design matrix, unprojected if there are fixed effects
+#' @param Xoriginal numeric design matrix, unprojected if there are fixed effects. Any column named \code{"(Intercept)" will be dropped}
 #' @param weights numeric weights vector
 #' @param cluster numeric cluster vector
 #' @param fixed_effects character matrix of fixed effect groups
@@ -34,42 +34,13 @@ lm_robust_fit <- function(y,
                           try_cholesky = FALSE,
                           iv_stage = list(0)) {
 
-  data <- list(
-    y = as.matrix(y),
-    X = X
-  )
-  ny <- ncol(data[["y"]])
-  ynames <- colnames(data[["y"]])
-  fes <- !is.null(fixed_effects)
-  if (fes) {
-    data[["fixed_effects"]] <- fixed_effects
-    if (is.numeric(yoriginal)) {
-      data[["yoriginal"]] <- as.matrix(yoriginal)
-    }
-    if (is.numeric(Xoriginal)) {
-      data[["Xoriginal"]] <- as.matrix(Xoriginal)
-    }
-    fe_rank <- attr(data[["fixed_effects"]], "fe_rank")
-  } else {
-    fe_rank <- 0
-  }
-  multivariate <- ny > 1
-  weighted <- !is.null(weights)
-  if (weighted) {
-    data[["weights"]] <- weights
-  }
-  if (iv_stage[[1]] == 2) {
-    data[["X_first_stage"]] <- iv_stage[[2]]
-  }
-  clustered <- !is.null(cluster)
-  if (clustered) {
-    data[["cluster"]] <- cluster
-  }
-
   # ----------
   # Check se type
   # ----------
 
+  clustered <- !is.null(cluster)
+  fes <- !is.null(fixed_effects)
+  weighted <- !is.null(weights)
   se_type <- check_se_type(se_type, clustered)
 
   if (weighted && se_type == "CR2" && fes) {
@@ -83,6 +54,24 @@ lm_robust_fit <- function(y,
   # Prep data for fitting
   # -----------
 
+  data <- list(
+    y = as.matrix(y),
+    X = X
+  )
+
+  ny <- ncol(data[["y"]])
+  ynames <- colnames(data[["y"]])
+  multivariate <- ny > 1
+  if (weighted) {
+    data[["weights"]] <- weights
+  }
+  if (iv_stage[[1]] == 2) {
+    data[["X_first_stage"]] <- iv_stage[[2]]
+  }
+  if (clustered) {
+    data[["cluster"]] <- cluster
+  }
+
   k <- ncol(data[["X"]])
 
   if (is.null(colnames(data[["X"]]))) {
@@ -90,8 +79,27 @@ lm_robust_fit <- function(y,
   }
   variable_names <- colnames(data[["X"]])
 
+  if (fes) {
+    data[["fixed_effects"]] <- fixed_effects
+    if (is.numeric(yoriginal)) {
+      data[["yoriginal"]] <- as.matrix(yoriginal)
+    }
+    if (is.numeric(Xoriginal)) {
+      # Drop (Intercept) if Xoriginal created by clean_model_data
+      data[["Xoriginal"]] <- as.matrix(Xoriginal)
+      data[["Xoriginal"]] <- data[["Xoriginal"]][
+        ,
+        colnames(data[["Xoriginal"]]) != "(Intercept)",
+        drop = FALSE
+      ]
+    }
+    fe_rank <- attr(data[["fixed_effects"]], "fe_rank")
+  } else {
+    fe_rank <- 0
+  }
+
   # Legacy, in case we want to only get some covs in the future
-  which_covs <- rep(TRUE, ncol(data[["X"]]))
+  which_covs <- setNames(rep(TRUE, k), variable_names)
 
   data <- prep_data(
     data = data,
@@ -161,7 +169,7 @@ lm_robust_fit <- function(y,
     }
 
     fit_vals[["fitted.values"]] <- as.matrix(
-      data[[X_name]][, 1:x_rank, drop = FALSE] %*% fit$beta_hat
+      data[[X_name]][, seq_len(x_rank), drop = FALSE] %*% fit$beta_hat
     )
 
     fit_vals[["ei"]] <- as.matrix(data[["y"]] - fit_vals[["fitted.values"]])
@@ -185,8 +193,6 @@ lm_robust_fit <- function(y,
       }
 
     }
-
-
 
     # Also need second stage residuals for fstat
     if (iv_stage[[1]] == 2) {
@@ -257,10 +263,10 @@ lm_robust_fit <- function(y,
     if (fes &&
         (ncol(data[["fixed_effects"]]) == 1) &&
         is.numeric(data[["Xoriginal"]])) {
+
       return_list[["fixed_effects"]] <- setNames(
         tapply(
-          return_list[["fitted.values"]] -
-            data[["Xoriginal"]][, variable_names, drop = FALSE] %*% fit$beta_hat,
+          return_list[["fitted.values"]] - data[["Xoriginal"]] %*% fit$beta_hat,
           data[["fixed_effects"]],
           `[`,
           1
@@ -651,11 +657,9 @@ drop_collinear <- function(data, covs_used, weighted, iv_stage) {
         data[["X_first_stage_unweighted"]][, covs_used, drop = FALSE]
     }
   }
+
   if (is.numeric(data[["Xoriginal"]])) {
     data[["Xoriginal"]] <- data[["Xoriginal"]][, covs_used, drop = FALSE]
-    if (weighted) {
-      data[["Xoriginal"]] <- data[["Xoriginal"]][, covs_used, drop = FALSE]
-    }
   }
 
   return(data)

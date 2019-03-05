@@ -1,9 +1,9 @@
 # estimatr 0.16.1
 
-* Fixed bug where collinear covariates caused fixed effects estimator to crash
-* Added `glance.lh_robust()` and fixed some issues with printing and summarizing `lh_robust()` objects
+* Fixed bug where collinear covariates caused fixed effects estimator to crash  (issue #294)
+* Added `glance.lh_robust()` and fixed some issues with printing and summarizing `lh_robust()` objects (issues #295 and #296)
 
-# estimatr 0.16.0
+# estimatr 0.16.0 (latest CRAN)
 
 * Add `diagnostics` to `iv_robust()`
 * Add `glance()` methods for all estimators
