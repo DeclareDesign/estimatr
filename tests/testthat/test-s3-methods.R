@@ -222,7 +222,7 @@ test_that("tidy, glance, summary, and print work", {
 
   expect_output(
     print(lho$lh),
-    "Estimate.*x = z.*x = 3"
+    "Estimate.*cyl = am.*cyl = 3"
   )
 
   # print also gets right number of rows
