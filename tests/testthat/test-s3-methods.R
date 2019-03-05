@@ -183,7 +183,12 @@ test_that("tidy, glance, summary, and print work", {
   )
 
   ## lh_robust
-  lho <- lh_robust(y ~ x + z, data = dat, se_type = "classical", linear_hypothesis = c("x = z", "x = 3"))
+  lho <- lh_robust(
+    mpg ~ cyl + am,
+    data = mtcars,
+    se_type = "classical",
+    linear_hypothesis = c("cyl = am", "cyl = 3")
+  )
   tlho <- tidy(lho)
   slho <- summary(lho)
   glho <- glance(lho)
@@ -191,11 +196,11 @@ test_that("tidy, glance, summary, and print work", {
   # tidy adds rows for each LH
   expect_equal(
     tlho$term,
-    c("(Intercept)", "x", "z", "x = z", "x = 3")
+    c("(Intercept)", "cyl", "am", "cyl = am", "cyl = 3")
   )
 
   # glance only glances lm_robust object
-  lro <- lm_robust(y ~ x + z, data = dat, se_type = "classical")
+  lro <- lm_robust(mpg ~ cyl + am, data = mtcars, se_type = "classical")
 
   expect_identical(
     glance(lho),
@@ -213,12 +218,6 @@ test_that("tidy, glance, summary, and print work", {
   expect_identical(
     printsummary_lho[19:21],
     capture.output(summary(lho$lh))
-  )
-
-  # same except for coefficient rounding
-  expect_identical(
-    substr(capture.output(print(lho)), 1, 6),
-    substr(printsummary_lho[c(1, 10:14, 18:22)], 1, 6)
   )
 
   expect_output(
