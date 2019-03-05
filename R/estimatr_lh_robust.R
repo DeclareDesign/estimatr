@@ -17,9 +17,9 @@
 #' \item{lh}{A data frame with most of its columns pulled from \code{linearHypothesis}' output.}
 #'
 #' The only analyis directly performed by \code{lh_robust} is a \code{t-test} for the null hypothesis of no effects of the linear combination of coefficients as specified by the user.
-#' All other output components are either extract from \code{linearHypothesis} or \code{lm_robust}.
+#' All other output components are either extracted from \code{linearHypothesis} or \code{lm_robust}.
 #'
-#' The original output returned by \code{linearHypothesis} is added as an attribute.
+#' The original output returned by \code{linearHypothesis} is added as an attribute under the \code{"linear_hypothesis"} attribute.
 #'
 #' @examples
 #'
@@ -99,7 +99,7 @@ lh_robust <- function(..., data, linear_hypothesis) {
     outcome =  lm_robust_fit$outcome
   )
 
-  attr(return_lh_robust, "linearHypothesis") <- car_lht
+  attr(return_lh_robust, "linear_hypothesis") <- car_lht
   class(return_lh_robust) <- c("lh", "data.frame")
 
   return_lm_robust <- lm_robust_fit

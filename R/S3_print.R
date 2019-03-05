@@ -3,8 +3,6 @@ print.lm_robust <- function(x, ...) {
   print(summarize_tidy(x))
 }
 
-
-
 #' @export
 print.iv_robust <- function(x, ...) {
   print(summarize_tidy(x))
@@ -126,8 +124,7 @@ print.horvitz_thompson <- function(x, ...) {
 
 #' @export
 print.lh <- function(x, ...) {
-
-  print(summarize_tidy(x))
+  print(summary(x))
 }
 
 #' @export
@@ -141,22 +138,22 @@ print.lh_robust <- function(x, ...) {
   invisible(x)
 }
 
-
-
-
 #' @export
-print.summary.lh_robust <- function(x,...){
-  cat("$lm_robust \n ")
-  print(summary(x$lm_robust))
-  x <- x[[2]]
-
-cat("\n\n$lh \n \n")
-
-print(attr(x, "linear_hypothesis"))
+print.summary.lh_robust <- function(x,
+                                    digits = max(3L, getOption("digits") - 3L),
+                                    ...){
+  lnames <- names(x)
+  for (i in seq_along(x)) {
+    cat("$", lnames[i], "\n", sep = "")
+    print(summary(x[[i]]), digits = digits)
+    cat("\n")
+  }
 }
+
 #' @export
-print.summary.lh <- function(x, ...){
-
-  print(attr(x, "linear_hypothesis"))
-
+print.summary.lh <- function(x,
+                             digits = max(3L, getOption("digits") - 3L),
+                             ...){
+  class(x) <- NULL
+  print(x, digits = digits)
 }

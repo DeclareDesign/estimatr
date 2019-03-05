@@ -21,9 +21,9 @@ An object of class \code{"lh_robust"} containing the two following components:
 \item{lh}{A data frame with most of its columns pulled from \code{linearHypothesis}' output.}
 
 The only analyis directly performed by \code{lh_robust} is a \code{t-test} for the null hypothesis of no effects of the linear combination of coefficients as specified by the user.
-All other output components are either extract from \code{linearHypothesis} or \code{lm_robust}.
+All other output components are either extracted from \code{linearHypothesis} or \code{lm_robust}.
 
-The original output returned by \code{linearHypothesis} is added as an attribute.
+The original output returned by \code{linearHypothesis} is added as an attribute under the \code{"linear_hypothesis"} attribute.
 }
 \description{
 This function fits a linear model with robust standard errors and performs linear hypothesis test.

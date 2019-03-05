@@ -10,6 +10,7 @@ dat <- data.frame(
   cl = sample(1:4, size = N, replace = T),
   w = runif(N)
 )
+
 # se tests
 test_that("lh_robust works with all se types", {
   for (se_type in se_types) {
@@ -31,7 +32,6 @@ test_that("lh_robust works with all se types", {
                  sqrt(as.numeric(attr(linHyp , "vcov"))))
   }
 })
-
 
 test_that("lh_robust with clusters works for all se_types ", {
   for (se_type in cr_se_types) {
@@ -57,9 +57,6 @@ test_that("lh_robust with clusters works for all se_types ", {
   }
 })
 
-#
-
-
 test_that("lh_robust matches lm_robust with fixed effects", {
   lhro <-
     lh_robust(
@@ -77,7 +74,6 @@ test_that("lh_robust matches lm_robust with fixed effects", {
                sqrt(as.numeric(attr(linHyp , "vcov"))))
 
 })
-
 
 test_that("lh_robust matches lm_robust with weights", {
   lhro <-
@@ -115,9 +111,6 @@ test_that("lh_robust matches lm_robust with subsetted data.frame", {
 
 })
 
-
-
-
 test_that("lh_robust matches lm_robust with subsetted data.frame", {
   lhro <-
     lh_robust(Y ~ Z * X,
@@ -136,8 +129,6 @@ test_that("lh_robust matches lm_robust with subsetted data.frame", {
 })
 
 # lh test
-
 test_that("returns error when no linear hypothesis is specified", {
   expect_error(lh_robust(Y ~ Z * X, data = dat))
-
 })

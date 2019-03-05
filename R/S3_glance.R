@@ -68,6 +68,19 @@ glance.lm_robust <- function(x, ...) {
 }
 
 #' @name estimatr_glancers
+#' @templateVar class difference_in_means
+#' @return For \code{glance.lh_robust}, we glance the \code{lm_robust} component only. You can access the linear hypotheses as a data.frame directy from the \code{lh} component of the \code{lh_robust} object
+#'
+#' @inheritParams glance.lm_robust
+#'
+#' @export
+#' @family estimatr glancers
+#' @md
+glance.lh_robust <- function(x, ...) {
+  glance(x[["lm_robust"]])
+}
+
+#' @name estimatr_glancers
 #' @templateVar class iv_robust
 #' @return For \code{glance.iv_robust}, a data.frame with columns:
 #'   \item{r.squared}{The \eqn{R^2} of the second stage regression}

@@ -3,12 +3,15 @@
 \name{estimatr_glancers}
 \alias{estimatr_glancers}
 \alias{glance.lm_robust}
+\alias{glance.lh_robust}
 \alias{glance.iv_robust}
 \alias{glance.difference_in_means}
 \alias{glance.horvitz_thompson}
 \title{Glance at an estimatr object}
 \usage{
 \method{glance}{lm_robust}(x, ...)
+
+\method{glance}{lh_robust}(x, ...)
 
 \method{glance}{iv_robust}(x, ...)
 
@@ -33,6 +36,8 @@ and \eqn{e[i]} is the ith residual.}
 \item{p.value}{p-value from the F test}
 \item{df.residual}{residual degrees of freedom}
 \item{N}{the number of observations used}
+
+For \code{glance.lh_robust}, we glance the \code{lm_robust} component only. You can access the linear hypotheses as a data.frame directy from the \code{lh} component of the \code{lh_robust} object
 
 For \code{glance.iv_robust}, a data.frame with columns:
 \item{r.squared}{The \eqn{R^2} of the second stage regression}
