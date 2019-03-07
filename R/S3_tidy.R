@@ -91,11 +91,21 @@ tidy.horvitz_thompson <- tidy_data_frame
 tidy.lh_robust <- function(x, ...) {
   rbind(tidy(x$lm_robust), tidy(x$lh))
 }
-#'
+
 #' @rdname estimatr_tidiers
 #' @templateVar class lh
 #'
 #' @export
 #' @family estimatr tidiers
-tidy.lh <- tidy_data_frame
+tidy.lh <- function(x, ...) {
+  tidy_data_frame(simplify_lh_outcome(x))
+}
+
+# Simplifies the `lh` outcome column for tidy.lh and print.lh
+simplify_lh_outcome <- function(x) {
+  x_list <- as.list(x)
+  x_list[["outcome"]] <- unique(x_list[["outcome"]])
+  class(x_list) <- "lh"
+  x_list
+}
 

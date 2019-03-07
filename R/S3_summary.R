@@ -55,6 +55,19 @@ summary.iv_robust <- function(object, ...) {
   summary_lm_model(object)
 }
 
+#' @export
+summary.lh_robust <- function(object,...){
+  class(object) <- "summary.lh_robust"
+  object
+}
+
+#' @export
+summary.lh <- function(object,...){
+  summary_lh_object <- summarize_tidy(simplify_lh_outcome(object))
+  class(summary_lh_object) <- "summary.lh"
+  summary_lh_object
+}
+
 
 summary_lm_model <- function(object) {
 
@@ -136,7 +149,7 @@ summarize_tidy <- function(object, test = "t", ...) {
 
   ny <- length(object$outcome)
   p <- length(object$term)
-  if (length(object$outcome) > 1) {
+  if (ny > 1) {
     rownames(tidy_mat) <- paste0(
       rep(object$outcome, each = p),
       ":",
@@ -148,17 +161,3 @@ summarize_tidy <- function(object, test = "t", ...) {
 
   return(tidy_mat)
 }
-
-
-
-#' @export
-summary.lh_robust <- function(object,...){
-  class(object) <- "summary.lh_robust"
-  object
-}
-
-#' @export
-summary.lh <- function(object,...){
-  attr(object, "linearHypothesis")
-}
-

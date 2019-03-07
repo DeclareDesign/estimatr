@@ -182,6 +182,55 @@ test_that("tidy, glance, summary, and print work", {
     c("r.squared", "adj.r.squared", "statistic", "p.value", "df.residual", "N", "se_type")
   )
 
+  ## lh_robust
+  lho <- lh_robust(
+    mpg ~ cyl + am,
+    data = mtcars,
+    se_type = "classical",
+    linear_hypothesis = c("cyl = am", "cyl = 3")
+  )
+  tlho <- tidy(lho)
+  slho <- summary(lho)
+  glho <- glance(lho)
+
+  # tidy adds rows for each LH
+  expect_equal(
+    tlho$term,
+    c("(Intercept)", "cyl", "am", "cyl = am", "cyl = 3")
+  )
+
+  # glance only glances lm_robust object
+  lro <- lm_robust(mpg ~ cyl + am, data = mtcars, se_type = "classical")
+
+  expect_identical(
+    glance(lho),
+    glance(lro)
+  )
+
+  printsummary_lho <- capture.output(summary(lho))
+  printsummary_lro <- capture.output(summary(lro))
+
+  expect_identical(
+    printsummary_lho[7:16],
+    printsummary_lro[5:14]
+  )
+
+  expect_identical(
+    printsummary_lho[19:21],
+    capture.output(summary(lho$lh))
+  )
+
+  expect_output(
+    print(lho$lh),
+    "Estimate.*cyl = am.*cyl = 3"
+  )
+
+  # print also gets right number of rows
+  expect_equal(
+    length(capture.output(print(lho$lh))),
+    3
+  )
+
   ## horvitz_thompson
   ht <- horvitz_thompson(y ~ x, condition_prs = p, data = dat)
   expect_is(
