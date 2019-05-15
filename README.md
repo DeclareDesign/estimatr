@@ -102,9 +102,9 @@ data(sleep)
 res_dim <- difference_in_means(extra ~ group, data = sleep, blocks = ID)
 ```
 
-The [Getting Started Guide](/r/estimatr/articles/getting-started.html)
+The [Getting Started Guide](https://declaredesign.org/r/estimatr/articles/getting-started.html)
 has more examples and uses, as do the reference pages. The [Mathematical
-Notes](/r/estimatr/articles/mathematical-notes.html) provide more
+Notes](https://declaredesign.org/r/estimatr/articles/mathematical-notes.html) provide more
 information about what each estimator is doing under the hood.
 
 ## Fast to use
