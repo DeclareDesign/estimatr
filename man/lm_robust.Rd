@@ -133,6 +133,9 @@ standard error estimators. Be wary when specifying fixed effects that may result
 in perfect fits for some observations or if there are intersecting groups across
 multiple fixed effect variables (e.g. if you specify both "year" and "country" fixed effects
 with an unbalanced panel where one year you only have data for one country).
+
+As with \code{`lm()`}, multivariate regression (multiple outcomes) will only admit
+observations into the estimation that have no missingness on any outcome.
 }
 \examples{
 library(fabricatr)
