@@ -11,9 +11,9 @@ Eigen::MatrixXd eigenAve(const Eigen::ArrayXd& x,
   std::unordered_map<std::string, Eigen::Array2d> sums;
   Eigen::ArrayXd avevec(x.rows());
 
+  Eigen::Array2d dat;
   for (int i=0; i<fe.size(); i++) {
     std::string fei = Rcpp::as<std::string>(fe(i));
-    Eigen::Array2d dat;
     dat(0) = weights(i) * x(i);
     dat(1) = weights(i);
     if (sums.find(fei) != sums.end()) {
