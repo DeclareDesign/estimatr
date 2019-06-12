@@ -240,7 +240,7 @@ test_that("iv_robust matches AER + clubSandwich", {
                                         cluster = dat$clust,
                                         test = ifelse(se_type == "CR2", "Satterthwaite", "naive-t"))
 
-    cols <- if (se_type == "CR2") c("estimate", "std.error", "df", "p.value") else c("estimate", "std.error", "p.value")
+    cols <- if (se_type == "CR2") c("estimate", "std.error", "statistic", "df", "p.value") else c("estimate", "std.error", "statistic", "p.value")
 
     expect_equivalent(
       as.matrix(tidy(ivcr)[, cols]),

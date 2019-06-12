@@ -69,6 +69,9 @@
 #' multiple fixed effect variables (e.g. if you specify both "year" and "country" fixed effects
 #' with an unbalanced panel where one year you only have data for one country).
 #'
+#' As with \code{`lm()`}, multivariate regression (multiple outcomes) will only admit
+#' observations into the estimation that have no missingness on any outcome.
+#'
 #' @return An object of class \code{"lm_robust"}.
 #'
 #' The post-estimation commands functions \code{summary} and \code{\link{tidy}}
