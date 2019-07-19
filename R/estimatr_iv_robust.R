@@ -246,6 +246,8 @@ iv_robust <- function(formula,
     formula = formula
   )
 
+  se_type <- return_list[["se_type"]]
+
   # ------
   # diagnostics
   # ------

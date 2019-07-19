@@ -1,3 +1,7 @@
+# estimatr 0.19.0
+
+* Fixed bug when estimating `diagnostics` in `iv_robust()` without explicitly specifying `se_type` (issue #310)
+
 # estimatr 0.18.0
 
 * Fixed bug where collinear covariates caused fixed effects estimator to crash  (issue #294)
