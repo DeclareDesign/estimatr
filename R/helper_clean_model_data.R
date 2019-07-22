@@ -198,12 +198,12 @@ demean_fes <- function(model_data) {
   model_data[["design_matrix"]] <- demeaned[["design_matrix"]]
 
   if (is.numeric(model_data[["instrument_matrix"]])) {
-    demeaned[["instrument_matrix"]] <- demeanMat2(model_data[["instrument_matrix"]], fe.ints, weights, 0, eps)
+    demeaned[["instrument_matrix"]] <- demeanMat2(model_data[["instrument_matrix"]], fe.ints, weights, has_int, eps)
     model_data[["instrument_matrix"]] <- demeaned[["instrument_matrix"]]
   }
 
 
-  model_data[["fe_levels"]] <- setNames(nfaclevels, colnames(model_data[["fixed_effects"]]))
+  model_data[["fe_levels"]] <- apply(fe.ints, 2, max) - 1
 
   return(model_data)
 }
