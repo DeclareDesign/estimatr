@@ -162,23 +162,6 @@ clean_model_data <- function(data, datargs, estimator = "") {
 demean_fes <- function(model_data) {
   fe.ints <- apply(model_data[["fixed_effects"]], 2, function(x) match(x, unique(x)))
 
-  nfaclevels <- max.col(t(fe.ints)) - 1
-
-
-  # demeaned <- demeanMat(
-  #   Y = as.matrix(model_data[["outcome"]]),
-  #   X = model_data[["design_matrix"]],
-  #   Zmat = model_data[["instrument_matrix"]],
-  #   fes = model_data[["fixed_effects"]],
-  #   weights =
-  #     if (is.numeric(model_data[["weights"]]))
-  #       model_data[["weights"]]
-  #     else
-  #       rep(1, nrow(model_data[["design_matrix"]])),
-  #   has_int = attr(model_data$terms, "intercept"),
-  #   eps = 1e-8
-  # )
-
   eps <- 1e-8
   weights <- model_data[["weights"]] %||% rep(1, nrow(model_data[["design_matrix"]]))
   has_int <- attr(model_data$terms, "intercept")
