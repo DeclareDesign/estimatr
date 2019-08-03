@@ -20,12 +20,12 @@ emm_basis.lm_robust = function(object, trms, xlev, grid, ...) {
   X = model.matrix(trms, m, contrasts.arg = object$contrasts)
   V = emmeans::.my.vcov(object, ...)
 
-  if (sum(is.na(bhat)) > 0) {
+  if (!anyNA(bhat))
+    nbasis = estimability::all.estble
+  else {
     desmat = model.matrix(trms, data = attr(object, "data"))
     nbasis = estimability::nonest.basis(desmat)
   }
-  else
-    nbasis = estimability::all.estble
   misc = list()
   if (n.mult > 1) { # multivariate case. Need to expand some matrices
     eye = diag(n.mult)
