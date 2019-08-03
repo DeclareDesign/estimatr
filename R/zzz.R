@@ -14,6 +14,9 @@
               definition = extract.iv_robust
     )
   }
+  if(requireNamespace("emmeans", quietly = TRUE)) {
+    emmeans::.emm_register("lm_robust", pkgname)
+  }
   invisible()
 }
 

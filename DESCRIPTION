@@ -29,6 +29,7 @@ Suggests:
     randomizr (>= 0.16),
     AER,
     clubSandwich,
+    emmeans (>= 1.4),
     ivpack,
     lfe,
     margins,
