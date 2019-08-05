@@ -1,5 +1,7 @@
 context("S3 - emmeans")
 
+skip_if_not(getRversion() >= "3.5.0")
+
 library(emmeans)
 
 test_that("emmeans can work with lm_robust objects", {
