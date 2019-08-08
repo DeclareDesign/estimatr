@@ -56,7 +56,8 @@ you can use these data frames, you can use the resulting list directly, or
 you can use the generic accessor functions \code{coef}, \code{vcov},
 \code{confint}, and \code{predict}. Marginal effects and uncertainty about
 them can be gotten by passing this object to
-\code{\link[margins]{margins}} from the \pkg{margins}.
+\code{\link[margins]{margins}} from the \pkg{margins},
+or to \code{emmeans} in the \pkg{emmeans} package.
 
 Users who want to print the results in TeX of HTML can use the
 \code{\link[texreg]{extract}} function and the \pkg{texreg} package.
@@ -209,8 +210,8 @@ lm_robust(y ~ x + z, data = dat, alpha = 0.1)
 tidy(lm_robust(y ~ x + z, data = dat, fixed_effects = ~ blockID, se_type = "HC1"))
 
 \dontrun{
-  # Can also use 'margins' package if you have it installed to get
-  # marginal effects
+  # Can also use 'margins' or 'emmeans' package if you have them installed
+  # to get marginal effects
   library(margins)
   lmrout <- lm_robust(y ~ x + z, data = dat)
   summary(margins(lmrout))
@@ -218,6 +219,11 @@ tidy(lm_robust(y ~ x + z, data = dat, fixed_effects = ~ blockID, se_type = "HC1"
   # Can output results using 'texreg'
   library(texreg)
   texreg(lmrout)
+
+  # Using emmeans to obtain covariate-adjusted means
+  library(emmeans)
+  fiber.rlm <- lm_robust(strength ~ diameter + machine, data = fiber)
+  emmeans(fiber.rlm, "machine")
 }
 
 }
