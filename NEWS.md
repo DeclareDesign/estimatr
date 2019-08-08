@@ -1,4 +1,8 @@
-# estimatr 0.18.0
+# estimatr 0.19.0 (dev)
+
+* Added support for `emmeans` (thanks @rvlenth)!
+
+# estimatr 0.18.0 (CRAN)
 
 * Fixed bug where collinear covariates caused fixed effects estimator to crash  (issue #294)
 * Added `glance.lh_robust()` and fixed some issues with printing and summarizing `lh_robust()` objects (issues #295 and #296)
