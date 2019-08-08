@@ -14,7 +14,7 @@ matrix:
       r_packages: broom
 
     - os: linux
-      r: 3.4
+      r: 3.5
       after_success:
       - echo skipping source packaging on linux/oldrel
 
@@ -29,7 +29,7 @@ matrix:
       brew_packages: libgit2
 
     - os: osx
-      r: 3.4
+      r: 3.5
       if: branch = master
       brew_packages: libgit2
 

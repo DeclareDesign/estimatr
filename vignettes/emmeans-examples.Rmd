@@ -1,0 +1,96 @@
+---
+title: "Examples with emmeans"
+author: "Russ Lenth"
+date: "8/3/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+The **emmeans** package provides a variety of *post hoc* analyses such
+as obtaining estimated marginal means (EMMs) and comparisons thereof,
+displaying these results in a graph, and a number of related tasks.
+
+This vignette illustrates basic uses of **emmeans** with `lm_robust` 
+objects. For more details, refer to the **emmeans** package itself 
+and its vignettes.
+
+### A factorial experiment
+The `warpbreaks` dataset provided in base R has the results of a two-factor
+experiment. We start by fitting a model
+```{r}
+library(estimatr)
+
+warp.rlm <- lm_robust(log(breaks) ~ wool * tension, data = warpbreaks)
+```
+Typical use of `emmeans()` is to obtain predictions, or marginal means thereof,
+via a formula of the form `~ primary.variables | by.variables`:
+```{r}
+library(emmeans)
+
+emm <- emmeans(warp.rlm, ~ tension | wool)
+class(emm)
+str(emm)
+emm
+```
+These results may be plotted as side-by-side intervals or as an interaction-style plot:
+```{r}
+plot(emm)
+emmip(emm, wool ~ tension, CIs = TRUE)
+```
+
+This particular example has a response transformation. That transformation is
+detected and we may back-transform to the original scale:
+```{r}
+confint(emm, type = "response")
+```
+We may do comparisons and other contrasts:
+```{r}
+pairs(emm) # pairwise comparisons
+contrast(emm, "trt.vs.ctrl", ref = "L", type = "response", adjust = "mvt")
+```
+Note that with a log transformations, it is possible to back-transform 
+comparisons, and they become ratios. With other transformations, back-transforming
+is not possible.
+
+### Rank-deficient models
+Let's create a variation on this example where one cell is omitted:
+```{r}
+warpi.rlm <- update(warp.rlm, subset = -(37:48))
+(rgi <- ref_grid(warpi.rlm))
+summary(rgi)
+```
+Note that the empty cell is detected and flagged as non-estimable.
+
+Some additional explanation here. EMMs are based on a *reference grid*, defined
+as the grid created by all possible combinations of factor levels, together with
+the mean of each numerical predictor. The reference grid here (`rgi`) is also an
+`"emmGrid"` object just like the previous `emm`.
+The grid itself is available as a data frame via the `grid` member, and
+you can verify that the above results match those of the `predict` function
+for the model:
+```{r}
+predict(warpi.rlm, newdata = rgi@grid, se.fit = TRUE)
+```
+There is one exception for the empty cell. I will leave it as a user exercise to demonstrate that if we were to use different contrasts when fitting `warpi.rlm`,
+the predictions will be the same *except* for the empty cell.
+
+### Multivariate models
+If there is a multivariate response, it is treated as another factor that
+is crossed with the other factors in the model. To illustrate, consider
+the dataset `MOats`, provided in **emmeans**:
+```{r}
+MOats.rlm <- lm_robust(yield ~ Block + Variety, data = MOats)
+ref_grid(MOats.rlm)
+```
+By default, the pseudo-factor is named `rep.meas`, but we can change it
+if we like:
+```{r}
+emmeans(MOats.rlm, pairwise ~ nitro, mult.name = "nitro")
+```
+This illustrates an additional feature of `emmeans` that we can put a contrast method in the left side of a formula.
+
+### Afterword
+There are numerous capabilities of **emmeans** not illustrated here. See that package's
+help files and vignettes. Using `vignette("basics", "emmeans")` is a good starting point.
