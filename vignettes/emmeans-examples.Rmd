@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 ```
 The **emmeans** package provides a variety of *post hoc* analyses such
 as obtaining estimated marginal means (EMMs) and comparisons thereof,
