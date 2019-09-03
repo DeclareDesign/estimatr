@@ -225,7 +225,7 @@ commarobust <- function(model,
 #' # Use default "HC2" standard errors
 #' stargazer(lm1, lm2,
 #'           se = starprep(lm1, lm2),
-#'           p = starprep(lm1, lm2, stat = "p.value),
+#'           p = starprep(lm1, lm2, stat = "p.value"),
 #'           omit.stat = "f")
 #' # NB: We remove the F-stat because stargazer only can use original F-stat
 #' # which uses classical SEs
