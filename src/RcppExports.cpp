@@ -33,20 +33,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// demeanMat
-List demeanMat(const Eigen::MatrixXd& Y, const Eigen::MatrixXd& X, const Rcpp::Nullable<Rcpp::NumericMatrix>& Zmat, const Rcpp::StringMatrix& fes, const Eigen::VectorXd& weights, const bool& has_int, const double& eps);
-RcppExport SEXP _estimatr_demeanMat(SEXP YSEXP, SEXP XSEXP, SEXP ZmatSEXP, SEXP fesSEXP, SEXP weightsSEXP, SEXP has_intSEXP, SEXP epsSEXP) {
+// demeanMat2
+Eigen::ArrayXXd demeanMat2(const Eigen::MatrixXd& what, const Rcpp::IntegerMatrix& fes, const Rcpp::NumericVector& weights, const int& start_col, const double& eps);
+RcppExport SEXP _estimatr_demeanMat2(SEXP whatSEXP, SEXP fesSEXP, SEXP weightsSEXP, SEXP start_colSEXP, SEXP epsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericMatrix>& >::type Zmat(ZmatSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::StringMatrix& >::type fes(fesSEXP);
-    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type weights(weightsSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type has_int(has_intSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type what(whatSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::IntegerMatrix& >::type fes(fesSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type weights(weightsSEXP);
+    Rcpp::traits::input_parameter< const int& >::type start_col(start_colSEXP);
     Rcpp::traits::input_parameter< const double& >::type eps(epsSEXP);
-    rcpp_result_gen = Rcpp::wrap(demeanMat(Y, X, Zmat, fes, weights, has_int, eps));
+    rcpp_result_gen = Rcpp::wrap(demeanMat2(what, fes, weights, start_col, eps));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -123,7 +121,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_estimatr_ht_covar_partial", (DL_FUNC) &_estimatr_ht_covar_partial, 5},
     {"_estimatr_ht_var_partial", (DL_FUNC) &_estimatr_ht_var_partial, 2},
-    {"_estimatr_demeanMat", (DL_FUNC) &_estimatr_demeanMat, 7},
+    {"_estimatr_demeanMat2", (DL_FUNC) &_estimatr_demeanMat2, 5},
     {"_estimatr_AtA", (DL_FUNC) &_estimatr_AtA, 1},
     {"_estimatr_Kr", (DL_FUNC) &_estimatr_Kr, 2},
     {"_estimatr_lm_solver", (DL_FUNC) &_estimatr_lm_solver, 3},
