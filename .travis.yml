@@ -5,9 +5,7 @@ warnings_are_errors: false
 
 r_github_packages:
 - DeclareDesign/DDtools
-- ropensci/git2r
 - rstudio/gt
-- vincentarelbundock/gtsummary
 
 matrix:
   include:
