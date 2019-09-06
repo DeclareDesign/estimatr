@@ -9,8 +9,8 @@ ht_var_partial <- function(y, p) {
     .Call(`_estimatr_ht_var_partial`, y, p)
 }
 
-demeanMat <- function(Y, X, Zmat, fes, weights, has_int, eps) {
-    .Call(`_estimatr_demeanMat`, Y, X, Zmat, fes, weights, has_int, eps)
+demeanMat2 <- function(what, fes, weights, start_col, eps) {
+    .Call(`_estimatr_demeanMat2`, what, fes, weights, start_col, eps)
 }
 
 AtA <- function(A) {
