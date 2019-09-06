@@ -1,7 +1,8 @@
-# estimatr 0.19.0 (dev)
+# estimatr 0.20.0 (CRAN)
 
 * Added support for `emmeans` (thanks @rvlenth)!
 * Fixed bug when estimating `diagnostics` in `iv_robust()` without explicitly specifying `se_type` (issue #310)
+* Support for `rlang` 0.4.0
 
 # estimatr 0.18.0 (CRAN)
 
