@@ -35,3 +35,30 @@ Prefers lm_robust objects, but because \code{stargazer} does not work with \code
 objects, \code{starprep} can also take \code{lm} objects and calls \code{commarobust} to get
 the preferred, robust statistics.
 }
+\examples{
+
+library(stargazer)
+
+lm1 <- lm(mpg ~ hp, data = mtcars)
+lm2 <- lm(mpg ~ hp + wt, data = mtcars)
+
+# Use default "HC2" standard errors
+stargazer(lm1, lm2,
+          se = starprep(lm1, lm2),
+          p = starprep(lm1, lm2, stat = "p.value"),
+          omit.stat = "f")
+# NB: We remove the F-stat because stargazer only can use original F-stat
+# which uses classical SEs
+
+# Use default "CR2" standard errors with clusters
+stargazer(lm1, lm2,
+          se = starprep(lm1, lm2, clusters = mtcars$carb),
+          p = starprep(lm1, lm2, clusters = mtcars$carb, stat = "p.value"),
+          omit.stat = "f")
+
+# Can also specify significance levels and different standard errors
+stargazer(lm1, lm2,
+          ci.custom = starprep(lm1, lm2, se_type = "HC3", alpha = 0.1, stat = "ci"),
+          omit.stat = "f")
+
+}
