@@ -4,6 +4,7 @@ context("S3 - modelsummary works")
 
 test_that("modelsummary works with glance", {
 
+  library(gt)
   library(modelsummary)
 
   model1 <- lm_robust(mpg ~ am, mtcars)
