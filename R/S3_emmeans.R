@@ -3,6 +3,8 @@
 # Note: the recover_data and emm_basis methods are registered dynamically
 #   (see zzz.R). So these functions are not exported
 
+#' @importFrom utils getS3method
+
 recover_data.lm_robust <- function(object, ...) {
   data <- getS3method("recover_data", "lm")(object, ...)
   if (object$rank < object$k)  # rank-deficient. Need to pass dataset to emm_basis
