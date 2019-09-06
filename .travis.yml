@@ -3,6 +3,13 @@ sudo: false
 cache: packages
 warnings_are_errors: false
 
+r_packages:
+  - devtools
+
+r_github_packages:
+- DeclareDesign/DDtools
+- rstudio/gt
+
 matrix:
   include:
     - os: linux
@@ -45,12 +52,6 @@ addons:
   apt:
     packages:
       - libnlopt-dev
-
-r_github_packages:
-- DeclareDesign/DDtools
-- ropensci/git2r
-- rstudio/gt
-- vincentarelbundock/gtsummary
 
 after_success:
 - Rscript -e DDtools::after_build
