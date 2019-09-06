@@ -8,7 +8,6 @@ r_packages:
 
 r_github_packages:
 - DeclareDesign/DDtools
-- rstudio/gt
 
 matrix:
   include:
