@@ -21,6 +21,12 @@ clean_model_data <- function(data, datargs, estimator = "") {
   m_formula <- eval_tidy(mfargs[["formula"]])
   m_formula_env <- environment(m_formula)
 
+  # From this point on we never use the environment of anything
+  # in mfargs as we always evaluate in `data` explicitly
+  # Therefore we can just change it to a list that can take
+  # expressions without environments attached to them
+  mfargs <- as.list(mfargs)
+
   args_ignored <- c("fixed_effects", "se_type")
   # For each ... that would go to model.fram .default, early eval,
   # save to formula env, and point to it
