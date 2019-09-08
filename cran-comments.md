@@ -2,7 +2,7 @@
 
 We are resubmitting a small update, `estimatr 0.20.0`, with bug fixes and the addition of a small new feature.
 
-(We address the errors in submitting it last night. We mistakenly left the revdep folders in the package. Our apologies.)
+We have now fixed issues related to Solaris builds, MKL, and OpenBLAS. Apologies for the back and forth.
 
 Thank you for your time reviewing the submission.
 
