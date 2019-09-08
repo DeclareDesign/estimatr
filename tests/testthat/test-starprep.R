@@ -26,17 +26,16 @@ test_that("starprep works", {
 })
 
 set.seed(43)
-N <- 40
+N <- 480
 dat <- data.frame(
-  Y = rnorm(N),
-  Y2 = rnorm(N),
   Z = rbinom(N, 1, .5),
   X = rnorm(N),
   B = factor(rep(1:2, times = c(8, 12))),
-  B2 = factor(rep(1:4, times = c(3, 3, 4, 10))),
-  cl = sample(1:4, size = N, replace = T),
+  cl = sample(1:(N/4), size = N, replace = T),
   w = runif(N)
 )
+dat$Y <- dat$Z + dat$X + rnorm(N)
+dat$Y2 = dat$Z + rnorm(N)
 dat$Xdup <- dat$X
 dat$Bdup <- dat$B
 # In outcome
@@ -47,7 +46,7 @@ datmiss$B[1] <- NA
 test_that("commarobust works with regular lm", {
 
   # expect cluster length error
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
+  lo <- lm(Y ~ Z + X + factor(B), data = datmiss)
   expect_error(
     clo <- commarobust(lo, clusters = datmiss$cl, se_type = "CR0"),
     "`clusters` must be the same length as the model data."
@@ -55,8 +54,8 @@ test_that("commarobust works with regular lm", {
 
   ## Test unclustered SEs
   for (se_type in se_types) {
-    ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, se_type = se_type)
-    lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
+    ro <- lm_robust(Y ~ Z + X + factor(B), data = datmiss, se_type = se_type)
+    lo <- lm(Y ~ Z + X + factor(B), data = datmiss)
     clo <- commarobust(lo, se_type = se_type)
 
     expect_equal(
@@ -78,8 +77,8 @@ test_that("commarobust works with regular lm", {
   ## Test clustered SEs
   for (se_type in cr_se_types) {
 
-    ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl, data = datmiss, se_type = se_type)
-    lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
+    ro <- lm_robust(Y ~ Z + X + factor(B), clusters = cl, data = datmiss, se_type = se_type)
+    lo <- lm(Y ~ Z + X + factor(B), data = datmiss)
     clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = se_type)
 
     expect_equal(
@@ -103,8 +102,8 @@ test_that("commarobust works with regular lm", {
   datmiss$cl_num <- sample(rnorm(3), size = nrow(datmiss), replace = TRUE)
   datmiss$cl_fac <- as.factor(datmiss$cl_char)
 
-  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl_char, data = datmiss, se_type = "CR2")
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
+  ro <- lm_robust(Y ~ Z + X + factor(B), clusters = cl_char, data = datmiss, se_type = "CR2")
+  lo <- lm(Y ~ Z + X + factor(B), data = datmiss)
   clo <- commarobust(lo, clusters = datmiss$cl_char[complete.cases(datmiss)], se_type = "CR2")
 
   expect_equal(
@@ -112,8 +111,8 @@ test_that("commarobust works with regular lm", {
     tidy(clo)
   )
 
-  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl_num, data = datmiss, se_type = "CR2")
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
+  ro <- lm_robust(Y ~ Z + X + factor(B), clusters = cl_num, data = datmiss, se_type = "CR2")
+  lo <- lm(Y ~ Z + X + factor(B), data = datmiss)
   clo <- commarobust(lo, clusters = datmiss$cl_num[complete.cases(datmiss)], se_type = "CR2")
 
   expect_equal(
@@ -121,8 +120,8 @@ test_that("commarobust works with regular lm", {
     tidy(clo)
   )
 
-  ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl_fac, data = datmiss, se_type = "CR2")
-  lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss)
+  ro <- lm_robust(Y ~ Z + X + factor(B), clusters = cl_fac, data = datmiss, se_type = "CR2")
+  lo <- lm(Y ~ Z + X + factor(B), data = datmiss)
   clo <- commarobust(lo, clusters = datmiss$cl_fac[complete.cases(datmiss)], se_type = "CR2")
 
   expect_equal(
@@ -135,8 +134,8 @@ test_that("commarobust works with regular lm", {
 test_that("commarobust works with weighted lm", {
   # Test unclustered SEs
   for (se_type in se_types) {
-    ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w, se_type = se_type)
-    lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w)
+    ro <- lm_robust(Y ~ Z + X + factor(B), data = datmiss, weights = w, se_type = se_type)
+    lo <- lm(Y ~ Z + X + factor(B), data = datmiss, weights = w)
     clo <- commarobust(lo, se_type = se_type)
 
     expect_equal(
@@ -158,8 +157,8 @@ test_that("commarobust works with weighted lm", {
   ## Test clustered SEs
   for (se_type in cr_se_types) {
 
-    ro <- lm_robust(Y ~ Z + X + factor(B) + factor(B2), clusters = cl, data = datmiss, weights = w, se_type = se_type)
-    lo <- lm(Y ~ Z + X + factor(B) + factor(B2), data = datmiss, weights = w)
+    ro <- lm_robust(Y ~ Z + X + factor(B), clusters = cl, data = datmiss, weights = w, se_type = se_type)
+    lo <- lm(Y ~ Z + X + factor(B), data = datmiss, weights = w)
     clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = se_type)
 
 
@@ -191,8 +190,8 @@ test_that("commarobust works with dependency, weighted lm", {
   }
 
   for (se_type in se_types) {
-    ro <- lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w, se_type = se_type)
-    lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
+    ro <- lm_robust(Y ~ Z + X + Xdup + factor(B), data = datmiss, weights = w, se_type = se_type)
+    lo <- lm(Y ~ Z + X + Xdup + factor(B), data = datmiss, weights = w)
     clo <- commarobust(lo, se_type = se_type)
 
     capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
@@ -214,8 +213,8 @@ test_that("commarobust works with dependency, weighted lm", {
   }
 
   for (se_type in cr_se_types) {
-    ro <- lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), clusters = cl, data = datmiss, weights = w, se_type = se_type)
-    lo <- lm(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = datmiss, weights = w)
+    ro <- lm_robust(Y ~ Z + X + Xdup + factor(B), clusters = cl, data = datmiss, weights = w, se_type = se_type)
+    lo <- lm(Y ~ Z + X + Xdup + factor(B), data = datmiss, weights = w)
     clo <- commarobust(lo, clusters = datmiss$cl[complete.cases(datmiss)], se_type = se_type)
 
     capture_output(sapply(names(ro), check_obj, ro = ro, clo = clo))
