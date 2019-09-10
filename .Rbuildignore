@@ -24,3 +24,4 @@ update_repo.R
 ^tests/testthat/test-gtsummary\.R$
 ^cran-comments\.md$
 
+^CRAN-RELEASE$
