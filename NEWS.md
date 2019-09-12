@@ -4,7 +4,7 @@
 * Fixed bug when estimating `diagnostics` in `iv_robust()` without explicitly specifying `se_type` (issue #310)
 * Support for `rlang` 0.4.0
 
-# estimatr 0.18.0 (CRAN)
+# estimatr 0.18.0
 
 * Fixed bug where collinear covariates caused fixed effects estimator to crash  (issue #294)
 * Added `glance.lh_robust()` and fixed some issues with printing and summarizing `lh_robust()` objects (issues #295 and #296)
