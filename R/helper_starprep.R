@@ -252,14 +252,19 @@ starprep <- function(...,
 
   fits <- list(...)
 
-  gave_list <- length(fits) == 1 & is.list(fits[[1]])
+  first_object <- fits[[1]]
 
-  if(gave_list) fits <- fits[[1]]
+  gave_list <- length(fits) == 1 & is.list(first_object)
+
+  if(gave_list){
+    is_list_of_lm <- sapply(first_object, inherits, what = c("lm","lm_robust"))
+    if(all(is_list_of_lm)) fits <- first_object
+  }
 
   fitlist <- lapply(
     fits,
     function(x) {
-      if (class(x)[1] == "lm")
+      if (inherits(x, "lm"))
         commarobust(x, se_type = se_type, clusters = clusters, alpha = alpha)
       else
         x
