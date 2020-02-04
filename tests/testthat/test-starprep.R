@@ -259,7 +259,18 @@ test_that("starprep takes lists of fits", {
 
   expect_equal(starprep(a,b,c), starprep(abc))
   expect_equal(starprep(a,b), starprep(ab))
+  expect_is(starprep(a), "list")
 
+  a <- lm_robust(mpg ~ cyl, mtcars)
+  b <- lm_robust(mpg ~ cyl + disp, mtcars)
+  c <- lm_robust(mpg ~ cyl + disp + hp, mtcars)
+
+  abc <- list(a, b, c)
+  ab <- list(a, b)
+
+  expect_equal(starprep(a,b,c), starprep(abc))
+  expect_equal(starprep(a,b), starprep(ab))
+  expect_is(starprep(a), "list")
   })
 
 
