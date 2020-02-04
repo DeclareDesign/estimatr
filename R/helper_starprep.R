@@ -249,8 +249,15 @@ starprep <- function(...,
                      se_type = NULL,
                      clusters = NULL,
                      alpha = 0.05) {
+
+  fits <- list(...)
+
+  gave_list <- length(fits) == 1 & is.list(fits[[1]])
+
+  if(gave_list) fits <- fits[[1]]
+
   fitlist <- lapply(
-    list(...),
+    fits,
     function(x) {
       if (class(x)[1] == "lm")
         commarobust(x, se_type = se_type, clusters = clusters, alpha = alpha)
