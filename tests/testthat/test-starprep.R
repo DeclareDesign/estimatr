@@ -248,3 +248,20 @@ test_that("Only works with lm, not mlm or glm", {
   )
 })
 
+
+test_that("starprep takes lists of fits", {
+  a <- lm(mpg ~ cyl, mtcars)
+  b <- lm(mpg ~ cyl + disp, mtcars)
+  c <- lm(mpg ~ cyl + disp + hp, mtcars)
+
+  abc <- list(a, b, c)
+  ab <- list(a, b)
+
+  expect_equal(starprep(a,b,c), starprep(abc))
+  expect_equal(starprep(a,b), starprep(ab))
+
+  })
+
+
+
+
