@@ -37,7 +37,6 @@
 #'
 #' # The linear hypothesis argument can be specified equivalently as:
 #' lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z = 2x")
-#' lh_robust(y ~ x + z, data = dat, linear_hypothesis = c("z = 1", "x = 2"))
 #' lh_robust(y ~ x + z, data = dat, linear_hypothesis = "2*x +1*z")
 #' lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z + 2x = 0")
 #'
