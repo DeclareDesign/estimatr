@@ -271,7 +271,24 @@ test_that("starprep takes lists of fits", {
   expect_equal(starprep(a,b,c), starprep(abc))
   expect_equal(starprep(a,b), starprep(ab))
   expect_is(starprep(a), "list")
-  })
+
+  # Also check errors
+  expect_error(
+    starprep(ab, c),
+    "`...` must be one list of model fits or several comma separated model fits"
+  )
+
+  expect_error(
+    starprep(list(a, "should_fail")),
+    "must contain only `lm` or `lm_robust` objects."
+  )
+
+  expect_error(
+    starprep(a, "should_fail"),
+    "must contain only `lm` or `lm_robust` objects."
+  )
+
+})
 
 
 
