@@ -4,8 +4,7 @@
 \alias{commarobust}
 \title{Build lm_robust object from lm fit}
 \usage{
-commarobust(model, se_type = NULL, clusters = NULL, ci = TRUE,
-  alpha = 0.05)
+commarobust(model, se_type = NULL, clusters = NULL, ci = TRUE, alpha = 0.05)
 }
 \arguments{
 \item{model}{an lm model object}

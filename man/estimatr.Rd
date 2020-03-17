@@ -3,8 +3,4 @@
 \docType{package}
 \name{estimatr}
 \alias{estimatr}
-\alias{estimatr-package}
 \title{estimatr}
-\description{
-estimatr
-}

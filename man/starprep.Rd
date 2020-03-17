@@ -4,8 +4,13 @@
 \alias{starprep}
 \title{Prepare model fits for stargazer}
 \usage{
-starprep(..., stat = c("std.error", "statistic", "p.value", "ci", "df"),
-  se_type = NULL, clusters = NULL, alpha = 0.05)
+starprep(
+  ...,
+  stat = c("std.error", "statistic", "p.value", "ci", "df"),
+  se_type = NULL,
+  clusters = NULL,
+  alpha = 0.05
+)
 }
 \arguments{
 \item{...}{a list of lm_robust or lm objects}

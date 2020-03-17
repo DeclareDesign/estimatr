@@ -4,9 +4,17 @@
 \alias{predict.lm_robust}
 \title{Predict method for \code{lm_robust} object}
 \usage{
-\method{predict}{lm_robust}(object, newdata, se.fit = FALSE,
-  interval = c("none", "confidence", "prediction"), alpha = 0.05,
-  na.action = na.pass, pred.var = NULL, weights, ...)
+\method{predict}{lm_robust}(
+  object,
+  newdata,
+  se.fit = FALSE,
+  interval = c("none", "confidence", "prediction"),
+  alpha = 0.05,
+  na.action = na.pass,
+  pred.var = NULL,
+  weights,
+  ...
+)
 }
 \arguments{
 \item{object}{an object of class 'lm_robust'}
