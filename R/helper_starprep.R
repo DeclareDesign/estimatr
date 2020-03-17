@@ -250,15 +250,19 @@ starprep <- function(...,
                      clusters = NULL,
                      alpha = 0.05) {
 
-  fits <- list(...)
+  if (inherits(..1, "list")) {
+    if (...length() > 1) {
+      stop("`...` must be one list of model fits or several comma separated model fits")
+    }
+    fits <- ..1
+  } else {
+    fits <- list(...)
+  }
 
-  first_object <- fits[[1]]
+  is_list_of_lm <- vapply(fits, inherits, what = c("lm","lm_robust"), TRUE)
 
-  gave_list <- length(fits) == 1 & is.list(first_object)
-
-  if(gave_list){
-    is_list_of_lm <- sapply(first_object, inherits, what = c("lm","lm_robust"))
-    if(all(is_list_of_lm)) fits <- first_object
+  if (any(!is_list_of_lm)) {
+    stop("`...` must contain only `lm` or `lm_robust` objects.")
   }
 
   fitlist <- lapply(
