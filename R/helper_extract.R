@@ -14,6 +14,7 @@
 #' @param include.nobs logical. Defaults to TRUE
 #' @param include.fstatistic logical. Defaults to TRUE
 #' @param include.rmse logical. Defaults to TRUE
+#' @param include.nclusts logical. Defaults to TRUE if clusters in \code{model}
 #' @param ... unused
 #'
 extract.robust_default <- function(model,
@@ -23,6 +24,7 @@ extract.robust_default <- function(model,
                               include.nobs = TRUE,
                               include.fstatistic = FALSE,
                               include.rmse = TRUE,
+                              include.nclusts = TRUE,
                               ...) {
   s <- tidy(model)
 
@@ -70,6 +72,12 @@ extract.robust_default <- function(model,
     gof <- c(gof, rmse)
     gof.names <- c(gof.names, "RMSE")
     gof.decimal <- c(gof.decimal, TRUE)
+  }
+  if (include.nclusts && model[["clustered"]]) {
+    rmse <- sqrt(model[["res_var"]])
+    gof <- c(gof, model[["N_clusters"]])
+    gof.names <- c(gof.names, "N Clusters")
+    gof.decimal <- c(gof.decimal, FALSE)
   }
 
   tr <- texreg::createTexreg(
