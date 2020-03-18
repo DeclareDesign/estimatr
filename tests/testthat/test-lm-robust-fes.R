@@ -518,6 +518,9 @@ test_that("FEs give correct projected F-stats", {
 })
 
 test_that("FE matches lm_robust with one block", {
+
+  skip_on_os("solaris")
+
   # In outcome
   datmiss <- dat
   datmiss$Y[5] <- NA
