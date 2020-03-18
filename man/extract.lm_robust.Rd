@@ -14,6 +14,7 @@ extract.robust_default(
   include.nobs = TRUE,
   include.fstatistic = FALSE,
   include.rmse = TRUE,
+  include.nclusts = TRUE,
   ...
 )
 
@@ -25,6 +26,7 @@ extract.lm_robust(
   include.nobs = TRUE,
   include.fstatistic = FALSE,
   include.rmse = TRUE,
+  include.nclusts = TRUE,
   ...
 )
 
@@ -36,6 +38,7 @@ extract.iv_robust(
   include.nobs = TRUE,
   include.fstatistic = FALSE,
   include.rmse = TRUE,
+  include.nclusts = TRUE,
   ...
 )
 }
@@ -53,6 +56,8 @@ extract.iv_robust(
 \item{include.fstatistic}{logical. Defaults to TRUE}
 
 \item{include.rmse}{logical. Defaults to TRUE}
+
+\item{include.nclusts}{logical. Defaults to TRUE if clusters in \code{model}}
 
 \item{...}{unused}
 }
