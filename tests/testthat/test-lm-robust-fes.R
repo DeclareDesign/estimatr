@@ -521,7 +521,7 @@ test_that("FE matches lm_robust with one block", {
   # In outcome
   datmiss <- dat
   datmiss$Y[5] <- NA
-  datmiss$oneB <- "A"
+  datmiss$oneB <- as.factor("A")
 
   ## Classical
   ro <- lm_robust(Y ~ Z + X, data = datmiss, se_type = "classical")
