@@ -248,3 +248,48 @@ test_that("Only works with lm, not mlm or glm", {
   )
 })
 
+
+test_that("starprep takes lists of fits", {
+  a <- lm(mpg ~ cyl, mtcars)
+  b <- lm(mpg ~ cyl + disp, mtcars)
+  c <- lm(mpg ~ cyl + disp + hp, mtcars)
+
+  abc <- list(a, b, c)
+  ab <- list(a, b)
+
+  expect_equal(starprep(a,b,c), starprep(abc))
+  expect_equal(starprep(a,b), starprep(ab))
+  expect_is(starprep(a), "list")
+
+  a <- lm_robust(mpg ~ cyl, mtcars)
+  b <- lm_robust(mpg ~ cyl + disp, mtcars)
+  c <- lm_robust(mpg ~ cyl + disp + hp, mtcars)
+
+  abc <- list(a, b, c)
+  ab <- list(a, b)
+
+  expect_equal(starprep(a,b,c), starprep(abc))
+  expect_equal(starprep(a,b), starprep(ab))
+  expect_is(starprep(a), "list")
+
+  # Also check errors
+  expect_error(
+    starprep(ab, c),
+    "`...` must be one list of model fits or several comma separated model fits"
+  )
+
+  expect_error(
+    starprep(list(a, "should_fail")),
+    "must contain only `lm` or `lm_robust` objects."
+  )
+
+  expect_error(
+    starprep(a, "should_fail"),
+    "must contain only `lm` or `lm_robust` objects."
+  )
+
+})
+
+
+
+

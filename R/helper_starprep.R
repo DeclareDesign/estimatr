@@ -249,10 +249,26 @@ starprep <- function(...,
                      se_type = NULL,
                      clusters = NULL,
                      alpha = 0.05) {
+
+  if (inherits(..1, "list")) {
+    if (...length() > 1) {
+      stop("`...` must be one list of model fits or several comma separated model fits")
+    }
+    fits <- ..1
+  } else {
+    fits <- list(...)
+  }
+
+  is_list_of_lm <- vapply(fits, inherits, what = c("lm","lm_robust"), TRUE)
+
+  if (any(!is_list_of_lm)) {
+    stop("`...` must contain only `lm` or `lm_robust` objects.")
+  }
+
   fitlist <- lapply(
-    list(...),
+    fits,
     function(x) {
-      if (class(x)[1] == "lm")
+      if (inherits(x, "lm"))
         commarobust(x, se_type = se_type, clusters = clusters, alpha = alpha)
       else
         x
