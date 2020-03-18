@@ -1,8 +1,6 @@
 ## Submission
 
-We are resubmitting a small update, `estimatr 0.20.0`, with bug fixes and the addition of a small new feature.
-
-We have now fixed issues related to Solaris builds, MKL, and OpenBLAS. Apologies for the back and forth.
+This small patch addresses errors on CRAN related to changes in stringsAsFactor and we think resolves all issues. 
 
 Thank you for your time reviewing the submission.
 
@@ -11,6 +9,7 @@ Thank you for your time reviewing the submission.
 * ubuntu on travis-ci (devel, release, oldrel)
 * OS X on travis-ci (release, oldrel)
 * win-builder (devel, release, oldrel)
+* rhub (including Solaris)
 
 ## R CMD check results
 
