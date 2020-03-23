@@ -4,9 +4,19 @@
 \alias{lm_lin}
 \title{Linear regression with the Lin (2013) covariate adjustment}
 \usage{
-lm_lin(formula, covariates, data, weights, subset, clusters,
-  se_type = NULL, ci = TRUE, alpha = 0.05, return_vcov = TRUE,
-  try_cholesky = FALSE)
+lm_lin(
+  formula,
+  covariates,
+  data,
+  weights,
+  subset,
+  clusters,
+  se_type = NULL,
+  ci = TRUE,
+  alpha = 0.05,
+  return_vcov = TRUE,
+  try_cholesky = FALSE
+)
 }
 \arguments{
 \item{formula}{an object of class formula, as in \code{\link{lm}}, such as

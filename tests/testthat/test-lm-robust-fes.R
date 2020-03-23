@@ -518,6 +518,7 @@ test_that("FEs give correct projected F-stats", {
 })
 
 test_that("FE matches lm_robust with one block", {
+
   # In outcome
   datmiss <- dat
   datmiss$Y[5] <- NA
@@ -675,6 +676,9 @@ test_that("FEs handle collinear covariates", {
 })
 
 test_that("Handle perfect fits appropriately", {
+
+  skip_on_os("solaris")
+
   dat$Bsingle <- c(1, 2, rep(3:4, each = 9))
   rfo <- lm_robust(Y ~ X, fixed_effects = ~ Bsingle, data = dat)
   ro <- lm_robust(Y ~ X + factor(Bsingle), data = dat)

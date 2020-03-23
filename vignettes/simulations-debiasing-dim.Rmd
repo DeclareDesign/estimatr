@@ -76,11 +76,11 @@ simp_bl_des <- simp_blocks +
 
 # Our diagnosands of interest
 my_diagnosands <- declare_diagnosands(
-  `Bias` = mean(est - estimand),
-  `Coverage` =  mean(estimand <= ci_upper & estimand >= ci_lower),
-  `Mean of Estimated ATE` = mean(est),
+  `Bias` = mean(estimate - estimand),
+  `Coverage` =  mean(estimand <= conf.high & estimand >= conf.low),
+  `Mean of Estimated ATE` = mean(estimate),
   `Mean of True ATE (Estimand)` = mean(estimand),
-  `Mean Standard Error` = mean(se)
+  `Mean Standard Error` = mean(std.error)
 )
 ```
 

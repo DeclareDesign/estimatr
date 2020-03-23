@@ -4,14 +4,16 @@
 \name{alo_star_men}
 \alias{alo_star_men}
 \title{Replication data for Lin 2013}
-\format{A data frame with educational treatments and outcomes:
+\format{
+A data frame with educational treatments and outcomes:
 \describe{
   \item{gpa0}{high school GPA}
   \item{sfsp}{financial incentives and support treatment}
   \item{ssp}{support only treatment}
   \item{GPA_year1}{college GPA year 1}
   \item{GPA_year2}{college GPA year 2}
-}}
+}
+}
 \source{
 \url{https://www.aeaweb.org/articles?id=10.1257/app.1.1.136}
 }

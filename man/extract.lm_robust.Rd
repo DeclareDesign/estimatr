@@ -6,17 +6,41 @@
 \alias{extract.iv_robust}
 \title{Extract model data for \pkg{texreg} package}
 \usage{
-extract.robust_default(model, include.ci = TRUE,
-  include.rsquared = TRUE, include.adjrs = TRUE, include.nobs = TRUE,
-  include.fstatistic = FALSE, include.rmse = TRUE, ...)
+extract.robust_default(
+  model,
+  include.ci = TRUE,
+  include.rsquared = TRUE,
+  include.adjrs = TRUE,
+  include.nobs = TRUE,
+  include.fstatistic = FALSE,
+  include.rmse = TRUE,
+  include.nclusts = TRUE,
+  ...
+)
 
-extract.lm_robust(model, include.ci = TRUE, include.rsquared = TRUE,
-  include.adjrs = TRUE, include.nobs = TRUE,
-  include.fstatistic = FALSE, include.rmse = TRUE, ...)
+extract.lm_robust(
+  model,
+  include.ci = TRUE,
+  include.rsquared = TRUE,
+  include.adjrs = TRUE,
+  include.nobs = TRUE,
+  include.fstatistic = FALSE,
+  include.rmse = TRUE,
+  include.nclusts = TRUE,
+  ...
+)
 
-extract.iv_robust(model, include.ci = TRUE, include.rsquared = TRUE,
-  include.adjrs = TRUE, include.nobs = TRUE,
-  include.fstatistic = FALSE, include.rmse = TRUE, ...)
+extract.iv_robust(
+  model,
+  include.ci = TRUE,
+  include.rsquared = TRUE,
+  include.adjrs = TRUE,
+  include.nobs = TRUE,
+  include.fstatistic = FALSE,
+  include.rmse = TRUE,
+  include.nclusts = TRUE,
+  ...
+)
 }
 \arguments{
 \item{model}{an object of class \code{\link{lm_robust}} or \code{"iv_robust"}}
@@ -32,6 +56,8 @@ extract.iv_robust(model, include.ci = TRUE, include.rsquared = TRUE,
 \item{include.fstatistic}{logical. Defaults to TRUE}
 
 \item{include.rmse}{logical. Defaults to TRUE}
+
+\item{include.nclusts}{logical. Defaults to TRUE if clusters in \code{model}}
 
 \item{...}{unused}
 }

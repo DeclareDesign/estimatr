@@ -8,8 +8,6 @@ na.omit_detailed.data.frame(object)
 }
 \arguments{
 \item{object}{a data.frame}
-
-\item{...}{unused}
 }
 \value{
 a normal \code{omit} object, with the extra attribute \code{why_omit},

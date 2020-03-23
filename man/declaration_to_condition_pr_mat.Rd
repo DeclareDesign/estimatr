@@ -5,8 +5,12 @@
 \title{Builds condition probability matrices for Horvitz-Thompson estimation from
 \pkg{randomizr} declaration}
 \usage{
-declaration_to_condition_pr_mat(ra_declaration, condition1 = NULL,
-  condition2 = NULL, prob_matrix = NULL)
+declaration_to_condition_pr_mat(
+  ra_declaration,
+  condition1 = NULL,
+  condition2 = NULL,
+  prob_matrix = NULL
+)
 }
 \arguments{
 \item{ra_declaration}{An object of class \code{"ra_declaration"}, generated
