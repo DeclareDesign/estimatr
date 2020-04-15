@@ -35,7 +35,7 @@ and \eqn{e[i]} is the ith residual.}
 \item{statistic}{the value of the F-statistic}
 \item{p.value}{p-value from the F test}
 \item{df.residual}{residual degrees of freedom}
-\item{N}{the number of observations used}
+\item{nobs}{the number of observations used}
 
 For \code{glance.lh_robust}, we glance the \code{lm_robust} component only. You can access the linear hypotheses as a data.frame directy from the \code{lh} component of the \code{lh_robust} object
 
@@ -43,7 +43,7 @@ For \code{glance.iv_robust}, a data.frame with columns:
 \item{r.squared}{The \eqn{R^2} of the second stage regression}
 \item{adj.r.squared}{The \eqn{R^2} but penalized for having more parameters, \code{rank}}
 \item{df.residual}{residual degrees of freedom}
-\item{N}{the number of observations used}
+\item{nobs}{the number of observations used}
 \item{se_type}{the standard error type specified by the user}
 \item{statistic}{the value of the F-statistic}
 \item{p.value}{p-value from the F test}
@@ -57,14 +57,14 @@ For \code{glance.iv_robust}, a data.frame with columns:
 For \code{glance.difference_in_means}, a data.frame with columns:
 \item{design}{the design used, and therefore the estimator used}
 \item{df}{the degrees of freedom}
-\item{N}{the number of observations used}
-\item{N_blocks}{the number of blocks, if used}
-\item{N_clusters}{the number of clusters, if used}
+\item{nobs}{the number of observations used}
+\item{nblocks}{the number of blocks, if used}
+\item{nclusters}{the number of clusters, if used}
 \item{condition2}{the second, "treatment", condition}
 \item{condition1}{the first, "control", condition}
 
 For \code{glance.horvitz_thompson}, a data.frame with columns:
-\item{N}{the number of observations used}
+\item{nobs}{the number of observations used}
 \item{se_type}{the type of standard error estimator used}
 \item{condition2}{the second, "treatment", condition}
 \item{condition1}{the first, "control", condition}

@@ -56,7 +56,7 @@ test_that("tidy, glance, summary, and print work", {
 
   expect_equal(
     colnames(glance(lmo)),
-    c("r.squared", "adj.r.squared", "statistic", "p.value", "df.residual", "N", "se_type")
+    c("r.squared", "adj.r.squared", "statistic", "p.value", "df.residual", "nobs", "se_type")
   )
 
   expect_equal(
@@ -179,7 +179,7 @@ test_that("tidy, glance, summary, and print work", {
 
   expect_equal(
     colnames(glance(lmlo)),
-    c("r.squared", "adj.r.squared", "statistic", "p.value", "df.residual", "N", "se_type")
+    c("r.squared", "adj.r.squared", "statistic", "p.value", "df.residual", "nobs", "se_type")
   )
 
   ## lh_robust
@@ -262,7 +262,7 @@ test_that("tidy, glance, summary, and print work", {
 
   expect_equal(
     colnames(glance(ht)),
-    c("N", "se_type", "condition2", "condition1")
+    c("nobs", "se_type", "condition2", "condition1")
   )
 
   ## difference_in_means
@@ -290,7 +290,7 @@ test_that("tidy, glance, summary, and print work", {
 
   expect_equal(
     colnames(glance(dim)),
-    c("design", "df", "N", "N_blocks", "N_clusters", "condition2", "condition1")
+    c("design", "df", "nobs", "nblocks", "nclusters", "condition2", "condition1")
   )
 
   # rank deficient
