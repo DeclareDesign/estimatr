@@ -35,6 +35,7 @@ Suggests:
     ivpack,
     lfe,
     margins,
+    modelsummary,
     prediction,
     RcppEigen,
     sandwich,
