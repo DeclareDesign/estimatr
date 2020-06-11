@@ -7,7 +7,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-Preparing regression tables with estimatr is possible with all of the major r-to-LaTeX packages, including `texreg`, `stargazer`, `xtable` and `huxtable`.
+Preparing regression tables with estimatr is possible with all of the major r-to-LaTeX packages, including `texreg`, `modelsummary`, `stargazer`, `xtable`, and `huxtable`.
 
 ## Setup
 
@@ -27,6 +27,19 @@ library(texreg)
 fit <- lm_robust(mpg ~ disp, data = mtcars)
 texreg(fit, include.ci = FALSE)
 ```
+
+## modelsummary
+
+`modelsummary` operates directly on `lm_robust` objects:
+
+```{r, message = FALSE, eval = FALSE}
+library(modelsummary)
+fit1 <- lm(mpg ~ disp, data = mtcars)
+fit2 <- lm(mpg ~ hp, data = mtcars)
+modelsummary(list(fit1, fit2))
+```
+
+To learn how to customize the output table and/or statistics, please consult the `modelsummary` README file on Github: https://github.com/vincentarelbundock/modelsummary
 
 ## Stargazer
 
@@ -86,6 +99,5 @@ library(huxtable)
 fit <- lm_robust(mpg ~ disp, data = mtcars)
 fit %>% tidy %>% hux() %>% print_latex()
 ```
-
 
 
