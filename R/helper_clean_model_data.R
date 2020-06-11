@@ -21,6 +21,8 @@ clean_model_data <- function(data, datargs, estimator = "") {
   m_formula <- eval_tidy(mfargs[["formula"]])
   m_formula_env <- environment(m_formula)
 
+  stopifnot("`formula` argument must be a formula"=inherits(m_formula, "formula"))
+
   # From this point on we never use the environment of anything
   # in mfargs as we always evaluate in `data` explicitly
   # Therefore we can just change it to a list that can take
