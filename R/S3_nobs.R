@@ -12,3 +12,4 @@ nobs.horvitz_thompson <- function(object, ...) object$N
 
 #' @export
 nobs.summary.lm_robust <- nobs.lm_robust
+
