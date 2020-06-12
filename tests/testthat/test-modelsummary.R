@@ -15,7 +15,7 @@ test_that("modelsummary works with glance", {
   expect_equal(colnames(mso), c("group", "term", "statistic", 
                                 "Model 1", "Model 2", "Model 3"))
 
-  expect_equal(nrow(mso), 13L)
+  expect_equal(nrow(mso), 12L)
 
   expect_equal(ncol(mso), 6L)
 
@@ -42,7 +42,7 @@ test_that("modelsummary works with glance", {
 
   mso <- modelsummary::extract(list(model1, model2))
 
-  expect_equal(nrow(mso), 7)
+  expect_equal(nrow(mso), 6)
 
   expect_equal(ncol(mso), 5)
 

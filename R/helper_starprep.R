@@ -140,7 +140,7 @@ commarobust <- function(model,
   return_list[["std.error"]][est_exists] <- sqrt(diag(vcov_fit$Vcov_hat))
   return_list[["df"]][est_exists] <- ifelse(vcov_fit$dof == -99, NA, vcov_fit$dof)
   if (clustered) {
-    return_list[["N_clusters"]] <- data[["J"]]
+    return_list[["nclusters"]] <- data[["J"]]
   }
 
   return_list[["res_var"]] <- get_resvar(

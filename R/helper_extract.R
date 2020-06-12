@@ -75,7 +75,7 @@ extract.robust_default <- function(model,
   }
   if (include.nclusts && model[["clustered"]]) {
     rmse <- sqrt(model[["res_var"]])
-    gof <- c(gof, model[["N_clusters"]])
+    gof <- c(gof, model[["nclusters"]])
     gof.names <- c(gof.names, "N Clusters")
     gof.decimal <- c(gof.decimal, FALSE)
   }

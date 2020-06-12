@@ -320,8 +320,8 @@ iv_robust <- function(formula,
 # IV diagnostic test functions
 # helper to get denominator degress of freedom
 get_dendf <- function(lm_fit) {
-  if (is.numeric(lm_fit[["N_clusters"]])) {
-    lm_fit[["N_clusters"]] - 1
+  if (is.numeric(lm_fit[["nclusters"]])) {
+    lm_fit[["nclusters"]] - 1
   } else {
     lm_fit[["df.residual"]]
   }
