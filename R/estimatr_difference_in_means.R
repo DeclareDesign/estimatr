@@ -332,11 +332,11 @@ difference_in_means <- function(formula,
 
     block_estimates <- do.call(rbind, block_estimates)
 
-    N_overall <- with(block_estimates, sum(N))
+    N_overall <- with(block_estimates, sum(nobs))
     nclusters <- with(block_estimates, sum(nclusters))
 
     # Blocked design, (Gerber Green 2012, p73, eq3.10)
-    diff <- with(block_estimates, sum(coefficients * N / N_overall))
+    diff <- with(block_estimates, sum(coefficients * nobs / N_overall))
 
     df <- NA
     std.error <- NA
@@ -366,7 +366,7 @@ difference_in_means <- function(formula,
               block_estimates,
               sqrt(
                 (nblocks / ((nblocks - 1) * N_overall^2)) *
-                  sum((N * coefficients - (N_overall * diff) / nblocks)^2)
+                  sum((nobs * coefficients - (N_overall * diff) / nblocks)^2)
               )
             )
         }
@@ -379,7 +379,7 @@ difference_in_means <- function(formula,
       if (se_type != "none") {
         std.error <- with(
           block_estimates,
-          sqrt(sum(std.error^2 * (N / N_overall)^2))
+          sqrt(sum(std.error^2 * (nobs / N_overall)^2))
         )
       }
 
@@ -400,7 +400,7 @@ difference_in_means <- function(formula,
       coefficients = diff,
       std.error = std.error,
       df = df,
-      N = N_overall,
+      nobs = N_overall,
       stringsAsFactors = FALSE
     )
   }
@@ -573,9 +573,9 @@ difference_in_means_internal <- function(condition1 = NULL,
     )
 
   if (is.numeric(data$weights)) {
-    return_frame$N <- sum(data$weights)
+    return_frame$nobs <- sum(data$weights)
   } else {
-    return_frame$N <- N
+    return_frame$nobs <- N
   }
 
   if (is.numeric(nclusters)) {

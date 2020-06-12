@@ -101,7 +101,7 @@
 #'   \item{alpha}{the significance level specified by the user}
 #'   \item{se_type}{the standard error type specified by the user}
 #'   \item{res_var}{the residual variance}
-#'   \item{N}{the number of observations used}
+#'   \item{nobs}{the number of observations used}
 #'   \item{k}{the number of columns in the design matrix (includes linearly dependent columns!)}
 #'   \item{rank}{the rank of the fitted model}
 #'   \item{vcov}{the fitted variance covariance matrix}
@@ -470,7 +470,7 @@ sargan_chisq <- function(model_data, ss_residuals) {
     return_vcov = FALSE
   )
 
-  lmr[["r.squared"]] * lmr[["N"]]
+  lmr[["r.squared"]] * lmr[["nobs"]]
 }
 
 # wooldridge score test (robust SEs)

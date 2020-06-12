@@ -105,7 +105,7 @@ least the following components:
   \item{conf.high}{the upper bound of the \code{1 - alpha} percent confidence interval}
   \item{term}{a character vector of coefficient names}
   \item{alpha}{the significance level specified by the user}
-  \item{N}{the number of observations used}
+  \item{nobs}{the number of observations used}
   \item{outcome}{the name of the outcome variable}
   \item{condition_pr_mat}{the condition probability matrix if \code{return_condition_pr_mat} is TRUE}
 }
