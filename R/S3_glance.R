@@ -33,7 +33,7 @@ generics::glance
 #'   \item{statistic}{the value of the F-statistic}
 #'   \item{p.value}{p-value from the F test}
 #'   \item{df.residual}{residual degrees of freedom}
-#'   \item{N}{the number of observations used}
+#'   \item{nobs}{the number of observations used}
 #'
 #' @param x An object returned by one of the estimators
 #' @param ... extra arguments (not used)
@@ -56,7 +56,7 @@ glance.lm_robust <- function(x, ...) {
     retrieve_fstatistic(x),
     data.frame(
       df.residual = x[["df"]][1],
-      N = as.integer(x[["N"]]),
+      nobs = as.integer(x[["nobs"]]),
       se_type = x[["se_type"]],
       stringsAsFactors = FALSE
     )
@@ -113,7 +113,7 @@ glance.iv_robust <- function(x, ...) {
       r.squared = x[["r.squared"]],
       adj.r.squared = x[["adj.r.squared"]],
       df.residual = x[["df.residual"]],
-      N = as.integer(x[["N"]]),
+      nobs = as.integer(x[["nobs"]]),
       se_type = x[["se_type"]],
       stringsAsFactors = FALSE
     ),
@@ -152,9 +152,9 @@ glance.iv_robust <- function(x, ...) {
 #' @return For \code{glance.difference_in_means}, a data.frame with columns:
 #'   \item{design}{the design used, and therefore the estimator used}
 #'   \item{df}{the degrees of freedom}
-#'   \item{N}{the number of observations used}
-#'   \item{N_blocks}{the number of blocks, if used}
-#'   \item{N_clusters}{the number of clusters, if used}
+#'   \item{nobs}{the number of observations used}
+#'   \item{nblocks}{the number of blocks, if used}
+#'   \item{nclusters}{the number of clusters, if used}
 #'   \item{condition2}{the second, "treatment", condition}
 #'   \item{condition1}{the first, "control", condition}
 #'
@@ -167,9 +167,9 @@ glance.difference_in_means <- function(x, ...) {
   data.frame(
     design = x[["design"]],
     df = x[["df"]],
-    N = as.integer(x[["N"]]),
-    N_blocks = retrieve_value(x, "N_blocks"),
-    N_clusters = retrieve_value(x, "N_clusters"),
+    nobs = as.integer(x[["nobs"]]),
+    nblocks = retrieve_value(x, "nblocks"),
+    nclusters = retrieve_value(x, "nclusters"),
     condition2 = x[["condition2"]],
     condition1 = x[["condition1"]],
     stringsAsFactors = FALSE
@@ -179,7 +179,7 @@ glance.difference_in_means <- function(x, ...) {
 #' @name estimatr_glancers
 #' @templateVar class horvitz_thompson
 #' @return For \code{glance.horvitz_thompson}, a data.frame with columns:
-#'   \item{N}{the number of observations used}
+#'   \item{nobs}{the number of observations used}
 #'   \item{se_type}{the type of standard error estimator used}
 #'   \item{condition2}{the second, "treatment", condition}
 #'   \item{condition1}{the first, "control", condition}
@@ -191,7 +191,7 @@ glance.difference_in_means <- function(x, ...) {
 #' @md
 glance.horvitz_thompson <- function(x, ...) {
   data.frame(
-    N = as.integer(x[["N"]]),
+    nobs = as.integer(x[["nobs"]]),
     se_type = x[["se_type"]],
     condition2 = x[["condition2"]],
     condition1 = x[["condition1"]],

@@ -274,8 +274,8 @@ difference_in_means <- function(formula,
   # subset data
   data <- subset.data.frame(data, t %in% c(condition1, condition2))
 
-  N_blocks <- NULL
-  N_clusters <- NULL
+  nblocks <- NULL
+  nclusters <- NULL
 
   if (is.null(data$block)) {
     return_frame <- difference_in_means_internal(
@@ -289,7 +289,7 @@ difference_in_means <- function(formula,
     if (is.null(data$cluster)) {
       design <- "Standard"
     } else {
-      N_clusters <- return_frame[["N_clusters"]]
+      nclusters <- return_frame[["nclusters"]]
       design <- "Clustered"
     }
 
@@ -332,15 +332,15 @@ difference_in_means <- function(formula,
 
     block_estimates <- do.call(rbind, block_estimates)
 
-    N_overall <- with(block_estimates, sum(N))
-    N_clusters <- with(block_estimates, sum(N_clusters))
+    N_overall <- with(block_estimates, sum(nobs))
+    nclusters <- with(block_estimates, sum(nclusters))
 
     # Blocked design, (Gerber Green 2012, p73, eq3.10)
-    diff <- with(block_estimates, sum(coefficients * N / N_overall))
+    diff <- with(block_estimates, sum(coefficients * nobs / N_overall))
 
     df <- NA
     std.error <- NA
-    N_blocks <- nrow(block_estimates)
+    nblocks <- nrow(block_estimates)
 
     if (pair_matched) {
       if (is.null(data$cluster)) {
@@ -352,7 +352,7 @@ difference_in_means <- function(formula,
             with(
               block_estimates,
               sqrt(
-                (1 / (N_blocks * (N_blocks - 1))) *
+                (1 / (nblocks * (nblocks - 1))) *
                   sum((coefficients - diff)^2)
               )
             )
@@ -365,21 +365,21 @@ difference_in_means <- function(formula,
             with(
               block_estimates,
               sqrt(
-                (N_blocks / ((N_blocks - 1) * N_overall^2)) *
-                  sum((N * coefficients - (N_overall * diff) / N_blocks)^2)
+                (nblocks / ((nblocks - 1) * N_overall^2)) *
+                  sum((nobs * coefficients - (N_overall * diff) / nblocks)^2)
               )
             )
         }
       }
 
       # For pair matched, cluster randomized Imai et al. 2009 recommend (p. 37)
-      df <- N_blocks - 1
+      df <- nblocks - 1
     } else {
       # Block randomized (Gerber and Green 2012, p. 74, footnote 17)
       if (se_type != "none") {
         std.error <- with(
           block_estimates,
-          sqrt(sum(std.error^2 * (N / N_overall)^2))
+          sqrt(sum(std.error^2 * (nobs / N_overall)^2))
         )
       }
 
@@ -388,11 +388,11 @@ difference_in_means <- function(formula,
       ## matches lm_lin, two estimates per block
       if (is.null(data$cluster)) {
         design <- "Blocked"
-        df <- nrow(data) - 2 * N_blocks
+        df <- nrow(data) - 2 * nblocks
       } else {
         design <- "Block-clustered"
         # Also matches lm_lin for even sized clusters, should be conservative
-        df <- N_clusters - 2 * N_blocks
+        df <- nclusters - 2 * nblocks
       }
     }
 
@@ -400,7 +400,7 @@ difference_in_means <- function(formula,
       coefficients = diff,
       std.error = std.error,
       df = df,
-      N = N_overall,
+      nobs = N_overall,
       stringsAsFactors = FALSE
     )
   }
@@ -421,11 +421,11 @@ difference_in_means <- function(formula,
   )
 
   return_list[["design"]] <- design
-  if (is.numeric(N_blocks)) {
-    return_list[["N_blocks"]] <- N_blocks
+  if (is.numeric(nblocks)) {
+    return_list[["nblocks"]] <- nblocks
   }
-  if (is.numeric(N_clusters)) {
-    return_list[["N_clusters"]] <- N_clusters
+  if (is.numeric(nclusters)) {
+    return_list[["nclusters"]] <- nclusters
   }
 
   attr(return_list, "class") <- "difference_in_means"
@@ -476,7 +476,7 @@ difference_in_means_internal <- function(condition1 = NULL,
   }
 
   df <- NA
-  N_clusters <- NA
+  nclusters <- NA
 
   if (clustered && !pair_matched) {
 
@@ -506,7 +506,7 @@ difference_in_means_internal <- function(condition1 = NULL,
     diff <- coef(cr2_out)[2]
     std.error <- cr2_out[["std.error"]][2]
     df <- cr2_out[["df"]][2]
-    N_clusters <- cr2_out[["N_clusters"]]
+    nclusters <- cr2_out[["nclusters"]]
   } else {
     if (is.null(data$weights)) {
       diff <- mean(Y2) - mean(Y1)
@@ -514,7 +514,7 @@ difference_in_means_internal <- function(condition1 = NULL,
       if (pair_matched || se_type == "none") {
 
         if (clustered) {
-          N_clusters <- 2
+          nclusters <- 2
         }
 
         # Pair matched designs
@@ -573,13 +573,13 @@ difference_in_means_internal <- function(condition1 = NULL,
     )
 
   if (is.numeric(data$weights)) {
-    return_frame$N <- sum(data$weights)
+    return_frame$nobs <- sum(data$weights)
   } else {
-    return_frame$N <- N
+    return_frame$nobs <- N
   }
 
-  if (is.numeric(N_clusters)) {
-    return_frame$N_clusters <- N_clusters
+  if (is.numeric(nclusters)) {
+    return_frame$nclusters <- nclusters
   }
 
   return(return_frame)

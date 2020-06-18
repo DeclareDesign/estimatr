@@ -403,7 +403,7 @@ test_that("S3 methods", {
 
   expect_equal(
     colnames(glance(ivro)),
-    c("r.squared", "adj.r.squared", "df.residual", "N", "se_type",
+    c("r.squared", "adj.r.squared", "df.residual", "nobs", "se_type",
       "statistic", "p.value", "statistic.weakinst", "p.value.weakinst",
       "statistic.endogeneity", "p.value.endogeneity", "statistic.overid",
       "p.value.overid")

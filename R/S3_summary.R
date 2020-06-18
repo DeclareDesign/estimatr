@@ -109,7 +109,7 @@ summary_lm_model <- function(object) {
   # Split into two lists if multivariate linear model
 
   return_list[["coefficients"]] <- summarize_tidy(object)
-  return_list[["N"]] <- nobs(object)
+  return_list[["nobs"]] <- nobs(object)
 
   class(return_list) <- "summary.lm_robust"
   return(return_list)

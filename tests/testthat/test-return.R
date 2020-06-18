@@ -21,7 +21,7 @@ test_that("Structure of output is the same", {
       "conf.high",
       "outcome",
       "alpha",
-      "N"
+      "nobs"
     )
 
   lmr_o <- lm_robust(y ~ z, data = dat)

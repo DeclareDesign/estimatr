@@ -291,9 +291,9 @@ lm_robust_fit <- function(y,
   return_list[["fes"]] <- fes
   return_list[["clustered"]] <- clustered
   return_list[["df.residual"]] <- N - tot_rank
-  return_list[["N"]] <- N
+  return_list[["nobs"]] <- N
   if (clustered) {
-    return_list[["N_clusters"]] <- data[["J"]]
+    return_list[["nclusters"]] <- data[["J"]]
   }
   return_list[["k"]] <- k
   return_list[["rank"]] <- x_rank

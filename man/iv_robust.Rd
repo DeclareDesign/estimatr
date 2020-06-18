@@ -84,7 +84,7 @@ following components:
   \item{alpha}{the significance level specified by the user}
   \item{se_type}{the standard error type specified by the user}
   \item{res_var}{the residual variance}
-  \item{N}{the number of observations used}
+  \item{nobs}{the number of observations used}
   \item{k}{the number of columns in the design matrix (includes linearly dependent columns!)}
   \item{rank}{the rank of the fitted model}
   \item{vcov}{the fitted variance covariance matrix}

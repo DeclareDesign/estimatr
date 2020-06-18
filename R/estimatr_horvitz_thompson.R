@@ -131,7 +131,7 @@
 #'   \item{conf.high}{the upper bound of the \code{1 - alpha} percent confidence interval}
 #'   \item{term}{a character vector of coefficient names}
 #'   \item{alpha}{the significance level specified by the user}
-#'   \item{N}{the number of observations used}
+#'   \item{nobs}{the number of observations used}
 #'   \item{outcome}{the name of the outcome variable}
 #'   \item{condition_pr_mat}{the condition probability matrix if \code{return_condition_pr_mat} is TRUE}
 #'
@@ -565,16 +565,16 @@ horvitz_thompson <- function(formula,
 
     block_estimates <- do.call(rbind, block_estimates)
 
-    N_overall <- with(block_estimates, sum(N))
+    N_overall <- with(block_estimates, sum(nobs))
 
     n_blocks <- nrow(block_estimates)
 
-    diff <- with(block_estimates, sum(coefficients * N / N_overall))
+    diff <- with(block_estimates, sum(coefficients * nobs / N_overall))
 
     if (se_type != "none") {
       std.error <- with(
         block_estimates,
-        sqrt(sum(std.error^2 * (N / N_overall)^2))
+        sqrt(sum(std.error^2 * (nobs / N_overall)^2))
       )
     } else {
       std.error <- NA
@@ -583,7 +583,7 @@ horvitz_thompson <- function(formula,
     return_frame <- data.frame(
       coefficients = diff,
       std.error = std.error,
-      N = N_overall,
+      nobs = N_overall,
       stringsAsFactors = FALSE
     )
   }
@@ -791,7 +791,7 @@ horvitz_thompson_internal <- function(condition_pr_mat = NULL,
     data.frame(
       coefficients = diff,
       std.error = std.error,
-      N = N,
+      nobs = N,
       stringsAsFactors = FALSE
     )
 
