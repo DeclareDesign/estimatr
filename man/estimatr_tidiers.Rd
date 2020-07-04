@@ -10,13 +10,13 @@
 \alias{tidy.lh}
 \title{Tidy an estimatr object}
 \usage{
-\method{tidy}{lm_robust}(x, ...)
+\method{tidy}{lm_robust}(x, conf.int = FALSE, conf.level = 0.95, ...)
 
-\method{tidy}{iv_robust}(x, ...)
+\method{tidy}{iv_robust}(x, conf.int = FALSE, conf.level = 0.95, ...)
 
-\method{tidy}{difference_in_means}(x, ...)
+\method{tidy}{difference_in_means}(x, conf.int = FALSE, conf.level = 0.95, ...)
 
-\method{tidy}{horvitz_thompson}(x, ...)
+\method{tidy}{horvitz_thompson}(x, conf.int = FALSE, conf.level = 0.95, ...)
 
 \method{tidy}{lh_robust}(x, ...)
 
@@ -24,6 +24,14 @@
 }
 \arguments{
 \item{x}{An object returned by one of the estimators}
+
+\item{conf.int}{Logical indicating whether or not to include a
+confidence interval in the tidied output. Defaults to ‘FALSE’.}
+
+\item{conf.level}{The confidence level to use for the confidence
+interval if ‘conf.int = TRUE’. Must be strictly greater than 0 and less
+than 1. Defaults to 0.95, which corresponds to a 95 percent confidence
+interval.}
 
 \item{...}{extra arguments (not used)}
 }
@@ -36,6 +44,6 @@ name of the outcome variable
 Tidy an estimatr object
 }
 \seealso{
-\code{\link[generics:tidy]{generics::tidy()}}, \code{\link[estimatr:lm_robust]{estimatr::lm_robust()}}, \code{\link[estimatr:iv_robust]{estimatr::iv_robust()}},  \code{\link[estimatr:difference_in_means]{estimatr::difference_in_means()}}, \code{\link[estimatr:horvitz_thompson]{estimatr::horvitz_thompson()}}
+\code{\link[generics:tidy]{generics::tidy()}}, \code{\link[=lm_robust]{lm_robust()}}, \code{\link[=iv_robust]{iv_robust()}},  \code{\link[=difference_in_means]{difference_in_means()}}, \code{\link[=horvitz_thompson]{horvitz_thompson()}}
 }
 \concept{estimatr tidiers}

@@ -1,3 +1,8 @@
+# estimatr 0.23.0
+
+* tidy: rename nobs, nclusters, nblocks
+* tidy: new arguments conf.int, conf.level
+
 # estimatr 0.22.0 
 
 * Bug fixes
