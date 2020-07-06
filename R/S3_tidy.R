@@ -31,13 +31,13 @@ tidy_data_frame <- function(x,
   # re-calculate CIs if explicitly requested and alpha level has changed
   flag <- conf.int && utils::hasName(x, 'alpha') && (1 - x$alpha != conf.level)
   if (flag) {
-      ci <- tryCatch(stats::confint(x, level = conf.level), error = function(e) NULL)
-      flag <- inherits(ci, 'matrix') && all(row.names(ci) == return_frame$term)
-      if (flag) {
+      ci <- stats::confint(x, level = conf.level, ...)
+      if (all(row.names(ci) == return_frame$term))  {
           return_frame$conf.low <- ci[, 1]
           return_frame$conf.high <- ci[, 2]
       }
   }               
+
 
   return(return_frame)
 }
@@ -78,7 +78,7 @@ tidy.lm_robust <- function(x,
                            conf.level = .95,
                            ...) {
   warn_singularities(x)
-  tidy_data_frame(x, conf.int = conf.int, conf.level = conf.level)
+  tidy_data_frame(x, conf.int = conf.int, conf.level = conf.level, ...)
 }
 
 #' @rdname estimatr_tidiers
@@ -88,7 +88,7 @@ tidy.lm_robust <- function(x,
 #' @family estimatr tidiers
 tidy.iv_robust <- function(x, conf.int = FALSE, conf.level = .95, ...) {
   warn_singularities(x)
-  tidy_data_frame(x, conf.int = conf.int, conf.level = conf.level)
+  tidy_data_frame(x, conf.int = conf.int, conf.level = conf.level, ...)
 }
 
 #' @rdname estimatr_tidiers
@@ -105,14 +105,13 @@ tidy.difference_in_means <- tidy_data_frame
 #' @family estimatr tidiers
 tidy.horvitz_thompson <- tidy_data_frame
 
-
 #' @rdname estimatr_tidiers
 #' @templateVar class lh_robust
 #'
 #' @export
 #' @family estimatr tidiers
 tidy.lh_robust <- function(x, ...) {
-  rbind(tidy(x$lm_robust), tidy(x$lh))
+  rbind(tidy(x$lm_robust, ...), tidy(x$lh, ...))
 }
 
 #' @rdname estimatr_tidiers
@@ -121,7 +120,7 @@ tidy.lh_robust <- function(x, ...) {
 #' @export
 #' @family estimatr tidiers
 tidy.lh <- function(x, ...) {
-  tidy_data_frame(simplify_lh_outcome(x))
+  tidy_data_frame(simplify_lh_outcome(x), ...)
 }
 
 # Simplifies the `lh` outcome column for tidy.lh and print.lh

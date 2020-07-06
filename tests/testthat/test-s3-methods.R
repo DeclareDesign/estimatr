@@ -994,10 +994,11 @@ test_that("tidy conf_level", {
 
     mod <- lm_robust(mpg ~ hp + factor(cyl) + gear, mtcars)
 
-    truth  <- c(13.9946994508471, -0.0879182720503278, -6.78499264035586, -7.57127120766524, 1.11960081760074)
-    expect_equal(truth, tidy(mod)$conf.low)
+    expect_equal(unname(confint(mod, level = .95)[, 1]), 
+                 tidy(mod)$conf.low)
 
-    truth  <- c(9.35879901429946, -0.11386438606093, -8.95208521114944, -11.7803907124633, -0.218853284108813)
-    expect_equal(truth, tidy(mod, conf.int = TRUE, conf.level = .999)$conf.low)
+    expect_equal(unname(confint(mod, level = .999)[, 1]), 
+                 tidy(mod, conf.int = TRUE, conf.level = .999)$conf.low)
+
 
 })
