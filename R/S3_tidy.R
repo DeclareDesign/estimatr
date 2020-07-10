@@ -29,14 +29,15 @@ tidy_data_frame <- function(x,
   rownames(return_frame) <- NULL
 
   # re-calculate CIs if explicitly requested and alpha level has changed
-  flag <- conf.int && utils::hasName(x, 'alpha') && (1 - x$alpha != conf.level)
+  # x$alpha[1] because lm_robust duplicates alpha with multiple linear_hypotheses
+  flag <- conf.int || (utils::hasName(x, 'alpha') && (1 - x$alpha[1] != conf.level))
   if (flag) {
       ci <- stats::confint(x, level = conf.level, ...)
       if (all(row.names(ci) == return_frame$term))  {
           return_frame$conf.low <- ci[, 1]
           return_frame$conf.high <- ci[, 2]
       }
-  }               
+  }
 
 
   return(return_frame)
