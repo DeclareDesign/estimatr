@@ -1001,5 +1001,26 @@ test_that("tidy conf_level", {
     expect_equal(unname(confint(mod, level = .999)[, 1]),
                  tidy(mod, conf.int = TRUE, conf.level = .999)$conf.low)
 
+    dimmod <- difference_in_means(mpg ~ am, mtcars)
+
+    expect_equal(
+      unname(confint(dimmod, level = .999)[, 1]),
+      tidy(dimmod, conf.int = TRUE, conf.level = .999)$conf.low
+    )
+
+    expect_false(
+      tidy(dimmod, conf.int = TRUE, conf.level = .999)$conf.low == tidy(dimmod)$conf.low
+    )
+
+    htmod <- horvitz_thompson(mpg ~ am, mtcars, condition_prs = 0.5)
+
+    expect_equal(
+      unname(confint(htmod, level = .999)[, 1]),
+      tidy(htmod, conf.int = TRUE, conf.level = .999)$conf.low
+    )
+
+    expect_false(
+      tidy(htmod, conf.int = TRUE, conf.level = .999)$conf.low == tidy(htmod)$conf.low
+    )
 
 })
