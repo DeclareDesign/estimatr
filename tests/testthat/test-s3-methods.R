@@ -345,15 +345,16 @@ test_that("vcov works", {
     "return_vcov = TRUE"
   )
 
-  expect_error(
-    vcov(horvitz_thompson(y ~ x, condition_prs = p, data = dat)),
-    "supported|horvitz_thompson"
+  hto <- horvitz_thompson(y ~ x, condition_prs = p, data = dat)
+  expect_equal(
+    vcov(hto),
+    matrix(hto$std.error ^ 2, dimnames = list(hto$term, hto$term))
   )
 
-
-  expect_error(
-    vcov(difference_in_means(y ~ x, data = dat)),
-    "supported|difference_in_means"
+  dimo <- difference_in_means(y ~ x, data = dat)
+  expect_equal(
+    vcov(dimo),
+    matrix(dimo$std.error ^ 2, dimnames = list(dimo$term, dimo$term))
   )
 
   # Instrumental variables
@@ -994,10 +995,10 @@ test_that("tidy conf_level", {
 
     mod <- lm_robust(mpg ~ hp + factor(cyl) + gear, mtcars)
 
-    expect_equal(unname(confint(mod, level = .95)[, 1]), 
+    expect_equal(unname(confint(mod, level = .95)[, 1]),
                  tidy(mod)$conf.low)
 
-    expect_equal(unname(confint(mod, level = .999)[, 1]), 
+    expect_equal(unname(confint(mod, level = .999)[, 1]),
                  tidy(mod, conf.int = TRUE, conf.level = .999)$conf.low)
 
 
