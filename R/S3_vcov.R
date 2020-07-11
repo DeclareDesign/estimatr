@@ -4,20 +4,15 @@ vcov.lm_robust <- function(object, complete = TRUE, ...) {
 }
 
 #' @export
-vcov.iv_robust <- function(object, complete = TRUE, ...) {
-  vcov_simple(object, complete = complete)
+vcov.iv_robust <- vcov.lm_robust
+
+#' @export
+vcov.difference_in_means <- function(object, ...) {
+  return(object$vcov)
 }
 
 #' @export
-vcov.difference_in_means <- function(object, complete = TRUE, ...) {
-  stop("vcov not supported for difference_in_means")
-}
-
-
-#' @export
-vcov.horvitz_thompson <- function(object, complete = TRUE, ...) {
-  stop("vcov not supported for horvitz_thompson")
-}
+vcov.horvitz_thompson <- vcov.difference_in_means
 
 
 # Helper function for extracting vcov when it is just an element in the object list

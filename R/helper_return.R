@@ -79,5 +79,10 @@ dim_like_return <- function(return_list, alpha, formula, conditions) {
   return_list[["condition2"]] <- conditions[[2]]
   return_list[["condition1"]] <- conditions[[1]]
 
+  return_list[["vcov"]] <- matrix(
+    data = return_list[["std.error"]] ^ 2,
+    dimnames = list(return_list[["term"]], return_list[["term"]])
+  )
+
   return(return_list)
 }
