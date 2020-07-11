@@ -44,6 +44,6 @@ name of the outcome variable
 Tidy an estimatr object
 }
 \seealso{
-\code{\link[generics:tidy]{generics::tidy()}}, \code{\link[estimatr:lm_robust]{estimatr::lm_robust()}}, \code{\link[estimatr:iv_robust]{estimatr::iv_robust()}},  \code{\link[estimatr:difference_in_means]{estimatr::difference_in_means()}}, \code{\link[estimatr:horvitz_thompson]{estimatr::horvitz_thompson()}}
+\code{\link[generics:tidy]{generics::tidy()}}, \code{\link[=lm_robust]{lm_robust()}}, \code{\link[=iv_robust]{iv_robust()}},  \code{\link[=difference_in_means]{difference_in_means()}}, \code{\link[=horvitz_thompson]{horvitz_thompson()}}
 }
 \concept{estimatr tidiers}
