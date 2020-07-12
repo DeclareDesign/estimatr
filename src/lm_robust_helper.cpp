@@ -73,7 +73,7 @@ Eigen::ArrayXXd demeanMat2(const Eigen::MatrixXd& what,
       delta = std::sqrt(delta);
       neweps = sqrt(1.0 + neweps) * eps *  0.01;
 
-    } while ((delta >= neweps));
+    } while (delta >= neweps);
 
   }
 
