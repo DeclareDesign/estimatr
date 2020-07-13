@@ -17,8 +17,10 @@ Eigen::ArrayXXd demeanMat2(const Eigen::MatrixXd& what,
 
   Eigen::ArrayXXd out(n,p);
   Eigen::ArrayXd oldcol(n);
+  double norm2 = 0.0;
+  double neweps = 0.0;
 
-  out =  what.block(0, start_col, n , p);
+  out =  what.block(0, start_col, n, p);
 
   int nlevels = max(fes) + 1; // add one because factor codes are 1:N
   Eigen::ArrayXd group_sums(nlevels);
@@ -32,11 +34,15 @@ Eigen::ArrayXXd demeanMat2(const Eigen::MatrixXd& what,
     }
   }
 
-
-
   for (int k=0; k<p; k++) {
 
-    double delta = 9999;
+    // Adjust eps to allow for numerically large covariates to converge
+    for (int i=0; i<n; i++) {
+      norm2 += out(i, k) * out(i, k);
+    }
+    neweps = 0.01 * eps * norm2;
+
+    double delta = 0.0;
 
     do {
       oldcol = out.col(k);
@@ -58,20 +64,16 @@ Eigen::ArrayXXd demeanMat2(const Eigen::MatrixXd& what,
 
       }
 
-      delta = std::sqrt((oldcol - out.col(k)).pow(2).sum());
+      delta = 0.0;
+      neweps = 0.0;
+      for (int i=0; i<n; i++) {
+        delta += (oldcol(i, k) - out(i, k)) * (oldcol(i, k) - out(i, k));
+        neweps += out(i, k) * out(i, k);
+      }
+      delta = std::sqrt(delta);
+      neweps = sqrt(1.0 + neweps) * eps *  0.01;
 
-
-      // Rcout << delta << std::endl;
-      // Rcout << "**********************************" << std::endl;
-      // Rcout << group_sums << std::endl;
-      // Rcout << "**********************************" << std::endl;
-      // Rcout << "old" << oldcol << std::endl;
-      // Rcout << "**********************************" << std::endl;
-      // Rcout << "outk" << out.col(k) << std::endl;
-      // Rcout << "**********************************" << std::endl;
-      // return out;
-
-    } while (delta >= eps);
+    } while (delta >= neweps);
 
   }
 

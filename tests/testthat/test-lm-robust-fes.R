@@ -385,6 +385,9 @@ test_that("FEs handle collinear FEs", {
 
 test_that("FEs work with collinear covariates", {
   ## Classical
+
+  sum(dat$X^2) * 1e-4 * 1e-8
+  sum(dat$Xdup^2)
   for (se_type in se_types) {
     ro <- tidy(lm_robust(Y ~ Z + X + Xdup + factor(B) + factor(B2), data = dat, se_type = se_type))
     rfo <- tidy(lm_robust(Y ~ Z + X + Xdup, fixed_effects = ~ B + B2, data = dat, se_type = se_type))
@@ -672,6 +675,23 @@ test_that("FEs handle collinear covariates", {
       tidy(lmfo)[grepl("cyl", lmfo$term), ]
     )
   }
+
+})
+
+test_that("FEs handle large numbers", {
+  df <- data.frame(
+    i = rep(1:100,100),
+    x = rnorm(10000) * 1000000 + 10000000,
+    y = rnorm(10000)
+  )
+
+  fefit <- tidy(lm_robust(y ~ x, data = df, fixed_effects = ~i, se_type = "HC1"))
+  lmfit <- tidy(lm_robust(y ~ x - 1 + factor(i), data = df, se_type = "HC1"))
+
+  expect_equal(
+    fefit[fefit$term == "x", ],
+    lmfit[lmfit$term == "x", ],
+  )
 
 })
 
