@@ -1024,3 +1024,21 @@ test_that("tidy conf_level", {
     )
 
 })
+
+
+test_that("update works", {
+  l1 <- lm_robust(mpg ~ hp, mtcars)
+  l2 <- lm_robust(mpg ~ cyl, mtcars)
+  expect_equal(
+    tidy(l2),
+    tidy(update(l1, . ~ cyl))
+  )
+
+  iv1 <- iv_robust(mpg ~ hp | am, mtcars)
+  iv2 <- iv_robust(mpg ~ cyl | am, mtcars)
+  expect_equal(
+    tidy(iv2),
+    tidy(update(iv1, . ~ cyl | .))
+  )
+
+})
