@@ -135,6 +135,9 @@ test_that("lm robust se", {
 })
 
 test_that("lm robust F-tests are correct", {
+  skip_if_not_installed("car")
+  skip_if_not_installed("clubSandwich")
+
 
   co <- lm_robust(mpg ~ hp + am, data = mtcars, se_type = "classical")
   caro <- car::linearHypothesis(co, c("hp = 0", "am = 0"), test = "F")
