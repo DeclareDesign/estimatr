@@ -243,7 +243,7 @@ iv_robust <- function(formula,
   return_list <- lm_return(
     second_stage,
     model_data = model_data,
-    formula = formula
+    formula = model_data$formula
   )
 
   se_type <- return_list[["se_type"]]
@@ -312,6 +312,7 @@ iv_robust <- function(formula,
   return_list[["call"]] <- match.call()
 
   return_list[["terms_regressors"]] <- model_data[["terms_regressors"]]
+  return_list[["formula"]] <- formula(formula)
   class(return_list) <- "iv_robust"
 
   return(return_list)
