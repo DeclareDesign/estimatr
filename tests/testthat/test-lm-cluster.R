@@ -178,6 +178,8 @@ test_that("lm cluster se", {
 })
 
 test_that("Clustered SEs match clubSandwich", {
+  skip_if_not_installed("clubSandwich")
+
   lm_o <- lm(mpg ~ hp, data = mtcars)
   lm_ow <- lm(mpg ~ hp, data = mtcars, weights = wt)
 
@@ -206,6 +208,8 @@ test_that("Clustered SEs match clubSandwich", {
 })
 
 test_that("multiple outcomes", {
+  skip_if_not_installed("clubSandwich")
+
 
   for (se_type in cr_se_types) {
     lmo <- lm(cbind(mpg, hp) ~ wt, data = mtcars)
