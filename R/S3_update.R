@@ -1,4 +1,5 @@
 #' @importFrom Formula Formula
+#' @importFrom stats getCall
 #' @export
 update.iv_robust <- function(object, formula., ..., evaluate = TRUE) {
   if (is.null(call <- getCall(object)))
