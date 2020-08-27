@@ -228,6 +228,7 @@ test_that("iv_robust matches AER + ivpack", {
 test_that("iv_robust matches AER + clubSandwich", {
   skip_if_not_installed("AER")
   skip_if_not_installed("clubSandwich")
+  skip_on_cran()
 
   # ClubSandwich IV tests
   for (se_type in cr_se_types) {
