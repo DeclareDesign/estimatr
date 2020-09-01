@@ -137,7 +137,6 @@ test_that("lm robust se", {
 test_that("lm robust F-tests are correct", {
   skip_if_not_installed("car")
   skip_if_not_installed("clubSandwich")
-  skip_on_cran()
 
   co <- lm_robust(mpg ~ hp + am, data = mtcars, se_type = "classical")
   caro <- car::linearHypothesis(co, c("hp = 0", "am = 0"), test = "F")
@@ -197,24 +196,24 @@ test_that("lm robust F-tests are correct", {
     lmcr <- lm_robust(mpg ~ hp + am, data = mtcars, clusters = carb, se_type = se_type)
     caro <- clubSandwich::Wald_test(lm(mpg ~ hp + am, data = mtcars),
                                     cluster = mtcars$carb,
-                                    c(FALSE, TRUE, TRUE),
+                                    constraints = clubSandwich::constrain_zero(2:3),
                                     vcov = ifelse(se_type == "stata", "CR1S", se_type),
                                     test = "Naive-F")
 
     lmcrw <- lm_robust(mpg ~ hp + am, data = mtcars, clusters = carb, weights = wt, se_type = se_type)
     carow <- clubSandwich::Wald_test(lm(mpg ~ hp + am, weights = wt, data = mtcars),
                                     cluster = mtcars$carb,
-                                    c(FALSE, TRUE, TRUE),
+                                    constraints = clubSandwich::constrain_zero(2:3),
                                     vcov = ifelse(se_type == "stata", "CR1S", se_type),
                                     test = "Naive-F")
 
     expect_equivalent(
       lmcr$fstatistic[c(1, 3)],
-      c(caro$Fstat, caro$df)
+      c(caro$Fstat, caro$df_denom)
     )
     expect_equivalent(
       lmcrw$fstatistic[c(1, 3)],
-      c(carow$Fstat, carow$df)
+      c(carow$Fstat, carow$df_denom)
     )
   }
 
