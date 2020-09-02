@@ -10,6 +10,7 @@ appveyor.yml
 CONDUCT.md
 ^vignettes$
 ^docs$
+^.github$
 ^docs/templates/.*$
 deploy.sh
 _pkgdown.yml
