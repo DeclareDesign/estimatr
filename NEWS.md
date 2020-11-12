@@ -1,3 +1,7 @@
+# estimatr 0.26.0
+
+* Test suite changes
+
 # estimatr 0.24.0
 
 * tidy: rename nobs, nclusters, nblocks
