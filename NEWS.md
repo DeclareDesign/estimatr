@@ -1,3 +1,7 @@
+# estimatr 0.28.0
+
+* Test suite changes
+
 # estimatr 0.26.0
 
 * Test suite changes
