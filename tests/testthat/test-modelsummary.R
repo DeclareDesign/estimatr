@@ -3,8 +3,7 @@
 context("S3 - modelsummary works")
 
 test_that("modelsummary works with glance", {
-
-  library(modelsummary)
+  skip_if_not_installed("modelsummary")
 
   model1 <- lm_robust(mpg ~ am, mtcars)
   model2 <- lm_robust(mpg ~ am, mtcars, clusters = cyl)
@@ -24,8 +23,8 @@ test_that("modelsummary works with glance", {
   model2 <- iv_robust(mpg ~ am | gear, mtcars, clusters = cyl, diagnostics = TRUE)
 
   mso <- modelsummary::modelsummary(list(model1, model2),
-                               gof_omit = c("N|[sS]tatistic|p.value|p{1}"),
-                               output = "data.frame")
+                                    gof_omit = c("N|[sS]tatistic|p.value|p{1}"),
+                                    output = "data.frame")
 
   expect_equal(nrow(mso), 6)
 
