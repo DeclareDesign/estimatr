@@ -14,7 +14,7 @@ Description: Fast procedures for small set of commonly-used, design-appropriate 
 URL: https://declaredesign.org/r/estimatr/, https://github.com/DeclareDesign/estimatr
 BugReports: https://github.com/DeclareDesign/estimatr/issues
 License: MIT + file LICENSE
-Depends: R (>= 3.6.0)
+Depends: R (>= 3.5.0)
 Imports:
     Formula,
     generics,
