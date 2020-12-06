@@ -3,9 +3,7 @@ template:
 
 navbar:
   left:
-  - text: "Ask for Help"
-    href: http://discuss.declaredesign.org
-  - text: "Packages"
+  - text: "Software"
     menu:
       - text: DeclareDesign
         href: http://declaredesign.org/r/declaredesign/
@@ -13,10 +11,10 @@ navbar:
         href: https://declaredesign.org/r/randomizr/
       - text: fabricatr
         href: https://declaredesign.org/r/fabricatr/
-      - text: estimatr
-        href: https://declaredesign.org/r/estimatr/
       - text: DesignLibrary
         href: https://declaredesign.org/r/designlibrary/
+  - text: "Help"
+    href: http://discuss.declaredesign.org
   right:
   - text: estimatr home
     href: https://declaredesign.org/r/estimatr/
