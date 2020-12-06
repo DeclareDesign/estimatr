@@ -16,22 +16,22 @@ navbar:
   - text: "Help"
     href: http://discuss.declaredesign.org
   right:
-  - text: estimatr home
-    href: https://declaredesign.org/r/estimatr/
+  - text: Get started
+    href: articles/getting-started.html
   - text: Reference
     href: reference/index.html
   - text: Articles
     menu:
+     - text: Getting started using estimatr
+       href: articles/getting-started.html
      - text: Absorbing Fixed Effects with estimatr
        href: articles/absorbing-fixed-effects.html
+     - text: estimatr in the Tidyverse
+       href: articles/estimatr-in-the-tidyverse.html
      - text: Benchmarking estimatr
        href: articles/benchmarking-estimatr.html
      - text: Examples with emmeans
        href: articles/emmeans-examples.html
-     - text: estimatr in the Tidyverse
-       href: articles/estimatr-in-the-tidyverse.html
-     - text: Getting started using estimatr
-       href: articles/getting-started.html
      - text: Mathematical notes for estimatr
        href: articles/mathematical-notes.html
      - text: Regression Tables with estimatr
@@ -42,3 +42,5 @@ navbar:
        href: articles/simulations-ols-variance.html
      - text: How Stata's hat matrix differs with weights
        href: articles/stata-wls-hat.html
+  - text: estimatr home
+    href: https://declaredesign.org/r/estimatr/
