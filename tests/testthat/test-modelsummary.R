@@ -12,7 +12,7 @@ test_that("modelsummary works with glance", {
 
   mso <- modelsummary::modelsummary(list(model1, model2, model3), output = "data.frame")
 
-  expect_equal(colnames(mso), c("group", "term", "statistic",
+  expect_equal(colnames(mso), c("part", "term", "statistic",
                                 "Model 1", "Model 2", "Model 3"))
 
   expect_equal(nrow(mso), 12L)
@@ -34,7 +34,7 @@ test_that("modelsummary works with glance", {
   # difference_in_means
   model1 <- difference_in_means(mpg ~ am, mtcars)
   model2 <- difference_in_means(mpg ~ am, mtcars, blocks = vs)
-  mso <- modelsummary:::extract_models(list(model1, model2))
+  mso <- modelsummary:::modelsummary(list(model1, model2))
 
 
   # horvitz_thompson
