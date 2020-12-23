@@ -26,3 +26,4 @@ update_repo.R
 ^cran-comments\.md$
 ^tests/testthat/test-zzz\.R$
 ^CRAN-RELEASE$
+^pkgdown$
