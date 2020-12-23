@@ -33,7 +33,6 @@ Suggests:
     emmeans (>= 1.4),
     estimability,
     ivpack,
-    lfe,
     margins,
     modelsummary,
     prediction,

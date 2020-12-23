@@ -105,6 +105,8 @@ test_that("FE matches with multiple FEs and covars", {
 })
 
 test_that("IV FE matches lfe including proj r2", {
+  skip_if_not_installed("lfe")
+  skip_on_cran()
   ## unweighted
 
   ## Classical
