@@ -27,3 +27,4 @@ update_repo.R
 ^tests/testthat/test-zzz\.R$
 ^CRAN-RELEASE$
 ^pkgdown$
+^\.github$
