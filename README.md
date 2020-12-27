@@ -4,14 +4,13 @@ estimatr: Fast Estimators for Design-Based Inference
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 [![CRAN
-Status](https://r-pkg.org/badges/version/estimatr)](https://cran.r-project.org/package=estimatr)
-[![Travis-CI Build
-Status](https://travis-ci.com/DeclareDesign/estimatr.svg?branch=master)](https://travis-ci.com/DeclareDesign/estimatr)
-[![AppVeyor Build
-Status](https://ci.appveyor.com/api/projects/status/github/DeclareDesign/estimatr?branch=master&svg=true)](https://ci.appveyor.com/project/DeclareDesign/estimatr)
-[![Coverage
-Status](https://coveralls.io/repos/github/DeclareDesign/estimatr/badge.svg?branch=master)](https://coveralls.io/github/DeclareDesign/estimatr?branch=master)
-![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/estimatr)
+status](https://www.r-pkg.org/badges/version/fabricatr)](https://cran.r-project.org/package=fabricatr)
+[![CRAN RStudio mirror
+downloads](https://cranlogs.r-pkg.org/badges/grand-total/fabricatr?color=green)](https://r-pkg.org/pkg/fabricatr)
+[![Build
+status](https://github.com/DeclareDesign/fabricatr/workflows/R-CMD-check/badge.svg)](https://github.com/DeclareDesign/fabricatr/actions)
+[![Code
+coverage](https://codecov.io/gh/DeclareDesign/fabricatr/branch/master/graph/badge.svg?token=x9MpkuKobc)](https://codecov.io/gh/DeclareDesign/fabricatr)
 
 **estimatr** is an `R` package providing a range of commonly-used linear
 estimators, designed for speed and for ease-of-use. Users can easily
@@ -135,8 +134,8 @@ mb <- microbenchmark(
 
 | estimatr      | median run-time (ms) |
 |:--------------|---------------------:|
-| estimatr      |                   19 |
-| lm + sandwich |                   40 |
+| estimatr      |                   22 |
+| lm + sandwich |                   42 |
 
 ------------------------------------------------------------------------
 
