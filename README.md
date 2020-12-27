@@ -4,13 +4,13 @@ estimatr: Fast Estimators for Design-Based Inference
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 [![CRAN
-status](https://www.r-pkg.org/badges/version/fabricatr)](https://cran.r-project.org/package=fabricatr)
+status](https://www.r-pkg.org/badges/version/estimatr)](https://cran.r-project.org/package=estimatr)
 [![CRAN RStudio mirror
-downloads](https://cranlogs.r-pkg.org/badges/grand-total/fabricatr?color=green)](https://r-pkg.org/pkg/fabricatr)
+downloads](https://cranlogs.r-pkg.org/badges/grand-total/estimatr?color=green)](https://r-pkg.org/pkg/estimatr)
 [![Build
-status](https://github.com/DeclareDesign/fabricatr/workflows/R-CMD-check/badge.svg)](https://github.com/DeclareDesign/fabricatr/actions)
+status](https://github.com/DeclareDesign/estimatr/workflows/R-CMD-check/badge.svg)](https://github.com/DeclareDesign/estimatr/actions)
 [![Code
-coverage](https://codecov.io/gh/DeclareDesign/fabricatr/branch/master/graph/badge.svg?token=x9MpkuKobc)](https://codecov.io/gh/DeclareDesign/fabricatr)
+coverage](https://codecov.io/gh/DeclareDesign/estimatr/branch/master/graph/badge.svg?token=x9MpkuKobc)](https://codecov.io/gh/DeclareDesign/estimatr)
 
 **estimatr** is an `R` package providing a range of commonly-used linear
 estimators, designed for speed and for ease-of-use. Users can easily
@@ -134,8 +134,8 @@ mb <- microbenchmark(
 
 | estimatr      | median run-time (ms) |
 |:--------------|---------------------:|
-| estimatr      |                   22 |
-| lm + sandwich |                   42 |
+| estimatr      |                   21 |
+| lm + sandwich |                   41 |
 
 ------------------------------------------------------------------------
 
