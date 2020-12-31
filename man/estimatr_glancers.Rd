@@ -40,34 +40,34 @@ and \eqn{e[i]} is the ith residual.}
 For \code{glance.lh_robust}, we glance the \code{lm_robust} component only. You can access the linear hypotheses as a data.frame directy from the \code{lh} component of the \code{lh_robust} object
 
 For \code{glance.iv_robust}, a data.frame with columns:
-\item{r.squared}{The \eqn{R^2} of the second stage regression}
-\item{adj.r.squared}{The \eqn{R^2} but penalized for having more parameters, \code{rank}}
-\item{df.residual}{residual degrees of freedom}
-\item{N}{the number of observations used}
-\item{se_type}{the standard error type specified by the user}
-\item{statistic}{the value of the F-statistic}
-\item{p.value}{p-value from the F test}
-\item{statistic.weakinst}{the value of the first stage F-statistic, useful for the weak instruments test; only reported if there is only one endogenous variable}
-\item{p.value.weakinst}{p-value from the first-stage F test, a test of weak instruments; only reported if there is only one endogenous variable}
-\item{statistic.endogeneity}{the value of the F-statistic for the test of endogeneity; often called the Wu-Hausman statistic, with robust standard errors, we employ the regression based test}
-\item{p.value.endogeneity}{p-value from the F-test for endogeneity}
-\item{statistic.overid}{the value of the chi-squared statistic for the test of instrument correlation with the error term; only reported with overidentification}
-\item{p.value.overid}{p-value from the chi-squared test; only reported with overidentification}
+  \item{r.squared}{The \eqn{R^2} of the second stage regression}
+  \item{adj.r.squared}{The \eqn{R^2} but penalized for having more parameters, \code{rank}}
+  \item{df.residual}{residual degrees of freedom}
+  \item{N}{the number of observations used}
+  \item{se_type}{the standard error type specified by the user}
+  \item{statistic}{the value of the F-statistic}
+  \item{p.value}{p-value from the F test}
+  \item{statistic.weakinst}{the value of the first stage F-statistic, useful for the weak instruments test; only reported if there is only one endogenous variable}
+  \item{p.value.weakinst}{p-value from the first-stage F test, a test of weak instruments; only reported if there is only one endogenous variable}
+  \item{statistic.endogeneity}{the value of the F-statistic for the test of endogeneity; often called the Wu-Hausman statistic, with robust standard errors, we employ the regression based test}
+  \item{p.value.endogeneity}{p-value from the F-test for endogeneity}
+  \item{statistic.overid}{the value of the chi-squared statistic for the test of instrument correlation with the error term; only reported with overidentification}
+  \item{p.value.overid}{p-value from the chi-squared test; only reported with overidentification}
 
 For \code{glance.difference_in_means}, a data.frame with columns:
-\item{design}{the design used, and therefore the estimator used}
-\item{df}{the degrees of freedom}
-\item{nobs}{the number of observations used}
-\item{nblocks}{the number of blocks, if used}
-\item{nclusters}{the number of clusters, if used}
-\item{condition2}{the second, "treatment", condition}
-\item{condition1}{the first, "control", condition}
+  \item{design}{the design used, and therefore the estimator used}
+  \item{df}{the degrees of freedom}
+  \item{nobs}{the number of observations used}
+  \item{nblocks}{the number of blocks, if used}
+  \item{nclusters}{the number of clusters, if used}
+  \item{condition2}{the second, "treatment", condition}
+  \item{condition1}{the first, "control", condition}
 
 For \code{glance.horvitz_thompson}, a data.frame with columns:
-\item{nobs}{the number of observations used}
-\item{se_type}{the type of standard error estimator used}
-\item{condition2}{the second, "treatment", condition}
-\item{condition1}{the first, "control", condition}
+  \item{nobs}{the number of observations used}
+  \item{se_type}{the type of standard error estimator used}
+  \item{condition2}{the second, "treatment", condition}
+  \item{condition1}{the first, "control", condition}
 }
 \description{
 Glance at an estimatr object

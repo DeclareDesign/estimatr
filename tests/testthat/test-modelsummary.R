@@ -34,7 +34,7 @@ test_that("modelsummary works with glance", {
   # difference_in_means
   model1 <- difference_in_means(mpg ~ am, mtcars)
   model2 <- difference_in_means(mpg ~ am, mtcars, blocks = vs)
-  mso <- modelsummary(list(model1, model2))
+  mso <- modelsummary(list(model1, model2), output = "data.frame")
 
 
   # horvitz_thompson
