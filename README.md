@@ -4,14 +4,13 @@ estimatr: Fast Estimators for Design-Based Inference
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 [![CRAN
-Status](https://r-pkg.org/badges/version/estimatr)](https://cran.r-project.org/package=estimatr)
-[![Travis-CI Build
-Status](https://travis-ci.com/DeclareDesign/estimatr.svg?branch=master)](https://travis-ci.com/DeclareDesign/estimatr)
-[![AppVeyor Build
-Status](https://ci.appveyor.com/api/projects/status/github/DeclareDesign/estimatr?branch=master&svg=true)](https://ci.appveyor.com/project/DeclareDesign/estimatr)
-[![Coverage
-Status](https://coveralls.io/repos/github/DeclareDesign/estimatr/badge.svg?branch=master)](https://coveralls.io/github/DeclareDesign/estimatr?branch=master)
-![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/estimatr)
+status](https://www.r-pkg.org/badges/version/estimatr)](https://cran.r-project.org/package=estimatr)
+[![CRAN RStudio mirror
+downloads](https://cranlogs.r-pkg.org/badges/grand-total/estimatr?color=green)](https://r-pkg.org/pkg/estimatr)
+[![Build
+status](https://github.com/DeclareDesign/estimatr/workflows/R-CMD-check/badge.svg)](https://github.com/DeclareDesign/estimatr/actions)
+[![Code
+coverage](https://codecov.io/gh/DeclareDesign/estimatr/branch/master/graph/badge.svg?token=x9MpkuKobc)](https://codecov.io/gh/DeclareDesign/estimatr)
 
 **estimatr** is an `R` package providing a range of commonly-used linear
 estimators, designed for speed and for ease-of-use. Users can easily
@@ -73,8 +72,8 @@ res_rob <- lm_robust(y ~ z, data = dat)
 # tidy dataframes on command!
 tidy(res_rob)
 #>          term estimate std.error statistic p.value conf.low conf.high df
-#> 1 (Intercept)     0.27      0.16       1.7   0.089   -0.041     0.580 98
-#> 2           z    -0.42      0.21      -2.0   0.044   -0.833    -0.012 98
+#> 1 (Intercept)    0.065      0.14      0.46    0.64    -0.21      0.34 98
+#> 2           z   -0.067      0.21     -0.32    0.75    -0.48      0.35 98
 #>   outcome
 #> 1       y
 #> 2       y
@@ -91,20 +90,20 @@ summary(res_cl)
 #> 
 #> Coefficients:
 #>             Estimate Std. Error t value Pr(>|t|) CI Lower CI Upper   DF
-#> (Intercept)    0.269      0.164    1.64     0.20   -0.255    0.793 2.99
-#> z             -0.422      0.250   -1.69     0.14   -1.027    0.182 6.30
+#> (Intercept)   0.0653      0.145   0.452    0.678   -0.358    0.489 3.53
+#> z            -0.0670      0.202  -0.331    0.750   -0.544    0.410 7.05
 #> 
-#> Multiple R-squared:  0.041 , Adjusted R-squared:  0.0312 
-#> F-statistic: 2.86 on 1 and 9 DF,  p-value: 0.125
+#> Multiple R-squared:  0.00105 ,   Adjusted R-squared:  -0.00915 
+#> F-statistic: 0.11 on 1 and 9 DF,  p-value: 0.748
 
 # matched-pair design learned from blocks argument
 data(sleep)
 res_dim <- difference_in_means(extra ~ group, data = sleep, blocks = ID)
 ```
 
-The [Getting Started Guide](https://declaredesign.org/r/estimatr/articles/getting-started.html)
+The [Getting Started Guide](/r/estimatr/articles/getting-started.html)
 has more examples and uses, as do the reference pages. The [Mathematical
-Notes](https://declaredesign.org/r/estimatr/articles/mathematical-notes.html) provide more
+Notes](/r/estimatr/articles/mathematical-notes.html) provide more
 information about what each estimator is doing under the hood.
 
 ## Fast to use
@@ -134,11 +133,11 @@ mb <- microbenchmark(
 ```
 
 | estimatr      | median run-time (ms) |
-| :------------ | -------------------: |
-| estimatr      |                   22 |
-| lm + sandwich |                   43 |
+|:--------------|---------------------:|
+| estimatr      |                   21 |
+| lm + sandwich |                   41 |
 
------
+------------------------------------------------------------------------
 
 This project is generously supported by a grant from the [Laura and John
 Arnold Foundation](http://www.arnoldfoundation.org) and seed funding
