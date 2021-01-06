@@ -242,13 +242,13 @@ Abadie, Alberto, Susan Athey, Guido W Imbens, and Jeffrey Wooldridge. 2017. "A C
 
 Bell, Robert M, and Daniel F McCaffrey. 2002. "Bias Reduction in Standard Errors for Linear Regression with Multi-Stage Samples." Survey Methodology 28 (2): 169-82.
 
-Gaure, Simon. 2013. "OLS with multiple high dimensional category variables." Computational Statistics \& Data Analysis 66: 8-1. \url{https://doi.org/10.1016/j.csda.2013.03.024}
+Gaure, Simon. 2013. "OLS with multiple high dimensional category variables." Computational Statistics \& Data Analysis 66: 8-1. \doi{10.1016/j.csda.2013.03.024}
 
 Halperin, I. 1962. "The product of projection operators." Acta Scientiarum Mathematicarum (Szeged) 23(1-2): 96-99.
 
-MacKinnon, James, and Halbert White. 1985. "Some Heteroskedasticity-Consistent Covariance Matrix Estimators with Improved Finite Sample Properties." Journal of Econometrics 29 (3): 305-25. \url{https://doi.org/10.1016/0304-4076(85)90158-7}.
+MacKinnon, James, and Halbert White. 1985. "Some Heteroskedasticity-Consistent Covariance Matrix Estimators with Improved Finite Sample Properties." Journal of Econometrics 29 (3): 305-25. \doi{10.1016/0304-4076(85)90158-7}.
 
-Pustejovsky, James E, and Elizabeth Tipton. 2016. "Small Sample Methods for Cluster-Robust Variance Estimation and Hypothesis Testing in Fixed Effects Models." Journal of Business & Economic Statistics. Taylor & Francis. \url{https://doi.org/10.1080/07350015.2016.1247004}.
+Pustejovsky, James E, and Elizabeth Tipton. 2016. "Small Sample Methods for Cluster-Robust Variance Estimation and Hypothesis Testing in Fixed Effects Models." Journal of Business & Economic Statistics. Taylor & Francis. \doi{10.1080/07350015.2016.1247004}.
 
-Samii, Cyrus, and Peter M Aronow. 2012. "On Equivalencies Between Design-Based and Regression-Based Variance Estimators for Randomized Experiments." Statistics and Probability Letters 82 (2). \url{https://doi.org/10.1016/j.spl.2011.10.024}.
+Samii, Cyrus, and Peter M Aronow. 2012. "On Equivalencies Between Design-Based and Regression-Based Variance Estimators for Randomized Experiments." Statistics and Probability Letters 82 (2). \doi{10.1016/j.spl.2011.10.024}.
 }

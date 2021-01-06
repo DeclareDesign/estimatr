@@ -1,6 +1,6 @@
 ## Submission
 
-Thank you for accepting this patch, which skips tests for suggests packages if they are not installed per email from Prof. Ripley. This fixes all ERRORs on CRAN now.
+Thank you for accepting this patch, which skips tests for suggests packages if they are not installed per email from Prof. Ripley. This fixes all ERRORs on CRAN now. This also addresses the DOI problems raised in the submission.
 
 There are no changes to worse in reverse depends. 
 
