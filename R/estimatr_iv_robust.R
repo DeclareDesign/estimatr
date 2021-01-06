@@ -118,7 +118,7 @@
 #'
 #' @references
 #'
-#' Gaure, Simon. 2013. "OLS with multiple high dimensional category variables." Computational Statistics & Data Analysis 66: 8-1. \url{https://doi.org/10.1016/j.csda.2013.03.024}
+#' Gaure, Simon. 2013. "OLS with multiple high dimensional category variables." Computational Statistics & Data Analysis 66: 8-1. \doi{10.1016/j.csda.2013.03.024}
 #'
 #' Halperin, I. 1962. "The product of projection operators." Acta Scientiarum Mathematicarum (Szeged) 23(1-2): 96-99.
 #'
