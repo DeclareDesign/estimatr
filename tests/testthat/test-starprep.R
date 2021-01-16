@@ -2,6 +2,8 @@ context("Helper - commarobust + starprep")
 
 test_that("starprep works", {
 
+  skip_if_not_installed("stargazer")
+
   fit_1 <- lm(mpg ~ hp, data = mtcars)
   fit_2 <- lm(mpg ~ hp, data = mtcars)
 

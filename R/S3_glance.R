@@ -67,20 +67,17 @@ glance.lm_robust <- function(x, ...) {
   ret
 }
 
-#' @name estimatr_glancers
-#' @templateVar class difference_in_means
+#' @rdname estimatr_glancers
+#' @templateVar class lh_robust
 #' @return For \code{glance.lh_robust}, we glance the \code{lm_robust} component only. You can access the linear hypotheses as a data.frame directy from the \code{lh} component of the \code{lh_robust} object
-#'
-#' @inheritParams glance.lm_robust
 #'
 #' @export
 #' @family estimatr glancers
-#' @md
 glance.lh_robust <- function(x, ...) {
   glance(x[["lm_robust"]])
 }
 
-#' @name estimatr_glancers
+#' @rdname estimatr_glancers
 #' @templateVar class iv_robust
 #' @return For \code{glance.iv_robust}, a data.frame with columns:
 #'   \item{r.squared}{The \eqn{R^2} of the second stage regression}
@@ -97,11 +94,8 @@ glance.lh_robust <- function(x, ...) {
 #'   \item{statistic.overid}{the value of the chi-squared statistic for the test of instrument correlation with the error term; only reported with overidentification}
 #'   \item{p.value.overid}{p-value from the chi-squared test; only reported with overidentification}
 #'
-#' @inheritParams glance.lm_robust
-#'
 #' @export
 #' @family estimatr glancers
-#' @md
 glance.iv_robust <- function(x, ...) {
 
   if (length(x[["outcome"]]) > 1) {
@@ -147,7 +141,7 @@ glance.iv_robust <- function(x, ...) {
   ret
 }
 
-#' @name estimatr_glancers
+#' @rdname estimatr_glancers
 #' @templateVar class difference_in_means
 #' @return For \code{glance.difference_in_means}, a data.frame with columns:
 #'   \item{design}{the design used, and therefore the estimator used}
@@ -158,11 +152,8 @@ glance.iv_robust <- function(x, ...) {
 #'   \item{condition2}{the second, "treatment", condition}
 #'   \item{condition1}{the first, "control", condition}
 #'
-#' @inheritParams glance.lm_robust
-#'
 #' @export
 #' @family estimatr glancers
-#' @md
 glance.difference_in_means <- function(x, ...) {
   data.frame(
     design = x[["design"]],
@@ -176,7 +167,7 @@ glance.difference_in_means <- function(x, ...) {
   )
 }
 
-#' @name estimatr_glancers
+#' @rdname estimatr_glancers
 #' @templateVar class horvitz_thompson
 #' @return For \code{glance.horvitz_thompson}, a data.frame with columns:
 #'   \item{nobs}{the number of observations used}
@@ -184,11 +175,8 @@ glance.difference_in_means <- function(x, ...) {
 #'   \item{condition2}{the second, "treatment", condition}
 #'   \item{condition1}{the first, "control", condition}
 #'
-#' @inheritParams glance.lm_robust
-#'
 #' @export
 #' @family estimatr glancers
-#' @md
 glance.horvitz_thompson <- function(x, ...) {
   data.frame(
     nobs = as.integer(x[["nobs"]]),

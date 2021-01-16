@@ -1,11 +1,13 @@
 context("S3 - emmeans")
 
-library(emmeans)
+
 
 test_that("emmeans can work with lm_robust objects", {
+  skip_if_not_installed("emmeans")
+  library(emmeans)
   lmr <- lm_robust(mpg ~ factor(cyl) * hp + wt, data = mtcars)
 
-  rg <- ref_grid(lmr)
+  rg <- emmeans::ref_grid(lmr)
   expect_equal(class(rg)[1], "emmGrid")
 
   grid <- rg@grid
@@ -15,12 +17,16 @@ test_that("emmeans can work with lm_robust objects", {
 })
 
 test_that("lm_robust multivariate model works with emmeans", {
+  skip_if_not_installed("emmeans")
+  library(emmeans)
   lmr <- lm_robust(yield ~ Block + Variety, data = emmeans::MOats)
   emm <- emmeans(lmr, "rep.meas")
   expect_equal(summary(emm)$emmean[4], 123.4, tolerance = 0.1)
 })
 
 test_that("lm_robust model with rank deficiency works with emmeans", {
+  skip_if_not_installed("emmeans")
+  library(emmeans)
   lmr <- lm_robust(log(breaks) ~ wool * tension, data = warpbreaks, subset = -(19:30))
   pred <- predict(ref_grid(lmr))
   expect_true(is.na(pred[5]))

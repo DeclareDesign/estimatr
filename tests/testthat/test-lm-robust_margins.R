@@ -1,10 +1,11 @@
 context("Helper - lm_robust margins")
 
-library(margins)
+
 
 mv <- c("AME", "SE", "z", "p")
 
 test_that("lm robust can work with margins", {
+  skip_if_not_installed("margins")
   x <- lm(mpg ~ cyl * hp + wt, data = mtcars)
   lmr <- lm_robust(mpg ~ cyl * hp + wt, data = mtcars)
 
@@ -48,9 +49,10 @@ test_that("lm robust can work with margins", {
 })
 
 test_that("lm robust + weights can work with margins", {
+  skip_if_not_installed("margins")
   x <- lm(mpg ~ cyl * hp, data = mtcars, weights = wt)
   x2 <- lm_robust(mpg ~ cyl * hp, data = mtcars, weights = wt, se_type = "classical")
-  expect_equal(marginal_effects(x), marginal_effects(x2))
+  expect_equal(margins::marginal_effects(x), margins::marginal_effects(x2))
 
 
   suppressWarnings(
@@ -65,6 +67,7 @@ test_that("lm robust + weights can work with margins", {
 })
 
 test_that("lm robust + cluster can work with margins", {
+  skip_if_not_installed("margins")
   # works but throws a lot of warnings
   x <- lm(mpg ~ cyl * hp + wt, data = mtcars)
   x2 <- lm_robust(mpg ~ cyl * hp + wt, data = mtcars, clusters = am)
@@ -92,6 +95,7 @@ test_that("lm robust + cluster can work with margins", {
 
 
 test_that("lm lin can work with margins", {
+  skip_if_not_installed("margins")
   data("alo_star_men")
   lml <- lm_lin(GPA_year1 ~ ssp, ~  gpa0, data = alo_star_men, se_type = "classical")
 

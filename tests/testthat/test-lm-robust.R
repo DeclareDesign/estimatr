@@ -269,6 +269,8 @@ test_that("lm robust mlm gets right fstats", {
 
 
 test_that("lm robust works with missingness", {
+  skip_if_not_installed("sandwich")
+
   dat <- data.frame(
     Y = rnorm(100),
     Z = rbinom(100, 1, .5),
@@ -324,6 +326,7 @@ test_that("lm_robust doesn't include aux variables when . is used", {
 
 
 test_that("lm robust works with weights", {
+  skip_if_not_installed("sandwich")
   N <- 100
   dat <- data.frame(
     Y = rnorm(N),

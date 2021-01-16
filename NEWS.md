@@ -1,3 +1,7 @@
+# estimatr 0.30.0
+
+* Test suite changes (skip if not installed for checking against other packages)
+
 # estimatr 0.28.0
 
 * Test suite changes

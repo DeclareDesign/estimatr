@@ -143,7 +143,7 @@
 #'
 #' Aronow, Peter M, and Cyrus Samii. 2017. "Estimating Average Causal Effects Under Interference Between Units." Annals of Applied Statistics, forthcoming. \url{https://arxiv.org/abs/1305.6156v3}.
 #'
-#' Middleton, Joel A, and Peter M Aronow. 2015. "Unbiased Estimation of the Average Treatment Effect in Cluster-Randomized Experiments." Statistics, Politics and Policy 6 (1-2): 39-75. \url{https://doi.org/10.1515/spp-2013-0002}.
+#' Middleton, Joel A, and Peter M Aronow. 2015. "Unbiased Estimation of the Average Treatment Effect in Cluster-Randomized Experiments." Statistics, Politics and Policy 6 (1-2): 39-75. \doi{10.1515/spp-2013-0002}.
 #'
 #' @examples
 #'

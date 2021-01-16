@@ -214,6 +214,7 @@ test_that("FEs work with multiple outcomes", {
 
 test_that("FEs work with missingness", {
 
+  skip_if_not_installed("sandwich")
   # In outcome
   datmiss <- dat
   datmiss$Y[5] <- NA
@@ -524,6 +525,8 @@ test_that("FEs give correct projected F-stats", {
 })
 
 test_that("FE matches lm_robust with one block", {
+
+  skip_if_not_installed("sandwich")
 
   # In outcome
   datmiss <- dat

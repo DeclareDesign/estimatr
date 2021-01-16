@@ -26,6 +26,8 @@ test_that("iv_robust warnings and errors are correct", {
 
 test_that("iv_robust matches AER + ivpack", {
 
+  skip_if_not_installed("AER")
+  skip_if_not_installed("ivpack")
   ivco <- iv_robust(y ~ x | z, data = dat, se_type = "classical")
   ivfit <- AER::ivreg(y ~ x | z, data = dat)
   ivo <- summary(ivfit)
