@@ -92,7 +92,7 @@ simp_pop <- declare_population(
 Now let's tell DeclareDesign that our target, our estimand, is the true variance.
 
 ```{r}
-varb_estimand <- declare_estimand(true_varb = true_varb)
+varb_estimand <- declare_inquiry(true_varb = true_varb)
 ```
 
 Our estimator for this estimand will be the classical OLS variance estimator, which we know should be unbiased:
@@ -221,7 +221,7 @@ het_designer <- function(N) {
     y = x + epsilon
   )
 
-  varb_het_estimand <- declare_estimand(true_varb_het = true_varb_het)
+  varb_het_estimand <- declare_inquiry(true_varb_het = true_varb_het)
 
   # Now we declare all three estimators
   lm1 <- declare_estimator(

@@ -49,22 +49,22 @@ simp_blocks <- declare_population(
   ),
   individual = add_level(
     N = 8,
-    epsilon = rnorm(N)
+    epsilon = rnorm(N),
+    # Block shocks influnce Y_Z_1, the treatment potential outcome
+    potential_outcomes(Y ~ Z * 0.5 * block_shock + epsilon)
   )
 )
-# Block shocks influnce Y_Z_1, the treatment potential outcome
-blocked_pos <- declare_potential_outcomes(Y ~ Z * 0.5 * block_shock + epsilon)
 # Complete random assignment of half of units in each block
-blocked_assign <- declare_assignment(blocks = blocks, prob = 0.5)
+blocked_assign <- declare_assignment(Z = block_ra(N, blocks = blocks, prob = 0.5), legacy = FALSE)
 # Estimand is the ATE
-ate <- declare_estimand(ATE = mean(Y_Z_1 - Y_Z_0))
+ate <- declare_inquiry(ATE = mean(Y_Z_1 - Y_Z_0))
 ```
 
 Now let's define our two estimators, one that doesn't account for blocking and one that does. The estimator that accounts for blocking essentially will compute treatment effects within blocks and then will take a weighted average across blocks. Details and references can be found in the [mathematical notes](/r/estimatr/articles/mathematical-notes.html#difference_in_means-notes).
 
 ```{r}
-dim <- declare_estimator(Y ~ Z, label = "DIM")
-dim_bl <- declare_estimator(Y ~ Z, blocks = blocks, label = "DIM blocked")
+dim <- declare_estimator(Y ~ Z, inquiry = "ATE", label = "DIM")
+dim_bl <- declare_estimator(Y ~ Z, blocks = blocks, inquiry = "ATE", label = "DIM blocked")
 
 # Our design
 simp_bl_des <- simp_blocks +
@@ -208,16 +208,16 @@ simp_clusts <- declare_population(
   ),
   individual = add_level(
     N = 8,
-    epsilon = rnorm(N)
+    epsilon = rnorm(N),
+    # Treatment potential outcomes correlated with cluster shock
+    potential_outcomes(Y ~ Z * 0.2 * clust_shock + epsilon)
   )
 )
-# Treatment potential outcomes correlated with cluster shock
-clustered_POs <- declare_potential_outcomes(Y ~ Z * 0.2 * clust_shock + epsilon)
 
 # Clustered assignment to treatment
-clustered_assign <- declare_assignment(clusters = clusters, prob = 0.5)
+clustered_assign <- declare_assignment(Z = cluster_ra(N, clusters = clusters, prob = 0.5), legacy = FALSE)
 
-ate <- declare_estimand(ATE = mean(Y_Z_1 - Y_Z_0))
+ate <- declare_inquiry(ATE = mean(Y_Z_1 - Y_Z_0))
 
 # Specify our two estimators
 dim <- declare_estimator(Y ~ Z, label = "DIM")
@@ -290,11 +290,11 @@ diff_size_cls <- declare_population(
   ),
   individual = add_level(
     N = indivs_per_clust,
-    epsilon = rnorm(N, sd = 3)
+    epsilon = rnorm(N, sd = 3),
+    potential_outcomes(Y ~ Z * 0.4 * clust_shock + epsilon)
   )
 )
-clustered_POs <- declare_potential_outcomes(Y ~ Z * 0.4 * clust_shock + epsilon)
-clustered_assign <- declare_assignment(clusters = clusters, prob = 0.5)
+clustered_assign <- declare_assignment(Z = cluster_ra(N, clusters = clusters, prob = 0.5), legacy = FALSE)
 
 ht_cl <- declare_estimator(
   formula = Y ~ Z,
@@ -302,10 +302,11 @@ ht_cl <- declare_estimator(
   condition_prs = condition_pr,
   simple = FALSE,
   model = estimatr::horvitz_thompson,
+  inquiry = "ATE",
   label = "Horvitz-Thompson Clustered"
 )
 
-ate <- declare_estimand(ATE = mean(Y_Z_1 - Y_Z_0))
+ate <- declare_inquiry(ATE = mean(Y_Z_1 - Y_Z_0))
 
 diff_cl_des <- diff_size_cls + 
   clustered_POs + 
