@@ -1,3 +1,7 @@
+# estimatr 0.30.1
+
+* Remove lfe from tests
+
 # estimatr 0.30.0
 
 * Test suite changes (skip if not installed for checking against other packages)

@@ -337,26 +337,6 @@ test_that("FEs handle collinear FEs", {
     }
   }
 
-  # lo <- lfe::felm(Y ~ Z + X|B + B2 + Bdup, data = dat)
-  #
-  # mtcars$cyl2 <- mtcars$cyl
-  # # Doesn't properly deal if collinearity not in first two
-  # lfe:::summary.felm(lfe::felm(mpg ~ hp | cyl + am + cyl2, data = mtcars))$coefficients
-  # library(estimatr)
-  # mtcars$cyl2 <- mtcars$cyl
-  # tidy(lm_robust(mpg ~ hp, fixed_effects = ~ cyl + cyl2 + am, data = mtcars))
-  #
-  # tidy(lm_robust(mpg ~ hp, fixed_effects = ~ cyl + am, data = mtcars))
-  # tidy(lm_robust(mpg ~ hp + factor(cyl) + factor(am), data = mtcars))[2,]
-  #
-  # tidy(lm_robust(mpg ~ hp, fixed_effects = ~ cyl + cyl2 + am, data = mtcars))
-  # tidy(lm_robust(mpg ~ hp + factor(cyl) + factor(cyl2)  + factor(am), data = mtcars))[2,]
-  # tidy(lm_robust(mpg ~ hp + factor(cyl) + factor(am), data = mtcars))[2,]
-  #
-  # # LFE does the right thing if the dependency is in the first two
-  # lfe:::summary.felm(lfe::felm(mpg ~ hp | cyl + cyl2 + am, data = mtcars))$coefficients
-  # tidy(lm_robust(mpg ~ hp + factor(cyl) + factor(cyl3) + factor(am), data = mtcars, se_type = "classical"))[2,]
-
   ## Collinear factors
   for (se_type in cr_se_types) {
     ro <- tidy(lm_robust(Y ~ Z + X + factor(B) + factor(Bdup) + factor(B2), clusters = cl, data = dat, se_type = se_type))
@@ -450,76 +430,6 @@ test_that("test matches stata absorb", {
   expect_equal(
     estimatr_mat[, 1],
     stata_ests[, 2]
-  )
-
-})
-
-
-test_that("FEs give correct projected F-stats", {
-
-  skip_if_not_installed("lfe")
-  skip_on_cran()
-
-  feo <- lfe::felm(Y ~ Z + X | B + B2, data = dat)
-  sfeo <- lfe:::summary.felm(feo)
-  sfeor <- lfe:::summary.felm(feo, robust = TRUE)
-
-  cfeo <- lfe::felm(Y ~ Z + X | B + B2 | 0 | cl, data = dat)
-  sfeoc <- lfe:::summary.felm(cfeo, robust = TRUE)
-
-  # classical
-  rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "classical")
-
-  expect_equivalent(
-    tidy(rfo)[rfo$term %in% c("Z", "X"), c("estimate", "std.error", "statistic", "p.value")],
-    as.data.frame(sfeo$coefficients[, 1:4])
-  )
-
-  expect_equivalent(
-    rfo[c("r.squared", "adj.r.squared", "proj_r.squared", "proj_adj.r.squared")],
-    sfeo[c("r.squared", "adj.r.squared", "P.r.squared", "P.adj.r.squared")]
-  )
-
-  expect_equivalent(
-    rfo[["proj_fstatistic"]],
-    sfeo[["P.fstat"]][c("F", "df1", "df2")]
-  )
-
-  ## HC1
-  rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, data = dat, se_type = "HC1")
-
-  expect_equivalent(
-    tidy(rfo)[rfo$term %in% c("Z", "X"), c("estimate", "std.error", "statistic", "p.value")],
-    as.data.frame(sfeor$coefficients[, 1:4])
-  )
-
-  expect_equivalent(
-    rfo[c("r.squared", "adj.r.squared", "proj_r.squared", "proj_adj.r.squared")],
-    sfeor[c("r.squared", "adj.r.squared", "P.r.squared", "P.adj.r.squared")]
-  )
-
-  expect_equivalent(
-    rfo[["proj_fstatistic"]],
-    sfeor[["P.fstat"]][c("F", "df1", "df2")]
-  )
-
-  ## CR stata
-  rfo <- lm_robust(Y ~ Z + X, fixed_effects = ~ B + B2, clusters = cl, data = dat, se_type = "stata")
-
-  # Different pval because lfe doesn't use J-1 as it's DoF
-  expect_equivalent(
-    tidy(rfo)[rfo$term %in% c("Z", "X"), c("estimate", "std.error")],
-    as.data.frame(sfeoc$coefficients[, c(1, 2)])
-  )
-
-  expect_equivalent(
-    rfo[c("r.squared", "adj.r.squared", "proj_r.squared", "proj_adj.r.squared")],
-    sfeoc[c("r.squared", "adj.r.squared", "P.r.squared", "P.adj.r.squared")]
-  )
-
-  expect_equivalent(
-    rfo[["proj_fstatistic"]],
-    sfeoc[["P.fstat"]][c("F", "df1", "df2")]
   )
 
 })
