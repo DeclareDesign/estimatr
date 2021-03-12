@@ -149,6 +149,7 @@ As with \code{`lm()`}, multivariate regression (multiple outcomes) will only adm
 observations into the estimation that have no missingness on any outcome.
 }
 \examples{
+set.seed(15)
 library(fabricatr)
 dat <- fabricate(
   N = 40,
@@ -216,8 +217,8 @@ lm_robust(y ~ x, data = dat, subset = z == 1)
 lm_robust(y ~ x + z, data = dat, alpha = 0.1)
 
 # We can also specify fixed effects
-# Speed gains with fixed effects are greatests with "stata" or "HC1" std.errors
-tidy(lm_robust(y ~ x + z, data = dat, fixed_effects = ~ blockID, se_type = "HC1"))
+# Speed gains with fixed effects are greatest with "stata" or "HC1" std.errors
+tidy(lm_robust(y ~ z, data = dat, fixed_effects = ~ blockID, se_type = "HC1"))
 
 \dontrun{
   # Can also use 'margins' or 'emmeans' package if you have them installed
