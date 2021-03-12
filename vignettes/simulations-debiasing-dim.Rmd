@@ -42,7 +42,7 @@ Let's first consider an example where blocks predict the potential outcomes but 
 First, let's set up our data and randomization scheme. In all of these analyses, our estimand will be the average treatment effect
 ```{r}
 # Define population with blocks of the same size, with some block-level shock
-simp_blocks <- declare_population(
+simp_blocks <- declare_model(
   blocks = add_level(
     N = 40,
     block_shock = runif(N, 0, 10)
@@ -55,9 +55,10 @@ simp_blocks <- declare_population(
   )
 )
 # Complete random assignment of half of units in each block
-blocked_assign <- declare_assignment(Z = block_ra(N, blocks = blocks, prob = 0.5), legacy = FALSE)
+blocked_assign <- declare_assignment(Z = block_ra(blocks = blocks, prob = 0.5), legacy = FALSE)
 # Estimand is the ATE
 ate <- declare_inquiry(ATE = mean(Y_Z_1 - Y_Z_0))
+outcomes <- declare_measurement(Y = reveal_outcomes(Y ~ Z))
 ```
 
 Now let's define our two estimators, one that doesn't account for blocking and one that does. The estimator that accounts for blocking essentially will compute treatment effects within blocks and then will take a weighted average across blocks. Details and references can be found in the [mathematical notes](/r/estimatr/articles/mathematical-notes.html#difference_in_means-notes).
@@ -68,9 +69,9 @@ dim_bl <- declare_estimator(Y ~ Z, blocks = blocks, inquiry = "ATE", label = "DI
 
 # Our design
 simp_bl_des <- simp_blocks +
-  blocked_pos +
   blocked_assign +
   ate +
+  outcomes + 
   dim +
   dim_bl
 
@@ -125,7 +126,7 @@ Both estimates are unbiased (and indeed are identical), and you can see that sta
 However, not accounting for blocking becomes more problematic if the probability of treatment in each block is correlated with the potential outcomes. Imagine, for example, that you are working with a partner who wants their intervention to both have a big effect and be amenable to rigorous analysis (in which case, congratulations). In this scenario, they may suspect certain types of units have higher treatment effects and want those units to be treated more often. In this case, if blocks with higher treatment effects are treated more often, the naive estimator will overrepresent those treated units and upwardly bias the ATE. Accounting for blocking by estimating treatment effects within block and then weighting for the probability of treatment, which our `difference_in_means()` estimator does when blocks are specified, will eliminate this bias.
 
 ```{r}
-corr_blocks <- declare_population(
+corr_blocks <- declare_model(
   blocks = add_level(
     N = 60,
     block_shock = runif(N, 0, 10),
@@ -135,20 +136,24 @@ corr_blocks <- declare_population(
   ),
   individual = add_level(
     N = indivs_per_block,
-    epsilon = rnorm(N, sd = 3)
+    epsilon = rnorm(N, sd = 3),
+    potential_outcomes(Y ~ Z * 0.5 * block_shock + epsilon)
   )
 )
 # Use same potential outcomes as above, but now treatment probability varies across blocks
 corr_blocked_assign <- declare_assignment(
-  blocks = blocks,
-  # The next line will just get the number of treated for a block from
-  # the first unit in that block
-  block_m = m_treat[!duplicated(blocks)]
+  Z = block_ra(
+    blocks = blocks,
+    # The next line will just get the number of treated for a block from
+    # the first unit in that block
+    block_m = m_treat[!duplicated(blocks)]
+  ),
+  legacy = FALSE
 )
 corr_bl_des <- corr_blocks +
-  blocked_pos +
   corr_blocked_assign +
   ate +
+  outcomes +
   dim +
   dim_bl
 ```
@@ -215,7 +220,7 @@ simp_clusts <- declare_population(
 )
 
 # Clustered assignment to treatment
-clustered_assign <- declare_assignment(Z = cluster_ra(N, clusters = clusters, prob = 0.5), legacy = FALSE)
+clustered_assign <- declare_assignment(Z = cluster_ra(clusters = clusters, prob = 0.5), legacy = FALSE)
 
 ate <- declare_inquiry(ATE = mean(Y_Z_1 - Y_Z_0))
 
@@ -224,9 +229,9 @@ dim <- declare_estimator(Y ~ Z, label = "DIM")
 dim_cl <- declare_estimator(Y ~ Z, clusters = clusters, label = "DIM clustered")
 
 simp_cl_des <- simp_clusts +
-  clustered_POs +
   clustered_assign +
   ate +
+  outcomes + 
   dim +
   dim_cl
 ```
@@ -294,7 +299,7 @@ diff_size_cls <- declare_population(
     potential_outcomes(Y ~ Z * 0.4 * clust_shock + epsilon)
   )
 )
-clustered_assign <- declare_assignment(Z = cluster_ra(N, clusters = clusters, prob = 0.5), legacy = FALSE)
+clustered_assign <- declare_assignment(Z = cluster_ra(clusters = clusters, prob = 0.5), legacy = FALSE)
 
 ht_cl <- declare_estimator(
   formula = Y ~ Z,
@@ -309,16 +314,16 @@ ht_cl <- declare_estimator(
 ate <- declare_inquiry(ATE = mean(Y_Z_1 - Y_Z_0))
 
 diff_cl_des <- diff_size_cls + 
-  clustered_POs + 
   clustered_assign + 
-  ate
+  ate + 
+  outcomes
 
 dat <- draw_data(diff_cl_des)
 ht_cl(dat)
 diff_cl_des <- diff_size_cls + 
-  clustered_POs + 
   clustered_assign + 
   ate + 
+  outcomes + 
   dim_cl + 
   ht_cl
 ```
