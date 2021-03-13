@@ -27,17 +27,10 @@ You can also see the multiple ways you can [get regression tables out of estimat
 
 ## Installing estimatr
 
-To install the latest stable release of **estimatr**, please ensure that you are running version 3.4 or later of R and run the following code:
+To install the latest stable release of **estimatr**, please ensure that you are running version 3.5 or later of R and run the following code:
 
 ```{r, eval=F}
 install.packages("estimatr")
-```
-
-If you would like to use the latest development release of **estimatr**, please ensure that you are running version 3.4 or later of R and run the following code:
-
-```{r, eval=F}
-install.packages("estimatr", dependencies = TRUE,
-                 repos = c("http://r.declaredesign.org", "https://cloud.r-project.org"))
 ```
 
 ## Easy to use
