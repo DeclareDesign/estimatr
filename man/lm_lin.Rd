@@ -28,13 +28,14 @@ the right hand side, such as \code{ ~ x1 + x2 + x3}.}
 \item{data}{A \code{data.frame}}
 
 \item{weights}{the bare (unquoted) names of the weights variable in the
-supplied data.}
+supplied data or a right-sided formula containing the name of the variable.}
 
 \item{subset}{An optional bare (unquoted) expression specifying a subset
 of observations to be used.}
 
 \item{clusters}{An optional bare (unquoted) name of the variable that
-corresponds to the clusters in the data.}
+corresponds to the clusters in the data or a right-sided formula containing
+the name of the variable.}
 
 \item{se_type}{The sort of standard error sought. If \code{clusters} is
 not specified the options are "HC0", "HC1" (or "stata", the equivalent),

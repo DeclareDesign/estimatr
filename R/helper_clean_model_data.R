@@ -29,7 +29,7 @@ clean_model_data <- function(data, datargs, estimator = "") {
   # expressions without environments attached to them
   mfargs <- as.list(mfargs)
 
-  args_ignored <- c("fixed_effects", "se_type")
+  args_ignored <- c("fixed_effects", "se_type", "cluster", "weights")
   # For each ... that would go to model.fram .default, early eval,
   # save to formula env, and point to it
   # subset is also non-standard eval
@@ -44,6 +44,18 @@ clean_model_data <- function(data, datargs, estimator = "") {
   for (da in to_process) {
     name <- sprintf(".__%s%%%d__", da, sample.int(.Machine$integer.max, 1))
     m_formula_env[[name]] <- eval_tidy(mfargs[[da]], data = data)
+    mfargs[[da]] <- sym(name)
+  }
+
+  for (da in intersect(names(mfargs), c("cluster", "weights"))) {
+    name <- sprintf(".__%s%%%d__", da, sample.int(.Machine$integer.max, 1))
+    m_formula_env[[name]] <- unlist(
+      stats::model.frame.default(
+        mfargs[[da]],
+        data = data,
+        na.action = NULL
+      )
+    )
     mfargs[[da]] <- sym(name)
   }
 

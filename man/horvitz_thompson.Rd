@@ -32,7 +32,8 @@ horvitz_thompson(
 for blocked designs only. See details.}
 
 \item{clusters}{An optional bare (unquoted) name of the variable that
-corresponds to the clusters in the data; used for cluster randomized
+corresponds to the clusters in the data or a right-sided formula containing
+the name of the variable; used for cluster randomized
 designs. For blocked designs, clusters must be within blocks.}
 
 \item{simple}{logical, optional. Whether the randomization is simple

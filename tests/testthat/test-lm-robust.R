@@ -625,3 +625,29 @@ test_that("multiple outcomes", {
   )
 
 })
+
+test_that("lm_robust works with formula args", {
+  unquoted <- lm_robust(mpg ~ wt, mtcars, clusters = am)
+  formula  <- lm_robust(mpg ~ wt, mtcars, clusters = ~ am)
+
+  expect_equal(
+    unquoted[names(unquoted) != "call"],
+    formula[names(formula) != "call"]
+  )
+
+  unquoted <- lm_robust(mpg ~ wt, mtcars, weights = cyl)
+  formula  <- lm_robust(mpg ~ wt, mtcars, weights = ~ cyl)
+
+  expect_equal(
+    unquoted[names(unquoted) != "call"],
+    formula[names(formula) != "call"]
+  )
+
+  unquoted <- lm_robust(mpg ~ wt, mtcars, fixed_effects = carb)
+  formula  <- lm_robust(mpg ~ wt, mtcars, fixed_effects = ~ carb)
+
+  expect_equal(
+    unquoted[names(unquoted) != "call"],
+    formula[names(formula) != "call"]
+  )
+})

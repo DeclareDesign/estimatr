@@ -28,11 +28,12 @@ difference_in_means(
 for blocked designs only.}
 
 \item{clusters}{An optional bare (unquoted) name of the variable that
-corresponds to the clusters in the data; used for cluster randomized
+corresponds to the clusters in the data or a right-sided formula containing
+the name of the variable; used for cluster randomized
 designs. For blocked designs, clusters must nest within blocks.}
 
 \item{weights}{the bare (unquoted) names of the weights variable in the
-supplied data.}
+supplied data or a right-sided formula containing the name of the variable.}
 
 \item{subset}{An optional bare (unquoted) expression specifying a subset of
 observations to be used.}

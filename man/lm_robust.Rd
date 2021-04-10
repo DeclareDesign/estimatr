@@ -24,13 +24,15 @@ lm_robust(
 \item{data}{A \code{data.frame}}
 
 \item{weights}{the bare (unquoted) names of the weights variable in the
-supplied data.}
+supplied data or a right-sided formula containing
+the name of the variable}
 
 \item{subset}{An optional bare (unquoted) expression specifying a subset
 of observations to be used.}
 
 \item{clusters}{An optional bare (unquoted) name of the variable that
-corresponds to the clusters in the data.}
+corresponds to the clusters in the data or a right-sided formula containing
+the name of the variable.}
 
 \item{fixed_effects}{An optional right-sided formula containing the fixed
 effects that will be projected out of the data, such as \code{~ blockID}. Do not

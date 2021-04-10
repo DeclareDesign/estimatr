@@ -12,10 +12,11 @@
 #' @param blocks An optional bare (unquoted) name of the block variable. Use
 #' for blocked designs only.
 #' @param clusters An optional bare (unquoted) name of the variable that
-#' corresponds to the clusters in the data; used for cluster randomized
+#' corresponds to the clusters in the data or a right-sided formula containing
+#' the name of the variable; used for cluster randomized
 #' designs. For blocked designs, clusters must nest within blocks.
 #' @param weights the bare (unquoted) names of the weights variable in the
-#' supplied data.
+#' supplied data or a right-sided formula containing the name of the variable.
 #' @param subset An optional bare (unquoted) expression specifying a subset of
 #' observations to be used.
 #' @param se_type An optional string that can be one of \code{c("default", "none")}. If "default" (the default), it will use the default standard error estimator for the design, and if "none" then standard errors will not be computed which may speed up run time if only the point estimate is required.

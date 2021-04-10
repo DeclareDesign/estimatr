@@ -12,7 +12,8 @@
 #' @param blocks An optional bare (unquoted) name of the block variable. Use
 #' for blocked designs only. See details.
 #' @param clusters An optional bare (unquoted) name of the variable that
-#' corresponds to the clusters in the data; used for cluster randomized
+#' corresponds to the clusters in the data or a right-sided formula containing
+#' the name of the variable; used for cluster randomized
 #' designs. For blocked designs, clusters must be within blocks.
 #' @param simple logical, optional. Whether the randomization is simple
 #' (TRUE) or complete (FALSE). This is ignored if \code{blocks} are specified,
