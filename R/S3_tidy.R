@@ -2,7 +2,7 @@
 #' @export
 generics::tidy
 
-tidy_data_frame <- function(x, 
+tidy_data_frame <- function(x,
                             conf.int = FALSE,
                             conf.level = .95,
                             ...) {
@@ -32,11 +32,12 @@ tidy_data_frame <- function(x,
   # x$alpha[1] because lm_robust duplicates alpha with multiple linear_hypotheses
   flag <- conf.int || (utils::hasName(x, 'alpha') && (1 - x$alpha[1] != conf.level))
   if (flag) {
-      ci <- stats::confint(x, level = conf.level, ...)
-      if (all(row.names(ci) == return_frame$term))  {
-          return_frame$conf.low <- ci[, 1]
-          return_frame$conf.high <- ci[, 2]
-      }
+    conf.level <- 1 - x$alpha[1]
+    ci <- stats::confint(x, level = conf.level, ...)
+    if (all(row.names(ci) == return_frame$term))  {
+      return_frame$conf.low <- ci[, 1]
+      return_frame$conf.high <- ci[, 2]
+    }
   }
 
 
