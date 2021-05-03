@@ -1042,3 +1042,48 @@ test_that("update works", {
   )
 
 })
+
+test_that("setting different alpha in lm_robust call leads to different CIs in tidy", {
+
+  set.seed(15)
+  library(fabricatr)
+  dat <- fabricate(
+    N = 40,
+    y = rpois(N, lambda = 4),
+    x = rnorm(N),
+    z = rbinom(N, 1, prob = 0.4)
+  )
+
+  # Default variance estimator is HC2 robust standard errors
+  lmro05 <- lm_robust(y ~ x + z, data = dat)
+  td1 <- tidy(lmro05)
+
+  lmro01 <- lm_robust(y ~ x + z, alpha = 0.01, data = dat)
+  td2 <- tidy(lmro01)
+
+  td3 <- tidy(lmro01, conf.int = TRUE, conf.level = 0.95)
+
+  expect_false(identical(round(td1$conf.low, 2), round(td2$conf.low, 2)))
+
+})
+
+test_that("conf int for lh_robust works", {
+
+  set.seed(15)
+  library(fabricatr)
+  dat <- fabricate(
+    N = 40,
+    y = rpois(N, lambda = 4),
+    x = rnorm(N),
+    z = rbinom(N, 1, prob = 0.4)
+  )
+
+  # Default variance estimator is HC2 robust standard errors
+  lmro05 <- lh_robust(y ~ x + z, linear_hypothesis = "z - 0.05 = 0", data = dat)
+  td1 <- tidy(lmro05)
+  td1 <- tidy(lmro05, conf.int = TRUE, conf.level = 0.5)
+
+  expect_false(identical(round(td1$conf.low, 2), round(td2$conf.low, 2)))
+
+})
+

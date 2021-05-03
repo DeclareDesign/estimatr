@@ -3,6 +3,8 @@
 S3method(confint,difference_in_means)
 S3method(confint,horvitz_thompson)
 S3method(confint,iv_robust)
+S3method(confint,lh)
+S3method(confint,lh_robust)
 S3method(confint,lm_robust)
 S3method(glance,difference_in_means)
 S3method(glance,horvitz_thompson)

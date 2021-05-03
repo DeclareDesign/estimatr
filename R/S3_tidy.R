@@ -112,8 +112,12 @@ tidy.horvitz_thompson <- tidy_data_frame
 #'
 #' @export
 #' @family estimatr tidiers
-tidy.lh_robust <- function(x, ...) {
-  rbind(tidy(x$lm_robust, ...), tidy(x$lh, ...))
+tidy.lh_robust <- function(x,
+                           conf.int = FALSE,
+                           conf.level = .95,
+                           ...) {
+  rbind(tidy(x$lm_robust, conf.int = conf.int, conf.level = conf.level, ...),
+        tidy(x$lh, conf.int = conf.int, conf.level = conf.level, ...))
 }
 
 #' @rdname estimatr_tidiers
@@ -121,8 +125,11 @@ tidy.lh_robust <- function(x, ...) {
 #'
 #' @export
 #' @family estimatr tidiers
-tidy.lh <- function(x, ...) {
-  tidy_data_frame(simplify_lh_outcome(x), ...)
+tidy.lh <- function(x,
+                    conf.int = FALSE,
+                    conf.level = .95,
+                    ...) {
+  tidy_data_frame(simplify_lh_outcome(x), conf.int = conf.int, conf.level = conf.level, ...)
 }
 
 # Simplifies the `lh` outcome column for tidy.lh and print.lh
