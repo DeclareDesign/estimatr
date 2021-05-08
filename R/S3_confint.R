@@ -17,9 +17,10 @@ confint.lm_robust <- confint_lm_like
 #' @export
 confint.iv_robust <- confint_lm_like
 
+#' @importFrom stats confint
 #' @export
-confint.lh_robust <- function(x, ...) {
-  rbind(confint(x$lm_robust, ...), tidy(x$lh, ...))
+confint.lh_robust <- function(x, parm = NULL, level = NULL, ...) {
+  rbind(confint(x$lm_robust, parm = parm, level = level, ...), tidy(x$lh, ...))
 }
 
 #' @export
