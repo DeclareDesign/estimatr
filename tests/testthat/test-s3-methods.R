@@ -1080,11 +1080,16 @@ test_that("conf int for lh_robust works", {
   )
 
   # Default variance estimator is HC2 robust standard errors
-  lmro05 <- lh_robust(y ~ x + z, linear_hypothesis = "z - 0.05 = 0", data = dat)
-  td1 <- tidy(lmro05)
-  td1 <- tidy(lmro05, conf.int = TRUE, conf.level = 0.5)
+  lhro05 <- lh_robust(y ~ x + z, linear_hypothesis = "z - 0.05 = 0", data = dat)
+  td1 <- tidy(lhro05)
+
+  lhro01 <- lh_robust(y ~ x + z, linear_hypothesis = "z - 0.05 = 0", alpha = 0.01, data = dat)
+  td2 <- tidy(lhro01)
+
+  td3 <- tidy(lhro05, conf.int = TRUE, conf.level = 0.95)
 
   expect_false(identical(round(td1$conf.low, 2), round(td2$conf.low, 2)))
+  expect_true(identical(round(td1$conf.low, 2), round(td3$conf.low, 2)))
 
-})
+  })
 
