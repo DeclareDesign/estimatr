@@ -10,23 +10,23 @@
 \alias{tidy.lh}
 \title{Tidy an estimatr object}
 \usage{
-\method{tidy}{lm_robust}(x, conf.int = FALSE, conf.level = 0.95, ...)
+\method{tidy}{lm_robust}(x, conf.int = TRUE, conf.level = NULL, ...)
 
-\method{tidy}{iv_robust}(x, conf.int = FALSE, conf.level = 0.95, ...)
+\method{tidy}{iv_robust}(x, conf.int = TRUE, conf.level = NULL, ...)
 
-\method{tidy}{difference_in_means}(x, conf.int = FALSE, conf.level = 0.95, ...)
+\method{tidy}{difference_in_means}(x, conf.int = TRUE, conf.level = NULL, ...)
 
-\method{tidy}{horvitz_thompson}(x, conf.int = FALSE, conf.level = 0.95, ...)
+\method{tidy}{horvitz_thompson}(x, conf.int = TRUE, conf.level = NULL, ...)
 
-\method{tidy}{lh_robust}(x, ...)
+\method{tidy}{lh_robust}(x, conf.int = TRUE, conf.level = NULL, ...)
 
-\method{tidy}{lh}(x, ...)
+\method{tidy}{lh}(x, conf.int = TRUE, conf.level = NULL, ...)
 }
 \arguments{
 \item{x}{An object returned by one of the estimators}
 
 \item{conf.int}{Logical indicating whether or not to include a
-confidence interval in the tidied output. Defaults to ‘FALSE’.}
+confidence interval in the tidied output. Defaults to ‘TRUE’.}
 
 \item{conf.level}{The confidence level to use for the confidence
 interval if ‘conf.int = TRUE’. Must be strictly greater than 0 and less

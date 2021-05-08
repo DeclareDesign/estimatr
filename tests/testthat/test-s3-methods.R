@@ -1064,6 +1064,7 @@ test_that("setting different alpha in lm_robust call leads to different CIs in t
   td3 <- tidy(lmro01, conf.int = TRUE, conf.level = 0.95)
 
   expect_false(identical(round(td1$conf.low, 2), round(td2$conf.low, 2)))
+  expect_true(identical(round(td1$conf.low, 2), round(td3$conf.low, 2)))
 
 })
 
