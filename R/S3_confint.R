@@ -17,6 +17,14 @@ confint.lm_robust <- confint_lm_like
 #' @export
 confint.iv_robust <- confint_lm_like
 
+#' @importFrom stats confint
+#' @export
+confint.lh_robust <- function(object, parm = NULL, level = NULL, ...) {
+  rbind(confint(object$lm_robust, parm = parm, level = level, ...), tidy(object$lh, ...))
+}
+
+#' @export
+confint.lh <- confint_lm_like
 
 #' @export
 confint.difference_in_means <- function(object,
