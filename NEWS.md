@@ -1,4 +1,9 @@
-# estimatr 0.30.1
+# estimatr 0.30.3
+
+* Bug fix of tidy handling of conf.level
+* Bug fix of lh_robust tidy
+
+# estimatr 0.30.2
 
 * Remove lfe from tests
 
