@@ -280,7 +280,7 @@ dx3 <- diagnose_design(designs, sims = sims, diagnosands = my_diagnosands)
 ```
 
 ```{r, fig.width=5, fig.height=4}
-ggplot(dx3$diagnosands_df, aes(x = N, y = `Bias of Estimated Variance`, color = estimator_label)) +
+ggplot(dx3$diagnosands_df, aes(x = N, y = `Bias of Estimated Variance`, color = estimator)) +
   geom_point() +
   geom_line() +
   geom_hline(yintercept = 0, linetype = 2, color = "grey") +
