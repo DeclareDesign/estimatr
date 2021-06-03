@@ -112,26 +112,26 @@ glance.iv_robust <- function(x, ...) {
       stringsAsFactors = FALSE
     ),
     retrieve_fstatistic(x),
-    if (exists("diagnostic_firststage_fstatistic", x) && length(x[["diagnostic_firststage_fstatistic"]] == 4)) {
+    if (exists("diagnostic_first_stage_fstatistic", x) && length(x[["diagnostic_first_stage_fstatistic"]] == 4)) {
       data.frame(
-        statistic.weakinst = x[["diagnostic_firststage_fstatistic"]]["value"],
-        p.value.weakinst = x[["diagnostic_firststage_fstatistic"]]["p.value"]
+        statistic.weakinst = x[["diagnostic_first_stage_fstatistic"]]["value"],
+        p.value.weakinst = x[["diagnostic_first_stage_fstatistic"]]["p.value"]
       )
     } else {
       data.frame(statistic.weakinst = NA_real_, p.value.weakinst = NA_real_)
     },
-    if (exists("diagnostic_endogeneity_fstatistic", x)) {
+    if (exists("diagnostic_endogeneity_test", x)) {
       data.frame(
-        statistic.endogeneity = x[["diagnostic_endogeneity_fstatistic"]]["value"],
-        p.value.endogeneity = x[["diagnostic_endogeneity_fstatistic"]]["p.value"]
+        statistic.endogeneity = x[["diagnostic_endogeneity_test"]]["value"],
+        p.value.endogeneity = x[["diagnostic_endogeneity_test"]]["p.value"]
       )
     } else {
       data.frame(statistic.endogeneity = NA_real_, p.value.endogeneity = NA_real_)
     },
-    if (exists("diagnostic_overid_fstatistic", x)) {
+    if (exists("diagnostic_overid_test", x)) {
       data.frame(
-        statistic.overid = x[["diagnostic_overid_fstatistic"]]["value"],
-        p.value.overid = x[["diagnostic_overid_fstatistic"]]["p.value"]
+        statistic.overid = x[["diagnostic_overid_test"]]["value"],
+        p.value.overid = x[["diagnostic_overid_test"]]["p.value"]
       )
     } else {
       data.frame(statistic.overid = NA_real_, p.value.overid = NA_real_)
