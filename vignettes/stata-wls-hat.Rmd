@@ -89,7 +89,7 @@ Where $h_{ii}$ are the diagonal elements of the hat matrix, the HC2 variance est
 where $e_i$ are the residuals. The HC3 estimator is very similar,
 
 \[
-\mathbb{V}[\widehat{\mathbf{\beta}}]_{HC3} = (\mathbf{X}^{\top}\mathbf{X})^{-1} \mathbf{X}^\top \mathrm{diag}\left[\frac{e^2_i}{(1 - h_{ii}^2)}\right] \mathbf{X} (\mathbf{X}^{\top}\mathbf{X})^{-1} .
+\mathbb{V}[\widehat{\mathbf{\beta}}]_{HC3} = (\mathbf{X}^{\top}\mathbf{X})^{-1} \mathbf{X}^\top \mathrm{diag}\left[\frac{e^2_i}{(1 - h_{ii})^2}\right] \mathbf{X} (\mathbf{X}^{\top}\mathbf{X})^{-1} .
 \]
 
 Both rely on the hat matrix. Crucially, this is where Stata and the packages and modules in R and Python disagree. When weights are specified, Stata estimates the hat matrix as
