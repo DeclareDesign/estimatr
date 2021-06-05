@@ -193,6 +193,36 @@ test_that("tidy, glance, summary, and print work", {
   slho <- summary(lho)
   glho <- glance(lho)
 
+  ## iv_robust 1st-stage stats.
+  ivro <- iv_robust(y ~ x | z, data = dat, se_type = "classical", diagnostics = T)
+  expect_equivalent(
+    as.numeric(glance(ivro)[c("statistic.weakinst", "p.value.weakinst")]),
+    summary(ivro)$diagnostic_first_stage_fstatistic[c(1, 4)]
+  )
+  expect_equivalent(
+    as.numeric(glance(ivro)[c("statistic.endogeneity", "p.value.endogeneity")]),
+    summary(ivro)$diagnostic_endogeneity_test[c(1, 4)]
+  )
+  expect_equivalent(
+    as.logical(is.na(glance(ivro)[c("statistic.overid", "p.value.overid")])),
+    c(T, T)
+  )
+  ## iv-robust over-identification test
+  ivro_oid <- iv_robust(y ~ x | z + p, data = dat, se_type = "classical", diagnostics = T)
+  expect_equivalent(
+    as.numeric(glance(ivro_oid)[c("statistic.weakinst", "p.value.weakinst")]),
+    summary(ivro_oid)$diagnostic_first_stage_fstatistic[c(1, 4)]
+  )
+  expect_equivalent(
+    as.numeric(glance(ivro_oid)[c("statistic.endogeneity", "p.value.endogeneity")]),
+    summary(ivro_oid)$diagnostic_endogeneity_test[c(1, 4)]
+  )
+  expect_equivalent(
+    as.numeric(glance(ivro_oid)[c("statistic.overid", "p.value.overid")]),
+    summary(ivro_oid)$diagnostic_overid_test[c(1, 3)]
+  )
+
+
   # tidy adds rows for each LH
   expect_equal(
     tlho$term,
