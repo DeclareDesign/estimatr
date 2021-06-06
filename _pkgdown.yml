@@ -1,6 +1,8 @@
 template:
   package: ddpkgdowntemplate
 
+url: https://declaredesign.org/r/estimatr
+
 navbar:
   left:
   - text: "Software"
