@@ -391,7 +391,11 @@ lm_robust_fit <- function(y,
   }
 
   attr(return_list, "class") <- "lm_robust"
-
+  return_list[['XtX_inv']] <- fit$XtX_inv
+  return_list[['weights']] <- data[["weights"]]
+  return_list[['X']] <- data[["X"]]
+  return_list[['residuals']] <- fit_vals[['ei']]
+  
   return(return_list)
 }
 

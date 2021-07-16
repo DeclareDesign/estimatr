@@ -361,7 +361,8 @@ lm_lin <- function(formula,
   setNames(return_list[["scaled_center"]], original_covar_names)
 
   return_list[["call"]] <- match.call()
-
+  return_list[["model"]] <- X
+  return_list[["y"]] <- outcome
 
   return(return_list)
 }

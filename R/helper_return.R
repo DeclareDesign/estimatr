@@ -38,6 +38,7 @@ lm_return <- function(return_list, model_data, formula) {
   return_list[["fitted.values"]] <- drop(return_list[["fitted.values"]])
   return_list[["ei.iv"]] <- drop(return_list[["ei.iv"]])
   return_list[["residuals"]] <- drop(return_list[["residuals"]])
+  return_list[["model"]] <- model_data$design_matrix
   return(return_list)
 }
 
