@@ -108,7 +108,7 @@ lmc <- declare_estimator(
   y ~ x,
   model = lm_robust,
   se_type = "classical",
-  estimand = varb_estimand,
+  inquiry = varb_estimand,
   term = "x"
 )
 ```
@@ -228,7 +228,7 @@ het_designer <- function(N) {
     y ~ x,
     model = lm_robust,
     se_type = "classical",
-    estimand = varb_het_estimand,
+    inquiry = varb_het_estimand,
     term = "x",
     label = "classical"
   )
@@ -237,7 +237,7 @@ het_designer <- function(N) {
     y ~ x,
     model = lm_robust,
     se_type = "HC1",
-    estimand = varb_het_estimand,
+    inquiry = varb_het_estimand,
     term = "x",
     label = "HC1"
   )
@@ -246,7 +246,7 @@ het_designer <- function(N) {
     y ~ x,
     model = lm_robust,
     se_type = "HC2",
-    estimand = varb_het_estimand,
+    inquiry = varb_het_estimand,
     term = "x",
     label = "HC2"
   )
