@@ -6,6 +6,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // ht_covar_partial
 double ht_covar_partial(const Eigen::VectorXd& y1, const Eigen::VectorXd& y0, const Eigen::MatrixXd& p10, const Eigen::VectorXd& p1, const Eigen::VectorXd& p0);
 RcppExport SEXP _estimatr_ht_covar_partial(SEXP y1SEXP, SEXP y0SEXP, SEXP p10SEXP, SEXP p1SEXP, SEXP p0SEXP) {

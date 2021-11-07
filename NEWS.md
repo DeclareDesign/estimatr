@@ -1,4 +1,4 @@
-# estimatr 0.30.3
+# estimatr 0.30.4
 
 * Bug fix of tidy handling of conf.level
 * Bug fix of lh_robust tidy
