@@ -206,7 +206,7 @@ Let's see this in action.
 
 ```{r}
 # Define clustered data
-simp_clusts <- declare_population(
+simp_clusts <- declare_model(
   clusters = add_level(
     N = 40,
     clust_shock = runif(N, 0, 10)
@@ -286,7 +286,7 @@ In the below, I use simulation to show that the difference-in-means estimator ca
 
 ```{r}
 # Correlated cluster size and potential outcomes
-diff_size_cls <- declare_population(
+diff_size_cls <- declare_model(
   clusters = add_level(
     N = 10,
     clust_shock = runif(N, 0, 10),

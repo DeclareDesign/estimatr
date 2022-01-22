@@ -83,7 +83,7 @@ true_varb
 Now, using [`DeclareDesign`](/r/declaredesign/), let's specify the rest of the data generating process (DGP). Let's set $\beta = [0, 1]^\top$, so that the true DGP is $\mathbf{y} = \mathbf{x_1} + \epsilon$.
 
 ```{r}
-simp_pop <- declare_population(
+simp_pop <- declare_model(
   epsilon = rnorm(N, sd = 2),
   y = x + epsilon
 )
@@ -119,7 +119,7 @@ Let's first set up the design and our diagnosands.
 
 ```{r}
 # First declare all the steps of our design, starting with our fixed data
-classical_design <- declare_population(dat) + simp_pop + varb_estimand + lmc
+classical_design <- declare_model(dat) + simp_pop + varb_estimand + lmc
 
 # Declare a set of diagnosands that help us check if
 # we have unbiasedness
@@ -215,7 +215,7 @@ het_designer <- function(N) {
   true_varb_het <- varb[2, 2]
 
   # Population function now has heteroskedastic noise
-  simp_pop <- declare_population(
+  simp_pop <- declare_model(
     dat,
     epsilon = rnorm(N, sd = sqrt(noise_var)),
     y = x + epsilon
