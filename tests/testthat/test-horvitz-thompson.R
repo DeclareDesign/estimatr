@@ -252,10 +252,11 @@ test_that("Horvitz-Thompson works with clustered data", {
   # Not the same because second doesn't know it's clustered!
   # Just passing mat
   clust_srs_mat <- declaration_to_condition_pr_mat(clust_srs_decl)
+  ht_srs_nodecl <- horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_srs_mat)
   expect_is(
     all.equal(
-      ht_srs_decl,
-      ht_srs_nodecl <- horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_srs_mat)
+      target = ht_srs_decl,
+      current = ht_srs_nodecl
     ),
     "character"
   )

@@ -185,8 +185,8 @@ test_that("Clustered ra", {
 
   expect_is(
     all.equal(
-      cl_simp_cpm,
-      permutations_to_condition_pr_mat(cl_simp_perms),
+      target = cl_simp_cpm,
+      current = permutations_to_condition_pr_mat(cl_simp_perms),
       check.attributes = FALSE
     ),
     "character"
