@@ -28,3 +28,4 @@ update_repo.R
 ^CRAN-RELEASE$
 ^pkgdown$
 ^\.github$
+^CRAN-SUBMISSION$
