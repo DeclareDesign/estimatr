@@ -57,7 +57,7 @@ test_that("lm robust se", {
     expect_false(all(lm_hc1$std.error == lm_hc3$std.error))
     expect_false(all(lm_hc2$std.error == lm_hc3$std.error))
 
-    expect_equivalent(lm_hc0$df,lm_hc1$d)
+    expect_equivalent(lm_hc0$df,lm_hc1$df)
     expect_equivalent(lm_hc0$df,lm_hc2$df)
     expect_equivalent(lm_hc0$df,lm_hc3$df)
     expect_equivalent(lm_hc0$df,lm_stata$df)
