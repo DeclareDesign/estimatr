@@ -1,6 +1,6 @@
 ## Submission
 
-Thank you for reviewing this minor patch, which includes two bug fixes.
+Thank you for reviewing this minor patch, which addresses failures on CRAN due to changes in all.equal in r-devel per email from Prof. Ripley. 
 
 There are no changes to worse in reverse depends. 
 
