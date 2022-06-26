@@ -323,6 +323,7 @@ test_that("iv_robust matches AER + clubSandwich", {
 
 test_that("iv_robust different specifications work", {
   skip_if_not_installed("AER")
+  skip_if_not_installed("ivpack")
 
   # More instruments than endog. regressors
   ivro <- iv_robust(mpg ~ wt | hp + cyl, data = mtcars, se_type = "HC0")
@@ -438,6 +439,8 @@ test_that("S3 methods", {
 })
 
 test_that("IV diagnostics", {
+
+  skip_if_not_installed("AER")
 
   # Load stata diagnostics
   stata_diags <- read.table(

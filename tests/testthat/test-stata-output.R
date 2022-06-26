@@ -54,6 +54,8 @@ test_that("lm_robust matches stata", {
 
 test_that("iv_robust matches stata", {
 
+  skip_if_not_installed("AER")
+
   # write.csv(mtcars,
   #           file = 'tests/testthat/mtcars.csv',
   #           row.names = F)

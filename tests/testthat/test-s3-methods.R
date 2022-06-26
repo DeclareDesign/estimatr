@@ -336,6 +336,8 @@ test_that("tidy, glance, summary, and print work", {
 
 test_that("vcov works", {
 
+  skip_if_not_installed("AER")
+
   # not identical due to < 1e-15 diffs
   expect_equal(
     vcov(lm_robust(y ~ x, data = dat, se_type = "classical")),
@@ -840,6 +842,8 @@ test_that("predict works with fixed effects", {
 })
 
 test_that("predict.iv_robust works with fixed effects", {
+
+  skip_if_not_installed("AER")
 
   ro <- iv_robust(mpg ~ hp + factor(cyl) | vs + factor(cyl), data = mtcars)
   rfo <- iv_robust(mpg ~ hp | vs, fixed_effects = ~ cyl, data = mtcars)
