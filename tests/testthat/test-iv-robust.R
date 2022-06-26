@@ -245,11 +245,13 @@ test_that("iv_robust matches AER + clubSandwich", {
                                         cluster = dat$clust,
                                         test = ifelse(se_type == "CR2", "Satterthwaite", "naive-t"))
 
-    cols <- if (se_type == "CR2") c("estimate", "std.error", "statistic", "df", "p.value") else c("estimate", "std.error", "statistic", "p.value")
+    clubsand <- as.data.frame(clubsand)
+
+    cols <- c("estimate", "std.error", "statistic", "df", "p.value")
 
     expect_equivalent(
       as.matrix(tidy(ivcr)[, cols]),
-      as.matrix(clubsand)
+      as.matrix(clubsand[,-1])
     )
 
     expect_equivalent(
@@ -264,9 +266,11 @@ test_that("iv_robust matches AER + clubSandwich", {
                                          cluster = dat$clust,
                                          test = ifelse(se_type == "CR2", "Satterthwaite", "naive-t"))
 
+    clubsandw <- as.data.frame(clubsandw)
+
     expect_equivalent(
       as.matrix(tidy(ivcrw)[, cols]),
-      as.matrix(clubsandw)
+      as.matrix(clubsandw[,-1])
     )
 
     expect_equivalent(
@@ -282,9 +286,11 @@ test_that("iv_robust matches AER + clubSandwich", {
                                            cluster = dat$clust,
                                            test = ifelse(se_type == "CR2", "Satterthwaite", "naive-t"))
 
+    clubsand_rd <- as.data.frame(clubsand_rd)
+
     expect_equivalent(
       na.omit(as.matrix(tidy(ivcr_rd)[, cols])),
-      na.omit(as.matrix(clubsand_rd))
+      na.omit(as.matrix(clubsand_rd[,-1]))
     )
 
     expect_equivalent(
@@ -300,9 +306,11 @@ test_that("iv_robust matches AER + clubSandwich", {
                                             cluster = dat$clust,
                                             test = ifelse(se_type == "CR2", "Satterthwaite", "naive-t"))
 
+    clubsandw_rd <- as.data.frame(clubsandw_rd)
+
     expect_equivalent(
       na.omit(as.matrix(tidy(ivcrw_rd)[, cols])),
-      na.omit(as.matrix(clubsandw_rd))
+      na.omit(as.matrix(clubsandw_rd[,-1]))
     )
 
     expect_equivalent(

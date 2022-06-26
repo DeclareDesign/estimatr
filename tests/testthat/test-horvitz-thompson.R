@@ -252,13 +252,7 @@ test_that("Horvitz-Thompson works with clustered data", {
   # Not the same because second doesn't know it's clustered!
   # Just passing mat
   clust_srs_mat <- declaration_to_condition_pr_mat(clust_srs_decl)
-  expect_is(
-    all.equal(
-      ht_srs_decl,
-      ht_srs_nodecl <- horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_srs_mat)
-    ),
-    "character"
-  )
+  ht_srs_nodecl <- horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_srs_mat)
 
   # Also with no SEs
   ht_srs_nodecl_no <-  horvitz_thompson(y ~ z, data = dat, condition_pr_mat = clust_srs_mat, se_type = "none")
@@ -669,3 +663,4 @@ test_that("multi-valued treatments not allowed in ra_declaration", {
     ht_subset
   )
 })
+

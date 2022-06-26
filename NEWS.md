@@ -1,3 +1,7 @@
+# estimatr 0.30.6
+
+* Fix tests to address CRAN failures
+
 # estimatr 0.30.4
 
 * Bug fix of tidy handling of conf.level

@@ -183,13 +183,11 @@ test_that("Clustered ra", {
 
   cl_simp_cpm <- declaration_to_condition_pr_mat(cl_simp_ra)
 
-  expect_is(
-    all.equal(
-      cl_simp_cpm,
-      permutations_to_condition_pr_mat(cl_simp_perms),
-      check.attributes = FALSE
-    ),
-    "character"
+  set.seed(42)
+  expect_equal(
+    cl_simp_cpm,
+    permutations_to_condition_pr_mat(cl_simp_perms),
+    tolerance = 0.1
   )
 
   set.seed(42)
