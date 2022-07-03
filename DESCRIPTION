@@ -32,7 +32,6 @@ Suggests:
     clubSandwich,
     emmeans (>= 1.4),
     estimability,
-    ivpack,
     margins,
     modelsummary,
     prediction,

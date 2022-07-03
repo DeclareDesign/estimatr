@@ -28,6 +28,8 @@ test_that("iv_robust matches AER + ivpack", {
 
   skip_if_not_installed("AER")
   skip_if_not_installed("ivpack")
+  skip("ivpack is not available")
+
   ivco <- iv_robust(y ~ x | z, data = dat, se_type = "classical")
   ivfit <- AER::ivreg(y ~ x | z, data = dat)
   ivo <- summary(ivfit)
@@ -324,6 +326,7 @@ test_that("iv_robust matches AER + clubSandwich", {
 test_that("iv_robust different specifications work", {
   skip_if_not_installed("AER")
   skip_if_not_installed("ivpack")
+  skip("ivpack not available")
 
   # More instruments than endog. regressors
   ivro <- iv_robust(mpg ~ wt | hp + cyl, data = mtcars, se_type = "HC0")
