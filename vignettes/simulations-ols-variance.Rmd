@@ -18,7 +18,7 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 fname <- "simulations-ols-var.rda"
 sims <- 2000
-rerun <- TRUE
+rerun <- !file.exists(fname)
 if (!rerun) {load(fname)}
 ```
 
