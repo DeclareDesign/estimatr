@@ -55,7 +55,7 @@ simp_blocks <- declare_model(
   )
 )
 # Complete random assignment of half of units in each block
-blocked_assign <- declare_assignment(Z = block_ra(blocks = blocks, prob = 0.5), legacy = FALSE)
+blocked_assign <- declare_assignment(Z = block_ra(blocks = blocks, prob = 0.5))
 # Estimand is the ATE
 ate <- declare_inquiry(ATE = mean(Y_Z_1 - Y_Z_0))
 outcomes <- declare_measurement(Y = reveal_outcomes(Y ~ Z))
@@ -65,7 +65,7 @@ Now let's define our two estimators, one that doesn't account for blocking and o
 
 ```{r}
 dim <- declare_estimator(Y ~ Z, inquiry = "ATE", label = "DIM")
-dim_bl <- declare_estimator(Y ~ Z, blocks = blocks, inquiry = "ATE", label = "DIM blocked")
+dim_bl <- declare_estimator(Y ~ Z, .method = difference_in_means, blocks = blocks, inquiry = "ATE", label = "DIM blocked")
 
 # Our design
 simp_bl_des <- simp_blocks +
@@ -136,10 +136,11 @@ corr_blocks <- declare_model(
   ),
   individual = add_level(
     N = indivs_per_block,
-    epsilon = rnorm(N, sd = 3),
-    potential_outcomes(Y ~ Z * 0.5 * block_shock + epsilon)
+    epsilon = rnorm(N, sd = 3)
+    
   )
-)
+) + 
+  declare_model(potential_outcomes(Y ~ Z * 0.5 * block_shock + epsilon))
 # Use same potential outcomes as above, but now treatment probability varies across blocks
 corr_blocked_assign <- declare_assignment(
   Z = block_ra(
@@ -150,7 +151,8 @@ corr_blocked_assign <- declare_assignment(
   ),
   legacy = FALSE
 )
-corr_bl_des <- corr_blocks +
+corr_bl_des <- 
+  corr_blocks +
   corr_blocked_assign +
   ate +
   outcomes +
@@ -295,18 +297,18 @@ diff_size_cls <- declare_model(
   ),
   individual = add_level(
     N = indivs_per_clust,
-    epsilon = rnorm(N, sd = 3),
-    potential_outcomes(Y ~ Z * 0.4 * clust_shock + epsilon)
+    epsilon = rnorm(N, sd = 3)
   )
-)
-clustered_assign <- declare_assignment(Z = cluster_ra(clusters = clusters, prob = 0.5), legacy = FALSE)
+) + 
+  declare_model(potential_outcomes(Y ~ Z * 0.4 * clust_shock + epsilon))
+clustered_assign <- declare_assignment(Z = cluster_ra(clusters = clusters, prob = 0.5))
 
 ht_cl <- declare_estimator(
   formula = Y ~ Z,
   clusters = clusters,
   condition_prs = condition_pr,
   simple = FALSE,
-  model = estimatr::horvitz_thompson,
+  .method = estimatr::horvitz_thompson,
   inquiry = "ATE",
   label = "Horvitz-Thompson Clustered"
 )

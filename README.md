@@ -34,19 +34,10 @@ about their properties (see [DeclareDesign](https://declaredesign.org)).
 ## Installing estimatr
 
 To install the latest stable release of **estimatr**, please ensure that
-you are running version 3.4 or later of R and run the following code:
+you are running version 3.5 or later of R and run the following code:
 
 ``` r
 install.packages("estimatr")
-```
-
-If you would like to use the latest development release of **estimatr**,
-please ensure that you are running version 3.4 or later of R and run the
-following code:
-
-``` r
-install.packages("estimatr", dependencies = TRUE,
-                 repos = c("http://r.declaredesign.org", "https://cloud.r-project.org"))
 ```
 
 ## Easy to use
@@ -130,12 +121,15 @@ mb <- microbenchmark(
     coeftest(lo, vcov = vcovHC(lo, type = 'HC2'))
   }
 )
+#> Warning in microbenchmark(estimatr = lm_robust(y ~ ., data = dat), `lm +
+#> sandwich` = {: less accurate nanosecond times to avoid potential integer
+#> overflows
 ```
 
 | estimatr      | median run-time (ms) |
 |:--------------|---------------------:|
-| estimatr      |                   21 |
-| lm + sandwich |                   41 |
+| estimatr      |                  7.2 |
+| lm + sandwich |                 24.6 |
 
 ------------------------------------------------------------------------
 

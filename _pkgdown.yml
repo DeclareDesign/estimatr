@@ -1,24 +1,33 @@
-template:
-  package: ddpkgdowntemplate
-
 url: https://declaredesign.org/r/estimatr
 
+template:
+  bootstrap: 5
+  bslib:
+    primary: "#0054AD"
+    border-radius: 0.5rem
+    btn-border-radius: 0.25rem
+
+development:
+  mode: auto
+
 navbar:
-  left:
+  right:
   - text: "Software"
     menu:
       - text: DeclareDesign
-        href: http://declaredesign.org/r/declaredesign/
+        href: https://declaredesign.org/r/DeclareDesign/
       - text: randomizr
         href: https://declaredesign.org/r/randomizr/
       - text: fabricatr
         href: https://declaredesign.org/r/fabricatr/
+      - text: estimatr
+        href: https://declaredesign.org/r/estimatr/
       - text: DesignLibrary
         href: https://declaredesign.org/r/designlibrary/
-  - text: "Help"
-    href: http://discuss.declaredesign.org
-  right:
-  - text: Get started
+  - text: declaredesign.org
+    href: https://declaredesign.org
+  left:
+  - text: Getting started
     href: articles/getting-started.html
   - text: Reference
     href: reference/index.html
@@ -44,5 +53,3 @@ navbar:
        href: articles/simulations-ols-variance.html
      - text: How Stata's hat matrix differs with weights
        href: articles/stata-wls-hat.html
-  - text: estimatr home
-    href: https://declaredesign.org/r/estimatr/
