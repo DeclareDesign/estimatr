@@ -175,7 +175,7 @@ lm_lin <- function(formula,
     )
   }
 
-  if (class(covariates) != "formula") {
+  if (!inherits(covariates, "formula")) {
     stop(
       "The `covariates` argument must be specified as a formula:\n",
       "You passed an object of class ", class(covariates)

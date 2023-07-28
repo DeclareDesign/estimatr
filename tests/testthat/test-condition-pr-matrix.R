@@ -12,6 +12,8 @@ test_that("Checks class", {
 
 test_that("Complete randomization", {
 
+  skip_if_not_installed("randomizr")
+
   prs <- rep(0.4, times = n)
   comp_ra <- randomizr::declare_ra(N = n, prob = prs[1])
   perms <- randomizr::obtain_permutation_matrix(comp_ra)

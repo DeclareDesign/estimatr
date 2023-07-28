@@ -13,6 +13,7 @@ dat <- data.frame(
 
 # se tests
 test_that("lh_robust works with all se types", {
+  skip_if_not_installed("car")
   for (se_type in se_types) {
     lhro <-
       tidy(
@@ -34,6 +35,7 @@ test_that("lh_robust works with all se types", {
 })
 
 test_that("lh_robust with clusters works for all se_types ", {
+  skip_if_not_installed("car")
   for (se_type in cr_se_types) {
     lhro <-
       tidy(
@@ -58,6 +60,8 @@ test_that("lh_robust with clusters works for all se_types ", {
 })
 
 test_that("lh_robust matches lm_robust with fixed effects", {
+  skip_if_not_installed("car")
+
   lhro <-
     lh_robust(
       Y ~ Z * X,
@@ -76,6 +80,8 @@ test_that("lh_robust matches lm_robust with fixed effects", {
 })
 
 test_that("lh_robust matches lm_robust with weights", {
+  skip_if_not_installed("car")
+
   lhro <-
     lh_robust(
       Y ~ Z * X,
@@ -95,6 +101,8 @@ test_that("lh_robust matches lm_robust with weights", {
 })
 
 test_that("lh_robust matches lm_robust with subsetted data.frame", {
+  skip_if_not_installed("car")
+
   lhro <-
     lh_robust(Y ~ Z * X,
               data = dat,
@@ -112,6 +120,8 @@ test_that("lh_robust matches lm_robust with subsetted data.frame", {
 })
 
 test_that("lh_robust matches lm_robust with subsetted data.frame", {
+  skip_if_not_installed("car")
+
   lhro <-
     lh_robust(Y ~ Z * X,
               data = dat,

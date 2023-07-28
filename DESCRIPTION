@@ -23,7 +23,7 @@ Imports:
     rlang (>= 0.2.0)
 LinkingTo: Rcpp, RcppEigen
 Encoding: UTF-8
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.0
 LazyData: true
 Suggests:
     fabricatr (>= 0.10.0),
@@ -32,7 +32,6 @@ Suggests:
     clubSandwich,
     emmeans (>= 1.4),
     estimability,
-    ivpack,
     margins,
     modelsummary,
     prediction,

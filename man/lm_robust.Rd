@@ -243,7 +243,7 @@ Abadie, Alberto, Susan Athey, Guido W Imbens, and Jeffrey Wooldridge. 2017. "A C
 
 Bell, Robert M, and Daniel F McCaffrey. 2002. "Bias Reduction in Standard Errors for Linear Regression with Multi-Stage Samples." Survey Methodology 28 (2): 169-82.
 
-Gaure, Simon. 2013. "OLS with multiple high dimensional category variables." Computational Statistics \& Data Analysis 66: 8-1. \doi{10.1016/j.csda.2013.03.024}
+Gaure, Simon. 2013. "OLS with multiple high dimensional category variables." Computational Statistics & Data Analysis 66: 8-1. \doi{10.1016/j.csda.2013.03.024}
 
 Halperin, I. 1962. "The product of projection operators." Acta Scientiarum Mathematicarum (Szeged) 23(1-2): 96-99.
 
