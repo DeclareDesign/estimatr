@@ -15,7 +15,7 @@ navbar:
   - text: "Software"
     menu:
       - text: DeclareDesign
-        href: https://declaredesign.org/r/DeclareDesign/
+        href: http://declaredesign.org/r/declaredesign/
       - text: randomizr
         href: https://declaredesign.org/r/randomizr/
       - text: fabricatr
@@ -24,6 +24,8 @@ navbar:
         href: https://declaredesign.org/r/estimatr/
       - text: DesignLibrary
         href: https://declaredesign.org/r/designlibrary/
+      - text: DesignWizard
+        href: https://eos.wzb.eu/ipi/DDWizard/
   - text: declaredesign.org
     href: https://declaredesign.org
   left:
