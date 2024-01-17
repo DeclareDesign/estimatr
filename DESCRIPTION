@@ -1,7 +1,7 @@
 Package: estimatr
 Type: Package
 Title: Fast Estimators for Design-Based Inference
-Version: 1.0.0
+Version: 1.0.2
 Authors@R: c(person("Graeme", "Blair", email = "graeme.blair@gmail.com", role = c("aut", "cre")),
              person("Jasper", "Cooper", email = "jjc2247@columbia.edu", role = c("aut")),
              person("Alexander", "Coppock", email = "alex.coppock@yale.edu", role = c("aut")),
@@ -14,7 +14,7 @@ Description: Fast procedures for small set of commonly-used, design-appropriate 
 URL: https://declaredesign.org/r/estimatr/, https://github.com/DeclareDesign/estimatr
 BugReports: https://github.com/DeclareDesign/estimatr/issues
 License: MIT + file LICENSE
-Depends: R (>= 3.5.0)
+Depends: R (>= 3.6.0)
 Imports:
     Formula,
     generics,
@@ -23,7 +23,7 @@ Imports:
     rlang (>= 0.2.0)
 LinkingTo: Rcpp, RcppEigen
 Encoding: UTF-8
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.3
 LazyData: true
 Suggests:
     fabricatr (>= 0.10.0),

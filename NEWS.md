@@ -1,3 +1,7 @@
+# estimatr 1.0.2
+
+* Minor documentation changes to stay current on CRAN.
+
 # estimatr 1.0.0
 
 * Version bump to coincide with DeclareDesign package version 1.0.0

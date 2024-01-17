@@ -3,7 +3,36 @@
 \docType{package}
 \name{estimatr}
 \alias{estimatr}
+\alias{estimatr-package}
 \title{estimatr}
 \description{
 Fast procedures for small set of commonly-used, design-appropriate estimators with robust standard errors and confidence intervals. Includes estimators for linear regression, instrumental variables regression, difference-in-means, Horvitz-Thompson estimation, and regression improving precision of experimental estimates by interacting treatment with centered pre-treatment covariates introduced by Lin (2013) <doi:10.1214/12-AOAS583>.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://declaredesign.org/r/estimatr/}
+  \item \url{https://github.com/DeclareDesign/estimatr}
+  \item Report bugs at \url{https://github.com/DeclareDesign/estimatr/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Graeme Blair \email{graeme.blair@gmail.com}
+
+Authors:
+\itemize{
+  \item Jasper Cooper \email{jjc2247@columbia.edu}
+  \item Alexander Coppock \email{alex.coppock@yale.edu}
+  \item Macartan Humphreys \email{macartan@gmail.com}
+  \item Luke Sonnet \email{luke.sonnet@gmail.com}
+}
+
+Other contributors:
+\itemize{
+  \item Neal Fultz \email{nfultz@gmail.com} [contributor]
+  \item Lily Medina \email{lilymiru@gmail.com} [contributor]
+  \item Russell Lenth \email{russell-lenth@uiowa.edu} [contributor]
+}
+
 }

@@ -15,4 +15,4 @@
 #' @importFrom Formula as.Formula
 #' @importFrom rlang enquos enquo eval_tidy quo_get_expr quo_set_expr quo_is_missing sym quo
 #' @name estimatr
-NULL
+"_PACKAGE"
