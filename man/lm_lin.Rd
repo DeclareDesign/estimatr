@@ -96,7 +96,7 @@ following components:
   \item{call}{the original function call}
   \item{fitted.values}{the matrix of predicted means}
 We also return \code{terms} and \code{contrasts}, used by \code{predict},
-and \code{scaled_center}{the means of each of the covariates used for centering them}
+and \code{scaled_center} (the means of each of the covariates used for centering them).
 }
 \description{
 This function is a wrapper for \code{\link{lm_robust}} that
@@ -172,11 +172,11 @@ lm_lin(y ~ z_block, ~ factor(blockID), data = dat)
 }
 
 }
-\seealso{
-\code{\link{lm_robust}}
-
-#' @references
+\references{
 Freedman, David A. 2008. "On Regression Adjustments in Experiments with Several Treatments." The Annals of Applied Statistics. JSTOR, 176-96. \doi{10.1214/07-AOAS143}.
 
 Lin, Winston. 2013. "Agnostic Notes on Regression Adjustments to Experimental Data: Reexamining Freedman's Critique." The Annals of Applied Statistics 7 (1). Institute of Mathematical Statistics: 295-318. \doi{10.1214/12-AOAS583}.
+}
+\seealso{
+\code{\link{lm_robust}}
 }

@@ -1,6 +1,6 @@
 ## Submission
 
-Thank you for reviewing this minor patch, which addresses failures on CRAN due to ivpack being archived. The version is also bumped and the email address of the maintainer changed.
+Small changes to update based on Kurt's 8/19/23 email and also address C++ warning in R CMD CHECK.
 
 There are no changes to worse in reverse depends. 
 
