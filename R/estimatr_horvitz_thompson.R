@@ -139,7 +139,7 @@
 #' @seealso \code{\link[randomizr]{declare_ra}}
 #'
 #' @references
-#' Aronow, Peter M, and Joel A Middleton. 2013. "A Class of Unbiased Estimators of the Average Treatment Effect in Randomized Experiments." Journal of Causal Inference 1 (1): 135-54. \url{https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.712.5830&rep=rep1&type=pdf}.
+#' Aronow, Peter M, and Joel A Middleton. 2013. "A Class of Unbiased Estimators of the Average Treatment Effect in Randomized Experiments." Journal of Causal Inference 1 (1): 135-54. \doi{10.1515/jci-2012-0009}.
 #'
 #' Aronow, Peter M, and Cyrus Samii. 2017. "Estimating Average Causal Effects Under Interference Between Units." Annals of Applied Statistics, forthcoming. \url{https://arxiv.org/abs/1305.6156v3}.
 #'
