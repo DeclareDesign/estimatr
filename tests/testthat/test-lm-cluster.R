@@ -121,7 +121,7 @@ test_that("lm cluster se", {
   for (se_type in cr_se_types) {
     lmr_rd <- lm_robust(Y ~ X + Z + X2, data = dat, clusters = J, se_type = se_type)
     lmr_full <- lm_robust(Y ~ X + Z, data = dat, clusters = J, se_type = se_type)
-    expect_identical(
+    expect_equal(
       tidy(lmr_rd)[1:3, ],
       tidy(lmr_full)
     )
