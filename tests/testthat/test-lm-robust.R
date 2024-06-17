@@ -569,6 +569,7 @@ test_that("multiple outcomes", {
     vcov(lmro)
   )
 
+  skip_if_not_installed("sandwich")
   for (se_type in setdiff(se_types, "classical")) {
     expect_equal(
       sandwich::vcovHC(lmo, type = se_type),

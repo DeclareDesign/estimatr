@@ -472,6 +472,8 @@ test_that("DIM works with character args", {
 })
 
 test_that("DIM unbiased", {
+  skip_if_not_installed("randomizr")
+
   dat <- data.frame(
     i = 1:10,
     Y0 = c(
