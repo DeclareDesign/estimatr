@@ -63,6 +63,7 @@ test_that("lm cluster se", {
 
   lm_interact_simple <- lm(Y ~ Z * X, data = dat)
 
+  skip_if_not_installed("sandwich")
   bm_interact <-
     BMlmSE(
       lm_interact_simple,
@@ -357,6 +358,8 @@ test_that("lm works with quoted or unquoted vars and withor without factor clust
 })
 
 test_that("Clustered SEs work with clusters of size 1", {
+  skip_if_not_installed("sandwich")
+
   dat <- data.frame(
     Y = rnorm(100),
     X = rnorm(100),

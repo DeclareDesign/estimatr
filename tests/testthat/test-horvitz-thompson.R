@@ -26,6 +26,8 @@ test_that("Horvitz-Thompson matches d-i-m under certain conditions", {
 })
 
 test_that("Horvitz-Thompson works in simple case", {
+  skip_if_not_installed("randomizr")
+
   n <- 40
   dat <- data.frame(
     y = rnorm(n)
@@ -167,6 +169,8 @@ test_that("Horvitz-Thompson works in simple case", {
 })
 
 test_that("Horvitz-Thompson works with clustered data", {
+  skip_if_not_installed("randomizr")
+
   n <- 8
   dat <- data.frame(
     y = rnorm(n),
@@ -339,6 +343,8 @@ test_that("Horvitz-Thompson works with clustered data", {
 })
 
 test_that("Horvitz-Thompson works with missingness", {
+  skip_if_not_installed("randomizr")
+
   n <- 40
   dat <- data.frame(
     y = rnorm(n),
@@ -386,6 +392,8 @@ test_that("Horvitz-Thompson works with missingness", {
 
 # test blocks in the data
 test_that("Estimating Horvitz-Thompson can be done two ways with blocks", {
+  skip_if_not_installed("randomizr")
+
   n <- 40
   dat <- data.frame(
     y = rnorm(n),
@@ -449,6 +457,8 @@ test_that("Estimating Horvitz-Thompson can be done two ways with blocks", {
 
 # errors when arguments are passed that shouldn't be together
 test_that("Horvitz-Thompson properly checks arguments and data", {
+  skip_if_not_installed("randomizr")
+
   n <- 8
   dat <- data.frame(
     y = rnorm(n),
@@ -618,6 +628,8 @@ test_that("Works without variation in treatment", {
 })
 
 test_that("multi-valued treatments not allowed in ra_declaration", {
+  skip_if_not_installed("randomizr")
+
   dat <- data.frame(
     y = rnorm(20),
     ps = 0.4
