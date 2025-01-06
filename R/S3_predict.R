@@ -74,30 +74,6 @@ predict.lm_robust <- function(object,
 
   X <- get_X(object, newdata, na.action)
 
-  # lm_lin scaling
-  if (!is.null(object$scaled_center)) {
-    demeaned_covars <-
-      scale(
-        X[
-          ,
-          names(object$scaled_center),
-          drop = FALSE
-        ],
-        center = object$scaled_center,
-        scale = FALSE
-      )
-
-    # Interacted with treatment
-    treat_name <- attr(object$terms, "term.labels")[1]
-    interacted_covars <- X[, treat_name] * demeaned_covars
-
-    X <- cbind(
-      X[, attr(X, "assign") <= 1, drop = FALSE],
-      demeaned_covars,
-      interacted_covars
-    )
-  }
-
   # Get coefs
   coefs <- as.matrix(coef(object))
 
@@ -224,8 +200,53 @@ get_X <- function(object, newdata, na.action) {
 
   X <- model.matrix(rhs_terms, mf, contrasts.arg = object$contrasts)
 
+  # lm_lin scaling (moved down from predict.lm_robust)
+  if (!is.null(object$scaled_center)) {
+    # Covariates
+    demeaned_covars <-
+      scale(
+        X[
+          ,
+          names(object$scaled_center),
+          drop = FALSE
+        ],
+        center = object$scaled_center,
+        scale = FALSE
+      )
+
+    # Handle treatment variable reconstruction
+    treat_name <- attr(object$terms, "term.labels")[1]
+    treatment <- mf[, treat_name]
+
+    if (any(!(treatment %in% c(0, 1)))) {
+      vals <- sort(unique(treatment))
+      treatment <- model.matrix(~ factor(treatment, levels = vals) - 1)
+      colnames(treatment) <- paste0(treat_name, "_", vals)
+      # Drop out first group if there is an intercept
+      if (attr(rhs_terms, "intercept") == 1) treatment <- treatment[, -1, drop = FALSE]
+    }
+
+    # Interactions with covariates
+    interaction_matrix <- do.call(
+      cbind,
+      lapply(seq_len(ncol(treatment)), function(i) {
+        treatment[, i] * demeaned_covars
+      })
+    )
+
+    X <- cbind(
+      if (attr(rhs_terms, "intercept") == 1) {
+        matrix(1, nrow = nrow(X), ncol = 1, dimnames = list(NULL, "(Intercept)"))
+      },
+      treatment,
+      if (attr(rhs_terms, "intercept") == 1 || ncol(treatment) == 1) demeaned_covars,
+      interaction_matrix
+    )
+  }
+
   return(X)
 }
+
 
 add_fes <- function(preds, object, newdata) {
 
