@@ -230,7 +230,7 @@ lm_lin <- function(formula,
   design_mat_treatment <- colnames(design_matrix)[treat_col]
 
   # Check case where treatment is not factor and is not binary
-  if (any(!(treatment %in% c(0, 1)))) {
+  if (any(!(treatment %in% c(0, 1))) | (!has_intercept&ncol(treatment) ==1) ) {
     # create dummies for non-factor treatment variable
 
     # Drop out first group if there is an intercept
@@ -313,20 +313,10 @@ lm_lin <- function(formula,
       interacted_covars
     )
   } else {
-    # If no intercept, but treatment is only one column,
-    # need to add base terms for covariates
-    if (n_treat_cols == 1) {
-      X <- cbind(
-        treatment,
-        demeaned_covars,
-        interacted_covars
-      )
-    } else {
-      X <- cbind(
-        treatment,
-        interacted_covars
-      )
-    }
+    X <- cbind(
+      treatment,
+      interacted_covars
+    )
   }
 
   # ----------

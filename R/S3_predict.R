@@ -217,14 +217,11 @@ get_X <- function(object, newdata, na.action) {
     # Handle treatment variable reconstruction
     treat_name <- attr(object$terms, "term.labels")[1]
     treatment <- mf[, treat_name]
-
-    if (any(!(treatment %in% c(0, 1)))) {
-      vals <- sort(unique(treatment))
-      treatment <- model.matrix(~ factor(treatment, levels = vals) - 1)
-      colnames(treatment) <- paste0(treat_name, "_", vals)
-      # Drop out first group if there is an intercept
-      if (attr(rhs_terms, "intercept") == 1) treatment <- treatment[, -1, drop = FALSE]
-    }
+    vals <- sort(unique(treatment))
+    treatment <- model.matrix(~ factor(treatment, levels = vals) - 1)
+    colnames(treatment) <- paste0(treat_name, "_", vals)
+    # Drop out first group if there is an intercept
+    if (attr(rhs_terms, "intercept") == 1) treatment <- treatment[, -1, drop = FALSE]
 
     # Interactions with covariates
     interaction_matrix <- do.call(
