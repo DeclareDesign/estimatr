@@ -218,7 +218,16 @@ get_X <- function(object, newdata, na.action) {
     treat_name <- attr(object$terms, "term.labels")[1]
     treatment <- mf[, treat_name]
     vals <- sort(unique(treatment))
-    treatment <- model.matrix(~ factor(treatment, levels = vals) - 1)
+
+    # Ensure treatment levels in newdata are subset of those for model fit
+    if (!all(as.character(vals) %in% object$xlevels[[1]])) {
+      stop(
+        "Levels of treatment variable in `newdata` must be a subset of those ",
+        "in the model fit."
+      )
+    }
+    assign(treat_name, object$xlevels[[1]])
+    treatment <- model.matrix(~ factor(treatment, levels = object$xlevels[[1]]) - 1)
     colnames(treatment) <- paste0(treat_name, "_", vals)
     # Drop out first group if there is an intercept
     if (attr(rhs_terms, "intercept") == 1) treatment <- treatment[, -1, drop = FALSE]
