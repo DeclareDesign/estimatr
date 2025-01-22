@@ -90,4 +90,25 @@ predict(lm_out, newdata = new_dat)
 new_dat$w <- runif(n)
 predict(lm_out, newdata = new_dat, weights = w, interval = "prediction")
 
+# Works for 'lm_lin' models as well
+dat$z <- sample(1:3, size = nrow(dat), replace = TRUE)
+lmlin_out1 <- lm_lin(y ~ z, covariates = ~ x, data = dat)
+predict(lmlin_out1, newdata = dat, interval = "prediction")
+
+# Predictions from Lin models are equivalent with and without an intercept
+# and for multi-level treatments entered as numeric or factor variables
+lmlin_out2 <- lm_lin(y ~ z - 1, covariates = ~ x, data = dat)
+lmlin_out3 <- lm_lin(y ~ factor(z), covariates = ~ x, data = dat)
+lmlin_out4 <- lm_lin(y ~ factor(z) - 1, covariates = ~ x, data = dat)
+
+predict(lmlin_out2, newdata = dat, interval = "prediction")
+predict(lmlin_out3, newdata = dat, interval = "prediction")
+predict(lmlin_out4, newdata = dat, interval = "prediction")
+
+# In Lin models, predict will stop with an error message if new
+# treatment levels are supplied in the new data
+new_dat$z <- sample(0:3, size = nrow(new_dat), replace = TRUE)
+# predict(lmlin_out, newdata = new_dat)
+
+
 }
