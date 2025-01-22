@@ -350,6 +350,12 @@ lm_lin <- function(formula,
 
   return_list[["scaled_center"]] <- center
   setNames(return_list[["scaled_center"]], original_covar_names)
+  # Store unique treatment values
+  if(attr(terms(model_data), "dataClasses")[attr(terms(model_data),"term.labels")[1]] == "factor"){
+    return_list[["treatment_levels"]] <- model_data$xlevels[[1]]
+  } else {
+    return_list[["treatment_levels"]] <- sort(unique(design_matrix[, design_mat_treatment]))
+  }
 
   return_list[["call"]] <- match.call()
 
