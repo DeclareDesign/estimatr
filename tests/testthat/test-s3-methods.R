@@ -643,6 +643,59 @@ test_that("predict works", {
     predict(lm_int_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1, 2)]
   )
 
+  # With and without factorial treatment, intercept, predictions should be the same
+  lml_out <- lm_lin(y ~ x, covariates = ~ z + I(z^2) +cl, data = dat, se_type = "classical")
+  lml_0_out <- lm_lin(y ~ x + 0, covariates = ~ z + I(z^2) + cl, data = dat, se_type = "classical")
+  lml_f_out <- lm_lin(y ~ factor(x), covariates = ~ z + I(z^2) + cl, data = dat, se_type = "classical")
+  lm_f0_out <- lm_lin(y ~ factor(x) + 0, covariates = ~ z + I(z^2) + cl, data = dat, se_type = "classical")
+
+  expect_equivalent(
+    predict(lml_0_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1, 2)],
+    predict(lml_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1, 2)]
+  )
+  expect_equivalent(
+    predict(lml_f_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1, 2)],
+    predict(lml_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1, 2)],
+  )
+
+  expect_equivalent(
+    predict(lml_f_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1, 2)],
+    predict(lml_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1, 2)]
+  )
+
+  expect_equivalent(
+    predict(lml_f_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1, 2)],
+    predict(lm_f0_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1, 2)]
+  )
+
+  # For multi-level treatments, with and without factorial treatment, intercept, predictions should be the same
+  dat$x_multi <- rep(0:2, times = 7)[1:20]
+  new_dat$x_multi <- rep(0:2, times = 7)
+
+  lml_out <- lm_lin(y ~ x_multi, covariates = ~ z + I(z^2) +cl, data = dat, se_type = "classical")
+  lml_0_out <- lm_lin(y ~ x_multi + 0, covariates = ~ z + I(z^2) + cl, data = dat, se_type = "classical")
+  lml_f_out <- lm_lin(y ~ factor(x_multi), covariates = ~ z + I(z^2) + cl, data = dat, se_type = "classical")
+  lm_f0_out <- lm_lin(y ~ factor(x_multi) + 0, covariates = ~ z + I(z^2) + cl, data = dat, se_type = "classical")
+
+  expect_equivalent(
+    predict(lml_0_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1, 2)],
+    predict(lml_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1, 2)]
+  )
+  expect_equivalent(
+    predict(lml_f_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1, 2)],
+    predict(lml_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1, 2)],
+  )
+
+  expect_equivalent(
+    predict(lml_f_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1, 2)],
+    predict(lml_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1, 2)]
+  )
+
+  expect_equivalent(
+    predict(lml_f_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1, 2)],
+    predict(lm_f0_out, new_dat, se.fit = TRUE, interval = "confidence")[c(1, 2)]
+  )
+
   # working with rank deficient X
   head(dat)
   dat$z2 <- dat$z

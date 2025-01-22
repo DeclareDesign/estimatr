@@ -308,10 +308,19 @@ test_that("Test LM Lin", {
   lmlo <- lm_lin(Y ~ z + 0, ~X1, data = dat)
   expect_equal(
     lmlo$term,
-    c("z", "X1_c", "z:X1_c")
+    c("z0", "z1", "z0:X1_c", "z1:X1_c")
+  )
+
+  # works with a multi-value treatment with no intercept
+  dat$z <- factor(rbinom(nrow(dat), 2, 0.5))
+  lmlo <- lm_lin(Y ~ z + 0, ~X1, data = dat)
+  expect_equal(
+    lmlo$term,
+    c("z0", "z1", "z2", "z0:X1_c", "z1:X1_c", "z2:X1_c")
   )
 
   # behaves correctly with "odd" covariates (see issue #283)
+  dat$z <- rbinom(nrow(dat), 1, 0.5)
   lmlo <- lm_lin(Y ~ z, ~ is.na(X1), data = dat)
   expect_equal(
     lmlo$term,
