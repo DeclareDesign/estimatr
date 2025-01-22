@@ -233,13 +233,16 @@ get_X <- function(object, newdata, na.action) {
     # Drop out first group if there is an intercept
     if (attr(rhs_terms, "intercept") == 1) treatment <- treatment[, -1, drop = FALSE]
 
-    # Interactions with covariates
-    interaction_matrix <- do.call(
-      cbind,
-      lapply(seq_len(ncol(treatment)), function(i) {
-        treatment[, i] * demeaned_covars
-      })
-    )
+    # Interactions matching original fitting logic
+    n_treat_cols <- ncol(treatment)
+    n_covars <- ncol(demeaned_covars)
+
+    interaction_matrix <- matrix(0, nrow = nrow(X), ncol = n_covars * n_treat_cols)
+
+    for (i in 1:n_covars) {
+      cols <- (i - 1) * n_treat_cols + (1:n_treat_cols)
+      interaction_matrix[, cols] <- treatment * demeaned_covars[, i]
+    }
 
     X <- cbind(
       if (attr(rhs_terms, "intercept") == 1) {
