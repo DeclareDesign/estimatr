@@ -123,9 +123,8 @@ In short, the Horvitz-Thompson estimator essentially reweights each unit
 by the probability of it being in its observed condition. Pivotal to the
 estimation of treatment effects using this estimator are the marginal
 condition probabilities (i.e., the probability that any one unit is in
-a particular treatment condition). Pivotal to the estimating the variance
-variance whenever the design is more complicated than simple randomization,
-are the
+a particular treatment condition). Pivotal to estimating the variance
+whenever the design is more complicated than simple randomization are the
 joint condition probabilities (i.e., the probabilities that any two units
 have a particular set of treatment conditions, either the same or
 different). The estimator we provide here considers the case with two
