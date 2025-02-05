@@ -22,6 +22,8 @@ navbar:
         href: https://declaredesign.org/r/fabricatr/
       - text: estimatr
         href: https://declaredesign.org/r/estimatr/
+      - text: rdss
+        href: https://declaredesign.org/r/rdss/
       - text: DesignLibrary
         href: https://declaredesign.org/r/designlibrary/
       - text: DesignWizard
