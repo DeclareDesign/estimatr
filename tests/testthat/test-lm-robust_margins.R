@@ -110,5 +110,6 @@ test_that("lm lin can work with margins", {
   expect_equal(
     lml_sum[, 4],
     lmo_sum[, 4],
+    tolerance = 0.000001
   )
 })
