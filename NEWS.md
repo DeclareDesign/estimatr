@@ -1,3 +1,7 @@
+# estimatr 1.0.4
+
+* Test suite changes for M1 mac stay current on CRAN.
+
 # estimatr 1.0.2
 
 * Minor documentation changes to stay current on CRAN.
