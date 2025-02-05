@@ -83,7 +83,7 @@
 #'   \item{weighted}{whether or not weights were applied}
 #'   \item{call}{the original function call}
 #'   \item{fitted.values}{the matrix of predicted means}
-#' We also return \code{terms} and \code{contrasts}, used by \code{predict},
+#' We also return \code{terms}, \code{contrasts}, and \code{treatment_levels}, used by \code{predict},
 #' and \code{scaled_center} (the means of each of the covariates used for centering them).
 #'
 #' @seealso \code{\link{lm_robust}}
@@ -127,9 +127,12 @@
 #'
 #' lm_lin(y ~ z_clust, covariates = ~ x, data = dat, clusters = clusterID)
 #'
-#' # Works with multi-valued treatments
+#' # Works with multi-valued treatments, whether treatment is specified as a
+#' # factor or not
 #' dat$z_multi <- sample(1:3, size = nrow(dat), replace = TRUE)
+#'
 #' lm_lin(y ~ z_multi, covariates = ~ x, data = dat)
+#' lm_lin(y ~ factor(z_multi), covariates = ~ x, data = dat)
 #'
 #' # Stratified estimator with blocks
 #' dat$blockID <- rep(1:5, each = 8)
@@ -137,11 +140,23 @@
 #'
 #' lm_lin(y ~ z_block, ~ factor(blockID), data = dat)
 #'
+#' # Fitting the model without an intercept provides estimates of mean outcomes
+#' # under each respective treatment condition
+#' lm_lin(y ~ z_multi - 1, covariates = ~ x, data = dat)
+#'
+#' # Predictions are the same in equivalent models with and without an intercept
+#' lmlin_out3 <- lm_lin(y ~ z_multi - 1, covariates = ~ x, data = dat)
+#' lmlin_out4 <- lm_lin(y ~ z_multi, covariates = ~ x, data = dat)
+#'
+#' predict(lmlin_out3, newdata = dat, se.fit = TRUE, interval = "confidence")
+#' predict(lmlin_out4, newdata = dat, se.fit = TRUE, interval = "confidence")
+#'
 #' \dontrun{
 #'   # Can also use 'margins' package if you have it installed to get
 #'   # marginal effects
 #'   library(margins)
-#'   lmlout <- lm_lin(y ~ z_block, ~ x, data = dat)
+#'   # Instruct 'margins' to treat z as a factor
+#'   lmlout <- lm_lin(y ~ factor(z_block), ~ x, data = dat)
 #'   summary(margins(lmlout))
 #'
 #'   # Can output results using 'texreg'
@@ -230,7 +245,7 @@ lm_lin <- function(formula,
   design_mat_treatment <- colnames(design_matrix)[treat_col]
 
   # Check case where treatment is not factor and is not binary
-  if (any(!(treatment %in% c(0, 1)))) {
+  if (any(!(treatment %in% c(0, 1))) | (!has_intercept&ncol(treatment) ==1) ) {
     # create dummies for non-factor treatment variable
 
     # Drop out first group if there is an intercept
@@ -313,20 +328,10 @@ lm_lin <- function(formula,
       interacted_covars
     )
   } else {
-    # If no intercept, but treatment is only one column,
-    # need to add base terms for covariates
-    if (n_treat_cols == 1) {
-      X <- cbind(
-        treatment,
-        demeaned_covars,
-        interacted_covars
-      )
-    } else {
-      X <- cbind(
-        treatment,
-        interacted_covars
-      )
-    }
+    X <- cbind(
+      treatment,
+      interacted_covars
+    )
   }
 
   # ----------
@@ -360,6 +365,12 @@ lm_lin <- function(formula,
 
   return_list[["scaled_center"]] <- center
   setNames(return_list[["scaled_center"]], original_covar_names)
+  # Store unique treatment values
+  if(attr(terms(model_data), "dataClasses")[attr(terms(model_data),"term.labels")[1]] == "factor"){
+    return_list[["treatment_levels"]] <- model_data$xlevels[[1]]
+  } else {
+    return_list[["treatment_levels"]] <- sort(unique(design_matrix[, design_mat_treatment]))
+  }
 
   return_list[["call"]] <- match.call()
 

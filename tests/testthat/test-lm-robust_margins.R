@@ -97,17 +97,19 @@ test_that("lm robust + cluster can work with margins", {
 test_that("lm lin can work with margins", {
   skip_if_not_installed("margins")
   data("alo_star_men")
-  lml <- lm_lin(GPA_year1 ~ ssp, ~  gpa0, data = alo_star_men, se_type = "classical")
+  # instruct margins to treat treatment as a factor
+  lml <- lm_lin(GPA_year1 ~ factor(ssp), ~  gpa0, data = alo_star_men, se_type = "classical")
 
   alo_star_men$gpa0_tilde <- alo_star_men$gpa0 - mean(alo_star_men$gpa0)
 
-  lmo <- lm(GPA_year1 ~ ssp * gpa0_tilde, data = alo_star_men)
+  lmo <- lm(GPA_year1 ~ factor(ssp) * gpa0_tilde, data = alo_star_men)
 
   lml_sum <- margins:::summary.margins(margins::margins(lml, vce = "delta"))
   lmo_sum <- margins:::summary.margins(margins::margins(lmo, vce = "delta"))
 
   expect_equal(
-    round(lml_sum[, 4], 5),
-    round(lmo_sum[, 4], 5)
+    lml_sum[, 4],
+    lmo_sum[, 4],
+    tolerance = 0.000001
   )
 })
