@@ -2,8 +2,8 @@
 % Please edit documentation in R/estimatr.R
 \docType{package}
 \name{estimatr}
-\alias{estimatr}
 \alias{estimatr-package}
+\alias{estimatr}
 \title{estimatr}
 \description{
 Fast procedures for small set of commonly-used, design-appropriate estimators with robust standard errors and confidence intervals. Includes estimators for linear regression, instrumental variables regression, difference-in-means, Horvitz-Thompson estimation, and regression improving precision of experimental estimates by interacting treatment with centered pre-treatment covariates introduced by Lin (2013) <doi:10.1214/12-AOAS583>.
