@@ -8,9 +8,9 @@ status](https://www.r-pkg.org/badges/version/estimatr)](https://cran.r-project.o
 [![CRAN RStudio mirror
 downloads](https://cranlogs.r-pkg.org/badges/grand-total/estimatr?color=green)](https://r-pkg.org/pkg/estimatr)
 [![Build
-status](https://github.com/DeclareDesign/estimatr/workflows/R-CMD-check/badge.svg)](https://github.com/DeclareDesign/estimatr/actions)
-[![Code
-coverage](https://codecov.io/gh/DeclareDesign/estimatr/branch/master/graph/badge.svg?token=x9MpkuKobc)](https://codecov.io/gh/DeclareDesign/estimatr)
+status](https://github.com/DeclareDesign/estimatr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/DeclareDesign/estimatr/actions/workflows/R-CMD-check.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/DeclareDesign/estimatr/graph/badge.svg)](https://app.codecov.io/gh/DeclareDesign/estimatr)
 [![Replications](https://softwarecite.com/badge/estimatr)](https://softwarecite.com/package/estimatr)
 
 **estimatr** is an `R` package providing a range of commonly-used linear
@@ -129,8 +129,8 @@ mb <- microbenchmark(
 
 | estimatr      | median run-time (ms) |
 |:--------------|---------------------:|
-| estimatr      |                  6.3 |
-| lm + sandwich |                 20.1 |
+| estimatr      |                    6 |
+| lm + sandwich |                   21 |
 
 ------------------------------------------------------------------------
 
