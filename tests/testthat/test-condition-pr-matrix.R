@@ -25,6 +25,7 @@ test_that("Complete randomization", {
 })
 
 test_that("declaration to condition_pr_mat errors", {
+  skip_if_not_installed("randomizr")
 
   expect_error(
     declaration_to_condition_pr_mat(randomizr::declare_ra(N = n), 1, NULL),
@@ -41,6 +42,7 @@ test_that("declaration to condition_pr_mat errors", {
 })
 
 test_that("condition args work properly", {
+  skip_if_not_installed("randomizr")
 
   # Condition args work properly
   mat01 <- declaration_to_condition_pr_mat(
@@ -61,6 +63,7 @@ test_that("condition args work properly", {
 })
 
 test_that("Complete randomization with number of treated units not fixed", {
+  skip_if_not_installed("randomizr")
 
   #
   comp_odd_ra <- randomizr::declare_ra(N = 3, prob = 0.5)
@@ -83,6 +86,7 @@ test_that("Complete randomization with number of treated units not fixed", {
 })
 
 test_that("Complete randomization with non 0.5 as remainder", {
+  skip_if_not_installed("randomizr")
   comp_odd_ra <- randomizr::declare_ra(N = 3, prob = 0.4)
   decl_cond_pr_mat <- declaration_to_condition_pr_mat(comp_odd_ra)
 
@@ -95,6 +99,7 @@ test_that("Complete randomization with non 0.5 as remainder", {
   )
 })
 test_that("Simple ra", {
+  skip_if_not_installed("randomizr")
 
   # Simple randomization
   prs <- rep(0.4, times = n)
@@ -113,6 +118,7 @@ test_that("Simple ra", {
   )
 })
 test_that("Blocked complete ra", {
+  skip_if_not_installed("randomizr")
 
   # Blocked case
   dat <- data.frame(
@@ -129,6 +135,8 @@ test_that("Blocked complete ra", {
   )
 })
 test_that("Blocked complete ra with remainder", {
+  skip_if_not_installed("randomizr")
+
   dat <- data.frame(
     bl = c("A", "B", "A", "B", "B", "B"),
     pr = c(0.5, 0.25, 0.5, 0.25, 0.25, 0.25)
@@ -147,6 +155,7 @@ test_that("Blocked complete ra with remainder", {
   )
 })
 test_that("Clustered complete ra", {
+  skip_if_not_installed("randomizr")
 
   # Cluster complete case
   dat <- data.frame(
@@ -173,6 +182,7 @@ test_that("Clustered complete ra", {
 })
 
 test_that("Clustered ra", {
+  skip_if_not_installed("randomizr")
 
   # Cluster simple ? Should this be simple or no? --NJF
   dat <- data.frame(
@@ -204,6 +214,7 @@ test_that("Clustered ra", {
 })
 
 test_that("Blocked and Clustered ra", {
+  skip_if_not_installed("randomizr")
 
   # Blocked and clustered
   dat <- data.frame(
@@ -221,6 +232,7 @@ test_that("Blocked and Clustered ra", {
 })
 
 test_that("Blocked and clusted ra with remainder", {
+  skip_if_not_installed("randomizr")
 
   # with remainder
   dat <- data.frame(
@@ -238,6 +250,8 @@ test_that("Blocked and clusted ra with remainder", {
 })
 
 test_that("Custom ra", {
+  skip_if_not_installed("randomizr")
+
   cust_perms <- cbind(c(1, 0, 1, 0), c(1, 1, 0, 0))
   cust_ra <- randomizr::declare_ra(permutation_matrix = cust_perms)
 
@@ -248,6 +262,7 @@ test_that("Custom ra", {
 })
 
 test_that("Errors for things that we can't support", {
+  skip_if_not_installed("randomizr")
 
   #
   # multiple armed experiments
@@ -275,6 +290,8 @@ test_that("Errors for things that we can't support", {
 })
 
 test_that("probability not fixed within blocks", {
+  skip_if_not_installed("randomizr")
+
   bl_small <- randomizr::declare_ra(
     blocks = c(1, 1, 2, 2),
     prob = 0.4
@@ -295,6 +312,7 @@ test_that("probability not fixed within blocks", {
 })
 
 test_that("N=2, m=1", {
+  skip_if_not_installed("randomizr")
 
   comp <- randomizr::declare_ra(N = 2, m = 1)
   assign(

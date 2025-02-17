@@ -1,6 +1,7 @@
 context("Verification - HT matches Joel Middleton code")
 
 test_that("We match Joel's estimator", {
+  skip_if_not_installed("randomizr")
 
   # Code from Joel Middleton
   n <- 400
