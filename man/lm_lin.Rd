@@ -95,7 +95,7 @@ following components:
   \item{weighted}{whether or not weights were applied}
   \item{call}{the original function call}
   \item{fitted.values}{the matrix of predicted means}
-We also return \code{terms} and \code{contrasts}, used by \code{predict},
+We also return \code{terms}, \code{contrasts}, and \code{treatment_levels}, used by \code{predict},
 and \code{scaled_center} (the means of each of the covariates used for centering them).
 }
 \description{
@@ -149,9 +149,12 @@ dat$z_clust <- cluster_ra(clusters = dat$clusterID)
 
 lm_lin(y ~ z_clust, covariates = ~ x, data = dat, clusters = clusterID)
 
-# Works with multi-valued treatments
+# Works with multi-valued treatments, whether treatment is specified as a
+# factor or not
 dat$z_multi <- sample(1:3, size = nrow(dat), replace = TRUE)
+
 lm_lin(y ~ z_multi, covariates = ~ x, data = dat)
+lm_lin(y ~ factor(z_multi), covariates = ~ x, data = dat)
 
 # Stratified estimator with blocks
 dat$blockID <- rep(1:5, each = 8)
@@ -159,11 +162,23 @@ dat$z_block <- block_ra(blocks = dat$blockID)
 
 lm_lin(y ~ z_block, ~ factor(blockID), data = dat)
 
+# Fitting the model without an intercept provides estimates of mean outcomes
+# under each respective treatment condition
+lm_lin(y ~ z_multi - 1, covariates = ~ x, data = dat)
+
+# Predictions are the same in equivalent models with and without an intercept
+lmlin_out3 <- lm_lin(y ~ z_multi - 1, covariates = ~ x, data = dat)
+lmlin_out4 <- lm_lin(y ~ z_multi, covariates = ~ x, data = dat)
+
+predict(lmlin_out3, newdata = dat, se.fit = TRUE, interval = "confidence")
+predict(lmlin_out4, newdata = dat, se.fit = TRUE, interval = "confidence")
+
 \dontrun{
   # Can also use 'margins' package if you have it installed to get
   # marginal effects
   library(margins)
-  lmlout <- lm_lin(y ~ z_block, ~ x, data = dat)
+  # Instruct 'margins' to treat z as a factor
+  lmlout <- lm_lin(y ~ factor(z_block), ~ x, data = dat)
   summary(margins(lmlout))
 
   # Can output results using 'texreg'

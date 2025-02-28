@@ -61,6 +61,27 @@
 #' new_dat$w <- runif(n)
 #' predict(lm_out, newdata = new_dat, weights = w, interval = "prediction")
 #'
+#' # Works for 'lm_lin' models as well
+#' dat$z <- sample(1:3, size = nrow(dat), replace = TRUE)
+#' lmlin_out1 <- lm_lin(y ~ z, covariates = ~ x, data = dat)
+#' predict(lmlin_out1, newdata = dat, interval = "prediction")
+#'
+#' # Predictions from Lin models are equivalent with and without an intercept
+#' # and for multi-level treatments entered as numeric or factor variables
+#' lmlin_out2 <- lm_lin(y ~ z - 1, covariates = ~ x, data = dat)
+#' lmlin_out3 <- lm_lin(y ~ factor(z), covariates = ~ x, data = dat)
+#' lmlin_out4 <- lm_lin(y ~ factor(z) - 1, covariates = ~ x, data = dat)
+#'
+#' predict(lmlin_out2, newdata = dat, interval = "prediction")
+#' predict(lmlin_out3, newdata = dat, interval = "prediction")
+#' predict(lmlin_out4, newdata = dat, interval = "prediction")
+#'
+#' # In Lin models, predict will stop with an error message if new
+#' # treatment levels are supplied in the new data
+#' new_dat$z <- sample(0:3, size = nrow(new_dat), replace = TRUE)
+#' # predict(lmlin_out, newdata = new_dat)
+#'
+#'
 #' @export
 predict.lm_robust <- function(object,
                               newdata,
@@ -73,30 +94,6 @@ predict.lm_robust <- function(object,
                               ...) {
 
   X <- get_X(object, newdata, na.action)
-
-  # lm_lin scaling
-  if (!is.null(object$scaled_center)) {
-    demeaned_covars <-
-      scale(
-        X[
-          ,
-          names(object$scaled_center),
-          drop = FALSE
-        ],
-        center = object$scaled_center,
-        scale = FALSE
-      )
-
-    # Interacted with treatment
-    treat_name <- attr(object$terms, "term.labels")[1]
-    interacted_covars <- X[, treat_name] * demeaned_covars
-
-    X <- cbind(
-      X[, attr(X, "assign") <= 1, drop = FALSE],
-      demeaned_covars,
-      interacted_covars
-    )
-  }
 
   # Get coefs
   coefs <- as.matrix(coef(object))
@@ -224,8 +221,63 @@ get_X <- function(object, newdata, na.action) {
 
   X <- model.matrix(rhs_terms, mf, contrasts.arg = object$contrasts)
 
+  # lm_lin scaling (moved down from predict.lm_robust)
+  if (!is.null(object$scaled_center)) {
+    # Covariates
+    demeaned_covars <-
+      scale(
+        X[
+          ,
+          names(object$scaled_center),
+          drop = FALSE
+        ],
+        center = object$scaled_center,
+        scale = FALSE
+      )
+
+    # Handle treatment variable reconstruction
+    treat_name <- attr(object$terms, "term.labels")[1]
+    treatment <- mf[, treat_name]
+    vals <- sort(unique(treatment))
+    old_vals <- object$treatment_levels
+
+    # Ensure treatment levels in newdata are subset of those for model fit
+    if (!all(as.character(vals) %in% as.character(old_vals))) {
+      stop(
+        "Levels of treatment variable in `newdata` must be a subset of those ",
+        "in the model fit."
+      )
+    }
+    treatment <- model.matrix(~ factor(treatment, levels = old_vals) - 1)
+
+    colnames(treatment) <- paste0(treat_name, "_", old_vals)
+    # Drop out first group if there is an intercept
+    if (attr(rhs_terms, "intercept") == 1) treatment <- treatment[, -1, drop = FALSE]
+
+    # Interactions matching original fitting logic
+    n_treat_cols <- ncol(treatment)
+    n_covars <- ncol(demeaned_covars)
+
+    interaction_matrix <- matrix(0, nrow = nrow(X), ncol = n_covars * n_treat_cols)
+
+    for (i in 1:n_covars) {
+      cols <- (i - 1) * n_treat_cols + (1:n_treat_cols)
+      interaction_matrix[, cols] <- treatment * demeaned_covars[, i]
+    }
+
+    X <- cbind(
+      if (attr(rhs_terms, "intercept") == 1) {
+        matrix(1, nrow = nrow(X), ncol = 1, dimnames = list(NULL, "(Intercept)"))
+      },
+      treatment,
+      if (attr(rhs_terms, "intercept") == 1 || ncol(treatment) == 1) demeaned_covars,
+      interaction_matrix
+    )
+  }
+
   return(X)
 }
+
 
 add_fes <- function(preds, object, newdata) {
 

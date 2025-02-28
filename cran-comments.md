@@ -1,6 +1,6 @@
 ## Submission
 
-Small changes to update based on Kurt's 8/19/23 email and also address C++ warning in R CMD CHECK.
+Fixes M1 Mac errors.
 
 There are no changes to worse in reverse depends. 
 

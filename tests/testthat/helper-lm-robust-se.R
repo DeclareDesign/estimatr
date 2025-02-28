@@ -164,3 +164,4 @@ BMlmSE <- function(model, clustervar=NULL, ell=NULL, IK=TRUE) {
     se = se, se.Stata = se.Stata
   )
 }
+

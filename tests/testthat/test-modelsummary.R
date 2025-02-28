@@ -3,10 +3,12 @@
 context("S3 - modelsummary works")
 
 test_that("modelsummary works with glance", {
-  # skip_if_not_installed("modelsummary")
-  skip("modelsummary non reproducible errors")
+  skip_if_not_installed("modelsummary")
 
   library(modelsummary)
+
+  set.seed(5)
+
   model1 <- lm_robust(mpg ~ am, mtcars)
   model2 <- lm_robust(mpg ~ am, mtcars, clusters = cyl)
   model3 <- lm_lin(mpg ~ am, ~ cyl, mtcars)
@@ -14,9 +16,9 @@ test_that("modelsummary works with glance", {
   mso <- modelsummary(list(model1, model2, model3), output = "data.frame")
 
   expect_equal(colnames(mso), c("part", "term", "statistic",
-                                "Model 1", "Model 2", "Model 3"))
+                                "(1)", "(2)", "(3)"))
 
-  expect_equal(nrow(mso), 12L)
+  expect_equal(nrow(mso), 15L)
 
   expect_equal(ncol(mso), 6L)
 
@@ -28,7 +30,7 @@ test_that("modelsummary works with glance", {
                                     gof_omit = c("N|[sS]tatistic|p.value|p{1}"),
                                     output = "data.frame")
 
-  expect_equal(nrow(mso), 6)
+  expect_equal(nrow(mso), 10)
 
   expect_equal(ncol(mso), 5)
 
