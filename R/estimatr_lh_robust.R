@@ -98,7 +98,7 @@ lh_robust <- function(..., data, linear_hypothesis) {
   df <- lm_robust_fit$df[1]
 
   # appropriate when all elements of df are identical
-  if(length(lm_robust_fit$df) >0 && var(lm_robust_fit$df > 0)) {
+  if(length(lm_robust_fit$df) >1 && var(lm_robust_fit$df > 0)) {
     warning("lh_robust inference may be inaccurate if degrees of freedom vary across coefficients")
   }
 
