@@ -28,7 +28,13 @@ clean_model_data <- function(data, datargs, estimator = "") {
     mfargs[[da]] <- sym(name)
   }
 
-  mfargs[["formula"]] <- Formula::as.Formula(m_formula)
+  # IV needs Formula (for the | separator); everything else uses plain formula
+  # and avoids the ~80µs overhead of Formula::as.Formula + model.frame.Formula
+  if (estimator == "iv") {
+    mfargs[["formula"]] <- Formula::as.Formula(m_formula)
+  } else {
+    mfargs[["formula"]] <- m_formula
+  }
 
   mf <- eval_tidy(rlang::quo((stats::model.frame)(
     !!!mfargs,
