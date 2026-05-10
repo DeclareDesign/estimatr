@@ -354,6 +354,9 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
     } else if (se_type != "CR2") {
       dof.fill(J - 1);
     } else {
+      // Avoid O(J^2) P_array by computing trace and Frobenius norm from
+      // r_fe×J matrices directly. Complexity: O(r * r_fe^2 * J) vs O(r * J^2).
+      // For typical cases (r_fe=3, J=100): ~11x faster for this section.
       for (int j = 0; j < r; j++) {
         if (which_covs[j]) {
 
@@ -361,15 +364,45 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
           Eigen::MatrixXd H2t = H2s.row(j);
           Eigen::MatrixXd H3t = H3s.row(j);
 
-          H1t.resize(r_fe, J);
+          H1t.resize(r_fe, J);  // r_fe × J
           H2t.resize(r_fe, J);
           H3t.resize(r_fe, J);
 
-          Eigen::MatrixXd uf = H1t.transpose() * H2t;
-          Eigen::MatrixXd P_row = P_diags.row(j).asDiagonal();
-          Eigen::MatrixXd P_array = (H3t.transpose()*H3t - uf - uf.transpose()) + P_row;
+          Eigen::RowVectorXd p = P_diags.row(j);  // 1 × J
 
-          double dof_j = std::pow(P_array.trace(), 2) / P_array.array().pow(2).sum();
+          // r_fe × r_fe products — cheap
+          Eigen::MatrixXd G3  = H3t * H3t.transpose();  // symmetric
+          Eigen::MatrixXd P31 = H3t * H1t.transpose();
+          Eigen::MatrixXd P32 = H3t * H2t.transpose();
+          Eigen::MatrixXd G21 = H2t * H1t.transpose();
+          Eigen::MatrixXd G11 = H1t * H1t.transpose();  // symmetric
+          Eigen::MatrixXd G22 = H2t * H2t.transpose();  // symmetric
+
+          // Column-wise dot products — O(r_fe * J)
+          Eigen::RowVectorXd col_sq_A3    = H3t.colwise().squaredNorm();
+          Eigen::RowVectorXd col_dot_A1A2 = (H1t.cwiseProduct(H2t)).colwise().sum();
+
+          // trace(P_array) without forming J×J matrix
+          double trace_P = H3t.squaredNorm()
+                         - 2.0 * H1t.cwiseProduct(H2t).sum()
+                         + p.sum();
+
+          // ||P_array||_F^2 without forming J×J matrix
+          // P = S - U - U^T + D  (S=H3t^T H3t, U=H1t^T H2t, D=diag(p))
+          // ||P||^2 = ||S||^2 - 2<S,Q> + 2<S,D> + ||Q||^2 - 2<Q,D> + ||D||^2
+          // where Q = U + U^T (symmetric)
+          double sq_norm_P =
+              G3.squaredNorm()                                     // ||S||^2 (G3 symmetric → ||G3||_F^2 = trace(G3^2) = trace(S^2))
+            - 4.0 * P31.cwiseProduct(P32).sum()                   // -2<S,Q> = -4 trace(S U)
+            + 2.0 * col_sq_A3.cwiseProduct(p).sum()               // 2<S,D>
+            + 2.0 * G21.cwiseProduct(G21.transpose()).sum()        // 2 trace(U^2)  } ||Q||^2
+            + 2.0 * G11.cwiseProduct(G22).sum()                   // 2 ||U||_F^2   }
+            - 4.0 * col_dot_A1A2.cwiseProduct(p).sum()            // -2<Q,D>
+            + p.squaredNorm();                                     // ||D||^2
+
+          double dof_j = (sq_norm_P > 0.0)
+                       ? trace_P * trace_P / sq_norm_P
+                       : 0.0;
           for (int outcome_ix = 0; outcome_ix < ny; outcome_ix++) {
             dof(j + outcome_ix * r) = dof_j;
           }
