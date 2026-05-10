@@ -25,7 +25,8 @@ lm_robust_fit <- function(y,
                           return_vcov = TRUE,
                           return_fit = TRUE,
                           try_cholesky = FALSE,
-                          iv_stage = list(0)) {
+                          iv_stage = list(0),
+                          fe_rank = 0L) {
 
   # ----------
   # Check se type
@@ -33,7 +34,7 @@ lm_robust_fit <- function(y,
 
   clustered <- !is.null(cluster)
   weighted <- !is.null(weights)
-  se_type <- check_se_type(se_type, clustered)
+  se_type <- check_se_type(se_type, clustered, has_fe = (fe_rank > 0L))
 
   # -----------
   # Prep data for fitting
@@ -93,7 +94,7 @@ lm_robust_fit <- function(y,
   N <- nrow(data[["X"]])
 
   x_rank <- length(covs_used)
-  tot_rank <- x_rank
+  tot_rank <- x_rank + fe_rank
 
   if (multivariate) {
     return_list <- list(
@@ -173,7 +174,7 @@ lm_robust_fit <- function(y,
         ci = ci,
         se_type = se_type,
         which_covs = which_covs[covs_used],
-        fe_rank = 0L
+        fe_rank = fe_rank
       )
 
       return_list$std.error[est_exists] <- sqrt(diag(vcov_fit$Vcov_hat))
@@ -211,7 +212,7 @@ lm_robust_fit <- function(y,
   return_list[["alpha"]] <- alpha
   return_list[["se_type"]] <- se_type
   return_list[["weighted"]] <- weighted
-  return_list[["fes"]] <- FALSE
+  return_list[["fes"]] <- (fe_rank > 0L)
   return_list[["clustered"]] <- clustered
   return_list[["df.residual"]] <- N - tot_rank
   return_list[["nobs"]] <- N
@@ -297,15 +298,16 @@ lm_robust_fit <- function(y,
   return(return_list)
 }
 
-check_se_type <- function(se_type, clustered) {
+check_se_type <- function(se_type, clustered, has_fe = FALSE) {
 
-  cl_se_types <- c("CR0", "CR2", "stata")
+  cl_se_types  <- c("CR0", "CR2", "stata")
   rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata")
 
   if (clustered) {
 
     if (is.null(se_type)) {
-      se_type <- "CR2"
+      # With FE, CR2 requires the full augmented hat matrix; default to stata instead
+      se_type <- if (has_fe) "stata" else "CR2"
     } else if (!(se_type %in% c(cl_se_types, "none"))) {
       stop(
         "`se_type` must be either 'CR0', 'stata', 'CR2', or 'none' when ",
@@ -315,7 +317,8 @@ check_se_type <- function(se_type, clustered) {
   } else {
 
     if (is.null(se_type)) {
-      se_type <- "HC2"
+      # With FE, HC2/HC3 require the full augmented hat matrix; default to HC1 instead
+      se_type <- if (has_fe) "HC1" else "HC2"
     } else if (se_type %in% setdiff(cl_se_types, "stata")) {
       stop(
         "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3', ",
@@ -329,6 +332,28 @@ check_se_type <- function(se_type, clustered) {
       )
     } else if (se_type == "stata") {
       se_type <- "HC1"
+    }
+  }
+
+  # FE constraints: HC2/HC3/CR2 require the full augmented hat matrix over all
+  # FE dummies, which estimatrZero does not form (feols-style demeaning only).
+  # Warn and fall back to the FE-compatible equivalent.
+  if (has_fe) {
+    if (!clustered && se_type %in% c("HC2", "HC3")) {
+      warning(
+        "'", se_type, "' is not supported with `fixed_effects` in estimatrZero ",
+        "(it requires forming the full hat matrix over FE dummies, which is ",
+        "avoided for speed). Using 'HC1'. For exact HC2 with fixed effects, ",
+        "see fixest::feols()."
+      )
+      se_type <- "HC1"
+    }
+    if (clustered && se_type == "CR2") {
+      warning(
+        "'CR2' is not supported with `fixed_effects` in estimatrZero. ",
+        "Using 'stata' cluster-robust standard errors."
+      )
+      se_type <- "stata"
     }
   }
 

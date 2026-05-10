@@ -5,9 +5,13 @@
 #' @param weights the bare (unquoted) name of the weights variable
 #' @param subset An optional bare (unquoted) expression specifying a subset
 #' @param clusters An optional bare (unquoted) name of the cluster variable
+#' @param fixed_effects An optional right-sided formula of fixed effects to
+#'   absorb, such as `~ blockID`. Uses Frisch-Waugh-Lovell demeaning (feols
+#'   style). Defaults to HC1 (no clusters) or stata (with clusters). HC2, HC3,
+#'   and CR2 are not available with fixed effects and will warn and fall back.
 #' @param se_type The sort of standard error. Without clusters: "HC0", "HC1",
-#'   "HC2" (default), "HC3", "classical", "stata", or "none". With clusters:
-#'   "CR0", "CR2" (default), "stata", or "none".
+#'   "HC2" (default, or HC1 with FE), "HC3", "classical", "stata", or "none".
+#'   With clusters: "CR0", "CR2" (default, or stata with FE), "stata", or "none".
 #' @param ci logical. Whether to compute p-values and confidence intervals.
 #' @param alpha The significance level, 0.05 by default.
 #' @param return_vcov logical. Whether to return the vcov matrix.
@@ -21,6 +25,7 @@ lm_robust <- function(formula,
                       weights,
                       subset,
                       clusters,
+                      fixed_effects,
                       se_type = NULL,
                       ci = TRUE,
                       alpha = .05,
@@ -30,10 +35,22 @@ lm_robust <- function(formula,
     formula = formula,
     weights = weights,
     subset = subset,
-    cluster = clusters
+    cluster = clusters,
+    fixed_effects = fixed_effects
   )
   data <- rlang::enquo(data)
   model_data <- clean_model_data(data = data, datargs)
+
+  has_fe  <- is.character(model_data[["fixed_effects"]])
+  fe_rank <- 0L
+  yoriginal <- NULL
+
+  if (has_fe) {
+    yoriginal  <- as.matrix(model_data[["outcome"]])
+    model_data <- demean_fes(model_data)
+    # fe_rank: degrees of freedom consumed by FE (levels - 1 per variable, +1 for absorbed intercept)
+    fe_rank <- sum(model_data[["fe_levels"]]) - length(model_data[["fe_levels"]]) + 1L
+  }
 
   return_list <-
     lm_robust_fit(
@@ -47,7 +64,8 @@ lm_robust <- function(formula,
       return_vcov = return_vcov,
       try_cholesky = try_cholesky,
       has_int = attr(model_data$terms, "intercept"),
-      iv_stage = list(0)
+      iv_stage = list(0),
+      fe_rank = fe_rank
     )
 
   return_list <- lm_return(
@@ -55,6 +73,29 @@ lm_robust <- function(formula,
     model_data = model_data,
     formula = formula
   )
+
+  if (has_fe) {
+    # Rename projected (demeaned) R2 stats
+    for (nm in c("r.squared", "adj.r.squared", "tss", "fstatistic")) {
+      if (!is.null(return_list[[nm]])) {
+        return_list[[paste0("proj_", nm)]] <- return_list[[nm]]
+        return_list[[nm]] <- NULL
+      }
+    }
+
+    # Reconstruct full fitted values: by FWL, projected residuals = full residuals
+    residuals_proj <- drop(model_data[["outcome"]]) - return_list[["fitted.values"]]
+    return_list[["fitted.values"]] <- drop(yoriginal) - residuals_proj
+
+    # Full model R2 using original Y
+    n_obs <- nrow(yoriginal)
+    y_mean <- mean(yoriginal)
+    tss_full <- sum((yoriginal - y_mean)^2)
+    rss_full <- sum(residuals_proj^2)
+    r2_full  <- 1 - rss_full / tss_full
+    return_list[["r.squared"]]     <- r2_full
+    return_list[["adj.r.squared"]] <- 1 - (1 - r2_full) * (n_obs - 1L) / return_list[["df.residual"]]
+  }
 
   return_list[["call"]] <- match.call()
 

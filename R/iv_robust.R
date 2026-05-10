@@ -6,6 +6,8 @@
 #' @param weights the bare (unquoted) name of the weights variable
 #' @param subset An optional bare (unquoted) expression specifying a subset
 #' @param clusters An optional bare (unquoted) name of the cluster variable
+#' @param fixed_effects An optional right-sided formula of fixed effects to
+#'   absorb (see [lm_robust()]). Diagnostics are not available with FE.
 #' @param se_type The sort of standard error (see [lm_robust()])
 #' @param ci logical. Whether to compute p-values and confidence intervals.
 #' @param alpha The significance level, 0.05 by default.
@@ -21,6 +23,7 @@ iv_robust <- function(formula,
                       weights,
                       subset,
                       clusters,
+                      fixed_effects,
                       se_type = NULL,
                       ci = TRUE,
                       alpha = .05,
@@ -31,13 +34,31 @@ iv_robust <- function(formula,
     formula = formula,
     weights = weights,
     subset = subset,
-    cluster = clusters
+    cluster = clusters,
+    fixed_effects = fixed_effects
   )
   data <- rlang::enquo(data)
   model_data <- clean_model_data(data = data, datargs, estimator = "iv")
 
   if (ncol(model_data$instrument_matrix) < ncol(model_data$design_matrix)) {
     warning("More regressors than instruments")
+  }
+
+  has_fe  <- is.character(model_data[["fixed_effects"]])
+  fe_rank <- 0L
+  yoriginal <- NULL
+
+  if (has_fe) {
+    if (diagnostics) {
+      warning("Diagnostics are not available with `fixed_effects`. Skipping.")
+      diagnostics <- FALSE
+    }
+    yoriginal  <- as.matrix(model_data[["outcome"]])
+    model_data <- demean_fes(model_data)
+    model_data[["instrument_matrix"]] <- demean_matrix_by_fes(
+      model_data[["instrument_matrix"]], model_data
+    )
+    fe_rank <- sum(model_data[["fe_levels"]]) - length(model_data[["fe_levels"]]) + 1L
   }
 
   # -----------
@@ -58,7 +79,8 @@ iv_robust <- function(formula,
       return_fit = TRUE,
       return_vcov = FALSE,
       try_cholesky = try_cholesky,
-      iv_stage = list(1)
+      iv_stage = list(1),
+      fe_rank = fe_rank
     )
 
   # ------
@@ -78,7 +100,8 @@ iv_robust <- function(formula,
       alpha = alpha,
       return_vcov = return_vcov,
       try_cholesky = try_cholesky,
-      iv_stage = list(2, model_data$design_matrix)
+      iv_stage = list(2, model_data$design_matrix),
+      fe_rank = fe_rank
     )
 
 
@@ -147,6 +170,23 @@ iv_robust <- function(formula,
     return_list[["diagnostic_endogeneity_test"]] <- wu_hausman_ftest_val
     return_list[["diagnostic_overid_test"]] <- overid_chisqtest_val
   }
+  if (has_fe) {
+    for (nm in c("r.squared", "adj.r.squared", "tss", "fstatistic")) {
+      if (!is.null(return_list[[nm]])) {
+        return_list[[paste0("proj_", nm)]] <- return_list[[nm]]
+        return_list[[nm]] <- NULL
+      }
+    }
+    residuals_proj <- drop(model_data[["outcome"]]) - return_list[["fitted.values"]]
+    return_list[["fitted.values"]] <- drop(yoriginal) - residuals_proj
+
+    n_obs <- nrow(yoriginal)
+    tss_full <- sum((yoriginal - mean(yoriginal))^2)
+    r2_full  <- 1 - sum(residuals_proj^2) / tss_full
+    return_list[["r.squared"]]     <- r2_full
+    return_list[["adj.r.squared"]] <- 1 - (1 - r2_full) * (n_obs - 1L) / return_list[["df.residual"]]
+  }
+
   return_list[["call"]] <- match.call()
 
   return_list[["terms_regressors"]] <- model_data[["terms_regressors"]]
