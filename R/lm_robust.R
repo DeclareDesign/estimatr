@@ -50,6 +50,45 @@ lm_robust <- function(formula,
     model_data <- demean_fes(model_data)
     # fe_rank: degrees of freedom consumed by FE (levels - 1 per variable, +1 for absorbed intercept)
     fe_rank <- sum(model_data[["fe_levels"]]) - length(model_data[["fe_levels"]]) + 1L
+
+    if (ncol(model_data$design_matrix) == 0L) {
+      n_obs <- nrow(yoriginal)
+      df_r <- n_obs - fe_rank
+      residuals_proj <- drop(model_data$outcome)
+      rss <- sum(residuals_proj^2)
+      tss_full <- sum((yoriginal - mean(yoriginal))^2)
+      r2_full <- 1 - rss / tss_full
+      return_list <- list(
+        coefficients  = setNames(numeric(0), character(0)),
+        std.error     = setNames(numeric(0), character(0)),
+        statistic     = setNames(numeric(0), character(0)),
+        p.value       = setNames(numeric(0), character(0)),
+        conf.low      = setNames(numeric(0), character(0)),
+        conf.high     = setNames(numeric(0), character(0)),
+        df            = setNames(numeric(0), character(0)),
+        df.residual   = df_r,
+        res_var       = rss / df_r,
+        vcov          = matrix(numeric(0), 0L, 0L),
+        fitted.values = drop(yoriginal) - residuals_proj,
+        residuals     = residuals_proj,
+        weighted      = !is.null(model_data$weights),
+        se_type       = "none",
+        fes           = TRUE,
+        nobs          = n_obs,
+        rank          = 0L,
+        proj_r.squared  = 0,
+        r.squared       = r2_full,
+        adj.r.squared   = 1 - (1 - r2_full) * (n_obs - 1L) / df_r,
+        contrasts     = attr(model_data$design_matrix, "contrasts"),
+        terms         = model_data$terms,
+        xlevels       = model_data$xlevels,
+        felevels      = model_data$fe_levels,
+        weights       = model_data$weights,
+        outcome       = deparse(formula[[2]], nlines = 5)
+      )
+      return_list[["call"]] <- match.call()
+      return(return_list)
+    }
   }
 
   return_list <-

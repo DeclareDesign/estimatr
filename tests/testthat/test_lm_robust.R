@@ -189,3 +189,46 @@ test_that("weighted R2 is in [0, 1] for simple model", {
   expect_gte(m$r.squared, 0)
   expect_lte(m$r.squared, 1.0001)  # small tolerance
 })
+
+# ---- regression: GitHub issue fixes ----
+
+test_that("#421: ordered factor cluster does not crash", {
+  dat_ord <- dat
+  dat_ord$cl_ord <- factor(dat$cl, ordered = TRUE)
+  m <- lm_robust(y ~ x + z, data = dat_ord, clusters = cl_ord)
+  expect_s3_class(m, "lm_robust")
+  expect_equal(m$nclusters, length(unique(dat$cl)))
+})
+
+test_that("#348: formula() object passed to fixed_effects works", {
+  fe_form <- formula(~block)
+  m_var  <- lm_robust(y ~ z, data = dat, fixed_effects = fe_form)
+  m_lit  <- lm_robust(y ~ z, data = dat, fixed_effects = ~block)
+  expect_equal(coef(m_var), coef(m_lit), tolerance = 1e-12)
+})
+
+test_that("#303: intercept-only model with FE returns sensible result", {
+  m <- lm_robust(y ~ 1, data = dat, fixed_effects = ~block)
+  expect_equal(length(m$coefficients), 0L)
+  expect_equal(m$df.residual, n - 20L)       # 20 blocks
+  expect_gte(m$r.squared, 0)
+  expect_lte(m$r.squared, 1)
+  expect_equal(length(m$fitted.values), n)
+})
+
+test_that("#405: lh_robust CIs match lm_robust CIs with clusters", {
+  m_cl <- lm_robust(y ~ x + z, data = dat, clusters = cl)
+  lh_x <- lh_robust(y ~ x + z, data = dat, clusters = cl, linear_hypothesis = "x=0")
+  expect_equal(lh_x$lh$conf.low,  unname(confint(m_cl)["x", "2.5 %"]),  tolerance = 1e-10)
+  expect_equal(lh_x$lh$conf.high, unname(confint(m_cl)["x", "97.5 %"]), tolerance = 1e-10)
+})
+
+test_that("#320: lh_robust returns joint_hypothesis", {
+  lh2 <- lh_robust(y ~ x + z, data = dat, linear_hypothesis = c("x=0", "z=0"))
+  expect_true(!is.null(lh2$joint_hypothesis))
+  expect_true("value" %in% names(lh2$joint_hypothesis))
+  expect_true("p.value" %in% names(lh2$joint_hypothesis))
+  expect_equal(unname(lh2$joint_hypothesis["numdf"]), 2)
+  expect_gte(lh2$joint_hypothesis["p.value"], 0)
+  expect_lte(lh2$joint_hypothesis["p.value"], 1)
+})

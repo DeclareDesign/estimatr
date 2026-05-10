@@ -32,12 +32,9 @@ clean_model_data <- function(data, datargs, estimator = "") {
   # model.frame can attach it as an ancillary variable
   if ("fixed_effects" %in% names(mfargs)) {
     name <- sprintf(".__fixed_effects%%%d__", sample.int(.Machine$integer.max, 1))
+    fe_formula <- eval_tidy(mfargs[["fixed_effects"]], data = data)
     m_formula_env[[name]] <- sapply(
-      stats::model.frame.default(
-        mfargs[["fixed_effects"]],
-        data = data,
-        na.action = NULL
-      ),
+      stats::model.frame.default(fe_formula, data = data, na.action = NULL),
       FUN = as.factor
     )
     mfargs[["fixed_effects"]] <- sym(name)
@@ -107,8 +104,9 @@ clean_model_data <- function(data, datargs, estimator = "") {
   }
 
   ret[["cluster"]] <- stats::model.extract(mf, "cluster")
-  if (!(class(ret[["cluster"]]) %in% c("factor", "integer")) &&
-      !is.null(ret[["cluster"]])) {
+  if (!is.null(ret[["cluster"]]) &&
+      !is.factor(ret[["cluster"]]) &&
+      !is.integer(ret[["cluster"]])) {
     ret[["cluster"]] <- as.factor(ret[["cluster"]])
   }
 
@@ -175,8 +173,8 @@ demean_fes <- function(model_data) {
   # Demean X; intercept is absorbed by demeaning so drop it
   X <- model_data[["design_matrix"]]
   keep_cols <- if (has_int) colnames(X) != "(Intercept)" else rep(TRUE, ncol(X))
-  X_dm <- demean_mat(X[, keep_cols, drop = FALSE])
-  model_data[["design_matrix"]] <- X_dm
+  X_sub <- X[, keep_cols, drop = FALSE]
+  model_data[["design_matrix"]] <- if (ncol(X_sub) > 0L) demean_mat(X_sub) else X_sub
 
   model_data[["fe_levels"]] <- fe_levels
   return(model_data)

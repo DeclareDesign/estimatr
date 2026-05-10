@@ -5,7 +5,8 @@
 #' @param linear_hypothesis A character string or matrix specifying the
 #'   hypothesis, passed to `car::linearHypothesis`
 #'
-#' @return An object of class `"lh_robust"` with components `lm_robust` and `lh`.
+#' @return An object of class `"lh_robust"` with components `lm_robust`, `lh`,
+#'   and `joint_hypothesis`.
 #'
 #' @importFrom rlang quos eval_tidy
 #' @export
@@ -23,36 +24,63 @@ lh_robust <- function(..., data, linear_hypothesis) {
   car_lht <- car::linearHypothesis(
     lmr, hypothesis.matrix = linear_hypothesis, level = 1 - alpha)
 
-  estimate <- drop(attr(car_lht, "value"))
-  std.error <- sqrt(diag(attr(car_lht, "vcov")))
+  estimate  <- drop(attr(car_lht, "value"))
+  vcov_lh   <- attr(car_lht, "vcov")
+  std.error <- sqrt(diag(vcov_lh))
 
-  df <- lmr$df.residual
+  # Resolve the df for each hypothesis. Hypothesis names look like "x=0" or
+  # "x - z=0". Extract the LHS, check if it's a single coefficient name, and
+  # use that coefficient's (Satterthwaite-adjusted) df. For complex combinations
+  # fall back to the conservative min across all per-coefficient dfs.
+  coef_dfs <- lmr$df
+  df_vec <- vapply(names(estimate), function(nm) {
+    lhs <- trimws(sub("\\s*=.*", "", nm))
+    if (lhs %in% names(coef_dfs)) {
+      unname(coef_dfs[lhs])
+    } else {
+      min(coef_dfs, na.rm = TRUE)
+    }
+  }, numeric(1))
 
-  statistic <- estimate / std.error
-  p.value <- 2 * pt(abs(statistic), df, lower.tail = FALSE)
-  ci <- estimate + std.error %o% qt(c(alpha / 2, 1 - alpha / 2), df)
+  statistic  <- estimate / std.error
+  p.value    <- 2 * pt(abs(statistic), df_vec, lower.tail = FALSE)
+  half_width <- std.error * qt(1 - alpha / 2, df_vec)
+  ci_low     <- estimate - half_width
+  ci_high    <- estimate + half_width
 
   return_lh_robust <- data.frame(
     coefficients = estimate,
-    std.error = std.error,
-    statistic = statistic,
-    p.value = p.value,
-    alpha = alpha,
-    conf.low = ci[, 1],
-    conf.high = ci[, 2],
-    df = df,
-    term = linear_hypothesis,
-    outcome = lmr$outcome
+    std.error    = std.error,
+    statistic    = statistic,
+    p.value      = p.value,
+    alpha        = alpha,
+    conf.low     = unname(ci_low),
+    conf.high    = unname(ci_high),
+    df           = df_vec,
+    term         = linear_hypothesis,
+    outcome      = lmr$outcome
   )
-
   attr(return_lh_robust, "linear_hypothesis") <- car_lht
   class(return_lh_robust) <- c("lh", "data.frame")
+
+  # Joint Wald F-test: W = t(Lβ) (L Vcov L')^{-1} (Lβ) / m ~ F(m, df_joint)
+  m          <- length(estimate)
+  wald       <- drop(t(estimate) %*% solve(vcov_lh) %*% estimate)
+  joint_F    <- wald / m
+  df_joint   <- min(df_vec)
+  joint_pval <- pf(joint_F, m, df_joint, lower.tail = FALSE)
+  joint_hypothesis <- c(
+    value   = joint_F,
+    numdf   = m,
+    dendf   = df_joint,
+    p.value = joint_pval
+  )
 
   return_lmr <- lmr
   return_lmr[["call"]] <- match.call()
 
   return(structure(
-    list(lm_robust = return_lmr, lh = return_lh_robust),
+    list(lm_robust = return_lmr, lh = return_lh_robust, joint_hypothesis = joint_hypothesis),
     class = "lh_robust"
   ))
 
