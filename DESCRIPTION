@@ -1,0 +1,31 @@
+Package: estimatrZero
+Title: Fast Estimators for Design-Based Inference
+Version: 0.1.0
+Authors@R: person("Alex", "Coppock", email = "acoppock@gmail.com", role = c("aut", "cre"))
+Author: Alex Coppock [aut, cre]
+Maintainer: Alex Coppock <acoppock@gmail.com>
+Description: A lean rewrite of estimatr. Provides lm_robust, lm_lin, iv_robust,
+    lh_robust, and difference_in_means with HC2/CR2 standard errors. Drops
+    fixed-effects demean and Horvitz-Thompson. Fixes weighted R-squared.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports:
+    Formula,
+    generics,
+    methods,
+    Rcpp,
+    rlang,
+    stats
+Suggests:
+    car,
+    emmeans,
+    estimability,
+    testthat (>= 3.0.0),
+    texreg,
+    fabricatrZero
+LinkingTo:
+    Rcpp,
+    RcppEigen
+Config/testthat/edition: 3
