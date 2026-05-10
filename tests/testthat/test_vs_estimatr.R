@@ -1,8 +1,7 @@
 library(estimatrZero)
 
 # These tests confirm numerical identity with estimatr 1.0.6 for all
-# overlapping functionality. Where results intentionally differ (weighted
-# R-squared bug fix), that divergence is tested explicitly.
+# overlapping functionality.
 
 skip_if_not_installed("estimatr")
 
@@ -110,24 +109,14 @@ test_that("lm_robust clustered stata identical to estimatr", {
   check_identical(e0, ez, LM_FIELDS, "cl-stata")
 })
 
-# ---- lm_robust: weighted (coefs/SEs identical; R2 intentionally differs) ----
+# ---- lm_robust: weighted ----
 
-test_that("lm_robust weighted: coefs and SEs identical to estimatr", {
+test_that("lm_robust weighted: coefs, SEs, and R2 identical to estimatr", {
   e0 <- estimatr::lm_robust(y ~ x + z, data = dat, weights = w)
   ez <- estimatrZero::lm_robust(y ~ x + z, data = dat, weights = w)
   check_identical(e0, ez, INFERENCE_FIELDS, "weighted")
   check_identical(e0, ez, c("fitted.values", "res_var", "df.residual", "nobs"), "weighted-aux")
-})
-
-test_that("lm_robust weighted: R2 differs from estimatr (bug fix)", {
-  # estimatr used weights^2 in TSS; estimatrZero uses weights
-  e0 <- estimatr::lm_robust(y ~ x + z, data = dat, weights = w)
-  ez <- estimatrZero::lm_robust(y ~ x + z, data = dat, weights = w)
-  expect_false(isTRUE(all.equal(e0$tss, ez$tss)))
-  expect_false(isTRUE(all.equal(e0$r.squared, ez$r.squared)))
-  # estimatrZero R2 is in [0, 1]; estimatr's may not be
-  expect_gte(ez$r.squared, 0)
-  expect_lte(ez$r.squared, 1.0001)
+  check_identical(e0, ez, c("r.squared", "adj.r.squared", "tss"), "weighted-r2")
 })
 
 test_that("lm_robust weighted + clustered: coefs and SEs identical to estimatr", {
@@ -168,11 +157,11 @@ test_that("lm_lin clustered identical to estimatr", {
   check_identical(e0, ez, INFERENCE_FIELDS, "lm_lin-cl")
 })
 
-test_that("lm_lin weighted: coefs and SEs identical, R2 differs", {
+test_that("lm_lin weighted: coefs, SEs, and R2 identical to estimatr", {
   e0 <- estimatr::lm_lin(y ~ z, covariates = ~ x, data = dat, weights = w)
   ez <- estimatrZero::lm_lin(y ~ z, covariates = ~ x, data = dat, weights = w)
   check_identical(e0, ez, INFERENCE_FIELDS, "lm_lin-w")
-  expect_false(isTRUE(all.equal(e0$tss, ez$tss)))
+  check_identical(e0, ez, c("r.squared", "adj.r.squared", "tss"), "lm_lin-w-r2")
 })
 
 test_that("lm_lin scaled_center identical to estimatr", {

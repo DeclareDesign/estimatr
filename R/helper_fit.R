@@ -374,11 +374,10 @@ get_r2s <- function(y, return_list, has_int, yunweighted, weights, weight_mean) 
   N <- nrow(y)
   if (return_list[["weighted"]]) {
     if (has_int) {
-      # weights here = sqrt(w / mean_w) from prep_data.
-      # TSS = sum(weights * (y - wmean(y, weights))^2) * weight_mean
-      # vectorised: crossprod instead of apply loop
-      wmean <- drop(crossprod(weights, yunweighted) / sum(weights))
-      tss <- colSums(sweep(yunweighted, 2, wmean)^2 * weights) * weight_mean
+      # weights = sqrt(w/μ_w) from prep_data, so weights^2 = w/μ_w.
+      # Standard weighted mean uses w (= weights^2 × μ_w), not sqrt(w).
+      wmean <- drop(crossprod(weights^2, yunweighted) / sum(weights^2))
+      tss <- colSums(sweep(yunweighted, 2, wmean)^2 * weights^2) * weight_mean
     } else {
       tss <- colSums(y^2 * weight_mean)
     }

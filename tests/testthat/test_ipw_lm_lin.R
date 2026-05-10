@@ -203,20 +203,17 @@ test_that("IPW lm_lin works with multiple covariates", {
   expect_true(all(is.finite(m$std.error)))
 })
 
-# ---- regression against lm_robust for weighted R2 bug ----
+# ---- weighted R2 is always in [0, 1] ----
 
-test_that("weighted R2 bug fix: R2 consistent with OLS when weights are positively correlated with Y", {
-  # Before the fix (weights^2), strong positive weights inflated TSS and gave wrong R2
+test_that("weighted R2 is in [0, 1] when weights are positively correlated with Y", {
   set.seed(13)
   n <- 200
   x <- 1:n / n
   y <- x + rnorm(n, 0, 0.1)
-  # Weights strongly increasing: units with high y get high weight
   w_ipw <- x + 0.1
   dat <- data.frame(y = y, x = x, z = rbinom(n, 1, 0.5), w = w_ipw)
 
   m <- lm_lin(y ~ z, covariates = ~ x, data = dat, weights = w)
-  # Should give finite, bounded R2
   expect_gte(m$r.squared, 0)
-  expect_lte(m$r.squared, 1.0001)
+  expect_lte(m$r.squared, 1)
 })
