@@ -180,70 +180,109 @@ first_stage_ftest <- function(model_data, endog, instruments, se_type) {
   coef_inst <- as.matrix(lm_instruments[["coefficients"]])
 
   if (all(colnames(model_data$instrument_matrix) %in% instruments)) {
-    indices <- seq_len(nrow(coef_inst))
+    firststage_nomdf <- lm_instruments[["rank"]]
+    firststage_fstat_value <- lm_instruments[["fstatistic"]][seq_len(length(endog))]
   } else {
-    indices <- which(colnames(model_data$instrument_matrix) %in% instruments)
-  }
-  nomdf <- length(indices)
+    lm_noinstruments <- lm_robust_fit(
+      y = model_data$design_matrix[, endog, drop = FALSE],
+      X = model_data$instrument_matrix[
+        ,
+        !(colnames(model_data$instrument_matrix) %in% instruments),
+        drop = FALSE
+      ],
+      weights = model_data$weights,
+      cluster = model_data$cluster,
+      se_type = "none",
+      has_int = FALSE,
+      ci = FALSE,
+      return_fit = TRUE,
+      return_vcov = FALSE
+    )
 
-  fstat <- compute_fstat(
-    coef_matrix = coef_inst,
-    coef_indices = indices,
-    vcov_fit = lm_instruments[["vcov"]],
-    rank = lm_instruments[["rank"]],
-    nomdf = nomdf
-  )
+    coef_noinst <- as.matrix(lm_noinstruments[["coefficients"]])
+    inst_indices <- which(!(rownames(coef_inst) %in% rownames(coef_noinst)))
+    firststage_nomdf <- lm_instruments[["rank"]] - lm_noinstruments[["rank"]]
+    firststage_fstat_value <- compute_fstat(
+      coef_matrix = coef_inst,
+      coef_indices = inst_indices,
+      vcov_fit = lm_instruments[["vcov"]],
+      rank = lm_instruments[["rank"]],
+      nomdf = firststage_nomdf
+    )
+  }
+
+  fstat_names <- if (ncol(coef_inst) > 1) {
+    paste0(colnames(coef_inst), ":value")
+  } else {
+    "value"
+  }
+
   dendf <- get_dendf(lm_instruments)
 
-  first_stage_ftest_val <- c(
-    setNames(fstat, paste0(endog, ":value")),
-    numdf = nomdf,
-    dendf = dendf
+  c(
+    setNames(firststage_fstat_value, fstat_names),
+    nomdf = firststage_nomdf,
+    dendf = dendf,
+    setNames(
+      vapply(
+        firststage_fstat_value,
+        function(x) pf(x, firststage_nomdf, dendf, lower.tail = FALSE),
+        numeric(1)
+      ),
+      gsub("value", "p.value", fstat_names)
+    )
   )
-
-  first_stage_ftest_val
 }
 
 wu_hausman_reg_ftest <- function(model_data, first_stage_residuals, se_type) {
 
-  aug_design <- cbind(model_data$design_matrix, first_stage_residuals)
+  has_int <- 0 %in% attr(model_data$design_matrix, "assign")
 
-  wu_hausman_lm <- lm_robust_fit(
+  lm_noresids <- lm_robust_fit(
     y = model_data$outcome,
-    X = aug_design,
+    X = model_data$design_matrix,
+    weights = model_data$weights,
+    cluster = model_data$cluster,
+    se_type = "none",
+    has_int = has_int,
+    ci = FALSE,
+    return_fit = TRUE,
+    return_vcov = FALSE
+  )
+
+  lm_resids <- lm_robust_fit(
+    y = model_data$outcome,
+    X = cbind(model_data$design_matrix, first_stage_residuals),
     weights = model_data$weights,
     cluster = model_data$cluster,
     se_type = se_type,
-    has_int = attr(model_data$terms, "intercept"),
-    return_fit = FALSE,
-    return_vcov = TRUE,
-    ci = FALSE
+    has_int = has_int,
+    ci = FALSE,
+    return_fit = TRUE,
+    return_vcov = TRUE
   )
 
-  n_resid_cols <- ncol(first_stage_residuals)
-  endogeneity_indices <- seq(
-    ncol(model_data$design_matrix) + 1,
-    ncol(aug_design)
+  coef_noresids <- na.omit(lm_noresids[["coefficients"]])
+  coef_resids   <- na.omit(lm_resids[["coefficients"]])
+  ovar <- which(!(names(coef_resids) %in% names(coef_noresids)))
+  wu_hausman_nomdf <- lm_resids[["rank"]] - lm_noresids[["rank"]]
+
+  wu_hausman_fstat <- compute_fstat(
+    coef_matrix = as.matrix(coef_resids),
+    coef_indices = ovar,
+    vcov_fit = lm_resids[["vcov"]],
+    rank = lm_resids[["rank"]],
+    nomdf = wu_hausman_nomdf
   )
 
-  coef_wu_hausman <- as.matrix(wu_hausman_lm[["coefficients"]])
-  fstat <- compute_fstat(
-    coef_matrix = coef_wu_hausman,
-    coef_indices = endogeneity_indices,
-    vcov_fit = wu_hausman_lm[["vcov"]],
-    rank = wu_hausman_lm[["rank"]],
-    nomdf = n_resid_cols
-  )
-  dendf <- get_dendf(wu_hausman_lm)
+  dendf <- get_dendf(lm_resids)
 
-  wu_hausman_ftest_val <- c(
-    value = fstat,
-    numdf = n_resid_cols,
-    dendf = dendf,
-    p.value = pf(fstat, n_resid_cols, dendf, lower.tail = FALSE)
+  c(
+    value   = wu_hausman_fstat,
+    numdf   = wu_hausman_nomdf,
+    dendf   = dendf,
+    p.value = pf(wu_hausman_fstat, wu_hausman_nomdf, dendf, lower.tail = FALSE)
   )
-
-  wu_hausman_ftest_val
 }
 
 sargan_chisq <- function(model_data, ss_residuals) {
