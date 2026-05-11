@@ -79,9 +79,12 @@ clean_model_data <- function(data, datargs, estimator = "") {
     formula <- eval_tidy(mfargs[["formula"]])
   }
 
+  # For IV, select only the regressor RHS (rhs=1) from the Formula object.
+  # For non-IV, use terms(mf) which already has '.' expanded against the data.
+  design_terms <- if (estimator == "iv") terms(formula, rhs = 1) else terms(mf)
   ret <- list(
     outcome = stats::model.response(mf, type = "numeric"),
-    design_matrix = stats::model.matrix(terms(formula, rhs = 1), data = mf),
+    design_matrix = stats::model.matrix(design_terms, data = mf),
     formula = formula
   )
 
