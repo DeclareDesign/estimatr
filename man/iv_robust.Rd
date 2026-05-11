@@ -10,6 +10,7 @@ iv_robust(
   weights,
   subset,
   clusters,
+  fixed_effects,
   se_type = NULL,
   ci = TRUE,
   alpha = 0.05,
@@ -30,7 +31,14 @@ e.g. \code{y ~ x1 + x2 | z1 + z2}.}
 
 \item{clusters}{An optional bare (unquoted) name of the cluster variable}
 
-\item{se_type}{The sort of standard error (see \code{\link[=lm_robust]{lm_robust()}})}
+\item{fixed_effects}{An optional one-sided formula of fixed effects to absorb,
+such as \code{~ blockID}. Uses FWL demeaning (see \code{\link[=lm_robust]{lm_robust()}} for details and
+SE type restrictions). Diagnostics are not available with \code{fixed_effects}.}
+
+\item{se_type}{The standard error type. Same options and restrictions as
+\code{\link[=lm_robust]{lm_robust()}}: \code{"HC2"}, \code{"HC3"}, and \code{"CR2"} are \strong{not available} with
+\code{fixed_effects}. Defaults: \code{"HC2"} (no clusters, no FE), \code{"CR2"} (clusters,
+no FE), \code{"stata"} (no clusters, with FE), \code{"CR0"} (clusters, with FE).}
 
 \item{ci}{logical. Whether to compute p-values and confidence intervals.}
 

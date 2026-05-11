@@ -2,6 +2,28 @@ library(estimatrZero)
 
 skip_if_not_installed("estimatr")
 
+# Fixed effects are absorbed via Frisch-Waugh-Lovell (FWL) demeaning.
+# This gives bit-identical coefficients and residuals to the dummy-variable
+# formulation.
+#
+# SE type support with fixed_effects:
+#
+#   Supported (exact match with estimatr):
+#     HC0, HC1, stata, classical       (no clusters)
+#     CR0, stata                        (with clusters)
+#
+#   NOT supported — will error:
+#     HC2, HC3                          (require full [X|FE] hat values)
+#     CR2                               (same reason)
+#
+# To get HC2/HC3/CR2 SEs with FE, use the dummy formulation:
+#   lm_robust(y ~ x + factor(blockID), se_type = "HC2")
+#
+# Why: HC2, HC3, and CR2 need hat values from H = [X,Z]([X,Z]'[X,Z])^{-1}[X,Z]'
+# where Z is the full FE dummy matrix.  That is O(J^2) memory and O(J^3) compute
+# for J FE levels — prohibitive for individual FE.  HC0/HC1/CR0 only need
+# residuals and (for CR0) cluster membership, so FWL demeaning is sufficient.
+
 set.seed(42)
 n  <- 200
 dat <- data.frame(

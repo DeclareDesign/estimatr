@@ -5,16 +5,28 @@
 #' @param weights the bare (unquoted) name of the weights variable
 #' @param subset An optional bare (unquoted) expression specifying a subset
 #' @param clusters An optional bare (unquoted) name of the cluster variable
-#' @param fixed_effects An optional right-sided formula of fixed effects to
-#'   absorb, such as `~ blockID`. Uses Frisch-Waugh-Lovell demeaning.
-#'   HC2, HC3, and CR2 are not available with `fixed_effects` because they
-#'   require hat values from the full \[X | FE dummies\] design matrix; use
-#'   the dummy-variable formulation instead.
-#' @param se_type The sort of standard error. Without clusters: "HC0", "HC1",
-#'   "HC2" (default without FE), "HC3", "classical", "stata" (default with FE),
-#'   or "none". With clusters: "CR0" (default with FE), "CR2" (default without
-#'   FE), "stata", or "none". HC2, HC3, and CR2 error when `fixed_effects` is
-#'   specified.
+#' @param fixed_effects An optional one-sided formula of fixed effects to absorb,
+#'   such as `~ blockID` or `~ block + year`. Uses the Frisch-Waugh-Lovell (FWL)
+#'   theorem: each variable is demeaned within FE groups before OLS is run. FWL
+#'   guarantees exact coefficient and residual recovery. **SE type restriction:**
+#'   only `"HC0"`, `"HC1"`, `"stata"`, `"classical"`, and `"none"` are available
+#'   without clusters; only `"CR0"`, `"stata"`, and `"none"` with clusters.
+#'   `"HC2"`, `"HC3"`, and `"CR2"` require hat values from the full
+#'   \[X | FE dummies\] design matrix, which is O(J^2) memory for J FE levels.
+#'   To get those SEs, omit `fixed_effects` and include the FE variable as
+#'   dummies: `lm_robust(y ~ x + factor(blockID), se_type = "HC2")`.
+#' @param se_type The standard error type. Defaults depend on whether clusters
+#'   and/or fixed effects are present:
+#'   \itemize{
+#'     \item No clusters, no FE: `"HC2"` (default), `"HC0"`, `"HC1"`,
+#'       `"HC3"`, `"classical"`, `"stata"`, `"none"`.
+#'     \item Clusters, no FE: `"CR2"` (default), `"CR0"`, `"stata"`, `"none"`.
+#'     \item No clusters, with FE: `"stata"` (default, = HC1), `"HC0"`,
+#'       `"HC1"`, `"classical"`, `"none"`. **HC2, HC3 are not available.**
+#'     \item Clusters, with FE: `"CR0"` (default), `"stata"`, `"none"`.
+#'       **CR2 is not available.**
+#'   }
+#'   `"stata"` is an alias for HC1 (no clusters) or CR0 (with clusters).
 #' @param ci logical. Whether to compute p-values and confidence intervals.
 #' @param alpha The significance level, 0.05 by default.
 #' @param return_vcov logical. Whether to return the vcov matrix.

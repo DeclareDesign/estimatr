@@ -15,7 +15,8 @@ lh_robust(..., data, linear_hypothesis)
 hypothesis, passed to \code{car::linearHypothesis}}
 }
 \value{
-An object of class \code{"lh_robust"} with components \code{lm_robust} and \code{lh}.
+An object of class \code{"lh_robust"} with components \code{lm_robust}, \code{lh},
+and \code{joint_hypothesis}.
 }
 \description{
 Linear Hypothesis Test for OLS with Robust Standard Errors

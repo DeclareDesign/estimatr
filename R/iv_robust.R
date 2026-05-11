@@ -6,9 +6,13 @@
 #' @param weights the bare (unquoted) name of the weights variable
 #' @param subset An optional bare (unquoted) expression specifying a subset
 #' @param clusters An optional bare (unquoted) name of the cluster variable
-#' @param fixed_effects An optional right-sided formula of fixed effects to
-#'   absorb (see [lm_robust()]). Diagnostics are not available with FE.
-#' @param se_type The sort of standard error (see [lm_robust()])
+#' @param fixed_effects An optional one-sided formula of fixed effects to absorb,
+#'   such as `~ blockID`. Uses FWL demeaning (see [lm_robust()] for details and
+#'   SE type restrictions). Diagnostics are not available with `fixed_effects`.
+#' @param se_type The standard error type. Same options and restrictions as
+#'   [lm_robust()]: `"HC2"`, `"HC3"`, and `"CR2"` are **not available** with
+#'   `fixed_effects`. Defaults: `"HC2"` (no clusters, no FE), `"CR2"` (clusters,
+#'   no FE), `"stata"` (no clusters, with FE), `"CR0"` (clusters, with FE).
 #' @param ci logical. Whether to compute p-values and confidence intervals.
 #' @param alpha The significance level, 0.05 by default.
 #' @param diagnostics logical. Whether to compute IV diagnostic statistics.

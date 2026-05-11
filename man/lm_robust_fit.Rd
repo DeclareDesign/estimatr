@@ -16,7 +16,8 @@ lm_robust_fit(
   return_vcov = TRUE,
   return_fit = TRUE,
   try_cholesky = FALSE,
-  iv_stage = list(0)
+  iv_stage = list(0),
+  fe_rank = 0L
 )
 }
 \arguments{

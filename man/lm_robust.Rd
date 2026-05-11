@@ -10,6 +10,7 @@ lm_robust(
   weights,
   subset,
   clusters,
+  fixed_effects,
   se_type = NULL,
   ci = TRUE,
   alpha = 0.05,
@@ -28,9 +29,29 @@ lm_robust(
 
 \item{clusters}{An optional bare (unquoted) name of the cluster variable}
 
-\item{se_type}{The sort of standard error. Without clusters: "HC0", "HC1",
-"HC2" (default), "HC3", "classical", "stata", or "none". With clusters:
-"CR0", "CR2" (default), "stata", or "none".}
+\item{fixed_effects}{An optional one-sided formula of fixed effects to absorb,
+such as \code{~ blockID} or \code{~ block + year}. Uses the Frisch-Waugh-Lovell (FWL)
+theorem: each variable is demeaned within FE groups before OLS is run. FWL
+guarantees exact coefficient and residual recovery. \strong{SE type restriction:}
+only \code{"HC0"}, \code{"HC1"}, \code{"stata"}, \code{"classical"}, and \code{"none"} are available
+without clusters; only \code{"CR0"}, \code{"stata"}, and \code{"none"} with clusters.
+\code{"HC2"}, \code{"HC3"}, and \code{"CR2"} require hat values from the full
+[X | FE dummies] design matrix, which is O(J^2) memory for J FE levels.
+To get those SEs, omit \code{fixed_effects} and include the FE variable as
+dummies: \code{lm_robust(y ~ x + factor(blockID), se_type = "HC2")}.}
+
+\item{se_type}{The standard error type. Defaults depend on whether clusters
+and/or fixed effects are present:
+\itemize{
+\item No clusters, no FE: \code{"HC2"} (default), \code{"HC0"}, \code{"HC1"},
+\code{"HC3"}, \code{"classical"}, \code{"stata"}, \code{"none"}.
+\item Clusters, no FE: \code{"CR2"} (default), \code{"CR0"}, \code{"stata"}, \code{"none"}.
+\item No clusters, with FE: \code{"stata"} (default, = HC1), \code{"HC0"},
+\code{"HC1"}, \code{"classical"}, \code{"none"}. \strong{HC2, HC3 are not available.}
+\item Clusters, with FE: \code{"CR0"} (default), \code{"stata"}, \code{"none"}.
+\strong{CR2 is not available.}
+}
+\code{"stata"} is an alias for HC1 (no clusters) or CR0 (with clusters).}
 
 \item{ci}{logical. Whether to compute p-values and confidence intervals.}
 
