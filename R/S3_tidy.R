@@ -91,6 +91,10 @@ tidy.difference_in_means <- tidy_data_frame
 
 #' @rdname estimatrZero_tidiers
 #' @export
+tidy.horvitz_thompson <- tidy_data_frame
+
+#' @rdname estimatrZero_tidiers
+#' @export
 tidy.lh_robust <- function(x,
                            conf.int = TRUE,
                            conf.level = NULL,

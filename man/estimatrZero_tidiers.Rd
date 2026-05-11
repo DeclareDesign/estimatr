@@ -5,6 +5,7 @@
 \alias{tidy.lm_robust}
 \alias{tidy.iv_robust}
 \alias{tidy.difference_in_means}
+\alias{tidy.horvitz_thompson}
 \alias{tidy.lh_robust}
 \alias{tidy.lh}
 \title{Tidy an estimatrZero object}
@@ -14,6 +15,8 @@
 \method{tidy}{iv_robust}(x, conf.int = TRUE, conf.level = NULL, ...)
 
 \method{tidy}{difference_in_means}(x, conf.int = TRUE, conf.level = NULL, ...)
+
+\method{tidy}{horvitz_thompson}(x, conf.int = TRUE, conf.level = NULL, ...)
 
 \method{tidy}{lh_robust}(x, conf.int = TRUE, conf.level = NULL, ...)
 

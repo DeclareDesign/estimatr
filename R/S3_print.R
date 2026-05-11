@@ -120,6 +120,12 @@ print.difference_in_means <- function(x, ...) {
 }
 
 #' @export
+print.horvitz_thompson <- function(x, ...) {
+  cat("Horvitz-Thompson estimator\n")
+  print(summarize_tidy(x))
+}
+
+#' @export
 print.lh <- function(x, ...) {
   print(summary(x))
 }
