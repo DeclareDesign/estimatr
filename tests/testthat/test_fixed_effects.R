@@ -39,31 +39,35 @@ test_that("FE df.residual is n - k - (B-1) - 1", {
 
 # ---- defaults and se_type behaviour ----
 
-test_that("FE default se_type is HC2 (no clusters)", {
+test_that("FE default se_type is HC1/stata (no clusters)", {
   m <- lm_robust(y ~ z, data = dat, fixed_effects = ~bl)
-  expect_equal(m$se_type, "HC2")
+  expect_equal(m$se_type, "HC1")
 })
 
-test_that("FE default se_type is CR2 (with clusters)", {
+test_that("FE default se_type is CR0 (with clusters)", {
   m <- lm_robust(y ~ z, data = dat, fixed_effects = ~bl, clusters = cl)
-  expect_equal(m$se_type, "CR2")
+  expect_equal(m$se_type, "CR0")
 })
 
-test_that("HC2 with FE does not warn", {
-  expect_no_warning(lm_robust(y ~ z, data = dat, fixed_effects = ~bl, se_type = "HC2"))
-})
-
-test_that("HC3 with FE does not warn", {
-  expect_no_warning(lm_robust(y ~ z, data = dat, fixed_effects = ~bl, se_type = "HC3"))
-})
-
-test_that("CR2 with FE is accepted and returns CR2 (no FE-incompatibility fallback)", {
-  # CR2 is available with FE; any warnings that arise are about DOF, not FE
-  m <- suppressWarnings(
-    lm_robust(y ~ z, data = dat, fixed_effects = ~bl,
-              clusters = cl, se_type = "CR2")
+test_that("HC2 with FE errors with informative message", {
+  expect_error(
+    lm_robust(y ~ z, data = dat, fixed_effects = ~bl, se_type = "HC2"),
+    "HC2.*fixed_effects|fixed_effects.*HC2"
   )
-  expect_equal(m$se_type, "CR2")
+})
+
+test_that("HC3 with FE errors", {
+  expect_error(
+    lm_robust(y ~ z, data = dat, fixed_effects = ~bl, se_type = "HC3"),
+    "HC3"
+  )
+})
+
+test_that("CR2 with FE errors", {
+  expect_error(
+    lm_robust(y ~ z, data = dat, fixed_effects = ~bl, clusters = cl, se_type = "CR2"),
+    "CR2"
+  )
 })
 
 test_that("HC1 with FE does not warn", {
@@ -76,13 +80,14 @@ test_that("classical with FE does not warn", {
 
 # ---- numerical identity with estimatr ----
 #
-# HC1 matches estimatr exactly via FWL: the hat-value-free n/(n-k) correction
-# is the same whether computed from the full [X|Z] model or the FWL-demeaned X.
+# HC0/HC1/stata/classical/CR0 match estimatr exactly via FWL: these SE types
+# use only residuals (and cluster memberships for CR0), not hat values, so the
+# FWL demeaned-X model gives the same result as the full [X|FE dummies] model.
 #
-# HC2/HC3 and CR2 use FWL hat values (from H_FWL = X_dm(X_dm'X_dm)^{-1}X_dm')
-# which are smaller than estimatr's full-model hat values from H_[X|Z].
-# Coefficients, residuals, and df.residual are bit-identical; SEs differ by a
-# small positive amount (estimatr's are larger, conservative relative to ours).
+# HC2, HC3, CR2 are deliberately not supported with fixed_effects: they require
+# hat values from the full [X|FE] design matrix which is O(J^2) memory and
+# computation.  Users who need those SEs should use the dummy formulation:
+#   lm_robust(y ~ x + factor(fe_var), se_type = "HC2")
 
 test_that("FE HC1 coefs, SEs, df, and fitted values identical to estimatr", {
   m0 <- estimatr::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl, se_type = "HC1")
@@ -109,15 +114,12 @@ test_that("FE stata cluster SEs identical to estimatr", {
   expect_equal(mz$std.error, m0$std.error, tolerance = 1e-12)
 })
 
-test_that("FE HC2 coefs identical to estimatr (SEs use FWL hat values, not full-model)", {
-  m0 <- estimatr::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl)
+test_that("FE default coefs and fitted values identical to estimatr HC1", {
+  m0 <- estimatr::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl, se_type = "HC1")
   mz <- estimatrZero::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl)
   expect_equal(coef(mz),         coef(m0),         tolerance = 1e-12)
   expect_equal(mz$fitted.values, m0$fitted.values, tolerance = 1e-10)
   expect_equal(mz$df.residual,   m0$df.residual)
-  # SEs are not identical: estimatr uses full [X|FE] hat values; we use FWL hat values.
-  # Our SEs are smaller (less conservative) by a small amount.
-  expect_true(all(mz$std.error < m0$std.error + 1e-10))  # ours <= estimatr's
 })
 
 test_that("FE weighted HC1 coefs and SEs identical to estimatr", {

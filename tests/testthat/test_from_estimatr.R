@@ -676,14 +676,14 @@ test_that("iv_robust: weighted 2SLS runs", {
 # FE — extended (ported from estimatr test-fixed_effects.R)
 # ---------------------------------------------------------------------------
 
-test_that("FE coefs match dummy regression for all HC types", {
+test_that("FE coefs match dummy regression for supported HC types", {
   set.seed(43)
   N <- 40
   dat <- data.frame(
     Y = rnorm(N), Z = rbinom(N, 1, .5), X = rnorm(N),
     B = factor(rep(1:4, each = 10))
   )
-  for (st in c("HC0", "HC1", "HC2", "HC3", "classical")) {
+  for (st in c("HC0", "HC1", "classical")) {
     ro  <- tidy(lm_robust(Y ~ Z + factor(B), data = dat, se_type = st))
     rfo <- tidy(lm_robust(Y ~ Z, fixed_effects = ~B, data = dat, se_type = st))
     expect_equal(
@@ -695,14 +695,20 @@ test_that("FE coefs match dummy regression for all HC types", {
   }
 })
 
-test_that("FE coefs match dummy regression for all CR types", {
+test_that("HC2/HC3 with fixed_effects errors", {
+  dat <- data.frame(Y = rnorm(20), Z = rbinom(20, 1, .5), B = factor(rep(1:2, 10)))
+  expect_error(lm_robust(Y ~ Z, fixed_effects = ~B, data = dat, se_type = "HC2"), "HC2")
+  expect_error(lm_robust(Y ~ Z, fixed_effects = ~B, data = dat, se_type = "HC3"), "HC3")
+})
+
+test_that("FE coefs match dummy regression for supported CR types", {
   set.seed(43)
   N <- 40
   dat <- data.frame(
     Y = rnorm(N), Z = rbinom(N, 1, .5), X = rnorm(N),
     B = factor(rep(1:4, each = 10)), cl = rep(1:4, 10)
   )
-  for (st in c("CR0", "CR2", "stata")) {
+  for (st in c("CR0", "stata")) {
     ro  <- suppressWarnings(tidy(lm_robust(Y ~ Z + factor(B), clusters = cl, data = dat, se_type = st)))
     rfo <- suppressWarnings(tidy(lm_robust(Y ~ Z, fixed_effects = ~B, clusters = cl, data = dat, se_type = st)))
     expect_equal(
@@ -712,6 +718,15 @@ test_that("FE coefs match dummy regression for all CR types", {
       label = paste("coef match for se_type =", st)
     )
   }
+})
+
+test_that("CR2 with fixed_effects errors", {
+  dat <- data.frame(Y = rnorm(20), Z = rbinom(20, 1, .5),
+                    B = factor(rep(1:2, 10)), cl = rep(1:4, 5))
+  expect_error(
+    lm_robust(Y ~ Z, fixed_effects = ~B, clusters = cl, data = dat, se_type = "CR2"),
+    "CR2"
+  )
 })
 
 test_that("FE with multiple outcomes: coefs match dummy regression", {

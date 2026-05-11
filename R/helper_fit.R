@@ -303,9 +303,24 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE) {
   cl_se_types  <- c("CR0", "CR2", "stata")
   rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata")
 
+  # HC2, HC3, CR2 require hat values from the full [X|FE_dummies] design matrix.
+  # With fixed_effects demeaning we only have FWL hat values, which are not the
+  # same thing.  Rather than silently return approximate SEs, we error and tell
+  # the user how to get exact SEs via the dummy-variable formulation.
+  if (has_fe && !is.null(se_type) && se_type %in% c("HC2", "HC3", "CR2")) {
+    avail <- if (clustered) '"CR0", "stata", or "none"' else '"HC0", "HC1", "stata", "classical", or "none"'
+    stop(
+      '`se_type = "', se_type, '"` requires hat values from the full [X | FE dummies] ',
+      "design matrix and cannot be used with `fixed_effects`.\n",
+      "To get ", se_type, " SEs, replace `fixed_effects` with explicit dummies:\n",
+      "  lm_robust(y ~ x + factor(fe_var), se_type = \"", se_type, "\")\n",
+      "With `fixed_effects`, available SE types are: ", avail, "."
+    )
+  }
+
   if (clustered) {
     if (is.null(se_type)) {
-      se_type <- "CR2"
+      se_type <- if (has_fe) "CR0" else "CR2"
     } else if (!(se_type %in% c(cl_se_types, "none"))) {
       stop(
         "`se_type` must be either 'CR0', 'stata', 'CR2', or 'none' when ",
@@ -314,7 +329,7 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE) {
     }
   } else {
     if (is.null(se_type)) {
-      se_type <- "HC2"
+      se_type <- if (has_fe) "stata" else "HC2"
     } else if (se_type %in% setdiff(cl_se_types, "stata")) {
       stop(
         "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3', ",
@@ -326,9 +341,8 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE) {
         "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3', ",
         "'classical' or 'none' with no `clusters`.\nYou passed: ", se_type
       )
-    } else if (se_type == "stata") {
-      se_type <- "HC1"
     }
+    if (se_type == "stata") se_type <- "HC1"
   }
 
   return(se_type)
