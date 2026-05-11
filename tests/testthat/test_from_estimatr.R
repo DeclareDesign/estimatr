@@ -474,3 +474,287 @@ test_that("update.lm_robust re-runs model with new formula", {
   m2  <- update(m1, . ~ . + X)
   expect_equal(length(coef(m2)), 3L)
 })
+
+# ---------------------------------------------------------------------------
+# difference_in_means — extended
+# ---------------------------------------------------------------------------
+
+test_that("difference_in_means: matches t.test numerically", {
+  set.seed(42)
+  dat <- data.frame(Y = rnorm(100), Z = rbinom(100, 1, .5))
+  dm  <- difference_in_means(Y ~ Z, data = dat)
+  tt  <- with(dat, t.test(Y[Z == 1], Y[Z == 0]))
+  expect_equal(dm$p.value[[1]],  tt$p.value,     tolerance = 1e-10)
+  expect_equal(dm$conf.low[[1]], tt$conf.int[1], tolerance = 1e-10)
+  expect_equal(dm$conf.high[[1]], tt$conf.int[2], tolerance = 1e-10)
+})
+
+test_that("difference_in_means: multi-arm condition1/condition2 works", {
+  dat <- data.frame(Y = rnorm(100), Z = sample(1:3, 100, replace = TRUE))
+  m12 <- difference_in_means(Y ~ Z, condition1 = 1, condition2 = 2, data = dat)
+  m13 <- difference_in_means(Y ~ Z, condition1 = 1, condition2 = 3, data = dat)
+  expect_s3_class(m12, "difference_in_means")
+  expect_s3_class(m13, "difference_in_means")
+  expect_equal(m12$design, "Standard")
+})
+
+test_that("difference_in_means: reversing conditions negates estimate, not SE", {
+  set.seed(42)
+  N <- 80
+  dat <- data.frame(Y = rnorm(N), Z = rbinom(N, 1, .5))
+  m_fwd <- difference_in_means(Y ~ Z, condition1 = 0, condition2 = 1, data = dat)
+  m_rev <- difference_in_means(Y ~ Z, condition1 = 1, condition2 = 0, data = dat)
+  expect_equal(m_fwd$coefficients[[1]], -m_rev$coefficients[[1]])
+  expect_equal(m_fwd$std.error[[1]],    m_rev$std.error[[1]])
+})
+
+test_that("difference_in_means: blocked condition reversal negates estimate, not SE", {
+  set.seed(42)
+  dat <- data.frame(
+    Y = rnorm(60), Z = rbinom(60, 1, .5),
+    bl = sample(c("A", "B", "C"), 60, replace = TRUE)
+  )
+  m_fwd <- difference_in_means(Y ~ Z, blocks = bl, condition1 = 0, condition2 = 1, data = dat)
+  m_rev <- difference_in_means(Y ~ Z, blocks = bl, condition1 = 1, condition2 = 0, data = dat)
+  expect_equal(m_fwd$coefficients[[1]], -m_rev$coefficients[[1]])
+  expect_equal(m_fwd$std.error[[1]],    m_rev$std.error[[1]])
+  expect_equal(m_fwd$design, "Blocked")
+})
+
+test_that("difference_in_means: pair-matched design returns Matched-pair", {
+  set.seed(42)
+  dat <- data.frame(Y = rnorm(100), Z = rep(0:1, 50), bl = rep(1:50, each = 2))
+  m <- difference_in_means(Y ~ Z, blocks = bl, data = dat)
+  expect_equal(m$design, "Matched-pair")
+  expect_true(!is.na(m$std.error[["Z"]]))
+})
+
+test_that("difference_in_means: weighted standard design reported correctly", {
+  n <- 60
+  dat <- data.frame(Y = rnorm(n), Z = rbinom(n, 1, .5), W = runif(n))
+  m <- difference_in_means(Y ~ Z, weights = W, data = dat)
+  expect_equal(m$design, "Standard (weighted)")
+})
+
+test_that("difference_in_means: weighted blocked design reported correctly", {
+  set.seed(42)
+  n <- 60
+  bl <- rep(1:6, 10)
+  dat <- data.frame(
+    Y  = rnorm(n),
+    Z  = as.integer(unlist(lapply(split(seq_len(n), bl), function(idx) {
+      z <- integer(length(idx)); z[sample(seq_along(z), length(idx) %/% 2L)] <- 1L; z
+    }))),
+    W  = runif(n),
+    bl = bl
+  )
+  m <- difference_in_means(Y ~ Z, weights = W, blocks = bl, data = dat)
+  expect_equal(m$design, "Blocked (weighted)")
+})
+
+test_that("difference_in_means: ci = FALSE returns NA for p.value and CIs", {
+  dat <- data.frame(Y = rnorm(40), Z = rbinom(40, 1, .5))
+  m <- difference_in_means(Y ~ Z, data = dat, ci = FALSE)
+  expect_true(is.na(m$p.value[[1]]))
+  expect_true(is.na(m$conf.low[[1]]))
+  expect_true(is.na(m$conf.high[[1]]))
+})
+
+test_that("difference_in_means: clustered design label is Clustered", {
+  set.seed(42)
+  dat <- data.frame(
+    Y  = rnorm(40),
+    cl = rep(1:4, each = 10)
+  )
+  dat$Z <- as.integer(dat$cl %in% c(1, 2))
+  m <- difference_in_means(Y ~ Z, clusters = cl, data = dat)
+  expect_equal(m$design, "Clustered")
+})
+
+test_that("difference_in_means: block-cluster mismatch errors", {
+  set.seed(42)
+  N <- 100
+  dat <- data.frame(Y = rnorm(N), Z = rbinom(N, 1, .5),
+                    bl = rep(1:10, each = 10), bad_cl = rep(1:10, 10))
+  expect_error(
+    difference_in_means(Y ~ Z, blocks = bl, clusters = bad_cl, data = dat),
+    "All `clusters` must be contained within `blocks`"
+  )
+})
+
+test_that("difference_in_means: single-unit block errors", {
+  N <- 100
+  dat <- data.frame(Y = rnorm(N), Z = rbinom(N, 1, .5))
+  dat$bad_bl <- c(1, rep(2:10, length.out = N - 1))
+  expect_error(
+    difference_in_means(Y ~ Z, blocks = bad_bl, data = dat),
+    "All `blocks` must have multiple units"
+  )
+})
+
+test_that("difference_in_means: two-variable formula errors", {
+  dat <- data.frame(Y = rnorm(40), Z = rbinom(40, 1, .5), X = rnorm(40))
+  expect_error(
+    difference_in_means(Y ~ Z + X, data = dat),
+    "must have only one variable on the right-hand side"
+  )
+})
+
+# ---------------------------------------------------------------------------
+# lm_lin — extended
+# ---------------------------------------------------------------------------
+
+test_that("lm_lin: matches manual centering in lm_robust", {
+  set.seed(42)
+  n <- 100
+  dat <- data.frame(Y = rnorm(n), Z = rbinom(n, 1, .5), X1 = rnorm(n), X2 = rnorm(n))
+  dat$X1_c <- dat$X1 - mean(dat$X1)
+  dat$X2_c <- dat$X2 - mean(dat$X2)
+  m_lin <- lm_lin(Y ~ Z, covariates = ~ X1 + X2, data = dat)
+  m_man <- lm_robust(Y ~ Z + Z * X1_c + Z * X2_c, data = dat)
+  expect_equal(tidy(m_lin), tidy(m_man), tolerance = 1e-10)
+})
+
+test_that("lm_lin: error when covariates are not a right-sided formula", {
+  dat <- data.frame(Y = rnorm(30), Z = rbinom(30, 1, .5), X = rnorm(30))
+  expect_error(lm_lin(Y ~ Z, covariates = Y ~ X, data = dat), "right-sided formula")
+})
+
+test_that("lm_lin: error when covariates is not formula at all", {
+  dat <- data.frame(Y = rnorm(30), Z = rbinom(30, 1, .5), X = rnorm(30))
+  expect_error(lm_lin(Y ~ Z, dat$X, data = dat), "must be specified as a formula")
+})
+
+test_that("lm_lin: error when treatment formula has multiple terms", {
+  dat <- data.frame(Y = rnorm(30), Z = rbinom(30, 1, .5), X = rnorm(30))
+  expect_error(lm_lin(Y ~ Z + X, covariates = ~ X, data = dat),
+               "must only have the treatment variable on the right-hand side")
+})
+
+test_that("lm_lin: error when covariates formula has no predictors", {
+  dat <- data.frame(Y = rnorm(30), Z = rbinom(30, 1, .5))
+  expect_error(lm_lin(Y ~ Z, ~ 1, data = dat), "variable on the right-hand side")
+})
+
+# ---------------------------------------------------------------------------
+# iv_robust — extended
+# ---------------------------------------------------------------------------
+
+test_that("iv_robust: more regressors than instruments warns", {
+  expect_warning(
+    iv_robust(mpg ~ hp + cyl | am, data = mtcars, se_type = "HC0"),
+    "More regressors than instruments"
+  )
+})
+
+test_that("iv_robust: missing instrument specification errors", {
+  expect_error(
+    iv_robust(mpg ~ hp + cyl, data = mtcars),
+    "Must specify a `formula` with both regressors and instruments"
+  )
+})
+
+test_that("iv_robust: classical SEs match OLS when instrument = treatment", {
+  set.seed(42)
+  n <- 100
+  dat <- data.frame(y = rnorm(n), x = rnorm(n))
+  m_iv  <- iv_robust(y ~ x | x, data = dat, se_type = "classical")
+  m_ols <- lm_robust(y ~ x,     data = dat, se_type = "classical")
+  expect_equal(coef(m_iv), coef(m_ols), tolerance = 1e-10)
+})
+
+test_that("iv_robust: weighted 2SLS runs", {
+  set.seed(42)
+  n <- 60
+  dat <- data.frame(y = rnorm(n), x = rnorm(n), iv = rnorm(n), w = runif(n))
+  m <- iv_robust(y ~ x | iv, data = dat, weights = w)
+  expect_s3_class(m, "iv_robust")
+  expect_true(!is.na(coef(m)[["x"]]))
+})
+
+# ---------------------------------------------------------------------------
+# FE — extended (ported from estimatr test-fixed_effects.R)
+# ---------------------------------------------------------------------------
+
+test_that("FE coefs match dummy regression for all HC types", {
+  set.seed(43)
+  N <- 40
+  dat <- data.frame(
+    Y = rnorm(N), Z = rbinom(N, 1, .5), X = rnorm(N),
+    B = factor(rep(1:4, each = 10))
+  )
+  for (st in c("HC0", "HC1", "HC2", "HC3", "classical")) {
+    ro  <- tidy(lm_robust(Y ~ Z + factor(B), data = dat, se_type = st))
+    rfo <- tidy(lm_robust(Y ~ Z, fixed_effects = ~B, data = dat, se_type = st))
+    expect_equal(
+      ro$estimate[ro$term == "Z"],
+      rfo$estimate[rfo$term == "Z"],
+      tolerance = 1e-10,
+      label = paste("coef match for se_type =", st)
+    )
+  }
+})
+
+test_that("FE coefs match dummy regression for all CR types", {
+  set.seed(43)
+  N <- 40
+  dat <- data.frame(
+    Y = rnorm(N), Z = rbinom(N, 1, .5), X = rnorm(N),
+    B = factor(rep(1:4, each = 10)), cl = rep(1:4, 10)
+  )
+  for (st in c("CR0", "CR2", "stata")) {
+    ro  <- suppressWarnings(tidy(lm_robust(Y ~ Z + factor(B), clusters = cl, data = dat, se_type = st)))
+    rfo <- suppressWarnings(tidy(lm_robust(Y ~ Z, fixed_effects = ~B, clusters = cl, data = dat, se_type = st)))
+    expect_equal(
+      ro$estimate[ro$term == "Z"],
+      rfo$estimate[rfo$term == "Z"],
+      tolerance = 1e-10,
+      label = paste("coef match for se_type =", st)
+    )
+  }
+})
+
+test_that("FE with multiple outcomes: coefs match dummy regression", {
+  set.seed(43)
+  N <- 40
+  dat <- data.frame(
+    Y  = rnorm(N), Y2 = rnorm(N),
+    Z  = rbinom(N, 1, .5), X  = rnorm(N),
+    B  = factor(rep(1:4, each = 10))
+  )
+  ro  <- lm_robust(cbind(Y, Y2) ~ Z + X + factor(B), data = dat)
+  rfo <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~B, data = dat)
+
+  expect_equal(
+    tidy(ro)$estimate[tidy(ro)$term == "Z"],
+    tidy(rfo)$estimate[tidy(rfo)$term == "Z"],
+    tolerance = 1e-10
+  )
+  expect_equal(rfo$fitted.values, ro$fitted.values, tolerance = 1e-8)
+})
+
+test_that("FE missingness in FE variable warns and drops correctly", {
+  set.seed(43)
+  N <- 40
+  dat <- data.frame(
+    Y  = rnorm(N), Z = rbinom(N, 1, .5), X = rnorm(N),
+    B  = factor(rep(1:4, each = 10))
+  )
+  dat$B[2] <- NA
+
+  expect_warning(
+    m <- lm_robust(Y ~ Z + X, fixed_effects = ~B, data = dat),
+    "fixed_effects"
+  )
+  m_drop <- lm_robust(Y ~ Z + X, fixed_effects = ~B, data = dat[-2, ])
+  expect_equal(coef(m), coef(m_drop), tolerance = 1e-10)
+})
+
+test_that("FE-only model (no covariates) runs and returns empty coef", {
+  set.seed(42)
+  n <- 60
+  dat <- data.frame(y = rnorm(n), B = factor(rep(1:6, 10)))
+  m <- lm_robust(y ~ 1, fixed_effects = ~B, data = dat)
+  expect_equal(length(coef(m)), 0L)
+  expect_true(!is.null(m$fitted.values))
+})
