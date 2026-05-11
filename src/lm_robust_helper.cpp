@@ -415,3 +415,87 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
                       _["dof"]= dof,
                       _["res_var"]= res_var);
 }
+
+// ---------------------------------------------------------------------------
+// demean_cpp: alternating-projections FE demeaning in C++
+//
+// mat        - N × P matrix to demean (modified in place, returned)
+// fe_codes   - list of 1-indexed integer group vectors, one per FE variable
+// weights    - length-N weight vector (pass numeric(0) for unweighted)
+// eps        - convergence threshold (relative to 1 + max|mat|)
+// max_iter   - maximum number of full sweeps over all FE variables
+//
+// For one-way FE the algorithm converges in exactly 1 iteration.
+// For multi-way FE it cycles through the FE variables until the maximum
+// absolute change across all cells falls below eps * (1 + max|mat|).
+// ---------------------------------------------------------------------------
+// [[Rcpp::export]]
+Eigen::MatrixXd demean_cpp(Eigen::MatrixXd mat,
+                            Rcpp::List       fe_codes_list,
+                            Rcpp::NumericVector weights,
+                            double eps      = 1e-8,
+                            int    max_iter = 100) {
+  const int n = mat.rows();
+  const int p = mat.cols();
+  const int n_fe = fe_codes_list.size();
+
+  // Unpack FE group codes and group counts
+  std::vector<std::vector<int>> fe(n_fe);
+  std::vector<int> n_grp(n_fe);
+  for (int k = 0; k < n_fe; ++k) {
+    Rcpp::IntegerVector gv = Rcpp::as<Rcpp::IntegerVector>(fe_codes_list[k]);
+    fe[k].resize(n);
+    int mx = 0;
+    for (int i = 0; i < n; ++i) {
+      fe[k][i] = gv[i] - 1;   // 0-indexed
+      if (fe[k][i] > mx) mx = fe[k][i];
+    }
+    n_grp[k] = mx + 1;
+  }
+
+  // Weight vector (all-ones when unweighted)
+  Eigen::VectorXd w(n);
+  if (weights.size() == n) {
+    for (int i = 0; i < n; ++i) w(i) = weights[i];
+  } else {
+    w.setOnes();
+  }
+
+  // Pre-allocate group-sum buffers (reused across iterations and FE variables)
+  int max_grp = *std::max_element(n_grp.begin(), n_grp.end());
+  Eigen::VectorXd w_sum(max_grp);
+  Eigen::MatrixXd wx_sum(max_grp, p);
+
+  for (int iter = 0; iter < max_iter; ++iter) {
+    double max_delta = 0.0;
+
+    for (int k = 0; k < n_fe; ++k) {
+      const std::vector<int>& g = fe[k];
+      const int ng = n_grp[k];
+
+      // Accumulate weighted sums
+      w_sum.head(ng).setZero();
+      wx_sum.topRows(ng).setZero();
+      for (int i = 0; i < n; ++i) {
+        const int gi = g[i];
+        w_sum(gi) += w(i);
+        wx_sum.row(gi) += w(i) * mat.row(i);
+      }
+
+      // Subtract weighted group means, tracking max change
+      for (int i = 0; i < n; ++i) {
+        const int gi = g[i];
+        Eigen::RowVectorXd delta = wx_sum.row(gi) / w_sum(gi);
+        double row_max = delta.cwiseAbs().maxCoeff();
+        if (row_max > max_delta) max_delta = row_max;
+        mat.row(i) -= delta;
+      }
+    }
+
+    // Convergence: change small relative to current scale
+    double scale = 1.0 + mat.cwiseAbs().maxCoeff();
+    if (max_delta < eps * scale) break;
+  }
+
+  return mat;
+}

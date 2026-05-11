@@ -6,12 +6,12 @@
 #' @param subset An optional bare (unquoted) expression specifying a subset
 #' @param clusters An optional bare (unquoted) name of the cluster variable
 #' @param fixed_effects An optional right-sided formula of fixed effects to
-#'   absorb, such as `~ blockID`. Uses Frisch-Waugh-Lovell demeaning (feols
-#'   style). Defaults to HC1 (no clusters) or stata (with clusters). HC2, HC3,
-#'   and CR2 are not available with fixed effects and will warn and fall back.
+#'   absorb, such as `~ blockID`. Uses Frisch-Waugh-Lovell demeaning. All
+#'   SE types (HC0–HC3, CR0, CR2, stata) are available; by the FWL theorem,
+#'   applying them to the demeaned design matrix gives the correct SE.
 #' @param se_type The sort of standard error. Without clusters: "HC0", "HC1",
-#'   "HC2" (default, or HC1 with FE), "HC3", "classical", "stata", or "none".
-#'   With clusters: "CR0", "CR2" (default, or stata with FE), "stata", or "none".
+#'   "HC2" (default), "HC3", "classical", "stata", or "none".
+#'   With clusters: "CR0", "CR2" (default), "stata", or "none".
 #' @param ci logical. Whether to compute p-values and confidence intervals.
 #' @param alpha The significance level, 0.05 by default.
 #' @param return_vcov logical. Whether to return the vcov matrix.

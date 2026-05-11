@@ -68,6 +68,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// demean_cpp
+Eigen::MatrixXd demean_cpp(Eigen::MatrixXd mat, Rcpp::List fe_codes_list, Rcpp::NumericVector weights, double eps, int max_iter);
+RcppExport SEXP _estimatrZero_demean_cpp(SEXP matSEXP, SEXP fe_codes_listSEXP, SEXP weightsSEXP, SEXP epsSEXP, SEXP max_iterSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Eigen::MatrixXd >::type mat(matSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type fe_codes_list(fe_codes_listSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type weights(weightsSEXP);
+    Rcpp::traits::input_parameter< double >::type eps(epsSEXP);
+    Rcpp::traits::input_parameter< int >::type max_iter(max_iterSEXP);
+    rcpp_result_gen = Rcpp::wrap(demean_cpp(mat, fe_codes_list, weights, eps, max_iter));
+    return rcpp_result_gen;
+END_RCPP
+}
 // naomitwhy
 DataFrame naomitwhy(DataFrame df, Function recursive_subset);
 RcppExport SEXP _estimatrZero_naomitwhy(SEXP dfSEXP, SEXP recursive_subsetSEXP) {
@@ -86,6 +101,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_estimatrZero_Kr", (DL_FUNC) &_estimatrZero_Kr, 2},
     {"_estimatrZero_lm_solver", (DL_FUNC) &_estimatrZero_lm_solver, 3},
     {"_estimatrZero_lm_variance", (DL_FUNC) &_estimatrZero_lm_variance, 11},
+    {"_estimatrZero_demean_cpp", (DL_FUNC) &_estimatrZero_demean_cpp, 5},
     {"_estimatrZero_naomitwhy", (DL_FUNC) &_estimatrZero_naomitwhy, 2},
     {NULL, NULL, 0}
 };

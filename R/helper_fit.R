@@ -304,10 +304,8 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE) {
   rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata")
 
   if (clustered) {
-
     if (is.null(se_type)) {
-      # With FE, CR2 requires the full augmented hat matrix; default to stata instead
-      se_type <- if (has_fe) "stata" else "CR2"
+      se_type <- "CR2"
     } else if (!(se_type %in% c(cl_se_types, "none"))) {
       stop(
         "`se_type` must be either 'CR0', 'stata', 'CR2', or 'none' when ",
@@ -315,10 +313,8 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE) {
       )
     }
   } else {
-
     if (is.null(se_type)) {
-      # With FE, HC2/HC3 require the full augmented hat matrix; default to HC1 instead
-      se_type <- if (has_fe) "HC1" else "HC2"
+      se_type <- "HC2"
     } else if (se_type %in% setdiff(cl_se_types, "stata")) {
       stop(
         "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3', ",
@@ -332,28 +328,6 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE) {
       )
     } else if (se_type == "stata") {
       se_type <- "HC1"
-    }
-  }
-
-  # FE constraints: HC2/HC3/CR2 require the full augmented hat matrix over all
-  # FE dummies, which estimatrZero does not form (feols-style demeaning only).
-  # Warn and fall back to the FE-compatible equivalent.
-  if (has_fe) {
-    if (!clustered && se_type %in% c("HC2", "HC3")) {
-      warning(
-        "'", se_type, "' is not supported with `fixed_effects` in estimatrZero ",
-        "(it requires forming the full hat matrix over FE dummies, which is ",
-        "avoided for speed). Using 'HC1'. For exact HC2 with fixed effects, ",
-        "see fixest::feols()."
-      )
-      se_type <- "HC1"
-    }
-    if (clustered && se_type == "CR2") {
-      warning(
-        "'CR2' is not supported with `fixed_effects` in estimatrZero. ",
-        "Using 'stata' cluster-robust standard errors."
-      )
-      se_type <- "stata"
     }
   }
 

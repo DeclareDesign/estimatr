@@ -17,6 +17,10 @@ lm_variance <- function(X, Xunweighted, XtX_inv, ei, weight_mean, cluster, J, ci
     .Call(`_estimatrZero_lm_variance`, X, Xunweighted, XtX_inv, ei, weight_mean, cluster, J, ci, se_type, which_covs, fe_rank)
 }
 
+demean_cpp <- function(mat, fe_codes_list, weights, eps = 1e-8, max_iter = 100L) {
+    .Call(`_estimatrZero_demean_cpp`, mat, fe_codes_list, weights, eps, max_iter)
+}
+
 naomitwhy <- function(df, recursive_subset) {
     .Call(`_estimatrZero_naomitwhy`, df, recursive_subset)
 }

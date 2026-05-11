@@ -39,39 +39,31 @@ test_that("FE df.residual is n - k - (B-1) - 1", {
 
 # ---- defaults and se_type behaviour ----
 
-test_that("FE default se_type is HC1 (no clusters)", {
+test_that("FE default se_type is HC2 (no clusters)", {
   m <- lm_robust(y ~ z, data = dat, fixed_effects = ~bl)
-  expect_equal(m$se_type, "HC1")
+  expect_equal(m$se_type, "HC2")
 })
 
-test_that("FE default se_type is stata (with clusters)", {
+test_that("FE default se_type is CR2 (with clusters)", {
   m <- lm_robust(y ~ z, data = dat, fixed_effects = ~bl, clusters = cl)
-  expect_equal(m$se_type, "stata")
+  expect_equal(m$se_type, "CR2")
 })
 
-test_that("HC2 with FE warns and falls back to HC1", {
-  expect_warning(
-    m <- lm_robust(y ~ z, data = dat, fixed_effects = ~bl, se_type = "HC2"),
-    "HC2"
-  )
-  expect_equal(m$se_type, "HC1")
+test_that("HC2 with FE does not warn", {
+  expect_no_warning(lm_robust(y ~ z, data = dat, fixed_effects = ~bl, se_type = "HC2"))
 })
 
-test_that("HC3 with FE warns and falls back to HC1", {
-  expect_warning(
-    m <- lm_robust(y ~ z, data = dat, fixed_effects = ~bl, se_type = "HC3"),
-    "HC3"
-  )
-  expect_equal(m$se_type, "HC1")
+test_that("HC3 with FE does not warn", {
+  expect_no_warning(lm_robust(y ~ z, data = dat, fixed_effects = ~bl, se_type = "HC3"))
 })
 
-test_that("CR2 with FE warns and falls back to stata", {
-  expect_warning(
-    m <- lm_robust(y ~ z, data = dat, fixed_effects = ~bl,
-                   clusters = cl, se_type = "CR2"),
-    "CR2"
+test_that("CR2 with FE is accepted and returns CR2 (no FE-incompatibility fallback)", {
+  # CR2 is available with FE; any warnings that arise are about DOF, not FE
+  m <- suppressWarnings(
+    lm_robust(y ~ z, data = dat, fixed_effects = ~bl,
+              clusters = cl, se_type = "CR2")
   )
-  expect_equal(m$se_type, "stata")
+  expect_equal(m$se_type, "CR2")
 })
 
 test_that("HC1 with FE does not warn", {
@@ -82,24 +74,62 @@ test_that("classical with FE does not warn", {
   expect_no_warning(lm_robust(y ~ z, data = dat, fixed_effects = ~bl, se_type = "classical"))
 })
 
-# ---- identity with estimatr HC1 FE ----
+# ---- numerical identity with estimatr ----
+#
+# HC1 matches estimatr exactly via FWL: the hat-value-free n/(n-k) correction
+# is the same whether computed from the full [X|Z] model or the FWL-demeaned X.
+#
+# HC2/HC3 and CR2 use FWL hat values (from H_FWL = X_dm(X_dm'X_dm)^{-1}X_dm')
+# which are smaller than estimatr's full-model hat values from H_[X|Z].
+# Coefficients, residuals, and df.residual are bit-identical; SEs differ by a
+# small positive amount (estimatr's are larger, conservative relative to ours).
 
-test_that("FE HC1 coefs and SEs bit-identical to estimatr", {
-  m0  <- estimatr::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl, se_type = "HC1")
-  mz  <- estimatrZero::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl)
-  expect_equal(coef(mz),        coef(m0),        tolerance = 1e-12)
-  expect_equal(mz$std.error,    m0$std.error,    tolerance = 1e-12)
-  expect_equal(mz$df.residual,  m0$df.residual)
+test_that("FE HC1 coefs, SEs, df, and fitted values identical to estimatr", {
+  m0 <- estimatr::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl, se_type = "HC1")
+  mz <- estimatrZero::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl, se_type = "HC1")
+  expect_equal(coef(mz),         coef(m0),         tolerance = 1e-12)
+  expect_equal(mz$std.error,     m0$std.error,     tolerance = 1e-12)
+  expect_equal(mz$df.residual,   m0$df.residual)
   expect_equal(mz$fitted.values, m0$fitted.values, tolerance = 1e-10)
 })
 
-test_that("FE stata cluster SEs match estimatr", {
+test_that("FE HC0 coefs and SEs identical to estimatr", {
+  m0 <- estimatr::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl, se_type = "HC0")
+  mz <- estimatrZero::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl, se_type = "HC0")
+  expect_equal(coef(mz),     coef(m0),     tolerance = 1e-12)
+  expect_equal(mz$std.error, m0$std.error, tolerance = 1e-12)
+})
+
+test_that("FE stata cluster SEs identical to estimatr", {
   m0 <- estimatr::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl,
                               clusters = cl, se_type = "stata")
   mz <- estimatrZero::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl,
-                                  clusters = cl)
+                                  clusters = cl, se_type = "stata")
   expect_equal(coef(mz),     coef(m0),     tolerance = 1e-12)
   expect_equal(mz$std.error, m0$std.error, tolerance = 1e-12)
+})
+
+test_that("FE HC2 coefs identical to estimatr (SEs use FWL hat values, not full-model)", {
+  m0 <- estimatr::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl)
+  mz <- estimatrZero::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl)
+  expect_equal(coef(mz),         coef(m0),         tolerance = 1e-12)
+  expect_equal(mz$fitted.values, m0$fitted.values, tolerance = 1e-10)
+  expect_equal(mz$df.residual,   m0$df.residual)
+  # SEs are not identical: estimatr uses full [X|FE] hat values; we use FWL hat values.
+  # Our SEs are smaller (less conservative) by a small amount.
+  expect_true(all(mz$std.error < m0$std.error + 1e-10))  # ours <= estimatr's
+})
+
+test_that("FE weighted HC1 coefs and SEs identical to estimatr", {
+  set.seed(99)
+  dat_w <- dat
+  dat_w$w <- runif(n, 0.5, 2)
+  m0 <- estimatr::lm_robust(y ~ z + x, data = dat_w, fixed_effects = ~bl,
+                              weights = w, se_type = "HC1")
+  mz <- estimatrZero::lm_robust(y ~ z + x, data = dat_w, fixed_effects = ~bl,
+                                  weights = w, se_type = "HC1")
+  expect_equal(coef(mz),     coef(m0),     tolerance = 1e-10)
+  expect_equal(mz$std.error, m0$std.error, tolerance = 1e-10)
 })
 
 # ---- return object ----

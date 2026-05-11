@@ -127,80 +127,50 @@ clean_model_data <- function(data, datargs, estimator = "") {
 }
 
 # Demean outcome and design matrix by fixed effects (Frisch-Waugh-Lovell).
-# Uses alternating projections (one pass for one-way FE, iterates for multi-way).
-# Returns model_data with demeaned outcome and design matrix (intercept dropped).
+# FE demeaning via alternating projections in C++ (demean_cpp in lm_robust_helper.cpp).
+# One-way FE converges in exactly 1 iteration; multi-way iterates to eps = 1e-8.
+# Returns model_data with demeaned outcome and design matrix (intercept absorbed).
 demean_fes <- function(model_data) {
-  fe_df <- as.data.frame(model_data[["fixed_effects"]], stringsAsFactors = TRUE)
+  fe_df     <- as.data.frame(model_data[["fixed_effects"]], stringsAsFactors = TRUE)
   fe_levels <- vapply(fe_df, nlevels, 0L)
-
-  # Convert to integer codes for fast tapply indexing
-  fe_codes <- lapply(fe_df, as.integer)
-
-  w <- model_data[["weights"]] %||% rep(1.0, nrow(model_data[["design_matrix"]]))
-
-  demean_mat <- function(mat) {
-    # Alternating projections: iterate over each FE, subtract weighted group means.
-    # One-way FE converges in 1 iteration. Multi-way iterates to eps.
-    eps <- 1e-8
-    for (iter in seq_len(50L)) {
-      old <- mat
-      for (g in fe_codes) {
-        wg  <- tapply(w, g, sum)
-        if (is.matrix(mat)) {
-          for (j in seq_len(ncol(mat))) {
-            gm <- tapply(mat[, j] * w, g, sum) / wg
-            mat[, j] <- mat[, j] - gm[g]
-          }
-        } else {
-          gm <- tapply(mat * w, g, sum) / wg
-          mat <- mat - gm[g]
-        }
-      }
-      delta <- if (is.matrix(mat)) max(abs(mat - old)) else max(abs(mat - old))
-      if (delta < eps * (1.0 + (if (is.matrix(mat)) max(abs(mat)) else max(abs(mat))))) break
-    }
-    mat
-  }
-
+  fe_codes  <- lapply(fe_df, as.integer)
+  # At this point model_data[["weights"]] is the RAW weight vector (not yet
+  # sqrt-transformed — that happens in lm_robust_fit / prep_lm_data).
+  # WLS group means use raw weights as the metric.
+  w       <- model_data[["weights"]] %||% numeric(0L)
   has_int <- attr(model_data$terms, "intercept")
 
-  # Store original Y for fitted-value reconstruction
   model_data[["yoriginal"]] <- as.matrix(model_data[["outcome"]])
+  y_dm <- demean_cpp(as.matrix(model_data[["outcome"]]), fe_codes, w)
+  colnames(y_dm) <- colnames(model_data[["outcome"]])
+  model_data[["outcome"]] <- y_dm
 
-  # Demean Y
-  model_data[["outcome"]] <- demean_mat(as.matrix(model_data[["outcome"]]))
-
-  # Demean X; intercept is absorbed by demeaning so drop it
-  X <- model_data[["design_matrix"]]
+  X         <- model_data[["design_matrix"]]
   keep_cols <- if (has_int) colnames(X) != "(Intercept)" else rep(TRUE, ncol(X))
-  X_sub <- X[, keep_cols, drop = FALSE]
-  model_data[["design_matrix"]] <- if (ncol(X_sub) > 0L) demean_mat(X_sub) else X_sub
+  X_sub     <- X[, keep_cols, drop = FALSE]
+  model_data[["design_matrix"]] <- if (ncol(X_sub) > 0L) {
+    X_dm <- demean_cpp(X_sub, fe_codes, w)
+    colnames(X_dm) <- colnames(X_sub)
+    X_dm
+  } else {
+    X_sub
+  }
 
   model_data[["fe_levels"]] <- fe_levels
-  return(model_data)
+  model_data
 }
 
-# Demean an arbitrary matrix/vector by the same FE structure.
+# Demean an arbitrary matrix by the same FE structure as model_data.
 # Used in iv_robust to demean the instrument matrix.
 demean_matrix_by_fes <- function(mat, model_data) {
   fe_df    <- as.data.frame(model_data[["fixed_effects"]], stringsAsFactors = TRUE)
   fe_codes <- lapply(fe_df, as.integer)
-  w        <- model_data[["weights"]] %||% rep(1.0, nrow(mat))
+  w        <- model_data[["weights"]] %||% numeric(0L)
   has_int  <- !is.null(colnames(mat)) && "(Intercept)" %in% colnames(mat)
 
-  eps <- 1e-8
-  for (iter in seq_len(50L)) {
-    old <- mat
-    for (g in fe_codes) {
-      wg <- tapply(w, g, sum)
-      for (j in seq_len(ncol(mat))) {
-        gm <- tapply(mat[, j] * w, g, sum) / wg
-        mat[, j] <- mat[, j] - gm[g]
-      }
-    }
-    if (max(abs(mat - old)) < eps * (1.0 + max(abs(mat)))) break
-  }
-
+  orig_colnames <- colnames(mat)
+  mat <- demean_cpp(mat, fe_codes, w)
+  colnames(mat) <- orig_colnames
   if (has_int) mat <- mat[, colnames(mat) != "(Intercept)", drop = FALSE]
   mat
 }
