@@ -166,11 +166,35 @@ test_that("HT condition defaults to first and second sorted condition", {
 
 # ---- missing data ----
 
-test_that("HT missing Y drops the row", {
+test_that("HT missing Y: uniform pi gives same result as drop-row", {
   decl <- randomizr::declare_ra(N = N, m = 16)
   dat$Z <- randomizr::conduct_ra(decl)
   dat_miss <- dat; dat_miss$y[5] <- NA
   m_miss <- horvitz_thompson(y ~ Z, data = dat_miss, condition_prs = decl)
   m_drop <- horvitz_thompson(y ~ Z, data = dat[-5, ], condition_prs = decl)
   expect_equal(m_miss$coefficients[[1]], m_drop$coefficients[[1]], tolerance = 1e-10)
+  expect_equal(m_miss$std.error[[1]],    m_drop$std.error[[1]],    tolerance = 1e-10)
+})
+
+test_that("HT missing Y: non-uniform pi uses correct row probabilities", {
+  # Blocked design with unequal treatment proportions per block → varying pi.
+  # Row 2 (in block 1, pi2=0.3) is dropped; we verify the estimate uses
+  # pi=0.3 for block-1 units and pi=0.6 for block-2 units (not shifted rows).
+  N2 <- 30
+  dat2 <- data.frame(y = rnorm(N2), bl = c(rep(1, 10), rep(2, 20)))
+  decl2 <- randomizr::declare_ra(N = N2, blocks = dat2$bl, block_m = c(3, 12))
+  dat2$Z <- randomizr::conduct_ra(decl2)
+  dat2_miss <- dat2; dat2_miss$y[2] <- NA
+  m_miss <- horvitz_thompson(y ~ Z, data = dat2_miss, condition_prs = decl2)
+  # Manually compute: use probabilities for rows 1,3,...,30 (skipping row 2)
+  pm   <- decl2$probabilities_matrix
+  kept <- c(1L, 3:30)
+  pi2_k <- pm[kept, 2]; pi1_k <- pm[kept, 1]
+  y_k   <- dat2$y[kept]
+  z_k   <- as.character(dat2$Z[kept])        # coerce to character for safe comparison
+  conds <- sort(unique(z_k))
+  t2_k  <- which(z_k == conds[2]); t1_k <- which(z_k == conds[1])
+  Y2_k  <- y_k[t2_k] / pi2_k[t2_k]; Y1_k <- y_k[t1_k] / pi1_k[t1_k]
+  est_manual <- (sum(Y2_k) - sum(Y1_k)) / length(z_k)
+  expect_equal(m_miss$coefficients[[1]], est_manual, tolerance = 1e-10)
 })

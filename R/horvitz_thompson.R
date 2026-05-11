@@ -55,6 +55,15 @@ horvitz_thompson <- function(formula,
   Y  <- as.numeric(stats::model.response(mf))
   Z  <- mf[[all.vars(m_formula[[3L]])[1L]]]
 
+  # Track which original-data rows survived na.omit so we can index the
+  # ra_declaration's probability matrix correctly when rows are dropped.
+  na_dropped <- attr(mf, "na.action")
+  if (!is.null(data_df) && !is.null(na_dropped)) {
+    surv_idx <- setdiff(seq_len(nrow(data_df)), as.integer(na_dropped))
+  } else {
+    surv_idx <- seq_len(nrow(mf))
+  }
+
   # ---- resolve conditions ----
 
   conds <- if (is.factor(Z)) levels(Z) else sort(unique(Z))
@@ -68,9 +77,12 @@ horvitz_thompson <- function(formula,
   if (length(t2) == 0L || length(t1) == 0L)
     stop("No units observed in one of the two conditions.")
 
+  # Row indices in the original data for the in-study (condition1/2) units
+  row_idx <- surv_idx[in12]
+
   # ---- resolve probabilities and design ----
 
-  prs <- ht_prs(cpr, Z, condition1, condition2, in12, data_df)
+  prs <- ht_prs(cpr, Z, condition1, condition2, row_idx, data_df)
 
   # ---- IPW outcomes and point estimate ----
 
@@ -120,7 +132,10 @@ horvitz_thompson <- function(formula,
 # Returns list(pi1, pi2, design, ...) where pi1/pi2 are per-unit vectors
 # for the in-study (condition1 or condition2) units, and design carries
 # whatever is needed for variance computation.
-ht_prs <- function(cpr, Z, condition1, condition2, in12, data_df) {
+# row_idx: integer vector of original-data row indices for the in-study units.
+# Using original row indices (not model-frame logical) ensures correct
+# probability lookup from pm even when rows were dropped via na.omit.
+ht_prs <- function(cpr, Z, condition1, condition2, row_idx, data_df) {
   n <- length(Z)  # in-study unit count
 
   if (inherits(cpr, "ra_declaration")) {
@@ -135,9 +150,9 @@ ht_prs <- function(cpr, Z, condition1, condition2, in12, data_df) {
       stop("condition1/condition2 (", condition1, ", ", condition2,
            ") not found in ra_declaration conditions: ",
            paste(cnames, collapse = ", "), ".")
-    pi1_full <- pm[in12, c1_col]
-    pi2_full <- pm[in12, c2_col]
-    return(ht_prs_declaration(cpr, pi1_full, pi2_full, in12))
+    pi1_full <- pm[row_idx, c1_col]
+    pi2_full <- pm[row_idx, c2_col]
+    return(ht_prs_declaration(cpr, pi1_full, pi2_full, row_idx))
   }
 
   # Named scalar vector: e.g. c("0"=0.4, "1"=0.6)
@@ -171,7 +186,7 @@ ht_prs <- function(cpr, Z, condition1, condition2, in12, data_df) {
   stop("Unrecognised `condition_prs` format.")
 }
 
-ht_prs_declaration <- function(decl, pi1, pi2, in12) {
+ht_prs_declaration <- function(decl, pi1, pi2, row_idx) {
   N_total <- nrow(decl$probabilities_matrix)
 
   if (inherits(decl, "ra_simple")) {
@@ -183,8 +198,8 @@ ht_prs_declaration <- function(decl, pi1, pi2, in12) {
     K     <- ncol(perm)
     # Full 2N × 2N joint prob matrix (control rows 1:N, treated rows N+1:2N)
     full  <- tcrossprod(rbind(1 - perm, perm)) / K
-    # Subset to the in-study units
-    idx   <- which(in12)
+    # Subset to the in-study units using original-data row indices
+    idx   <- row_idx
     n     <- length(idx)
     sub   <- full[c(idx, N_total + idx), c(idx, N_total + idx)]
     return(list(pi1 = pi1, pi2 = pi2, design = "custom",
@@ -192,23 +207,23 @@ ht_prs_declaration <- function(decl, pi1, pi2, in12) {
   }
 
   if (inherits(decl, "ra_blocked_and_clustered")) {
-    blocks   <- decl$blocks[in12]
-    clusters <- decl$clusters[in12]
-    block_info <- ht_block_info(decl, in12, has_clusters = TRUE)
+    blocks   <- decl$blocks[row_idx]
+    clusters <- decl$clusters[row_idx]
+    block_info <- ht_block_info(decl, has_clusters = TRUE)
     return(list(pi1 = pi1, pi2 = pi2, design = "blocked_clustered",
                 blocks = blocks, clusters = clusters,
                 block_info = block_info))
   }
 
   if (inherits(decl, "ra_blocked")) {
-    blocks <- decl$blocks[in12]
-    block_info <- ht_block_info(decl, in12, has_clusters = FALSE)
+    blocks <- decl$blocks[row_idx]
+    block_info <- ht_block_info(decl, has_clusters = FALSE)
     return(list(pi1 = pi1, pi2 = pi2, design = "blocked",
                 blocks = blocks, block_info = block_info))
   }
 
   if (inherits(decl, "ra_clustered")) {
-    clusters  <- decl$clusters[in12]
+    clusters  <- decl$clusters[row_idx]
     is_simple <- isTRUE(decl$simple)
     pi2_cl    <- decl$probabilities_matrix[!duplicated(decl$clusters), 2L]
     K         <- length(pi2_cl)
@@ -225,8 +240,8 @@ ht_prs_declaration <- function(decl, pi1, pi2, in12) {
        N_total = N_total, pi2_b = pi2[1L], pi1_b = pi1[1L])
 }
 
-# Build per-block (N_b, n2_b, n1_b) table from an ra_declaration.
-ht_block_info <- function(decl, in12, has_clusters) {
+# Build per-block design info from an ra_declaration (full design, not subset).
+ht_block_info <- function(decl, has_clusters) {
   pm       <- decl$probabilities_matrix     # N_total × 2
   blk_full <- decl$blocks
   blk_tbl  <- table(blk_full)
