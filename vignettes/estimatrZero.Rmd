@@ -1,8 +1,8 @@
 ---
-title: "estimatrZero: what stays the same, what changes, and why"
+title: "estimatrZero: what changes, what does not, and why"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{estimatrZero: what stays the same, what changes, and why}
+  %\VignetteIndexEntry{estimatrZero: what changes, what does not, and why}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -18,6 +18,22 @@ has_randomizr <- requireNamespace("randomizr", quietly = TRUE)
 estimatrZero is a ground-up rewrite of estimatr aimed at the DeclareDesign workflow: fit the same model thousands of times, as fast as possible, and get the same number every time. It is a drop-in replacement for almost everything you already write. Change `estimatr::` to `estimatrZero::` and your code returns identical estimates, identical standard errors, identical confidence intervals, and identical objects, only faster.
 
 Three things are different, and each one is a deliberate trade. `horvitz_thompson()` takes one probability argument instead of five. `fixed_effects` no longer accepts HC2, HC3, or CR2. A handful of stargazer helpers are gone. The rest of this document explains what stays the same, what you gain, and what the three changes buy you.
+
+## Getting it
+
+Do not attach both packages in the same session. They define the same S3 methods for the same classes, and whichever loads second silently takes over dispatch for both. Either attach one:
+
+```r
+library(estimatrZero)
+lm_robust(y ~ z, data = dat)
+```
+
+or, when you genuinely need to compare them, attach neither and qualify every call:
+
+```r
+estimatr::lm_robust(y ~ z, data = dat)
+estimatrZero::lm_robust(y ~ z, data = dat)
+```
 
 ## What does not change
 
@@ -55,45 +71,7 @@ The identity claim is backed by a test suite of 588 passing assertions, 336 of w
 
 There are exactly two places where the numbers differ on purpose, and both involve `fixed_effects`. They are described below.
 
-## What you gain
-
-Median times on an Apple M4 Pro, R 4.6.0, comparing estimatr 1.0.6 to estimatrZero 0.1.0. Coefficients and standard errors agree to 1e-12 in every row.
-
-| task | estimatr | estimatrZero | speedup |
-|---|---:|---:|---:|
-| `lm_robust`, HC2, n = 1000 | 0.98 ms | 0.48 ms | 2.0x |
-| `lm_robust`, classical, n = 1000 | 0.89 ms | 0.41 ms | 2.1x |
-| `lm_robust`, CR2, 100 clusters | 1.26 ms | 0.73 ms | 1.7x |
-| `lm_robust`, CR2, weighted | 1.06 ms | 0.82 ms | 1.3x |
-| `lm_robust`, CR2, n = 5000, 500 clusters | 5.60 ms | 2.30 ms | 2.4x |
-| `lm_robust`, HC2, n = 100 | 0.53 ms | 0.36 ms | 1.5x |
-| `lm_lin` | 1.17 ms | 0.65 ms | 1.8x |
-| `iv_robust` | 1.23 ms | 0.87 ms | 1.4x |
-| `difference_in_means` | 0.75 ms | 0.61 ms | 1.2x |
-
-A simulation that calls `lm_robust()` 10,000 times saves about five seconds at n = 1000. That is the boring, everywhere-at-once gain. The interesting gains show up in the two places where the algorithms actually changed.
-
-**Fixed effects.** estimatrZero absorbs fixed effects by alternating projections in C++, the algorithm `fixest::feols` uses, rather than by building the full design matrix of dummies.
-
-| design | estimatr default | estimatr, HC1 | estimatrZero | speedup vs. default |
-|---|---:|---:|---:|---:|
-| 50 blocks, n = 1000 | 2.7 ms | 2.0 ms | 0.8 ms | 3.4x |
-| 500 blocks, n = 10,000 | 594 ms | 14.3 ms | 2.8 ms | 211x |
-| 2000 blocks, n = 40,000 | 43,492 ms | 95.0 ms | 10.9 ms | 3978x |
-
-The default column is the honest comparison, because estimatr defaults to HC2 with fixed effects and HC2 requires the hat matrix of the full design including every dummy. That is why 40,000 observations with 2000 blocks takes estimatr 43 seconds. The HC1 column shows the same computation with a standard error that does not need the full hat matrix, where estimatrZero is still 5x to 9x faster because the demeaning itself is faster.
-
-**Horvitz-Thompson.** estimatr builds the full N-by-N joint inclusion probability matrix. estimatrZero derives the same variance from scalar sufficient statistics, so the complete-randomization case is O(1) in N rather than O(N²).
-
-| design | estimatr | estimatrZero | speedup |
-|---|---:|---:|---:|
-| complete, N = 200 | 1.5 ms | 0.14 ms | 10x |
-| complete, N = 1000 | 13.0 ms | 0.18 ms | 73x |
-| complete, N = 3000 | 327 ms | 0.39 ms | 837x |
-
-Standard errors are identical to floating-point precision for simple, complete, blocked, clustered, and blocked-and-clustered designs.
-
-## Where the syntax changes
+## What changes, and why
 
 ### 1. `horvitz_thompson()` takes one probability argument
 
@@ -183,9 +161,104 @@ That equivalence is tested. If you need CR2 with a moderate number of blocks, wr
 
 `starprep()`, `commarobust()`, `declaration_to_condition_pr_mat()`, `gen_pr_matrix_cluster()`, and `permutations_to_condition_pr_mat()` are not exported. The first two are stargazer conveniences; the last three are the condition-probability-matrix machinery that the new Horvitz-Thompson variance does not need. HAC (Newey-West) and CR3 standard errors are also not implemented.
 
-## Bugs fixed along the way
+## Porting an existing script
 
-These are behavior changes too, in the sense that estimatrZero returns a different number than estimatr in the cases below. In each one the estimatr number is wrong.
+Three greps cover every breaking change. Whatever they do not find needs no attention.
+
+| Grep for | Replace with | Where it bites |
+|---|---|---|
+| `ra_declaration`, `condition_pr_mat`, `simple =`, or `blocks`/`clusters` inside `horvitz_thompson()` | one `condition_prs =`, holding a declaration, a named vector, or a matrix | Horvitz-Thompson designs |
+| `fixed_effects` together with `se_type = "HC2"`, `"HC3"`, or `"CR2"` | `se_type = "stata"` or `"CR0"`, or write the dummies with `factor()` | absorbed fixed effects |
+| `starprep`, `commarobust`, `declaration_to_condition_pr_mat`, `gen_pr_matrix_cluster`, `permutations_to_condition_pr_mat` | the first two have no replacement here; the last three are unnecessary | table output, HT internals |
+
+The first two stop with an error naming the replacement. The third stops because the function does not exist.
+
+One change does not announce itself, and it is the one to check by hand: `lm_robust(y ~ z, fixed_effects = ~ block)` with no `se_type` named gets HC2 from estimatr and HC1 from estimatrZero. The point estimates are identical and the standard errors are close, but if a result turns on which one you used, say which one you used.
+
+## What is new
+
+Four things estimatr cannot do, all of which fall out of the rewrite rather than being bolted on.
+
+**Multi-arm Horvitz-Thompson.** estimatr refuses an `ra_declaration` with more than two arms. estimatrZero contrasts any two arms of one, with the estimand still defined over all N units of the design. See [What changes, and why] for the call.
+
+**A joint hypothesis test.** `lh_robust()` returns a `joint_hypothesis` element carrying a Wald F statistic on cluster-adjusted degrees of freedom, which estimatr declines to compute.
+
+**Residuals.** `residuals(fit)` returns them, on the scale of the data, in the original row order for clustered fits, and structural rather than first-stage for `iv_robust()`. In estimatr the slot was `NULL` for every estimator.
+
+**A warning when a regressor is dropped.** Collinear terms come back as NA coefficients in both packages; only one of them tells you which terms it dropped.
+
+## Speed
+
+Median times on an Apple M4 Pro, R 4.6.0, comparing estimatr 1.0.6 to estimatrZero 0.1.0. Coefficients and standard errors agree to 1e-12 in every row.
+
+| task | estimatr | estimatrZero | speedup |
+|---|---:|---:|---:|
+| `lm_robust`, HC2, n = 1000 | 0.98 ms | 0.48 ms | 2.0x |
+| `lm_robust`, classical, n = 1000 | 0.89 ms | 0.41 ms | 2.1x |
+| `lm_robust`, CR2, 100 clusters | 1.26 ms | 0.73 ms | 1.7x |
+| `lm_robust`, CR2, weighted | 1.06 ms | 0.82 ms | 1.3x |
+| `lm_robust`, CR2, n = 5000, 500 clusters | 5.60 ms | 2.30 ms | 2.4x |
+| `lm_robust`, HC2, n = 100 | 0.53 ms | 0.36 ms | 1.5x |
+| `lm_lin` | 1.17 ms | 0.65 ms | 1.8x |
+| `iv_robust` | 1.23 ms | 0.87 ms | 1.4x |
+| `difference_in_means` | 0.75 ms | 0.61 ms | 1.2x |
+
+A simulation that calls `lm_robust()` 10,000 times saves about five seconds at n = 1000. That is the boring, everywhere-at-once gain. The interesting gains show up in the two places where the algorithms actually changed.
+
+**Fixed effects.** estimatrZero absorbs fixed effects by alternating projections in C++, the algorithm `fixest::feols` uses, rather than by building the full design matrix of dummies.
+
+| design | estimatr default | estimatr, HC1 | estimatrZero | speedup vs. default |
+|---|---:|---:|---:|---:|
+| 50 blocks, n = 1000 | 2.7 ms | 2.0 ms | 0.8 ms | 3.4x |
+| 500 blocks, n = 10,000 | 594 ms | 14.3 ms | 2.8 ms | 211x |
+| 2000 blocks, n = 40,000 | 43,492 ms | 95.0 ms | 10.9 ms | 3978x |
+
+The default column is the honest comparison, because estimatr defaults to HC2 with fixed effects and HC2 requires the hat matrix of the full design including every dummy. That is why 40,000 observations with 2000 blocks takes estimatr 43 seconds. The HC1 column shows the same computation with a standard error that does not need the full hat matrix, where estimatrZero is still 5x to 9x faster because the demeaning itself is faster.
+
+**Horvitz-Thompson.** estimatr builds the full N-by-N joint inclusion probability matrix. estimatrZero derives the same variance from scalar sufficient statistics, so the complete-randomization case is O(1) in N rather than O(N²).
+
+| design | estimatr | estimatrZero | speedup |
+|---|---:|---:|---:|
+| complete, N = 200 | 1.5 ms | 0.14 ms | 10x |
+| complete, N = 1000 | 13.0 ms | 0.18 ms | 73x |
+| complete, N = 3000 | 327 ms | 0.39 ms | 837x |
+
+Standard errors are identical to floating-point precision for simple, complete, blocked, clustered, and blocked-and-clustered designs.
+
+### Reproducing these numbers
+
+```r
+library(microbenchmark)
+set.seed(42)
+n <- 1000
+dat <- data.frame(
+  y = rnorm(n), x = rnorm(n), z = rbinom(n, 1, 0.5),
+  w = runif(n, 0.5, 1.5), cl = rep(1:100, each = 10),
+  bl = rep(1:50, each = 20)
+)
+
+microbenchmark(
+  estimatr = estimatr::lm_robust(y ~ z + x, data = dat, clusters = cl),
+  estimatrZero = estimatrZero::lm_robust(y ~ z + x, data = dat, clusters = cl),
+  times = 100
+)
+```
+
+## Why rewrite at all
+
+estimatr is about 6,782 lines; estimatrZero is about 3,377. The reduction is not uniform, and where it came from is the interesting part.
+
+The Horvitz-Thompson variance was the largest saving and the one that looked least likely. estimatr builds the full N-by-N matrix of joint inclusion probabilities, with 538 lines of helpers to construct it for each design family. Young's inequality bound for any complete-randomization design reduces to six scalar sufficient statistics per block, so the matrix never has to exist. Designs that cannot be described parametrically are a permutation matrix, and `tcrossprod()` handles those in one line. The whole estimator is 431 lines, and it is faster by a factor that grows with N.
+
+Fixed effects were the second. Absorbing by alternating projections in C++ is the `feols` algorithm, and it makes the number of fixed effects almost free. The cost is that leverage-based standard errors are no longer available for absorbed models, which is a real restriction and is why estimatrZero errors rather than quietly building the dummy matrix that the absorption was meant to avoid.
+
+The rest is ordinary: one code path where estimatr has several, and the S3 surface generated rather than written out per class.
+
+## Current status
+
+estimatrZero is not on CRAN yet, and it is not yet used in a published analysis. The test suite is 612 tests, and the numerical comparisons against estimatr run across 50 seeds per design type for every Horvitz-Thompson design family.
+
+What follows is the list of places where estimatrZero deliberately returns a different number from estimatr. These are behavior changes too, in the sense that estimatrZero returns a different number than estimatr in the cases below. In each one the estimatr number is wrong.
 
 **`lh_robust()` used residual degrees of freedom with clustered models.** With n = 100 and 10 clusters, `lh_robust()` tested hypotheses against 97 degrees of freedom rather than the cluster-adjusted 9, producing confidence intervals far too narrow and inconsistent with the `lm_robust()` fit it was built from. estimatrZero looks up the per-coefficient degrees of freedom, and takes the conservative minimum for composite hypotheses. (estimatr issue #405.)
 
@@ -218,37 +291,4 @@ fit <- estimatrZero::lm_robust(y ~ x + x_copy, data = dat)
 
 **An all-`NA` outcome errored when `weights` were given**, though the same model without weights returned an NA coefficient. The asymmetry bites when one model is fitted across many subgroups and one subgroup has no observed outcome. (estimatr issue #370.)
 
-## Loading the package
-
-Do not attach both packages in the same session. They define the same S3 methods for the same classes, and whichever loads second silently takes over dispatch for both. Either attach one:
-
-```r
-library(estimatrZero)
-lm_robust(y ~ z, data = dat)
-```
-
-or, when you genuinely need to compare them, attach neither and qualify every call:
-
-```r
-estimatr::lm_robust(y ~ z, data = dat)
-estimatrZero::lm_robust(y ~ z, data = dat)
-```
-
-## Reproducing the benchmarks
-
-```r
-library(microbenchmark)
-set.seed(42)
-n <- 1000
-dat <- data.frame(
-  y = rnorm(n), x = rnorm(n), z = rbinom(n, 1, 0.5),
-  w = runif(n, 0.5, 1.5), cl = rep(1:100, each = 10),
-  bl = rep(1:50, each = 20)
-)
-
-microbenchmark(
-  estimatr = estimatr::lm_robust(y ~ z + x, data = dat, clusters = cl),
-  estimatrZero = estimatrZero::lm_robust(y ~ z + x, data = dat, clusters = cl),
-  times = 100
-)
-```
+**Still open.** HAC (Newey-West) and CR3 standard errors are not implemented, and neither is `se_type = "constant"` for Horvitz-Thompson. The multi-arm Horvitz-Thompson contrast is ours to defend rather than a port: estimatr refuses the case outright, so there is no reference implementation to check against. It is conservative in every design simulated so far, with the estimated standard error running 1.08 to 1.32 times the true sampling standard deviation, but nobody has published the bound for a two-of-K contrast.
