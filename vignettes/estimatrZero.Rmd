@@ -67,7 +67,7 @@ all.equal(fit_estimatr$std.error, fit_zero$std.error, tolerance = 1e-12)
 all.equal(fit_estimatr$df, fit_zero$df, tolerance = 1e-12)
 ```
 
-The identity claim is backed by a test suite of 588 passing assertions, 336 of which compare estimatrZero output to estimatr output coefficient by coefficient and standard error by standard error, across every supported SE type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes.
+The identity claim is backed by a test suite of 715 passing assertions, 336 of which compare estimatrZero output to estimatr output coefficient by coefficient and standard error by standard error, across every supported SE type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes.
 
 There are exactly two places where the numbers differ on purpose, and both involve `fixed_effects`. They are described below.
 
@@ -177,7 +177,7 @@ One change does not announce itself, and it is the one to check by hand: `lm_rob
 
 ## What is new
 
-Four things estimatr cannot do, all of which fall out of the rewrite rather than being bolted on.
+Five things estimatr cannot do, all of which fall out of the rewrite rather than being bolted on.
 
 **Multi-arm Horvitz-Thompson.** estimatr refuses an `ra_declaration` with more than two arms. estimatrZero contrasts any two arms of one, with the estimand still defined over all N units of the design. See [What changes, and why] for the call.
 
@@ -186,6 +186,8 @@ Four things estimatr cannot do, all of which fall out of the rewrite rather than
 **Residuals.** `residuals(fit)` returns them, on the scale of the data, in the original row order for clustered fits, and structural rather than first-stage for `iv_robust()`. In estimatr the slot was `NULL` for every estimator.
 
 **A warning when a regressor is dropped.** Collinear terms come back as NA coefficients in both packages; only one of them tells you which terms it dropped.
+
+**Blocked designs whose blocks are not all the same shape.** A block holding one treated unit and three control units has no within-block variance to estimate, whatever its size. estimatr classifies blocks by size rather than by arm, so it either errors on such a design or applies the matched-pairs estimator to every block, big ones included. estimatrZero uses the Pashley and Miratrix (2021) estimators: blocks with two or more units per arm carry their own Neyman variance, blocks with a singleton arm are estimated across blocks, and a design with both combines the two. Standard errors agree to 1e-10 with `blkvar`, the authors' own implementation.
 
 ## Speed
 
@@ -254,9 +256,28 @@ Fixed effects were the second. Absorbing by alternating projections in C++ is th
 
 The rest is ordinary: one code path where estimatr has several, and the S3 surface generated rather than written out per class.
 
+## The estimatr issue list
+
+All 71 open issues on `DeclareDesign/estimatr` were run against both packages, one reproducer at a time. Where they landed:
+
+| status | n |
+|---|---:|
+| Fixed in estimatrZero | 26 |
+| Feature requests and discussions, unchanged | 23 |
+| Out of scope by design, or not actionable | 7 |
+| Not reproducible without the reporter's data | 6 |
+| Superseded by the rewrite | 5 |
+| Still open, real work | 4 |
+
+The fixes worth naming. Blocked designs whose blocks are not all the same shape (#336) now use the Pashley and Miratrix (2021) estimators, where estimatr either errors or applies the matched-pairs estimator to every block; this is the largest single addition. `residuals()` returns something (#345). Rank detection matches `lm()`, so a constant regressor comes back as NA rather than as a coefficient of 1e11 (#351, #395). `predict()` works with fixed effects, with factors, and with no `newdata` (#403, #404). `lh_robust()` uses cluster-adjusted degrees of freedom and returns a joint test (#405, #320, #390). Dropped collinear terms are named rather than silently returned as NA (#411). `augment()` exists, which unlocks the broom-aware packages downstream (#377). Multi-arm Horvitz-Thompson works at all (#183).
+
+The four still open are honest holdouts. Two of them, #412 and #337, ask whether `se_type = "stata"` reproduces Stata's clustered standard errors under fixed effects, and settling that needs Stata rather than more R. #289 needs the reporter to say what remains after the clustered case was fixed. #123 is a running catalogue of S3 methods `lm` has: `residuals` and `variable.names` are now present, `anova` and `simulate` are not.
+
+One defect turned up that has no issue behind it, and it is worth knowing if you run block-clustered designs. A block holding a single treated or single control **cluster** has no estimable within-block variance, and both packages returned one anyway. Exhaustive enumeration puts the estimate at 0.12 to 0.25 of the truth, depending on the block's size, for 88% coverage of a nominal 95% interval. estimatrZero now refuses those designs and names the offending blocks. Matched-pair clustered designs are unaffected, since their variance comes from across blocks rather than within them.
+
 ## Current status
 
-estimatrZero is not on CRAN yet, and it is not yet used in a published analysis. The test suite is 612 tests, and the numerical comparisons against estimatr run across 50 seeds per design type for every Horvitz-Thompson design family.
+estimatrZero is not on CRAN yet, and it is not yet used in a published analysis. The test suite is 715 assertions across 230 blocks, `R CMD check` is clean, and the numerical comparisons against estimatr run across 50 seeds per design type for every Horvitz-Thompson design family.
 
 What follows is the list of places where estimatrZero deliberately returns a different number from estimatr. These are behavior changes too, in the sense that estimatrZero returns a different number than estimatr in the cases below. In each one the estimatr number is wrong.
 
