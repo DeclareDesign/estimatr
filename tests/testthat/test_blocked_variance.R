@@ -159,3 +159,75 @@ test_that("hybrid variance is conservative and covers at the nominal rate", {
   expect_gt(mean(out[2, ]) / var(out[1, ]), 1)                  # conservative
   expect_gt(mean(out[3, ] <= sate & out[4, ] >= sate), 0.94)    # covers
 })
+
+# ---- cluster-randomized blocks (estimatr #336 is unit-level only) ----
+
+# Pashley and Miratrix cover treatment assigned WITHIN blocks, not blocks of
+# clusters ("we are focusing on treatment assigned within cluster", section 2),
+# so the hybrid above does not extend here. What is enforced instead is that a
+# block must be able to estimate its own variance.
+
+make_clustered <- function(cl_per_block, m_cl, cl_size = 4, seed = 1) {
+  set.seed(seed)
+  K <- length(cl_per_block)
+  bl_of_cl <- rep(seq_len(K), cl_per_block)
+  ncl <- length(bl_of_cl)
+  cl <- rep(seq_len(ncl), each = cl_size)
+  bl <- rep(bl_of_cl, each = cl_size)
+  z <- rep(randomizr::block_ra(blocks = bl_of_cl, block_m = m_cl), each = cl_size)
+  data.frame(y = rnorm(length(z)) + rep(rnorm(ncl, 0, 1.5), each = cl_size) + 0.5 * z,
+             z = z, cl = cl, bl = bl)
+}
+
+test_that("a block with one treated cluster is refused, not silently wrong", {
+  skip_if_not_installed("randomizr")
+  d <- make_clustered(c(6, 6, 6, 4), c(3, 3, 3, 1))
+  expect_error(
+    difference_in_means(y ~ z, data = d, blocks = bl, clusters = cl),
+    "only one treated or one control `cluster`"
+  )
+  # the message names the offending block
+  expect_error(
+    difference_in_means(y ~ z, data = d, blocks = bl, clusters = cl), "4"
+  )
+})
+
+test_that("matched-pair clustered designs are exempt from that check", {
+  skip_if_not_installed("randomizr")
+  # every block here has one treated and one control cluster by construction,
+  # and the variance comes from across blocks, so it is estimable
+  d <- make_clustered(c(2, 2, 2, 2), rep(1, 4))
+  m <- difference_in_means(y ~ z, data = d, blocks = bl, clusters = cl)
+  expect_equal(m$design, "Matched-pair clustered")
+  expect_true(is.finite(m$std.error[[1]]))
+})
+
+test_that("clustered blocks with two or more clusters per arm still work", {
+  skip_if_not_installed("randomizr")
+  d <- make_clustered(c(6, 6), c(3, 3))
+  m <- difference_in_means(y ~ z, data = d, blocks = bl, clusters = cl)
+  expect_equal(m$design, "Block-clustered")
+  expect_true(is.finite(m$std.error[[1]]))
+})
+
+test_that("within-block cluster variance is exact when both arms have 2+ clusters", {
+  skip_if_not_installed("randomizr")
+  # Enumerate every assignment of 6 clusters with 3 treated: with the
+  # cluster-level potential outcomes fixed, the mean estimated variance must
+  # equal the true variance of the estimator.
+  set.seed(77)
+  cl_size <- 4; ncl <- 6
+  y0 <- rnorm(ncl * cl_size) + rep(rnorm(ncl, 0, 1.5), each = cl_size)
+  y1 <- y0 + 0.5
+  cl <- rep(seq_len(ncl), each = cl_size)
+  combos <- utils::combn(ncl, 3)
+
+  res <- apply(combos, 2, function(tr) {
+    z <- as.integer(cl %in% tr)
+    f <- difference_in_means(y ~ z, clusters = cl,
+      data = data.frame(y = ifelse(z == 1, y1, y0), z = z, cl = cl))
+    c(f$coefficients[[1]], f$std.error[[1]]^2)
+  })
+  true_var <- var(res[1, ]) * (ncol(combos) - 1) / ncol(combos)
+  expect_equal(mean(res[2, ]), true_var, tolerance = 1e-8)
+})

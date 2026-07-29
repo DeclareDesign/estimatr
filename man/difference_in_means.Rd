@@ -71,9 +71,16 @@ units. Both messages suggest merging blocks or using \code{\link[=lm_robust]{lm_
 block fixed effects.
 
 If weights are specified, estimation is handed to \code{\link[=lm_robust]{lm_robust()}} with HC2
-standard errors. Blocked designs with \code{clusters} or \code{weights} do not use
-the Pashley and Miratrix estimators and require at least two treated and
-two control clusters in every block.
+standard errors.
+
+\strong{Blocks of clusters.} Pashley and Miratrix treat treatment assigned
+within blocks, not blocks of clusters, so blocked designs with \code{clusters}
+use the earlier estimators. Every block must have at least two treated and
+two control clusters, unless the design is matched-pair clustered, where
+the variance is estimated across blocks. A block with a single treated or
+control cluster is refused: its within-block variance is not estimable,
+and estimating it anyway understates the standard error by roughly the
+block's cluster count.
 }
 \references{
 Gerber, Alan S. and Donald P. Green. 2012. \emph{Field Experiments:

@@ -35,9 +35,16 @@
 #'   block fixed effects.
 #'
 #'   If weights are specified, estimation is handed to [lm_robust()] with HC2
-#'   standard errors. Blocked designs with `clusters` or `weights` do not use
-#'   the Pashley and Miratrix estimators and require at least two treated and
-#'   two control clusters in every block.
+#'   standard errors.
+#'
+#'   **Blocks of clusters.** Pashley and Miratrix treat treatment assigned
+#'   within blocks, not blocks of clusters, so blocked designs with `clusters`
+#'   use the earlier estimators. Every block must have at least two treated and
+#'   two control clusters, unless the design is matched-pair clustered, where
+#'   the variance is estimated across blocks. A block with a single treated or
+#'   control cluster is refused: its within-block variance is not estimable,
+#'   and estimating it anyway understates the standard error by roughly the
+#'   block's cluster count.
 #'
 #' @return An object of class `"difference_in_means"`.
 #'
@@ -192,6 +199,32 @@ difference_in_means <- function(formula,
         "Some `blocks` have two units/`clusters` while other blocks ",
         "have more units/`clusters`. Using matched pairs variance estimator."
       )
+    }
+
+    # A block with one treated or one control cluster has no estimable
+    # within-block variance: the singleton arm contributes nothing to the
+    # between-cluster variability, so the estimate captures only the other arm
+    # and comes out roughly a factor of the block's cluster count too small.
+    # Exact enumeration: 6 clusters with 1 treated returns 0.17 of the true
+    # variance. The matched-pair path is exempt because it estimates the
+    # variance across blocks rather than within them.
+    if (!pair_matched && !is.null(data$cluster)) {
+      singleton_arm <- vapply(split(data, data$block), function(x) {
+        min(length(unique(x$cluster[x$t == condition2])),
+            length(unique(x$cluster[x$t == condition1]))) == 1L
+      }, logical(1))
+
+      if (any(singleton_arm)) {
+        stop(
+          "Some `blocks` have only one treated or one control `cluster`: ",
+          paste(names(singleton_arm)[singleton_arm], collapse = ", "),
+          ".\nThe within-block variance cannot be estimated from a single ",
+          "cluster, and doing it anyway understates the standard error ",
+          "severely. Merge those blocks with others so each has at least two ",
+          "clusters per arm, or use `lm_robust()` with block fixed effects ",
+          "and `clusters`."
+        )
+      }
     }
 
     block_dfs <- split(data, data$block)

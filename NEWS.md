@@ -118,7 +118,26 @@ The `design` element now reports `"Blocked"`, `"Matched-pair"`, `"Small blocks"`
 
 Two designs are refused, because the variance genuinely cannot be estimated rather than because the software is unwilling: exactly one block with a singleton arm, which leaves nothing to compare it against and would contribute a variance of zero, and a set of different-sized such blocks in which one holds half or more of their units, which is the condition equation 8 needs to stay defined and conservative.
 
-Unchanged: all-big designs and matched pairs return exactly what they did before. Blocked designs with `clusters` or `weights` keep the old behaviour and still require two treated and two control clusters per block.
+Unchanged: all-big designs and matched pairs return exactly what they did before.
+
+### Blocks of clusters with a singleton cluster in an arm are now refused
+
+Pashley and Miratrix cover treatment assigned within blocks, not blocks of clusters: clusters appear once in their paper, to be set aside ("we are focusing on treatment assigned within cluster", section 2). The hybrid above therefore does not extend to cluster-randomized blocks, and blocked designs with `clusters` keep the previous estimators.
+
+Checking that boundary turned up a separate defect, present in estimatr too. A block with one treated or one control **cluster** has no estimable within-block variance, because the singleton arm contributes nothing to the between-cluster variability, yet both packages returned a number for it with no warning. Exhaustive enumeration of every assignment, with cluster-level potential outcomes held fixed:
+
+| block | ratio of mean estimated variance to true variance |
+|---|---:|
+| 6 clusters, 3 treated | 1.00 |
+| 6 clusters, 2 treated | 1.00 |
+| 4 clusters, 2 treated | 1.00 |
+| 4 clusters, 1 treated | 0.25 |
+| 6 clusters, 1 treated | 0.17 |
+| 8 clusters, 1 treated | 0.12 |
+
+With two or more clusters per arm the estimator is exact. With one it is too small by roughly the block's cluster count, and it worsens as the block grows. End to end, blocks of 6, 6, 6, and 4 clusters where the last has a single treated cluster gave 88% coverage of a nominal 95% interval.
+
+estimatrZero now errors, naming the offending blocks and suggesting either merging them so every block has two clusters per arm, or `lm_robust()` with block fixed effects and `clusters`. Matched-pair clustered designs are exempt, since every block there has a singleton arm by construction and the variance is estimated across blocks rather than within them.
 
 ### Rank detection matches `lm()` (#351, #395)
 
