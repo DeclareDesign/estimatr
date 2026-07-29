@@ -45,8 +45,17 @@ lm_robust_fit <- function(y,
     X = X
   )
 
+  # lm_solver maps these straight into Eigen, which requires doubles, and
+  # tidy() needs a name for every outcome column. Callers passing matrices
+  # directly (this function is exported) hit both (estimatr #269).
+  if (!is.double(data[["y"]])) storage.mode(data[["y"]]) <- "double"
+  if (!is.double(data[["X"]])) storage.mode(data[["X"]]) <- "double"
+
   ny <- ncol(data[["y"]])
   ynames <- colnames(data[["y"]])
+  if (is.null(ynames)) {
+    ynames <- if (ny == 1L) "y" else paste0("y", seq_len(ny))
+  }
   multivariate <- ny > 1
   if (weighted) {
     data[["weights"]] <- weights
@@ -178,6 +187,21 @@ lm_robust_fit <- function(y,
       )
 
       return_list$std.error[est_exists] <- sqrt(diag(vcov_fit$Vcov_hat))
+
+      # HC2, HC3 and CR2 divide by (1 - h_ii). An observation with leverage
+      # exactly 1, which a near-saturated design produces in quantity, makes
+      # that zero and the standard error NaN. Saying so beats a bare NaN
+      # (estimatr #395).
+      if (any(is.nan(return_list$std.error)) &&
+          se_type %in% c("HC2", "HC3", "CR2")) {
+        warning(
+          "Some standard errors are NaN. `se_type = \"", se_type, "\"` divides ",
+          "by the observation's leverage, which is exactly 1 for some ",
+          "observations here, as happens when the design is close to ",
+          "saturated. Use `se_type = \"HC1\"` or `\"classical\"`, or drop ",
+          "covariates, to get finite standard errors."
+        )
+      }
 
       if (ci) {
         return_list$df[est_exists] <-

@@ -141,6 +141,24 @@ lm_robust <- function(formula,
     residuals_proj <- drop(return_list[["residuals"]])
     return_list[["fitted.values"]] <- drop(yoriginal) - residuals_proj
 
+    # Absorbed group effects, so predict() can put them back. fitted - X'b is
+    # constant within group by construction, so take one value per group. Only
+    # defined for one-way FE: with several FE variables the sum is identified
+    # but the parts are not, so newdata cannot be mapped to a contribution.
+    if (ncol(model_data[["fixed_effects"]]) == 1L &&
+        NCOL(return_list[["fitted.values"]]) == 1L) {
+      return_list[["fixed_effects"]] <- setNames(
+        tapply(
+          return_list[["fitted.values"]] -
+            drop(model_data[["Xoriginal"]] %*% return_list[["coefficients"]]),
+          model_data[["fixed_effects"]][, 1L],
+          `[`, 1L
+        ),
+        paste0(colnames(model_data[["fixed_effects"]]),
+               levels(as.factor(model_data[["fixed_effects"]][, 1L])))
+      )
+    }
+
     # Full model R2 using original Y
     n_obs <- nrow(yoriginal)
     y_mean <- mean(yoriginal)

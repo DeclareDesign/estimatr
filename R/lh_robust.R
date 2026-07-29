@@ -16,6 +16,17 @@ lh_robust <- function(..., data, linear_hypothesis) {
 
   lmr <- lm_robust(..., data = data)
 
+  # With several outcomes the coefficients are named "<outcome>:<term>", so
+  # car::linearHypothesis cannot match a hypothesis written in terms of the
+  # variables and reports it as malformed (estimatr #297).
+  if (length(lmr[["outcome"]]) > 1) {
+    stop(
+      "`lh_robust` does not support multiple outcomes: coefficients of a ",
+      "multivariate fit are named '<outcome>:<term>', which a hypothesis ",
+      "such as 'cyl = 2' cannot refer to. Fit one outcome at a time."
+    )
+  }
+
   alpha <- eval_tidy(quos(...)$alpha)
   if (is.null(alpha)) {
     alpha <- 0.05

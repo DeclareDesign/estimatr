@@ -298,3 +298,115 @@ test_that("#411: no warning when the design matrix is full rank", {
   expect_no_warning(lm_robust(y ~ x + z, data = dat, clusters = cl))
   expect_no_warning(lm_lin(y ~ z, covariates = ~ x, data = dat))
 })
+
+# Other files in this suite load estimatr, which re-registers S3 methods for
+# the shared "lm_robust" and "iv_robust" classes, so generic dispatch here is
+# not guaranteed to reach estimatrZero's method. Where the method under test
+# IS the thing being tested, call ours explicitly.
+z_predict <- function(...) estimatrZero:::predict.lm_robust(...)
+z_glance <- function(...) estimatrZero:::glance.iv_robust(...)
+z_model_frame <- function(...) estimatrZero:::model.frame.iv_robust(...)
+z_varnames <- function(...) estimatrZero:::variable.names.lm_robust(...)
+z_tidy <- function(...) estimatrZero:::tidy.lm_robust(...)
+
+# ---- rank detection and degenerate designs (estimatr #351, #395) ----
+
+test_that("#351: a constant regressor is detected as collinear, as in lm()", {
+  d <- data.frame(y = rnorm(500), x = 1)
+  m <- suppressWarnings(lm_robust(y ~ x, data = d))
+  expect_true(is.na(m$coefficients[["x"]]))
+  expect_equal(unname(is.na(coef(lm(y ~ x, data = d)))), unname(is.na(m$coefficients)))
+})
+
+test_that("#395: NaN standard errors from leverage-1 points are explained", {
+  set.seed(7); N <- 50
+  d <- data.frame(x = sample(1:40, N, TRUE), Z = sample(0:1, N, TRUE))
+  d$Y <- 0.1 * d$Z + d$x + rnorm(N)
+  # the design is also rank deficient, so the collinearity warning fires too
+  expect_warning(
+    expect_warning(lm_lin(Y ~ Z, covariates = ~ as.factor(x), data = d), "leverage"),
+    "collinear"
+  )
+  # classical SEs do not use leverage, so they stay finite
+  m <- suppressWarnings(lm_lin(Y ~ Z, covariates = ~ as.factor(x), data = d,
+                               se_type = "classical"))
+  expect_false(is.nan(m$std.error[["Z"]]))
+})
+
+# ---- predict (estimatr #403, #404) ----
+
+test_that("#403: predict() with no newdata returns the in-sample fit", {
+  m <- lm_robust(y ~ x + z, data = dat)
+  expect_equal(z_predict(m), m$fitted.values)
+  expect_error(z_predict(m, se.fit = TRUE), "newdata")
+})
+
+test_that("#404: predict() works with fixed effects, with and without factors", {
+  d <- dat
+  d$f <- factor(rep(letters[1:4], length.out = n))
+  m <- lm_robust(y ~ x + f, data = d, fixed_effects = ~ block)
+  nd <- d[1:5, ]
+  # equals the dummy-variable regression, which is the definition of correct
+  expect_equal(unname(z_predict(m, nd)),
+               unname(predict(lm(y ~ x + f + factor(block), data = d), nd)),
+               tolerance = 1e-8)
+  # and reproduces the in-sample fit
+  expect_equal(unname(z_predict(m, d)), unname(m$fitted.values), tolerance = 1e-8)
+})
+
+test_that("#404: predict() rejects new FE levels and multi-way FE", {
+  m <- lm_robust(y ~ x, data = dat, fixed_effects = ~ block)
+  nd <- dat[1, ]; nd$block <- 999
+  expect_error(z_predict(m, nd), "new levels")
+  m2 <- lm_robust(y ~ x, data = dat, fixed_effects = ~ block + cl)
+  expect_error(z_predict(m2, dat[1:5, ]), "fitted.values")
+})
+
+# ---- exported lm_robust_fit and S3 coverage (estimatr #269, #123) ----
+
+test_that("#269: lm_robust_fit accepts an integer X and an unnamed y", {
+  fit <- lm_robust_fit(y = dat$y, X = matrix(as.integer(dat$z)), weights = NULL,
+    cluster = NULL, ci = FALSE, se_type = "none", alpha = 0.05,
+    return_vcov = FALSE, try_cholesky = FALSE, has_int = TRUE)
+  expect_s3_class(z_tidy(fit), "data.frame")
+  expect_equal(nrow(z_tidy(fit)), 1L)
+})
+
+test_that("#123: variable.names() returns the model terms", {
+  m <- lm_robust(y ~ x + z, data = dat)
+  expect_equal(z_varnames(m), c("(Intercept)", "x", "z"))
+})
+
+# ---- iv_robust S3 (estimatr #389, #397) ----
+
+test_that("#389: glance() works with multiple endogenous regressors", {
+  m <- iv_robust(mpg ~ hp + wt | am + cyl, data = mtcars, diagnostics = TRUE)
+  g <- z_glance(m)
+  expect_s3_class(g, "data.frame")
+  expect_equal(nrow(g), 1L)
+  # reports the weakest of the per-regressor first stages
+  fs <- m$diagnostic_first_stage_fstatistic
+  expect_equal(g$statistic.weakinst, unname(min(fs[grep("(^|:)value$", names(fs))])))
+})
+
+test_that("#397: model.frame() on iv_robust returns the model variables", {
+  m <- iv_robust(mpg ~ wt + hp | am + hp, data = mtcars)
+  mf <- z_model_frame(m)
+  expect_equal(nrow(mf), nrow(mtcars))
+  expect_setequal(names(mf), c("mpg", "wt", "hp", "am"))
+})
+
+# ---- clearer errors (estimatr #297, #304) ----
+
+test_that("#297: lh_robust rejects multiple outcomes with an explanation", {
+  skip_if_not_installed("carData")
+  expect_error(
+    lh_robust(cbind(mpg, am) ~ cyl + gear, data = mtcars, linear_hypothesis = "cyl = 2"),
+    "multiple outcomes"
+  )
+})
+
+test_that("#304: fixed_effects must be a formula", {
+  expect_error(lm_robust(y ~ x, data = dat, fixed_effects = block),
+               "must be a one-sided formula")
+})

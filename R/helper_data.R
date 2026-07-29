@@ -33,6 +33,13 @@ clean_model_data <- function(data, datargs, estimator = "") {
   if ("fixed_effects" %in% names(mfargs)) {
     name <- sprintf(".__fixed_effects%%%d__", sample.int(.Machine$integer.max, 1))
     fe_formula <- eval_tidy(mfargs[["fixed_effects"]], data = data)
+    if (!inherits(fe_formula, "formula")) {
+      stop(
+        "`fixed_effects` must be a one-sided formula, such as `~ blockID` or ",
+        "`~ block + year`. You passed an object of class ",
+        paste(class(fe_formula), collapse = "/"), "."
+      )
+    }
     m_formula_env[[name]] <- sapply(
       stats::model.frame.default(fe_formula, data = data, na.action = NULL),
       FUN = as.factor
@@ -151,6 +158,9 @@ demean_fes <- function(model_data) {
   X         <- model_data[["design_matrix"]]
   keep_cols <- if (has_int) colnames(X) != "(Intercept)" else rep(TRUE, ncol(X))
   X_sub     <- X[, keep_cols, drop = FALSE]
+  # Kept so lm_robust can recover the absorbed group effects, which predict()
+  # needs and which are otherwise unrecoverable once X is demeaned.
+  model_data[["Xoriginal"]] <- X_sub
   model_data[["design_matrix"]] <- if (ncol(X_sub) > 0L) {
     X_dm <- demean_cpp(X_sub, fe_codes, w)
     colnames(X_dm) <- colnames(X_sub)

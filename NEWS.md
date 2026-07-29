@@ -102,6 +102,33 @@ A regressor collinear with the others is dropped and returned as an NA coefficie
 
 estimatrZero warns once, naming the dropped terms. Note that an under-identified `iv_robust()` call now raises two warnings, "More regressors than instruments" and the collinearity warning for the intercept it drops; both are accurate.
 
+### Rank detection matches `lm()` (#351, #395)
+
+`lm_robust(y ~ x)` with `x` constant returned coefficients of order 1e11 instead of NA. The design matrix is exactly rank deficient, but Eigen's default `ColPivHouseholderQR` threshold is roughly `epsilon * ncol` relative to the largest pivot, tight enough that the collinear column survives as a pivot of order 1e-14. `stats::lm()` uses LINPACK `dqrdc2` with `tol = 1e-7`; estimatrZero now sets the same threshold, so rank detection agrees with `lm()` on degenerate designs. Cross-package agreement with estimatr is unaffected on any full-rank design.
+
+A near-saturated design also produces observations with leverage exactly 1, which makes HC2, HC3, and CR2 divide by zero and return `NaN`. estimatrZero now says so, naming the SE type and suggesting `"HC1"` or `"classical"`, rather than returning a bare `NaN`.
+
+### `predict()` with fixed effects (#403, #404)
+
+Three separate failures. `predict()` with no `newdata` errored instead of returning the in-sample fit. `predict()` on a fixed-effects model with a factor regressor failed with "non-conformable arguments", because the terms object still carries the intercept that fixed-effects absorption removed from the coefficients. And estimatrZero did not store the absorbed group effects at all, so no fixed-effects prediction was possible.
+
+`lm_robust()` now stores the absorbed group effects for a single-outcome model with one set of fixed effects, and `predict()` adds them back, reproducing the dummy-variable regression exactly. New levels in `newdata` and multi-way fixed effects both error with an explanation: with several sets of fixed effects the absorbed effects are identified in sum but not separately, so a new observation cannot be assigned its share.
+
+### `glance()` on `iv_robust` with several endogenous regressors (#389)
+
+The first-stage F test carries one entry per endogenous regressor, named `"<var>:value"` once there is more than one, so indexing it by `"value"` produced an NA with an NA name and the `data.frame()` call failed on the row name. `glance()` must return one row, so it now reports the weakest of the per-regressor first stages, which is the quantity a weak-instrument diagnostic asks about. The per-regressor tests remain in `diagnostic_first_stage_fstatistic`.
+
+### `model.frame()` on `iv_robust` (#397)
+
+`model.frame()` returned a two-column frame whose second column was named `"x + hp | am + hp"`, because `model.frame.default()` reads the `|` of a two-part formula as a logical operator. A `model.frame.iv_robust()` method now rebuilds a one-part formula naming every variable and defers to the default method.
+
+### Smaller fixes
+
+- **`lm_robust_fit()` with an unnamed or integer matrix (#269).** The exported fitting function failed on an integer design matrix ("Wrong R type for mapped matrix") and produced an object `tidy()` could not handle when `y` had no column names. Both inputs are now coerced and named.
+- **`variable.names()` (#123).** Added for `lm_robust` and `iv_robust`.
+- **`fixed_effects` must be a formula (#304).** Passing a bare column name produced "invalid formula" from deep inside `model.frame`. The error now names the argument and shows the expected form.
+- **`lh_robust()` with multiple outcomes (#297).** Coefficients of a multivariate fit are named `"<outcome>:<term>"`, which a hypothesis such as `"cyl = 2"` cannot refer to, and `car::linearHypothesis()` reported it as malformed. estimatrZero errors with that explanation and tells the user to fit one outcome at a time.
+
 ### All-missing outcome with weights (#370)
 
 `lm_robust(X ~ 1, weights = w, data = df)` where `X` is entirely `NA` errors in estimatr with "'x' must be an array of at least two dimensions", while the same model without weights returns an NA coefficient. The asymmetry matters when one model is fitted across many subgroups and some subgroup has no observed outcome. estimatrZero returns the NA coefficient in both cases.

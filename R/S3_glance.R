@@ -50,6 +50,26 @@ glance.lh_robust <- function(x, ...) {
   glance(x[["lm_robust"]])
 }
 
+# The first-stage F test has one entry per endogenous regressor, named
+# "<var>:value" once there is more than one, so indexing by "value" returns an
+# NA with an NA name and the data.frame call fails on the row name (estimatr
+# #389). glance() must be one row, so with several endogenous regressors we
+# report the weakest first stage, which is the quantity a weak-instrument
+# diagnostic is asking about. Read the per-regressor tests in
+# `diagnostic_first_stage_fstatistic` directly.
+weakinst_row <- function(fstat) {
+  if (is.null(fstat)) {
+    return(data.frame(statistic.weakinst = NA_real_, p.value.weakinst = NA_real_))
+  }
+  stat_i <- grep("(^|:)value$", names(fstat))
+  p_i <- grep("(^|:)p\\.value$", names(fstat))
+  weakest <- which.min(fstat[stat_i])
+  data.frame(
+    statistic.weakinst = unname(fstat[stat_i][weakest]),
+    p.value.weakinst = unname(fstat[p_i][weakest])
+  )
+}
+
 #' @export
 glance.iv_robust <- function(x, ...) {
 
@@ -67,14 +87,7 @@ glance.iv_robust <- function(x, ...) {
       stringsAsFactors = FALSE
     ),
     retrieve_fstatistic(x),
-    if (exists("diagnostic_first_stage_fstatistic", x) && length(x[["diagnostic_first_stage_fstatistic"]] == 4)) {
-      data.frame(
-        statistic.weakinst = x[["diagnostic_first_stage_fstatistic"]]["value"],
-        p.value.weakinst = x[["diagnostic_first_stage_fstatistic"]]["p.value"]
-      )
-    } else {
-      data.frame(statistic.weakinst = NA_real_, p.value.weakinst = NA_real_)
-    },
+    weakinst_row(x[["diagnostic_first_stage_fstatistic"]]),
     if (exists("diagnostic_endogeneity_test", x)) {
       data.frame(
         statistic.endogeneity = x[["diagnostic_endogeneity_test"]]["value"],

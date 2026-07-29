@@ -84,6 +84,13 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
 
   if (do_qr) {
     Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR(X);
+    // Eigen's default rank threshold is about epsilon * ncol relative to the
+    // largest pivot, which is tight enough that an exactly collinear column
+    // can survive as a pivot of order 1e-14 and produce coefficients of order
+    // 1e11 instead of NA (estimatr #351, #395).  stats::lm() uses LINPACK
+    // dqrdc2 with tol = 1e-7; matching that makes rank detection agree with
+    // lm() on degenerate designs.
+    PQR.setThreshold(1e-7);
     const Eigen::ColPivHouseholderQR<Eigen::MatrixXd>::PermutationType Pmat(PQR.colsPermutation());
 
     r = PQR.rank();
