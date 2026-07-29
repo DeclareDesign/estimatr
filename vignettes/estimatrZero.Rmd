@@ -187,7 +187,84 @@ Five things estimatr cannot do, all of which fall out of the rewrite rather than
 
 **A warning when a regressor is dropped.** Collinear terms come back as NA coefficients in both packages; only one of them tells you which terms it dropped.
 
-**Blocked designs whose blocks are not all the same shape.** A block holding one treated unit and three control units has no within-block variance to estimate, whatever its size. estimatr classifies blocks by size rather than by arm, so it either errors on such a design or applies the matched-pairs estimator to every block, big ones included. estimatrZero uses the Pashley and Miratrix (2021) estimators: blocks with two or more units per arm carry their own Neyman variance, blocks with a singleton arm are estimated across blocks, and a design with both combines the two. Standard errors agree to 1e-10 with `blkvar`, the authors' own implementation.
+**Blocked designs whose blocks are not all the same shape.** estimatr either errors on such a design or applies the matched-pairs estimator to every block, big ones included. estimatrZero uses the Pashley and Miratrix (2021) estimators. See [Blocked designs whose blocks are not all the same shape] for the details, which are worth a section of their own.
+
+## Blocked designs whose blocks are not all the same shape
+
+estimatr handles two kinds of blocked design and refuses everything between them. If every block has at least two treated and two control units, each block carries its own Neyman variance. If every block is a matched pair, the variance comes from the variation across pairs. A design with both, or a block holding one treated unit and three control units, either errors or silently applies the matched-pairs estimator to every block after a warning.
+
+Such designs are not exotic. Coarsened exact matching, full matching, and multisite trials with one or two sites per stratum all produce them.
+
+The substantive correction is to classify blocks by how many units each **arm** holds, not by how large the block is. A block of eight units with one of them treated has no more estimable within-block variance than a matched pair does; the singleton arm gives you one number, and one number has no variance. estimatrZero implements the three estimators of Pashley and Miratrix (2021) on that classification:
+
+- Blocks with at least two units in each arm contribute their own Neyman variance, their equation 4.
+- Blocks with a singleton arm contribute through the variation across such blocks, their equation 8, the "unified" estimator, which requires no two blocks to share a size. With equal sizes it reduces to the usual matched-pairs estimator, their equation 5, which is used directly because equation 8 is undefined at two equal-sized blocks.
+- A design with both kinds combines the parts by squared share of the sample, their section 3.3.
+
+Here is a design with both: twenty blocks of ten units with five treated, and twelve blocks of four units with one treated.
+
+```{r}
+set.seed(7)
+big <- data.frame(
+  bl = rep(paste0("big", 1:20), each = 10),
+  z = rep(rep(0:1, each = 5), times = 20)
+)
+small <- data.frame(
+  bl = rep(paste0("sm", 1:12), each = 4),
+  z = rep(c(1, 0, 0, 0), times = 12)
+)
+dat_bl <- rbind(big, small)
+dat_bl$y <- rnorm(nrow(dat_bl)) + 0.3 * dat_bl$z
+
+estimatrZero::difference_in_means(y ~ z, data = dat_bl, blocks = bl)
+```
+
+estimatr will not fit that design at all:
+
+```{r, error = TRUE, eval = has_estimatr}
+estimatr::difference_in_means(y ~ z, data = dat_bl, blocks = bl)
+```
+
+Replace the twelve four-unit blocks with twelve matched pairs and estimatr does fit it, by warning and then treating all thirty-two blocks as pairs. The point estimates agree, because the point estimator was never at issue. The standard error is 37% too large and the degrees of freedom are 31 rather than 167, because twenty blocks that could have supplied their own within-block variance are thrown into the across-block calculation instead.
+
+```{r, eval = has_estimatr, warning = TRUE}
+pairs <- data.frame(bl = rep(paste0("pr", 1:12), each = 2), z = rep(c(1, 0), times = 12))
+dat_pr <- rbind(big, pairs)
+dat_pr$y <- rnorm(nrow(dat_pr)) + 0.3 * dat_pr$z
+
+fit_pr_estimatr <- estimatr::difference_in_means(y ~ z, data = dat_pr, blocks = bl)
+fit_pr_zero <- estimatrZero::difference_in_means(y ~ z, data = dat_pr, blocks = bl)
+
+data.frame(
+  package = c("estimatr", "estimatrZero"),
+  design = c(fit_pr_estimatr$design, fit_pr_zero$design),
+  estimate = c(fit_pr_estimatr$coefficients, fit_pr_zero$coefficients),
+  std.error = c(fit_pr_estimatr$std.error, fit_pr_zero$std.error),
+  df = c(fit_pr_estimatr$df, fit_pr_zero$df)
+)
+```
+
+The `design` element reports which case applied, so you never have to infer it from the block sizes: `"Blocked"` when every block has two units per arm, `"Matched-pair"` when every block is a pair, `"Small blocks"` when every block has a singleton arm without all being pairs, and `"Hybrid blocked"` when the design mixes the two.
+
+```{r}
+estimatrZero::difference_in_means(y ~ z, data = dat_bl, blocks = bl)$design
+```
+
+Degrees of freedom are not treated in the paper, which stops at the variance. estimatrZero combines the two components by Welch-Satterthwaite, which reduces to `n - 2K` for an all-big design and to `K - 1` for an all-small one, matching what each literature uses on its own.
+
+Two designs are refused, because the variance genuinely cannot be estimated rather than because the software is unwilling. The first is a design with exactly one block holding a singleton arm, which leaves nothing to compare that block against and would contribute a variance of zero:
+
+```{r, error = TRUE}
+dat_one <- rbind(big, data.frame(bl = "sm1", z = c(1, 0, 0, 0)))
+dat_one$y <- rnorm(nrow(dat_one))
+estimatrZero::difference_in_means(y ~ z, data = dat_one, blocks = bl)
+```
+
+The second is a set of differently-sized singleton-arm blocks in which one holds half or more of their units, which is the condition equation 8 needs to stay defined and conservative. Both messages name the offending block and suggest merging blocks or using `lm_robust()` with block fixed effects.
+
+Standard errors agree to 1e-10 with `blkvar::block_estimator(method = "hybrid_p")`, the authors' own implementation, across all-big, all-small, matched-pair, and hybrid designs. All-big designs and matched pairs return exactly what they always did.
+
+**Blocks of clusters are a different problem, and are not covered.** Pashley and Miratrix treat treatment assigned within blocks, not blocks of clusters; clusters appear once in their paper, to be set aside. Blocked designs with `clusters` therefore keep the earlier estimators, and a block with a single treated or single control **cluster** is refused outright. See [Current status] for what turned up when that boundary was checked.
 
 ## Speed
 
