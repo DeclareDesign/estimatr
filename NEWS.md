@@ -102,6 +102,24 @@ A regressor collinear with the others is dropped and returned as an NA coefficie
 
 estimatrZero warns once, naming the dropped terms. Note that an under-identified `iv_robust()` call now raises two warnings, "More regressors than instruments" and the collinearity warning for the intercept it drops; both are accurate.
 
+### Blocked designs with blocks of different sizes (#336)
+
+estimatr handles two kinds of blocked design and refuses everything between them. If every block has at least two treated and two control units, each block carries its own Neyman variance. If every block is a matched pair, the variance comes from the variation across pairs. A design with both, or with a block holding one treated and three control units, either errors ("every block must have at least two treated and control units") or silently applies the matched-pairs estimator to every block, big ones included, after a warning. Such designs are not exotic: coarsened exact matching, full matching, and multisite trials with one or two sites per stratum all produce them.
+
+estimatrZero implements the estimators of Pashley and Miratrix (2021). Blocks are classified by how many units each **arm** holds, not by how large the block is, which is the substantive correction: a block of eight units with one of them treated has no more estimable within-block variance than a matched pair does.
+
+- Blocks with at least two treated and two control units contribute their own Neyman variance, their equation 4.
+- Blocks with a singleton treated or control unit contribute through the variation across such blocks, their equation 8, the "unified" estimator that requires no two blocks to share a size. With equal sizes this reduces to the usual matched-pairs estimator, their equation 5, which is used directly because equation 8 is undefined at two equal-sized blocks.
+- A design with both kinds combines the parts by squared share of the sample, their section 3.3.
+
+Degrees of freedom are not treated in the paper. estimatrZero combines the two components by Welch-Satterthwaite, which reduces to `n - 2K` for an all-big design and to `K - 1` for an all-small one, matching what each literature uses on its own.
+
+The `design` element now reports `"Blocked"`, `"Matched-pair"`, `"Small blocks"`, or `"Hybrid blocked"`. Standard errors agree to 1e-10 with `blkvar::block_estimator(method = "hybrid_p")`, the authors' own implementation, across all-big, all-small, matched-pair, and hybrid designs.
+
+Two designs are refused, because the variance genuinely cannot be estimated rather than because the software is unwilling: exactly one block with a singleton arm, which leaves nothing to compare it against and would contribute a variance of zero, and a set of different-sized such blocks in which one holds half or more of their units, which is the condition equation 8 needs to stay defined and conservative.
+
+Unchanged: all-big designs and matched pairs return exactly what they did before. Blocked designs with `clusters` or `weights` keep the old behaviour and still require two treated and two control clusters per block.
+
 ### Rank detection matches `lm()` (#351, #395)
 
 `lm_robust(y ~ x)` with `x` constant returned coefficients of order 1e11 instead of NA. The design matrix is exactly rank deficient, but Eigen's default `ColPivHouseholderQR` threshold is roughly `epsilon * ncol` relative to the largest pivot, tight enough that the collinear column survives as a pivot of order 1e-14. `stats::lm()` uses LINPACK `dqrdc2` with `tol = 1e-7`; estimatrZero now sets the same threshold, so rank detection agrees with `lm()` on degenerate designs. Cross-package agreement with estimatr is unaffected on any full-rank design.

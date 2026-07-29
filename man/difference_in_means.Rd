@@ -53,8 +53,27 @@ of freedom for unit randomized, cluster randomized, block randomized,
 block-cluster randomized, matched-pairs, and matched-pair cluster randomized
 designs.
 
+\strong{Blocks of different sizes.} For unit randomized blocks, blocks are
+classified by how many units each arm holds rather than by how large the
+block is. A block with at least two treated and two control units carries
+its own Neyman variance. A block with a single treated or single control
+unit has no estimable within-block variance, so the variation across such
+blocks stands in for it. A design containing both kinds combines the two
+parts by squared share of the sample, following Pashley and Miratrix
+(2021). The \code{design} element of the returned object reports which case
+applied: \code{"Blocked"}, \code{"Matched-pair"}, \code{"Small blocks"}, or
+\code{"Hybrid blocked"}.
+
+Two designs are refused, because the variance genuinely cannot be
+estimated: exactly one block with a singleton arm, and a set of
+different-sized such blocks in which one holds half or more of their
+units. Both messages suggest merging blocks or using \code{\link[=lm_robust]{lm_robust()}} with
+block fixed effects.
+
 If weights are specified, estimation is handed to \code{\link[=lm_robust]{lm_robust()}} with HC2
-standard errors.
+standard errors. Blocked designs with \code{clusters} or \code{weights} do not use
+the Pashley and Miratrix estimators and require at least two treated and
+two control clusters in every block.
 }
 \references{
 Gerber, Alan S. and Donald P. Green. 2012. \emph{Field Experiments:
@@ -63,4 +82,9 @@ Design, Analysis, and Interpretation}. New York: W.W. Norton.
 Imai, Kosuke, Gary King, and Clayton Nall. 2009. "The Essential Role of
 Pair Matching in Cluster-Randomized Experiments." \emph{Statistical Science}
 24(1): 29-53. \doi{10.1214/08-STS274}.
+
+Pashley, Nicole E. and Luke W. Miratrix. 2021. "Insights on Variance
+Estimation for Blocked and Matched Pairs Designs." \emph{Journal of
+Educational and Behavioral Statistics} 46(3): 271-296.
+\doi{10.3102/1076998620946272}.
 }

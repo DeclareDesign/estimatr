@@ -17,8 +17,27 @@
 #'   block-cluster randomized, matched-pairs, and matched-pair cluster randomized
 #'   designs.
 #'
+#'   **Blocks of different sizes.** For unit randomized blocks, blocks are
+#'   classified by how many units each arm holds rather than by how large the
+#'   block is. A block with at least two treated and two control units carries
+#'   its own Neyman variance. A block with a single treated or single control
+#'   unit has no estimable within-block variance, so the variation across such
+#'   blocks stands in for it. A design containing both kinds combines the two
+#'   parts by squared share of the sample, following Pashley and Miratrix
+#'   (2021). The `design` element of the returned object reports which case
+#'   applied: `"Blocked"`, `"Matched-pair"`, `"Small blocks"`, or
+#'   `"Hybrid blocked"`.
+#'
+#'   Two designs are refused, because the variance genuinely cannot be
+#'   estimated: exactly one block with a singleton arm, and a set of
+#'   different-sized such blocks in which one holds half or more of their
+#'   units. Both messages suggest merging blocks or using [lm_robust()] with
+#'   block fixed effects.
+#'
 #'   If weights are specified, estimation is handed to [lm_robust()] with HC2
-#'   standard errors.
+#'   standard errors. Blocked designs with `clusters` or `weights` do not use
+#'   the Pashley and Miratrix estimators and require at least two treated and
+#'   two control clusters in every block.
 #'
 #' @return An object of class `"difference_in_means"`.
 #'
@@ -28,6 +47,11 @@
 #'   Imai, Kosuke, Gary King, and Clayton Nall. 2009. "The Essential Role of
 #'   Pair Matching in Cluster-Randomized Experiments." \emph{Statistical Science}
 #'   24(1): 29-53. \doi{10.1214/08-STS274}.
+#'
+#'   Pashley, Nicole E. and Luke W. Miratrix. 2021. "Insights on Variance
+#'   Estimation for Blocked and Matched Pairs Designs." \emph{Journal of
+#'   Educational and Behavioral Statistics} 46(3): 271-296.
+#'   \doi{10.3102/1076998620946272}.
 #'
 #' @export
 difference_in_means <- function(formula,
@@ -113,6 +137,43 @@ difference_in_means <- function(formula,
       nclusters <- return_frame[["nclusters"]]
       design <- "Clustered"
     }
+
+  } else if (is.null(data$cluster) && is.null(data$weights)) {
+
+    # Unit-randomized blocks. Blocks are classified by how many units each arm
+    # has, not by how large the block is: a block with one treated unit has no
+    # estimable within-block variance whatever its size. See
+    # blocked_variance_pm() for the estimators.
+    blocked <- blocked_estimates(data, condition1, condition2)
+    nblocks <- length(blocked$tau_k)
+    N_overall <- sum(blocked$n_k)
+    diff <- sum(blocked$tau_k * blocked$n_k) / N_overall
+
+    if (se_type == "none") {
+      std.error <- NA_real_
+      df <- NA_real_
+    } else {
+      vc <- blocked_variance_pm(blocked$tau_k, blocked$n_k, blocked$var_k,
+                                blocked$small, diff)
+      std.error <- sqrt(vc$variance)
+      df <- vc$df
+    }
+
+    design <- if (!any(blocked$small)) {
+      "Blocked"
+    } else if (all(blocked$small)) {
+      if (all(blocked$n_k == 2)) "Matched-pair" else "Small blocks"
+    } else {
+      "Hybrid blocked"
+    }
+
+    return_frame <- data.frame(
+      coefficients = diff,
+      std.error = std.error,
+      df = df,
+      nobs = N_overall,
+      stringsAsFactors = FALSE
+    )
 
   } else {
     pair_matched <- FALSE
@@ -245,6 +306,124 @@ difference_in_means <- function(formula,
   return(return_list)
 }
 
+
+# Per-block difference in means for a unit-randomized blocked design, with the
+# within-block Neyman variance where both arms have at least two units. A block
+# with a singleton arm is flagged `small`: its variance is not estimable from
+# within the block, and blocked_variance_pm() estimates that part across blocks.
+blocked_estimates <- function(data, condition1, condition2) {
+  blocks <- split(data, data$block)
+
+  out <- lapply(blocks, function(x) {
+    Y2 <- x$y[x$t == condition2]
+    Y1 <- x$y[x$t == condition1]
+    n2 <- length(Y2)
+    n1 <- length(Y1)
+
+    if (n2 + n1 == 1L) {
+      stop("All `blocks` must have multiple units (or `clusters`)")
+    }
+    if (n2 == 0L || n1 == 0L) {
+      stop("Must have units with both treatment conditions within each block.")
+    }
+
+    small <- n2 == 1L || n1 == 1L
+    c(
+      tau = mean(Y2) - mean(Y1),
+      n_k = n2 + n1,
+      small = small,
+      var_k = if (small) NA_real_ else var(Y2) / n2 + var(Y1) / n1
+    )
+  })
+
+  out <- do.call(rbind, out)
+  list(
+    tau_k = out[, "tau"],
+    n_k = out[, "n_k"],
+    var_k = out[, "var_k"],
+    small = as.logical(out[, "small"])
+  )
+}
+
+# Variance of the blocked difference-in-means estimator, following Pashley and
+# Miratrix (2021). Blocks where both arms have at least two units contribute
+# their own Neyman variance (their equation 4). Blocks with a singleton arm
+# have no within-block variance estimate, so the variation across those blocks
+# stands in for it (their equations 5 and 8). A design with both kinds is the
+# "hybrid" of their section 3.3, and the two parts combine by squared share of
+# the sample.
+#
+# `tau_bk` is the overall estimate, the sample-weighted mean of the per-block
+# estimates.
+blocked_variance_pm <- function(tau_k, n_k, var_k, small, tau_bk) {
+  n <- sum(n_k)
+
+  # ---- big blocks: equation 4, weighted to their own share of the sample ----
+  n_big <- sum(n_k[!small])
+  k_big <- sum(!small)
+  if (k_big > 0L) {
+    var_big <- sum(n_k[!small]^2 * var_k[!small]) / n_big^2
+    df_big <- n_big - 2 * k_big
+  } else {
+    var_big <- 0
+    df_big <- 0
+  }
+
+  # ---- small blocks: equations 5 and 8 ----
+  n_sb <- sum(n_k[small])
+  k_small <- sum(small)
+  if (k_small > 0L) {
+    if (k_small == 1L) {
+      stop(
+        "Only one block has a single treated or control unit. The variance ",
+        "contributed by such blocks is estimated from the variation across ",
+        "them, so at least two are needed. Merge it with another block, drop ",
+        "it, or use `lm_robust()` with block fixed effects."
+      )
+    }
+    n_small <- n_k[small]
+    tau_small <- sum(tau_k[small] * n_small) / n_sb
+    dev2 <- (tau_k[small] - tau_small)^2
+
+    if (length(unique(n_small)) == 1L) {
+      # Equal sizes: equation 5, the usual matched-pairs estimator. Kept
+      # separate because equation 8 is undefined at two equal-sized blocks.
+      var_small <- sum(dev2) / (k_small * (k_small - 1))
+    } else {
+      # Equation 8, the unified estimator: no two blocks need share a size.
+      # It requires every block to be under half the small-block sample, which
+      # is what keeps the weights positive and the estimator conservative.
+      if (any(n_small >= n_sb / 2)) {
+        stop(
+          "Blocks with a singleton treated or control unit cannot be handled ",
+          "here: one of them holds half or more of the units in such blocks, ",
+          "which makes the variance estimator undefined. Merge blocks so ",
+          "that none dominates, or use `lm_robust()` with block fixed effects."
+        )
+      }
+      w <- n_small^2 / (n_sb - 2 * n_small)
+      var_small <- sum(w * dev2) / (n_sb + sum(w))
+    }
+    df_small <- k_small - 1
+  } else {
+    var_small <- 0
+    df_small <- 0
+  }
+
+  # ---- combine (section 3.3) ----
+  v_big <- (n_big / n)^2 * var_big
+  v_small <- (n_sb / n)^2 * var_small
+  variance <- v_big + v_small
+
+  # The paper stops at the variance. Welch-Satterthwaite across the two
+  # components gives a df that reduces to n - 2K for an all-big design and to
+  # K - 1 for an all-small one, matching what each literature uses on its own.
+  denom <- (if (df_big > 0) v_big^2 / df_big else 0) +
+    (if (df_small > 0) v_small^2 / df_small else 0)
+  df <- if (denom > 0) variance^2 / denom else NA_real_
+
+  list(variance = variance, df = df)
+}
 
 difference_in_means_internal <- function(condition1 = NULL,
                                          condition2 = NULL,
