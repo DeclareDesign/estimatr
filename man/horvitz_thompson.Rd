@@ -18,7 +18,7 @@ horvitz_thompson(
 \arguments{
 \item{formula}{A formula \code{Y ~ Z}.}
 
-\item{data}{A \code{data.frame}.}
+\item{data}{A \code{data.frame} with one row per unit of the design.}
 
 \item{condition_prs}{Treatment probability specification. One of:
 \itemize{
@@ -30,7 +30,7 @@ design-aware joint inclusion probabilities.  Any design for which
 you know the block structure, cluster structure, marginal treatment
 probabilities, and whether randomization is simple or complete can
 be expressed as \code{declare_ra(blocks = bl, clusters = cl,
-      prob = pi, simple = FALSE)} — there is no parametric design that
+    prob = pi, simple = FALSE)} — there is no parametric design that
 requires the alternatives below.  For fully custom designs, use
 \code{declare_ra(permutation_matrix = perm)}.
 \item A named numeric vector of marginal condition probabilities,
@@ -59,7 +59,8 @@ condition by default).}
 An object of class \code{"horvitz_thompson"} with fields
 \code{coefficients}, \code{std.error}, \code{statistic},
 \code{p.value}, \code{conf.low}, \code{conf.high}, \code{df},
-\code{nobs}, \code{vcov}, \code{se_type}, \code{condition1},
+\code{nobs} (the number of units in the design, including any arms
+outside the contrast), \code{vcov}, \code{se_type}, \code{condition1},
 \code{condition2}, \code{outcome}, and \code{term}.
 }
 \description{
@@ -67,4 +68,13 @@ Estimates treatment effects via inverse probability weighting when
 treatment assignment probabilities are known.  Supports all
 \pkg{randomizr} designs as well as arbitrary designs supplied via a
 permutation matrix.
+}
+\details{
+With more than two arms, \code{condition1} and \code{condition2}
+select the contrast, and the estimand remains the average treatment
+effect over all N units the design covers.  The estimator therefore
+divides by N, not by the number of units landing in the two conditions,
+and the variance uses the joint assignment probabilities implied by the
+arm sizes.  \code{data} must hold one row per unit of the design, in the
+design's order, including units assigned to arms outside the contrast.
 }
