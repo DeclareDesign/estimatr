@@ -4,3 +4,4 @@ src/*.dylib
 src/symbols.rds
 *.Rcheck/
 notes/
+tests/testthat/_problems/
