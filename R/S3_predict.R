@@ -1,4 +1,5 @@
 #' @importFrom rlang eval_tidy
+#' @importFrom stats predict
 #' @export
 predict.lm_robust <- function(object,
                               newdata,
@@ -208,8 +209,56 @@ model.frame.iv_robust <- function(formula, ...) {
   stats::model.frame.default(object, ...)
 }
 
+#' @importFrom stats variable.names
 #' @export
 variable.names.lm_robust <- function(object, ...) object[["term"]]
 
 #' @export
 variable.names.iv_robust <- function(object, ...) object[["term"]]
+
+#' @importFrom generics augment
+#' @export
+generics::augment
+
+#' Augment a Model Object with Fitted Values and Residuals
+#'
+#' Returns the model frame with `.fitted` and `.resid` columns appended, the
+#' form downstream packages expect from [broom::augment()]. Supplying
+#' `newdata` returns that instead, with `.fitted` only.
+#'
+#' @param x an `lm_robust` or `iv_robust` object
+#' @param data the data to augment, defaulting to the model frame
+#' @param newdata optional new data to predict on instead
+#' @param ... ignored
+#'
+#' @return A `data.frame`.
+#'
+#' @export
+augment.lm_robust <- function(x, data = NULL, newdata = NULL, ...) {
+  if (!is.null(newdata)) {
+    newdata[[".fitted"]] <- predict(x, newdata = newdata)
+    return(newdata)
+  }
+
+  if (is.null(data)) data <- stats::model.frame(x)
+
+  fitted <- x[["fitted.values"]]
+  resid <- x[["residuals"]]
+  if (is.null(fitted) || NROW(fitted) != nrow(data)) {
+    stop(
+      "Cannot augment this model: fitted values are not available for every ",
+      "row of the data. Multivariate outcomes are not supported."
+    )
+  }
+  if (NCOL(fitted) > 1L) {
+    stop("Cannot augment a model with multiple outcomes.")
+  }
+
+  data[[".fitted"]] <- as.vector(fitted)
+  if (!is.null(resid)) data[[".resid"]] <- as.vector(resid)
+  data
+}
+
+#' @rdname augment.lm_robust
+#' @export
+augment.iv_robust <- augment.lm_robust

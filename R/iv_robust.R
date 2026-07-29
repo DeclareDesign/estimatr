@@ -21,6 +21,7 @@
 #'
 #' @return An object of class `"iv_robust"`.
 #'
+#' @importFrom stats na.omit
 #' @export
 iv_robust <- function(formula,
                       data,

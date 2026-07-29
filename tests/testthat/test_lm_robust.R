@@ -410,3 +410,37 @@ test_that("#304: fixed_effects must be a formula", {
   expect_error(lm_robust(y ~ x, data = dat, fixed_effects = block),
                "must be a one-sided formula")
 })
+
+# ---- augment (estimatr #377) ----
+
+test_that("#377: augment() returns the model frame with .fitted and .resid", {
+  m <- lm_robust(y ~ x + z, data = dat)
+  a <- estimatrZero:::augment.lm_robust(m)
+  expect_s3_class(a, "data.frame")
+  expect_true(all(c(".fitted", ".resid") %in% names(a)))
+  expect_equal(nrow(a), n)
+  expect_equal(a$.fitted + a$.resid, dat$y, tolerance = 1e-12)
+})
+
+test_that("#377: augment() works for lm_lin, iv_robust and fixed effects", {
+  expect_true(".fitted" %in% names(
+    estimatrZero:::augment.lm_robust(lm_lin(y ~ z, covariates = ~ x, data = dat))))
+  expect_true(".fitted" %in% names(
+    estimatrZero:::augment.iv_robust(iv_robust(mpg ~ wt | am, data = mtcars))))
+  a <- estimatrZero:::augment.lm_robust(
+    lm_robust(y ~ x, data = dat, fixed_effects = ~ block))
+  expect_equal(a$.fitted + a$.resid, dat$y, tolerance = 1e-8)
+})
+
+test_that("#377: augment(newdata =) predicts without residuals", {
+  m <- lm_robust(y ~ x + z, data = dat)
+  a <- estimatrZero:::augment.lm_robust(m, newdata = dat[1:5, ])
+  expect_equal(nrow(a), 5L)
+  expect_true(".fitted" %in% names(a))
+  expect_false(".resid" %in% names(a))
+})
+
+test_that("#377: augment() refuses multivariate outcomes", {
+  m <- lm_robust(cbind(y, x) ~ z, data = dat)
+  expect_error(estimatrZero:::augment.lm_robust(m), "multiple outcomes")
+})

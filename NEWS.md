@@ -102,6 +102,19 @@ A regressor collinear with the others is dropped and returned as an NA coefficie
 
 estimatrZero warns once, naming the dropped terms. Note that an under-identified `iv_robust()` call now raises two warnings, "More regressors than instruments" and the collinearity warning for the intercept it drops; both are accurate.
 
+### `augment()` for use with broom-aware packages (#377)
+
+`augment()` returns the model frame with `.fitted` and `.resid` appended, which is what downstream packages expect before they will accept a model object. It was not implementable before this release, since no estimator returned residuals (#345). `augment(newdata = )` predicts on new data instead. Multivariate outcomes are refused. Methods are provided for `lm_robust` (covering `lm_lin`) and `iv_robust`.
+
+### Closed by the rewrite rather than by a fix
+
+- **#233, Horvitz-Thompson messages.** estimatr prints `` `simple` = FALSE, using complete cluster randomization `` and `` `condition_prs` not found, estimating probability of treatment to be constant... `` on every call, which in a simulation means every iteration. estimatrZero requires `condition_prs`, so it never guesses a probability and never prints either message.
+- **#334, faster fixed effects.** The issue asks for `fixest`'s algorithm. estimatrZero uses it: alternating projections in C++, 200x to 4,000x faster on the designs measured above.
+- **#365, replace AER tests with ivreg**, and **#402, skip tests relying on suggested packages.** Both are true by construction here: the suite never used AER, and every test needing `randomizr`, `estimatr`, `carData`, or `blkvar` is guarded with `skip_if_not_installed()`.
+- **#260, bad defaulting to matched pairs.** The reporter has 17 blocks, one of which holds a single treated and single control unit, and estimatr collapses the whole design to matched pairs on 16 degrees of freedom. With two or more such blocks estimatrZero now estimates the design properly; with exactly one, as here, it errors naming the block, because one small block leaves nothing to estimate its contribution against.
+
+`R CMD check` runs clean: 0 errors, 0 warnings, 0 notes.
+
 ### Blocked designs with blocks of different sizes (#336)
 
 estimatr handles two kinds of blocked design and refuses everything between them. If every block has at least two treated and two control units, each block carries its own Neyman variance. If every block is a matched pair, the variance comes from the variation across pairs. A design with both, or with a block holding one treated and three control units, either errors ("every block must have at least two treated and control units") or silently applies the matched-pairs estimator to every block, big ones included, after a warning. Such designs are not exotic: coarsened exact matching, full matching, and multisite trials with one or two sites per stratum all produce them.

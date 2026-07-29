@@ -406,12 +406,14 @@ blocked_variance_pm <- function(tau_k, n_k, var_k, small, tau_bk) {
   n_sb <- sum(n_k[small])
   k_small <- sum(small)
   if (k_small > 0L) {
+    small_names <- names(tau_k)[small]
     if (k_small == 1L) {
       stop(
-        "Only one block has a single treated or control unit. The variance ",
-        "contributed by such blocks is estimated from the variation across ",
-        "them, so at least two are needed. Merge it with another block, drop ",
-        "it, or use `lm_robust()` with block fixed effects."
+        "Only one block has a single treated or control unit (block ",
+        small_names, "). The variance contributed by such blocks is ",
+        "estimated from the variation across them, so at least two are ",
+        "needed. Merge that block with another, drop it, or use ",
+        "`lm_robust()` with block fixed effects."
       )
     }
     n_small <- n_k[small]
@@ -429,9 +431,11 @@ blocked_variance_pm <- function(tau_k, n_k, var_k, small, tau_bk) {
       if (any(n_small >= n_sb / 2)) {
         stop(
           "Blocks with a singleton treated or control unit cannot be handled ",
-          "here: one of them holds half or more of the units in such blocks, ",
-          "which makes the variance estimator undefined. Merge blocks so ",
-          "that none dominates, or use `lm_robust()` with block fixed effects."
+          "here: block ",
+          paste(small_names[n_small >= n_sb / 2], collapse = ", "),
+          " holds half or more of the units in such blocks, which makes the ",
+          "variance estimator undefined. Merge blocks so that none dominates, ",
+          "or use `lm_robust()` with block fixed effects."
         )
       }
       w <- n_small^2 / (n_sb - 2 * n_small)

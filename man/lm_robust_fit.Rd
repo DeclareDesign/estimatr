@@ -44,6 +44,8 @@ lm_robust_fit(
 \item{try_cholesky}{logical, whether to try Cholesky decomposition}
 
 \item{iv_stage}{list of length one or two for 2SLS stages}
+
+\item{fe_rank}{integer, degrees of freedom absorbed by fixed effects}
 }
 \description{
 Internal method that creates linear fits (no fixed effects)

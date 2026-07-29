@@ -12,6 +12,7 @@
 #' @param return_fit logical, whether to return fitted values
 #' @param try_cholesky logical, whether to try Cholesky decomposition
 #' @param iv_stage list of length one or two for 2SLS stages
+#' @param fe_rank integer, degrees of freedom absorbed by fixed effects
 #'
 #' @export
 lm_robust_fit <- function(y,
