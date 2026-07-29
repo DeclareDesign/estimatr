@@ -138,7 +138,7 @@ lm_robust <- function(formula,
     }
 
     # Reconstruct full fitted values: by FWL, projected residuals = full residuals
-    residuals_proj <- drop(model_data[["outcome"]]) - return_list[["fitted.values"]]
+    residuals_proj <- drop(return_list[["residuals"]])
     return_list[["fitted.values"]] <- drop(yoriginal) - residuals_proj
 
     # Full model R2 using original Y

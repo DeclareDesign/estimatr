@@ -194,17 +194,28 @@ lm_robust_fit <- function(y,
 
   if (return_fit) {
 
-    fitted.vals_name <- if (weighted)
-      "fitted.values.unweighted"
-      else "fitted.values"
+    # Weighted fits carry residuals on both scales; the unweighted pair is the
+    # one on the scale of the data, so it is what gets returned.
+    if (weighted) {
+      fitted.vals_name <- "fitted.values.unweighted"
+      resid_name <- "ei.unweighted"
+    } else {
+      fitted.vals_name <- "fitted.values"
+      resid_name <- "ei"
+    }
 
     return_list[["fitted.values"]] <- as.matrix(fit_vals[[fitted.vals_name]])
+    return_list[["residuals"]] <- as.matrix(fit_vals[[resid_name]])
 
     if (clustered && se_type != "none") {
-      return_list[["fitted.values"]] <- return_list[["fitted.values"]][order(data[["cl_ord"]]), , drop = FALSE]
+      # prep_data sorted the rows by cluster; put them back
+      unsort <- order(data[["cl_ord"]])
+      return_list[["fitted.values"]] <- return_list[["fitted.values"]][unsort, , drop = FALSE]
+      return_list[["residuals"]] <- return_list[["residuals"]][unsort, , drop = FALSE]
     }
 
     colnames(return_list[["fitted.values"]]) <- ynames
+    colnames(return_list[["residuals"]]) <- ynames
   }
 
   return_list[["term"]] <- variable_names

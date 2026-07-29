@@ -88,6 +88,24 @@ F = (Lβ̂)ᵀ (L Vcov Lᵀ)⁻¹ (Lβ̂) / m
 
 where m is the number of restrictions, tested against F(m, df) using the same cluster-adjusted df as the individual tests. The vcov matrix `L Vcov Lᵀ` is obtained directly from `car::linearHypothesis()` via the `vcov` attribute of its return value, so the cluster-robust variance is correctly propagated.
 
+The same work closes #390, where `lh_robust(Y ~ X1 + X2 + X3, linear_hypothesis = c("X1", "X2"))` should return one joint test and estimatr instead errors: "lh_robust currently implements tests for hypotheses involving linear combinations of variables but not joint hypotheses."
+
+### Residuals are returned (#345)
+
+Neither `lm_robust()` nor `iv_robust()` nor `lm_lin()` returned residuals: `residuals(fit)` was `NULL`, and `fit$residuals` did not exist, though `fitted.values` did. `lm_return()` dropped the field.
+
+estimatrZero returns `residuals` on the scale of the data. Weighted fits return the unweighted residuals, so `residuals + fitted.values` recovers the outcome. Clustered fits are returned in the original row order, undoing the internal sort by cluster. Fixed-effects models return full-model residuals, which by Frisch-Waugh-Lovell equal the residuals of the demeaned regression. `iv_robust()` returns structural residuals, y − Xβ̂ on the original endogenous regressors rather than their first-stage projections. Because `residuals.default()` reads `object$residuals`, `residuals(fit)` now works with no new method.
+
+### Dropped collinear regressors warn (#411)
+
+A regressor collinear with the others is dropped and returned as an NA coefficient, silently. The reporting user compared `lm()` and `lm_robust()` output, found coefficients that differed, and had no way to see that a term had been dropped and the rest were therefore conditional on a different set of regressors.
+
+estimatrZero warns once, naming the dropped terms. Note that an under-identified `iv_robust()` call now raises two warnings, "More regressors than instruments" and the collinearity warning for the intercept it drops; both are accurate.
+
+### All-missing outcome with weights (#370)
+
+`lm_robust(X ~ 1, weights = w, data = df)` where `X` is entirely `NA` errors in estimatr with "'x' must be an array of at least two dimensions", while the same model without weights returns an NA coefficient. The asymmetry matters when one model is fitted across many subgroups and some subgroup has no observed outcome. estimatrZero returns the NA coefficient in both cases.
+
 ---
 
 ## Performance improvements

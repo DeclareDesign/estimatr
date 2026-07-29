@@ -199,6 +199,25 @@ These are behavior changes too, in the sense that estimatrZero returns a differe
 
 **`lm_robust(y ~ 1, fixed_effects = ~ block)` crashed** after accumulating 50 convergence warnings on a zero-column design matrix. estimatrZero returns a well-formed intercept-only result with the correct residual degrees of freedom. (estimatr issue #303.)
 
+**Residuals were not returned at all.** `residuals(fit)` was `NULL` for every estimator, though `fitted.values` was present. estimatrZero returns residuals on the scale of the data, in the original row order for clustered fits, and structural rather than first-stage residuals for `iv_robust()`. (estimatr issue #345.)
+
+```{r}
+fit <- estimatrZero::lm_robust(y ~ z + x, data = dat)
+head(round(residuals(fit), 4))
+all.equal(residuals(fit) + fitted(fit), dat$y, check.attributes = FALSE)
+```
+
+**A collinear regressor was dropped silently.** The dropped term comes back as an NA coefficient with no warning, which is what made an `lm()` user open the issue after finding coefficients that disagreed between the two functions. estimatrZero warns and names the terms it dropped. (estimatr issue #411.)
+
+```{r, warning = TRUE}
+dat$x_copy <- dat$x
+fit <- estimatrZero::lm_robust(y ~ x + x_copy, data = dat)
+```
+
+**A joint hypothesis test errored.** `lh_robust(Y ~ X1 + X2 + X3, linear_hypothesis = c("X1", "X2"))` should return one joint test; estimatr replies that it "implements tests for hypotheses involving linear combinations of variables but not joint hypotheses." The `joint_hypothesis` element above covers it. (estimatr issue #390.)
+
+**An all-`NA` outcome errored when `weights` were given**, though the same model without weights returned an NA coefficient. The asymmetry bites when one model is fitted across many subgroups and one subgroup has no observed outcome. (estimatr issue #370.)
+
 ## Loading the package
 
 Do not attach both packages in the same session. They define the same S3 methods for the same classes, and whichever loads second silently takes over dispatch for both. Either attach one:

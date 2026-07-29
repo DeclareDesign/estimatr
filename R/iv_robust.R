@@ -181,7 +181,7 @@ iv_robust <- function(formula,
         return_list[[nm]] <- NULL
       }
     }
-    residuals_proj <- drop(model_data[["outcome"]]) - return_list[["fitted.values"]]
+    residuals_proj <- drop(return_list[["residuals"]])
     return_list[["fitted.values"]] <- drop(yoriginal) - residuals_proj
 
     n_obs <- nrow(yoriginal)

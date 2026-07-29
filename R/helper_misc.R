@@ -48,6 +48,24 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
 }
 
 lm_return <- function(return_list, model_data, formula) {
+
+  # A collinear column is dropped and comes back as an NA coefficient. Saying
+  # so is the difference between a user reading the NA correctly and reading
+  # it as a bug, since the remaining coefficients are then conditional on a
+  # different set of regressors than they asked for (estimatr #411).
+  coefs <- return_list[["coefficients"]]
+  na_coefs <- is.na(coefs)
+  if (any(na_coefs)) {
+    dropped <- if (is.matrix(coefs))
+      rownames(coefs)[apply(na_coefs, 1, any)]
+      else names(coefs)[na_coefs]
+    warning(
+      "Some coefficients are collinear with other regressors and were ",
+      "dropped, and are returned as NA: ",
+      paste(dropped, collapse = ", "), "."
+    )
+  }
+
   if (!is.null(model_data)) {
     return_list[["contrasts"]] <- attr(model_data$design_matrix, "contrasts")
     return_list[["terms"]] <- model_data$terms

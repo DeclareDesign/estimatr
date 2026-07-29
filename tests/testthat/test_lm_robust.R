@@ -232,3 +232,69 @@ test_that("#320: lh_robust returns joint_hypothesis", {
   expect_gte(lh2$joint_hypothesis["p.value"], 0)
   expect_lte(lh2$joint_hypothesis["p.value"], 1)
 })
+
+# ---- residuals (estimatr #345) ----
+
+test_that("#345: lm_robust returns residuals on the scale of the data", {
+  m <- lm_robust(y ~ x + z, data = dat)
+  expect_equal(length(m$residuals), n)
+  expect_equal(unname(m$residuals), unname(residuals(lm(y ~ x + z, data = dat))),
+               tolerance = 1e-12)
+  # the default S3 method finds the field, so residuals() just works
+  expect_equal(residuals(m), m$residuals)
+  expect_equal(unname(m$residuals + m$fitted.values), dat$y, tolerance = 1e-12)
+})
+
+test_that("#345: residuals with weights are on the unweighted scale", {
+  m <- lm_robust(y ~ x + z, data = dat, weights = w)
+  expect_equal(unname(m$residuals),
+               unname(residuals(lm(y ~ x + z, data = dat, weights = dat$w))),
+               tolerance = 1e-12)
+  expect_equal(unname(m$residuals + m$fitted.values), dat$y, tolerance = 1e-12)
+})
+
+test_that("#345: residuals with clusters come back in the original row order", {
+  # prep_data sorts rows by cluster internally; cl is interleaved here, so an
+  # unsorted return would be silently misaligned with the data.
+  m <- lm_robust(y ~ x + z, data = dat, clusters = cl)
+  expect_equal(unname(m$residuals), unname(residuals(lm(y ~ x + z, data = dat))),
+               tolerance = 1e-12)
+  expect_equal(unname(m$residuals + m$fitted.values), dat$y, tolerance = 1e-12)
+})
+
+test_that("#345: residuals with fixed effects are the full-model residuals", {
+  m <- lm_robust(y ~ x + z, data = dat, fixed_effects = ~ block)
+  m_dummy <- lm(y ~ x + z + factor(block), data = dat)
+  expect_equal(unname(m$residuals), unname(residuals(m_dummy)), tolerance = 1e-10)
+  expect_equal(unname(m$residuals + m$fitted.values), dat$y, tolerance = 1e-10)
+})
+
+test_that("#345: iv_robust returns structural residuals", {
+  m <- iv_robust(mpg ~ wt | am, data = mtcars)
+  X <- cbind(1, mtcars$wt)
+  expect_equal(unname(m$residuals), as.vector(mtcars$mpg - X %*% coef(m)),
+               tolerance = 1e-12)
+})
+
+test_that("#345: lm_lin returns residuals", {
+  m <- lm_lin(y ~ z, covariates = ~ x, data = dat)
+  expect_equal(length(m$residuals), n)
+  expect_equal(unname(m$residuals + m$fitted.values), dat$y, tolerance = 1e-12)
+})
+
+# ---- collinearity warning (estimatr #411) ----
+
+test_that("#411: dropped collinear regressors warn and name themselves", {
+  d <- dat
+  d$x_copy <- d$x
+  expect_warning(lm_robust(y ~ x + x_copy, data = d), "collinear")
+  expect_warning(lm_robust(y ~ x + x_copy, data = d), "x_copy")
+  m <- suppressWarnings(lm_robust(y ~ x + x_copy, data = d))
+  expect_true(is.na(m$coefficients[["x_copy"]]))
+})
+
+test_that("#411: no warning when the design matrix is full rank", {
+  expect_no_warning(lm_robust(y ~ x + z, data = dat))
+  expect_no_warning(lm_robust(y ~ x + z, data = dat, clusters = cl))
+  expect_no_warning(lm_lin(y ~ z, covariates = ~ x, data = dat))
+})
