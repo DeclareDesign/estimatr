@@ -1,6 +1,8 @@
 # estimatrZero 0.1.0
 
-estimatrZero is a ground-up rewrite of [estimatr](https://declaredesign.org/r/estimatr/) targeting the DeclareDesign use case: OLS, Lin-adjusted OLS, 2SLS IV, difference-in-means, and linear hypothesis tests with heteroskedasticity- and cluster-robust standard errors. The rewrite fixes several long-standing correctness bugs, improves performance on the critical path, and adds feols-style fixed effects absorption.
+estimatrZero is a ground-up rewrite of [estimatr](https://declaredesign.org/r/estimatr/) targeting the DeclareDesign use case: OLS, Lin-adjusted OLS, 2SLS IV, difference-in-means, Horvitz-Thompson, and linear hypothesis tests with heteroskedasticity- and cluster-robust standard errors. The rewrite fixes several long-standing correctness bugs, improves performance on the critical path, adds feols-style fixed effects absorption, and replaces the O(N²) Horvitz-Thompson variance with a design-aware O(1) computation.
+
+See `vignette("estimatrZero")` for a user-facing tour of what changes and what does not.
 
 ---
 
@@ -12,6 +14,7 @@ All public functions from estimatr that are relevant to the DeclareDesign workfl
 - `lm_lin()` — Lin (2013) covariate-adjusted estimator
 - `iv_robust()` — two-stage least squares with the same SE menu
 - `difference_in_means()` — Neyman variance, paired, blocked, and clustered designs
+- `horvitz_thompson()` — inverse probability weighting with Young's inequality variance
 - `lh_robust()` — linear hypothesis tests via `car::linearHypothesis` with robust variance
 - S3 methods: `tidy`, `glance`, `summary`, `print`, `predict`, `coef`, `confint`, `vcov`, `nobs`, `update`
 
@@ -21,9 +24,9 @@ Return objects are structurally compatible with estimatr 1.0.6: field names, cla
 
 ## What is dropped
 
-**Horvitz-Thompson estimator.** `horvitz_thompson()` is not included. The HT estimator requires a known randomization probability matrix, which in the DeclareDesign workflow would have to be recomputed for every simulation draw. Supplying it adds complexity and latency that outweigh the benefits for that use case; `difference_in_means()` covers the common cases.
+**Horvitz-Thompson auxiliary arguments.** `horvitz_thompson()` is included, but the probability specification is consolidated into the single `condition_prs` argument. The `blocks`, `clusters`, `simple`, `condition_pr_mat`, `subset`, and `return_condition_pr_mat` arguments and `se_type = "constant"` are dropped. An `ra_declaration` already carries the block structure, cluster structure, per-unit probabilities, and simple-versus-complete flag, so the separate arguments restated information the declaration holds, and gave the estimator two sources of truth that could disagree. Fully custom designs go through `declare_ra(permutation_matrix = perm)`, which replaces `condition_pr_mat`.
 
-**`starprep()` and `commarobust()`.** Stargazer integration utilities not relevant to the DeclareDesign workflow.
+**`starprep()` and `commarobust()`.** Stargazer integration utilities not relevant to the DeclareDesign workflow. The condition-probability-matrix helpers `declaration_to_condition_pr_mat()`, `gen_pr_matrix_cluster()`, and `permutations_to_condition_pr_mat()` go with them: the new variance computation does not build that matrix.
 
 **HAC (Newey-West) standard errors.** Not implemented.
 
@@ -33,9 +36,11 @@ Return objects are structurally compatible with estimatr 1.0.6: field names, cla
 
 ## Bug fixes
 
-### Weighted R² formula (affects `lm_robust`, `lm_lin`, `iv_robust`)
+### Weighted R² formula: investigated, no change (affects `lm_robust`, `lm_lin`, `iv_robust`)
 
-estimatr's weighted R² formula is correct. The standard weighted TSS is:
+An early version of estimatrZero "corrected" the weighted TSS from `weights_internal²` to `weights_internal`. That change was wrong and was reverted. estimatr's weighted R² formula is correct, and estimatrZero reproduces it exactly. The reasoning is recorded here so it is not re-litigated.
+
+The standard weighted TSS is:
 
 ```
 TSS = Σᵢ wᵢ (yᵢ - ȳ_w)²
@@ -97,6 +102,22 @@ estimatrZero uses an algebraic identity to reduce this to five r×r Gram matrix 
 
 `iv_robust()` requires `Formula::as.Formula()` to parse the two-sided formula `y ~ x | z`. `lm_robust()` and `lm_lin()` do not, but the original code called `as.Formula()` unconditionally in `clean_model_data()`. This path is now skipped for non-IV calls, saving approximately 80 µs per `lm_robust()` invocation — meaningful in simulations that call it thousands of times.
 
+### Horvitz-Thompson variance: O(N²) → O(1)
+
+estimatr constructs the full 2N×2N joint inclusion probability matrix for every Horvitz-Thompson call. The Young's inequality variance for any complete-randomization design (including within blocks, and at the cluster level for clustered designs) reduces to six scalar sufficient statistics per block, so the matrix is never needed. The custom-design pathway, where an explicit permutation matrix is the only description of the design, is the one case that still forms a matrix, and does so in one `tcrossprod()` call in place of estimatr's 538-line `helper_condition_pr_matrix.R`.
+
+Measured against estimatr on complete randomization: 10× at N = 200, 73× at N = 1,000, 837× at N = 3,000. Standard errors are identical to floating-point precision for simple, complete, blocked, clustered, and blocked-and-clustered designs.
+
+### Multi-arm Horvitz-Thompson
+
+estimatr refuses an `ra_declaration` with more than two arms. estimatrZero supports the contrast between any two arms of a multi-arm design: `condition1` and `condition2` pick the contrast, the estimand stays the average treatment effect over all N units, and the variance uses the joint assignment probabilities implied by the arm sizes.
+
+Two generalizations were needed. The denominator of the estimator is N, the size of the design, and not the number of units landing in the two selected conditions; those coincide only when the design has two arms. The Young's inequality coefficients come from the pairwise joint probabilities `m2(m2-1)/(n(n-1))`, `m1(m1-1)/(n(n-1))`, and `m2 m1/(n(n-1))`, which do not assume `m1 = n - m2`. The cross coefficient collapses to `1/n` for every complete design. Two-arm contrasts continue to run through estimatr's `gen_joint_pr_complete` path, including its floor/ceiling mixture for non-integer implied counts, so every two-arm result is numerically unchanged.
+
+Tested by exhaustive enumeration: over all 90 assignments of six units to three arms of two, the average estimate equals the true ATE exactly, and the closed-form variance equals the one computed from the exact joint probability matrix of the same 90 permutations.
+
+Because probabilities are matched to units by row position, `data` must contain one row per unit of the declaration. Passing a declaration whose size does not match `nrow(data)` is now an error rather than a silent misalignment.
+
 ### TSS computation vectorized
 
 The total sum of squares calculation replaced an `apply(y, 1, '-', colMeans(y))` column-mean sweep with `sweep(y, 2, colMeans(y))`, which is handled by a single optimized C routine rather than an R-level loop. Speedup on a 1,000-observation multivariate model: approximately 280 µs.
@@ -107,19 +128,23 @@ The total sum of squares calculation replaced an `apply(y, 1, '-', colMeans(y))`
 
 Fixed effects absorption is implemented using the Frisch-Waugh-Lovell theorem with alternating projections (the algorithm used by `fixest::feols`). All FE variables are demeaned out of both the outcome and the design matrix before estimation; the intercept is absorbed into the group means and dropped.
 
-**SE type defaults with fixed effects.** HC2 and HC3 require the full n×n hat matrix over the augmented design matrix including all FE dummies, which eliminates the computational advantage of FE demeaning. estimatrZero instead defaults to HC1 (no clusters) or `stata` CR0-scaled (with clusters) when `fixed_effects` is specified, and warns if HC2, HC3, or CR2 are requested:
+**SE type restriction with fixed effects.** HC2, HC3, and CR2 require hat values from the full `[X | FE dummies]` design matrix, which eliminates the computational advantage of FE demeaning: estimatr's `fixed_effects = ~block` with the default HC2 takes 43 seconds on n = 40,000 with 2,000 blocks, against 11 ms in estimatrZero with HC1. Rather than silently pay that cost or silently return an approximation under the same name, estimatrZero errors and names the escape hatch. Defaults change to `"stata"` (= HC1, no clusters) and `"CR0"` (with clusters), matching `feols`.
 
 ```r
 lm_robust(y ~ z, data = dat, fixed_effects = ~block)
 # se_type = "HC1"
 
 lm_robust(y ~ z, data = dat, fixed_effects = ~block, clusters = cl)
-# se_type = "stata"
+# se_type = "CR0"
 
 lm_robust(y ~ z, data = dat, fixed_effects = ~block, se_type = "HC2")
-# Warning: 'HC2' is not supported with fixed_effects in estimatrZero...
-# se_type = "HC1"
+# Error: `se_type = "HC2"` requires hat values from the full [X | FE dummies]
+# design matrix and cannot be used with `fixed_effects`.
+# To get HC2 SEs, replace `fixed_effects` with explicit dummies:
+#   lm_robust(y ~ x + factor(fe_var), se_type = "HC2")
 ```
+
+The dummy-variable formulation returns exactly the estimatr `fixed_effects` + HC2 result; that equivalence is tested.
 
 **Multi-way FE.** Two-way (and higher) FE are supported via alternating projections that iterate to convergence (tolerance 1e-8, maximum 50 iterations).
 

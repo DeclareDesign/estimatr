@@ -4,13 +4,15 @@ Version: 0.1.0
 Authors@R: person("Alex", "Coppock", email = "acoppock@gmail.com", role = c("aut", "cre"))
 Author: Alex Coppock [aut, cre]
 Maintainer: Alex Coppock <acoppock@gmail.com>
-Description: A lean rewrite of estimatr. Provides lm_robust, lm_lin, iv_robust,
-    lh_robust, and difference_in_means with HC2/CR2 standard errors. Drops
-    fixed-effects demean and Horvitz-Thompson. Fixes weighted R-squared.
+Description: A lean rewrite of estimatr targeting the DeclareDesign workflow.
+    Provides lm_robust, lm_lin, iv_robust, lh_robust, difference_in_means, and
+    horvitz_thompson with heteroskedasticity- and cluster-robust standard
+    errors, feols-style fixed effects absorption, and design-aware
+    Horvitz-Thompson variance. Interfaces match estimatr; several long-standing
+    correctness bugs are fixed.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Imports:
     Formula,
     generics,
@@ -22,10 +24,16 @@ Suggests:
     car,
     emmeans,
     estimability,
+    estimatr,
+    knitr,
+    randomizr,
+    rmarkdown,
     testthat (>= 3.0.0),
     texreg,
     fabricatrZero
+VignetteBuilder: knitr
 LinkingTo:
     Rcpp,
     RcppEigen
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0

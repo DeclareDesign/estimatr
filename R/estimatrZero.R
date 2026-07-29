@@ -1,9 +1,10 @@
 #' estimatrZero: Fast Estimators for Design-Based Inference
 #'
-#' A lean rewrite of estimatr. Provides `lm_robust`, `lm_lin`, `iv_robust`,
-#' `lh_robust`, and `difference_in_means` with HC2/CR2 standard errors.
-#' Fixed effects and Horvitz-Thompson are intentionally omitted.
-#' Weighted R-squared bug fixed.
+#' A lean rewrite of estimatr targeting the DeclareDesign workflow. Provides
+#' `lm_robust`, `lm_lin`, `iv_robust`, `lh_robust`, `difference_in_means`, and
+#' `horvitz_thompson`, with feols-style fixed effects absorption and
+#' design-aware Horvitz-Thompson variance. See `vignette("estimatrZero")` for
+#' what changes relative to estimatr and what does not.
 #'
 #' @docType package
 #' @name estimatrZero-package

@@ -6,12 +6,18 @@
 \alias{estimatrZero-package}
 \title{estimatrZero: Fast Estimators for Design-Based Inference}
 \description{
-A lean rewrite of estimatr. Provides \code{lm_robust}, \code{lm_lin}, \code{iv_robust},
-\code{lh_robust}, and \code{difference_in_means} with HC2/CR2 standard errors.
-Fixed effects and Horvitz-Thompson are intentionally omitted.
-Weighted R-squared bug fixed.
+A lean rewrite of estimatr targeting the DeclareDesign workflow. Provides
+\code{lm_robust}, \code{lm_lin}, \code{iv_robust}, \code{lh_robust}, \code{difference_in_means}, and
+\code{horvitz_thompson}, with feols-style fixed effects absorption and
+design-aware Horvitz-Thompson variance. See \code{vignette("estimatrZero")} for
+what changes relative to estimatr and what does not.
 }
 \author{
 \strong{Maintainer}: Alex Coppock \email{acoppock@gmail.com}
+
+Authors:
+\itemize{
+  \item Alex Coppock \email{acoppock@gmail.com}
+}
 
 }
