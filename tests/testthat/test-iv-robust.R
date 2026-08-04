@@ -234,6 +234,20 @@ test_that("iv_robust matches AER + clubSandwich", {
   skip_if_not_installed("clubSandwich")
   skip_on_cran()
 
+  # Pull the five quantities we compare out of a clubSandwich::coef_test()
+  # result by name, in the order estimatr's tidy() returns them.
+  #
+  # This used to be `clubsand[, -1]`, which assumed coef_test() returns exactly
+  # six columns. clubSandwich 0.7.0 returns seven: it added `null_value` and
+  # renamed `df` to `df_t`, so the positional form silently started comparing a
+  # 6-column matrix against a 5-column one and the test failed on length. The
+  # `df`/`df_t` fallback keeps this working on either side of that rename.
+  club_cols <- function(x) {
+    x <- as.data.frame(x)
+    df_col <- if ("df_t" %in% names(x)) "df_t" else "df"
+    as.matrix(x[, c("beta", "SE", "tstat", df_col, "p_t")])
+  }
+
   # ClubSandwich IV tests
   for (se_type in cr_se_types) {
 
@@ -247,13 +261,11 @@ test_that("iv_robust matches AER + clubSandwich", {
                                         cluster = dat$clust,
                                         test = ifelse(se_type == "CR2", "Satterthwaite", "naive-t"))
 
-    clubsand <- as.data.frame(clubsand)
-
     cols <- c("estimate", "std.error", "statistic", "df", "p.value")
 
     expect_equivalent(
       as.matrix(tidy(ivcr)[, cols]),
-      as.matrix(clubsand[,-1])
+      club_cols(clubsand)
     )
 
     expect_equivalent(
@@ -268,11 +280,9 @@ test_that("iv_robust matches AER + clubSandwich", {
                                          cluster = dat$clust,
                                          test = ifelse(se_type == "CR2", "Satterthwaite", "naive-t"))
 
-    clubsandw <- as.data.frame(clubsandw)
-
     expect_equivalent(
       as.matrix(tidy(ivcrw)[, cols]),
-      as.matrix(clubsandw[,-1])
+      club_cols(clubsandw)
     )
 
     expect_equivalent(
@@ -288,11 +298,9 @@ test_that("iv_robust matches AER + clubSandwich", {
                                            cluster = dat$clust,
                                            test = ifelse(se_type == "CR2", "Satterthwaite", "naive-t"))
 
-    clubsand_rd <- as.data.frame(clubsand_rd)
-
     expect_equivalent(
       na.omit(as.matrix(tidy(ivcr_rd)[, cols])),
-      na.omit(as.matrix(clubsand_rd[,-1]))
+      na.omit(club_cols(clubsand_rd))
     )
 
     expect_equivalent(
@@ -308,11 +316,9 @@ test_that("iv_robust matches AER + clubSandwich", {
                                             cluster = dat$clust,
                                             test = ifelse(se_type == "CR2", "Satterthwaite", "naive-t"))
 
-    clubsandw_rd <- as.data.frame(clubsandw_rd)
-
     expect_equivalent(
       na.omit(as.matrix(tidy(ivcrw_rd)[, cols])),
-      na.omit(as.matrix(clubsandw_rd[,-1]))
+      na.omit(club_cols(clubsandw_rd))
     )
 
     expect_equivalent(
