@@ -1,6 +1,6 @@
 Package: estimatrZero
 Title: Fast Estimators for Design-Based Inference
-Version: 0.1.0
+Version: 2.0.0
 Authors@R: person("Alex", "Coppock", email = "acoppock@gmail.com", role = c("aut", "cre"))
 Author: Alex Coppock [aut, cre]
 Maintainer: Alex Coppock <acoppock@gmail.com>

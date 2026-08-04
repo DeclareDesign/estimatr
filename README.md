@@ -29,6 +29,6 @@ As of 2026-07-30: `R CMD check` 0 errors / 0 warnings / 0 notes, identity to est
 
 A ledger of all 71 open estimatr issues against this implementation is in `notes/` (private) and mirrored to Alex's `claude_control/logs/estimatrZero_issue_ledger.md`: 26 fixed here, 7 out of scope, 6 not reproducible, 5 superseded by the rewrite.
 
-This branch is headed for estimatr 2.0.0 along with its three siblings. Nothing on it asserts that yet: the DESCRIPTION still reads `estimatrZero 0.1.0`.
+**This branch is versioned 2.0.0**, against estimatr 1.0.6 on CRAN, and heads to CRAN with its three siblings. It is still *named* `estimatrZero`, and that is deliberate: the version says where it is going, the name is what keeps it installable alongside the released package. That matters more here than anywhere else, since the test suite checks this implementation against estimatr's to 1e-12 and both must load at once. The rename is the last step before release.
 
 Sibling branches: `DeclareDesign/fabricatr@rewrite` and `DeclareDesign/DeclareDesign@rewrite`.

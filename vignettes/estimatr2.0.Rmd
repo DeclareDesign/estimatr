@@ -268,7 +268,7 @@ Standard errors agree to 1e-10 with `blkvar::block_estimator(method = "hybrid_p"
 
 ## Speed
 
-Median times on an Apple M4 Pro, R 4.6.0, comparing estimatr 1.0.6 to estimatrZero 0.1.0. Coefficients and standard errors agree to 1e-12 in every row.
+Median times on an Apple M4 Pro, R 4.6.0, comparing estimatr 1.0.6 to estimatrZero 2.0.0. Coefficients and standard errors agree to 1e-12 in every row.
 
 | task | estimatr | estimatrZero | speedup |
 |---|---:|---:|---:|
