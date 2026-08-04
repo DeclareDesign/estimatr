@@ -6,7 +6,7 @@ The package on this branch is still named `estimatrZero`, so installing it leave
 
 ```r
 remotes::install_github("DeclareDesign/estimatr@rewrite", build_vignettes = TRUE)
-vignette("estimatrZero")
+vignette("estimatr2.0")
 ```
 
 The vignette is the document to read first. It covers what does not change (with the live identity check against estimatr), what changes and why, how to port an existing script, and the benchmarks.

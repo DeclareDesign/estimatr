@@ -1,8 +1,8 @@
 ---
-title: "estimatrZero: what changes, what does not, and why"
+title: "estimatr 2.0: what changes, what does not, and why"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{estimatrZero: what changes, what does not, and why}
+  %\VignetteIndexEntry{estimatr 2.0: what changes, what does not, and why}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

@@ -2,7 +2,7 @@
 
 estimatrZero is a ground-up rewrite of [estimatr](https://declaredesign.org/r/estimatr/) targeting the DeclareDesign use case: OLS, Lin-adjusted OLS, 2SLS IV, difference-in-means, Horvitz-Thompson, and linear hypothesis tests with heteroskedasticity- and cluster-robust standard errors. The rewrite fixes several long-standing correctness bugs, improves performance on the critical path, adds feols-style fixed effects absorption, and replaces the O(N²) Horvitz-Thompson variance with a design-aware O(1) computation.
 
-See `vignette("estimatrZero")` for a user-facing tour of what changes and what does not.
+See `vignette("estimatr2.0")` for a user-facing tour of what changes and what does not.
 
 ---
 
