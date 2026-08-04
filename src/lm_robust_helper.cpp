@@ -124,6 +124,13 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
   );
 }
 
+// `fe_leverage` is the per-observation leverage contributed by absorbed
+// one-way fixed effects. Under a single FE factor the hat value of the full
+// [dummies | X] design splits exactly, as
+//     h_ii = h_ii(demeaned X) + w_i / (sum of w over i's group)
+// so HC2 and HC3 need only this vector rather than a full dummy hat matrix.
+// It is R_NilValue when there are no fixed effects, or more than one factor,
+// where the split does not hold.
 // [[Rcpp::export]]
 List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
                  const Rcpp::Nullable<Rcpp::NumericMatrix> & Xunweighted,
@@ -135,7 +142,8 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
                  const bool& ci,
                  const String se_type,
                  const std::vector<bool> & which_covs,
-                 const int& fe_rank) {
+                 const int& fe_rank,
+                 const Rcpp::Nullable<Rcpp::NumericVector> & fe_leverage) {
 
   const int n(X.rows()), r(XtX_inv.cols()), ny(ei.cols());
   int r_fe = r + fe_rank;
@@ -185,6 +193,13 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
         r_fe = meatXtX_inv.cols();
       } else {
         meatXtX_inv = XtX_inv;
+        // r_fe was initialised to r + fe_rank, but here the meat is the plain
+        // r-by-r XtX_inv and X carries only its r demeaned columns, so leaving
+        // r_fe alone makes X.leftCols(r_fe) overrun. Unreachable while HC2 and
+        // HC3 were refused with fixed_effects; reachable now that one-way FE
+        // is supported, and it aborts inside Eigen rather than returning a
+        // wrong number.
+        r_fe = r;
       }
     }
 
@@ -192,14 +207,21 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
       if ((se_type == "HC2") || (se_type == "HC3")) {
 
+        const bool has_fe_lev = fe_leverage.isNotNull();
+        Rcpp::NumericVector fe_lev;
+        if (has_fe_lev) fe_lev = Rcpp::NumericVector(fe_leverage);
+
         Eigen::ArrayXd new_omega(ny);
         for (int i = 0; i < n; i++) {
           Eigen::VectorXd Xi = X.leftCols(r_fe).row(i);
 
+          double hii = Xi.transpose() * meatXtX_inv * Xi;
+          if (has_fe_lev) hii += fe_lev[i];
+
           if (se_type == "HC2") {
-            new_omega = temp_omega.row(i) / (1.0 - (Xi.transpose() * meatXtX_inv * Xi));
+            new_omega = temp_omega.row(i) / (1.0 - hii);
           } else if (se_type == "HC3") {
-            new_omega = temp_omega.row(i) / (std::pow(1.0 - Xi.transpose() * meatXtX_inv * Xi, 2));
+            new_omega = temp_omega.row(i) / (std::pow(1.0 - hii, 2));
           }
           new_omega = new_omega.unaryExpr([](double v) {return std::isfinite(v)? v : 0.0;});
           temp_omega.row(i) = new_omega;

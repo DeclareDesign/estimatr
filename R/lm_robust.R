@@ -8,21 +8,34 @@
 #' @param fixed_effects An optional one-sided formula of fixed effects to absorb,
 #'   such as `~ blockID` or `~ block + year`. Uses the Frisch-Waugh-Lovell (FWL)
 #'   theorem: each variable is demeaned within FE groups before OLS is run. FWL
-#'   guarantees exact coefficient and residual recovery. **SE type restriction:**
-#'   only `"HC0"`, `"HC1"`, `"stata"`, `"classical"`, and `"none"` are available
-#'   without clusters; only `"CR0"`, `"stata"`, and `"none"` with clusters.
-#'   `"HC2"`, `"HC3"`, and `"CR2"` require hat values from the full
-#'   \[X | FE dummies\] design matrix, which is O(J^2) memory for J FE levels.
-#'   To get those SEs, omit `fixed_effects` and include the FE variable as
-#'   dummies: `lm_robust(y ~ x + factor(blockID), se_type = "HC2")`.
+#'   guarantees exact coefficient and residual recovery.
+#'
+#'   With a **single** FE factor there is no SE restriction: `"HC2"` and
+#'   `"HC3"` are exact and cost no more than the others, because the hat value
+#'   of the full \[dummies | X\] design splits as
+#'   `h_ii = h_ii(demeaned X) + w_i / sum(w in group i)`, so no dummy hat matrix
+#'   is built. Results are identical to writing the dummies out, and to
+#'   estimatr, at a fraction of the time.
+#'
+#'   With **two or more** factors that identity does not hold, and `"HC2"`,
+#'   `"HC3"` and `"CR2"` remain unavailable: they need hat values from the full
+#'   \[dummies | X\] design, which is O(J^2) memory for J levels. To get them,
+#'   omit `fixed_effects` and write the dummies out:
+#'   `lm_robust(y ~ x + factor(block) + factor(year), se_type = "HC2")`.
+#'   `"CR2"` is unavailable with any `fixed_effects`, since its adjustment is
+#'   built from cluster-level blocks of the hat matrix rather than from `h_ii`.
 #' @param se_type The standard error type. Defaults depend on whether clusters
 #'   and/or fixed effects are present:
 #'   \itemize{
 #'     \item No clusters, no FE: `"HC2"` (default), `"HC0"`, `"HC1"`,
 #'       `"HC3"`, `"classical"`, `"stata"`, `"none"`.
 #'     \item Clusters, no FE: `"CR2"` (default), `"CR0"`, `"stata"`, `"none"`.
-#'     \item No clusters, with FE: `"stata"` (default, = HC1), `"HC0"`,
-#'       `"HC1"`, `"classical"`, `"none"`. **HC2, HC3 are not available.**
+#'     \item No clusters, one FE factor: `"HC2"` (default), `"HC0"`, `"HC1"`,
+#'       `"HC3"`, `"classical"`, `"stata"`, `"none"`. The same menu as with no
+#'       FE at all.
+#'     \item No clusters, two or more FE factors: `"stata"` (default, = HC1),
+#'       `"HC0"`, `"HC1"`, `"classical"`, `"none"`. **HC2 and HC3 are not
+#'       available.**
 #'     \item Clusters, with FE: `"CR0"` (default), `"stata"`, `"none"`.
 #'       **CR2 is not available.**
 #'   }
@@ -119,7 +132,8 @@ lm_robust <- function(formula,
       try_cholesky = try_cholesky,
       has_int = attr(model_data$terms, "intercept"),
       iv_stage = list(0),
-      fe_rank = fe_rank
+      fe_rank = fe_rank,
+      fe_leverage = model_data[["fe_leverage"]]
     )
 
   return_list <- lm_return(

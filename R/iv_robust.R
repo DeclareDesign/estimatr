@@ -9,10 +9,13 @@
 #' @param fixed_effects An optional one-sided formula of fixed effects to absorb,
 #'   such as `~ blockID`. Uses FWL demeaning (see [lm_robust()] for details and
 #'   SE type restrictions). Diagnostics are not available with `fixed_effects`.
-#' @param se_type The standard error type. Same options and restrictions as
-#'   [lm_robust()]: `"HC2"`, `"HC3"`, and `"CR2"` are **not available** with
-#'   `fixed_effects`. Defaults: `"HC2"` (no clusters, no FE), `"CR2"` (clusters,
-#'   no FE), `"stata"` (no clusters, with FE), `"CR0"` (clusters, with FE).
+#' @param se_type The standard error type. `"HC2"`, `"HC3"` and `"CR2"` are
+#'   **not available** with `fixed_effects` here. [lm_robust()] lifts that
+#'   restriction for a single FE factor via a leverage identity, but the
+#'   identity has not been derived for the two-stage case, where the second
+#'   stage runs on fitted rather than observed regressors, so it is not assumed.
+#'   Defaults: `"HC2"` (no clusters, no FE), `"CR2"` (clusters, no FE),
+#'   `"stata"` (no clusters, with FE), `"CR0"` (clusters, with FE).
 #' @param ci logical. Whether to compute p-values and confidence intervals.
 #' @param alpha The significance level, 0.05 by default.
 #' @param diagnostics logical. Whether to compute IV diagnostic statistics.

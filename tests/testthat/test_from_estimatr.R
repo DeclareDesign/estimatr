@@ -700,10 +700,15 @@ test_that("FE coefs match dummy regression for supported HC types", {
   }
 })
 
-test_that("HC2/HC3 with fixed_effects errors", {
+test_that("HC2/HC3 with one-way fixed_effects match the dummy regression", {
+  # Was an error assertion. One FE factor now supports both exactly; two or
+  # more still do not. See test_fe_leverage.R.
   dat <- data.frame(Y = rnorm(20), Z = rbinom(20, 1, .5), B = factor(rep(1:2, 10)))
-  expect_error(lm_robust(Y ~ Z, fixed_effects = ~B, data = dat, se_type = "HC2"), "HC2")
-  expect_error(lm_robust(Y ~ Z, fixed_effects = ~B, data = dat, se_type = "HC3"), "HC3")
+  for (se in c("HC2", "HC3")) {
+    fe  <- lm_robust(Y ~ Z, fixed_effects = ~B, data = dat, se_type = se)
+    dum <- lm_robust(Y ~ Z + factor(B), data = dat, se_type = se)
+    expect_equal(unname(fe$std.error), unname(dum$std.error["Z"]))
+  }
 })
 
 test_that("FE coefs match dummy regression for supported CR types", {

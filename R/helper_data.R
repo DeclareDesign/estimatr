@@ -140,6 +140,8 @@ clean_model_data <- function(data, datargs, estimator = "") {
 # FE demeaning via alternating projections in C++ (demean_cpp in lm_robust_helper.cpp).
 # One-way FE converges in exactly 1 iteration; multi-way iterates to eps = 1e-8.
 # Returns model_data with demeaned outcome and design matrix (intercept absorbed).
+#' @importFrom stats ave
+#' @noRd
 demean_fes <- function(model_data) {
   fe_df     <- as.data.frame(model_data[["fixed_effects"]], stringsAsFactors = TRUE)
   fe_levels <- vapply(fe_df, nlevels, 0L)
@@ -170,6 +172,23 @@ demean_fes <- function(model_data) {
   }
 
   model_data[["fe_levels"]] <- fe_levels
+  # Under a SINGLE fixed-effect factor the hat value of the full
+  # [dummies | X] design splits exactly into the demeaned-X leverage plus each
+  # observation's share of its group's weight:
+  #
+  #   h_ii = h_ii(demeaned X) + w_i / sum(w in group i)
+  #
+  # so HC2 and HC3 are available at the cost of one vector rather than a full
+  # dummy hat matrix. Verified to machine precision, weighted and unweighted,
+  # balanced and unbalanced. It does NOT hold for two or more factors, where the
+  # analogous sum is wrong in the third decimal place, so the vector is NULL
+  # there and those designs keep the old restriction.
+  model_data[["fe_leverage"]] <- if (length(fe_levels) == 1L) {
+    g <- fe_codes[[1L]]
+    if (length(w) > 0L) w / ave(w, g, FUN = sum) else 1 / tabulate(g)[g]
+  } else {
+    NULL
+  }
   model_data
 }
 

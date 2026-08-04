@@ -24,6 +24,24 @@ Return objects are structurally compatible with estimatr 1.0.6: field names, cla
 
 ---
 
+## HC2 and HC3 with fixed effects
+
+Absorbed fixed effects used to refuse `se_type = "HC2"` and `"HC3"`, on the grounds that they need hat values from the full `[dummies | X]` design while absorption leaves only the demeaned ones. That is true for two or more FE factors and false for one, where the hat value splits exactly:
+
+```
+h_ii = h_ii(demeaned X) + w_i / sum(w over i's group)
+```
+
+So with a single FE factor both are now exact, and cost one vector rather than a dummy hat matrix. Verified to machine precision against writing the dummies out, and against estimatr, weighted and unweighted, balanced and unbalanced. At n = 40,000 with 2,000 groups, HC2 takes 0.30s here against 40.9s in estimatr, with standard errors agreeing to 1e-10.
+
+**The default with one-way fixed effects therefore returns to `"HC2"`**, which is the package default everywhere else and is also what estimatr returns for the same call. It had fallen back to `"stata"` only because HC2 was unaffordable.
+
+Two or more FE factors keep the restriction: the analogous sum is wrong in the third decimal place, so `"HC2"` and `"HC3"` still error there and name the dummy formulation. `"CR2"` is still refused with any `fixed_effects`, since its adjustment is built from cluster-level blocks of the hat matrix rather than from `h_ii`, and the identity says nothing about it. `iv_robust()` keeps the restriction too, since the identity has not been derived for a second stage running on fitted regressors.
+
+Fixing this exposed a latent crash: `r_fe` was left at `r + fe_rank` when the meat falls back to the plain `XtX_inv`, so `X.leftCols(r_fe)` overran and aborted inside Eigen. Unreachable while HC2 was refused with fixed effects, reachable now.
+
+---
+
 ## What is dropped
 
 **Horvitz-Thompson auxiliary arguments.** `horvitz_thompson()` is included, but the probability specification is consolidated into the single `condition_prs` argument. The `blocks`, `clusters`, `simple`, `condition_pr_mat`, `subset`, and `return_condition_pr_mat` arguments and `se_type = "constant"` are dropped. An `ra_declaration` already carries the block structure, cluster structure, per-unit probabilities, and simple-versus-complete flag, so the separate arguments restated information the declaration holds, and gave the estimator two sources of truth that could disagree. Fully custom designs go through `declare_ra(permutation_matrix = perm)`, which replaces `condition_pr_mat`.
@@ -229,23 +247,24 @@ The total sum of squares calculation replaced an `apply(y, 1, '-', colMeans(y))`
 
 Fixed effects absorption is implemented using the Frisch-Waugh-Lovell theorem with alternating projections (the algorithm used by `fixest::feols`). All FE variables are demeaned out of both the outcome and the design matrix before estimation; the intercept is absorbed into the group means and dropped.
 
-**SE type restriction with fixed effects.** HC2, HC3, and CR2 require hat values from the full `[X | FE dummies]` design matrix, which eliminates the computational advantage of FE demeaning: estimatr's `fixed_effects = ~block` with the default HC2 takes 43 seconds on n = 40,000 with 2,000 blocks, against 11 ms in estimatrZero with HC1. Rather than silently pay that cost or silently return an approximation under the same name, estimatrZero errors and names the escape hatch. Defaults change to `"stata"` (= HC1, no clusters) and `"CR0"` (with clusters), matching `feols`.
+**SE types with fixed effects.** With a **single** FE factor there is no restriction and no cost: the hat value of the full `[dummies | X]` design splits as `h_ii = h_ii(demeaned X) + w_i / sum(w over i's group)`, so HC2 and HC3 are exact from the demeaned fit plus one vector. The default is therefore `"HC2"`, the same as with no FE, and the same as estimatr returns.
 
 ```r
 lm_robust(y ~ z, data = dat, fixed_effects = ~block)
-# se_type = "HC1"
+# se_type = "HC2", identical to estimatr, 0.30s where estimatr takes 40.9s
+# at n = 40,000 with 2,000 blocks
 
 lm_robust(y ~ z, data = dat, fixed_effects = ~block, clusters = cl)
 # se_type = "CR0"
 
-lm_robust(y ~ z, data = dat, fixed_effects = ~block, se_type = "HC2")
+lm_robust(y ~ z, data = dat, fixed_effects = ~ block + year, se_type = "HC2")
 # Error: `se_type = "HC2"` requires hat values from the full [X | FE dummies]
 # design matrix and cannot be used with `fixed_effects`.
 # To get HC2 SEs, replace `fixed_effects` with explicit dummies:
 #   lm_robust(y ~ x + factor(fe_var), se_type = "HC2")
 ```
 
-The dummy-variable formulation returns exactly the estimatr `fixed_effects` + HC2 result; that equivalence is tested.
+With **two or more** FE factors the identity fails, by roughly 3e-3 rather than by rounding, so HC2 and HC3 still error there and name the escape hatch, and the default falls back to `"stata"` (= HC1). `"CR2"` is refused with any `fixed_effects`: its adjustment is built from cluster-level blocks of the hat matrix rather than from `h_ii`. The dummy-variable formulation returns exactly the estimatr `fixed_effects` result in every case; that equivalence is tested.
 
 **Multi-way FE.** Two-way (and higher) FE are supported via alternating projections that iterate to convergence (tolerance 1e-8, maximum 50 iterations).
 

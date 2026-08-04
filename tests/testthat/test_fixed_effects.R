@@ -61,9 +61,13 @@ test_that("FE df.residual is n - k - (B-1) - 1", {
 
 # ---- defaults and se_type behaviour ----
 
-test_that("FE default se_type is HC1/stata (no clusters)", {
+test_that("one-way FE default se_type is HC2 (no clusters)", {
+  # Was HC1: HC2 used to be unaffordable with absorbed FE. Under a single
+  # factor the leverage identity makes it exact and cheap, so the default is
+  # the package's ordinary one again, and it matches estimatr for this call.
+  # See test_fe_leverage.R.
   m <- lm_robust(y ~ z, data = dat, fixed_effects = ~bl)
-  expect_equal(m$se_type, "HC1")
+  expect_equal(m$se_type, "HC2")
 })
 
 test_that("FE default se_type is CR0 (with clusters)", {
@@ -71,17 +75,26 @@ test_that("FE default se_type is CR0 (with clusters)", {
   expect_equal(m$se_type, "CR0")
 })
 
-test_that("HC2 with FE errors with informative message", {
-  expect_error(
-    lm_robust(y ~ z, data = dat, fixed_effects = ~bl, se_type = "HC2"),
-    "HC2.*fixed_effects|fixed_effects.*HC2"
-  )
+test_that("HC2 and HC3 now work with one-way FE and match the dummy regression", {
+  # These two used to assert an error. The restriction was real for two or more
+  # FE factors and wrong for one; see test_fe_leverage.R for the identity.
+  for (se in c("HC2", "HC3")) {
+    fe  <- lm_robust(y ~ z, data = dat, fixed_effects = ~bl, se_type = se)
+    dum <- lm_robust(y ~ z + factor(bl), data = dat, se_type = se)
+    expect_equal(unname(fe$std.error), unname(dum$std.error["z"]))
+  }
 })
 
-test_that("HC3 with FE errors", {
+test_that("HC2 and HC3 still error with two-way FE", {
+  dat2 <- dat
+  dat2$bl2 <- factor(rep(1:4, length.out = nrow(dat2)))
   expect_error(
-    lm_robust(y ~ z, data = dat, fixed_effects = ~bl, se_type = "HC3"),
-    "HC3"
+    lm_robust(y ~ z, data = dat2, fixed_effects = ~ bl + bl2, se_type = "HC2"),
+    "cannot be used with `fixed_effects`"
+  )
+  expect_error(
+    lm_robust(y ~ z, data = dat2, fixed_effects = ~ bl + bl2, se_type = "HC3"),
+    "cannot be used with `fixed_effects`"
   )
 })
 

@@ -17,7 +17,8 @@ lm_robust_fit(
   return_fit = TRUE,
   try_cholesky = FALSE,
   iv_stage = list(0),
-  fe_rank = 0L
+  fe_rank = 0L,
+  fe_leverage = NULL
 )
 }
 \arguments{
@@ -46,6 +47,11 @@ lm_robust_fit(
 \item{iv_stage}{list of length one or two for 2SLS stages}
 
 \item{fe_rank}{integer, degrees of freedom absorbed by fixed effects}
+
+\item{fe_leverage}{numeric vector of per-observation leverage contributed by
+absorbed one-way fixed effects, or \code{NULL}. Supplied only when there is a
+single FE factor, where \code{h_ii} splits exactly into the demeaned-X leverage
+plus this term, which is what makes HC2 and HC3 available there.}
 }
 \description{
 Internal method that creates linear fits (no fixed effects)

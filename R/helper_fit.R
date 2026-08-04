@@ -13,6 +13,10 @@
 #' @param try_cholesky logical, whether to try Cholesky decomposition
 #' @param iv_stage list of length one or two for 2SLS stages
 #' @param fe_rank integer, degrees of freedom absorbed by fixed effects
+#' @param fe_leverage numeric vector of per-observation leverage contributed by
+#'   absorbed one-way fixed effects, or `NULL`. Supplied only when there is a
+#'   single FE factor, where `h_ii` splits exactly into the demeaned-X leverage
+#'   plus this term, which is what makes HC2 and HC3 available there.
 #'
 #' @export
 lm_robust_fit <- function(y,
@@ -27,7 +31,8 @@ lm_robust_fit <- function(y,
                           return_fit = TRUE,
                           try_cholesky = FALSE,
                           iv_stage = list(0),
-                          fe_rank = 0L) {
+                          fe_rank = 0L,
+                          fe_leverage = NULL) {
 
   # ----------
   # Check se type
@@ -35,7 +40,8 @@ lm_robust_fit <- function(y,
 
   clustered <- !is.null(cluster)
   weighted <- !is.null(weights)
-  se_type <- check_se_type(se_type, clustered, has_fe = (fe_rank > 0L))
+  se_type <- check_se_type(se_type, clustered, has_fe = (fe_rank > 0L),
+                           oneway_fe = !is.null(fe_leverage))
 
   # -----------
   # Prep data for fitting
@@ -184,7 +190,10 @@ lm_robust_fit <- function(y,
         ci = ci,
         se_type = se_type,
         which_covs = which_covs[covs_used],
-        fe_rank = fe_rank
+        fe_rank = fe_rank,
+        # Only HC2/HC3 consume this; it is NULL for every other se_type and for
+        # multi-way FE, so the C++ falls back to the plain hat value.
+        fe_leverage = if (se_type %in% c("HC2", "HC3")) fe_leverage else NULL
       )
 
       return_list$std.error[est_exists] <- sqrt(diag(vcov_fit$Vcov_hat))
@@ -334,15 +343,26 @@ lm_robust_fit <- function(y,
   return(return_list)
 }
 
-check_se_type <- function(se_type, clustered, has_fe = FALSE) {
+check_se_type <- function(se_type, clustered, has_fe = FALSE, oneway_fe = FALSE) {
 
   cl_se_types  <- c("CR0", "CR2", "stata")
   rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata")
 
-  # HC2, HC3, CR2 require hat values from the full [X|FE_dummies] design matrix.
-  # With fixed_effects demeaning we only have FWL hat values, which are not the
-  # same thing.  Rather than silently return approximate SEs, we error and tell
-  # the user how to get exact SEs via the dummy-variable formulation.
+  # HC2 and HC3 need the hat values of the full [dummies | X] design. Under a
+  # SINGLE fixed-effect factor those split exactly into the demeaned-X leverage
+  # plus w_i / sum(w in group), so here they are exact, cheap, and carry no
+  # restriction at all. The identity is stated and verified in demean_fes().
+  #
+  # CR2 stays excluded even for one-way FE: its adjustment is built from
+  # cluster-level blocks of the hat matrix rather than from h_ii, so the
+  # decomposition does not apply to it and has not been derived.
+  if (has_fe && oneway_fe && !is.null(se_type) && se_type %in% c("HC2", "HC3")) {
+    return(se_type)
+  }
+
+  # With two or more factors the analogous sum is wrong in the third decimal
+  # place, so those designs keep the restriction. Rather than silently return
+  # approximate SEs, error and give the dummy-variable formulation.
   if (has_fe && !is.null(se_type) && se_type %in% c("HC2", "HC3", "CR2")) {
     avail <- if (clustered) '"CR0", "stata", or "none"' else '"HC0", "HC1", "stata", "classical", or "none"'
     stop(
@@ -365,7 +385,10 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE) {
     }
   } else {
     if (is.null(se_type)) {
-      se_type <- if (has_fe) "stata" else "HC2"
+      # One-way FE now costs nothing extra for HC2, so it keeps the package's
+      # ordinary default instead of falling back. That also matches what
+      # estimatr returns for the same call.
+      se_type <- if (has_fe && !oneway_fe) "stata" else "HC2"
     } else if (se_type %in% setdiff(cl_se_types, "stata")) {
       stop(
         "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3', ",

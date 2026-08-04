@@ -13,8 +13,8 @@ lm_solver <- function(X, y, try_cholesky) {
     .Call(`_estimatrZero_lm_solver`, X, y, try_cholesky)
 }
 
-lm_variance <- function(X, Xunweighted, XtX_inv, ei, weight_mean, cluster, J, ci, se_type, which_covs, fe_rank) {
-    .Call(`_estimatrZero_lm_variance`, X, Xunweighted, XtX_inv, ei, weight_mean, cluster, J, ci, se_type, which_covs, fe_rank)
+lm_variance <- function(X, Xunweighted, XtX_inv, ei, weight_mean, cluster, J, ci, se_type, which_covs, fe_rank, fe_leverage) {
+    .Call(`_estimatrZero_lm_variance`, X, Xunweighted, XtX_inv, ei, weight_mean, cluster, J, ci, se_type, which_covs, fe_rank, fe_leverage)
 }
 
 demean_cpp <- function(mat, fe_codes_list, weights, eps = 1e-8, max_iter = 100L) {

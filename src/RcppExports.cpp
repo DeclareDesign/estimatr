@@ -48,8 +48,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // lm_variance
-List lm_variance(Eigen::Map<Eigen::MatrixXd>& X, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Eigen::Map<Eigen::MatrixXd>& XtX_inv, const Eigen::Map<Eigen::MatrixXd>& ei, const double weight_mean, const Rcpp::Nullable<Rcpp::IntegerVector>& cluster, const int& J, const bool& ci, const String se_type, const std::vector<bool>& which_covs, const int& fe_rank);
-RcppExport SEXP _estimatrZero_lm_variance(SEXP XSEXP, SEXP XunweightedSEXP, SEXP XtX_invSEXP, SEXP eiSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP se_typeSEXP, SEXP which_covsSEXP, SEXP fe_rankSEXP) {
+List lm_variance(Eigen::Map<Eigen::MatrixXd>& X, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Eigen::Map<Eigen::MatrixXd>& XtX_inv, const Eigen::Map<Eigen::MatrixXd>& ei, const double weight_mean, const Rcpp::Nullable<Rcpp::IntegerVector>& cluster, const int& J, const bool& ci, const String se_type, const std::vector<bool>& which_covs, const int& fe_rank, const Rcpp::Nullable<Rcpp::NumericVector>& fe_leverage);
+RcppExport SEXP _estimatrZero_lm_variance(SEXP XSEXP, SEXP XunweightedSEXP, SEXP XtX_invSEXP, SEXP eiSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP se_typeSEXP, SEXP which_covsSEXP, SEXP fe_rankSEXP, SEXP fe_leverageSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -64,7 +64,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const String >::type se_type(se_typeSEXP);
     Rcpp::traits::input_parameter< const std::vector<bool>& >::type which_covs(which_covsSEXP);
     Rcpp::traits::input_parameter< const int& >::type fe_rank(fe_rankSEXP);
-    rcpp_result_gen = Rcpp::wrap(lm_variance(X, Xunweighted, XtX_inv, ei, weight_mean, cluster, J, ci, se_type, which_covs, fe_rank));
+    Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericVector>& >::type fe_leverage(fe_leverageSEXP);
+    rcpp_result_gen = Rcpp::wrap(lm_variance(X, Xunweighted, XtX_inv, ei, weight_mean, cluster, J, ci, se_type, which_covs, fe_rank, fe_leverage));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -100,7 +101,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_estimatrZero_AtA", (DL_FUNC) &_estimatrZero_AtA, 1},
     {"_estimatrZero_Kr", (DL_FUNC) &_estimatrZero_Kr, 2},
     {"_estimatrZero_lm_solver", (DL_FUNC) &_estimatrZero_lm_solver, 3},
-    {"_estimatrZero_lm_variance", (DL_FUNC) &_estimatrZero_lm_variance, 11},
+    {"_estimatrZero_lm_variance", (DL_FUNC) &_estimatrZero_lm_variance, 12},
     {"_estimatrZero_demean_cpp", (DL_FUNC) &_estimatrZero_demean_cpp, 5},
     {"_estimatrZero_naomitwhy", (DL_FUNC) &_estimatrZero_naomitwhy, 2},
     {NULL, NULL, 0}
