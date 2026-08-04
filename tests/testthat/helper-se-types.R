@@ -2,3 +2,4 @@
 
 se_types <- c("classical", "HC0", "HC1", "HC2", "HC3")
 cr_se_types <- c("CR0", "stata", "CR2")
+cr_se_types_lh <- c("CR0", "stata")

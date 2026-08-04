@@ -1,3 +1,15 @@
+# estimatr 1.0.6 
+
+* Allows for prediction with lm_lin() when treatment is a factor and/or multi-valued.
+* Adds saved treatment_levels to the returned lm_lin model object.
+* Stops prediction for lm_lin if the treatment values in new data are not a subset of treatment_levels.
+* Standardizes model fit for lm_lin() models with no intercept.
+* Adds tests to ensure identical predictions from lm_lin() models where treatment is either numeric or factorial, and fit with/without an intercept.
+* Adds relevant examples to predict and lm_robust and lm_lin documentation.
+* Adds Molly Offer-Westort as a contributor.
+* Remove functionality for using `lh_robust` with multiple hypotheses.
+* Restricted functionality for using `lh_robust` with clustered standard errors to CR0 standard errors.
+
 # estimatr 1.0.4
 
 * Test suite changes for M1 mac stay current on CRAN.

@@ -3,21 +3,23 @@
 #' @description This function fits a linear model with robust standard errors and performs linear hypothesis test.
 #' @param ... Other arguments to be passed to  \code{\link{lm_robust}}
 #' @param data A \code{data.frame}
-#' @param linear_hypothesis A character string or a matrix specifying combination, to be passed to the hypothesis.matrix argument of car::linearHypothesis
+#' @param linear_hypothesis A length 1 character string or a matrix specifying combination, to be passed to the hypothesis.matrix argument of car::linearHypothesis. Joint hypotheses are currently not handled by lh_robust.
 #' See \code{\link[car]{linearHypothesis}} for more details.
 #' @details
 #'
 #' This function is a wrapper for \code{\link{lm_robust}} and for
 #' \code{\link[car]{linearHypothesis}}. It first runs \code{lm_robust} and
 #' next passes \code{"lm_robust"} object as an argument to \code{linearHypothesis}.
+#' Currently CR2 standard errors are not handled by lh_robust.
 #'
 #' @return An object of class \code{"lh_robust"} containing the two following components:
 #'
 #' \item{lm_robust}{an object as returned by \code{lm_robust}.}
 #' \item{lh}{A data frame with most of its columns pulled from \code{linearHypothesis}' output.}
 #'
-#' The only analyis directly performed by \code{lh_robust} is a \code{t-test} for the null hypothesis of no effects of the linear combination of coefficients as specified by the user.
+#' The only analysis directly performed by \code{lh_robust} is a \code{t-test} for the null hypothesis of no effects of the linear combination of coefficients as specified by the user.
 #' All other output components are either extracted from \code{linearHypothesis} or \code{lm_robust}.
+#' Note that the estimate returned is the value of the LHS of an equation of the form f(X) = 0. Hyptheses "x - z = 1", "x +1= z + 2" and "x-z-1=0" will all return the value for "x-y-1"
 #'
 #' The original output returned by \code{linearHypothesis} is added as an attribute under the \code{"linear_hypothesis"} attribute.
 #'
@@ -64,11 +66,22 @@ lh_robust <- function(..., data, linear_hypothesis) {
   requireNamespace("car")
 
   # fit lm_robust model
-  lm_robust_fit <- lm_robust(..., data = data)
+  lm_robust_fit <- lm_robust(...,  data = data)
 
-  alpha <- eval_tidy(quos(...)$alpha)
-  if (is.null(alpha)) {
-    alpha <- 0.05
+  alpha <- lm_robust_fit$alpha
+
+  # Checks
+  # This stop could also be limited to hypotheses involving more than one coefficient
+  if(!is.null(lm_robust_fit$se_type) && lm_robust_fit$se_type == "CR2") {
+    stop("lh_robust not available for CR2 standard errors")
+  }
+
+  if(lm_robust_fit$clustered  && is.null(lm_robust_fit$se_type)) {
+    stop("lh_robust not available for CR2 standard errors; please specify CR0")
+  }
+
+  if(length(linear_hypothesis) > 1) {
+    stop("lh_robust currently implements tests for hypotheses involving linear combinations of variables but not joint hypotheses (for instance X1 = X2, but not X1 = 0 and X2=0")
   }
 
   # calculate linear hypothesis
@@ -78,8 +91,16 @@ lh_robust <- function(..., data, linear_hypothesis) {
   estimate  <- drop(attr(car_lht, "value"))
   std.error <- sqrt(diag(attr(car_lht, "vcov")))
 
-  # this df is not in general correct, but unclear what to replace it with
-  df <- lm_robust_fit$df.residual
+  if(length(estimate) > 1) {
+    stop("lh_robust currently implements tests for hypotheses involving linear combinations of variables but not joint hypotheses (for instance X1 = X2, but not X1 = 0 and X2=0")
+  }
+
+  df <- lm_robust_fit$df[1]
+
+  # appropriate when all elements of df are identical
+  if(length(lm_robust_fit$df) >0 && var(lm_robust_fit$df > 0)) {
+    warning("lh_robust inference may be inaccurate if degrees of freedom vary across coefficients")
+  }
 
   statistic <- estimate / std.error
   p.value <-  2 * pt(abs(statistic), df, lower.tail = FALSE)

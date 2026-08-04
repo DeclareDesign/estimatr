@@ -33,6 +33,7 @@ Other contributors:
   \item Neal Fultz \email{nfultz@gmail.com} [contributor]
   \item Lily Medina \email{lilymiru@gmail.com} [contributor]
   \item Russell Lenth \email{russell-lenth@uiowa.edu} [contributor]
+  \item Molly Offer-Westort \email{mollyow@uchicago.edu} [contributor]
 }
 
 }

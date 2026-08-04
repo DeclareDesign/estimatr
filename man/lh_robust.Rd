@@ -11,7 +11,7 @@ lh_robust(..., data, linear_hypothesis)
 
 \item{data}{A \code{data.frame}}
 
-\item{linear_hypothesis}{A character string or a matrix specifying combination, to be passed to the hypothesis.matrix argument of car::linearHypothesis
+\item{linear_hypothesis}{A length 1 character string or a matrix specifying combination, to be passed to the hypothesis.matrix argument of car::linearHypothesis. Joint hypotheses are currently not handled by lh_robust.
 See \code{\link[car]{linearHypothesis}} for more details.}
 }
 \value{
@@ -20,8 +20,9 @@ An object of class \code{"lh_robust"} containing the two following components:
 \item{lm_robust}{an object as returned by \code{lm_robust}.}
 \item{lh}{A data frame with most of its columns pulled from \code{linearHypothesis}' output.}
 
-The only analyis directly performed by \code{lh_robust} is a \code{t-test} for the null hypothesis of no effects of the linear combination of coefficients as specified by the user.
+The only analysis directly performed by \code{lh_robust} is a \code{t-test} for the null hypothesis of no effects of the linear combination of coefficients as specified by the user.
 All other output components are either extracted from \code{linearHypothesis} or \code{lm_robust}.
+Note that the estimate returned is the value of the LHS of an equation of the form f(X) = 0. Hyptheses "x - z = 1", "x +1= z + 2" and "x-z-1=0" will all return the value for "x-y-1"
 
 The original output returned by \code{linearHypothesis} is added as an attribute under the \code{"linear_hypothesis"} attribute.
 }
@@ -32,6 +33,7 @@ This function fits a linear model with robust standard errors and performs linea
 This function is a wrapper for \code{\link{lm_robust}} and for
 \code{\link[car]{linearHypothesis}}. It first runs \code{lm_robust} and
 next passes \code{"lm_robust"} object as an argument to \code{linearHypothesis}.
+Currently CR2 standard errors are not handled by lh_robust.
 }
 \examples{
 

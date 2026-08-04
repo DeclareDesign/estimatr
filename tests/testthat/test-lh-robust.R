@@ -34,9 +34,9 @@ test_that("lh_robust works with all se types", {
   }
 })
 
-test_that("lh_robust with clusters works for all se_types ", {
+test_that("lh_robust with clusters works for all se_types (except CR2)", {
   skip_if_not_installed("car")
-  for (se_type in cr_se_types) {
+  for (se_type in cr_se_types_lh) {
     lhro <-
       tidy(
         lh_robust(
@@ -138,7 +138,67 @@ test_that("lh_robust matches lm_robust with subsetted data.frame", {
 
 })
 
+# Consistency of cluster results on single coefficient
+test_that("lh single coefficient consistency", {
+  skip_if_not_installed("car")
+  for (se_type in cr_se_types_lh) {
+    lhro <-
+      tidy(
+        lh_robust(
+          Y ~ Z * X,
+          data = dat,
+          clusters = cl,
+          linear_hypothesis = "X = 0",
+          se_type = se_type
+        )
+      )
+    expect_equal(lhro[3,5], lhro[5,5])
+    }
+})
+
+
 # lh test
 test_that("returns error when no linear hypothesis is specified", {
   expect_error(lh_robust(Y ~ Z * X, data = dat))
+})
+
+# lh test
+test_that("returns error when joint  hypothesis is specified", {
+  expect_error(lh_robust(Y ~ Z * X, linear_hypothesis = c("Z", "X"), data = dat))
+})
+
+# lh test
+test_that("returns error when CR2 is specified", {
+  expect_error(lh_robust(Y ~ Z * X, se_type = "CR2", linear_hypothesis = c("Z"), data = dat))
+})
+
+# lh test
+test_that("returns error when default CR2 are called", {
+  expect_error(lh_robust(Y ~ Z * X, linear_hypothesis = c("Z"), data = dat, clusters = cl))
+})
+
+test_that("issue #405 fixed", {
+
+  library(estimatr)
+  nSize = 12
+  dat = data.frame(
+    x = rnorm(nSize),
+    e = rnorm(nSize),
+    # Irrelevant clusters for errors
+    eg = sample(2, nSize, replace=T)
+  )
+  dat$z = dat$x + dat$e
+
+  # already worked
+  fit <- lh_robust(z~x, data=dat, se_type='HC2', linear_hypothesis='x=0')
+
+  expect_equivalent(fit$lm_robust$conf.low[2],
+               fit$lh$conf.low[1])
+
+  # was broken
+  fit_2 <- lh_robust(z~x, data=dat, clusters=eg, se_type='stata', linear_hypothesis='x=0')
+
+  expect_equivalent(fit_2$lm_robust$conf.low[2],
+                    fit_2$lh$conf.low[1])
+
 })

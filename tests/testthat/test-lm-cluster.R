@@ -2,6 +2,7 @@ context("Estimator - lm_robust, clustered")
 
 test_that("lm cluster se", {
   N <- 100
+  set.seed(5)
   dat <- data.frame(
     Y = rnorm(N),
     Z = rbinom(N, 1, .5),
