@@ -244,8 +244,13 @@ test_that("iv_robust matches AER + clubSandwich", {
   # `df`/`df_t` fallback keeps this working on either side of that rename.
   club_cols <- function(x) {
     x <- as.data.frame(x)
-    df_col <- if ("df_t" %in% names(x)) "df_t" else "df"
-    as.matrix(x[, c("beta", "SE", "tstat", df_col, "p_t")])
+    # The df and p columns are named for the test that produced them:
+    # `df_t`/`p_t` under "naive-t", `df_Satt`/`p_Satt` under "Satterthwaite",
+    # and plain `df` in clubSandwich before 0.7.0. Match on prefix so all three
+    # spellings work and the next one does not break this again.
+    df_col <- grep("^df", names(x), value = TRUE)[1]
+    p_col  <- grep("^p_", names(x), value = TRUE)[1]
+    as.matrix(x[, c("beta", "SE", "tstat", df_col, p_col)])
   }
 
   # ClubSandwich IV tests
