@@ -76,3 +76,90 @@ test_that("extract returns a texreg object for both fit types", {
   expect_s4_class(extract.lm_robust(lm_robust(y ~ z + x, data = dat)), "texreg")
   expect_true(is.function(extract.iv_robust))
 })
+
+# ---- lm_lin prediction ----
+
+# predict() rebuilt the lm_lin design by looking the treatment up by term
+# label, so a factor `z` produced X[, "z"] when the design matrix holds `zb`
+# and `zc`: subscript out of bounds for every treatment that is not a single
+# binary column. The design is now rebuilt the way lm_lin() builds it and lined
+# up against the coefficients by name.
+
+lin_cases <- list(
+  list(lbl = "factor treatment",        z = "zf", cov = ~ x),
+  list(lbl = "factor, two covariates",  z = "zf", cov = ~ x + w),
+  list(lbl = "binary treatment",        z = "zb", cov = ~ x),
+  list(lbl = "binary, two covariates",  z = "zb", cov = ~ x + w),
+  list(lbl = "numeric multi-valued",    z = "zn", cov = ~ x),
+  list(lbl = "numeric multi, two covs", z = "zn", cov = ~ x + w)
+)
+
+set.seed(1)
+lin_dat <- data.frame(
+  y  = rnorm(90),
+  zf = factor(rep(c("a", "b", "c"), length.out = 90)),
+  zb = rep(0:1, length.out = 90),
+  zn = rep(c(0, 2, 5), length.out = 90),
+  x  = rnorm(90),
+  w  = rnorm(90)
+)
+
+for (case in lin_cases) {
+  test_that(paste0("predict on an lm_lin fit works: ", case$lbl), {
+    fit <- lm_lin(reformulate(case$z, "y"), covariates = case$cov, data = lin_dat)
+    p <- predict(fit, newdata = lin_dat)
+    expect_length(p, nrow(lin_dat))
+    expect_false(anyNA(p))
+    # Predicting on the fitting data must reproduce the in-sample fit.
+    expect_equal(unname(p), unname(fit$fitted.values))
+  })
+}
+
+for (case in lin_cases) {
+  test_that(paste0("predict agrees with estimatr: ", case$lbl), {
+    skip_if_not_installed("estimatr")
+    f <- reformulate(case$z, "y")
+    fit_z <- lm_lin(f, covariates = case$cov, data = lin_dat)
+    fit_e <- estimatr::lm_lin(f, covariates = case$cov, data = lin_dat)
+    # Both packages define predict.lm_robust, so whichever namespace loaded
+    # second would otherwise answer for both fits.
+    p_z <- estimatrZero:::predict.lm_robust(fit_z, newdata = lin_dat)
+    p_e <- estimatr:::predict.lm_robust(fit_e, newdata = lin_dat)
+    expect_equal(unname(p_z), unname(p_e))
+  })
+}
+
+test_that("predict on a subset of newdata uses the levels seen at fit time", {
+  skip_if_not_installed("estimatr")
+  sub <- lin_dat[lin_dat$zf != "c", ]
+  fit_z <- lm_lin(y ~ zf, covariates = ~ x, data = lin_dat)
+  fit_e <- estimatr::lm_lin(y ~ zf, covariates = ~ x, data = lin_dat)
+  expect_equal(
+    unname(estimatrZero:::predict.lm_robust(fit_z, newdata = sub)),
+    unname(estimatr:::predict.lm_robust(fit_e, newdata = sub))
+  )
+})
+
+test_that("a numeric multi-valued treatment keeps its fit-time levels", {
+  fit <- lm_lin(y ~ zn, covariates = ~ x, data = lin_dat)
+  # Stored so predict() expands against these rather than against whatever
+  # values happen to appear in newdata.
+  expect_equal(unname(fit$treatment_vals), c(2, 5))
+  expect_null(lm_lin(y ~ zf, covariates = ~ x, data = lin_dat)$treatment_vals)
+})
+
+test_that("newdata carrying only one treatment level still predicts", {
+  skip_if_not_installed("estimatr")
+  # The stored terms keep the fit's factor levels, so the design rebuilds with
+  # the unused indicator columns at zero rather than losing them. Worth pinning:
+  # this is the case where a design rebuilt from `newdata` alone would silently
+  # come out narrower than the coefficient vector.
+  nd <- lin_dat
+  nd$zf <- factor(rep("a", nrow(nd)), levels = "a")
+  fit_z <- lm_lin(y ~ zf, covariates = ~ x, data = lin_dat)
+  fit_e <- estimatr::lm_lin(y ~ zf, covariates = ~ x, data = lin_dat)
+  expect_equal(
+    unname(estimatrZero:::predict.lm_robust(fit_z, newdata = nd)),
+    unname(estimatr:::predict.lm_robust(fit_e, newdata = nd))
+  )
+})

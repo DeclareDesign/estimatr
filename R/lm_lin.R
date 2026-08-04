@@ -85,11 +85,16 @@ lm_lin <- function(formula,
   treatment <- design_matrix[, treat_col, drop = FALSE]
   design_mat_treatment <- colnames(design_matrix)[treat_col]
 
+  # Kept on the fit so predict() expands a numeric multi-valued treatment
+  # against the levels seen here rather than whatever happens to appear in
+  # `newdata`. NULL for a binary treatment and for a factor, where the design
+  # matrix already carries one column per level.
+  treatment_vals <- NULL
+
   if (any(!(treatment %in% c(0, 1)))) {
     vals <- sort(unique(treatment))
     if (has_intercept) vals <- vals[-1]
 
-    n_treats <- length(vals)
     names(vals) <- paste0(colnames(design_matrix)[treat_col], vals)
 
     treatment <-
@@ -98,6 +103,7 @@ lm_lin <- function(formula,
         vals,
         function(x, y) as.numeric(x == y)
       )
+    treatment_vals <- vals
   }
 
   demeaned_covars <-
@@ -115,14 +121,7 @@ lm_lin <- function(formula,
 
   demeaned_covars <- sweep(demeaned_covars, 2, center)
 
-  original_covar_names <- colnames(demeaned_covars)
-
-  colnames(demeaned_covars) <- paste0(
-    ifelse(grepl("\\:|(^.+\\()", colnames(demeaned_covars)),
-           paste0("(", colnames(demeaned_covars), ")"),
-           colnames(demeaned_covars)),
-    "_c"
-  )
+  colnames(demeaned_covars) <- lin_covar_names(colnames(demeaned_covars))
 
   n_treat_cols <- ncol(treatment)
   n_covars <- ncol(demeaned_covars)
@@ -182,8 +181,11 @@ lm_lin <- function(formula,
     formula = formula
   )
 
+  # `center` already carries the covariates' original names, which is what
+  # predict() indexes `newdata` by. (There was a setNames() call here whose
+  # result was discarded, so it had never done anything.)
   return_list[["scaled_center"]] <- center
-  setNames(return_list[["scaled_center"]], original_covar_names)
+  return_list[["treatment_vals"]] <- treatment_vals
 
   return_list[["call"]] <- match.call()
 

@@ -206,3 +206,24 @@ check_clusters_blocks <- function(data) {
 
   return(clust_per_block)
 }
+
+#' The `_c` names lm_lin gives its centred covariates
+#'
+#' Shared by [lm_lin()], which builds the design, and `predict.lm_robust()`,
+#' which rebuilds it for `newdata`. The two must agree exactly, since predict
+#' lines the design up against the coefficients by name; keeping one copy of
+#' the rule is what stops them drifting apart.
+#'
+#' A name containing an interaction or a function call is parenthesised first,
+#' so `poly(x, 2)1` becomes `(poly(x, 2)1)_c` rather than `poly(x, 2)1_c`.
+#'
+#' @param x Character vector of covariate column names.
+#' @return Character vector of the same length.
+#' @keywords internal
+#' @noRd
+lin_covar_names <- function(x) {
+  paste0(
+    ifelse(grepl("\\:|(^.+\\()", x), paste0("(", x, ")"), x),
+    "_c"
+  )
+}

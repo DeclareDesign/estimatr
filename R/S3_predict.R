@@ -21,6 +21,11 @@ predict.lm_robust <- function(object,
 
   X <- get_X(object, newdata, na.action)
 
+  coefs <- as.matrix(coef(object))
+
+  # An lm_lin fit is the only one carrying scaled_center, and its design has to
+  # be rebuilt here exactly as lm_lin() built it: centred covariates, then every
+  # treatment column crossed with every covariate, covariate-major.
   if (!is.null(object$scaled_center)) {
     demeaned_covars <-
       scale(
@@ -32,18 +37,59 @@ predict.lm_robust <- function(object,
         center = object$scaled_center,
         scale = FALSE
       )
+    colnames(demeaned_covars) <- lin_covar_names(names(object$scaled_center))
 
-    treat_name <- attr(object$terms, "term.labels")[1]
-    interacted_covars <- X[, treat_name] * demeaned_covars
+    # `assign == 1` is the treatment, which is one column for a binary treatment
+    # and one per level for a factor. The previous code looked the treatment up
+    # by term label, so a factor `z` sent it to X[, "z"] when the design matrix
+    # holds `zb` and `zc` and there is no such column: subscript out of bounds
+    # for every multi-valued treatment.
+    treatment <- X[, attr(X, "assign") == 1, drop = FALSE]
+
+    # A numeric treatment taking values other than 0/1 is expanded into
+    # indicators against the levels seen at fit time. They have to come from the
+    # fit, not from `newdata`, or predicting on a subset silently builds a
+    # different design.
+    if (!is.null(object$treatment_vals)) {
+      treatment <- outer(
+        drop(treatment),
+        object$treatment_vals,
+        function(x, y) as.numeric(x == y)
+      )
+    }
+
+    n_covars <- ncol(demeaned_covars)
+    n_treat_cols <- ncol(treatment)
+    interacted_covars <- matrix(0, nrow = nrow(X), ncol = n_covars * n_treat_cols)
+    interacted_names <- character(n_covars * n_treat_cols)
+    for (i in seq_len(n_covars)) {
+      cols <- (i - 1) * n_treat_cols + seq_len(n_treat_cols)
+      interacted_covars[, cols] <- treatment * demeaned_covars[, i]
+      interacted_names[cols] <-
+        paste0(colnames(treatment), ":", colnames(demeaned_covars)[i])
+    }
+    colnames(interacted_covars) <- interacted_names
 
     X <- cbind(
-      X[, attr(X, "assign") <= 1, drop = FALSE],
+      X[, attr(X, "assign") == 0, drop = FALSE],
+      treatment,
       demeaned_covars,
       interacted_covars
     )
-  }
 
-  coefs <- as.matrix(coef(object))
+    # Line the design up with the coefficients by name rather than by position.
+    # If the two ever disagree this errors here instead of returning a number
+    # built from the wrong columns.
+    missing_cols <- setdiff(rownames(coefs), colnames(X))
+    if (length(missing_cols)) {
+      stop(
+        "Cannot rebuild the lm_lin design from `newdata`. Missing: ",
+        paste(missing_cols, collapse = ", "),
+        call. = FALSE
+      )
+    }
+    X <- X[, rownames(coefs), drop = FALSE]
+  }
 
   if (isTRUE(object[["fes"]])) X <- drop_absorbed_intercept(X, rownames(coefs))
 
