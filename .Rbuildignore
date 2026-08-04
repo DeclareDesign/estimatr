@@ -1,2 +1,10 @@
 ^notes$
+^\.github$
+^\.claude$
+^\.Rproj\.user$
+^.*\.Rproj$
+^.*\.Rcheck$
+^.*\.tar\.gz$
+^.*\.zip$
+^\.DS_Store$
 ^vignettes/.*\.html$

@@ -1,7 +1,33 @@
+# Compiled objects. Stale ones link against an older toolchain and segfault on
+# the first lm_robust() call, so they must never be committed or reused.
 src/*.o
 src/*.so
 src/*.dylib
 src/symbols.rds
+
+# R build and check artifacts
 *.Rcheck/
-notes/
+*.tar.gz
+*.zip
+*.Rout
 tests/testthat/_problems/
+
+# R session / RStudio
+.Rhistory
+.RData
+.Rdata
+.Ruserdata
+.Rproj.user/
+
+# Vignette build output
+vignettes/*.html
+inst/doc/
+
+# Private dev notes and logfile (mirrored to claude_control)
+notes/
+
+# Claude Code session state
+.claude/
+
+# Misc
+.DS_Store
