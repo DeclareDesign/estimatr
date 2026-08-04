@@ -74,5 +74,30 @@ extract.robust_default <- function(model,
   return(tr)
 }
 
+#' Extract model data for the \pkg{texreg} package
+#'
+#' Prepares an `lm_robust` or `iv_robust` fit for \pkg{texreg}. Largely a clone
+#' of texreg's own `extract.lm` method.
+#'
+#' These are exported as plain functions rather than registered with
+#' `S3method()` because that is how \pkg{texreg} finds them: it looks up
+#' `extract.<class>` by name in the package namespace rather than dispatching on
+#' a generic it owns. Registering them the usual way would leave texreg unable
+#' to see them.
+#'
+#' \pkg{texreg} is the only consumer. Table building through
+#' \pkg{modelsummary} needs nothing here, since it reads [tidy()] and
+#' [glance()] and so already works on every estimator in this package.
+#'
+#' @param model An `lm_robust` or `iv_robust` fit.
+#' @param include.ci,include.rsquared,include.adjrs,include.nobs Logical.
+#' @param include.fstatistic,include.rmse,include.nclusts Logical.
+#' @param ... Unused.
+#' @return A \pkg{texreg} object.
+#' @name extract.lm_robust
+#' @export
 extract.lm_robust <- extract.robust_default
+
+#' @rdname extract.lm_robust
+#' @export
 extract.iv_robust <- extract.robust_default

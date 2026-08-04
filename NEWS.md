@@ -20,13 +20,19 @@ All public functions from estimatr that are relevant to the DeclareDesign workfl
 
 Return objects are structurally compatible with estimatr 1.0.6: field names, classes, and method dispatch are unchanged. Cross-package identity tests confirm coefficient and standard error agreement to 1e-12 across all supported SE types.
 
+`horvitz_thompson()` fits now carry the same post-estimation methods as every other estimator here. `vcov()`, `confint()`, `glance()`, `summary()` and `nobs()` were missing, so the first three errored and the last two fell through to the base defaults and returned something that resembled output without being the estimate. All five now agree with estimatr 1.0.6 exactly, including `confint(level = )` at a non-default level, where the interval is normal rather than t because the estimator has no degrees of freedom to spend. The `glance()` gap was the one worth finding: without it `modelsummary()` did not fail, it silently dropped the goodness-of-fit rows and printed a coefficient table that looked complete.
+
 ---
 
 ## What is dropped
 
 **Horvitz-Thompson auxiliary arguments.** `horvitz_thompson()` is included, but the probability specification is consolidated into the single `condition_prs` argument. The `blocks`, `clusters`, `simple`, `condition_pr_mat`, `subset`, and `return_condition_pr_mat` arguments and `se_type = "constant"` are dropped. An `ra_declaration` already carries the block structure, cluster structure, per-unit probabilities, and simple-versus-complete flag, so the separate arguments restated information the declaration holds, and gave the estimator two sources of truth that could disagree. Fully custom designs go through `declare_ra(permutation_matrix = perm)`, which replaces `condition_pr_mat`.
 
-**`starprep()` and `commarobust()`.** Stargazer integration utilities not relevant to the DeclareDesign workflow. The condition-probability-matrix helpers `declaration_to_condition_pr_mat()`, `gen_pr_matrix_cluster()`, and `permutations_to_condition_pr_mat()` go with them: the new variance computation does not build that matrix.
+**`starprep()` and `commarobust()`.** Both are removed, but they remain as names that error with a pointer to the replacement rather than being deleted, so a script written against 1.x reports what happened instead of failing with `could not find function`. `commarobust()` recomputed robust standard errors on a fitted `lm`, which is what `lm_robust()` does. `starprep()` prepared fits for stargazer, which has not been maintained in years; table building now goes through modelsummary, which reads `tidy()` and `glance()` and therefore works on every estimator here with no adapter.
+
+The condition-probability-matrix helpers `declaration_to_condition_pr_mat()`, `gen_pr_matrix_cluster()`, and `permutations_to_condition_pr_mat()` go with the Horvitz-Thompson arguments above: the new variance computation does not build that matrix.
+
+**`extract.lm_robust()` and `extract.iv_robust()` are kept**, for \pkg{texreg}, which is their only consumer. They are exported as plain functions rather than registered as S3 methods because texreg looks them up by name.
 
 **HAC (Newey-West) standard errors.** Not implemented.
 

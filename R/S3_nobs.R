@@ -13,3 +13,6 @@ nobs.summary.lm_robust <- nobs.lm_robust
 
 #' @export
 nobs.difference_in_means <- function(object, ...) object$nobs
+
+#' @export
+nobs.horvitz_thompson <- function(object, ...) object$nobs

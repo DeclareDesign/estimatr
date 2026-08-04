@@ -35,6 +35,19 @@ confint.difference_in_means <- function(object,
   return(cis)
 }
 
+#' @export
+confint.horvitz_thompson <- function(object,
+                                     parm = NULL,
+                                     level = NULL,
+                                     ...) {
+  # `ttest = FALSE` because a Horvitz-Thompson fit has no degrees of freedom to
+  # spend: `df` is NA and the interval is normal. Passing the default would
+  # rebuild the interval off a t quantile with df = NA and return NA bounds
+  # whenever `level` is supplied.
+  cis <- get_ci_mat(object, level, ttest = FALSE)
+  return(cis)
+}
+
 get_ci_mat <- function(object, level, ttest = TRUE) {
   if (!is.null(level)) {
     if (!is.null(object[["alpha"]])) {

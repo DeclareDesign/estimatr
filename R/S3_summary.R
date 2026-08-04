@@ -110,6 +110,15 @@ summary.difference_in_means <- function(object, ...) {
   ))
 }
 
+#' @export
+summary.horvitz_thompson <- function(object, ...) {
+  # "z" rather than the default "t": the test statistic is normal, so the
+  # column headings must not promise degrees of freedom the estimator does not
+  # have. Without this method the call reached summary.default and returned a
+  # generic object summary, which looked like output but was not the estimate.
+  return(list(coefficients = summarize_tidy(object, "z")))
+}
+
 summarize_tidy <- function(object, test = "t", ...) {
   remove_cols <- c("term", "outcome")
 

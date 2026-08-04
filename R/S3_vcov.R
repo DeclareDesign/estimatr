@@ -11,6 +11,11 @@ vcov.difference_in_means <- function(object, ...) {
   return(object$vcov)
 }
 
+#' @export
+vcov.horvitz_thompson <- function(object, ...) {
+  return(object$vcov)
+}
+
 vcov_simple <- function(object, complete) {
   if (is.null(object$vcov)) {
     stop(

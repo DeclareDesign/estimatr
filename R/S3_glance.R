@@ -122,3 +122,18 @@ glance.difference_in_means <- function(x, ...) {
     stringsAsFactors = FALSE
   )
 }
+
+#' @export
+glance.horvitz_thompson <- function(x, ...) {
+  # Same four columns estimatr returns, so a table built over a mix of old and
+  # new fits binds rather than erroring. Without this method `modelsummary()`
+  # does not fail: it drops the goodness-of-fit rows and prints a coefficient
+  # table that looks complete, which is the worse outcome of the two.
+  data.frame(
+    nobs = as.integer(x[["nobs"]]),
+    se_type = x[["se_type"]],
+    condition2 = x[["condition2"]],
+    condition1 = x[["condition1"]],
+    stringsAsFactors = FALSE
+  )
+}

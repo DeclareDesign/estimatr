@@ -9,7 +9,7 @@
 A lean rewrite of estimatr targeting the DeclareDesign workflow. Provides
 \code{lm_robust}, \code{lm_lin}, \code{iv_robust}, \code{lh_robust}, \code{difference_in_means}, and
 \code{horvitz_thompson}, with feols-style fixed effects absorption and
-design-aware Horvitz-Thompson variance. See \code{vignette("estimatrZero")} for
+design-aware Horvitz-Thompson variance. See \code{vignette("estimatr2.0")} for
 what changes relative to estimatr and what does not.
 }
 \author{

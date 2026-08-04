@@ -22,10 +22,12 @@ Imports:
     stats
 Suggests:
     car,
+    dplyr,
     emmeans,
     estimability,
     estimatr,
     knitr,
+    modelsummary,
     randomizr,
     rmarkdown,
     testthat (>= 3.0.0),
