@@ -39,8 +39,14 @@ jobs:
 
       - uses: codecov/codecov-action@v4
         with:
-          # Fail if error if not on PR, or if on PR and token is given
-          fail_ci_if_error: ${{ github.event_name != 'pull_request' || secrets.CODECOV_TOKEN }}
+          # Best-effort: this repository has no CODECOV_TOKEN secret, and
+          # Codecov refuses tokenless uploads to a protected branch
+          # ("Token required because branch is protected"). The tests pass;
+          # failing the run on the upload reports red for a condition unrelated
+          # to the package. Set the secret and restore
+          #   ${{ github.event_name != 'pull_request' || secrets.CODECOV_TOKEN }}
+          # once an upload actually lands.
+          fail_ci_if_error: false
           file: ./cobertura.xml
           plugin: noop
           disable_search: true
