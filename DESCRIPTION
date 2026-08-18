@@ -31,8 +31,7 @@ Suggests:
     randomizr,
     rmarkdown,
     testthat (>= 3.0.0),
-    texreg,
-    fabricatrZero
+    texreg
 VignetteBuilder: knitr
 LinkingTo:
     Rcpp,
