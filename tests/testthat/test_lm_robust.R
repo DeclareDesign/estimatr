@@ -223,6 +223,25 @@ test_that("#405: lh_robust CIs match lm_robust CIs with clusters", {
   expect_equal(lh_x$lh$conf.high, unname(confint(m_cl)["x", "97.5 %"]), tolerance = 1e-10)
 })
 
+test_that("lh_robust handles an intercept-only model", {
+  # estimatr 1.0.6 errors here with "missing value where TRUE/FALSE needed".
+  # Its df warning guards with `length(fit$df) > 0 && var(fit$df > 0)`, and
+  # var() of a length-one vector is NA, so the `if` has nothing to branch on.
+  # The unreleased origin/lh-fixes branch changes that 0 to a 1; this rewrite
+  # resolves df per hypothesis by name instead and never calls var(), so the
+  # case works rather than being patched. Pinned because a future change to the
+  # df logic could reintroduce it silently.
+  # Live case: the italian_village_continued design in the ResearchDesigns
+  # library, which fits age ~ 1 and cannot run under CRAN estimatr.
+  intercept_only <- data.frame(age = dat$y)
+  m <- lh_robust(age ~ 1, data = intercept_only,
+                 linear_hypothesis = "(Intercept) = 20")
+  expect_s3_class(m, "lh_robust")
+  expect_equal(nrow(m$lh), 1L)
+  expect_equal(m$lh$df, unname(m$lm_robust$df["(Intercept)"]))
+  expect_false(is.na(m$lh$p.value))
+})
+
 test_that("#320: lh_robust returns joint_hypothesis", {
   lh2 <- lh_robust(y ~ x + z, data = dat, linear_hypothesis = c("x=0", "z=0"))
   expect_true(!is.null(lh2$joint_hypothesis))
