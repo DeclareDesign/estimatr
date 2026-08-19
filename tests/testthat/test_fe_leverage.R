@@ -13,23 +13,7 @@ library(estimatrZero)
 # against the two references that matter: writing the dummies out by hand, and
 # estimatr itself.
 
-set.seed(7)
-
-mk <- function(n, G, unbalanced = FALSE) {
-  g <- if (unbalanced) {
-    factor(sample(seq_len(G), n, replace = TRUE))
-  } else {
-    factor(rep(seq_len(G), length.out = n))
-  }
-  data.frame(y = rnorm(n), x = rnorm(n), z = rnorm(n), g = g,
-             wts = runif(n, 0.5, 3))
-}
-
-configs <- list(
-  balanced   = mk(200, 20),
-  unbalanced = mk(200, 17, unbalanced = TRUE),
-  many_small = mk(300, 60)
-)
+configs <- ref_data_leverage()
 
 # ---- against explicit dummies ----
 
@@ -64,14 +48,11 @@ test_that("the identity survives weights", {
 # ---- against estimatr ----
 
 test_that("absorbed FE agrees with estimatr for HC2 and HC3", {
-  skip_if_not_installed("estimatr")
   for (nm in names(configs)) {
     d <- configs[[nm]]
     for (se in c("HC2", "HC3")) {
-      a <- estimatrZero::lm_robust(y ~ x + z, fixed_effects = ~ g,
-                                   data = d, se_type = se)
-      b <- estimatr::lm_robust(y ~ x + z, fixed_effects = ~ g,
-                               data = d, se_type = se)
+      a <- lm_robust(y ~ x + z, fixed_effects = ~ g, data = d, se_type = se)
+      b <- ref(paste0("lev_", nm, "_", se))
       expect_equal(unname(a$std.error), unname(b$std.error),
                    tolerance = 1e-10, info = paste(nm, se))
     }
@@ -79,13 +60,11 @@ test_that("absorbed FE agrees with estimatr for HC2 and HC3", {
 })
 
 test_that("absorbed FE agrees with estimatr under weights", {
-  skip_if_not_installed("estimatr")
   d <- configs$unbalanced
   for (se in c("HC2", "HC3")) {
-    a <- estimatrZero::lm_robust(y ~ x + z, fixed_effects = ~ g, data = d,
-                                 se_type = se, weights = wts)
-    b <- estimatr::lm_robust(y ~ x + z, fixed_effects = ~ g, data = d,
-                             se_type = se, weights = wts)
+    a <- lm_robust(y ~ x + z, fixed_effects = ~ g, data = d,
+                   se_type = se, weights = wts)
+    b <- ref(paste0("levw_unbalanced_", se))
     expect_equal(unname(a$std.error), unname(b$std.error), tolerance = 1e-10)
   }
 })

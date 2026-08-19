@@ -1,7 +1,6 @@
 library(estimatrZero)
 
-set.seed(1)
-dat <- data.frame(y = rnorm(40), z = rep(0:1, 20), x = rnorm(40))
+dat <- ref_data_post()
 ht <- horvitz_thompson(y ~ z, data = dat, condition_prs = c("0" = 0.5, "1" = 0.5))
 
 # ---- Horvitz-Thompson post-estimation ----
@@ -12,29 +11,26 @@ ht <- horvitz_thompson(y ~ z, data = dat, condition_prs = c("0" = 0.5, "1" = 0.5
 # something that looked like output without being the estimate.
 
 test_that("vcov and nobs agree with estimatr", {
-  skip_if_not_installed("estimatr")
-  ref <- estimatr::horvitz_thompson(y ~ z, data = dat, condition_prs = 0.5)
-  expect_equal(as.numeric(vcov(ht)), as.numeric(vcov(ref)))
-  expect_equal(nobs(ht), nobs(ref))
+  e0 <- ref("post_ht")
+  expect_equal(as.numeric(vcov(ht)), e0$vcov)
+  expect_equal(nobs(ht), e0$nobs)
 })
 
 test_that("confint agrees with estimatr, including a non-default level", {
-  skip_if_not_installed("estimatr")
-  ref <- estimatr::horvitz_thompson(y ~ z, data = dat, condition_prs = 0.5)
-  expect_equal(unname(confint(ht)), unname(confint(ref)))
+  e0 <- ref("post_ht")
+  expect_equal(unname(confint(ht)), e0$confint)
   # The level argument is the case that exposes the t-versus-z choice: a
   # Horvitz-Thompson fit carries df = NA, so rebuilding the interval off a t
   # quantile returns NA bounds rather than a wrong number.
-  expect_equal(unname(confint(ht, level = 0.90)), unname(confint(ref, level = 0.90)))
+  expect_equal(unname(confint(ht, level = 0.90)), e0$confint_90)
   expect_false(anyNA(confint(ht, level = 0.90)))
 })
 
 test_that("glance returns estimatr's four columns", {
-  skip_if_not_installed("estimatr")
-  ref <- estimatr::horvitz_thompson(y ~ z, data = dat, condition_prs = 0.5)
+  e0 <- ref("post_ht")
   g <- generics::glance(ht)
   expect_equal(names(g), c("nobs", "se_type", "condition2", "condition1"))
-  expect_equal(names(g), names(generics::glance(ref)))
+  expect_equal(names(g), e0$glance_names)
   expect_equal(g$nobs, 40L)
 })
 
@@ -85,24 +81,8 @@ test_that("extract returns a texreg object for both fit types", {
 # binary column. The design is now rebuilt the way lm_lin() builds it and lined
 # up against the coefficients by name.
 
-lin_cases <- list(
-  list(lbl = "factor treatment",        z = "zf", cov = ~ x),
-  list(lbl = "factor, two covariates",  z = "zf", cov = ~ x + w),
-  list(lbl = "binary treatment",        z = "zb", cov = ~ x),
-  list(lbl = "binary, two covariates",  z = "zb", cov = ~ x + w),
-  list(lbl = "numeric multi-valued",    z = "zn", cov = ~ x),
-  list(lbl = "numeric multi, two covs", z = "zn", cov = ~ x + w)
-)
-
-set.seed(1)
-lin_dat <- data.frame(
-  y  = rnorm(90),
-  zf = factor(rep(c("a", "b", "c"), length.out = 90)),
-  zb = rep(0:1, length.out = 90),
-  zn = rep(c(0, 2, 5), length.out = 90),
-  x  = rnorm(90),
-  w  = rnorm(90)
-)
+lin_cases <- ref_lin_cases()
+lin_dat <- ref_data_lin()
 
 for (case in lin_cases) {
   test_that(paste0("predict on an lm_lin fit works: ", case$lbl), {
@@ -117,27 +97,17 @@ for (case in lin_cases) {
 
 for (case in lin_cases) {
   test_that(paste0("predict agrees with estimatr: ", case$lbl), {
-    skip_if_not_installed("estimatr")
     f <- reformulate(case$z, "y")
     fit_z <- lm_lin(f, covariates = case$cov, data = lin_dat)
-    fit_e <- estimatr::lm_lin(f, covariates = case$cov, data = lin_dat)
-    # Both packages define predict.lm_robust, so whichever namespace loaded
-    # second would otherwise answer for both fits.
-    p_z <- estimatrZero:::predict.lm_robust(fit_z, newdata = lin_dat)
-    p_e <- estimatr:::predict.lm_robust(fit_e, newdata = lin_dat)
-    expect_equal(unname(p_z), unname(p_e))
+    p_z <- predict(fit_z, newdata = lin_dat)
+    expect_equal(unname(p_z), ref(paste0("post_predict_", case$lbl)))
   })
 }
 
 test_that("predict on a subset of newdata uses the levels seen at fit time", {
-  skip_if_not_installed("estimatr")
   sub <- lin_dat[lin_dat$zf != "c", ]
   fit_z <- lm_lin(y ~ zf, covariates = ~ x, data = lin_dat)
-  fit_e <- estimatr::lm_lin(y ~ zf, covariates = ~ x, data = lin_dat)
-  expect_equal(
-    unname(estimatrZero:::predict.lm_robust(fit_z, newdata = sub)),
-    unname(estimatr:::predict.lm_robust(fit_e, newdata = sub))
-  )
+  expect_equal(unname(predict(fit_z, newdata = sub)), ref("post_predict_subset"))
 })
 
 test_that("a numeric multi-valued treatment keeps its fit-time levels", {
@@ -149,7 +119,6 @@ test_that("a numeric multi-valued treatment keeps its fit-time levels", {
 })
 
 test_that("newdata carrying only one treatment level still predicts", {
-  skip_if_not_installed("estimatr")
   # The stored terms keep the fit's factor levels, so the design rebuilds with
   # the unused indicator columns at zero rather than losing them. Worth pinning:
   # this is the case where a design rebuilt from `newdata` alone would silently
@@ -157,9 +126,5 @@ test_that("newdata carrying only one treatment level still predicts", {
   nd <- lin_dat
   nd$zf <- factor(rep("a", nrow(nd)), levels = "a")
   fit_z <- lm_lin(y ~ zf, covariates = ~ x, data = lin_dat)
-  fit_e <- estimatr::lm_lin(y ~ zf, covariates = ~ x, data = lin_dat)
-  expect_equal(
-    unname(estimatrZero:::predict.lm_robust(fit_z, newdata = nd)),
-    unname(estimatr:::predict.lm_robust(fit_e, newdata = nd))
-  )
+  expect_equal(unname(predict(fit_z, newdata = nd)), ref("post_predict_one_level"))
 })

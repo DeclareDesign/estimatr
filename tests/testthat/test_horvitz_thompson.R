@@ -1,21 +1,20 @@
 library(estimatrZero)
 
 skip_if_not_installed("randomizr")
-skip_if_not_installed("estimatr")
 
-set.seed(42)
-N <- 40
-dat <- data.frame(y = rnorm(N))
+dat <- ref_data_ht()
+N <- nrow(dat)
 
 # ---- helpers ----
 
-# Compare our HT to estimatr for designs it supports (all 2-arm designs).
-ht_check <- function(decl, dat, ...) {
-  dat$Z <- randomizr::conduct_ra(decl)
-  mz <- estimatrZero::horvitz_thompson(y ~ Z, data = dat,
-                                        condition_prs = decl, ...)
-  me <- estimatr::horvitz_thompson(y ~ Z, data = dat,
-                                    ra_declaration = decl, ...)
+# Compare our HT to the recorded estimatr 1.0.6 answer for designs estimatr
+# supports (all 2-arm designs). The assignment vector comes out of the fixture
+# rather than being redrawn, so the comparison does not depend on how much RNG
+# the rest of this file has consumed before reaching a given test.
+ht_check <- function(key, decl, dat, ...) {
+  me <- ref(key)
+  dat$Z <- me$Z
+  mz <- horvitz_thompson(y ~ Z, data = dat, condition_prs = decl, ...)
   list(mz = mz, me = me)
 }
 
@@ -23,14 +22,14 @@ ht_check <- function(decl, dat, ...) {
 
 test_that("HT simple: estimate and SE identical to estimatr", {
   decl <- randomizr::declare_ra(N = N, prob = 0.4, simple = TRUE)
-  r <- ht_check(decl, dat)
+  r <- ht_check("ht_simple", decl, dat)
   expect_equal(r$mz$coefficients[[1]], r$me$coefficients[[1]], tolerance = 1e-12)
   expect_equal(r$mz$std.error[[1]],    r$me$std.error[[1]],    tolerance = 1e-12)
 })
 
 test_that("HT complete: estimate and SE identical to estimatr", {
   decl <- randomizr::declare_ra(N = N, m = 16)
-  r <- ht_check(decl, dat)
+  r <- ht_check("ht_complete", decl, dat)
   expect_equal(r$mz$coefficients[[1]], r$me$coefficients[[1]], tolerance = 1e-12)
   expect_equal(r$mz$std.error[[1]],    r$me$std.error[[1]],    tolerance = 1e-12)
 })
@@ -38,7 +37,7 @@ test_that("HT complete: estimate and SE identical to estimatr", {
 test_that("HT blocked: estimate and SE identical to estimatr", {
   dat$bl <- rep(1:4, each = 10)
   decl <- randomizr::declare_ra(N = N, blocks = dat$bl)
-  r <- ht_check(decl, dat)
+  r <- ht_check("ht_blocked", decl, dat)
   expect_equal(r$mz$coefficients[[1]], r$me$coefficients[[1]], tolerance = 1e-12)
   expect_equal(r$mz$std.error[[1]],    r$me$std.error[[1]],    tolerance = 1e-12)
 })
@@ -48,7 +47,7 @@ test_that("HT blocked non-integer k2_b: SE identical to estimatr", {
   dat$bl2 <- rep(1:2, each = 20)
   dat$cl2 <- rep(1:10, each = 4)
   decl <- randomizr::declare_ra(N = N, blocks = dat$bl2, clusters = dat$cl2)
-  r <- ht_check(decl, dat)
+  r <- ht_check("ht_blocked_noninteger", decl, dat)
   expect_equal(r$mz$coefficients[[1]], r$me$coefficients[[1]], tolerance = 1e-12)
   expect_equal(r$mz$std.error[[1]],    r$me$std.error[[1]],    tolerance = 1e-12)
 })
@@ -56,7 +55,7 @@ test_that("HT blocked non-integer k2_b: SE identical to estimatr", {
 test_that("HT clustered complete: estimate and SE identical to estimatr", {
   dat$cl <- rep(1:8, each = 5)
   decl <- randomizr::declare_ra(N = N, clusters = dat$cl)
-  r <- ht_check(decl, dat)
+  r <- ht_check("ht_cl_complete", decl, dat)
   expect_equal(r$mz$coefficients[[1]], r$me$coefficients[[1]], tolerance = 1e-12)
   expect_equal(r$mz$std.error[[1]],    r$me$std.error[[1]],    tolerance = 1e-12)
 })
@@ -64,19 +63,16 @@ test_that("HT clustered complete: estimate and SE identical to estimatr", {
 test_that("HT clustered simple: estimate and SE identical to estimatr", {
   dat$cl <- rep(1:8, each = 5)
   decl <- randomizr::declare_ra(N = N, clusters = dat$cl, simple = TRUE)
-  r <- ht_check(decl, dat)
+  r <- ht_check("ht_cl_simple", decl, dat)
   expect_equal(r$mz$coefficients[[1]], r$me$coefficients[[1]], tolerance = 1e-12)
   expect_equal(r$mz$std.error[[1]],    r$me$std.error[[1]],    tolerance = 1e-12)
 })
 
 test_that("HT custom permutation: SE identical to estimatr", {
-  perm <- replicate(20, {
-    z <- rep(0L, N); z[sample(N, 16)] <- 1L; z
-  })
-  decl <- randomizr::declare_ra(permutation_matrix = perm)
-  dat$Z <- perm[, 1L]
+  me <- ref("ht_perm")
+  decl <- randomizr::declare_ra(permutation_matrix = me$permutation_matrix)
+  dat$Z <- me$Z
   mz <- horvitz_thompson(y ~ Z, data = dat, condition_prs = decl)
-  me <- estimatr::horvitz_thompson(y ~ Z, data = dat, ra_declaration = decl)
   expect_equal(mz$coefficients[[1]], me$coefficients[[1]], tolerance = 1e-12)
   expect_equal(mz$std.error[[1]],    me$std.error[[1]],    tolerance = 1e-12)
 })
@@ -84,10 +80,9 @@ test_that("HT custom permutation: SE identical to estimatr", {
 # ---- named scalar probability vector ----
 
 test_that("HT named vector: SE matches estimatr conservative formula", {
-  dat2 <- data.frame(y = rnorm(20), Z = c(rep(1L, 10L), rep(0L, 10L)))
+  me <- ref("ht_named")
+  dat2 <- me$data
   mz <- horvitz_thompson(y ~ Z, data = dat2, condition_prs = c("0" = 0.5, "1" = 0.5))
-  me <- estimatr::horvitz_thompson(y ~ Z, data = dat2,
-          condition_prs = ifelse(dat2$Z == 1, 0.5, 0.5))
   expect_equal(mz$coefficients[[1]], me$coefficients[[1]], tolerance = 1e-12)
   expect_equal(mz$std.error[[1]],    me$std.error[[1]],    tolerance = 1e-12)
 })

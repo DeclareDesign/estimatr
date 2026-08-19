@@ -1,7 +1,5 @@
 library(estimatrZero)
 
-skip_if_not_installed("estimatr")
-
 # Fixed effects are absorbed via Frisch-Waugh-Lovell (FWL) demeaning.
 # This gives bit-identical coefficients and residuals to the dummy-variable
 # formulation.
@@ -24,17 +22,8 @@ skip_if_not_installed("estimatr")
 # for J FE levels — prohibitive for individual FE.  HC0/HC1/CR0 only need
 # residuals and (for CR0) cluster membership, so FWL demeaning is sufficient.
 
-set.seed(42)
-n  <- 200
-dat <- data.frame(
-  y  = rnorm(n),
-  y2 = rnorm(n),
-  x  = rnorm(n),
-  z  = rbinom(n, 1, 0.5),
-  bl = rep(1:20, each = 10),
-  cl = rep(1:10, 20),
-  iv = rnorm(n) + rnorm(n, 0, 0.3)
-)
+dat <- ref_data_fe()
+n <- nrow(dat)
 
 # ---- FWL equivalence ----
 
@@ -125,8 +114,8 @@ test_that("classical with FE does not warn", {
 #   lm_robust(y ~ x + factor(fe_var), se_type = "HC2")
 
 test_that("FE HC1 coefs, SEs, df, and fitted values identical to estimatr", {
-  m0 <- estimatr::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl, se_type = "HC1")
-  mz <- estimatrZero::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl, se_type = "HC1")
+  m0 <- ref("fe_HC1")
+  mz <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl, se_type = "HC1")
   expect_equal(coef(mz),         coef(m0),         tolerance = 1e-12)
   expect_equal(mz$std.error,     m0$std.error,     tolerance = 1e-12)
   expect_equal(mz$df.residual,   m0$df.residual)
@@ -134,37 +123,33 @@ test_that("FE HC1 coefs, SEs, df, and fitted values identical to estimatr", {
 })
 
 test_that("FE HC0 coefs and SEs identical to estimatr", {
-  m0 <- estimatr::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl, se_type = "HC0")
-  mz <- estimatrZero::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl, se_type = "HC0")
+  m0 <- ref("fe_HC0")
+  mz <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl, se_type = "HC0")
   expect_equal(coef(mz),     coef(m0),     tolerance = 1e-12)
   expect_equal(mz$std.error, m0$std.error, tolerance = 1e-12)
 })
 
 test_that("FE stata cluster SEs identical to estimatr", {
-  m0 <- estimatr::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl,
-                              clusters = cl, se_type = "stata")
-  mz <- estimatrZero::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl,
-                                  clusters = cl, se_type = "stata")
+  m0 <- ref("fe_cl_stata")
+  mz <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl,
+                  clusters = cl, se_type = "stata")
   expect_equal(coef(mz),     coef(m0),     tolerance = 1e-12)
   expect_equal(mz$std.error, m0$std.error, tolerance = 1e-12)
 })
 
 test_that("FE default coefs and fitted values identical to estimatr HC1", {
-  m0 <- estimatr::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl, se_type = "HC1")
-  mz <- estimatrZero::lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl)
+  m0 <- ref("fe_HC1")
+  mz <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl)
   expect_equal(coef(mz),         coef(m0),         tolerance = 1e-12)
   expect_equal(mz$fitted.values, m0$fitted.values, tolerance = 1e-10)
   expect_equal(mz$df.residual,   m0$df.residual)
 })
 
 test_that("FE weighted HC1 coefs and SEs identical to estimatr", {
-  set.seed(99)
-  dat_w <- dat
-  dat_w$w <- runif(n, 0.5, 2)
-  m0 <- estimatr::lm_robust(y ~ z + x, data = dat_w, fixed_effects = ~bl,
-                              weights = w, se_type = "HC1")
-  mz <- estimatrZero::lm_robust(y ~ z + x, data = dat_w, fixed_effects = ~bl,
-                                  weights = w, se_type = "HC1")
+  dat_w <- ref_data_fe_weighted()
+  m0 <- ref("fe_w_HC1")
+  mz <- lm_robust(y ~ z + x, data = dat_w, fixed_effects = ~bl,
+                  weights = w, se_type = "HC1")
   expect_equal(coef(mz),     coef(m0),     tolerance = 1e-10)
   expect_equal(mz$std.error, m0$std.error, tolerance = 1e-10)
 })
