@@ -1,7 +1,6 @@
 <!-- NOT READY TO SUBMIT. Delete this block once every line below is true.
-     Outstanding as of 2026-08-19:
+     Outstanding as of 2026-08-20:
        - Graeme Blair's maintainer-transfer email to CRAN has not been sent.
-       - The GitHub Actions matrix has not been run against the renamed package.
        - win-builder has not been run.
        - The four broken revdep maintainers have not actually been emailed.
      Every claim in the sections below is written for the submitted state, so
@@ -21,7 +20,9 @@ has written to CRAN separately to confirm the transfer. He remains an author.
 
 * local macOS 15 (aarch64), R 4.6.0
 * GitHub Actions: ubuntu-latest (devel, release, oldrel-1), macOS-latest
-  (release), windows-latest (release)
+  (release), windows-latest (release). All five green, each reporting
+  `[ FAIL 0 | WARN 0 | SKIP 1 | PASS 1206 ]`; the single skip is a test guarded
+  on `blkvar`, which is not on CRAN.
 * win-builder (devel and release)
 
 ## R CMD check results
