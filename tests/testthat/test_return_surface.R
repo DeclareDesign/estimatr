@@ -27,7 +27,7 @@ compare_surface <- function(got, recorded, path) {
     if (is.list(a) && !is.data.frame(a) && is.list(b)) {
       n <- n + compare_surface(b, a, paste0(path, "$", f))
     } else if (is.numeric(a) || is.character(a)) {
-      expect_equal(unname(b), unname(a), tolerance = 1e-8,
+      expect_equal(unname(b), unname(a), tolerance = REF_TOL,
                    label = paste0(path, "$", f))
       n <- n + 1L
     }
@@ -94,7 +94,7 @@ test_that("proj_fstatistic counts every regressor, since FE absorbed the interce
 test_that("iv_robust with fixed effects returns the absorbed group effects", {
   fe <- surface_fits$iv_fe$fixed_effects
   expect_length(fe, nlevels(surface_d$id))
-  expect_equal(fe, ref("surface_iv_fe")$fixed_effects, tolerance = 1e-8)
+  expect_equal(fe, ref("surface_iv_fe")$fixed_effects, tolerance = REF_TOL)
 })
 
 test_that("lm_lin carries treatment_levels, including the baseline", {

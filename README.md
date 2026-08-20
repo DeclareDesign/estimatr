@@ -15,7 +15,7 @@ The vignette is the document to read first. It covers what does not change, what
 
 `lm_robust`, `lm_lin`, `iv_robust`, `lh_robust`, `difference_in_means` and `horvitz_thompson`, in roughly half the lines, with a Pashley and Miratrix (2021) blocked-variance estimator that 1.x does not have.
 
-Interfaces match 1.0.6 and the numbers match to 1e-12 across every supported standard error type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes. That claim is pinned by 801 assertions, of which 336 compare against answers recorded from an installed estimatr 1.0.6 (`data-raw/make_estimatr_reference.R` produces the recording).
+Interfaces match 1.0.6 and, run side by side on one machine, the numbers match to 1e-12 across every supported standard error type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes. The suite is 1218 assertions, of which the comparisons run against answers recorded from an installed estimatr 1.0.6 (`data-raw/make_estimatr_reference.R` produces the recording) at a tolerance of 1e-9, because a fixture recorded on one platform meets a different BLAS on another and the floor there is the linear algebra rather than this package.
 
 ## What breaks
 

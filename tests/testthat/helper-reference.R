@@ -34,6 +34,27 @@ ref <- function(key) {
   values[[key]]
 }
 
+# Tolerance for any comparison against the recorded fixture.
+#
+# The recording is a fixed set of numbers produced on one machine. Comparing
+# them to values computed on another machine has a floor set by BLAS and LAPACK
+# rather than by this package, so an exact or near-exact comparison is a test
+# of the CI runner's linear algebra. That is not hypothetical: the first CI run
+# after the freeze failed 11 assertions on Ubuntu and Windows and none on
+# macOS, which is where the fixture was recorded, and every failure was too
+# small for waldo to render.
+#
+# 1e-9 is set from the worst case rather than by taste. The tightest quantity
+# compared here is the weighted `adj.r.squared`, whose recorded value is
+# -7.1e-4, so one ulp of it is a relative difference of 3.1e-13. 1e-9 leaves
+# about 3,000 ulps of headroom there and far more everywhere else, while
+# remaining several orders of magnitude tighter than any difference that would
+# mean the estimators disagree.
+#
+# Comparisons between two things computed in the same session keep their tight
+# tolerances: those are exact by construction and have no platform floor.
+REF_TOL <- 1e-9
+
 reference_estimatr_version <- function() {
   .reference_fixture()$estimatr_version
 }

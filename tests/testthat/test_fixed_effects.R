@@ -116,32 +116,32 @@ test_that("classical with FE does not warn", {
 test_that("FE HC1 coefs, SEs, df, and fitted values identical to estimatr", {
   m0 <- ref("fe_HC1")
   mz <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl, se_type = "HC1")
-  expect_equal(coef(mz),         coef(m0),         tolerance = 1e-12)
-  expect_equal(mz$std.error,     m0$std.error,     tolerance = 1e-12)
+  expect_equal(coef(mz),         coef(m0),         tolerance = REF_TOL)
+  expect_equal(mz$std.error,     m0$std.error,     tolerance = REF_TOL)
   expect_equal(mz$df.residual,   m0$df.residual)
-  expect_equal(mz$fitted.values, m0$fitted.values, tolerance = 1e-10)
+  expect_equal(mz$fitted.values, m0$fitted.values, tolerance = REF_TOL)
 })
 
 test_that("FE HC0 coefs and SEs identical to estimatr", {
   m0 <- ref("fe_HC0")
   mz <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl, se_type = "HC0")
-  expect_equal(coef(mz),     coef(m0),     tolerance = 1e-12)
-  expect_equal(mz$std.error, m0$std.error, tolerance = 1e-12)
+  expect_equal(coef(mz),     coef(m0),     tolerance = REF_TOL)
+  expect_equal(mz$std.error, m0$std.error, tolerance = REF_TOL)
 })
 
 test_that("FE stata cluster SEs identical to estimatr", {
   m0 <- ref("fe_cl_stata")
   mz <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl,
                   clusters = cl, se_type = "stata")
-  expect_equal(coef(mz),     coef(m0),     tolerance = 1e-12)
-  expect_equal(mz$std.error, m0$std.error, tolerance = 1e-12)
+  expect_equal(coef(mz),     coef(m0),     tolerance = REF_TOL)
+  expect_equal(mz$std.error, m0$std.error, tolerance = REF_TOL)
 })
 
 test_that("FE default coefs and fitted values identical to estimatr HC1", {
   m0 <- ref("fe_HC1")
   mz <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl)
-  expect_equal(coef(mz),         coef(m0),         tolerance = 1e-12)
-  expect_equal(mz$fitted.values, m0$fitted.values, tolerance = 1e-10)
+  expect_equal(coef(mz),         coef(m0),         tolerance = REF_TOL)
+  expect_equal(mz$fitted.values, m0$fitted.values, tolerance = REF_TOL)
   expect_equal(mz$df.residual,   m0$df.residual)
 })
 
@@ -150,8 +150,8 @@ test_that("FE weighted HC1 coefs and SEs identical to estimatr", {
   m0 <- ref("fe_w_HC1")
   mz <- lm_robust(y ~ z + x, data = dat_w, fixed_effects = ~bl,
                   weights = w, se_type = "HC1")
-  expect_equal(coef(mz),     coef(m0),     tolerance = 1e-10)
-  expect_equal(mz$std.error, m0$std.error, tolerance = 1e-10)
+  expect_equal(coef(mz),     coef(m0),     tolerance = REF_TOL)
+  expect_equal(mz$std.error, m0$std.error, tolerance = REF_TOL)
 })
 
 # ---- return object ----

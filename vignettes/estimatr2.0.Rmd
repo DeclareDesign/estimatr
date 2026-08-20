@@ -60,7 +60,7 @@ dat <- data.frame(
 lm_robust(y ~ z + x, data = dat, clusters = cl, weights = w)
 ```
 
-Under 1.0.6 that call returns the same coefficients, standard errors and degrees of freedom to 1e-12. The comparison cannot be run inside this vignette, because estimatr 2.0 and estimatr 1.0.6 cannot both be loaded, so it is run in the test suite instead against answers recorded from 1.0.6 (`data-raw/make_estimatr_reference.R` produces the recording, and re-running it under a future 1.x is how you would check that the recording still holds).
+Under 1.0.6, run on the same machine, that call returns the same coefficients, standard errors and degrees of freedom to 1e-12. The comparison cannot be run inside this vignette, because estimatr 2.0 and estimatr 1.0.6 cannot both be loaded, so it is run in the test suite instead against answers recorded from 1.0.6 (`data-raw/make_estimatr_reference.R` produces the recording, and re-running it under a future 1.x is how you would check that the recording still holds). Those recorded comparisons run at 1e-9 rather than 1e-12: a fixture recorded on one platform meets a different BLAS on another, and the floor there is the linear algebra rather than either version of this package.
 
 There are exactly two places where the numbers differ on purpose. Both involve `fixed_effects`, and both are described below.
 
@@ -282,7 +282,7 @@ Standard errors agree to 1e-10 with `blkvar::block_estimator(method = "hybrid_p"
 
 ## Speed
 
-Median times over 100 replications, fewer for the slowest cells, on an Apple M4 Pro under R 4.6.0, comparing estimatr 1.0.6 to 2.0.0 in separate R sessions. Coefficients and standard errors agree to 1e-12 in every row, and in the fixed-effects table they are bit-identical. There is no row where 2.0 is slower; the smallest gain is 1.2x.
+Median times over 100 replications, fewer for the slowest cells, on an Apple M4 Pro under R 4.6.0, comparing estimatr 1.0.6 to 2.0.0 in separate R sessions. Both versions were run on this one machine, so the comparison is not limited by the platform: coefficients and standard errors agree to 1e-12 in every row, and in the fixed-effects table they are bit-identical. There is no row where 2.0 is slower; the smallest gain is 1.2x.
 
 | task | 1.0.6 | 2.0.0 | speedup |
 |---|---:|---:|---:|

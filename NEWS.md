@@ -1,6 +1,6 @@
 # estimatr 2.0.0
 
-estimatr 2.0.0 is a ground-up rewrite aimed at the DeclareDesign use case: OLS, Lin-adjusted OLS, 2SLS IV, difference-in-means, Horvitz-Thompson, and linear hypothesis tests with heteroskedasticity- and cluster-robust standard errors. It fixes several long-standing correctness bugs, improves performance on the critical path, adds feols-style fixed effects absorption, and replaces the O(N²) Horvitz-Thompson variance with a design-aware O(1) computation. Interfaces are unchanged from 1.0.6 and the numbers agree to 1e-12 wherever both versions answer.
+estimatr 2.0.0 is a ground-up rewrite aimed at the DeclareDesign use case: OLS, Lin-adjusted OLS, 2SLS IV, difference-in-means, Horvitz-Thompson, and linear hypothesis tests with heteroskedasticity- and cluster-robust standard errors. It fixes several long-standing correctness bugs, improves performance on the critical path, adds feols-style fixed effects absorption, and replaces the O(N²) Horvitz-Thompson variance with a design-aware O(1) computation. Interfaces are unchanged from 1.0.6 and, run side by side on one machine, the numbers agree to 1e-12 wherever both versions answer.
 
 See `vignette("estimatr2.0")` for a user-facing tour of what changes and what does not.
 
@@ -52,6 +52,27 @@ each element after its term, `~ get(idvar)` giving `felevels[["get(idvar)"]]`,
 except with a single fixed-effect factor on a model fitted with missing data,
 where it fell back to `V1`. 2.0 names it consistently. Code that reads
 `felevels$V1` will need the term name instead.
+
+### A note on the comparison tolerance
+
+The suite compares against a fixture of answers recorded from an installed
+1.0.6 rather than calling that version live, which is what lets the package
+carry its own name. One consequence was not obvious until CI ran: **the
+recording is a fixed set of numbers made on one machine, so comparing it to
+values computed on another machine has a floor set by BLAS and LAPACK rather
+than by this package.** Before the freeze both sides were computed in the same
+process, so several comparisons could reasonably ask for exact equality; they
+cannot any more. The first CI run after the rename failed 11 assertions on
+Ubuntu and Windows and none on macOS, where the fixture was recorded, and every
+difference was too small for waldo to render.
+
+Recorded comparisons therefore run at `REF_TOL = 1e-9`, set from the worst case
+rather than by taste: the tightest recorded quantity is the weighted
+`adj.r.squared` at -7.1e-4, whose one ulp is a relative difference of 3.1e-13,
+leaving about 3,200 ulps of headroom, and nothing else in the fixture comes
+within 100 ulps of the tolerance. Comparisons between two things computed in
+the same session keep their tight tolerances, since those have no platform
+floor.
 
 `tests/testthat/test_return_surface.R` now pins the whole returned surface of
 sixteen fit types against answers recorded from 1.0.6, so a field cannot go
@@ -109,7 +130,7 @@ All public functions from 1.x that are relevant to the DeclareDesign workflow ar
 - `lh_robust()` — linear hypothesis tests via `car::linearHypothesis` with robust variance
 - S3 methods: `tidy`, `glance`, `summary`, `print`, `predict`, `coef`, `confint`, `vcov`, `nobs`, `update`
 
-Return objects are structurally compatible with estimatr 1.0.6: field names, classes, and method dispatch are unchanged. Cross-package identity tests confirm coefficient and standard error agreement to 1e-12 across all supported SE types.
+Return objects are structurally compatible with estimatr 1.0.6: field names, classes, and method dispatch are unchanged. Cross-version identity tests confirm coefficient and standard error agreement across all supported SE types, to 1e-12 when both versions are run on the same machine and to 1e-9 against the recorded fixture the suite ships.
 
 `horvitz_thompson()` fits now carry the same post-estimation methods as every other estimator here. `vcov()`, `confint()`, `glance()`, `summary()` and `nobs()` were missing, so the first three errored and the last two fell through to the base defaults and returned something that resembled output without being the estimate. All five now agree with estimatr 1.0.6 exactly, including `confint(level = )` at a non-default level, where the interval is normal rather than t because the estimator has no degrees of freedom to spend. The `glance()` gap was the one worth finding: without it `modelsummary()` did not fail, it silently dropped the goodness-of-fit rows and printed a coefficient table that looked complete.
 

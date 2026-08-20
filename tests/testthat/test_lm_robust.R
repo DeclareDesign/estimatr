@@ -95,12 +95,13 @@ test_that("lm_lin coefs include _c interaction", {
   expect_true(any(grepl("_c$", m$term)))
 })
 
-test_that("lm_lin and lm_robust give same intercept estimate", {
-  # Intercept in lm_lin at center should match simple mean
-  m <- lm_lin(y ~ z, covariates = ~ x, data = dat)
-  # Treatment coef should be near lm_robust
+test_that("lm_lin's treatment coefficient is close to the additive lm_robust one", {
+  # Lin's estimator interacts the treatment with centred covariates, so it does
+  # not equal the additive fit; on data where the interaction is near zero the
+  # two land close, which is the property worth pinning.
+  m  <- lm_lin(y ~ z, covariates = ~ x, data = dat)
   m0 <- lm_robust(y ~ z + x, data = dat)
-  expect_equal(coef(m)["z"], coef(m)["z"], tolerance = 0.01)
+  expect_equal(unname(coef(m)["z"]), unname(coef(m0)["z"]), tolerance = 0.01)
 })
 
 # ---- difference_in_means ----

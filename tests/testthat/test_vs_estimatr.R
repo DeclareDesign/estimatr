@@ -18,16 +18,16 @@ INFERENCE_FIELDS <- c(
 LM_FIELDS <- c(INFERENCE_FIELDS, "fitted.values", "res_var", "fstatistic", "df.residual", "nobs", "rank")
 
 # Compare numeric fields between the recorded reference and a fresh fit.
-# tolerance = 1e-12: accepts machine-epsilon accumulation from large design
-# matrices and CR2 eigenvalue computations (~5e-15 observed) while catching
-# any real numerical discrepancy (would be >= 1e-10 for meaningful differences).
+# REF_TOL is the cross-platform floor; see helper-reference.R for why an exact
+# comparison against a recording is a test of the runner's BLAS rather than of
+# this package.
 check_identical <- function(e0, ez, fields, label = "") {
   for (nm in fields) {
     a <- e0[[nm]]
     b <- ez[[nm]]
     if (is.null(a) || is.null(b)) next
     info_msg <- if (nzchar(label)) paste0("[", label, "] ", nm) else nm
-    expect_equal(a, b, tolerance = 1e-12, label = info_msg)
+    expect_equal(a, b, tolerance = REF_TOL, label = info_msg)
   }
 }
 
@@ -153,7 +153,7 @@ test_that("lm_lin weighted: coefs, SEs, and R2 identical to estimatr", {
 test_that("lm_lin scaled_center identical to estimatr", {
   e0 <- ref("lin")
   ez <- lm_lin(y ~ z, covariates = ~ x, data = dat)
-  expect_equal(e0$scaled_center, ez$scaled_center, tolerance = 0)
+  expect_equal(e0$scaled_center, ez$scaled_center, tolerance = REF_TOL)
 })
 
 test_that("lm_lin multi-covariate identical to estimatr", {
@@ -191,12 +191,12 @@ test_that("iv_robust with diagnostics identical to estimatr", {
   expect_equal(
     e0$diagnostic_first_stage_fstatistic,
     ez$diagnostic_first_stage_fstatistic,
-    tolerance = 0
+    tolerance = REF_TOL
   )
   expect_equal(
     e0$diagnostic_endogeneity_test,
     ez$diagnostic_endogeneity_test,
-    tolerance = 0
+    tolerance = REF_TOL
   )
 })
 
@@ -252,7 +252,7 @@ test_that("lh_robust lh component identical to estimatr", {
   e0 <- ref("lh")
   ez <- lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z + 2*x = 0")
   for (nm in c("coefficients", "std.error", "statistic", "p.value", "conf.low", "conf.high")) {
-    expect_equal(e0$lh[[nm]], ez$lh[[nm]], tolerance = 0, label = paste0("lh$", nm))
+    expect_equal(e0$lh[[nm]], ez$lh[[nm]], tolerance = REF_TOL, label = paste0("lh$", nm))
   }
 })
 
@@ -277,6 +277,6 @@ test_that("lm_robust factor covariate identical to estimatr", {
 test_that("lm_robust se_type=none coefs identical to estimatr", {
   e0 <- ref("lmr_none")
   ez <- lm_robust(y ~ x + z, data = dat, se_type = "none")
-  expect_equal(e0$coefficients, ez$coefficients, tolerance = 0)
-  expect_equal(e0$fitted.values, ez$fitted.values, tolerance = 0)
+  expect_equal(e0$coefficients, ez$coefficients, tolerance = REF_TOL)
+  expect_equal(e0$fitted.values, ez$fitted.values, tolerance = REF_TOL)
 })

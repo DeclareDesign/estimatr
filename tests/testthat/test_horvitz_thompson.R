@@ -23,23 +23,23 @@ ht_check <- function(key, decl, dat, ...) {
 test_that("HT simple: estimate and SE identical to estimatr", {
   decl <- randomizr::declare_ra(N = N, prob = 0.4, simple = TRUE)
   r <- ht_check("ht_simple", decl, dat)
-  expect_equal(r$mz$coefficients[[1]], r$me$coefficients[[1]], tolerance = 1e-12)
-  expect_equal(r$mz$std.error[[1]],    r$me$std.error[[1]],    tolerance = 1e-12)
+  expect_equal(r$mz$coefficients[[1]], r$me$coefficients[[1]], tolerance = REF_TOL)
+  expect_equal(r$mz$std.error[[1]],    r$me$std.error[[1]],    tolerance = REF_TOL)
 })
 
 test_that("HT complete: estimate and SE identical to estimatr", {
   decl <- randomizr::declare_ra(N = N, m = 16)
   r <- ht_check("ht_complete", decl, dat)
-  expect_equal(r$mz$coefficients[[1]], r$me$coefficients[[1]], tolerance = 1e-12)
-  expect_equal(r$mz$std.error[[1]],    r$me$std.error[[1]],    tolerance = 1e-12)
+  expect_equal(r$mz$coefficients[[1]], r$me$coefficients[[1]], tolerance = REF_TOL)
+  expect_equal(r$mz$std.error[[1]],    r$me$std.error[[1]],    tolerance = REF_TOL)
 })
 
 test_that("HT blocked: estimate and SE identical to estimatr", {
   dat$bl <- rep(1:4, each = 10)
   decl <- randomizr::declare_ra(N = N, blocks = dat$bl)
   r <- ht_check("ht_blocked", decl, dat)
-  expect_equal(r$mz$coefficients[[1]], r$me$coefficients[[1]], tolerance = 1e-12)
-  expect_equal(r$mz$std.error[[1]],    r$me$std.error[[1]],    tolerance = 1e-12)
+  expect_equal(r$mz$coefficients[[1]], r$me$coefficients[[1]], tolerance = REF_TOL)
+  expect_equal(r$mz$std.error[[1]],    r$me$std.error[[1]],    tolerance = REF_TOL)
 })
 
 test_that("HT blocked non-integer k2_b: SE identical to estimatr", {
@@ -48,24 +48,24 @@ test_that("HT blocked non-integer k2_b: SE identical to estimatr", {
   dat$cl2 <- rep(1:10, each = 4)
   decl <- randomizr::declare_ra(N = N, blocks = dat$bl2, clusters = dat$cl2)
   r <- ht_check("ht_blocked_noninteger", decl, dat)
-  expect_equal(r$mz$coefficients[[1]], r$me$coefficients[[1]], tolerance = 1e-12)
-  expect_equal(r$mz$std.error[[1]],    r$me$std.error[[1]],    tolerance = 1e-12)
+  expect_equal(r$mz$coefficients[[1]], r$me$coefficients[[1]], tolerance = REF_TOL)
+  expect_equal(r$mz$std.error[[1]],    r$me$std.error[[1]],    tolerance = REF_TOL)
 })
 
 test_that("HT clustered complete: estimate and SE identical to estimatr", {
   dat$cl <- rep(1:8, each = 5)
   decl <- randomizr::declare_ra(N = N, clusters = dat$cl)
   r <- ht_check("ht_cl_complete", decl, dat)
-  expect_equal(r$mz$coefficients[[1]], r$me$coefficients[[1]], tolerance = 1e-12)
-  expect_equal(r$mz$std.error[[1]],    r$me$std.error[[1]],    tolerance = 1e-12)
+  expect_equal(r$mz$coefficients[[1]], r$me$coefficients[[1]], tolerance = REF_TOL)
+  expect_equal(r$mz$std.error[[1]],    r$me$std.error[[1]],    tolerance = REF_TOL)
 })
 
 test_that("HT clustered simple: estimate and SE identical to estimatr", {
   dat$cl <- rep(1:8, each = 5)
   decl <- randomizr::declare_ra(N = N, clusters = dat$cl, simple = TRUE)
   r <- ht_check("ht_cl_simple", decl, dat)
-  expect_equal(r$mz$coefficients[[1]], r$me$coefficients[[1]], tolerance = 1e-12)
-  expect_equal(r$mz$std.error[[1]],    r$me$std.error[[1]],    tolerance = 1e-12)
+  expect_equal(r$mz$coefficients[[1]], r$me$coefficients[[1]], tolerance = REF_TOL)
+  expect_equal(r$mz$std.error[[1]],    r$me$std.error[[1]],    tolerance = REF_TOL)
 })
 
 test_that("HT custom permutation: SE identical to estimatr", {
@@ -73,8 +73,8 @@ test_that("HT custom permutation: SE identical to estimatr", {
   decl <- randomizr::declare_ra(permutation_matrix = me$permutation_matrix)
   dat$Z <- me$Z
   mz <- horvitz_thompson(y ~ Z, data = dat, condition_prs = decl)
-  expect_equal(mz$coefficients[[1]], me$coefficients[[1]], tolerance = 1e-12)
-  expect_equal(mz$std.error[[1]],    me$std.error[[1]],    tolerance = 1e-12)
+  expect_equal(mz$coefficients[[1]], me$coefficients[[1]], tolerance = REF_TOL)
+  expect_equal(mz$std.error[[1]],    me$std.error[[1]],    tolerance = REF_TOL)
 })
 
 # ---- named scalar probability vector ----
@@ -83,8 +83,8 @@ test_that("HT named vector: SE matches estimatr conservative formula", {
   me <- ref("ht_named")
   dat2 <- me$data
   mz <- horvitz_thompson(y ~ Z, data = dat2, condition_prs = c("0" = 0.5, "1" = 0.5))
-  expect_equal(mz$coefficients[[1]], me$coefficients[[1]], tolerance = 1e-12)
-  expect_equal(mz$std.error[[1]],    me$std.error[[1]],    tolerance = 1e-12)
+  expect_equal(mz$coefficients[[1]], me$coefficients[[1]], tolerance = REF_TOL)
+  expect_equal(mz$std.error[[1]],    me$std.error[[1]],    tolerance = REF_TOL)
 })
 
 # ---- multi-arm (estimatr doesn't support ra_declaration with >2 arms) ----

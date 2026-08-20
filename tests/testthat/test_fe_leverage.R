@@ -54,7 +54,7 @@ test_that("absorbed FE agrees with estimatr for HC2 and HC3", {
       a <- lm_robust(y ~ x + z, fixed_effects = ~ g, data = d, se_type = se)
       b <- ref(paste0("lev_", nm, "_", se))
       expect_equal(unname(a$std.error), unname(b$std.error),
-                   tolerance = 1e-10, info = paste(nm, se))
+                   tolerance = REF_TOL, info = paste(nm, se))
     }
   }
 })
@@ -65,7 +65,7 @@ test_that("absorbed FE agrees with estimatr under weights", {
     a <- lm_robust(y ~ x + z, fixed_effects = ~ g, data = d,
                    se_type = se, weights = wts)
     b <- ref(paste0("levw_unbalanced_", se))
-    expect_equal(unname(a$std.error), unname(b$std.error), tolerance = 1e-10)
+    expect_equal(unname(a$std.error), unname(b$std.error), tolerance = REF_TOL)
   }
 })
 
