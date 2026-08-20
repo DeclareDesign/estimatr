@@ -182,6 +182,10 @@ difference_in_means <- function(formula,
 
   } else if (is.null(data$cluster) && is.null(data$weights)) {
 
+    # 1.x reports 0 rather than dropping the field for an unclustered blocked
+    # design, and a downstream reader cannot tell a dropped field from a NULL.
+    nclusters <- 0
+
     # Unit-randomized blocks. Blocks are classified by how many units each arm
     # has, not by how large the block is: a block with one treated unit has no
     # estimable within-block variance whatever its size. See

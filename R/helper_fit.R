@@ -299,7 +299,15 @@ lm_robust_fit <- function(y,
       weight_mean = data[["weight_mean"]]
     )
 
-    nomdf <- x_rank - has_int
+    # Absorbing fixed effects removes the intercept column from the design, so
+    # for the F statistic there is no intercept to skip: every coefficient is a
+    # regressor under test. Treating one as an intercept anyway tested a
+    # hypothesis one restriction short of the intended one, and for a
+    # single-regressor FE model it took nomdf to zero and dropped the statistic
+    # altogether. Only the F statistic is affected; get_r2s() still needs the
+    # formula's own intercept flag.
+    fstat_int <- if (fe_rank > 0L) 0L else has_int
+    nomdf <- x_rank - fstat_int
     if (clustered) {
       dendf <- data[["J"]] - 1
     } else {
@@ -314,7 +322,7 @@ lm_robust_fit <- function(y,
         nomdf = nomdf,
         dendf = dendf,
         vcov_fit = vcov_fit,
-        has_int = has_int,
+        has_int = fstat_int,
         iv_stage = iv_stage
       )
     } else {

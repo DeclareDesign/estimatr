@@ -6,6 +6,58 @@ See `vignette("estimatr2.0")` for a user-facing tour of what changes and what do
 
 ---
 
+## Found by `revdepcheck`, and fixed here
+
+Running the 35 CRAN reverse dependencies turned up six fields that had gone
+missing from fitted objects, and one that was returned with a wrong value. None
+of it was visible to a NAMESPACE diff, since no export changed, nor to the
+estimator comparisons, which name the fields they check, nor to a grep of the
+reverse dependencies' sources, since the calls are unchanged. It surfaced
+because `eventstudyr` reads `felevels` on a fixed-effects fit and got `NULL`.
+
+Restored: `felevels` and the unprojected `tss` on every fixed-effects fit;
+`fixed_effects` (the absorbed group effects) and `proj_fstatistic` on
+`iv_robust()` fixed-effects fits; `treatment_levels` on `lm_lin()` fits, which
+holds every level including the baseline and is not the same thing as the
+`treatment_vals` this version added; and `nclusters`, reported as `0`, on an
+unclustered blocked `difference_in_means()`.
+
+**`proj_fstatistic` was wrong, not merely missing.** With absorbed fixed
+effects the intercept is already out of the design, and the numerator degrees
+of freedom subtracted one anyway, so the statistic tested a hypothesis one
+restriction short of the intended one. A two-regressor fixed-effects model
+reported F on 1 numerator degree of freedom rather than 2, with a
+correspondingly wrong value. A single-regressor fixed-effects model took the
+count to zero and dropped the statistic altogether, which is how `iv_robust()`
+came to have no `proj_fstatistic` at all.
+
+`felevels` also came back in the wrong order. The fixed-effects matrix is
+coerced to character before demeaning, which re-derives the levels by string
+sort, so a factor with levels 1 to 30 reported them as 1, 10, 11. The names are
+now taken before that coercion.
+
+`tests/testthat/test_return_surface.R` now pins the whole returned surface of
+sixteen fit types against answers recorded from 1.0.6, so a field cannot go
+missing again without a test failing. A missing field is the failure mode worth
+guarding: `fit$felevels` returns `NULL` rather than erroring, so the reader gets
+a wrong answer instead of a stop.
+
+---
+
+## Two more breaking changes, which had not been written down
+
+Both were deliberate and neither was listed. Found the same way.
+
+**`fixed_effects` must be a one-sided formula.** 1.x also accepted a bare
+column name or an already-evaluated grouping vector. Refusing those is the
+resolution of issue #304, which asked for the argument to be enforced, and the
+error now says so. `RCT` relies on the old form.
+
+**HC2, HC3 and CR2 with `fixed_effects`**: see below. `clubSandwich` and
+`statuser` both call for CR2 or HC3 on an absorbed model.
+
+---
+
 ## What is kept
 
 All public functions from 1.x that are relevant to the DeclareDesign workflow are present with identical interfaces:

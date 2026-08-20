@@ -227,3 +227,34 @@ lin_covar_names <- function(x) {
     "_c"
   )
 }
+
+#' Recover the absorbed group effects of a one-way fixed-effects fit
+#'
+#' `predict()` needs them to put the group contribution back for `newdata`, and
+#' they are otherwise unrecoverable once the design matrix has been demeaned.
+#' `fitted - X'b` is constant within group by construction, so one value per
+#' group is the whole answer.
+#'
+#' Only defined for one-way FE: with several factors the sum is identified but
+#' the parts are not, so there is nothing to map a `newdata` row onto. Returns
+#' `NULL` in that case, and for multivariate outcomes.
+#'
+#' @param fitted Full-model fitted values.
+#' @param coefficients The fitted coefficient vector.
+#' @param model_data The object returned by `demean_fes()`, which carries
+#'   `Xoriginal` and the undemeaned `fixed_effects` matrix.
+#' @return A named numeric vector, one entry per group, or `NULL`.
+#' @keywords internal
+#' @noRd
+absorbed_group_effects <- function(fitted, coefficients, model_data) {
+  fe <- model_data[["fixed_effects"]]
+  if (ncol(fe) != 1L || NCOL(fitted) != 1L) return(NULL)
+  setNames(
+    tapply(
+      fitted - drop(model_data[["Xoriginal"]] %*% coefficients),
+      fe[, 1L],
+      `[`, 1L
+    ),
+    paste0(colnames(fe), levels(as.factor(fe[, 1L])))
+  )
+}

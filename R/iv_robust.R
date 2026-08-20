@@ -211,6 +211,11 @@ iv_robust <- function(formula,
     r2_full  <- 1 - sum(residuals_proj^2) / tss_full
     return_list[["r.squared"]]     <- r2_full
     return_list[["adj.r.squared"]] <- 1 - (1 - r2_full) * (n_obs - 1L) / return_list[["df.residual"]]
+    return_list[["tss"]]           <- tss_full
+    return_list[["felevels"]]      <- model_data[["fe_level_names"]]
+    return_list[["fixed_effects"]] <- absorbed_group_effects(
+      return_list[["fitted.values"]], return_list[["coefficients"]], model_data
+    )
   }
 
   return_list[["call"]] <- match.call()

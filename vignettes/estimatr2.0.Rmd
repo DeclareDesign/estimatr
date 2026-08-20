@@ -189,8 +189,9 @@ Three greps cover every breaking change. Whatever they do not find needs no atte
 | `ra_declaration`, `condition_pr_mat`, `simple =`, or `blocks`/`clusters` inside `horvitz_thompson()` | one `condition_prs =`, holding a declaration, a named vector, or a matrix | Horvitz-Thompson designs |
 | `fixed_effects` with `se_type = "CR2"`, or with `"HC2"`/`"HC3"` and two or more factors | `"CR0"` or `"stata"`, or write the dummies with `factor()` | absorbed fixed effects |
 | `starprep`, `commarobust`, `declaration_to_condition_pr_mat`, `gen_pr_matrix_cluster`, `permutations_to_condition_pr_mat` | the first two have no replacement here; the last three are unnecessary | table output, HT internals |
+| `fixed_effects =` followed by anything that is not a `~` | wrap the grouping variable in a formula: `fixed_effects = ~ block` | code that passed a bare column name or a vector |
 
-All of those stop with an error. The first two name their replacement; the last three fail because the function does not exist.
+All of those stop with an error. The first two name their replacement; the third fails because the function does not exist; the fourth says that 1.x accepted a bare vector and that this one does not. Enforcing the formula is the resolution of issue #304.
 
 **One change does not announce itself, and it is the only one.** `lm_robust(y ~ z, fixed_effects = ~ block, clusters = cl)` with no `se_type` named gets CR2 from 1.x and CR0 from 2.0. The point estimates are identical. CR0 typically runs a couple of percent below CR2, in the usual direction. Unclustered fixed effects are not affected: the default there is HC2 in both versions and the numbers are bit-identical. If a clustered fixed-effects result turns on which adjustment you used, name the `se_type` explicitly rather than taking the default.
 

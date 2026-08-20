@@ -10,3 +10,4 @@
 ^vignettes/.*\.html$
 ^data-raw$
 ^cran-comments\.md$
+^revdep$

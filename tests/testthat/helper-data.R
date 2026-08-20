@@ -109,3 +109,45 @@ ref_lin_cases <- function() {
     list(lbl = "numeric multi, two covs", z = "zn", cov = ~ x + w)
   )
 }
+
+# The fits used by the return-surface test. Defined here because the recorder
+# has to build exactly the same ones. Every case names its `se_type` where 2.0
+# and 1.x default differently, so that a difference in this test always means a
+# regression rather than the one deliberate default change.
+ref_surface_data <- function() {
+  set.seed(1)
+  n <- 300
+  d <- data.frame(
+    y = rnorm(n), y2 = rnorm(n), x = rnorm(n), z = rbinom(n, 1, 0.5),
+    w = runif(n, 0.5, 2), cl = rep(1:30, each = 10), bl = rep(1:15, each = 20),
+    id = factor(rep(1:30, each = 10)), tt = factor(rep(1:10, 30))
+  )
+  d$iv <- d$z + rnorm(n, 0, 0.3)
+  d$zb <- rep(rep(0:1, each = 10), 15)
+  d$zc <- d$zb
+  d$z3 <- rep(c(0, 2, 5), 100)
+  d
+}
+
+# Each entry returns a fit from whichever estimatr is loaded. The recorder runs
+# them under 1.0.6; the test runs them under this package.
+ref_surface_fits <- function(d) {
+  list(
+    lmr       = lm_robust(y ~ x + z, data = d),
+    lmr_cl    = lm_robust(y ~ x + z, data = d, clusters = cl),
+    lmr_w     = lm_robust(y ~ x + z, data = d, weights = w),
+    lmr_mv    = lm_robust(cbind(y, y2) ~ x + z, data = d),
+    lmr_fe1   = lm_robust(y ~ x + z, data = d, fixed_effects = ~ id, se_type = "HC1"),
+    lmr_fe2   = lm_robust(y ~ x + z, data = d, fixed_effects = ~ id + tt, se_type = "HC1"),
+    lmr_fe_cl = lm_robust(y ~ x + z, data = d, fixed_effects = ~ id, clusters = cl, se_type = "stata"),
+    lin       = lm_lin(y ~ z, covariates = ~ x, data = d),
+    lin_multi = lm_lin(y ~ z3, covariates = ~ x, data = d),
+    iv        = iv_robust(y ~ z | iv, data = d),
+    iv_diag   = iv_robust(y ~ z | iv, data = d, diagnostics = TRUE),
+    iv_fe     = iv_robust(y ~ z | iv, data = d, fixed_effects = ~ id, se_type = "HC1"),
+    dim       = difference_in_means(y ~ z, data = d),
+    dim_bl    = difference_in_means(y ~ zb, data = d, blocks = bl),
+    dim_cl    = difference_in_means(y ~ zc, data = d, clusters = cl),
+    lh        = lh_robust(y ~ x + z, data = d, linear_hypothesis = "z + 2*x = 0")
+  )
+}

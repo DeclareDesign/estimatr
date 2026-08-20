@@ -33,18 +33,31 @@ clean_model_data <- function(data, datargs, estimator = "") {
   if ("fixed_effects" %in% names(mfargs)) {
     name <- sprintf(".__fixed_effects%%%d__", sample.int(.Machine$integer.max, 1))
     fe_formula <- eval_tidy(mfargs[["fixed_effects"]], data = data)
+    # 1.x also accepted a bare column name or an already-evaluated vector.
+    # Refusing those is the resolution of estimatr issue #304, which asked for
+    # the argument to be enforced as a formula, so it is deliberate rather than
+    # an omission. It does break working code: see NEWS.
     if (!inherits(fe_formula, "formula")) {
       stop(
         "`fixed_effects` must be a one-sided formula, such as `~ blockID` or ",
         "`~ block + year`. You passed an object of class ",
-        paste(class(fe_formula), collapse = "/"), "."
+        paste(class(fe_formula), collapse = "/"), ".",
+        if (is.atomic(fe_formula) || is.factor(fe_formula)) {
+          "\nestimatr 1.x accepted a bare grouping vector here; wrap it in `~`."
+        }
       )
     }
-    m_formula_env[[name]] <- sapply(
-      stats::model.frame.default(fe_formula, data = data, na.action = NULL),
-      FUN = as.factor
-    )
+    fe_mf <- stats::model.frame.default(fe_formula, data = data, na.action = NULL)
+    # sapply() collapses the factors to a character matrix, which is what the
+    # demeaning wants but which also re-derives the levels by string sort, so
+    # a factor with levels 1..30 comes back ordered 1, 10, 11. The `felevels`
+    # field reports the levels the data actually had, so capture them here,
+    # before the coercion throws them away.
+    fe_level_names <- lapply(fe_mf, function(x) levels(as.factor(x)))
+    m_formula_env[[name]] <- sapply(fe_mf, FUN = as.factor)
     mfargs[["fixed_effects"]] <- sym(name)
+  } else {
+    fe_level_names <- NULL
   }
 
   # IV needs Formula (for the | separator); everything else uses plain formula
@@ -126,6 +139,7 @@ clean_model_data <- function(data, datargs, estimator = "") {
   if (is.character(ret[["fixed_effects"]])) {
     ret[["fixed_effects"]] <- as.matrix(ret[["fixed_effects"]])
   }
+  ret[["fe_level_names"]] <- fe_level_names
 
   ret[["terms"]] <- attr(mf, "terms")
   dcs <- attr(ret[["terms"]], "dataClasses")
@@ -172,6 +186,12 @@ demean_fes <- function(model_data) {
   }
 
   model_data[["fe_levels"]] <- fe_levels
+  # `fe_levels` above is a count per factor, used for the rank correction. The
+  # level *names* are what the `felevels` field carries, and they come from
+  # clean_model_data(), which saw them before the character coercion.
+  if (is.null(model_data[["fe_level_names"]])) {
+    model_data[["fe_level_names"]] <- lapply(fe_df, levels)
+  }
   # Under a SINGLE fixed-effect factor the hat value of the full
   # [dummies | X] design splits exactly into the demeaned-X leverage plus each
   # observation's share of its group's weight:

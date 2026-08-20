@@ -123,6 +123,17 @@ lm_lin <- function(formula,
   # matrix already carries one column per level.
   treatment_vals <- NULL
 
+  # Every level of the treatment, baseline included, which is what the
+  # `treatment_levels` field has always carried. Distinct from
+  # `treatment_vals` below, which holds only the non-baseline levels of a
+  # numeric multi-valued treatment and is what predict() expands against.
+  treatment_levels <- if (length(treat_col) > 1L) {
+    sub(paste0("^", design_mat_treatment[1L]), "",
+        design_mat_treatment)[seq_along(treat_col)]
+  } else {
+    sort(unique(drop(treatment)))
+  }
+
   if (any(!(treatment %in% c(0, 1)))) {
     vals <- sort(unique(treatment))
     if (has_intercept) vals <- vals[-1]
@@ -218,6 +229,7 @@ lm_lin <- function(formula,
   # result was discarded, so it had never done anything.)
   return_list[["scaled_center"]] <- center
   return_list[["treatment_vals"]] <- treatment_vals
+  return_list[["treatment_levels"]] <- treatment_levels
 
   return_list[["call"]] <- match.call()
 

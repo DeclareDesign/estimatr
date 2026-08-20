@@ -26,6 +26,7 @@ if (have != REQUIRED_ESTIMATR) {
        "deliberately.")
 }
 
+library(estimatr)
 source("tests/testthat/helper-data.R")
 
 # Keep the parts of a fit that a test can compare: atomic vectors and matrices,
@@ -228,6 +229,21 @@ nd <- lin_dat
 nd$zf <- factor(rep("a", nrow(nd)), levels = "a")
 put("post_predict_one_level",
     unname(estimatr:::predict.lm_robust(fit_zf, newdata = nd)))
+
+# ---- the return-object surface ----
+
+# Six fields went missing from 2.0's fitted objects without anything reporting
+# it, and one that survived (`proj_fstatistic`) came back wrong. None of it was
+# visible to a NAMESPACE diff, to the estimator comparisons, or to a grep of
+# the reverse dependencies; it surfaced only because a revdep read one of the
+# missing fields. Recording the whole surface is what turns that class of
+# regression into a test failure.
+
+surface_d <- ref_surface_data()
+for (nm in names(ref_surface_fits(surface_d))) {
+  fit <- ref_surface_fits(surface_d)[[nm]]
+  put(paste0("surface_", nm), record(fit))
+}
 
 # ---- write ----
 
