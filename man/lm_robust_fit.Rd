@@ -18,7 +18,8 @@ lm_robust_fit(
   try_cholesky = FALSE,
   iv_stage = list(0),
   fe_rank = 0L,
-  fe_leverage = NULL
+  fe_leverage = NULL,
+  femat = NULL
 )
 }
 \arguments{
@@ -52,6 +53,10 @@ lm_robust_fit(
 absorbed one-way fixed effects, or \code{NULL}. Supplied only when there is a
 single FE factor, where \code{h_ii} splits exactly into the demeaned-X leverage
 plus this term, which is what makes HC2 and HC3 available there.}
+
+\item{femat}{optional numeric matrix of fixed-effect dummies for the
+estimation sample, supplying the columns HC2, HC3 and CR2 need from the
+full design. \code{NULL} unless the requested \code{se_type} requires it.}
 }
 \description{
 Internal method that creates linear fits (no fixed effects)

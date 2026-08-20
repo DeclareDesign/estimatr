@@ -82,34 +82,61 @@ a wrong answer instead of a stop.
 
 ---
 
-## Two more breaking changes, which had not been written down
+## Two capabilities that had been dropped, and are now restored
 
-Both were deliberate and neither was listed. Found the same way.
+Both were removed on the understanding that 1.x had restricted them too. It had
+not: 1.0.6 answered every one of these calls, and answered them correctly. The
+reverse-dependency run is what surfaced the mistake.
 
-**`fixed_effects` must be a one-sided formula.** 1.x also accepted a bare
-column name or an already-evaluated grouping vector. Refusing those is the
-resolution of issue #304, which asked for the argument to be enforced, and the
-error now says so. `RCT` relies on the old form.
+**HC2, HC3 and CR2 work with `fixed_effects` again.** 1.0.6 built the full
+dummy matrix and took the hat values off the `[X | FE dummies]` design whenever
+the requested `se_type` needed them. 2.0 does the same. One fixed-effect factor
+still takes the cheap route through the leverage identity below; everything
+else expands the dummies. Every case is exact and equal to the explicit-dummy
+fit, and equal to 1.0.6, which the fixture now records. The one combination
+1.0.6 also refused, weighted CR2 with `fixed_effects`, is still refused.
 
-**HC2, HC3 and CR2 with `fixed_effects`**: see below. `clubSandwich` and
-`statuser` both call for CR2 or HC3 on an absorbed model.
+**A bare grouping vector passed to `fixed_effects` warns instead of erroring.**
+1.x accepted a bare column name or an already-evaluated vector. Issue #304
+asked for the formula to be enforced; a warning that names the argument and
+shows the expected form does that without breaking working code, so the vector
+is still accepted and still names the term the way 1.0.6 named it. Anything
+that is neither a formula nor a grouping vector is an error, as before.
+
+### Two defaults that move, and say so
+
+Both were silent departures from 1.0.6 until now. Neither expands the dummies,
+because a default that quietly costs O(g^3) in the number of levels would undo
+the reason for absorbing fixed effects at all. Both warn **once per session**,
+since absorbed fixed effects are usually fitted in a loop or a simulation and a
+per-call warning would be noise. The warning names the `se_type` that accepts
+the default and removes it:
+
+* Two or more `fixed_effects` factors, unclustered, default to `"HC1"`.
+  1.0.6 defaulted to `"HC2"`.
+* Any `fixed_effects` with `clusters` defaults to `"CR0"`. 1.0.6 defaulted to
+  `"CR2"`.
+
+Writing `se_type = "HC1"` (or `"CR0"`) accepts the new default and removes the
+warning; writing `se_type = "HC2"` (or `"CR2"`) returns the 1.0.6 number exactly,
+also without warning.
+
+A single `fixed_effects` factor, unclustered, keeps the `"HC2"` default and does
+not warn: the leverage identity makes it free.
 
 ### What the reverse-dependency run leaves broken
 
-Of estimatr's 35 CRAN reverse dependencies, 30 check clean against 2.0.0 and
-one (`hbal`) fails to install on the test machine under both versions, for a
-local toolchain reason unrelated to this package.
+Of estimatr's 35 CRAN reverse dependencies, 34 check clean against 2.0.0.
+(`hbal` at first would not install on the test machine at all, for a local
+gfortran path problem unrelated to this package; corrected, it checks clean
+too.)
 
-Four break. Three need a one-line fix at the call site:
+`clubSandwich`, `RCT` and `statuser` were broken by the two removals above and
+now check clean.
 
-* **`clubSandwich`** calls `iv_robust()` and `lm_robust()` with `fixed_effects`
-  and `se_type = "CR2"`, in one example and three tests.
-* **`statuser`** documents and defaults to HC3, and its examples absorb two
-  fixed-effect factors.
-* **`RCT`** passes an evaluated grouping vector to `fixed_effects` on its
-  single-factor path.
+One remains:
 
-* **`eventstudyr`** has two assertions that read `felevels$V1` on a one-way
+* **`eventstudyr`** has three assertions that read `felevels$V1` on a one-way
   fixed-effects fit and want the 1.0.6 fallback name, in
   `test-EventStudyFHS.R` and `test-EventStudyOLS.R`. Nothing else in its suite
   changes and no estimate moves: its one-way branches size their
@@ -148,7 +175,7 @@ So with a single FE factor both are now exact, and cost one vector rather than a
 
 **The default with one-way fixed effects therefore returns to `"HC2"`**, which is the package default everywhere else and is also what 1.x returns for the same call. It had fallen back to `"stata"` only because HC2 was unaffordable.
 
-Two or more FE factors keep the restriction: the analogous sum is wrong in the third decimal place, so `"HC2"` and `"HC3"` still error there and name the dummy formulation. `"CR2"` is still refused with any `fixed_effects`, since its adjustment is built from cluster-level blocks of the hat matrix rather than from `h_ii`, and the identity says nothing about it. `iv_robust()` keeps the restriction too, since the identity has not been derived for a second stage running on fitted regressors.
+The identity holds only for one factor: with two or more the analogous sum is wrong in the third decimal place, so it is not used there. It says nothing about `"CR2"` either, whose adjustment is built from cluster-level blocks of the hat matrix rather than from `h_ii`, nor about `iv_robust()`, whose second stage runs on fitted regressors. Those cases all get their hat values by expanding the dummies, exactly as 1.0.6 did, so they are available and exact; they simply cost what 1.0.6 charged for them.
 
 Fixing this exposed a latent crash: `r_fe` was left at `r + fe_rank` when the meat falls back to the plain `XtX_inv`, so `X.leftCols(r_fe)` overran and aborted inside Eigen. Unreachable while HC2 was refused with fixed effects, reachable now.
 
@@ -312,7 +339,7 @@ The first-stage F test carries one entry per endogenous regressor, named `"<var>
 
 - **`lm_robust_fit()` with an unnamed or integer matrix (#269).** The exported fitting function failed on an integer design matrix ("Wrong R type for mapped matrix") and produced an object `tidy()` could not handle when `y` had no column names. Both inputs are now coerced and named.
 - **`variable.names()` (#123).** Added for `lm_robust` and `iv_robust`.
-- **`fixed_effects` must be a formula (#304).** Passing a bare column name produced "invalid formula" from deep inside `model.frame`. The error now names the argument and shows the expected form.
+- **`fixed_effects` given a bare column name (#304).** It produced "invalid formula" from deep inside `model.frame`. It now warns, names the argument, shows the expected form, and goes on to fit the model the way 1.x did.
 - **`lh_robust()` with multiple outcomes (#297).** Coefficients of a multivariate fit are named `"<outcome>:<term>"`, which a hypothesis such as `"cyl = 2"` cannot refer to, and `car::linearHypothesis()` reported it as malformed. 2.0 errors with that explanation and tells the user to fit one outcome at a time.
 
 ### All-missing outcome with weights (#370)
@@ -367,16 +394,18 @@ lm_robust(y ~ z, data = dat, fixed_effects = ~block)
 # at n = 40,000 with 2,000 blocks
 
 lm_robust(y ~ z, data = dat, fixed_effects = ~block, clusters = cl)
-# se_type = "CR0"
+# se_type = "CR0", with a warning: 1.0.6 defaulted to "CR2" here
+
+lm_robust(y ~ z, data = dat, fixed_effects = ~ block + year)
+# se_type = "HC1", with a warning: 1.0.6 defaulted to "HC2" here
 
 lm_robust(y ~ z, data = dat, fixed_effects = ~ block + year, se_type = "HC2")
-# Error: `se_type = "HC2"` requires hat values from the full [X | FE dummies]
-# design matrix and cannot be used with `fixed_effects`.
-# To get HC2 SEs, replace `fixed_effects` with explicit dummies:
-#   lm_robust(y ~ x + factor(fe_var), se_type = "HC2")
+# se_type = "HC2", exact, by expanding the dummies. No warning: you asked.
 ```
 
-With **two or more** FE factors the identity fails, by roughly 3e-3 rather than by rounding, so HC2 and HC3 still error there and name the escape hatch, and the default falls back to `"stata"` (= HC1). `"CR2"` is refused with any `fixed_effects`: its adjustment is built from cluster-level blocks of the hat matrix rather than from `h_ii`. The dummy-variable formulation returns exactly the 1.x `fixed_effects` result in every case; that equivalence is tested.
+With **two or more** FE factors the identity fails, by roughly 3e-3 rather than by rounding, so it is not used and the dummies are expanded instead. The same goes for `"CR2"` with any `fixed_effects`, whose adjustment is built from cluster-level blocks of the hat matrix rather than from `h_ii`. Those answers equal the explicit-dummy fit and equal 1.0.6 exactly; that equivalence is tested and recorded in the fixture.
+
+What changes is only what a **default** will reach for. Expanding the dummies is roughly O(g^3) in the number of levels: on a panel of 1,000 groups it takes about 5 s where the absorbed path takes 0.01 s, and the gap widens from there. So no default expands them. Two or more factors default to `"HC1"` and any `fixed_effects` with `clusters` defaults to `"CR0"`, each with a warning, shown once per session, that names what 1.0.6 returned and names the `se_type` that accepts the new default. Writing `se_type = "HC1"` or `se_type = "CR0"` removes it.
 
 **Multi-way FE.** Two-way (and higher) FE are supported via alternating projections that iterate to convergence (tolerance 1e-8, maximum 50 iterations).
 

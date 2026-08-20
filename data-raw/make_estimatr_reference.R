@@ -112,6 +112,18 @@ put("fe_HC0", record(estimatr::lm_robust(y ~ z + x, data = fe, fixed_effects = ~
 put("fe_cl_stata", record(estimatr::lm_robust(y ~ z + x, data = fe, fixed_effects = ~bl,
                                               clusters = cl, se_type = "stata")))
 
+# HC2, HC3 and CR2 under `fixed_effects`. 1.0.6 answered all of these by
+# expanding the dummies, and so does this version, so they are recorded rather
+# than left to a same-session dummy comparison alone.
+put("fe_2way_HC2", record(estimatr::lm_robust(y ~ z + x, data = fe,
+                                              fixed_effects = ~ bl + cl, se_type = "HC2")))
+put("fe_2way_HC3", record(estimatr::lm_robust(y ~ z + x, data = fe,
+                                              fixed_effects = ~ bl + cl, se_type = "HC3")))
+put("fe_cl_CR2", record(estimatr::lm_robust(y ~ z + x, data = fe, fixed_effects = ~ bl,
+                                            clusters = cl, se_type = "CR2")))
+put("fe_iv_cl_CR2", record(estimatr::iv_robust(y ~ z | iv, data = fe, fixed_effects = ~ bl,
+                                               clusters = cl, se_type = "CR2")))
+
 fe_w <- ref_data_fe_weighted()
 put("fe_w_HC1", record(estimatr::lm_robust(y ~ z + x, data = fe_w, fixed_effects = ~bl,
                                            weights = w, se_type = "HC1")))

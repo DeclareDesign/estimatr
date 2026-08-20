@@ -1,3 +1,83 @@
+#' Predict method for `lm_robust` object
+#'
+#' Produces predicted values, obtained by evaluating the regression function in
+#' the frame `newdata` for fits from [lm_robust()] and [lm_lin()]. If `se.fit`
+#' is `TRUE`, standard errors of the predictions are calculated. Setting
+#' `interval` specifies computation of confidence or prediction (tolerance)
+#' intervals at the specified level, sometimes referred to as narrow vs. wide
+#' intervals.
+#'
+#' Called without `newdata`, this returns the in-sample fitted values and
+#' `se.fit` and `interval` are not available.
+#'
+#' The equation used for the standard error of a prediction given a row of data
+#' \eqn{x} is:
+#'
+#' \eqn{\sqrt(x \Sigma x')},
+#'
+#' where \eqn{\Sigma} is the estimated variance-covariance matrix from
+#' [lm_robust()].
+#'
+#' The prediction intervals are for a single observation at each case in
+#' `newdata` with error variance(s) `pred.var`. The default is to assume that
+#' future observations have the same error variance as those used for fitting,
+#' which is taken from the fitted [lm_robust()] object. If `weights` is
+#' supplied, the inverse of this is used as a scale factor. If the fit was
+#' weighted, the default is to assume constant prediction variance, with a
+#' warning.
+#'
+#' @param object an object of class 'lm_robust'
+#' @param newdata a data frame in which to look for variables with which to
+#'   predict. If omitted, the fitted values are returned.
+#' @param se.fit logical. Whether standard errors are required, default = FALSE
+#' @param interval type of interval calculation. Can be abbreviated, default =
+#'   none
+#' @param alpha numeric denoting the test size for confidence intervals
+#' @param na.action function determining what should be done with missing
+#'   values in newdata. The default is to predict NA.
+#' @param pred.var the variance(s) for future observations to be assumed for
+#'   prediction intervals.
+#' @param weights variance weights for prediction. This can be a numeric vector
+#'   or a bare (unquoted) name of the weights variable in the supplied newdata.
+#' @param ... other arguments, unused
+#'
+#' @return A numeric vector of predictions, or a data frame with the
+#'   predictions and their standard errors and interval bounds when `se.fit` or
+#'   `interval` is set.
+#'
+#' @seealso [lm_robust()], [lm_lin()]
+#'
+#' @examples
+#'
+#' # Set seed
+#' set.seed(42)
+#'
+#' # Simulate data
+#' n <- 10
+#' dat <- data.frame(y = rnorm(n), x = rnorm(n))
+#'
+#' # Fit lm
+#' lm_out <- lm_robust(y ~ x, data = dat)
+#' # In-sample fitted values
+#' predict(lm_out)
+#' # Get predicted fits
+#' fits <- predict(lm_out, newdata = dat)
+#' # With standard errors and confidence intervals
+#' fits <- predict(lm_out, newdata = dat, se.fit = TRUE, interval = "confidence")
+#'
+#' # Use new data as well
+#' new_dat <- data.frame(x = runif(n, 5, 8))
+#' predict(lm_out, newdata = new_dat)
+#'
+#' # You can also supply custom variance weights for prediction intervals
+#' new_dat$w <- runif(n)
+#' predict(lm_out, newdata = new_dat, weights = w, interval = "prediction")
+#'
+#' # Works for 'lm_lin' models as well
+#' dat$z <- sample(1:3, size = nrow(dat), replace = TRUE)
+#' lmlin_out1 <- lm_lin(y ~ z, covariates = ~ x, data = dat)
+#' predict(lmlin_out1, newdata = dat, interval = "prediction")
+#'
 #' @importFrom rlang eval_tidy
 #' @importFrom stats predict
 #' @export

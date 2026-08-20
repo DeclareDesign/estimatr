@@ -1,4 +1,4 @@
-#' @importFrom rlang f_rhs %||% quo_is_missing eval_tidy sym
+#' @importFrom rlang f_rhs %||% quo_is_missing eval_tidy sym as_label
 #' @importFrom stats terms model.matrix model.response model.extract
 clean_model_data <- function(data, datargs, estimator = "") {
 
@@ -33,21 +33,39 @@ clean_model_data <- function(data, datargs, estimator = "") {
   if ("fixed_effects" %in% names(mfargs)) {
     name <- sprintf(".__fixed_effects%%%d__", sample.int(.Machine$integer.max, 1))
     fe_formula <- eval_tidy(mfargs[["fixed_effects"]], data = data)
-    # 1.x also accepted a bare column name or an already-evaluated vector.
-    # Refusing those is the resolution of estimatr issue #304, which asked for
-    # the argument to be enforced as a formula, so it is deliberate rather than
-    # an omission. It does break working code: see NEWS.
+    # 1.x also accepted a bare column name or an already-evaluated grouping
+    # vector. estimatr issue #304 asked for the formula to be enforced; a
+    # warning that names the argument and the expected form does that without
+    # breaking working code, so the vector is still accepted. `RCT` on CRAN
+    # passes one. Anything that is neither a formula nor a grouping vector is
+    # still an error.
     if (!inherits(fe_formula, "formula")) {
-      stop(
-        "`fixed_effects` must be a one-sided formula, such as `~ blockID` or ",
-        "`~ block + year`. You passed an object of class ",
-        paste(class(fe_formula), collapse = "/"), ".",
-        if (is.atomic(fe_formula) || is.factor(fe_formula)) {
-          "\nestimatr 1.x accepted a bare grouping vector here; wrap it in `~`."
-        }
+      if (!(is.atomic(fe_formula) || is.factor(fe_formula)) ||
+          is.matrix(fe_formula) || is.null(fe_formula)) {
+        stop(
+          "`fixed_effects` must be a one-sided formula, such as `~ blockID` or ",
+          "`~ block + year`. You passed an object of class ",
+          paste(class(fe_formula), collapse = "/"), "."
+        )
+      }
+      # The term name has to come from the unevaluated expression, since the
+      # value is a bare vector with no name of its own. 1.0.6 named it by
+      # deparsing the same expression, so `felevels` and the absorbed
+      # `fixed_effects` keep the names they had.
+      fe_name <- as_label(mfargs[["fixed_effects"]])
+      warning(
+        "Passing `fixed_effects` a bare grouping vector is deprecated and will ",
+        "be removed in a future version. Use a one-sided formula instead:\n",
+        "  fixed_effects = ~ ", fe_name,
+        call. = FALSE
       )
+      fe_mf <- stats::setNames(
+        data.frame(as.factor(fe_formula), stringsAsFactors = TRUE),
+        fe_name
+      )
+    } else {
+      fe_mf <- stats::model.frame.default(fe_formula, data = data, na.action = NULL)
     }
-    fe_mf <- stats::model.frame.default(fe_formula, data = data, na.action = NULL)
     # sapply() collapses the factors to a character matrix, which is what the
     # demeaning wants but which also re-derives the levels by string sort, so
     # a factor with levels 1..30 comes back ordered 1, 10, 11. The `felevels`
@@ -220,6 +238,55 @@ demean_fes <- function(model_data) {
     NULL
   }
   model_data
+}
+
+# HC2, HC3 and CR2 are built from the hat values of the full [X | FE dummies]
+# design. Under a single factor those decompose into `fe_leverage` (see
+# demean_fes) and no dummy matrix is needed, but under two or more factors, and
+# for CR2 under any number, there is no such shortcut: the dummies have to be
+# materialised, exactly as estimatr 1.0.6 did. That costs roughly O(g^3) in the
+# number of levels, so it is built only when the requested `se_type` actually
+# needs it and never to satisfy a default.
+#' @importFrom stats model.matrix
+#' @noRd
+fe_dummy_matrix <- function(model_data) {
+  fe_df     <- as.data.frame(model_data[["fixed_effects"]], stringsAsFactors = TRUE)
+  fe_levels <- vapply(fe_df, nlevels, 0L)
+
+  # A single factor with one level contributes an intercept, not a set of
+  # contrasts, and model.matrix() would return a zero-column matrix for it.
+  if (any(fe_levels == 1L)) {
+    if (ncol(fe_df) != 1L) {
+      stop(
+        "Can't have a fixed effect with only one group AND multiple fixed ",
+        "effect variables."
+      )
+    }
+    return(matrix(
+      1,
+      nrow  = nrow(fe_df),
+      ncol  = 1L,
+      dimnames = list(rownames(fe_df), paste0(names(fe_df), levels(fe_df[[1L]])))
+    ))
+  }
+
+  model.matrix(~ 0 + ., data = fe_df)
+}
+
+# Whether a fit needs the dummy matrix above. `se_type` here is the value the
+# user asked for, before check_se_type() fills in a default: a default must
+# never trigger the expansion, which is what keeps absorption fast.
+#' @noRd
+needs_fe_dummies <- function(se_type, model_data) {
+  if (is.null(se_type) || !se_type %in% c("HC2", "HC3", "CR2")) {
+    return(FALSE)
+  }
+  # One-way FE gets HC2 and HC3 exactly from `fe_leverage`, at the cost of one
+  # vector. CR2 has no such decomposition and always needs the dummies.
+  if (se_type %in% c("HC2", "HC3") && !is.null(model_data[["fe_leverage"]])) {
+    return(FALSE)
+  }
+  TRUE
 }
 
 # Demean an arbitrary matrix by the same FE structure as model_data.

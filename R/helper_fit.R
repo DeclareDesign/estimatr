@@ -13,6 +13,9 @@
 #' @param try_cholesky logical, whether to try Cholesky decomposition
 #' @param iv_stage list of length one or two for 2SLS stages
 #' @param fe_rank integer, degrees of freedom absorbed by fixed effects
+#' @param femat optional numeric matrix of fixed-effect dummies for the
+#'   estimation sample, supplying the columns HC2, HC3 and CR2 need from the
+#'   full design. `NULL` unless the requested `se_type` requires it.
 #' @param fe_leverage numeric vector of per-observation leverage contributed by
 #'   absorbed one-way fixed effects, or `NULL`. Supplied only when there is a
 #'   single FE factor, where `h_ii` splits exactly into the demeaned-X leverage
@@ -45,7 +48,8 @@ lm_robust_fit <- function(y,
                           try_cholesky = FALSE,
                           iv_stage = list(0),
                           fe_rank = 0L,
-                          fe_leverage = NULL) {
+                          fe_leverage = NULL,
+                          femat = NULL) {
 
   # ----------
   # Check se type
@@ -54,7 +58,8 @@ lm_robust_fit <- function(y,
   clustered <- !is.null(cluster)
   weighted <- !is.null(weights)
   se_type <- check_se_type(se_type, clustered, has_fe = (fe_rank > 0L),
-                           oneway_fe = !is.null(fe_leverage))
+                           oneway_fe = !is.null(fe_leverage),
+                           fe_dummies = !is.null(femat), weighted = weighted)
 
   # -----------
   # Prep data for fitting
@@ -64,6 +69,10 @@ lm_robust_fit <- function(y,
     y = as.matrix(y),
     X = X
   )
+  if (!is.null(femat)) {
+    data[["femat"]] <- femat
+    if (!is.double(data[["femat"]])) storage.mode(data[["femat"]]) <- "double"
+  }
 
   # lm_solver maps these straight into Eigen, which requires doubles, and
   # tidy() needs a name for every outcome column. Callers passing matrices
@@ -176,6 +185,9 @@ lm_robust_fit <- function(y,
 
       if (se_type == "CR2") {
         data[["X"]] <- data[["weights"]] * data[["X"]]
+        if (!is.null(data[["femat"]])) {
+          data[["femat"]] <- data[["weights"]] * data[["femat"]]
+        }
       }
     }
 
@@ -191,8 +203,16 @@ lm_robust_fit <- function(y,
     if (se_type != "none") {
 
       vcov_fit <- lm_variance(
-        X = data[["X"]],
-        Xunweighted = data[["Xunweighted"]],
+        # Widening the design here is what makes HC2, HC3 and CR2 available
+        # under `fixed_effects`. The C++ detects X.cols() > ncol(XtX_inv) and
+        # rebuilds the meat from the full design, dropping the rank-deficient
+        # dummy columns itself.
+        X = if (!is.null(data[["femat"]]))
+          cbind(data[["X"]], data[["femat"]])
+          else data[["X"]],
+        Xunweighted = if (!is.null(data[["femat"]]) && weighted)
+          cbind(data[["Xunweighted"]], data[["fematunweighted"]])
+          else data[["Xunweighted"]],
         XtX_inv = fit$XtX_inv,
         ei = if (se_type == "CR2" && weighted)
           fit_vals[["ei.unweighted"]]
@@ -364,39 +384,76 @@ lm_robust_fit <- function(y,
   return(return_list)
 }
 
-check_se_type <- function(se_type, clustered, has_fe = FALSE, oneway_fe = FALSE) {
+# The two default warnings below are `rlang::warn(.frequency = "once")`: absorbed
+# fixed effects are usually fitted in a loop or a simulation, and a per-call
+# warning would be noise rather than a notice. Once per session per case, keyed
+# by `.frequency_id`. rlang always signals these under testthat, so the tests
+# still see them on every call.
+#' @importFrom rlang warn
+#' @noRd
+check_se_type <- function(se_type, clustered, has_fe = FALSE, oneway_fe = FALSE,
+                          fe_dummies = FALSE, weighted = FALSE) {
 
   cl_se_types  <- c("CR0", "CR2", "stata")
   rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata")
 
   # HC2 and HC3 need the hat values of the full [dummies | X] design. Under a
   # SINGLE fixed-effect factor those split exactly into the demeaned-X leverage
-  # plus w_i / sum(w in group), so here they are exact, cheap, and carry no
-  # restriction at all. The identity is stated and verified in demean_fes().
-  #
-  # CR2 stays excluded even for one-way FE: its adjustment is built from
-  # cluster-level blocks of the hat matrix rather than from h_ii, so the
-  # decomposition does not apply to it and has not been derived.
+  # plus each observation's share of its group's weight, so here they are
+  # exact, cheap, and carry no restriction at all. The identity is stated and
+  # verified in demean_fes().
   if (has_fe && oneway_fe && !is.null(se_type) && se_type %in% c("HC2", "HC3")) {
     return(se_type)
   }
 
-  # With two or more factors the analogous sum is wrong in the third decimal
-  # place, so those designs keep the restriction. Rather than silently return
-  # approximate SEs, error and give the dummy-variable formulation.
+  # Otherwise the dummies have to be materialised. The caller does that when
+  # the requested se_type needs it (see needs_fe_dummies), which is what makes
+  # HC2, HC3 and CR2 available under `fixed_effects` as they were in 1.0.6.
   if (has_fe && !is.null(se_type) && se_type %in% c("HC2", "HC3", "CR2")) {
-    avail <- if (clustered) '"CR0", "stata", or "none"' else '"HC0", "HC1", "stata", "classical", or "none"'
-    stop(
-      '`se_type = "', se_type, '"` requires hat values from the full [X | FE dummies] ',
-      "design matrix and cannot be used with `fixed_effects`.\n",
-      "To get ", se_type, " SEs, replace `fixed_effects` with explicit dummies:\n",
-      "  lm_robust(y ~ x + factor(fe_var), se_type = \"", se_type, "\")\n",
-      "With `fixed_effects`, available SE types are: ", avail, "."
-    )
+    # 1.0.6 refused this combination too: the CR2 adjustment needs the design
+    # weighted by w rather than by sqrt(w), and the absorbed dummies are not
+    # carried in a form that supports it.
+    if (se_type == "CR2" && weighted) {
+      stop(
+        "`se_type = \"CR2\"` cannot be combined with `weights` and ",
+        "`fixed_effects`.\nUse `se_type = \"stata\"`, or replace ",
+        "`fixed_effects` with explicit dummies:\n",
+        "  lm_robust(y ~ x + factor(fe_var), weights = w, clusters = cl, ",
+        "se_type = \"CR2\")"
+      )
+    }
+    if (!fe_dummies) {
+      stop(
+        "`se_type = \"", se_type, "\"` requires hat values from the full ",
+        "[X | FE dummies] design matrix, which were not supplied.\n",
+        "Call `lm_robust()` or `iv_robust()`, which build them, or pass ",
+        "`femat` to `lm_robust_fit()`."
+      )
+    }
+    return(se_type)
   }
 
   if (clustered) {
     if (is.null(se_type)) {
+      # CR2 under `fixed_effects` is computable, but only by expanding the
+      # dummies, which is O(g^3) in the number of levels and would silently
+      # undo the reason for absorbing them. The default stays on the fast
+      # estimator and says so, rather than quietly returning a different
+      # number from 1.0.6 (which defaulted to CR2 here).
+      if (has_fe) {
+        warn(
+          paste0(
+            "With `fixed_effects` and `clusters`, `se_type` defaults to ",
+            "\"CR0\"; estimatr 1.0.6 defaulted to \"CR2\" here.\n",
+            "CR2 is available by asking for it, `se_type = \"CR2\"`, at the ",
+            "cost of expanding the fixed effects into dummies.\n",
+            "Write `se_type = \"CR0\"` to accept this default and remove this ",
+            "warning."
+          ),
+          .frequency = "once",
+          .frequency_id = "estimatr_fe_clustered_default"
+        )
+      }
       se_type <- if (has_fe) "CR0" else "CR2"
     } else if (!(se_type %in% c(cl_se_types, "none"))) {
       stop(
@@ -406,9 +463,24 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE, oneway_fe = FALSE)
     }
   } else {
     if (is.null(se_type)) {
-      # One-way FE now costs nothing extra for HC2, so it keeps the package's
-      # ordinary default instead of falling back. That also matches what
-      # estimatr returns for the same call.
+      # One-way FE costs nothing extra for HC2, so it keeps the package's
+      # ordinary default. Two or more factors would have to expand the
+      # dummies, so they fall back to HC1 and warn, for the same reason as the
+      # clustered case above.
+      if (has_fe && !oneway_fe) {
+        warn(
+          paste0(
+            "With two or more `fixed_effects` variables, `se_type` defaults ",
+            "to \"HC1\"; estimatr 1.0.6 defaulted to \"HC2\" here.\n",
+            "HC2 and HC3 are available by asking for them, at the cost of ",
+            "expanding the fixed effects into dummies.\n",
+            "Write `se_type = \"HC1\"` to accept this default and remove this ",
+            "warning."
+          ),
+          .frequency = "once",
+          .frequency_id = "estimatr_fe_multiway_default"
+        )
+      }
       se_type <- if (has_fe && !oneway_fe) "stata" else "HC2"
     } else if (se_type %in% setdiff(cl_se_types, "stata")) {
       stop(
@@ -561,6 +633,9 @@ prep_data <- function(data,
     data[["cluster"]] <- data[["cluster"]][data[["cl_ord"]]]
     data[["y"]] <- data[["y"]][data[["cl_ord"]], , drop = FALSE]
     data[["X"]] <- data[["X"]][data[["cl_ord"]], , drop = FALSE]
+    if (!is.null(data[["femat"]])) {
+      data[["femat"]] <- data[["femat"]][data[["cl_ord"]], , drop = FALSE]
+    }
 
     if (weighted) {
       data[["weights"]] <- data[["weights"]][data[["cl_ord"]]]
@@ -582,6 +657,10 @@ prep_data <- function(data,
     data[["weights"]] <- sqrt(data[["weights"]] / data[["weight_mean"]])
     data[["X"]] <- data[["weights"]] * data[["X"]]
     data[["y"]] <- data[["weights"]] * data[["y"]]
+    if (!is.null(data[["femat"]])) {
+      data[["fematunweighted"]] <- data[["femat"]]
+      data[["femat"]] <- data[["weights"]] * data[["femat"]]
+    }
     if (iv_stage[[1]] == 2) {
       data[["X_first_stage_unweighted"]] <- data[["X_first_stage"]]
       data[["X_first_stage"]] <- data[["weights"]] * data[["X_first_stage"]]

@@ -127,7 +127,10 @@ iv_robust <- function(formula,
       return_vcov = return_vcov,
       try_cholesky = try_cholesky,
       iv_stage = list(2, model_data$design_matrix),
-      fe_rank = fe_rank
+      fe_rank = fe_rank,
+      femat = if (has_fe && needs_fe_dummies(se_type, model_data))
+        fe_dummy_matrix(model_data)
+        else NULL
     )
 
 

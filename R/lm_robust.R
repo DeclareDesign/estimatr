@@ -168,7 +168,10 @@ lm_robust <- function(formula,
       has_int = attr(model_data$terms, "intercept"),
       iv_stage = list(0),
       fe_rank = fe_rank,
-      fe_leverage = model_data[["fe_leverage"]]
+      fe_leverage = model_data[["fe_leverage"]],
+      femat = if (has_fe && needs_fe_dummies(se_type, model_data))
+        fe_dummy_matrix(model_data)
+        else NULL
     )
 
   return_list <- lm_return(

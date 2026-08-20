@@ -372,7 +372,7 @@ test_that("#404: predict() rejects new FE levels and multi-way FE", {
   m <- lm_robust(y ~ x, data = dat, fixed_effects = ~ block)
   nd <- dat[1, ]; nd$block <- 999
   expect_error(predict(m, nd), "new levels")
-  m2 <- lm_robust(y ~ x, data = dat, fixed_effects = ~ block + cl)
+  m2 <- lm_robust(y ~ x, data = dat, fixed_effects = ~ block + cl, se_type = "HC1")
   expect_error(predict(m2, dat[1:5, ]), "fitted.values")
 })
 
@@ -420,8 +420,17 @@ test_that("#297: lh_robust rejects multiple outcomes with an explanation", {
   )
 })
 
-test_that("#304: fixed_effects must be a formula", {
-  expect_error(lm_robust(y ~ x, data = dat, fixed_effects = block),
+test_that("#304: a bare grouping vector warns but still works", {
+  # #304 asked for the formula to be enforced. A warning naming the argument
+  # and the expected form does that without breaking code written against
+  # 1.x, which accepted the bare vector; `RCT` on CRAN passes one.
+  expect_warning(fit <- lm_robust(y ~ x, data = dat, fixed_effects = block),
+                 "deprecated")
+  expect_equal(fit$std.error,
+               lm_robust(y ~ x, data = dat, fixed_effects = ~ block)$std.error)
+  expect_equal(names(fit$felevels), "block")
+  # Anything that is neither a formula nor a grouping vector is still an error.
+  expect_error(lm_robust(y ~ x, data = dat, fixed_effects = list(1, 2)),
                "must be a one-sided formula")
 })
 

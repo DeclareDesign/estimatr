@@ -86,40 +86,108 @@ test_that("two-way FE still falls back, since the identity does not hold there",
                   b = factor(rep(1:20, times = 15)))
   # Reported as "HC1" rather than "stata": the fit resolves the alias before
   # storing it, which is also what `se_type = "stata"` reports with no FE.
-  expect_equal(lm_robust(y ~ x, fixed_effects = ~ a + b, data = d)$se_type, "HC1")
+  expect_warning(fit <- lm_robust(y ~ x, fixed_effects = ~ a + b, data = d),
+                 "`se_type` defaults to")
+  expect_equal(fit$se_type, "HC1")
 })
 
-# ---- what is still refused, and why ----
+# ---- what the dummy expansion supplies, and what it costs ----
 
-test_that("two-way FE refuses HC2 and HC3 rather than approximating", {
+# The one-way identity above is a shortcut, not the only route. Where it does
+# not apply, the fixed effects are expanded into dummies and the hat values
+# come off the full design, which is what 1.0.6 did for every one of these
+# cases. The answers below must therefore equal the explicit-dummy fit exactly.
+
+test_that("two-way FE gets HC2 and HC3 from the dummy expansion", {
   set.seed(3)
   d <- data.frame(y = rnorm(300), x = rnorm(300),
                   a = factor(rep(1:15, each = 20)),
                   b = factor(rep(1:20, times = 15)))
-  expect_error(lm_robust(y ~ x, fixed_effects = ~ a + b, data = d, se_type = "HC2"),
-               "cannot be used with `fixed_effects`")
-  expect_error(lm_robust(y ~ x, fixed_effects = ~ a + b, data = d, se_type = "HC3"),
-               "cannot be used with `fixed_effects`")
+  for (se in c("HC2", "HC3")) {
+    fe  <- lm_robust(y ~ x, fixed_effects = ~ a + b, data = d, se_type = se)
+    dum <- lm_robust(y ~ x + a + b, data = d, se_type = se)
+    expect_equal(unname(fe$std.error), unname(dum$std.error["x"]))
+    expect_equal(unname(fe$df), unname(dum$df["x"]))
+  }
 })
 
-test_that("CR2 is still refused even with one FE factor", {
+test_that("CR2 with one FE factor matches the dummy expansion", {
   # CR2's adjustment comes from cluster-level blocks of the hat matrix, not
-  # from h_ii, so the one-way identity says nothing about it.
+  # from h_ii, so the one-way identity says nothing about it and the dummies
+  # have to be built even here.
   d <- configs$balanced
   d$cl <- factor(rep(1:10, length.out = nrow(d)))
+  fe  <- lm_robust(y ~ x + z, fixed_effects = ~ g, clusters = cl, data = d,
+                   se_type = "CR2")
+  dum <- lm_robust(y ~ x + z + g, clusters = cl, data = d, se_type = "CR2")
+  expect_equal(unname(fe$std.error), unname(dum$std.error[c("x", "z")]))
+  expect_equal(unname(fe$df), unname(dum$df[c("x", "z")]))
+})
+
+test_that("weighted CR2 with FE is still refused, as in 1.0.6", {
+  d <- configs$balanced
+  d$cl <- factor(rep(1:10, length.out = nrow(d)))
+  d$w  <- runif(nrow(d), 1, 2)
   expect_error(
-    lm_robust(y ~ x + z, fixed_effects = ~ g, clusters = cl, data = d, se_type = "CR2"),
-    "cannot be used with `fixed_effects`"
+    lm_robust(y ~ x + z, fixed_effects = ~ g, clusters = cl, weights = w,
+              data = d, se_type = "CR2"),
+    "cannot be combined with `weights`"
   )
 })
 
-test_that("the two-way error still names the dummy escape hatch", {
+test_that("the multi-way default warns rather than switching silently", {
   set.seed(3)
   d <- data.frame(y = rnorm(300), x = rnorm(300),
                   a = factor(rep(1:15, each = 20)),
                   b = factor(rep(1:20, times = 15)))
-  expect_error(lm_robust(y ~ x, fixed_effects = ~ a + b, data = d, se_type = "HC2"),
-               "factor\\(fe_var\\)")
+  # 1.0.6 returned HC2 here. Expanding the dummies to keep that default would
+  # undo the reason for absorbing them, so the default stays HC1 and says so.
+  expect_warning(
+    fit <- lm_robust(y ~ x, fixed_effects = ~ a + b, data = d),
+    "`se_type` defaults to"
+  )
+  expect_equal(fit$se_type, "HC1")
+  # Naming the se_type silences it, whichever one you name.
+  expect_no_warning(lm_robust(y ~ x, fixed_effects = ~ a + b, data = d, se_type = "HC2"))
+  expect_no_warning(lm_robust(y ~ x, fixed_effects = ~ a + b, data = d, se_type = "HC1"))
+})
+
+test_that("the clustered FE default warns rather than switching silently", {
+  d <- configs$balanced
+  d$cl <- factor(rep(1:10, length.out = nrow(d)))
+  # 1.0.6 defaulted to CR2 here.
+  expect_warning(
+    fit <- lm_robust(y ~ x + z, fixed_effects = ~ g, clusters = cl, data = d),
+    "`se_type` defaults to"
+  )
+  expect_equal(fit$se_type, "CR0")
+  expect_no_warning(
+    lm_robust(y ~ x + z, fixed_effects = ~ g, clusters = cl, data = d, se_type = "CR0")
+  )
+})
+
+test_that("the default warnings fire once per session, not once per call", {
+  # helper-warning-frequency.R forces every frequency warning to signal so the
+  # rest of the suite does not depend on file order. This one test needs the
+  # real behaviour, so it puts the option back and clears the spent budget.
+  old <- options(rlib_warning_verbosity = "default")
+  on.exit(options(old), add = TRUE)
+  rlang::reset_warning_verbosity("estimatr_fe_multiway_default")
+
+  set.seed(3)
+  d <- data.frame(y = rnorm(300), x = rnorm(300),
+                  a = factor(rep(1:15, each = 20)),
+                  b = factor(rep(1:20, times = 15)))
+  expect_warning(lm_robust(y ~ x, fixed_effects = ~ a + b, data = d),
+                 "`se_type` defaults to")
+  expect_no_warning(lm_robust(y ~ x, fixed_effects = ~ a + b, data = d))
+  expect_no_warning(lm_robust(y ~ x, fixed_effects = ~ a + b, data = d))
+})
+
+test_that("one-way unclustered FE keeps the HC2 default and stays silent", {
+  d <- configs$balanced
+  expect_no_warning(fit <- lm_robust(y ~ x + z, fixed_effects = ~ g, data = d))
+  expect_equal(fit$se_type, "HC2")
 })
 
 # ---- the leverage identity itself ----

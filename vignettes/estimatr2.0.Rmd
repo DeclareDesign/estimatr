@@ -17,7 +17,7 @@ library(estimatr)
 
 estimatr 2.0 is a ground-up rewrite aimed at the DeclareDesign workflow: fit the same model thousands of times, as fast as possible, and get the same number every time. Almost everything you already wrote against 1.x runs unchanged and returns identical estimates, identical standard errors, identical confidence intervals, and identical objects, only faster. That claim is pinned by 801 test assertions, 336 of which compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error.
 
-Three things break, and each one is a deliberate trade. `horvitz_thompson()` takes one probability argument instead of five. Two or more fixed-effect factors no longer accept HC2 or HC3, and no fixed-effects model accepts CR2. Two stargazer helpers are gone. Exactly one change moves a number without saying so, and it is named in the porting section.
+Two things break, and each one is a deliberate trade. `horvitz_thompson()` takes one probability argument instead of five. Two stargazer helpers are gone. Every standard error 1.x could compute, 2.0 can still compute. What changes is which one a *default* reaches for when you absorb fixed effects, and both such defaults now say so out loud.
 
 The gains concentrate where the algorithms changed. Ordinary `lm_robust()` is about twice as fast. Absorbed fixed effects are 133x faster at 500 blocks and 2,318x faster at 2,000, returning bit-identical numbers. Horvitz-Thompson under complete randomization is 888x faster at N = 3,000, because the N-by-N joint inclusion probability matrix is never built.
 
@@ -128,7 +128,7 @@ dat_ht <- data.frame(Y = rnorm(200) + 0.5 * Z, Z = Z)
 horvitz_thompson(Y ~ Z, data = dat_ht, condition_prs = decl)
 ```
 
-### 2. `fixed_effects` refuses CR2, and refuses HC2 and HC3 with two or more factors
+### 2. `fixed_effects` changes which standard error you get by default
 
 **One fixed-effect factor and no clusters is unaffected.** HC2 and HC3 are exact, the default is HC2, and both are what 1.x returns for the same call. This is the common case and it ports with no change to the numbers at all.
 
@@ -145,28 +145,25 @@ h_ii = h_ii(demeaned X) + w_i / sum(w over i's group)
 
 so the leverage of the full design is recoverable from the demeaned fit plus one vector, at the cost of that vector rather than of a dummy hat matrix. Verified to machine precision against writing the dummies out, weighted and unweighted, balanced and unbalanced.
 
-**Two or more factors keep the restriction**, because the analogous sum is wrong in the third decimal place rather than by rounding. Those requests error and name the dummy formulation:
+**Two or more factors do not get the identity**, because the analogous sum is wrong in the third decimal place rather than by rounding. Neither does CR2, with one factor or several, since its adjustment is built from cluster-level blocks of the hat matrix rather than from `h_ii`. In those cases 2.0 does what 1.x did: it writes the dummies out and reads the hat values off the full design. The answer is exact and equal to 1.0.6.
 
-```{r, error = TRUE}
+```{r}
 dat$bl2 <- rep(1:20, times = 50)
-lm_robust(y ~ z + x, data = dat, fixed_effects = ~ bl + bl2, se_type = "HC2")
-```
-
-**`CR2` is refused with any `fixed_effects`**, one factor or several, because its adjustment is built from cluster-level blocks of the hat matrix rather than from `h_ii`, and the identity above says nothing about those.
-
-```{r, error = TRUE}
+lm_robust(y ~ z + x, data = dat, fixed_effects = ~ bl + bl2, se_type = "HC2")$std.error
 lm_robust(y ~ z + x, data = dat, fixed_effects = ~ bl,
-          clusters = cl, se_type = "CR2")
+          clusters = cl, se_type = "CR2")$std.error
 ```
 
-**The upside.** You can absorb a very large number of fixed effects, which was previously impractical: 1.x defaults to HC2 with fixed effects and computes it from the full dummy hat matrix, so 40,000 observations across 2,000 blocks takes it 41 seconds. 2.0 returns the same number in 18 milliseconds. And where a standard error is genuinely refused, the error message names the escape hatch, so nothing is unavailable:
+**What that costs is why no default does it.** Expanding the dummies is roughly cubic in the number of levels. On a two-way panel of 1,000 groups it takes about 5 seconds where the absorbed path takes 0.01, and the gap widens from there; that cost is the whole reason to absorb fixed effects rather than expand them. So the defaults stay on the absorbed path and tell you they have:
 
-```r
-# exactly equal to the fixed_effects + HC2 result, at the cost of the dummies
-lm_robust(y ~ z + x + factor(bl) + factor(bl2), data = dat, se_type = "HC2")
+```{r}
+fit <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~ bl + bl2)
+fit$se_type
 ```
 
-That equivalence is tested. If you need CR2 with a moderate number of blocks, write the dummies and pay the cost knowingly. If you have thousands of fixed effects, use `fixed_effects` and take CR0.
+Two or more factors default to `"HC1"` where 1.x gave `"HC2"`; any `fixed_effects` with `clusters` defaults to `"CR0"` where 1.x gave `"CR2"`. Both warn once per session, not once per call, since absorbed fixed effects are usually fitted in a loop. Writing `se_type = "HC1"` accepts the new default and removes the warning; writing `se_type = "HC2"` gets the 1.x number back, also without warning.
+
+**The upside.** You can absorb a very large number of fixed effects and get a standard error quickly, which was previously impractical: 1.x defaults to HC2 with fixed effects and computes it from the full dummy hat matrix, so 40,000 observations across 2,000 blocks takes it 41 seconds. 2.0 returns the same number in 18 milliseconds, because one factor needs only the identity. Where you genuinely want the expansion, ask for it and 2.0 will pay the cost, exactly as 1.x paid it without asking.
 
 ### 3. Functions that are gone
 
@@ -187,13 +184,13 @@ Three greps cover every breaking change. Whatever they do not find needs no atte
 | Grep for | Replace with | Where it bites |
 |---|---|---|
 | `ra_declaration`, `condition_pr_mat`, `simple =`, or `blocks`/`clusters` inside `horvitz_thompson()` | one `condition_prs =`, holding a declaration, a named vector, or a matrix | Horvitz-Thompson designs |
-| `fixed_effects` with `se_type = "CR2"`, or with `"HC2"`/`"HC3"` and two or more factors | `"CR0"` or `"stata"`, or write the dummies with `factor()` | absorbed fixed effects |
+| `fixed_effects` with no `se_type` named | nothing, or name the `se_type` you want | absorbed fixed effects: the default moved, see below |
 | `starprep`, `commarobust`, `declaration_to_condition_pr_mat`, `gen_pr_matrix_cluster`, `permutations_to_condition_pr_mat` | the first two have no replacement here; the last three are unnecessary | table output, HT internals |
 | `fixed_effects =` followed by anything that is not a `~` | wrap the grouping variable in a formula: `fixed_effects = ~ block` | code that passed a bare column name or a vector |
 
-All of those stop with an error. The first two name their replacement; the third fails because the function does not exist; the fourth says that 1.x accepted a bare vector and that this one does not. Enforcing the formula is the resolution of issue #304.
+The first row stops with an error naming its replacement. The third fails because the function does not exist. The fourth still runs, and still gives the 1.x answer, but warns: enforcing the formula is the resolution of issue #304, and a warning enforces it without breaking a working script.
 
-**One change does not announce itself, and it is the only one.** `lm_robust(y ~ z, fixed_effects = ~ block, clusters = cl)` with no `se_type` named gets CR2 from 1.x and CR0 from 2.0. The point estimates are identical. CR0 typically runs a couple of percent below CR2, in the usual direction. Unclustered fixed effects are not affected: the default there is HC2 in both versions and the numbers are bit-identical. If a clustered fixed-effects result turns on which adjustment you used, name the `se_type` explicitly rather than taking the default.
+**The second row is the one to read carefully, because it moves a number.** With no `se_type` named, `lm_robust(y ~ z, fixed_effects = ~ block, clusters = cl)` gets CR2 from 1.x and CR0 from 2.0, and `lm_robust(y ~ z, fixed_effects = ~ block + year)` gets HC2 from 1.x and HC1 from 2.0. The point estimates are identical in both. Each warns once per session, so nothing changes silently and nothing spams a simulation loop. Writing `se_type = "HC1"` or `se_type = "CR0"` accepts the new default and removes the warning; writing `se_type = "HC2"` or `se_type = "CR2"` gets you the 1.x number exactly. A single unclustered factor is unaffected: the default is HC2 in both versions and the numbers are bit-identical. If a published fixed-effects standard error turns on which adjustment you used, name the `se_type` rather than taking the default.
 
 ## What is new
 

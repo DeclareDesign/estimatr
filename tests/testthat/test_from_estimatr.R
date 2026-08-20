@@ -731,13 +731,13 @@ test_that("FE coefs match dummy regression for supported CR types", {
   }
 })
 
-test_that("CR2 with fixed_effects errors", {
+test_that("CR2 with fixed_effects matches the dummy regression", {
   dat <- data.frame(Y = rnorm(20), Z = rbinom(20, 1, .5),
                     B = factor(rep(1:2, 10)), cl = rep(1:4, 5))
-  expect_error(
-    lm_robust(Y ~ Z, fixed_effects = ~B, clusters = cl, data = dat, se_type = "CR2"),
-    "CR2"
-  )
+  fe  <- lm_robust(Y ~ Z, fixed_effects = ~ B, clusters = cl, data = dat,
+                   se_type = "CR2")
+  dum <- lm_robust(Y ~ Z + B, clusters = cl, data = dat, se_type = "CR2")
+  expect_equal(unname(fe$std.error), unname(dum$std.error["Z"]))
 })
 
 test_that("FE with multiple outcomes: coefs match dummy regression", {
