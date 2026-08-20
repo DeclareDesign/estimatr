@@ -3,7 +3,7 @@
        - Graeme Blair's maintainer-transfer email to CRAN has not been sent.
        - The GitHub Actions matrix has not been run against the renamed package.
        - win-builder has not been run.
-       - The three broken revdep maintainers have not actually been emailed.
+       - The four broken revdep maintainers have not actually been emailed.
      Every claim in the sections below is written for the submitted state, so
      do not send this file while this block is still here. -->
 
@@ -44,16 +44,26 @@ message to CRAN.
 ## Reverse dependencies
 
 estimatr has 17 strong reverse dependencies and 18 that suggest or enhance it.
-All 35 were checked with `revdepcheck::revdep_check()`. 31 are clean. `hbal`
+All 35 were checked with `revdepcheck::revdep_check()`. 30 are clean. `hbal`
 fails to install on the test machine under both the old and the new version,
 for a local toolchain reason unrelated to this package.
 
-Three are broken by documented breaking changes in this release, and all three
-maintainers have been notified:
+Four are broken by documented changes in this release, and all four maintainers
+have been notified.
+
+Three stop with an error that names the replacement, so nothing returns a
+different number silently:
 
 * clubSandwich: uses `se_type = "CR2"` with `fixed_effects`
 * statuser: uses HC3 with two absorbed fixed-effect factors
 * RCT: passes a grouping vector rather than a formula to `fixed_effects`
 
-Each is a small change at the call site, and each now stops with an error that
-names the replacement rather than returning a different number.
+The fourth, eventstudyr, is the one whose numbers move, and it is worth stating
+plainly here. estimatr 1.0.6 named the elements of a fitted object's `felevels`
+after their terms, except on a model fitted with missing data, where it fell
+back to `V1`, `V2`. This release names them consistently. eventstudyr computes
+a degrees-of-freedom correction from `felevels[["get(timevar)"]]`, which on its
+data was reading `NULL`; it now reads the levels, and its corrected standard
+errors change in the fourth significant figure. estimatr's own estimates are
+unchanged: coefficients, standard errors, `rank`, `nobs` and `nclusters` are
+identical to 1.0.6 on the same call.

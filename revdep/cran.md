@@ -23,7 +23,6 @@ Issues with CRAN packages are summarised below.
 
 * statuser
   checking examples ... ERROR
-  checking tests ...
   checking Rd cross-references ... WARNING
 
 ### Failed to check

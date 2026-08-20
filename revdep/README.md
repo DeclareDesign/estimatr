@@ -39,5 +39,5 @@
 |[clubSandwich](problems.md#clubsandwich)|0.7.0   |__+2__ |        |     |
 |[eventstudyr](problems.md#eventstudyr)|1.2.0   |__+1__ |        |     |
 |[RCT](problems.md#rct)|1.2     |__+2__ |        |     |
-|[statuser](problems.md#statuser)|0.3.1   |__+2__ |__+1__  |     |
+|[statuser](problems.md#statuser)|0.3.1   |__+1__ |__+1__  |     |
 

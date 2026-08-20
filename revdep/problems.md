@@ -88,7 +88,7 @@ Run `revdepcheck::revdep_details(, "eventstudyr")` for more info
        `expected` is a logical vector (TRUE)
        
        
-       [ FAIL 14 | WARN 103 | SKIP 0 | PASS 445 ]
+       [ FAIL 11 | WARN 103 | SKIP 0 | PASS 448 ]
        Error:
        ! Test failures.
        Execution halted
@@ -106,11 +106,11 @@ Run `revdepcheck::revdep_details(, "RCT")` for more info
 *   checking examples ... ERROR
      ```
      ...
-     +                        control_vars = c("control_var1"))
      Error in `purrr::map()`:
      ℹ In index: 1.
      Caused by error in `clean_model_data()`:
      ! `fixed_effects` must be a one-sided formula, such as `~ blockID` or `~ block + year`. You passed an object of class numeric.
+     estimatr 1.x accepted a bare grouping vector here; wrap it in `~`.
      Backtrace:
           ▆
        1. ├─RCT::impact_eval(...)
@@ -193,29 +193,6 @@ Run `revdepcheck::revdep_details(, "statuser")` for more info
      With `fixed_effects`, available SE types are: "HC0", "HC1", "stata", "classical", or "none".
      Calls: lm2 ... do.call -> <Anonymous> -> lm_robust_fit -> check_se_type
      Execution halted
-     ```
-
-*   checking tests ...
-     ```
-       Running ‘testthat.R’
-      ERROR
-     Running the tests in ‘tests/testthat.R’ failed.
-     Last 13 lines of output:
-       Most extreme value of fitted 'y' with GAM obtained at 'x' = 0.18
-       Local range of values considered for breakpoint 'x': [0, 0.32]
-       t-values for two lines at 'x' = 0.18:
-          t1 = 11.61
-          t2 = 8.11
-       We compute t2/(t1+t2) = 0.41
-       We then lookup the value of 'x' at that quantile, so we run
-       quantile(x, 0.41) = 0.11 and set that value, 0.11, as the breakpoint.
-       
-       Note: you may turn off this message by setting `quiet=TRUE`
-       interprobe() says: you defined a variable as factor
-          within the 'model' call. This creates problems.
-          Please define factor variables as factors in 
-          the data before estimating the model 
-          e.g., df$x <- factor(df$x)).Execution halted
      ```
 
 *   checking Rd cross-references ... WARNING

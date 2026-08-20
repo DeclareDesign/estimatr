@@ -109,3 +109,32 @@ test_that("an unclustered blocked difference_in_means reports nclusters as 0", {
   # Dropping the field instead makes it indistinguishable from NULL to a reader.
   expect_equal(surface_fits$dim_bl$nclusters, 0)
 })
+
+test_that("felevels keeps the fixed-effect name when rows are dropped for missingness", {
+  # 1.0.6 reported `V1` here rather than the term's name, but only when some
+  # row was removed: with a complete outcome it named the term correctly. The
+  # name is now taken from the model frame before the character coercion, so it
+  # survives either way.
+  #
+  # This is a deliberate difference from 1.0.6 and it has a downstream
+  # consequence, so it is pinned rather than left implicit: code that reads
+  # `fit$felevels[["<term>"]]` used to get NULL on any model fitted with
+  # missing data, and now gets the levels.
+  set.seed(2)
+  n <- 200
+  d <- data.frame(y = rnorm(n), x = rnorm(n), grp = rep(1:20, each = 10))
+  idvar <- "grp"
+
+  complete <- lm_robust(y ~ x, data = d, fixed_effects = ~ get(idvar), se_type = "HC1")
+  expect_named(complete$felevels, "get(idvar)")
+
+  d$y[1:25] <- NA
+  dropped <- lm_robust(y ~ x, data = d, fixed_effects = ~ get(idvar), se_type = "HC1")
+  expect_named(dropped$felevels, "get(idvar)")
+  expect_length(dropped$felevels[["get(idvar)"]], 20)
+
+  # iv_robust absorbs through the same path
+  d$z <- d$x + rnorm(n)
+  iv <- iv_robust(y ~ x | z, data = d, fixed_effects = ~ get(idvar), se_type = "HC1")
+  expect_named(iv$felevels, "get(idvar)")
+})
