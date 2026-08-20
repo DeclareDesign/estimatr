@@ -110,16 +110,12 @@ test_that("an unclustered blocked difference_in_means reports nclusters as 0", {
   expect_equal(surface_fits$dim_bl$nclusters, 0)
 })
 
-test_that("felevels keeps the fixed-effect name when rows are dropped for missingness", {
-  # 1.0.6 reported `V1` here rather than the term's name, but only when some
-  # row was removed: with a complete outcome it named the term correctly. The
-  # name is now taken from the model frame before the character coercion, so it
-  # survives either way.
-  #
-  # This is a deliberate difference from 1.0.6 and it has a downstream
-  # consequence, so it is pinned rather than left implicit: code that reads
-  # `fit$felevels[["<term>"]]` used to get NULL on any model fitted with
-  # missing data, and now gets the levels.
+test_that("felevels lists the levels in the fit, not the levels in the data", {
+  # Downstream code sizes a degrees-of-freedom correction off
+  # `length(fit$felevels[[term]])`, so this is a number rather than a label. A
+  # level whose every row was dropped for missingness is not in the fit and
+  # must not be counted. eventstudyr does exactly this, and counting the
+  # absent levels moved its standard errors in the fourth significant figure.
   set.seed(2)
   n <- 200
   d <- data.frame(y = rnorm(n), x = rnorm(n), grp = rep(1:20, each = 10))
@@ -127,14 +123,26 @@ test_that("felevels keeps the fixed-effect name when rows are dropped for missin
 
   complete <- lm_robust(y ~ x, data = d, fixed_effects = ~ get(idvar), se_type = "HC1")
   expect_named(complete$felevels, "get(idvar)")
+  expect_equal(complete$felevels[["get(idvar)"]], as.character(1:20))
 
-  d$y[1:25] <- NA
+  # Drop every row of groups 1 and 2, and part of group 3. Eighteen groups
+  # remain in the estimation sample.
+  d$y[d$grp %in% 1:2] <- NA
+  d$y[d$grp == 3][1:3] <- NA
   dropped <- lm_robust(y ~ x, data = d, fixed_effects = ~ get(idvar), se_type = "HC1")
+  expect_equal(dropped$felevels[["get(idvar)"]], as.character(3:20))
+  expect_length(dropped$felevels[["get(idvar)"]], 18)
+  expect_equal(length(dropped$felevels[["get(idvar)"]]),
+               length(unique(d$grp[!is.na(d$y)])))
+
+  # The name survives the row removal. 1.0.6 fell back to `V1` here, which is
+  # the one difference from it that this field still carries, and it moves no
+  # estimate.
   expect_named(dropped$felevels, "get(idvar)")
-  expect_length(dropped$felevels[["get(idvar)"]], 20)
 
   # iv_robust absorbs through the same path
   d$z <- d$x + rnorm(n)
   iv <- iv_robust(y ~ x | z, data = d, fixed_effects = ~ get(idvar), se_type = "HC1")
   expect_named(iv$felevels, "get(idvar)")
+  expect_equal(iv$felevels[["get(idvar)"]], as.character(3:20))
 })

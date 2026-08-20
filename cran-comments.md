@@ -58,12 +58,9 @@ different number silently:
 * statuser: uses HC3 with two absorbed fixed-effect factors
 * RCT: passes a grouping vector rather than a formula to `fixed_effects`
 
-The fourth, eventstudyr, is the one whose numbers move, and it is worth stating
-plainly here. estimatr 1.0.6 named the elements of a fitted object's `felevels`
-after their terms, except on a model fitted with missing data, where it fell
-back to `V1`, `V2`. This release names them consistently. eventstudyr computes
-a degrees-of-freedom correction from `felevels[["get(timevar)"]]`, which on its
-data was reading `NULL`; it now reads the levels, and its corrected standard
-errors change in the fourth significant figure. estimatr's own estimates are
-unchanged: coefficients, standard errors, `rank`, `nobs` and `nclusters` are
-identical to 1.0.6 on the same call.
+The fourth, eventstudyr, fails on one assertion that reads a fitted object's
+`felevels` list by the element name `V1`. estimatr 1.0.6 named those elements
+after their terms except with a single fixed-effect factor on a model fitted
+with missing data, where it fell back to `V1`; this release names them
+consistently. No estimate changes: eventstudyr's one-way branch sizes its
+degrees-of-freedom correction as `1 + rank` without consulting the field.

@@ -36,20 +36,22 @@ coerced to character before demeaning, which re-derives the levels by string
 sort, so a factor with levels 1 to 30 reported them as 1, 10, 11. The names are
 now taken before that coercion.
 
-**And `felevels` is now named correctly on a model fitted with missing data**,
-which is a deliberate difference from 1.0.6 rather than a restoration, and the
-one change in this release most likely to move a number downstream without
-erroring. 1.0.6 named each element after its term, `~ get(idvar)` giving
-`felevels[["get(idvar)"]]`, **except when any row had been dropped for
-missingness**, where it fell back to `V1`, `V2`. Code written against the
-documented name therefore read `NULL` on exactly those fits. `eventstudyr` does
-this: its two-way branch computes a degrees-of-freedom correction as
-`length(fit$felevels[["get(timevar)"]]) + fit$rank`, which on its own data
-(1,700 of 2,000 rows complete) was `length(NULL) + rank`. Under 2.0 the lookup
-succeeds, the count changes, and its standard errors move in the fourth
-significant figure. The estimator is unaffected; the coefficients, the standard
-errors before that correction, `rank`, `nobs` and `nclusters` are all identical
-to 1.0.6.
+**`felevels` also had to keep listing the levels that are in the fit rather
+than the levels that are in the data.** The first attempt at the ordering fix
+above read the level names off the model frame before rows were dropped for
+missingness, which counted levels that no observation survives into. That is
+not cosmetic: downstream code sizes a degrees-of-freedom correction off
+`length(fit$felevels[[term]])`. On `eventstudyr`'s example data, 1,700 complete
+rows of 2,000 leave 34 of 40 time periods in the estimation sample, and
+counting all 40 moved its standard errors in the fourth significant figure.
+`felevels` now carries the estimation-sample levels, in the order the data
+gave them.
+
+One difference from 1.0.6 does remain, and it moves no estimate. 1.0.6 named
+each element after its term, `~ get(idvar)` giving `felevels[["get(idvar)"]]`,
+except with a single fixed-effect factor on a model fitted with missing data,
+where it fell back to `V1`. 2.0 names it consistently. Code that reads
+`felevels$V1` will need the term name instead.
 
 `tests/testthat/test_return_surface.R` now pins the whole returned surface of
 sixteen fit types against answers recorded from 1.0.6, so a field cannot go
@@ -86,13 +88,10 @@ Four break. Three need a one-line fix at the call site:
 * **`RCT`** passes an evaluated grouping vector to `fixed_effects` on its
   single-factor path.
 
-* **`eventstudyr`** reads `felevels` by term name, and is affected by the
-  naming fix above in both directions: one assertion wants the old `V1`, and
-  eight compare its corrected standard errors against recorded Stata output.
-  This one is not a call-site fix and is the only one whose numbers move: see
-  the `felevels` note above for why, and note that estimatr's own estimates are
-  unchanged, including for two-way fixed effects with clusters under
-  `se_type = "stata"`, which is bit-identical to 1.0.6.
+* **`eventstudyr`** has one assertion that reads `felevels$V1` on a one-way
+  fixed-effects fit and wants the 1.0.6 fallback name. Nothing else in its
+  suite changes, and no estimate moves: its one-way branch sizes its
+  degrees-of-freedom correction as `1 + rank` without consulting `felevels`.
 
 ---
 

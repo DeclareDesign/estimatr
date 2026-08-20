@@ -187,10 +187,20 @@ demean_fes <- function(model_data) {
 
   model_data[["fe_levels"]] <- fe_levels
   # `fe_levels` above is a count per factor, used for the rank correction. The
-  # level *names* are what the `felevels` field carries, and they come from
-  # clean_model_data(), which saw them before the character coercion.
-  if (is.null(model_data[["fe_level_names"]])) {
-    model_data[["fe_level_names"]] <- lapply(fe_df, levels)
+  # level *names* are what the `felevels` field carries, and they need two
+  # things at once. The ORDER has to come from clean_model_data(), which saw
+  # the columns before the character coercion re-sorted them as strings. The
+  # MEMBERSHIP has to come from `fe_df`, which is the estimation sample: a
+  # level whose every row was dropped for missingness is not in the fit and
+  # must not be counted. Downstream code sizes a degrees-of-freedom correction
+  # off `length(felevels[[term]])`, so counting absent levels inflates it.
+  model_data[["fe_level_names"]] <- if (is.null(model_data[["fe_level_names"]])) {
+    lapply(fe_df, levels)
+  } else {
+    Map(
+      function(ordered, col) ordered[ordered %in% levels(col)],
+      model_data[["fe_level_names"]], fe_df
+    )
   }
   # Under a SINGLE fixed-effect factor the hat value of the full
   # [dummies | X] design splits exactly into the demeaned-X leverage plus each
