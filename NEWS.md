@@ -88,10 +88,12 @@ Four break. Three need a one-line fix at the call site:
 * **`RCT`** passes an evaluated grouping vector to `fixed_effects` on its
   single-factor path.
 
-* **`eventstudyr`** has one assertion that reads `felevels$V1` on a one-way
-  fixed-effects fit and wants the 1.0.6 fallback name. Nothing else in its
-  suite changes, and no estimate moves: its one-way branch sizes its
-  degrees-of-freedom correction as `1 + rank` without consulting `felevels`.
+* **`eventstudyr`** has two assertions that read `felevels$V1` on a one-way
+  fixed-effects fit and want the 1.0.6 fallback name, in
+  `test-EventStudyFHS.R` and `test-EventStudyOLS.R`. Nothing else in its suite
+  changes and no estimate moves: its one-way branches size their
+  degrees-of-freedom correction as `1 + rank` without consulting `felevels`,
+  and its comparisons against recorded Stata output all hold.
 
 ---
 

@@ -88,7 +88,7 @@ Run `revdepcheck::revdep_details(, "eventstudyr")` for more info
        `expected` is a logical vector (TRUE)
        
        
-       [ FAIL 11 | WARN 103 | SKIP 0 | PASS 448 ]
+       [ FAIL 3 | WARN 103 | SKIP 0 | PASS 456 ]
        Error:
        ! Test failures.
        Execution halted

@@ -58,9 +58,9 @@ different number silently:
 * statuser: uses HC3 with two absorbed fixed-effect factors
 * RCT: passes a grouping vector rather than a formula to `fixed_effects`
 
-The fourth, eventstudyr, fails on one assertion that reads a fitted object's
+The fourth, eventstudyr, fails on two assertions that read a fitted object's
 `felevels` list by the element name `V1`. estimatr 1.0.6 named those elements
 after their terms except with a single fixed-effect factor on a model fitted
 with missing data, where it fell back to `V1`; this release names them
 consistently. No estimate changes: eventstudyr's one-way branch sizes its
-degrees-of-freedom correction as `1 + rank` without consulting the field.
+degrees-of-freedom correction as `1 + rank` without consulting the field, and its comparisons against recorded Stata output are unaffected.
