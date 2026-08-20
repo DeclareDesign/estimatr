@@ -56,6 +56,30 @@ error now says so. `RCT` relies on the old form.
 **HC2, HC3 and CR2 with `fixed_effects`**: see below. `clubSandwich` and
 `statuser` both call for CR2 or HC3 on an absorbed model.
 
+### What the reverse-dependency run leaves broken
+
+Of estimatr's 35 CRAN reverse dependencies, 31 check clean against 2.0.0 and
+one (`hbal`) fails to install on the test machine under both versions, for a
+local toolchain reason unrelated to this package.
+
+Three break, each on one of the changes above, and each needs a one-line fix
+from its maintainer rather than anything here:
+
+* **`clubSandwich`** calls `iv_robust()` and `lm_robust()` with `fixed_effects`
+  and `se_type = "CR2"`, in one example and three tests.
+* **`statuser`** documents and defaults to HC3, and its examples absorb two
+  fixed-effect factors.
+* **`RCT`** passes an evaluated grouping vector to `fixed_effects` on its
+  single-factor path.
+
+`eventstudyr` also broke, on the missing `felevels` above, and passes in full
+once the field is restored. Its other symptom was eight standard errors
+disagreeing with recorded Stata output in the fourth significant figure, which
+looked like a variance regression and was not one: with `felevels` returning
+`NULL` it was not estimating the model it meant to. The variance itself is
+bit-identical to 1.0.6 for two-way fixed effects with clusters under
+`se_type = "stata"`.
+
 ---
 
 ## What is kept
