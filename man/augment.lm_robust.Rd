@@ -26,3 +26,15 @@ Returns the model frame with \code{.fitted} and \code{.resid} columns appended, 
 form downstream packages expect from \code{\link[broom:augment]{broom::augment()}}. Supplying
 \code{newdata} returns that instead, with \code{.fitted} only.
 }
+\examples{
+set.seed(55)
+dat <- data.frame(x = rnorm(50), z = rep(0:1, 25))
+dat$y <- dat$x + 0.4 * dat$z + rnorm(50)
+fit <- lm_robust(y ~ x + z, data = dat)
+
+head(augment(fit))
+
+# Supplying newdata returns predictions on it, with .fitted only
+head(augment(fit, newdata = dat[1:5, ]))
+
+}

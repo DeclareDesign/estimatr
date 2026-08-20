@@ -1,4 +1,4 @@
-library(estimatrZero)
+library(estimatr)
 
 # HC2 and HC3 with absorbed fixed effects.
 #
@@ -133,7 +133,7 @@ test_that("the FE leverage vector is the group weight share", {
     weights = d$wts,
     terms = terms(y ~ x, data = d)
   )
-  out <- estimatrZero:::demean_fes(md)
+  out <- estimatr:::demean_fes(md)
   expect_equal(out$fe_leverage, d$wts / ave(d$wts, d$g, FUN = sum))
 })
 
@@ -149,5 +149,5 @@ test_that("no leverage vector is produced for two-way FE", {
     weights = NULL,
     terms = terms(y ~ x, data = d)
   )
-  expect_null(estimatrZero:::demean_fes(md)$fe_leverage)
+  expect_null(estimatr:::demean_fes(md)$fe_leverage)
 })

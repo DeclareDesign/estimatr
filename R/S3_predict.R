@@ -279,6 +279,17 @@ generics::augment
 #'
 #' @return A `data.frame`.
 #'
+#' @examples
+#' set.seed(55)
+#' dat <- data.frame(x = rnorm(50), z = rep(0:1, 25))
+#' dat$y <- dat$x + 0.4 * dat$z + rnorm(50)
+#' fit <- lm_robust(y ~ x + z, data = dat)
+#'
+#' head(augment(fit))
+#'
+#' # Supplying newdata returns predictions on it, with .fitted only
+#' head(augment(fit, newdata = dat[1:5, ]))
+#'
 #' @export
 augment.lm_robust <- function(x, data = NULL, newdata = NULL, ...) {
   if (!is.null(newdata)) {

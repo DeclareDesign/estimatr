@@ -13,7 +13,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // AtA
 Eigen::MatrixXd AtA(const Eigen::MatrixXd& A);
-RcppExport SEXP _estimatrZero_AtA(SEXP ASEXP) {
+RcppExport SEXP _estimatr_AtA(SEXP ASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -24,7 +24,7 @@ END_RCPP
 }
 // Kr
 Eigen::MatrixXd Kr(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B);
-RcppExport SEXP _estimatrZero_Kr(SEXP ASEXP, SEXP BSEXP) {
+RcppExport SEXP _estimatr_Kr(SEXP ASEXP, SEXP BSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -36,7 +36,7 @@ END_RCPP
 }
 // lm_solver
 List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X, const Eigen::Map<Eigen::MatrixXd>& y, const bool& try_cholesky);
-RcppExport SEXP _estimatrZero_lm_solver(SEXP XSEXP, SEXP ySEXP, SEXP try_choleskySEXP) {
+RcppExport SEXP _estimatr_lm_solver(SEXP XSEXP, SEXP ySEXP, SEXP try_choleskySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -49,7 +49,7 @@ END_RCPP
 }
 // lm_variance
 List lm_variance(Eigen::Map<Eigen::MatrixXd>& X, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Eigen::Map<Eigen::MatrixXd>& XtX_inv, const Eigen::Map<Eigen::MatrixXd>& ei, const double weight_mean, const Rcpp::Nullable<Rcpp::IntegerVector>& cluster, const int& J, const bool& ci, const String se_type, const std::vector<bool>& which_covs, const int& fe_rank, const Rcpp::Nullable<Rcpp::NumericVector>& fe_leverage);
-RcppExport SEXP _estimatrZero_lm_variance(SEXP XSEXP, SEXP XunweightedSEXP, SEXP XtX_invSEXP, SEXP eiSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP se_typeSEXP, SEXP which_covsSEXP, SEXP fe_rankSEXP, SEXP fe_leverageSEXP) {
+RcppExport SEXP _estimatr_lm_variance(SEXP XSEXP, SEXP XunweightedSEXP, SEXP XtX_invSEXP, SEXP eiSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP se_typeSEXP, SEXP which_covsSEXP, SEXP fe_rankSEXP, SEXP fe_leverageSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -71,7 +71,7 @@ END_RCPP
 }
 // demean_cpp
 Eigen::MatrixXd demean_cpp(Eigen::MatrixXd mat, Rcpp::List fe_codes_list, Rcpp::NumericVector weights, double eps, int max_iter);
-RcppExport SEXP _estimatrZero_demean_cpp(SEXP matSEXP, SEXP fe_codes_listSEXP, SEXP weightsSEXP, SEXP epsSEXP, SEXP max_iterSEXP) {
+RcppExport SEXP _estimatr_demean_cpp(SEXP matSEXP, SEXP fe_codes_listSEXP, SEXP weightsSEXP, SEXP epsSEXP, SEXP max_iterSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -86,7 +86,7 @@ END_RCPP
 }
 // naomitwhy
 DataFrame naomitwhy(DataFrame df, Function recursive_subset);
-RcppExport SEXP _estimatrZero_naomitwhy(SEXP dfSEXP, SEXP recursive_subsetSEXP) {
+RcppExport SEXP _estimatr_naomitwhy(SEXP dfSEXP, SEXP recursive_subsetSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -98,16 +98,16 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_estimatrZero_AtA", (DL_FUNC) &_estimatrZero_AtA, 1},
-    {"_estimatrZero_Kr", (DL_FUNC) &_estimatrZero_Kr, 2},
-    {"_estimatrZero_lm_solver", (DL_FUNC) &_estimatrZero_lm_solver, 3},
-    {"_estimatrZero_lm_variance", (DL_FUNC) &_estimatrZero_lm_variance, 12},
-    {"_estimatrZero_demean_cpp", (DL_FUNC) &_estimatrZero_demean_cpp, 5},
-    {"_estimatrZero_naomitwhy", (DL_FUNC) &_estimatrZero_naomitwhy, 2},
+    {"_estimatr_AtA", (DL_FUNC) &_estimatr_AtA, 1},
+    {"_estimatr_Kr", (DL_FUNC) &_estimatr_Kr, 2},
+    {"_estimatr_lm_solver", (DL_FUNC) &_estimatr_lm_solver, 3},
+    {"_estimatr_lm_variance", (DL_FUNC) &_estimatr_lm_variance, 12},
+    {"_estimatr_demean_cpp", (DL_FUNC) &_estimatr_demean_cpp, 5},
+    {"_estimatr_naomitwhy", (DL_FUNC) &_estimatr_naomitwhy, 2},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_estimatrZero(DllInfo *dll) {
+RcppExport void R_init_estimatr(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

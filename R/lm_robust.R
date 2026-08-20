@@ -47,6 +47,40 @@
 #'
 #' @return An object of class `"lm_robust"`.
 #'
+#' @examples
+#' set.seed(15)
+#' dat <- data.frame(
+#'   y = rpois(40, lambda = 4),
+#'   x = rnorm(40),
+#'   z = rbinom(40, 1, prob = 0.4),
+#'   cl = rep(1:10, each = 4),
+#'   bl = rep(c("A", "B", "C", "D"), each = 10),
+#'   w = runif(40)
+#' )
+#'
+#' # HC2 is the default
+#' fit <- lm_robust(y ~ x + z, data = dat)
+#' fit
+#' tidy(fit)
+#' summary(fit)
+#' confint(fit, level = 0.8)
+#'
+#' # Other variance estimators, including Stata's
+#' lm_robust(y ~ x + z, data = dat, se_type = "classical")
+#' lm_robust(y ~ x + z, data = dat, se_type = "stata")
+#'
+#' # Clustered inference defaults to CR2
+#' lm_robust(y ~ x + z, data = dat, clusters = cl)
+#' lm_robust(y ~ x + z, data = dat, clusters = cl, se_type = "stata")
+#'
+#' # Weights and subsets behave as they do in lm()
+#' lm_robust(y ~ x + z, data = dat, weights = w, clusters = cl)
+#' lm_robust(y ~ x, data = dat, subset = z == 1)
+#'
+#' # Fixed effects are absorbed rather than expanded into dummies. With a
+#' # single factor the HC2 default is exact and costs nothing extra.
+#' lm_robust(y ~ z, data = dat, fixed_effects = ~ bl)
+#'
 #' @export
 lm_robust <- function(formula,
                       data,

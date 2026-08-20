@@ -18,6 +18,19 @@
 #'   single FE factor, where `h_ii` splits exactly into the demeaned-X leverage
 #'   plus this term, which is what makes HC2 and HC3 available there.
 #'
+#' @examples
+#' # The fitter behind lm_robust(), exported for packages that have already
+#' # built their own design matrix. Most users want lm_robust().
+#' set.seed(45)
+#' X <- cbind(`(Intercept)` = 1, x = rnorm(50))
+#' y <- X[, "x"] + rnorm(50)
+#'
+#' lm_robust_fit(
+#'   y = y, X = X,
+#'   weights = NULL, cluster = NULL,
+#'   se_type = "HC2", has_int = TRUE
+#' )
+#'
 #' @export
 lm_robust_fit <- function(y,
                           X,

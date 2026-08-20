@@ -1,4 +1,4 @@
-library(estimatrZero)
+library(estimatr)
 
 skip_if_not_installed("randomizr")
 

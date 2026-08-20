@@ -9,6 +9,26 @@
 #'   and `joint_hypothesis`.
 #'
 #' @importFrom rlang quos eval_tidy
+#' @examples
+#' set.seed(35)
+#' dat <- data.frame(x = rnorm(100), z = rbinom(100, 1, 0.5),
+#'                   cl = rep(1:10, each = 10))
+#' dat$y <- dat$x + 0.5 * dat$z + rnorm(100)
+#'
+#' # One linear combination of coefficients
+#' fit <- lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z + 2*x = 0")
+#' fit
+#' tidy(fit)
+#'
+#' # Degrees of freedom follow the fit, so a clustered model tests against the
+#' # cluster-adjusted df rather than the residual df
+#' lh_robust(y ~ x + z, data = dat, clusters = cl,
+#'           linear_hypothesis = "z + 2*x = 0")
+#'
+#' # Several restrictions at once give one joint Wald test as well
+#' joint <- lh_robust(y ~ x + z, data = dat, linear_hypothesis = c("x = 0", "z = 0"))
+#' joint$joint_hypothesis
+#'
 #' @export
 lh_robust <- function(..., data, linear_hypothesis) {
 

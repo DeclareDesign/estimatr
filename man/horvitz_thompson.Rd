@@ -78,3 +78,34 @@ and the variance uses the joint assignment probabilities implied by the
 arm sizes.  \code{data} must hold one row per unit of the design, in the
 design's order, including units assigned to arms outside the contrast.
 }
+\examples{
+set.seed(40)
+dat <- data.frame(y = rnorm(100), z = rep(0:1, 50))
+
+# A named vector of condition probabilities gives the conservative
+# simple-randomization bound, valid for any design
+horvitz_thompson(y ~ z, data = dat, condition_prs = c("0" = 0.5, "1" = 0.5))
+
+# Passing the randomization declaration instead is what buys the
+# design-aware variance, and it is the recommended form
+if (requireNamespace("randomizr", quietly = TRUE)) {
+  decl <- randomizr::declare_ra(N = 100, m = 50)
+  dat$z2 <- randomizr::conduct_ra(decl)
+  print(horvitz_thompson(y ~ z2, data = dat, condition_prs = decl))
+
+  # Blocked and clustered designs need no extra arguments: the declaration
+  # already carries the structure
+  bl <- rep(1:4, each = 25)
+  decl_bl <- randomizr::declare_ra(blocks = bl, prob = 0.4)
+  dat$z3 <- randomizr::conduct_ra(decl_bl)
+  print(horvitz_thompson(y ~ z3, data = dat, condition_prs = decl_bl))
+
+  # Any two arms of a multi-arm design can be contrasted, with the estimand
+  # still defined over all N units
+  decl3 <- randomizr::declare_ra(N = 100, conditions = c("a", "b", "c"))
+  dat$z4 <- randomizr::conduct_ra(decl3)
+  print(horvitz_thompson(y ~ z4, data = dat, condition_prs = decl3,
+                         condition1 = "a", condition2 = "c"))
+}
+
+}

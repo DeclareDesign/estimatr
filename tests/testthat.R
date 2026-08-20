@@ -1,4 +1,4 @@
 library(testthat)
-library(estimatrZero)
+library(estimatr)
 
-test_check("estimatrZero")
+test_check("estimatr")

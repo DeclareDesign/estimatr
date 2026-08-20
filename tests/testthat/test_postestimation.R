@@ -1,4 +1,4 @@
-library(estimatrZero)
+library(estimatr)
 
 dat <- ref_data_post()
 ht <- horvitz_thompson(y ~ z, data = dat, condition_prs = c("0" = 0.5, "1" = 0.5))

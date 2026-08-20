@@ -1,9 +1,10 @@
 # Tests ported from the estimatr test suite.
 # Source: https://github.com/DeclareDesign/estimatr/tree/master/tests/testthat
-# Adapted for estimatrZero: horvitz_thompson removed; fixed_effects behaviour
-# may differ (FWL hat values for HC2/CR2 vs. full-model hat values in estimatr).
+# Adapted for 2.0: the horvitz_thompson cases are removed, since the argument
+# they exercise is gone. The fixed_effects cases hold, including HC2 and HC3
+# with one factor, where the leverage identity makes absorption exact.
 
-library(estimatrZero)
+library(estimatr)
 
 # Strip call and formula environment (random symbol names differ between calls)
 rmcall <- function(x) {

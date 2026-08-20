@@ -1,4 +1,4 @@
-library(estimatrZero)
+library(estimatr)
 
 # Helper: simulate observational data with a known propensity score model
 sim_obs <- function(n, seed, tau = 2, beta_x = 0.5, ps_strength = 0.5) {

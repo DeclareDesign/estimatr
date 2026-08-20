@@ -1,4 +1,4 @@
-library(estimatrZero)
+library(estimatr)
 
 set.seed(42)
 n <- 200
@@ -318,15 +318,9 @@ test_that("#411: no warning when the design matrix is full rank", {
   expect_no_warning(lm_lin(y ~ z, covariates = ~ x, data = dat))
 })
 
-# Other files in this suite load estimatr, which re-registers S3 methods for
-# the shared "lm_robust" and "iv_robust" classes, so generic dispatch here is
-# not guaranteed to reach estimatrZero's method. Where the method under test
-# IS the thing being tested, call ours explicitly.
-z_predict <- function(...) estimatrZero:::predict.lm_robust(...)
-z_glance <- function(...) estimatrZero:::glance.iv_robust(...)
-z_model_frame <- function(...) estimatrZero:::model.frame.iv_robust(...)
-z_varnames <- function(...) estimatrZero:::variable.names.lm_robust(...)
-z_tidy <- function(...) estimatrZero:::tidy.lm_robust(...)
+z_model_frame <- function(...) estimatr:::model.frame.iv_robust(...)
+z_varnames <- function(...) estimatr:::variable.names.lm_robust(...)
+z_tidy <- function(...) estimatr:::tidy.lm_robust(...)
 
 # ---- rank detection and degenerate designs (estimatr #351, #395) ----
 
@@ -356,8 +350,8 @@ test_that("#395: NaN standard errors from leverage-1 points are explained", {
 
 test_that("#403: predict() with no newdata returns the in-sample fit", {
   m <- lm_robust(y ~ x + z, data = dat)
-  expect_equal(z_predict(m), m$fitted.values)
-  expect_error(z_predict(m, se.fit = TRUE), "newdata")
+  expect_equal(predict(m), m$fitted.values)
+  expect_error(predict(m, se.fit = TRUE), "newdata")
 })
 
 test_that("#404: predict() works with fixed effects, with and without factors", {
@@ -366,19 +360,19 @@ test_that("#404: predict() works with fixed effects, with and without factors", 
   m <- lm_robust(y ~ x + f, data = d, fixed_effects = ~ block)
   nd <- d[1:5, ]
   # equals the dummy-variable regression, which is the definition of correct
-  expect_equal(unname(z_predict(m, nd)),
+  expect_equal(unname(predict(m, nd)),
                unname(predict(lm(y ~ x + f + factor(block), data = d), nd)),
                tolerance = 1e-8)
   # and reproduces the in-sample fit
-  expect_equal(unname(z_predict(m, d)), unname(m$fitted.values), tolerance = 1e-8)
+  expect_equal(unname(predict(m, d)), unname(m$fitted.values), tolerance = 1e-8)
 })
 
 test_that("#404: predict() rejects new FE levels and multi-way FE", {
   m <- lm_robust(y ~ x, data = dat, fixed_effects = ~ block)
   nd <- dat[1, ]; nd$block <- 999
-  expect_error(z_predict(m, nd), "new levels")
+  expect_error(predict(m, nd), "new levels")
   m2 <- lm_robust(y ~ x, data = dat, fixed_effects = ~ block + cl)
-  expect_error(z_predict(m2, dat[1:5, ]), "fitted.values")
+  expect_error(predict(m2, dat[1:5, ]), "fitted.values")
 })
 
 # ---- exported lm_robust_fit and S3 coverage (estimatr #269, #123) ----
@@ -400,7 +394,7 @@ test_that("#123: variable.names() returns the model terms", {
 
 test_that("#389: glance() works with multiple endogenous regressors", {
   m <- iv_robust(mpg ~ hp + wt | am + cyl, data = mtcars, diagnostics = TRUE)
-  g <- z_glance(m)
+  g <- glance(m)
   expect_s3_class(g, "data.frame")
   expect_equal(nrow(g), 1L)
   # reports the weakest of the per-regressor first stages
@@ -434,7 +428,7 @@ test_that("#304: fixed_effects must be a formula", {
 
 test_that("#377: augment() returns the model frame with .fitted and .resid", {
   m <- lm_robust(y ~ x + z, data = dat)
-  a <- estimatrZero:::augment.lm_robust(m)
+  a <- estimatr:::augment.lm_robust(m)
   expect_s3_class(a, "data.frame")
   expect_true(all(c(".fitted", ".resid") %in% names(a)))
   expect_equal(nrow(a), n)
@@ -443,17 +437,17 @@ test_that("#377: augment() returns the model frame with .fitted and .resid", {
 
 test_that("#377: augment() works for lm_lin, iv_robust and fixed effects", {
   expect_true(".fitted" %in% names(
-    estimatrZero:::augment.lm_robust(lm_lin(y ~ z, covariates = ~ x, data = dat))))
+    estimatr:::augment.lm_robust(lm_lin(y ~ z, covariates = ~ x, data = dat))))
   expect_true(".fitted" %in% names(
-    estimatrZero:::augment.iv_robust(iv_robust(mpg ~ wt | am, data = mtcars))))
-  a <- estimatrZero:::augment.lm_robust(
+    estimatr:::augment.iv_robust(iv_robust(mpg ~ wt | am, data = mtcars))))
+  a <- estimatr:::augment.lm_robust(
     lm_robust(y ~ x, data = dat, fixed_effects = ~ block))
   expect_equal(a$.fitted + a$.resid, dat$y, tolerance = 1e-8)
 })
 
 test_that("#377: augment(newdata =) predicts without residuals", {
   m <- lm_robust(y ~ x + z, data = dat)
-  a <- estimatrZero:::augment.lm_robust(m, newdata = dat[1:5, ])
+  a <- estimatr:::augment.lm_robust(m, newdata = dat[1:5, ])
   expect_equal(nrow(a), 5L)
   expect_true(".fitted" %in% names(a))
   expect_false(".resid" %in% names(a))
@@ -461,5 +455,5 @@ test_that("#377: augment(newdata =) predicts without residuals", {
 
 test_that("#377: augment() refuses multivariate outcomes", {
   m <- lm_robust(cbind(y, x) ~ z, data = dat)
-  expect_error(estimatrZero:::augment.lm_robust(m), "multiple outcomes")
+  expect_error(estimatr:::augment.lm_robust(m), "multiple outcomes")
 })

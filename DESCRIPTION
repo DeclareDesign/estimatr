@@ -1,18 +1,33 @@
-Package: estimatrZero
+Package: estimatr
+Type: Package
 Title: Fast Estimators for Design-Based Inference
 Version: 2.0.0
-Authors@R: person("Alex", "Coppock", email = "acoppock@gmail.com", role = c("aut", "cre"))
-Author: Alex Coppock [aut, cre]
-Maintainer: Alex Coppock <acoppock@gmail.com>
-Description: A lean rewrite of estimatr targeting the DeclareDesign workflow.
-    Provides lm_robust, lm_lin, iv_robust, lh_robust, difference_in_means, and
-    horvitz_thompson with heteroskedasticity- and cluster-robust standard
-    errors, feols-style fixed effects absorption, and design-aware
-    Horvitz-Thompson variance. Interfaces match estimatr; several long-standing
-    correctness bugs are fixed.
+Authors@R: c(person("Alexander", "Coppock", email = "acoppock@gmail.com", role = c("aut", "cre")),
+             person("Graeme", "Blair", email = "graeme.blair@gmail.com", role = c("aut")),
+             person("Jasper", "Cooper", email = "jjc2247@columbia.edu", role = c("aut")),
+             person("Macartan", "Humphreys", email = "macartan@gmail.com", role = c("aut")),
+             person("Luke", "Sonnet", email = "luke.sonnet@gmail.com", role = c("aut")),
+             person("Neal", "Fultz", email = "nfultz@gmail.com", role = c("ctb")),
+             person("Lily", "Medina", email = "lilymiru@gmail.com", role = c("ctb")),
+             person("Russell", "Lenth", email = "russell-lenth@uiowa.edu", role = c("ctb")),
+             person("Molly", "Offer-Westort", email = "mollyow@uchicago.edu", role = c("ctb")))
+Description: Fast procedures for a small set of commonly-used,
+    design-appropriate estimators with robust standard errors and confidence
+    intervals. Includes estimators for linear regression, instrumental
+    variables regression, difference-in-means, Horvitz-Thompson estimation,
+    and regression improving precision of experimental estimates by
+    interacting treatment with centered pre-treatment covariates introduced by
+    Lin (2013) <doi:10.1214/12-AOAS583>. Fixed effects are absorbed by
+    alternating projections rather than by dummy expansion, and
+    Horvitz-Thompson variance is computed from the randomization declaration.
+URL: https://declaredesign.org/r/estimatr/,
+    https://github.com/DeclareDesign/estimatr
+BugReports: https://github.com/DeclareDesign/estimatr/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
+Depends:
+    R (>= 3.6.0)
 Imports:
     Formula,
     generics,
@@ -25,7 +40,6 @@ Suggests:
     dplyr,
     emmeans,
     estimability,
-    estimatr,
     knitr,
     modelsummary,
     randomizr,

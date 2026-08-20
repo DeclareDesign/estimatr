@@ -60,14 +60,28 @@ warn_singularities <- function(x) {
   }
 }
 
-#' Tidy an estimatrZero object
-#' @name estimatrZero_tidiers
+#' Tidy an estimatr object
+#' @name estimatr_tidiers
 #' @templateVar class lm_robust
 #'
 #' @param x An object returned by one of the estimators
 #' @param conf.int Logical, whether to include confidence intervals.
 #' @param conf.level The confidence level for intervals.
 #' @param ... extra arguments (not used)
+#'
+#' @examples
+#' set.seed(50)
+#' dat <- data.frame(x = rnorm(50), z = rep(0:1, 25))
+#' dat$y <- dat$x + 0.4 * dat$z + rnorm(50)
+#' fit <- lm_robust(y ~ x + z, data = dat)
+#'
+#' # One row per term, with the interval the fit was built with
+#' tidy(fit)
+#' tidy(fit, conf.int = FALSE)
+#' tidy(fit, conf.level = 0.9)
+#'
+#' # The same shape for every estimator in the package
+#' tidy(difference_in_means(y ~ z, data = dat))
 #'
 #' @export
 tidy.lm_robust <- function(x,
@@ -78,22 +92,22 @@ tidy.lm_robust <- function(x,
   tidy_data_frame(x, conf.int = conf.int, conf.level = conf.level, ...)
 }
 
-#' @rdname estimatrZero_tidiers
+#' @rdname estimatr_tidiers
 #' @export
 tidy.iv_robust <- function(x, conf.int = TRUE, conf.level = NULL, ...) {
   warn_singularities(x)
   tidy_data_frame(x, conf.int = conf.int, conf.level = conf.level, ...)
 }
 
-#' @rdname estimatrZero_tidiers
+#' @rdname estimatr_tidiers
 #' @export
 tidy.difference_in_means <- tidy_data_frame
 
-#' @rdname estimatrZero_tidiers
+#' @rdname estimatr_tidiers
 #' @export
 tidy.horvitz_thompson <- tidy_data_frame
 
-#' @rdname estimatrZero_tidiers
+#' @rdname estimatr_tidiers
 #' @export
 tidy.lh_robust <- function(x,
                            conf.int = TRUE,
@@ -103,7 +117,7 @@ tidy.lh_robust <- function(x,
         tidy(x$lh, conf.int = conf.int, conf.level = conf.level, ...))
 }
 
-#' @rdname estimatrZero_tidiers
+#' @rdname estimatr_tidiers
 #' @export
 tidy.lh <- function(x,
                     conf.int = TRUE,

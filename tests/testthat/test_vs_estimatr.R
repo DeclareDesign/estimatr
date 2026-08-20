@@ -1,4 +1,4 @@
-library(estimatrZero)
+library(estimatr)
 
 # Numerical identity with estimatr 1.0.6 for all overlapping functionality.
 #

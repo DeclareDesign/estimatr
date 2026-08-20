@@ -56,3 +56,14 @@ to see them.
 \pkg{modelsummary} needs nothing here, since it reads \code{\link[=tidy]{tidy()}} and
 \code{\link[=glance]{glance()}} and so already works on every estimator in this package.
 }
+\examples{
+set.seed(60)
+dat <- data.frame(x = rnorm(50), z = rep(0:1, 25))
+dat$y <- dat$x + 0.4 * dat$z + rnorm(50)
+fit <- lm_robust(y ~ x + z, data = dat)
+
+if (requireNamespace("texreg", quietly = TRUE)) {
+  texreg::screenreg(fit)
+}
+
+}

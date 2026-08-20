@@ -60,6 +60,41 @@
 #'   Educational and Behavioral Statistics} 46(3): 271-296.
 #'   \doi{10.3102/1076998620946272}.
 #'
+#' @examples
+#' set.seed(30)
+#' dat <- data.frame(y = rnorm(100), z = rep(0:1, 50))
+#'
+#' # Unblocked, unclustered: the Welch-corrected two-sample difference
+#' fit <- difference_in_means(y ~ z, data = dat)
+#' fit
+#' fit$design
+#'
+#' # Blocked designs use the Neyman variance within each block
+#' dat_bl <- data.frame(
+#'   bl = rep(1:10, each = 10),
+#'   z  = rep(rep(0:1, each = 5), times = 10)
+#' )
+#' dat_bl$y <- rnorm(100) + 0.3 * dat_bl$z
+#' difference_in_means(y ~ z, data = dat_bl, blocks = bl)
+#'
+#' # Matched pairs are recognised as such
+#' dat_pr <- data.frame(pr = rep(1:50, each = 2), z = rep(c(0, 1), 50))
+#' dat_pr$y <- rnorm(100) + 0.3 * dat_pr$z
+#' difference_in_means(y ~ z, data = dat_pr, blocks = pr)$design
+#'
+#' # Blocks of unequal shape, which earlier versions refused, use the
+#' # Pashley and Miratrix (2021) estimators. `design` reports which case
+#' # applied rather than leaving it to be inferred from the block sizes.
+#' dat_hy <- rbind(dat_bl[c("bl", "z", "y")],
+#'                 transform(dat_pr[c("pr", "z", "y")], bl = pr + 100)[c("bl", "z", "y")])
+#' difference_in_means(y ~ z, data = dat_hy, blocks = bl)$design
+#'
+#' # Clustered assignment
+#' dat_cl <- data.frame(cl = rep(1:20, each = 5))
+#' dat_cl$z <- rep(rep(0:1, each = 5), times = 10)
+#' dat_cl$y <- rnorm(100) + 0.3 * dat_cl$z
+#' difference_in_means(y ~ z, data = dat_cl, clusters = cl)
+#'
 #' @export
 difference_in_means <- function(formula,
                                 data,

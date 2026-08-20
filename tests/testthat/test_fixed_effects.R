@@ -1,4 +1,4 @@
-library(estimatrZero)
+library(estimatr)
 
 # Fixed effects are absorbed via Frisch-Waugh-Lovell (FWL) demeaning.
 # This gives bit-identical coefficients and residuals to the dummy-variable

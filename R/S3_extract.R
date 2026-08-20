@@ -94,6 +94,16 @@ extract.robust_default <- function(model,
 #' @param include.fstatistic,include.rmse,include.nclusts Logical.
 #' @param ... Unused.
 #' @return A \pkg{texreg} object.
+#' @examples
+#' set.seed(60)
+#' dat <- data.frame(x = rnorm(50), z = rep(0:1, 25))
+#' dat$y <- dat$x + 0.4 * dat$z + rnorm(50)
+#' fit <- lm_robust(y ~ x + z, data = dat)
+#'
+#' if (requireNamespace("texreg", quietly = TRUE)) {
+#'   texreg::screenreg(fit)
+#' }
+#'
 #' @name extract.lm_robust
 #' @export
 extract.lm_robust <- extract.robust_default

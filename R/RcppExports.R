@@ -2,26 +2,26 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 AtA <- function(A) {
-    .Call(`_estimatrZero_AtA`, A)
+    .Call(`_estimatr_AtA`, A)
 }
 
 Kr <- function(A, B) {
-    .Call(`_estimatrZero_Kr`, A, B)
+    .Call(`_estimatr_Kr`, A, B)
 }
 
 lm_solver <- function(X, y, try_cholesky) {
-    .Call(`_estimatrZero_lm_solver`, X, y, try_cholesky)
+    .Call(`_estimatr_lm_solver`, X, y, try_cholesky)
 }
 
 lm_variance <- function(X, Xunweighted, XtX_inv, ei, weight_mean, cluster, J, ci, se_type, which_covs, fe_rank, fe_leverage) {
-    .Call(`_estimatrZero_lm_variance`, X, Xunweighted, XtX_inv, ei, weight_mean, cluster, J, ci, se_type, which_covs, fe_rank, fe_leverage)
+    .Call(`_estimatr_lm_variance`, X, Xunweighted, XtX_inv, ei, weight_mean, cluster, J, ci, se_type, which_covs, fe_rank, fe_leverage)
 }
 
 demean_cpp <- function(mat, fe_codes_list, weights, eps = 1e-8, max_iter = 100L) {
-    .Call(`_estimatrZero_demean_cpp`, mat, fe_codes_list, weights, eps, max_iter)
+    .Call(`_estimatr_demean_cpp`, mat, fe_codes_list, weights, eps, max_iter)
 }
 
 naomitwhy <- function(df, recursive_subset) {
-    .Call(`_estimatrZero_naomitwhy`, df, recursive_subset)
+    .Call(`_estimatr_naomitwhy`, df, recursive_subset)
 }
 

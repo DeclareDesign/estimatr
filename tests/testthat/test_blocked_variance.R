@@ -1,4 +1,4 @@
-library(estimatrZero)
+library(estimatr)
 
 # Pashley and Miratrix (2021) variance estimation for blocked designs with
 # blocks of different sizes, including blocks holding a singleton treated or

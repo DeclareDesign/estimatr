@@ -18,6 +18,38 @@
 #'   Experimental Data: Reexamining Freedman's Critique." The Annals of Applied
 #'   Statistics 7(1): 295-318. \doi{10.1214/12-AOAS583}.
 #'
+#' @examples
+#' set.seed(20)
+#' dat <- data.frame(
+#'   x  = rnorm(40, mean = 2.3),
+#'   x2 = rpois(40, lambda = 2),
+#'   x3 = runif(40),
+#'   z  = rep(0:1, 20),
+#'   cl = rep(1:20, each = 2)
+#' )
+#' dat$y <- rnorm(40) + dat$x + 0.35 * dat$z
+#'
+#' # lm_robust's interface plus one argument
+#' fit <- lm_lin(y ~ z, covariates = ~ x, data = dat)
+#' tidy(fit)
+#'
+#' # Several covariates
+#' lm_lin(y ~ z, covariates = ~ x + x2, data = dat)
+#'
+#' # Covariates are centered after any function in the formula is evaluated
+#' fit2 <- lm_lin(y ~ z, covariates = ~ x + log(x3), data = dat)
+#' fit2$scaled_center["log(x3)"]
+#' mean(log(dat$x3))
+#'
+#' # Clusters, and multi-valued treatments whether or not they are factors
+#' lm_lin(y ~ z, covariates = ~ x, data = dat, clusters = cl)
+#' dat$z3 <- rep(1:3, length.out = 40)
+#' lm_lin(y ~ z3, covariates = ~ x, data = dat)
+#' lm_lin(y ~ factor(z3), covariates = ~ x, data = dat)
+#'
+#' # Dropping the intercept gives the mean outcome under each condition
+#' lm_lin(y ~ z3 - 1, covariates = ~ x, data = dat)
+#'
 #' @export
 lm_lin <- function(formula,
                    covariates,

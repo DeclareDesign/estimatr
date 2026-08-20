@@ -3,8 +3,8 @@
 #
 # This is the rewrite branch's own workflow. `main`'s triggers on
 # [main, master] and would never fire here. Every dependency of this branch is
-# on CRAN, including `estimatr` itself, which Suggests carries so the
-# comparison tests can check the rewrite against the released parent.
+# on CRAN. The comparisons against 1.0.6 read a recorded fixture rather than
+# installing the older version, so nothing here depends on estimatr itself.
 on:
   push:
     branches: [rewrite]
@@ -31,6 +31,7 @@ jobs:
       fail-fast: false
       matrix:
         config:
+          - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,  r: 'release'}
           - {os: ubuntu-latest,  r: 'oldrel-1'}
           - {os: macos-latest,   r: 'release'}

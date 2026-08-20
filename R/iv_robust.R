@@ -25,6 +25,24 @@
 #' @return An object of class `"iv_robust"`.
 #'
 #' @importFrom stats na.omit
+#' @examples
+#' set.seed(25)
+#' n <- 200
+#' dat <- data.frame(z = rbinom(n, 1, 0.5), cl = rep(1:20, each = 10))
+#' dat$x <- dat$z * rbinom(n, 1, 0.7)
+#' dat$y <- dat$x + rnorm(n)
+#'
+#' # Endogenous regressor on the left of the bar, instrument on the right
+#' fit <- iv_robust(y ~ x | z, data = dat)
+#' tidy(fit)
+#'
+#' # The same variance menu as lm_robust()
+#' iv_robust(y ~ x | z, data = dat, se_type = "classical")
+#' iv_robust(y ~ x | z, data = dat, clusters = cl)
+#'
+#' # Weak-instrument, endogeneity and overidentification tests
+#' summary(iv_robust(y ~ x | z, data = dat, diagnostics = TRUE))
+#'
 #' @export
 iv_robust <- function(formula,
                       data,
