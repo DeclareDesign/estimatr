@@ -124,6 +124,23 @@ put("fe_cl_CR2", record(estimatr::lm_robust(y ~ z + x, data = fe, fixed_effects 
 put("fe_iv_cl_CR2", record(estimatr::iv_robust(y ~ z | iv, data = fe, fixed_effects = ~ bl,
                                                clusters = cl, se_type = "CR2")))
 
+# Multi-way HC2 and HC3, weighted and three-way, and the multi-way DEFAULT.
+# 2.0 gets all of these from the leverage identity rather than by expanding
+# the dummies, and they have to equal what 1.0.6 returned by expanding them --
+# degrees of freedom included, which is what these keys are really for.
+fe_mw <- ref_data_fe_multiway()
+for (se in c("HC2", "HC3")) {
+  put(paste0("fe_2way_w_", se),
+      record(estimatr::lm_robust(y ~ z + x, data = fe_mw,
+                                 fixed_effects = ~ bl + cl, weights = w,
+                                 se_type = se)))
+  put(paste0("fe_3way_", se),
+      record(estimatr::lm_robust(y ~ z + x, data = fe_mw,
+                                 fixed_effects = ~ bl + cl + c3, se_type = se)))
+}
+put("fe_2way_default",
+    record(estimatr::lm_robust(y ~ z + x, data = fe_mw, fixed_effects = ~ bl + cl)))
+
 fe_w <- ref_data_fe_weighted()
 put("fe_w_HC1", record(estimatr::lm_robust(y ~ z + x, data = fe_w, fixed_effects = ~bl,
                                            weights = w, se_type = "HC1")))

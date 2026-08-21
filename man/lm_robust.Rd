@@ -34,20 +34,20 @@ such as \code{~ blockID} or \code{~ block + year}. Uses the Frisch-Waugh-Lovell 
 theorem: each variable is demeaned within FE groups before OLS is run. FWL
 guarantees exact coefficient and residual recovery.
 
-With a \strong{single} FE factor there is no SE restriction: \code{"HC2"} and
-\code{"HC3"} are exact and cost no more than the others, because the hat value
-of the full [dummies | X] design splits as
-\verb{h_ii = h_ii(demeaned X) + w_i / sum(w in group i)}, so no dummy hat matrix
-is built. Results are identical to writing the dummies out, and to
-estimatr, at a fraction of the time.
+There is no SE restriction, at any number of FE factors: \code{"HC2"} and
+\code{"HC3"} are exact and cost no more than the others. The projection onto
+the full [dummies | X] design splits as \verb{P_[X|D] = P_D + P_\{M_D X\}}, so
+\code{h_ii} is the demeaned-X hat value plus \code{diag(P_D)}, and no dummy hat
+matrix is built. With one factor \code{diag(P_D)} is \verb{w_i / sum(w in group i)};
+with several it costs a factorisation the size of the design's narrowest
+dimension. Results are identical to writing the dummies out, and to
+estimatr, at a fraction of the time and memory.
 
-With \strong{two or more} factors that identity does not hold, and \code{"HC2"},
-\code{"HC3"} and \code{"CR2"} remain unavailable: they need hat values from the full
-[dummies | X] design, which is O(J^2) memory for J levels. To get them,
-omit \code{fixed_effects} and write the dummies out:
-\code{lm_robust(y ~ x + factor(block) + factor(year), se_type = "HC2")}.
-\code{"CR2"} is unavailable with any \code{fixed_effects}, since its adjustment is
-built from cluster-level blocks of the hat matrix rather than from \code{h_ii}.}
+\code{"CR2"} is the one exception, and needs the dummies whatever the number of
+factors, since its adjustment is built from cluster-level blocks of the hat
+matrix rather than from \code{h_ii}. It is available with \code{fixed_effects} but
+pays for the expansion, and is refused in combination with \code{weights}, as in
+estimatr 1.0.6.}
 
 \item{se_type}{The standard error type. Defaults depend on whether clusters
 and/or fixed effects are present:
@@ -55,14 +55,12 @@ and/or fixed effects are present:
 \item No clusters, no FE: \code{"HC2"} (default), \code{"HC0"}, \code{"HC1"},
 \code{"HC3"}, \code{"classical"}, \code{"stata"}, \code{"none"}.
 \item Clusters, no FE: \code{"CR2"} (default), \code{"CR0"}, \code{"stata"}, \code{"none"}.
-\item No clusters, one FE factor: \code{"HC2"} (default), \code{"HC0"}, \code{"HC1"},
-\code{"HC3"}, \code{"classical"}, \code{"stata"}, \code{"none"}. The same menu as with no
-FE at all.
-\item No clusters, two or more FE factors: \code{"stata"} (default, = HC1),
-\code{"HC0"}, \code{"HC1"}, \code{"classical"}, \code{"none"}. \strong{HC2 and HC3 are not
-available.}
-\item Clusters, with FE: \code{"CR0"} (default), \code{"stata"}, \code{"none"}.
-\strong{CR2 is not available.}
+\item No clusters, with FE (any number of factors): \code{"HC2"} (default),
+\code{"HC0"}, \code{"HC1"}, \code{"HC3"}, \code{"classical"}, \code{"stata"}, \code{"none"}. The
+same menu as with no FE at all.
+\item Clusters, with FE: \code{"CR0"} (default), \code{"CR2"}, \code{"stata"},
+\code{"none"}. \code{"CR2"} expands the fixed effects into dummies, so it is not
+the default here; it is refused with \code{weights}.
 }
 \code{"stata"} is an alias for HC1 (no clusters) or CR0 (with clusters).}
 

@@ -9,13 +9,13 @@
 #' @param fixed_effects An optional one-sided formula of fixed effects to absorb,
 #'   such as `~ blockID`. Uses FWL demeaning (see [lm_robust()] for details and
 #'   SE type restrictions). Diagnostics are not available with `fixed_effects`.
-#' @param se_type The standard error type. `"HC2"`, `"HC3"` and `"CR2"` are
-#'   **not available** with `fixed_effects` here. [lm_robust()] lifts that
-#'   restriction for a single FE factor via a leverage identity, but the
-#'   identity has not been derived for the two-stage case, where the second
-#'   stage runs on fitted rather than observed regressors, so it is not assumed.
-#'   Defaults: `"HC2"` (no clusters, no FE), `"CR2"` (clusters, no FE),
-#'   `"stata"` (no clusters, with FE), `"CR0"` (clusters, with FE).
+#' @param se_type The standard error type. `"HC2"` and `"HC3"` work with
+#'   `fixed_effects` at any number of factors: the second stage runs on fitted
+#'   regressors, but those are demeaned by the same fixed effects, so the
+#'   leverage decomposition [lm_robust()] describes applies unchanged. `"CR2"`
+#'   with `fixed_effects` expands the dummies, as in estimatr 1.0.6.
+#'   Defaults: `"HC2"` (no clusters, with or without FE), `"CR2"` (clusters, no
+#'   FE), `"CR0"` (clusters, with FE).
 #' @param ci logical. Whether to compute p-values and confidence intervals.
 #' @param alpha The significance level, 0.05 by default.
 #' @param diagnostics logical. Whether to compute IV diagnostic statistics.
@@ -72,6 +72,7 @@ iv_robust <- function(formula,
 
   has_fe  <- is.character(model_data[["fixed_effects"]])
   fe_rank <- 0L
+  fe_lev <- NULL
   yoriginal <- NULL
 
   if (has_fe) {
@@ -85,6 +86,17 @@ iv_robust <- function(formula,
       model_data[["instrument_matrix"]], model_data
     )
     fe_rank <- sum(model_data[["fe_levels"]]) - length(model_data[["fe_levels"]]) + 1L
+
+    # The nominal count above overstates the rank whenever one factor is partly
+    # spanned by the others -- a nested factor, or a disconnected design --
+    # which inflates the rank correction and shrinks the residual degrees of
+    # freedom. fe_leverage() returns the exact rank from the same
+    # eigendecomposition that gives the leverage, so it is used for every
+    # se_type; only HC2 and HC3 also need the vector.
+    fe_proj <- fe_leverage(model_data[["fe_codes"]], model_data[["weights"]],
+                           leverage = needs_fe_leverage(se_type))
+    fe_rank <- fe_proj[["rank"]]
+    fe_lev <- fe_proj[["leverage"]]
   }
 
   # -----------
@@ -128,6 +140,7 @@ iv_robust <- function(formula,
       try_cholesky = try_cholesky,
       iv_stage = list(2, model_data$design_matrix),
       fe_rank = fe_rank,
+      fe_leverage = fe_lev,
       femat = if (has_fe && needs_fe_dummies(se_type, model_data))
         fe_dummy_matrix(model_data)
         else NULL

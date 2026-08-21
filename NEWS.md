@@ -103,26 +103,22 @@ shows the expected form does that without breaking working code, so the vector
 is still accepted and still names the term the way 1.0.6 named it. Anything
 that is neither a formula nor a grouping vector is an error, as before.
 
-### Two defaults that move, and say so
+### One default that moves, and says so
 
-Both were silent departures from 1.0.6 until now. Neither expands the dummies,
-because a default that quietly costs O(g^3) in the number of levels would undo
-the reason for absorbing fixed effects at all. Both warn **once per session**,
-since absorbed fixed effects are usually fitted in a loop or a simulation and a
-per-call warning would be noise. The warning names the `se_type` that accepts
-the default and removes it:
+`fixed_effects` with `clusters` defaults to `"CR0"`; 1.0.6 defaulted to
+`"CR2"`. CR2 is the one estimator here still built from cluster-level blocks of
+the hat matrix rather than from `h_ii`, so it is the one case that still has to
+expand the dummies, and a default that quietly costs O(g^3) in the number of
+levels would undo the reason for absorbing fixed effects at all. The warning
+fires **once per session**, since absorbed fixed effects are usually fitted in
+a loop or a simulation and a per-call warning would be noise. Writing
+`se_type = "CR0"` accepts the default and removes the warning; writing
+`se_type = "CR2"` returns the 1.0.6 number exactly, also without warning.
 
-* Two or more `fixed_effects` factors, unclustered, default to `"HC1"`.
-  1.0.6 defaulted to `"HC2"`.
-* Any `fixed_effects` with `clusters` defaults to `"CR0"`. 1.0.6 defaulted to
-  `"CR2"`.
-
-Writing `se_type = "HC1"` (or `"CR0"`) accepts the new default and removes the
-warning; writing `se_type = "HC2"` (or `"CR2"`) returns the 1.0.6 number exactly,
-also without warning.
-
-A single `fixed_effects` factor, unclustered, keeps the `"HC2"` default and does
-not warn: the leverage identity makes it free.
+**Unclustered `fixed_effects` keeps the `"HC2"` default at any number of
+factors**, which is what 1.0.6 returned. An earlier draft of 2.0 fell back to
+`"HC1"` for two or more factors and warned, on the understanding that HC2 there
+meant expanding the dummies. It does not; see below.
 
 ### What the reverse-dependency run leaves broken
 
@@ -165,17 +161,37 @@ Return objects are structurally compatible with estimatr 1.0.6: field names, cla
 
 ## HC2 and HC3 with fixed effects
 
-Absorbed fixed effects used to refuse `se_type = "HC2"` and `"HC3"`, on the grounds that they need hat values from the full `[dummies | X]` design while absorption leaves only the demeaned ones. That is true for two or more FE factors and false for one, where the hat value splits exactly:
+Absorbed fixed effects used to refuse `se_type = "HC2"` and `"HC3"`, on the grounds that they need hat values from the full `[dummies | X]` design while absorption leaves only the demeaned ones. The hat values in fact decompose exactly, for any number of FE factors:
 
 ```
-h_ii = h_ii(demeaned X) + w_i / sum(w over i's group)
+P_[X | D] = P_D + P_{M_D X}
 ```
 
-So with a single FE factor both are now exact, and cost one vector rather than a dummy hat matrix. Verified to machine precision against writing the dummies out, and against 1.x, weighted and unweighted, balanced and unbalanced. At n = 40,000 with 2,000 groups, HC2 takes 17.8 ms here against 41.3 s in 1.0.6, with standard errors bit-identical.
+so `h_ii` is the demeaned-X hat value plus `diag(P_D)`. With one factor `P_D` is diagonal and the second term is just `w_i / sum(w over i's group)`. With several it is not diagonal, but writing `D` with its widest factor in full dummies and the rest contrast-coded leaves `D'WD` with a diagonal leading block, so `diag(P_D)` costs a factorisation of order `sum_{k>1}(g_k - 1)` -- the narrowest the design allows -- and no dummy matrix is built at any point.
 
-**The default with one-way fixed effects therefore returns to `"HC2"`**, which is the package default everywhere else and is also what 1.x returns for the same call. It had fallen back to `"stata"` only because HC2 was unaffordable.
+Verified to machine precision against writing the dummies out, weighted and unweighted, balanced and unbalanced, from one factor to five, and against 1.x. At n = 40,000 with 2,000 groups, one-way HC2 takes 17.8 ms here against 41.3 s in 1.0.6. At n = 50,000 across 1,000 x 30 groups, two-way HC2 takes 36 ms and peaks at 174 MB, against 13.8 s and 970 MB before.
 
-The identity holds only for one factor: with two or more the analogous sum is wrong in the third decimal place, so it is not used there. It says nothing about `"CR2"` either, whose adjustment is built from cluster-level blocks of the hat matrix rather than from `h_ii`, nor about `iv_robust()`, whose second stage runs on fitted regressors. Those cases all get their hat values by expanding the dummies, exactly as 1.0.6 did, so they are available and exact; they simply cost what 1.0.6 charged for them.
+**The default with fixed effects therefore returns to `"HC2"`**, at any number of factors, which is the package default everywhere else and is what 1.x returns for the same call. It had fallen back to `"stata"` only because HC2 was unaffordable.
+
+The identity generalises to any number of factors. What fails beyond one factor is the *sum of each factor's own within-group share*, which ignores the cross terms and is wrong in the third decimal place; that is what an earlier draft tested and rejected. The projection itself decomposes exactly:
+
+```
+P_[X | D] = P_D + P_{M_D X}
+```
+
+so `h_ii` is the demeaned-X hat value plus `diag(P_D)`, whatever the number of factors. Writing the FE design with its widest factor in full dummies and the rest contrast-coded makes `D'WD` block-diagonal in its leading block, so `diag(P_D)` costs a factorisation of order `sum_{k>1}(g_k - 1)` -- as small as the design allows -- rather than an n-by-g dummy hat matrix. Inverting that block through its eigendecomposition rather than a solve means a **disconnected or nested** design, where `D` is rank deficient, gets the pseudo-inverse and the right projection anyway.
+
+`iv_robust()` gets the same treatment: its second stage runs on fitted regressors, but those are demeaned by the same fixed effects, so the decomposition applies unchanged. It never used the shortcut before, even for one factor.
+
+`"CR2"` is the exception. Its adjustment is built from cluster-level *blocks* of the hat matrix rather than from `h_ii`, and blocks do not decompose the way the diagonal does, so CR2 with `fixed_effects` still expands the dummies exactly as 1.0.6 did. It is available and exact; it simply costs what 1.0.6 charged for it.
+
+**What this is worth.** On 50,000 observations across 1,000 x 30 groups, `se_type = "HC2"` with two-way `fixed_effects` took 13.8 seconds and peaked at 970 MB; it now takes 36 milliseconds and peaks at 174 MB. The dummy matrix is never built, so the memory that used to make wide fixed effects impractical is simply not allocated.
+
+**A rank-deficiency bug, fixed.** When one FE factor is spanned by the others -- a nested factor, or a disconnected design -- the FE design is rank deficient, and the nominal count `sum(levels) - K + 1` overstates its rank. 1.0.6 used that nominal count for the residual degrees of freedom, and for HC2 and HC3 it expanded the dummies, let a pivoted QR drop the redundant columns, and then read the hat values off the padded design. Its absorbed answer therefore disagreed with its own explicit-dummy fit, and disagreed differently depending on the `se_type`.
+
+2.0 takes the exact rank from the same eigendecomposition that produces the leverage, and uses it for **every** `se_type`, so an absorbed fit and the same fit with the dummies written out now agree exactly on standard errors, degrees of freedom, p-values and intervals however degenerate the design is. Absorbing fixed effects is a computational choice and should not move the answer.
+
+This is a deliberate departure from 1.0.6, and it only bites where the FE design is genuinely rank deficient; on a design of full rank the nominal and exact counts agree and nothing moves. Canvassed against the ecosystem on a nested-factor design and a disconnected two-way design: base `lm()` with explicit dummies and `plm` (twoways within) both report the exact rank, and estimatr now matches them. `fixest::feols` reports the nominal one and issues no note, so it differs from its own dummy regression on both designs; that difference is `fixest`'s to make, and is recorded here only so the discrepancy is not mistaken for a bug in either package.
 
 Fixing this exposed a latent crash: `r_fe` was left at `r + fe_rank` when the meat falls back to the plain `XtX_inv`, so `X.leftCols(r_fe)` overran and aborted inside Eigen. Unreachable while HC2 was refused with fixed effects, reachable now.
 
@@ -397,15 +413,17 @@ lm_robust(y ~ z, data = dat, fixed_effects = ~block, clusters = cl)
 # se_type = "CR0", with a warning: 1.0.6 defaulted to "CR2" here
 
 lm_robust(y ~ z, data = dat, fixed_effects = ~ block + year)
-# se_type = "HC1", with a warning: 1.0.6 defaulted to "HC2" here
+# se_type = "HC2", as in 1.0.6, and no warning: the identity covers any
+# number of factors, so there is nothing to trade away
 
-lm_robust(y ~ z, data = dat, fixed_effects = ~ block + year, se_type = "HC2")
-# se_type = "HC2", exact, by expanding the dummies. No warning: you asked.
+lm_robust(y ~ z, data = dat, fixed_effects = ~ block + year, se_type = "CR2",
+          clusters = cl)
+# se_type = "CR2", exact, by expanding the dummies. No warning: you asked.
 ```
 
-With **two or more** FE factors the identity fails, by roughly 3e-3 rather than by rounding, so it is not used and the dummies are expanded instead. The same goes for `"CR2"` with any `fixed_effects`, whose adjustment is built from cluster-level blocks of the hat matrix rather than from `h_ii`. Those answers equal the explicit-dummy fit and equal 1.0.6 exactly; that equivalence is tested and recorded in the fixture.
+With **two or more** FE factors the naive version of the identity fails, by roughly 3e-3 rather than by rounding: summing each factor's own within-group share drops the cross terms. The projection decomposition `P_[X | D] = P_D + P_{M_D X}` is exact for any number of factors, and that is what is used. Only `"CR2"` with `fixed_effects` still expands the dummies, its adjustment being built from cluster-level blocks of the hat matrix rather than from `h_ii`. Every answer equals the explicit-dummy fit and equals 1.0.6; that equivalence is tested and recorded in the fixture.
 
-What changes is only what a **default** will reach for. Expanding the dummies is roughly O(g^3) in the number of levels: on a panel of 1,000 groups it takes about 5 s where the absorbed path takes 0.01 s, and the gap widens from there. So no default expands them. Two or more factors default to `"HC1"` and any `fixed_effects` with `clusters` defaults to `"CR0"`, each with a warning, shown once per session, that names what 1.0.6 returned and names the `se_type` that accepts the new default. Writing `se_type = "HC1"` or `se_type = "CR0"` removes it.
+What changes is only what a **default** will reach for, and only in the clustered case. Expanding the dummies is roughly O(g^3) in the number of levels, so no default expands them; `"CR2"` is the only estimator that still needs the expansion, so `fixed_effects` with `clusters` defaults to `"CR0"` with a warning, shown once per session, that names what 1.0.6 returned and names the `se_type` that accepts the new default. Writing `se_type = "CR0"` removes it. Unclustered fits keep the `"HC2"` default at any number of factors, as in 1.0.6.
 
 **Multi-way FE.** Two-way (and higher) FE are supported via alternating projections that iterate to convergence (tolerance 1e-8, maximum 50 iterations).
 

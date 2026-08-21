@@ -35,13 +35,13 @@ e.g. \code{y ~ x1 + x2 | z1 + z2}.}
 such as \code{~ blockID}. Uses FWL demeaning (see \code{\link[=lm_robust]{lm_robust()}} for details and
 SE type restrictions). Diagnostics are not available with \code{fixed_effects}.}
 
-\item{se_type}{The standard error type. \code{"HC2"}, \code{"HC3"} and \code{"CR2"} are
-\strong{not available} with \code{fixed_effects} here. \code{\link[=lm_robust]{lm_robust()}} lifts that
-restriction for a single FE factor via a leverage identity, but the
-identity has not been derived for the two-stage case, where the second
-stage runs on fitted rather than observed regressors, so it is not assumed.
-Defaults: \code{"HC2"} (no clusters, no FE), \code{"CR2"} (clusters, no FE),
-\code{"stata"} (no clusters, with FE), \code{"CR0"} (clusters, with FE).}
+\item{se_type}{The standard error type. \code{"HC2"} and \code{"HC3"} work with
+\code{fixed_effects} at any number of factors: the second stage runs on fitted
+regressors, but those are demeaned by the same fixed effects, so the
+leverage decomposition \code{\link[=lm_robust]{lm_robust()}} describes applies unchanged. \code{"CR2"}
+with \code{fixed_effects} expands the dummies, as in estimatr 1.0.6.
+Defaults: \code{"HC2"} (no clusters, with or without FE), \code{"CR2"} (clusters, no
+FE), \code{"CR0"} (clusters, with FE).}
 
 \item{ci}{logical. Whether to compute p-values and confidence intervals.}
 

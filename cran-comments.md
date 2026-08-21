@@ -3,8 +3,10 @@
        - Graeme Blair's maintainer-transfer email to CRAN has not been sent.
        - win-builder has not been run.
        - The eventstudyr maintainer has not actually been emailed.
-       - CI has not been re-run since the revdep fixes; the counts below are
-         from the local suite only.
+       - CI is green on all five platforms as of 245296d, but has NOT run
+         against the fixed-effects leverage work that follows it.
+       - The reverse-dependency counts below were measured against the final
+         code on 2026-08-20 and are current.
      Every claim in the sections below is written for the submitted state, so
      do not send this file while this block is still here. -->
 
@@ -46,10 +48,12 @@ message to CRAN.
 ## Reverse dependencies
 
 estimatr has 17 strong reverse dependencies and 18 that suggest or enhance it.
-All 35 were checked. 34 are clean, `hbal` among them. `hbal` initially failed
-to install on the test machine for a local toolchain reason unrelated to this
-package: the machine has no `/opt/gfortran`, which is the path R's `FLIBS`
-hardcodes. With that corrected it installs and checks `OK`.
+All 35 were checked with `revdepcheck` against the submitted code; none failed
+to check, and 34 are clean. (`hbal` needs one local correction to build at all
+on the test machine, for a toolchain reason unrelated to this package: the
+machine has no `/opt/gfortran`, which is the path R's `FLIBS` hardcodes. With
+`FLIBS` pointed at the compiler that is installed, `hbal` installs and checks
+`OK`.)
 
 An earlier run of this release broke four. Three of those breaks were
 regressions rather than intended changes: 1.0.6 computed HC2, HC3 and CR2 under
@@ -67,9 +71,18 @@ degrees-of-freedom correction as `1 + rank` without consulting the field, and
 its comparisons against recorded Stata output are unaffected. Its maintainer has
 been notified.
 
-Two defaults do change, in both cases away from an estimator that would require
-expanding the fixed effects into dummies. Absorbed fixed effects with clusters
-default to CR0 where 1.0.6 defaulted to CR2, and two or more absorbed factors
-default to HC1 where 1.0.6 defaulted to HC2. Both emit a warning, once per session, that names the
-1.0.6 default and names the `se_type` that accepts the new one. Naming `se_type`
-explicitly returns the 1.0.6 number exactly.
+One default changes, away from an estimator that would require expanding the
+fixed effects into dummies. Absorbed fixed effects with clusters default to CR0
+where 1.0.6 defaulted to CR2, and emit a warning, once per session, that names
+the 1.0.6 default and names the `se_type` that accepts the new one. Naming
+`se_type = "CR2"` returns the 1.0.6 number exactly. Unclustered absorbed fixed
+effects keep 1.0.6's HC2 default at any number of factors: HC2 and HC3 no longer
+need the dummies, so there is nothing to trade away.
+
+One further difference is deliberate and affects only fixed-effect designs that
+are rank deficient, where one absorbed factor is spanned by the others (a nested
+factor, or a disconnected design). 1.0.6 sized the rank correction from the
+nominal level count, so its absorbed fit disagreed with its own explicit-dummy
+fit on those designs. This release takes the exact rank and the two now agree,
+which is also what `lm()` and `plm` report for the same data. Designs of full
+rank are unaffected.

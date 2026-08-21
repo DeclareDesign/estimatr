@@ -49,6 +49,18 @@ ref_data_fe <- function() {
   )
 }
 
+# ref_data_fe() plus a third factor, for the multi-way leverage comparisons.
+ref_data_fe_multiway <- function() {
+  dat <- ref_data_fe()
+  set.seed(77)
+  # Drawn, not cycled: rep(1:5, length.out = 200) would be a deterministic
+  # function of `cl`, which makes the FE design rank deficient and is a
+  # separate case (see the nested-factor test).
+  dat$c3 <- sample(5, nrow(dat), replace = TRUE)
+  dat$w  <- runif(nrow(dat), 0.5, 2)
+  dat
+}
+
 ref_data_fe_weighted <- function() {
   dat <- ref_data_fe()
   set.seed(99)

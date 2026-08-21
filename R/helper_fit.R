@@ -17,9 +17,10 @@
 #'   estimation sample, supplying the columns HC2, HC3 and CR2 need from the
 #'   full design. `NULL` unless the requested `se_type` requires it.
 #' @param fe_leverage numeric vector of per-observation leverage contributed by
-#'   absorbed one-way fixed effects, or `NULL`. Supplied only when there is a
-#'   single FE factor, where `h_ii` splits exactly into the demeaned-X leverage
-#'   plus this term, which is what makes HC2 and HC3 available there.
+#'   the absorbed fixed effects, or `NULL`. `h_ii` of the full design splits
+#'   exactly into the demeaned-X leverage plus this term, for any number of FE
+#'   factors, which is what makes HC2 and HC3 available under `fixed_effects`
+#'   without building the dummy matrix.
 #'
 #' @examples
 #' # The fitter behind lm_robust(), exported for packages that have already
@@ -58,7 +59,7 @@ lm_robust_fit <- function(y,
   clustered <- !is.null(cluster)
   weighted <- !is.null(weights)
   se_type <- check_se_type(se_type, clustered, has_fe = (fe_rank > 0L),
-                           oneway_fe = !is.null(fe_leverage),
+                           has_fe_leverage = !is.null(fe_leverage),
                            fe_dummies = !is.null(femat), weighted = weighted)
 
   # -----------
@@ -384,31 +385,31 @@ lm_robust_fit <- function(y,
   return(return_list)
 }
 
-# The two default warnings below are `rlang::warn(.frequency = "once")`: absorbed
+# The default warning below is `rlang::warn(.frequency = "once")`: absorbed
 # fixed effects are usually fitted in a loop or a simulation, and a per-call
-# warning would be noise rather than a notice. Once per session per case, keyed
-# by `.frequency_id`. rlang always signals these under testthat, so the tests
+# warning would be noise rather than a notice. Once per session, keyed by
+# `.frequency_id`. rlang always signals these under testthat, so the tests
 # still see them on every call.
 #' @importFrom rlang warn
 #' @noRd
-check_se_type <- function(se_type, clustered, has_fe = FALSE, oneway_fe = FALSE,
+check_se_type <- function(se_type, clustered, has_fe = FALSE,
+                          has_fe_leverage = FALSE,
                           fe_dummies = FALSE, weighted = FALSE) {
 
   cl_se_types  <- c("CR0", "CR2", "stata")
   rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata")
 
-  # HC2 and HC3 need the hat values of the full [dummies | X] design. Under a
-  # SINGLE fixed-effect factor those split exactly into the demeaned-X leverage
-  # plus each observation's share of its group's weight, so here they are
-  # exact, cheap, and carry no restriction at all. The identity is stated and
-  # verified in demean_fes().
-  if (has_fe && oneway_fe && !is.null(se_type) && se_type %in% c("HC2", "HC3")) {
+  # HC2 and HC3 need the hat values of the full [dummies | X] design. Those
+  # split exactly into the demeaned-X leverage plus fe_leverage(), for ANY
+  # number of fixed-effect factors, so they are exact and cheap here and carry
+  # no restriction. The identity is stated and verified in fe_leverage().
+  if (has_fe && has_fe_leverage && !is.null(se_type) &&
+      se_type %in% c("HC2", "HC3")) {
     return(se_type)
   }
 
-  # Otherwise the dummies have to be materialised. The caller does that when
-  # the requested se_type needs it (see needs_fe_dummies), which is what makes
-  # HC2, HC3 and CR2 available under `fixed_effects` as they were in 1.0.6.
+  # CR2 is the one case left that has to materialise the dummies: it needs the
+  # whole per-cluster block of the hat matrix, which does not decompose.
   if (has_fe && !is.null(se_type) && se_type %in% c("HC2", "HC3", "CR2")) {
     # 1.0.6 refused this combination too: the CR2 adjustment needs the design
     # weighted by w rather than by sqrt(w), and the absorbed dummies are not
@@ -463,25 +464,11 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE, oneway_fe = FALSE,
     }
   } else {
     if (is.null(se_type)) {
-      # One-way FE costs nothing extra for HC2, so it keeps the package's
-      # ordinary default. Two or more factors would have to expand the
-      # dummies, so they fall back to HC1 and warn, for the same reason as the
-      # clustered case above.
-      if (has_fe && !oneway_fe) {
-        warn(
-          paste0(
-            "With two or more `fixed_effects` variables, `se_type` defaults ",
-            "to \"HC1\"; estimatr 1.0.6 defaulted to \"HC2\" here.\n",
-            "HC2 and HC3 are available by asking for them, at the cost of ",
-            "expanding the fixed effects into dummies.\n",
-            "Write `se_type = \"HC1\"` to accept this default and remove this ",
-            "warning."
-          ),
-          .frequency = "once",
-          .frequency_id = "estimatr_fe_multiway_default"
-        )
-      }
-      se_type <- if (has_fe && !oneway_fe) "stata" else "HC2"
+      # HC2 for every unclustered fit, with or without fixed effects and
+      # whatever their number: fe_leverage() makes it exact and cheap, so
+      # there is nothing to trade away and nothing to warn about. This is also
+      # what 1.0.6 returned.
+      se_type <- "HC2"
     } else if (se_type %in% setdiff(cl_se_types, "stata")) {
       stop(
         "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3', ",

@@ -249,12 +249,15 @@ lin_covar_names <- function(x) {
 absorbed_group_effects <- function(fitted, coefficients, model_data) {
   fe <- model_data[["fixed_effects"]]
   if (ncol(fe) != 1L || NCOL(fitted) != 1L) return(NULL)
-  setNames(
-    tapply(
-      fitted - drop(model_data[["Xoriginal"]] %*% coefficients),
-      fe[, 1L],
-      `[`, 1L
-    ),
-    paste0(colnames(fe), levels(as.factor(fe[, 1L])))
-  )
+  # The value is constant within group, so the group effect is the value at
+  # the group's first row. tapply() would build the full split to read one
+  # element out of each piece; match() finds those rows in a single pass.
+  g <- fe[, 1L]
+  lv <- levels(fe_factors(model_data)[[1L]])
+  effects <- (fitted - drop(model_data[["Xoriginal"]] %*% coefficients))[match(lv, g)]
+  # tapply() returned a one-dimensional array, and that shape is part of the
+  # return surface: `predict()` and the 1.0.6 comparison both see it.
+  dim(effects) <- length(lv)
+  dimnames(effects) <- list(paste0(colnames(fe), lv))
+  effects
 }

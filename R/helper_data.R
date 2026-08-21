@@ -168,6 +168,16 @@ clean_model_data <- function(data, datargs, estimator = "") {
   return(ret)
 }
 
+# The fixed effects as a data frame of factors. `clean_model_data()` stores
+# them as a character matrix, so every caller that wants levels or integer
+# codes has to coerce, which is a string sort per column. `demean_fes()` runs
+# first and caches the result, and the later callers reuse it.
+#' @noRd
+fe_factors <- function(model_data) {
+  model_data[["fe_df"]] %||%
+    as.data.frame(model_data[["fixed_effects"]], stringsAsFactors = TRUE)
+}
+
 # Demean outcome and design matrix by fixed effects (Frisch-Waugh-Lovell).
 # FE demeaning via alternating projections in C++ (demean_cpp in lm_robust_helper.cpp).
 # One-way FE converges in exactly 1 iteration; multi-way iterates to eps = 1e-8.
@@ -175,16 +185,19 @@ clean_model_data <- function(data, datargs, estimator = "") {
 #' @importFrom stats ave
 #' @noRd
 demean_fes <- function(model_data) {
-  fe_df     <- as.data.frame(model_data[["fixed_effects"]], stringsAsFactors = TRUE)
+  fe_df     <- fe_factors(model_data)
   fe_levels <- vapply(fe_df, nlevels, 0L)
   fe_codes  <- lapply(fe_df, as.integer)
+  # clean_model_data() stores the fixed effects as a character matrix, and
+  # coercing it back to factors costs a string sort per column. Three callers
+  # need the same coercion, so it is done once and carried.
+  model_data[["fe_df"]] <- fe_df
   # At this point model_data[["weights"]] is the RAW weight vector (not yet
   # sqrt-transformed — that happens in lm_robust_fit / prep_lm_data).
   # WLS group means use raw weights as the metric.
   w       <- model_data[["weights"]] %||% numeric(0L)
   has_int <- attr(model_data$terms, "intercept")
 
-  model_data[["yoriginal"]] <- as.matrix(model_data[["outcome"]])
   y_dm <- demean_cpp(as.matrix(model_data[["outcome"]]), fe_codes, w)
   colnames(y_dm) <- colnames(model_data[["outcome"]])
   model_data[["outcome"]] <- y_dm
@@ -220,24 +233,132 @@ demean_fes <- function(model_data) {
       model_data[["fe_level_names"]], fe_df
     )
   }
-  # Under a SINGLE fixed-effect factor the hat value of the full
-  # [dummies | X] design splits exactly into the demeaned-X leverage plus each
-  # observation's share of its group's weight:
-  #
-  #   h_ii = h_ii(demeaned X) + w_i / sum(w in group i)
-  #
-  # so HC2 and HC3 are available at the cost of one vector rather than a full
-  # dummy hat matrix. Verified to machine precision, weighted and unweighted,
-  # balanced and unbalanced. It does NOT hold for two or more factors, where the
-  # analogous sum is wrong in the third decimal place, so the vector is NULL
-  # there and those designs keep the old restriction.
-  model_data[["fe_leverage"]] <- if (length(fe_levels) == 1L) {
-    g <- fe_codes[[1L]]
-    if (length(w) > 0L) w / ave(w, g, FUN = sum) else 1 / tabulate(g)[g]
-  } else {
-    NULL
-  }
+  # `fe_codes` and the raw weights are what fe_leverage() needs, and it is
+  # called only when the requested se_type wants it.
+  model_data[["fe_codes"]] <- fe_codes
   model_data
+}
+
+# Per-observation leverage contributed by the absorbed fixed effects, exactly:
+# the diagonal of P_D, the projection onto the span of the FE dummies.
+#
+# The hat values of the full design decompose as
+#
+#   P_[X | D] = P_D + P_{M_D X}
+#
+# so h_ii = (this vector) + the hat value of the DEMEANED X, which the fitter
+# already computes. That is what makes HC2 and HC3 available under
+# `fixed_effects` without ever materialising the n-by-g dummy matrix.
+#
+# For ONE factor P_D is diagonal and this is just w_i / sum(w in group i).
+#
+# For TWO OR MORE it is not, but it is still cheap. Write D with the factor
+# that has the MOST levels in full dummies and the rest contrast-coded; then
+# A = D'WD has a diagonal leading block, and block inversion needs only the
+# Schur complement S, which is `sum_{k>1}(g_k - 1)` square -- as small as the
+# design allows. `col(D)`, and so P_D, does not depend on that choice.
+#
+# S is inverted through its eigendecomposition rather than a solve, so a
+# DISCONNECTED design (where D is rank deficient) gives the pseudo-inverse and
+# the right projection anyway.
+#
+# An earlier version of this file recorded that no such decomposition existed
+# beyond one factor. What had been tested was the sum of each factor's own
+# within-group share, which ignores the cross terms and is wrong in the third
+# decimal place. The identity above is exact; see test_fe_leverage.R.
+# Returns a list with `rank`, the exact rank of the FE design, and `leverage`,
+# `diag(P_D)` -- or NULL for the leverage when `leverage = FALSE`, since only
+# HC2 and HC3 need the vector while every se_type needs the rank, and the
+# vector's per-observation gathers are the expensive part.
+#' @noRd
+fe_leverage <- function(fe_codes, w = NULL, leverage = TRUE) {
+  n <- length(fe_codes[[1L]])
+  if (is.null(w) || length(w) == 0L) w <- rep(1, n)
+  g <- vapply(fe_codes, max, 0L)
+
+  ord <- order(g, decreasing = TRUE)
+  fe_codes <- fe_codes[ord]
+  g <- g[ord]
+
+  a <- fe_codes[[1L]]
+  g1 <- unname(g[1L])
+  A11 <- as.vector(rowsum(w, a, reorder = TRUE))
+
+  K <- length(g)
+  offs <- if (K > 1L) cumsum(c(0L, g[-1L] - 1L)) else 0L
+  p <- offs[K]
+
+  # `p` is the number of contrast columns the factors after the first
+  # contribute. A factor with a single level contributes none: it is an
+  # intercept, and the first factor's full dummies already span it. When every
+  # later factor is like that -- and when there is only one factor at all --
+  # the design reduces to the one-way case, where P_D is diagonal.
+  if (p == 0L) {
+    return(list(rank = g1,
+                leverage = if (leverage) w / A11[a] else NULL))
+  }
+  ck <- lapply(2:K, function(k) fe_codes[[k]])
+  keep <- lapply(ck, function(z) z > 1L)
+  colof <- lapply(seq_len(K - 1L), function(k) offs[k] + ck[[k]] - 1L)
+
+  # Weighted cross-tabulation of two integer codes, as (index, value) pairs.
+  xtab <- function(i1, i2, n1, wts) {
+    s <- rowsum(wts, i1 + (i2 - 1L) * n1, reorder = TRUE)
+    list(idx = as.integer(rownames(s)), val = as.vector(s))
+  }
+
+  A12 <- matrix(0, g1, p)
+  for (k in seq_len(K - 1L)) {
+    kp <- keep[[k]]
+    s <- xtab(a[kp], ck[[k]][kp] - 1L, g1, w[kp])
+    A12[cbind((s$idx - 1L) %% g1 + 1L, offs[k] + (s$idx - 1L) %/% g1 + 1L)] <- s$val
+  }
+
+  A22 <- matrix(0, p, p)
+  for (k in seq_len(K - 1L)) {
+    for (l in k:(K - 1L)) {
+      kp <- keep[[k]] & keep[[l]]
+      if (!any(kp)) next
+      nk <- g[k + 1L] - 1L
+      s <- xtab(ck[[k]][kp] - 1L, ck[[l]][kp] - 1L, nk, w[kp])
+      rr <- offs[k] + (s$idx - 1L) %% nk + 1L
+      cc <- offs[l] + (s$idx - 1L) %/% nk + 1L
+      A22[cbind(rr, cc)] <- A22[cbind(rr, cc)] + s$val
+      if (l != k) A22[cbind(cc, rr)] <- A22[cbind(cc, rr)] + s$val
+    }
+  }
+
+  C <- A12 / A11
+  es <- eigen(A22 - crossprod(A12, C), symmetric = TRUE)
+  tol <- max(es$values, 0) * 1e-12
+  # rank(D) = g1 + rank(S): the leading block of A is diagonal and positive, so
+  # it contributes g1, and the Schur complement contributes the rest. The
+  # eigenvalues are already here, so the exact rank of a nested or disconnected
+  # FE design costs nothing extra. The nominal `sum(levels) - K + 1` overstates
+  # it whenever one factor is partly spanned by the others.
+  rank_S <- sum(es$values > tol)
+  if (!leverage) {
+    return(list(rank = g1 + rank_S, leverage = NULL))
+  }
+  S_inv <- es$vectors %*% (ifelse(es$values > tol, 1 / es$values, 0) * t(es$vectors))
+  Tm <- C %*% S_inv
+  q <- rowSums(Tm * C)
+
+  cross <- numeric(n)
+  quad <- numeric(n)
+  for (k in seq_len(K - 1L)) {
+    kp <- keep[[k]]
+    cross[kp] <- cross[kp] + Tm[cbind(a[kp], colof[[k]][kp])]
+    for (l in seq_len(K - 1L)) {
+      kl <- kp & keep[[l]]
+      if (any(kl)) {
+        quad[kl] <- quad[kl] + S_inv[cbind(colof[[k]][kl], colof[[l]][kl])]
+      }
+    }
+  }
+
+  list(rank = g1 + rank_S,
+       leverage = w * (1 / A11[a] + q[a] - 2 * cross + quad))
 }
 
 # HC2, HC3 and CR2 are built from the hat values of the full [X | FE dummies]
@@ -250,24 +371,25 @@ demean_fes <- function(model_data) {
 #' @importFrom stats model.matrix
 #' @noRd
 fe_dummy_matrix <- function(model_data) {
-  fe_df     <- as.data.frame(model_data[["fixed_effects"]], stringsAsFactors = TRUE)
+  fe_df     <- fe_factors(model_data)
   fe_levels <- vapply(fe_df, nlevels, 0L)
 
-  # A single factor with one level contributes an intercept, not a set of
-  # contrasts, and model.matrix() would return a zero-column matrix for it.
+  # A factor with one level contributes an intercept, not a set of contrasts,
+  # and model.matrix() would return a zero-column matrix for it. Alongside
+  # other factors its span is already inside theirs, so it is dropped; on its
+  # own the intercept column is the whole design. fe_leverage() takes the same
+  # view, so every se_type answers the same question.
   if (any(fe_levels == 1L)) {
-    if (ncol(fe_df) != 1L) {
-      stop(
-        "Can't have a fixed effect with only one group AND multiple fixed ",
-        "effect variables."
-      )
+    if (all(fe_levels == 1L)) {
+      return(matrix(
+        1,
+        nrow  = nrow(fe_df),
+        ncol  = 1L,
+        dimnames = list(rownames(fe_df),
+                        paste0(names(fe_df)[1L], levels(fe_df[[1L]])))
+      ))
     }
-    return(matrix(
-      1,
-      nrow  = nrow(fe_df),
-      ncol  = 1L,
-      dimnames = list(rownames(fe_df), paste0(names(fe_df), levels(fe_df[[1L]])))
-    ))
+    fe_df <- fe_df[, fe_levels > 1L, drop = FALSE]
   }
 
   model.matrix(~ 0 + ., data = fe_df)
@@ -278,21 +400,23 @@ fe_dummy_matrix <- function(model_data) {
 # never trigger the expansion, which is what keeps absorption fast.
 #' @noRd
 needs_fe_dummies <- function(se_type, model_data) {
-  if (is.null(se_type) || !se_type %in% c("HC2", "HC3", "CR2")) {
-    return(FALSE)
-  }
-  # One-way FE gets HC2 and HC3 exactly from `fe_leverage`, at the cost of one
-  # vector. CR2 has no such decomposition and always needs the dummies.
-  if (se_type %in% c("HC2", "HC3") && !is.null(model_data[["fe_leverage"]])) {
-    return(FALSE)
-  }
-  TRUE
+  # HC2 and HC3 come from fe_leverage() for any number of factors. CR2 needs
+  # the whole per-cluster block of the hat matrix, not just its diagonal, and
+  # has no such decomposition, so it is the only case left that expands.
+  isTRUE(se_type == "CR2")
+}
+
+# Whether the fit wants the leverage vector. A NULL `se_type` is the default,
+# which under `fixed_effects` is HC2, so it does.
+#' @noRd
+needs_fe_leverage <- function(se_type) {
+  is.null(se_type) || se_type %in% c("HC2", "HC3")
 }
 
 # Demean an arbitrary matrix by the same FE structure as model_data.
 # Used in iv_robust to demean the instrument matrix.
 demean_matrix_by_fes <- function(mat, model_data) {
-  fe_df    <- as.data.frame(model_data[["fixed_effects"]], stringsAsFactors = TRUE)
+  fe_df    <- fe_factors(model_data)
   fe_codes <- lapply(fe_df, as.integer)
   w        <- model_data[["weights"]] %||% numeric(0L)
   has_int  <- !is.null(colnames(mat)) && "(Intercept)" %in% colnames(mat)

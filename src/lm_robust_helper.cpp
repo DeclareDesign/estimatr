@@ -2,6 +2,9 @@
 // [[Rcpp::plugins(cpp11)]]
 
 #include <RcppEigen.h>
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
 using namespace Rcpp;
 
 // Much of what follows is modified from RcppEigen Vignette by Douglas Bates and Dirk Eddelbuettel
@@ -146,8 +149,20 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
                  const Rcpp::Nullable<Rcpp::NumericVector> & fe_leverage) {
 
   const int n(X.rows()), r(XtX_inv.cols()), ny(ei.cols());
+  // Two different things, which used to share one variable. `r_fe` is the RANK
+  // consumed by the fit, which sets the residual degrees of freedom and the
+  // HC1/stata scale factors; absorbed fixed effects consume it whether or not
+  // the design matrix carries their columns. `meat_cols` is how many columns
+  // of X the hat values are actually read off. They coincide only when the
+  // dummies have been expanded into X.
   int r_fe = r + fe_rank;
-  const bool clustered = ((se_type == "stata") || (se_type == "CR0") || (se_type == "CR2"));
+  int meat_cols = r;
+  // Rcpp::String comparison is not free, and these were being re-evaluated
+  // once per observation and once per cluster inside the loops below.
+  const bool cr2 = (se_type == "CR2");
+  const bool hc2 = (se_type == "HC2");
+  const bool hc3 = (se_type == "HC3");
+  const bool clustered = ((se_type == "stata") || (se_type == "CR0") || cr2);
   const int npars = r * ny;
   int sandwich_size = n;
   if (clustered) {
@@ -187,44 +202,58 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
     }
 
     Eigen::MatrixXd meatXtX_inv;
-    if ((se_type == "HC2") || (se_type == "HC3") || (se_type == "CR2")) {
+    if (hc2 || hc3 || cr2) {
       if (X.cols() > r) {
+        // The dummies were expanded into X, so the QR reveals the true rank
+        // and the meat is read off the full design.
         meatXtX_inv = getMeatXtX(X, XtX_inv);
-        r_fe = meatXtX_inv.cols();
+        meat_cols = meatXtX_inv.cols();
+        r_fe = meat_cols;
       } else {
+        // The meat is the plain r-by-r XtX_inv and X carries only its r
+        // demeaned columns, so the hat values are read off those. `r_fe` keeps
+        // the absorbed rank: setting it to r here dropped the fixed effects
+        // from the residual degrees of freedom, which moved every p-value and
+        // confidence interval on a one-way FE fit at the HC2 default.
         meatXtX_inv = XtX_inv;
-        // r_fe was initialised to r + fe_rank, but here the meat is the plain
-        // r-by-r XtX_inv and X carries only its r demeaned columns, so leaving
-        // r_fe alone makes X.leftCols(r_fe) overrun. Unreachable while HC2 and
-        // HC3 were refused with fixed_effects; reachable now that one-way FE
-        // is supported, and it aborts inside Eigen rather than returning a
-        // wrong number.
-        r_fe = r;
+        meat_cols = r;
       }
     }
 
     if ( !clustered ) {
 
-      if ((se_type == "HC2") || (se_type == "HC3")) {
+      if (hc2 || hc3) {
 
-        const bool has_fe_lev = fe_leverage.isNotNull();
-        Rcpp::NumericVector fe_lev;
-        if (has_fe_lev) fe_lev = Rcpp::NumericVector(fe_leverage);
+        // h_ii is the row-wise quadratic form X_i' M X_i. Taking it as a
+        // matrix product plus a row-wise dot product replaces n separate
+        // matrix-vector products, each of which also heap-allocated a row.
+        //
+        // In row blocks, not in one product: with `fixed_effects` expanded
+        // into dummies meat_cols is the number of FE levels, and one n-by-that
+        // temporary would be hundreds of megabytes. The block is sized to hold
+        // about 8 MB, so the ordinary case (a handful of covariates) is
+        // still one pass, and the wide case stays bounded.
+        Eigen::VectorXd hii(n);
+        const int block_rows = std::max(1, std::min(n, (int)(1048576 / meat_cols)));
+        for (int start = 0; start < n; start += block_rows) {
+          const int len = std::min(block_rows, n - start);
+          hii.segment(start, len) =
+            (X.block(start, 0, len, meat_cols) * meatXtX_inv)
+              .cwiseProduct(X.block(start, 0, len, meat_cols))
+              .rowwise().sum();
+        }
 
-        Eigen::ArrayXd new_omega(ny);
-        for (int i = 0; i < n; i++) {
-          Eigen::VectorXd Xi = X.leftCols(r_fe).row(i);
+        if (fe_leverage.isNotNull()) {
+          Rcpp::NumericVector fe_lev(fe_leverage);
+          for (int i = 0; i < n; i++) hii(i) += fe_lev[i];
+        }
 
-          double hii = Xi.transpose() * meatXtX_inv * Xi;
-          if (has_fe_lev) hii += fe_lev[i];
+        Eigen::ArrayXd denom = 1.0 - hii.array();
+        if (hc3) denom = denom.square();
 
-          if (se_type == "HC2") {
-            new_omega = temp_omega.row(i) / (1.0 - hii);
-          } else if (se_type == "HC3") {
-            new_omega = temp_omega.row(i) / (std::pow(1.0 - hii, 2));
-          }
-          new_omega = new_omega.unaryExpr([](double v) {return std::isfinite(v)? v : 0.0;});
-          temp_omega.row(i) = new_omega;
+        for (int m = 0; m < ny; m++) {
+          temp_omega.col(m) = (temp_omega.col(m).array() / denom)
+            .unaryExpr([](double v) {return std::isfinite(v)? v : 0.0;});
         }
       }
 
@@ -239,7 +268,7 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
     } else {
       // clustered
 
-      if (se_type == "CR2") {
+      if (cr2) {
         Xoriginal.resize(n, r);
         if (Xunweighted.isNotNull()) {
           Xoriginal = Rcpp::as<Eigen::Map<Eigen::MatrixXd> >(Xunweighted);
@@ -247,13 +276,13 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
           Xoriginal = X;
         }
 
-        H1s.resize(r_fe, r_fe*J);
-        H2s.resize(r_fe, r_fe*J);
-        H3s.resize(r_fe, r_fe*J);
-        P_diags.resize(r_fe, J);
+        H1s.resize(meat_cols, meat_cols*J);
+        H2s.resize(meat_cols, meat_cols*J);
+        H3s.resize(meat_cols, meat_cols*J);
+        P_diags.resize(meat_cols, J);
 
         M_U_ct = meatXtX_inv.llt().matrixL();
-        MUWTWUM = meatXtX_inv * X.leftCols(r_fe).transpose() * X.leftCols(r_fe) * meatXtX_inv;
+        MUWTWUM = meatXtX_inv * X.leftCols(meat_cols).transpose() * X.leftCols(meat_cols) * meatXtX_inv;
         Omega_ct = MUWTWUM.llt().matrixL();
       }
 
@@ -268,18 +297,18 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
         if ((i == n) || (clusters(i) != current_cluster)) {
 
-          if (se_type == "CR2") {
+          if (cr2) {
 
             Eigen::MatrixXd H =
-              Xoriginal.block(start_pos, 0, len, r_fe) *
+              Xoriginal.block(start_pos, 0, len, meat_cols) *
               meatXtX_inv *
-              X.block(start_pos, 0, len, r_fe).transpose();
+              X.block(start_pos, 0, len, meat_cols).transpose();
 
             Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> At_WX(
                 (Eigen::MatrixXd::Identity(len, len) - H) - H.transpose() +
-                  Xoriginal.block(start_pos, 0, len, r_fe) *
+                  Xoriginal.block(start_pos, 0, len, meat_cols) *
                   MUWTWUM *
-                  Xoriginal.block(start_pos, 0, len, r_fe).transpose()
+                  Xoriginal.block(start_pos, 0, len, meat_cols).transpose()
             );
 
             Eigen::VectorXd eigvals = At_WX.eigenvalues();
@@ -295,11 +324,11 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
               At_WX.eigenvectors() *
               eigvals.asDiagonal() *
               At_WX.eigenvectors().transpose() *
-              X.block(start_pos, 0, len, r_fe);
+              X.block(start_pos, 0, len, meat_cols);
 
             if (ci) {
 
-              Eigen::MatrixXd ME(r_fe, len);
+              Eigen::MatrixXd ME(meat_cols, len);
               if (weight_mean != 1) {
                 ME = (meatXtX_inv / weight_mean) * At_WX_inv.transpose();
               } else {
@@ -308,12 +337,12 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
               P_diags.col(clust_num) = ME.array().pow(2).rowwise().sum();
 
-              Eigen::MatrixXd MEU = ME * Xoriginal.block(start_pos, 0, len, r_fe);
+              Eigen::MatrixXd MEU = ME * Xoriginal.block(start_pos, 0, len, meat_cols);
 
-              int p_pos = clust_num*r_fe;
-              H1s.block(0, p_pos, r_fe, r_fe) = MEU * M_U_ct;
-              H2s.block(0, p_pos, r_fe, r_fe) = ME * X.block(start_pos, 0, len, r_fe) * M_U_ct;
-              H3s.block(0, p_pos, r_fe, r_fe) = MEU * Omega_ct;
+              int p_pos = clust_num*meat_cols;
+              H1s.block(0, p_pos, meat_cols, meat_cols) = MEU * M_U_ct;
+              H2s.block(0, p_pos, meat_cols, meat_cols) = ME * X.block(start_pos, 0, len, meat_cols) * M_U_ct;
+              H3s.block(0, p_pos, meat_cols, meat_cols) = MEU * Omega_ct;
             }
           }
 
@@ -322,7 +351,7 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
             Eigen::MatrixXd ei_block = ei.block(start_pos, 0, len, ny);
             Eigen::Map<const Eigen::MatrixXd> ei_long(ei_block.data(), 1, len*ny);
 
-            if (se_type == "CR2") {
+            if (cr2) {
               half_meat.block(clust_num, 0, 1, npars) =
                 ei_long *
                 Kr(Eigen::MatrixXd::Identity(ny, ny), At_WX_inv.leftCols(r));
@@ -334,7 +363,7 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
           } else {
 
-            if (se_type == "CR2") {
+            if (cr2) {
               half_meat.row(clust_num) =
                 ei.block(start_pos, 0, len, 1).transpose() *
                 At_WX_inv.leftCols(r);
@@ -380,12 +409,12 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
   if (ci) {
     if ( !clustered ) {
       dof.fill(n - r_fe);
-    } else if (se_type != "CR2") {
+    } else if (!cr2) {
       dof.fill(J - 1);
     } else {
       // Avoid O(J^2) P_array by computing trace and Frobenius norm from
-      // r_fe×J matrices directly. Complexity: O(r * r_fe^2 * J) vs O(r * J^2).
-      // For typical cases (r_fe=3, J=100): ~11x faster for this section.
+      // meat_cols×J matrices directly. Complexity: O(r * meat_cols^2 * J)
+      // vs O(r * J^2). For typical cases (meat_cols=3, J=100): ~11x faster.
       for (int j = 0; j < r; j++) {
         if (which_covs[j]) {
 
@@ -393,13 +422,13 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
           Eigen::MatrixXd H2t = H2s.row(j);
           Eigen::MatrixXd H3t = H3s.row(j);
 
-          H1t.resize(r_fe, J);  // r_fe × J
-          H2t.resize(r_fe, J);
-          H3t.resize(r_fe, J);
+          H1t.resize(meat_cols, J);  // meat_cols × J
+          H2t.resize(meat_cols, J);
+          H3t.resize(meat_cols, J);
 
           Eigen::RowVectorXd p = P_diags.row(j);  // 1 × J
 
-          // r_fe × r_fe products — cheap
+          // meat_cols × meat_cols products — cheap
           Eigen::MatrixXd G3  = H3t * H3t.transpose();  // symmetric
           Eigen::MatrixXd P31 = H3t * H1t.transpose();
           Eigen::MatrixXd P32 = H3t * H2t.transpose();
@@ -407,7 +436,7 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
           Eigen::MatrixXd G11 = H1t * H1t.transpose();  // symmetric
           Eigen::MatrixXd G22 = H2t * H2t.transpose();  // symmetric
 
-          // Column-wise dot products — O(r_fe * J)
+          // Column-wise dot products — O(meat_cols * J)
           Eigen::RowVectorXd col_sq_A3    = H3t.colwise().squaredNorm();
           Eigen::RowVectorXd col_dot_A1A2 = (H1t.cwiseProduct(H2t)).colwise().sum();
 
@@ -502,22 +531,41 @@ Eigen::MatrixXd demean_cpp(Eigen::MatrixXd mat,
       const std::vector<int>& g = fe[k];
       const int ng = n_grp[k];
 
-      // Accumulate weighted sums
+      // Both `mat` and `wx_sum` are column-major, so everything below walks
+      // one column at a time. Touching a row at a time instead strides across
+      // the whole matrix on every element, and measured an order of magnitude
+      // slower here; it also built a heap-allocated row vector per
+      // observation, of which there are only `ng` distinct values.
       w_sum.head(ng).setZero();
       wx_sum.topRows(ng).setZero();
-      for (int i = 0; i < n; ++i) {
-        const int gi = g[i];
-        w_sum(gi) += w(i);
-        wx_sum.row(gi) += w(i) * mat.row(i);
+
+      const std::size_t wstride = (std::size_t) wx_sum.rows();
+
+      for (int i = 0; i < n; ++i) w_sum(g[i]) += w(i);
+
+      for (int c = 0; c < p; ++c) {
+        const double* mc = mat.data() + (std::size_t) c * n;
+        double* wc = wx_sum.data() + (std::size_t) c * wstride;
+        for (int i = 0; i < n; ++i) wc[g[i]] += w(i) * mc[i];
       }
 
-      // Subtract weighted group means, tracking max change
-      for (int i = 0; i < n; ++i) {
-        const int gi = g[i];
-        Eigen::RowVectorXd delta = wx_sum.row(gi) / w_sum(gi);
-        double row_max = delta.cwiseAbs().maxCoeff();
-        if (row_max > max_delta) max_delta = row_max;
-        mat.row(i) -= delta;
+      // Group sums become group means once per group rather than once per
+      // observation. A group with no observations would divide by zero, and is
+      // skipped here exactly as the subtraction below never reaches it.
+      for (int c = 0; c < p; ++c) {
+        double* wc = wx_sum.data() + (std::size_t) c * wstride;
+        for (int j = 0; j < ng; ++j) {
+          if (w_sum(j) == 0.0) continue;
+          wc[j] /= w_sum(j);
+          const double v = std::abs(wc[j]);
+          if (v > max_delta) max_delta = v;
+        }
+      }
+
+      for (int c = 0; c < p; ++c) {
+        double* mc = mat.data() + (std::size_t) c * n;
+        const double* wc = wx_sum.data() + (std::size_t) c * wstride;
+        for (int i = 0; i < n; ++i) mc[i] -= wc[g[i]];
       }
     }
 

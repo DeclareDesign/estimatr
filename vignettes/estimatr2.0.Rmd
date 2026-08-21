@@ -17,7 +17,7 @@ library(estimatr)
 
 estimatr 2.0 is a ground-up rewrite aimed at the DeclareDesign workflow: fit the same model thousands of times, as fast as possible, and get the same number every time. Almost everything you already wrote against 1.x runs unchanged and returns identical estimates, identical standard errors, identical confidence intervals, and identical objects, only faster. That claim is pinned by 801 test assertions, 336 of which compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error.
 
-Two things break, and each one is a deliberate trade. `horvitz_thompson()` takes one probability argument instead of five. Two stargazer helpers are gone. Every standard error 1.x could compute, 2.0 can still compute. What changes is which one a *default* reaches for when you absorb fixed effects, and both such defaults now say so out loud.
+Two things break, and each one is a deliberate trade. `horvitz_thompson()` takes one probability argument instead of five. Two stargazer helpers are gone. Every standard error 1.x could compute, 2.0 can still compute. What changes is which one a *default* reaches for when you absorb fixed effects with clusters, and that default now says so out loud.
 
 The gains concentrate where the algorithms changed. Ordinary `lm_robust()` is about twice as fast. Absorbed fixed effects are 133x faster at 500 blocks and 2,318x faster at 2,000, returning bit-identical numbers. Horvitz-Thompson under complete randomization is 888x faster at N = 3,000, because the N-by-N joint inclusion probability matrix is never built.
 
@@ -137,15 +137,19 @@ fit_fe <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~ bl)
 fit_fe$se_type
 ```
 
-The reason it works is an identity. HC2 and HC3 need the leverage values of the full design matrix, meaning the matrix with every fixed-effect dummy in it, and absorbing fixed effects by demeaning is exactly the decision not to build that matrix. With a single factor the hat value splits exactly:
+The reason it works is an identity. HC2 and HC3 need the leverage values of the full design matrix, meaning the matrix with every fixed-effect dummy in it, and absorbing fixed effects by demeaning is exactly the decision not to build that matrix. But the projection onto the full design splits exactly into the projection onto the dummies and the projection onto the demeaned covariates:
 
 ```
-h_ii = h_ii(demeaned X) + w_i / sum(w over i's group)
+P_[X | D] = P_D + P_{M_D X}
 ```
 
-so the leverage of the full design is recoverable from the demeaned fit plus one vector, at the cost of that vector rather than of a dummy hat matrix. Verified to machine precision against writing the dummies out, weighted and unweighted, balanced and unbalanced.
+so `h_ii` is the demeaned-X hat value plus `diag(P_D)`. With a single factor `P_D` is diagonal and that second term is simply `w_i / sum(w over i's group)`.
 
-**Two or more factors do not get the identity**, because the analogous sum is wrong in the third decimal place rather than by rounding. Neither does CR2, with one factor or several, since its adjustment is built from cluster-level blocks of the hat matrix rather than from `h_ii`. In those cases 2.0 does what 1.x did: it writes the dummies out and reads the hat values off the full design. The answer is exact and equal to 1.0.6.
+**This holds for any number of factors.** With several, `P_D` is no longer diagonal, but writing the FE design with its widest factor in full dummies and the rest contrast-coded leaves the leading block of `D'WD` diagonal, so `diag(P_D)` needs only a factorisation of size `sum_{k>1}(g_k - 1)`: for a panel of many units over a few periods, a handful of columns. The dummy matrix is never built. Verified to machine precision against writing the dummies out, weighted and unweighted, balanced and unbalanced, from one factor to five.
+
+What does *not* work is the tempting shortcut of adding up each factor's own within-group share. That drops the cross terms and is wrong in the third decimal place rather than by rounding; an earlier draft of 2.0 tested that version, found it wrong, and concluded there was no identity beyond one factor.
+
+**CR2 is the exception.** Its adjustment is built from cluster-level *blocks* of the hat matrix rather than from `h_ii`, and blocks do not decompose the way the diagonal does. There 2.0 does what 1.x did: it writes the dummies out and reads the hat values off the full design. The answer is exact and equal to 1.0.6.
 
 ```{r}
 dat$bl2 <- rep(1:20, times = 50)
@@ -154,16 +158,18 @@ lm_robust(y ~ z + x, data = dat, fixed_effects = ~ bl,
           clusters = cl, se_type = "CR2")$std.error
 ```
 
-**What that costs is why no default does it.** Expanding the dummies is roughly cubic in the number of levels. On a two-way panel of 1,000 groups it takes about 5 seconds where the absorbed path takes 0.01, and the gap widens from there; that cost is the whole reason to absorb fixed effects rather than expand them. So the defaults stay on the absorbed path and tell you they have:
+**What that costs is why one default does not do it.** Expanding the dummies is roughly cubic in the number of levels, and that cost is the whole reason to absorb fixed effects rather than expand them. Only CR2 still needs the expansion, so it is the only default that moves:
 
 ```{r}
 fit <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~ bl + bl2)
 fit$se_type
 ```
 
-Two or more factors default to `"HC1"` where 1.x gave `"HC2"`; any `fixed_effects` with `clusters` defaults to `"CR0"` where 1.x gave `"CR2"`. Both warn once per session, not once per call, since absorbed fixed effects are usually fitted in a loop. Writing `se_type = "HC1"` accepts the new default and removes the warning; writing `se_type = "HC2"` gets the 1.x number back, also without warning.
+Unclustered fixed effects keep the `"HC2"` default at any number of factors, exactly as 1.x did. Any `fixed_effects` with `clusters` defaults to `"CR0"` where 1.x gave `"CR2"`, and warns once per session rather than once per call, since absorbed fixed effects are usually fitted in a loop. Writing `se_type = "CR0"` accepts the new default and removes the warning; writing `se_type = "CR2"` gets the 1.x number back, also without warning.
 
-**The upside.** You can absorb a very large number of fixed effects and get a standard error quickly, which was previously impractical: 1.x defaults to HC2 with fixed effects and computes it from the full dummy hat matrix, so 40,000 observations across 2,000 blocks takes it 41 seconds. 2.0 returns the same number in 18 milliseconds, because one factor needs only the identity. Where you genuinely want the expansion, ask for it and 2.0 will pay the cost, exactly as 1.x paid it without asking.
+**The upside.** You can absorb a very large number of fixed effects and get a standard error quickly, which was previously impractical. 1.x computes HC2 from the full dummy hat matrix, so 40,000 observations across 2,000 blocks takes it 41 seconds; 2.0 returns the same number in 18 milliseconds. Two-way is where it tells most: 50,000 observations across 1,000 x 30 groups took 13.8 seconds and 970 MB in 1.x, and takes 36 milliseconds and 174 MB here. The memory that made wide fixed effects impractical is simply never allocated.
+
+**A rank-deficiency bug goes with it.** If one FE factor is spanned by the others -- a nested factor, or a disconnected design -- the FE design is rank deficient. 1.x expanded the dummies, let a pivoted QR drop the redundant columns, and read the hat values off the padded design, so its absorbed answer disagreed with its own explicit-dummy fit. Taking `diag(P_D)` through a pseudo-inverse is exact at any rank, so 2.0 returns the dummy-regression answer, and uses the design's true rank for the residual degrees of freedom rather than the nominal level count.
 
 ### 3. Functions that are gone
 
