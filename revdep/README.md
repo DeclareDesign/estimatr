@@ -26,18 +26,9 @@
 
 # Revdeps
 
-## Failed to check (1)
+## New problems (1)
 
-|package |version |error |warning |note |
-|:-------|:-------|:-----|:-------|:----|
-|hbal    |1.2.15  |1     |        |     |
-
-## New problems (4)
-
-|package      |version |error  |warning |note |
-|:------------|:-------|:------|:-------|:----|
-|[clubSandwich](problems.md#clubsandwich)|0.7.0   |__+2__ |        |     |
+|package     |version |error  |warning |note |
+|:-----------|:-------|:------|:-------|:----|
 |[eventstudyr](problems.md#eventstudyr)|1.2.0   |__+1__ |        |     |
-|[RCT](problems.md#rct)|1.2     |__+2__ |        |     |
-|[statuser](problems.md#statuser)|0.3.1   |__+1__ |__+1__  |     |
 
