@@ -70,7 +70,7 @@ iv_robust <- function(formula,
     warning("More regressors than instruments")
   }
 
-  has_fe  <- is.character(model_data[["fixed_effects"]])
+  has_fe  <- !is.null(model_data[["fixed_effects"]])
   fe_rank <- 0L
   fe_lev <- NULL
   yoriginal <- NULL

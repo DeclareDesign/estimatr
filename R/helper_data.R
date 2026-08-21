@@ -66,13 +66,16 @@ clean_model_data <- function(data, datargs, estimator = "") {
     } else {
       fe_mf <- stats::model.frame.default(fe_formula, data = data, na.action = NULL)
     }
-    # sapply() collapses the factors to a character matrix, which is what the
-    # demeaning wants but which also re-derives the levels by string sort, so
-    # a factor with levels 1..30 comes back ordered 1, 10, 11. The `felevels`
-    # field reports the levels the data actually had, so capture them here,
-    # before the coercion throws them away.
-    fe_level_names <- lapply(fe_mf, function(x) levels(as.factor(x)))
-    m_formula_env[[name]] <- sapply(fe_mf, FUN = as.factor)
+    # The fixed effects travel as an INTEGER CODE matrix, with the level names
+    # carried alongside. An earlier version put a character matrix here, which
+    # every consumer then coerced back to factors: a round trip that cost
+    # around 4 ms per fit at n = 100,000, doubled the memory the model frame
+    # had to carry through NA handling, and re-derived the levels by string
+    # sort, so a factor with levels 1..30 came back ordered 1, 10, 11. Codes
+    # keep the order the data had, so nothing has to be corrected afterwards.
+    fe_fac <- lapply(fe_mf, function(x) if (is.factor(x)) x else as.factor(x))
+    fe_level_names <- lapply(fe_fac, levels)
+    m_formula_env[[name]] <- sapply(fe_fac, as.integer)
     mfargs[["fixed_effects"]] <- sym(name)
   } else {
     fe_level_names <- NULL
@@ -154,8 +157,22 @@ clean_model_data <- function(data, datargs, estimator = "") {
   ret[["block"]] <- stats::model.extract(mf, "block")
 
   ret[["fixed_effects"]] <- stats::model.extract(mf, "fixed_effects")
-  if (is.character(ret[["fixed_effects"]])) {
+  if (!is.null(ret[["fixed_effects"]])) {
     ret[["fixed_effects"]] <- as.matrix(ret[["fixed_effects"]])
+    # A level can disappear between capture and here, either because every one
+    # of its rows was dropped for missingness or because the factor arrived
+    # carrying levels it never used. Downstream code sizes a rank correction
+    # off the number of levels, so an absent level must not be counted, and
+    # fe_leverage() indexes by code and needs them contiguous. Renumber only
+    # the columns that actually have a gap.
+    for (k in seq_len(ncol(ret[["fixed_effects"]]))) {
+      col <- ret[["fixed_effects"]][, k]
+      u <- sort(unique(col))
+      if (length(u) != u[length(u)]) {
+        ret[["fixed_effects"]][, k] <- match(col, u)
+        fe_level_names[[k]] <- fe_level_names[[k]][u]
+      }
+    }
   }
   ret[["fe_level_names"]] <- fe_level_names
 
@@ -168,14 +185,18 @@ clean_model_data <- function(data, datargs, estimator = "") {
   return(ret)
 }
 
-# The fixed effects as a data frame of factors. `clean_model_data()` stores
-# them as a character matrix, so every caller that wants levels or integer
-# codes has to coerce, which is a string sort per column. `demean_fes()` runs
-# first and caches the result, and the later callers reuse it.
+# The fixed effects as a data frame of factors, rebuilt from the integer codes
+# and the level names. Only `model.matrix()` needs factors, so this is on the
+# CR2 path and the instrument-demeaning path and nowhere else; everything on
+# the ordinary path works from the codes directly.
 #' @noRd
 fe_factors <- function(model_data) {
-  model_data[["fe_df"]] %||%
-    as.data.frame(model_data[["fixed_effects"]], stringsAsFactors = TRUE)
+  codes <- model_data[["fixed_effects"]]
+  lv <- model_data[["fe_level_names"]]
+  out <- lapply(seq_len(ncol(codes)), function(k) {
+    factor(codes[, k], levels = seq_along(lv[[k]]), labels = lv[[k]])
+  })
+  stats::setNames(as.data.frame(out, stringsAsFactors = FALSE), colnames(codes))
 }
 
 # Demean outcome and design matrix by fixed effects (Frisch-Waugh-Lovell).
@@ -185,13 +206,9 @@ fe_factors <- function(model_data) {
 #' @importFrom stats ave
 #' @noRd
 demean_fes <- function(model_data) {
-  fe_df     <- fe_factors(model_data)
-  fe_levels <- vapply(fe_df, nlevels, 0L)
-  fe_codes  <- lapply(fe_df, as.integer)
-  # clean_model_data() stores the fixed effects as a character matrix, and
-  # coercing it back to factors costs a string sort per column. Three callers
-  # need the same coercion, so it is done once and carried.
-  model_data[["fe_df"]] <- fe_df
+  codes     <- model_data[["fixed_effects"]]
+  fe_codes  <- lapply(seq_len(ncol(codes)), function(k) codes[, k])
+  fe_levels <- vapply(model_data[["fe_level_names"]], length, 0L)
   # At this point model_data[["weights"]] is the RAW weight vector (not yet
   # sqrt-transformed — that happens in lm_robust_fit / prep_lm_data).
   # WLS group means use raw weights as the metric.
@@ -217,22 +234,9 @@ demean_fes <- function(model_data) {
   }
 
   model_data[["fe_levels"]] <- fe_levels
-  # `fe_levels` above is a count per factor, used for the rank correction. The
-  # level *names* are what the `felevels` field carries, and they need two
-  # things at once. The ORDER has to come from clean_model_data(), which saw
-  # the columns before the character coercion re-sorted them as strings. The
-  # MEMBERSHIP has to come from `fe_df`, which is the estimation sample: a
-  # level whose every row was dropped for missingness is not in the fit and
-  # must not be counted. Downstream code sizes a degrees-of-freedom correction
-  # off `length(felevels[[term]])`, so counting absent levels inflates it.
-  model_data[["fe_level_names"]] <- if (is.null(model_data[["fe_level_names"]])) {
-    lapply(fe_df, levels)
-  } else {
-    Map(
-      function(ordered, col) ordered[ordered %in% levels(col)],
-      model_data[["fe_level_names"]], fe_df
-    )
-  }
+  # `fe_level_names` needs no repair here any more. It is captured in the order
+  # the data had and renumbered alongside the codes in clean_model_data(), so
+  # by this point its order and its membership are both already right.
   # `fe_codes` and the raw weights are what fe_leverage() needs, and it is
   # called only when the requested se_type wants it.
   model_data[["fe_codes"]] <- fe_codes
@@ -416,8 +420,8 @@ needs_fe_leverage <- function(se_type) {
 # Demean an arbitrary matrix by the same FE structure as model_data.
 # Used in iv_robust to demean the instrument matrix.
 demean_matrix_by_fes <- function(mat, model_data) {
-  fe_df    <- fe_factors(model_data)
-  fe_codes <- lapply(fe_df, as.integer)
+  codes    <- model_data[["fixed_effects"]]
+  fe_codes <- lapply(seq_len(ncol(codes)), function(k) codes[, k])
   w        <- model_data[["weights"]] %||% numeric(0L)
   has_int  <- !is.null(colnames(mat)) && "(Intercept)" %in% colnames(mat)
 

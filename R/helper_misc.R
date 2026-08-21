@@ -102,7 +102,15 @@ lm_return <- function(return_list, model_data, formula) {
   }
   return_list[["fitted.values"]] <- drop(return_list[["fitted.values"]])
   return_list[["ei.iv"]] <- drop(return_list[["ei.iv"]])
-  return_list[["residuals"]] <- drop(return_list[["residuals"]])
+  # Residuals come back unnamed, as they did in 1.0.6. The names are the model
+  # frame's row names, and they arrive here only because `X %*% beta` inherits
+  # the design matrix's rownames: at n = 100,000 that is 6.4 MB of strings
+  # wrapped around 0.8 MB of numbers, and it made a fit with fixed effects
+  # smaller than the same fit without them, since the FE path never picked them
+  # up. `fitted.values` keeps its names, also as in 1.0.6.
+  resid <- drop(return_list[["residuals"]])
+  if (is.matrix(resid)) rownames(resid) <- NULL else names(resid) <- NULL
+  return_list[["residuals"]] <- resid
   return(return_list)
 }
 
@@ -251,10 +259,25 @@ absorbed_group_effects <- function(fitted, coefficients, model_data) {
   if (ncol(fe) != 1L || NCOL(fitted) != 1L) return(NULL)
   # The value is constant within group, so the group effect is the value at
   # the group's first row. tapply() would build the full split to read one
-  # element out of each piece; match() finds those rows in a single pass.
+  # element out of each piece; match() finds those rows in a single pass, and
+  # matching integer codes rather than the level strings is three times faster
+  # again at n = 100,000.
   g <- fe[, 1L]
-  lv <- levels(fe_factors(model_data)[[1L]])
-  effects <- (fitted - drop(model_data[["Xoriginal"]] %*% coefficients))[match(lv, g)]
+  lv <- model_data[["fe_level_names"]][[1L]]
+  # 1.0.6 built these from a character matrix, so it returned them in string
+  # order: a factor with levels 1..30 came back 1, 10, 11, ... The codes carry
+  # the data's own order instead, so sort here rather than silently renaming
+  # and reordering a returned field. Sorting `length(lv)` strings is nothing;
+  # the string matching over all n observations, which this replaces, was not.
+  ord <- order(as.character(lv))
+  # Evaluate at the representative rows only. The group effect is constant
+  # within group, so forming `fitted - X b` for all n observations to read one
+  # value per group out of it does n-by-k work, and allocates two n-length
+  # vectors, to produce `length(lv)` numbers.
+  idx <- match(ord, g)
+  effects <- fitted[idx] -
+    drop(model_data[["Xoriginal"]][idx, , drop = FALSE] %*% coefficients)
+  lv <- lv[ord]
   # tapply() returned a one-dimensional array, and that shape is part of the
   # return surface: `predict()` and the 1.0.6 comparison both see it.
   dim(effects) <- length(lv)

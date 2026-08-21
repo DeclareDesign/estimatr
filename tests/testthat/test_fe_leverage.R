@@ -188,8 +188,13 @@ test_that("one-way unclustered FE keeps the HC2 default and stays silent", {
 
 test_that("the FE leverage vector is the group weight share", {
   d <- configs$unbalanced
+  # clean_model_data() carries the fixed effects as an integer code matrix
+  # with the level names alongside; build that shape here.
+  g_fac <- as.factor(d$g)
   md <- list(
-    fixed_effects = d["g"],
+    fixed_effects = matrix(as.integer(g_fac), ncol = 1L,
+                           dimnames = list(NULL, "g")),
+    fe_level_names = list(g = levels(g_fac)),
     outcome = as.matrix(d$y),
     design_matrix = cbind("(Intercept)" = 1, x = d$x),
     weights = d$wts,

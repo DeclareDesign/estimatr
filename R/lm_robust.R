@@ -101,7 +101,7 @@ lm_robust <- function(formula,
   data <- rlang::enquo(data)
   model_data <- clean_model_data(data = data, datargs)
 
-  has_fe  <- is.character(model_data[["fixed_effects"]])
+  has_fe  <- !is.null(model_data[["fixed_effects"]])
   fe_rank <- 0L
   fe_lev <- NULL
   yoriginal <- NULL

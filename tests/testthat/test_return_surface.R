@@ -146,3 +146,55 @@ test_that("felevels lists the levels in the fit, not the levels in the data", {
   expect_named(iv$felevels, "get(idvar)")
   expect_equal(iv$felevels[["get(idvar)"]], as.character(3:20))
 })
+
+# ---- names on the n-length fields ----
+
+# `fitted.values` carries the model frame's row names and `residuals` does not,
+# which is what 1.0.6 returned in every configuration. The distinction is worth
+# pinning rather than leaving to chance: the names arrive only because
+# `X %*% beta` inherits the design matrix's rownames, so they appear or vanish
+# depending on which branch built the vector. 2.0 briefly named residuals on
+# fits without fixed effects and not on fits with them, which made a fit with
+# absorbed fixed effects SMALLER than the same fit without them -- 8.0 MB
+# against 14.4 MB at n = 100,000, all of it row-name strings.
+#
+# The comparisons above call unname() on both sides, by design, so they cannot
+# see this. Hence a test of its own.
+
+test_that("fitted.values is named and residuals is not, in every configuration", {
+  set.seed(1)
+  n <- 300
+  d <- data.frame(
+    y = rnorm(n), y2 = rnorm(n), x = rnorm(n),
+    g = factor(sample(6, n, TRUE)), cl = factor(sample(8, n, TRUE)),
+    w = runif(n, 1, 2), iv = rnorm(n)
+  )
+  d$zz <- d$iv + rnorm(n)
+  d$yy <- d$zz + rnorm(n)
+  d$y[4] <- NA  # a dropped row, so the names are not simply seq_len(n)
+
+  fits <- list(
+    plain     = lm_robust(y ~ x, data = d),
+    weighted  = lm_robust(y ~ x, weights = w, data = d),
+    clustered = lm_robust(y ~ x, clusters = cl, data = d),
+    fe        = lm_robust(y ~ x, fixed_effects = ~ g, data = d),
+    fe_wt     = lm_robust(y ~ x, fixed_effects = ~ g, weights = w, data = d),
+    fe_cl     = suppressWarnings(
+      lm_robust(y ~ x, fixed_effects = ~ g, clusters = cl, data = d)),
+    iv        = iv_robust(yy ~ zz | iv, data = d),
+    iv_fe     = iv_robust(yy ~ zz | iv, fixed_effects = ~ g, data = d)
+  )
+
+  for (nm in names(fits)) {
+    expect_false(is.null(names(fits[[nm]]$fitted.values)), info = nm)
+    expect_null(names(fits[[nm]]$residuals), info = nm)
+  }
+
+  # and the same for a multivariate outcome, where the fields are matrices
+  mv <- lm_robust(cbind(y, y2) ~ x, data = d)
+  mv_fe <- lm_robust(cbind(y, y2) ~ x, fixed_effects = ~ g, data = d)
+  for (f in list(mv, mv_fe)) {
+    expect_false(is.null(rownames(f$fitted.values)))
+    expect_null(rownames(f$residuals))
+  }
+})
