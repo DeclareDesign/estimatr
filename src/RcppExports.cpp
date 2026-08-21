@@ -84,6 +84,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// xtab_cpp
+Rcpp::NumericMatrix xtab_cpp(const Rcpp::IntegerVector& i1, const Rcpp::IntegerVector& i2, const int n1, const int n2, const Rcpp::NumericVector& w);
+RcppExport SEXP _estimatr_xtab_cpp(SEXP i1SEXP, SEXP i2SEXP, SEXP n1SEXP, SEXP n2SEXP, SEXP wSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type i1(i1SEXP);
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type i2(i2SEXP);
+    Rcpp::traits::input_parameter< const int >::type n1(n1SEXP);
+    Rcpp::traits::input_parameter< const int >::type n2(n2SEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type w(wSEXP);
+    rcpp_result_gen = Rcpp::wrap(xtab_cpp(i1, i2, n1, n2, w));
+    return rcpp_result_gen;
+END_RCPP
+}
 // naomitwhy
 DataFrame naomitwhy(DataFrame df, Function recursive_subset);
 RcppExport SEXP _estimatr_naomitwhy(SEXP dfSEXP, SEXP recursive_subsetSEXP) {
@@ -103,6 +118,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_estimatr_lm_solver", (DL_FUNC) &_estimatr_lm_solver, 3},
     {"_estimatr_lm_variance", (DL_FUNC) &_estimatr_lm_variance, 12},
     {"_estimatr_demean_cpp", (DL_FUNC) &_estimatr_demean_cpp, 5},
+    {"_estimatr_xtab_cpp", (DL_FUNC) &_estimatr_xtab_cpp, 5},
     {"_estimatr_naomitwhy", (DL_FUNC) &_estimatr_naomitwhy, 2},
     {NULL, NULL, 0}
 };

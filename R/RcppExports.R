@@ -21,6 +21,10 @@ demean_cpp <- function(mat, fe_codes_list, weights, eps = 1e-8, max_iter = 100L)
     .Call(`_estimatr_demean_cpp`, mat, fe_codes_list, weights, eps, max_iter)
 }
 
+xtab_cpp <- function(i1, i2, n1, n2, w) {
+    .Call(`_estimatr_xtab_cpp`, i1, i2, n1, n2, w)
+}
+
 naomitwhy <- function(df, recursive_subset) {
     .Call(`_estimatr_naomitwhy`, df, recursive_subset)
 }

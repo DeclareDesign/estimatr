@@ -127,8 +127,16 @@ lm_robust <- function(formula,
       n_obs <- nrow(yoriginal)
       df_r <- n_obs - fe_rank
       residuals_proj <- drop(model_data$outcome)
-      rss <- sum(residuals_proj^2)
-      tss_full <- sum((yoriginal - mean(yoriginal))^2)
+      fitted_full <- drop(yoriginal) - residuals_proj
+      if (!is.null(model_data[["obs_names"]])) {
+        if (is.matrix(fitted_full)) {
+          rownames(fitted_full) <- model_data[["obs_names"]]
+        } else {
+          names(fitted_full) <- model_data[["obs_names"]]
+        }
+      }
+      rss <- sum(diag(crossprod(residuals_proj)))
+      tss_full <- sum(diag(crossprod(yoriginal - mean(yoriginal))))
       r2_full <- 1 - rss / tss_full
       return_list <- list(
         coefficients  = setNames(numeric(0), character(0)),
@@ -141,7 +149,7 @@ lm_robust <- function(formula,
         df.residual   = df_r,
         res_var       = rss / df_r,
         vcov          = matrix(numeric(0), 0L, 0L),
-        fitted.values = drop(yoriginal) - residuals_proj,
+        fitted.values = fitted_full,
         residuals     = residuals_proj,
         weighted      = !is.null(model_data$weights),
         se_type       = "none",
@@ -201,7 +209,17 @@ lm_robust <- function(formula,
 
     # Reconstruct full fitted values: by FWL, projected residuals = full residuals
     residuals_proj <- drop(return_list[["residuals"]])
-    return_list[["fitted.values"]] <- drop(yoriginal) - residuals_proj
+    fitted_full <- drop(yoriginal) - residuals_proj
+    # yoriginal comes from the stripped model data, so the names go back on
+    # here, exactly as lm_return() does it for a fit without fixed effects.
+    if (!is.null(model_data[["obs_names"]])) {
+      if (is.matrix(fitted_full)) {
+        rownames(fitted_full) <- model_data[["obs_names"]]
+      } else {
+        names(fitted_full) <- model_data[["obs_names"]]
+      }
+    }
+    return_list[["fitted.values"]] <- fitted_full
 
     # Absorbed group effects, so predict() can put them back.
     return_list[["fixed_effects"]] <- absorbed_group_effects(
@@ -211,8 +229,13 @@ lm_robust <- function(formula,
     # Full model R2 using original Y
     n_obs <- nrow(yoriginal)
     y_mean <- mean(yoriginal)
-    tss_full <- sum((yoriginal - y_mean)^2)
-    rss_full <- sum(residuals_proj^2)
+    # `crossprod()` reads the columns without materialising their squares, so
+    # the two sums of squares cost one n-length temporary between them instead
+    # of three. A multivariate outcome is n-by-k here, and both totals are
+    # pooled across the k columns as they have always been, so it is the trace
+    # that is wanted and not the whole k-by-k matrix.
+    tss_full <- sum(diag(crossprod(yoriginal - y_mean)))
+    rss_full <- sum(diag(crossprod(residuals_proj)))
     r2_full  <- 1 - rss_full / tss_full
     return_list[["r.squared"]]     <- r2_full
     return_list[["adj.r.squared"]] <- 1 - (1 - r2_full) * (n_obs - 1L) / return_list[["df.residual"]]

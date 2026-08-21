@@ -123,10 +123,29 @@ clean_model_data <- function(data, datargs, estimator = "") {
   # For IV, select only the regressor RHS (rhs=1) from the Formula object.
   # For non-IV, use terms(mf) which already has '.' expanded against the data.
   design_terms <- if (estimator == "iv") terms(formula, rhs = 1) else terms(mf)
+  # The row names are carried once, here, and put back on `fitted.values` in
+  # lm_return(). `model.frame()` turns a data frame's compact automatic row
+  # names into a character vector as long as the data, and from here every
+  # object derived from the design matrix inherits it: the fitted values from
+  # `X %*% beta`, the residuals formed from those, the row subset the cluster
+  # sort takes, and the `drop()` that turns each n-by-1 matrix into a vector.
+  # Only `fitted.values` keeps them in the returned object. Stripping them
+  # costs one copy of the design matrix here and saves every copy downstream;
+  # at n = 100,000 that trade is worth two thirds of a plain fit. The model
+  # frame's row names are integer and `model.matrix()` is what turns them into
+  # strings, but building the strings is not the cost, and measures near zero.
+  # Carrying 100,000 of them through each intermediate is.
+  y_resp <- stats::model.response(mf, type = "numeric")
+  dm <- stats::model.matrix(design_terms, data = mf)
+  obs_names <- rownames(dm)
+  dimnames(dm) <- list(NULL, colnames(dm))
+  if (is.matrix(y_resp)) rownames(y_resp) <- NULL else names(y_resp) <- NULL
+
   ret <- list(
-    outcome = stats::model.response(mf, type = "numeric"),
-    design_matrix = stats::model.matrix(design_terms, data = mf),
-    formula = formula
+    outcome = y_resp,
+    design_matrix = dm,
+    formula = formula,
+    obs_names = obs_names
   )
 
   if (estimator == "iv") {
@@ -136,7 +155,9 @@ clean_model_data <- function(data, datargs, estimator = "") {
         "example, `formula = y ~ x1 + x2 | x1 + z2`.\n\nSee ?iv_robust."
       )
     }
-    ret[["instrument_matrix"]] <- stats::model.matrix(terms(formula, rhs = 2), data = mf)
+    im <- stats::model.matrix(terms(formula, rhs = 2), data = mf)
+    dimnames(im) <- list(NULL, colnames(im))
+    ret[["instrument_matrix"]] <- im
     ret[["terms_regressors"]] <- terms(formula, rhs = 1)
   } else if (estimator == "dim") {
     ret[["original_treatment"]] <- mf[, colnames(mf) == all.vars(terms(mf)[[3]])[1]]
@@ -159,16 +180,37 @@ clean_model_data <- function(data, datargs, estimator = "") {
   ret[["fixed_effects"]] <- stats::model.extract(mf, "fixed_effects")
   if (!is.null(ret[["fixed_effects"]])) {
     ret[["fixed_effects"]] <- as.matrix(ret[["fixed_effects"]])
+    # With a single fixed-effects factor, dropping any row for missingness
+    # degrades the model frame's one-column code matrix to a vector, and
+    # `as.matrix()` rebuilds it without a column name. Everything that names a
+    # fixed effect then loses the term: `fe_factors()` hands `model.matrix()` a
+    # data frame with no names and CR2 dies on `~ 0 + .`, the absorbed effects
+    # come back as "1", "2", "3" instead of "g1", "g2", "g3", and `predict()`
+    # rejects its own newdata. `fe_level_names` is captured before the model
+    # frame and keeps its names, so take them from there and the two cannot
+    # disagree. 1.0.6 lost the name here too and fell back to "V1".
+    # Guarded: assigning the attribute duplicates the whole code matrix, and
+    # in the ordinary case the names are already right.
+    if (!identical(colnames(ret[["fixed_effects"]]), names(fe_level_names))) {
+      colnames(ret[["fixed_effects"]]) <- names(fe_level_names)
+    }
     # A level can disappear between capture and here, either because every one
     # of its rows was dropped for missingness or because the factor arrived
     # carrying levels it never used. Downstream code sizes a rank correction
     # off the number of levels, so an absent level must not be counted, and
     # fe_leverage() indexes by code and needs them contiguous. Renumber only
     # the columns that actually have a gap.
+    #
+    # The codes are positive and run to at most their own maximum, so a gap is
+    # a zero count in `tabulate()`, which reads the column once into a bin
+    # vector the size of the factor. `sort(unique(col))` answered the same
+    # question by hashing all n observations: 5x the time and 1.4 MB per
+    # column at n = 100,000.
     for (k in seq_len(ncol(ret[["fixed_effects"]]))) {
       col <- ret[["fixed_effects"]][, k]
-      u <- sort(unique(col))
-      if (length(u) != u[length(u)]) {
+      counts <- tabulate(col)
+      if (any(counts == 0L)) {
+        u <- which(counts > 0L)
         ret[["fixed_effects"]][, k] <- match(col, u)
         fe_level_names[[k]] <- fe_level_names[[k]][u]
       }
@@ -221,7 +263,7 @@ demean_fes <- function(model_data) {
 
   X         <- model_data[["design_matrix"]]
   keep_cols <- if (has_int) colnames(X) != "(Intercept)" else rep(TRUE, ncol(X))
-  X_sub     <- X[, keep_cols, drop = FALSE]
+  X_sub     <- if (all(keep_cols)) X else X[, keep_cols, drop = FALSE]
   # Kept so lm_robust can recover the absorbed group effects, which predict()
   # needs and which are otherwise unrecoverable once X is demeaned.
   model_data[["Xoriginal"]] <- X_sub
@@ -277,7 +319,11 @@ demean_fes <- function(model_data) {
 #' @noRd
 fe_leverage <- function(fe_codes, w = NULL, leverage = TRUE) {
   n <- length(fe_codes[[1L]])
-  if (is.null(w) || length(w) == 0L) w <- rep(1, n)
+  # An unweighted fit does not need the weight vector materialised at all on
+  # the one-way path, which is the common one: the group sums are counts, and
+  # `w / A11[a]` is `1 / A11[a]`. The `rep(1, n)` is deferred to the multi-way
+  # branch below, which does index into it.
+  unweighted <- is.null(w) || length(w) == 0L
   g <- vapply(fe_codes, max, 0L)
 
   ord <- order(g, decreasing = TRUE)
@@ -286,7 +332,14 @@ fe_leverage <- function(fe_codes, w = NULL, leverage = TRUE) {
 
   a <- fe_codes[[1L]]
   g1 <- unname(g[1L])
-  A11 <- as.vector(rowsum(w, a, reorder = TRUE))
+  # The codes are contiguous 1..g1, so unweighted group sums are exactly
+  # `tabulate()`. `rowsum()` hashes all n observations to rediscover the
+  # groups: 0.67 ms and 2.2 MB against 0.03 ms at n = 100,000.
+  A11 <- if (unweighted) {
+    as.double(tabulate(a, nbins = g1))
+  } else {
+    as.vector(rowsum(w, a, reorder = TRUE))
+  }
 
   K <- length(g)
   offs <- if (K > 1L) cumsum(c(0L, g[-1L] - 1L)) else 0L
@@ -299,36 +352,34 @@ fe_leverage <- function(fe_codes, w = NULL, leverage = TRUE) {
   # the design reduces to the one-way case, where P_D is diagonal.
   if (p == 0L) {
     return(list(rank = g1,
-                leverage = if (leverage) w / A11[a] else NULL))
+                leverage = if (!leverage) NULL
+                           else if (unweighted) 1 / A11[a]
+                           else w / A11[a]))
   }
   ck <- lapply(2:K, function(k) fe_codes[[k]])
-  keep <- lapply(ck, function(z) z > 1L)
-  colof <- lapply(seq_len(K - 1L), function(k) offs[k] + ck[[k]] - 1L)
 
-  # Weighted cross-tabulation of two integer codes, as (index, value) pairs.
-  xtab <- function(i1, i2, n1, wts) {
-    s <- rowsum(wts, i1 + (i2 - 1L) * n1, reorder = TRUE)
-    list(idx = as.integer(rownames(s)), val = as.vector(s))
-  }
+  # The contrast codes: level 1 of each later factor is the reference and maps
+  # to 0, which xtab_cpp() skips. That is the same set of observations the
+  # `keep` masks select, without materialising the subsets.
+  cc_codes <- lapply(ck, function(z) z - 1L)
+  nlev <- g[-1L] - 1L
+  # Empty means unweighted, so no unit weight vector is built for the pass.
+  wv <- if (unweighted) numeric(0) else w
 
   A12 <- matrix(0, g1, p)
   for (k in seq_len(K - 1L)) {
-    kp <- keep[[k]]
-    s <- xtab(a[kp], ck[[k]][kp] - 1L, g1, w[kp])
-    A12[cbind((s$idx - 1L) %% g1 + 1L, offs[k] + (s$idx - 1L) %/% g1 + 1L)] <- s$val
+    A12[, offs[k] + seq_len(nlev[k])] <-
+      xtab_cpp(a, cc_codes[[k]], g1, nlev[k], wv)
   }
 
   A22 <- matrix(0, p, p)
   for (k in seq_len(K - 1L)) {
+    rows_k <- offs[k] + seq_len(nlev[k])
     for (l in k:(K - 1L)) {
-      kp <- keep[[k]] & keep[[l]]
-      if (!any(kp)) next
-      nk <- g[k + 1L] - 1L
-      s <- xtab(ck[[k]][kp] - 1L, ck[[l]][kp] - 1L, nk, w[kp])
-      rr <- offs[k] + (s$idx - 1L) %% nk + 1L
-      cc <- offs[l] + (s$idx - 1L) %/% nk + 1L
-      A22[cbind(rr, cc)] <- A22[cbind(rr, cc)] + s$val
-      if (l != k) A22[cbind(cc, rr)] <- A22[cbind(cc, rr)] + s$val
+      cols_l <- offs[l] + seq_len(nlev[l])
+      block <- xtab_cpp(cc_codes[[k]], cc_codes[[l]], nlev[k], nlev[l], wv)
+      A22[rows_k, cols_l] <- A22[rows_k, cols_l] + block
+      if (l != k) A22[cols_l, rows_k] <- A22[cols_l, rows_k] + t(block)
     }
   }
 
@@ -344,6 +395,10 @@ fe_leverage <- function(fe_codes, w = NULL, leverage = TRUE) {
   if (!leverage) {
     return(list(rank = g1 + rank_S, leverage = NULL))
   }
+  # Only the leverage vector reads these, and every se_type except HC2 and HC3
+  # returns above without it. They are two n-length vectors per later factor.
+  keep <- lapply(ck, function(z) z > 1L)
+  colof <- lapply(seq_len(K - 1L), function(k) offs[k] + ck[[k]] - 1L)
   S_inv <- es$vectors %*% (ifelse(es$values > tol, 1 / es$values, 0) * t(es$vectors))
   Tm <- C %*% S_inv
   q <- rowSums(Tm * C)
@@ -361,8 +416,9 @@ fe_leverage <- function(fe_codes, w = NULL, leverage = TRUE) {
     }
   }
 
+  lev <- 1 / A11[a] + q[a] - 2 * cross + quad
   list(rank = g1 + rank_S,
-       leverage = w * (1 / A11[a] + q[a] - 2 * cross + quad))
+       leverage = if (unweighted) lev else w * lev)
 }
 
 # HC2, HC3 and CR2 are built from the hat values of the full [X | FE dummies]

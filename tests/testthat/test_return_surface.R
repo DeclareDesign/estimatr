@@ -198,3 +198,44 @@ test_that("fitted.values is named and residuals is not, in every configuration",
     expect_null(rownames(f$residuals))
   }
 })
+
+# `res_var` and `weights` were named by accident, not by design. Both took
+# whatever dimnames survived `data[["y"]] - fitted.values`, which R resolves in
+# favour of the first operand that has any, so the answer depended on whether
+# the outcome happened to be carrying the model frame's row names at the time.
+# It was, except on the fixed-effects path, where the outcome has been demeaned
+# into a fresh matrix. So a weighted fixed-effects fit disagreed with a
+# weighted one without fixed effects, and with 1.0.6, in two fields at once.
+# Now that the row names are stripped once in clean_model_data() and put back
+# once in lm_return(), nothing is inherited by accident. These are the values
+# estimatr 1.0.6 returns, verified against an installed 1.0.6.
+test_that("res_var and weights are named as they are in 1.0.6", {
+  set.seed(42)
+  n <- 300
+  d <- data.frame(y = rnorm(n), x = rnorm(n), w = runif(n, 0.5, 2),
+                  g = factor(sample(10, n, TRUE)))
+
+  w_only <- lm_robust(y ~ x, data = d, weights = w)
+  w_fe   <- lm_robust(y ~ x, data = d, weights = w, fixed_effects = ~ g,
+                      se_type = "HC1")
+  fe_only <- lm_robust(y ~ x, data = d, fixed_effects = ~ g, se_type = "HC1")
+
+  # res_var is unnamed in all three; 1.0.6 never named it.
+  for (fit in list(w_only, w_fe, fe_only)) {
+    expect_null(names(fit$res_var))
+    expect_null(names(fit$r.squared))
+  }
+
+  # weights are named with the observation names whenever weights are used,
+  # with or without fixed effects. The fixed-effects fit that had no weights
+  # has none to name.
+  expect_equal(names(w_only$weights), rownames(d))
+  expect_equal(names(w_fe$weights), rownames(d))
+  expect_null(names(fe_only$weights))
+
+  # fitted.values keeps its names on every path, which is what the row names
+  # are carried through the fit for.
+  expect_equal(names(w_only$fitted.values), rownames(d))
+  expect_equal(names(w_fe$fitted.values), rownames(d))
+  expect_equal(names(fe_only$fitted.values), rownames(d))
+})

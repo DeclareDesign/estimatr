@@ -511,18 +511,36 @@ Eigen::MatrixXd demean_cpp(Eigen::MatrixXd mat,
     n_grp[k] = mx + 1;
   }
 
-  // Weight vector (all-ones when unweighted)
-  Eigen::VectorXd w(n);
-  if (weights.size() == n) {
+  // Weight vector. Unweighted fits never read it, so it is not built.
+  const bool unweighted = (weights.size() != n);
+  Eigen::VectorXd w;
+  if (!unweighted) {
+    w.resize(n);
     for (int i = 0; i < n; ++i) w(i) = weights[i];
-  } else {
-    w.setOnes();
   }
 
   // Pre-allocate group-sum buffers (reused across iterations and FE variables)
   int max_grp = *std::max_element(n_grp.begin(), n_grp.end());
-  Eigen::VectorXd w_sum(max_grp);
   Eigen::MatrixXd wx_sum(max_grp, p);
+
+  // The group weight sums depend only on the codes and the weights, so they
+  // are the same on every sweep. They used to be rebuilt inside the iteration
+  // loop, which is an O(n) pass per FE variable per sweep, thrown away and
+  // recomputed identically the next time round.
+  std::vector<Eigen::VectorXd> w_sums(n_fe);
+  for (int k = 0; k < n_fe; ++k) {
+    const std::vector<int>& g = fe[k];
+    w_sums[k] = Eigen::VectorXd::Zero(n_grp[k]);
+    if (unweighted) {
+      for (int i = 0; i < n; ++i) w_sums[k](g[i]) += 1.0;
+    } else {
+      for (int i = 0; i < n; ++i) w_sums[k](g[i]) += w(i);
+    }
+  }
+
+  // max|mat| after the final sweep, accumulated by the subtraction pass below
+  // rather than by a separate full pass over the matrix.
+  double max_abs = 0.0;
 
   for (int iter = 0; iter < max_iter; ++iter) {
     double max_delta = 0.0;
@@ -530,23 +548,28 @@ Eigen::MatrixXd demean_cpp(Eigen::MatrixXd mat,
     for (int k = 0; k < n_fe; ++k) {
       const std::vector<int>& g = fe[k];
       const int ng = n_grp[k];
+      const Eigen::VectorXd& w_sum = w_sums[k];
 
       // Both `mat` and `wx_sum` are column-major, so everything below walks
       // one column at a time. Touching a row at a time instead strides across
       // the whole matrix on every element, and measured an order of magnitude
       // slower here; it also built a heap-allocated row vector per
       // observation, of which there are only `ng` distinct values.
-      w_sum.head(ng).setZero();
       wx_sum.topRows(ng).setZero();
 
       const std::size_t wstride = (std::size_t) wx_sum.rows();
 
-      for (int i = 0; i < n; ++i) w_sum(g[i]) += w(i);
-
+      // An unweighted fit multiplied every element by a 1.0 it had just read
+      // out of a vector of ones. The results are bit-identical either way;
+      // this is the innermost loop of the whole demeaning.
       for (int c = 0; c < p; ++c) {
         const double* mc = mat.data() + (std::size_t) c * n;
         double* wc = wx_sum.data() + (std::size_t) c * wstride;
-        for (int i = 0; i < n; ++i) wc[g[i]] += w(i) * mc[i];
+        if (unweighted) {
+          for (int i = 0; i < n; ++i) wc[g[i]] += mc[i];
+        } else {
+          for (int i = 0; i < n; ++i) wc[g[i]] += w(i) * mc[i];
+        }
       }
 
       // Group sums become group means once per group rather than once per
@@ -562,17 +585,59 @@ Eigen::MatrixXd demean_cpp(Eigen::MatrixXd mat,
         }
       }
 
+      // The last FE variable's subtraction touches every cell of `mat`, so the
+      // running maximum it leaves behind IS max|mat| for the finished sweep,
+      // which is what the convergence test below needs. Computing it here
+      // costs nothing; `mat.cwiseAbs().maxCoeff()` was a second full pass.
+      max_abs = 0.0;
       for (int c = 0; c < p; ++c) {
         double* mc = mat.data() + (std::size_t) c * n;
         const double* wc = wx_sum.data() + (std::size_t) c * wstride;
-        for (int i = 0; i < n; ++i) mc[i] -= wc[g[i]];
+        for (int i = 0; i < n; ++i) {
+          mc[i] -= wc[g[i]];
+          const double v = std::abs(mc[i]);
+          if (v > max_abs) max_abs = v;
+        }
       }
     }
 
     // Convergence: change small relative to current scale
-    double scale = 1.0 + mat.cwiseAbs().maxCoeff();
+    double scale = 1.0 + max_abs;
     if (max_delta < eps * scale) break;
   }
 
   return mat;
+}
+
+// Weighted cross-tabulation of two integer code vectors into a dense matrix.
+//
+// `i1` runs 1..n1 and `i2` runs 1..n2; an observation whose code is below 1 in
+// either vector is skipped, which is how the reference level of a
+// contrast-coded factor drops out. An empty `w` means unweighted, so the cell
+// counts are wanted and no unit weight vector has to be materialised.
+//
+// This replaces a composite index plus `rowsum()`. `rowsum()` hashes all n
+// observations to rediscover groups that are already known to be 1..n1 and
+// 1..n2, and then labels its result rows with the group values AS STRINGS, so
+// the caller converted them back with `as.integer(rownames(.))`. At n =
+// 100,000 over 1,000 by 30 groups that pair cost 7.3 ms against 0.04 ms for a
+// single pass, and fe_leverage() does one per factor pair.
+// [[Rcpp::export]]
+Rcpp::NumericMatrix xtab_cpp(const Rcpp::IntegerVector& i1,
+                             const Rcpp::IntegerVector& i2,
+                             const int n1,
+                             const int n2,
+                             const Rcpp::NumericVector& w) {
+  const R_xlen_t n = i1.size();
+  const bool unweighted = (w.size() == 0);
+  Rcpp::NumericMatrix out(n1, n2);
+
+  for (R_xlen_t t = 0; t < n; ++t) {
+    const int r = i1[t];
+    const int c = i2[t];
+    if (r < 1 || c < 1 || r > n1 || c > n2) continue;
+    out(r - 1, c - 1) += unweighted ? 1.0 : w[t];
+  }
+
+  return out;
 }

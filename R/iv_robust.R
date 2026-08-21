@@ -220,7 +220,17 @@ iv_robust <- function(formula,
       }
     }
     residuals_proj <- drop(return_list[["residuals"]])
-    return_list[["fitted.values"]] <- drop(yoriginal) - residuals_proj
+    fitted_full <- drop(yoriginal) - residuals_proj
+    # yoriginal comes from the stripped model data, so the names go back on
+    # here, exactly as lm_return() does it for a fit without fixed effects.
+    if (!is.null(model_data[["obs_names"]])) {
+      if (is.matrix(fitted_full)) {
+        rownames(fitted_full) <- model_data[["obs_names"]]
+      } else {
+        names(fitted_full) <- model_data[["obs_names"]]
+      }
+    }
+    return_list[["fitted.values"]] <- fitted_full
 
     n_obs <- nrow(yoriginal)
     tss_full <- sum((yoriginal - mean(yoriginal))^2)

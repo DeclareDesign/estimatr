@@ -358,6 +358,18 @@ The first-stage F test carries one entry per endogenous regressor, named `"<var>
 - **`fixed_effects` given a bare column name (#304).** It produced "invalid formula" from deep inside `model.frame`. It now warns, names the argument, shows the expected form, and goes on to fit the model the way 1.x did.
 - **`lh_robust()` with multiple outcomes (#297).** Coefficients of a multivariate fit are named `"<outcome>:<term>"`, which a hypothesis such as `"cyl = 2"` cannot refer to, and `car::linearHypothesis()` reported it as malformed. 2.0 errors with that explanation and tells the user to fit one outcome at a time.
 
+### A single fixed-effects factor lost its name when rows were dropped
+
+With one factor in `fixed_effects` and any observation dropped for missingness, the model frame's one-column matrix of factor codes degrades to a vector, and rebuilding it as a matrix leaves it without a column name. Three things read that name, and all three failed. `se_type = "CR2"` errored outright with "'.' in formula and no 'data' argument", because CR2 is the one estimator that still expands the fixed effects and it does so through `model.matrix(~ 0 + .)` on a data frame that had no names to expand. The absorbed group effects in `fixed_effects` came back labelled `1`, `2`, `3` instead of `g1`, `g2`, `g3`. And `predict()` rejected its own data as containing new levels, since the levels it was matching against had lost the term.
+
+estimatr 1.0.6 lost the name in the same place and fell back to `V1`, so it returned `V11`, `V12`, `V13` and its `predict()` failed too, but it did answer the CR2 call. The name is now taken from the level names captured before the model frame is built, which are the same ones `felevels` reports, so the two cannot disagree and complete and incomplete data give the same labels. The restored CR2 fit agrees with 1.0.6 and with the explicit-dummy fit to twelve digits.
+
+Every fixed-effects test until now used complete data, which is why nothing reported this.
+
+### `res_var` and `weights` were named by accident on weighted fixed-effects fits
+
+Both fields took whatever dimnames survived `data[["y"]] - fitted.values`, and R resolves that in favour of the first operand carrying any. The outcome was carrying the model frame's row names, except on the fixed-effects path, where it has been demeaned into a fresh matrix. So a weighted fixed-effects fit disagreed with a weighted fit without fixed effects, and with 1.0.6, in two fields at once: `res_var` (and the `proj_` R-squareds derived from it) came back named after the outcome column when 1.0.6 leaves it unnamed, and `weights` came back unnamed when 1.0.6 names it. Now that the row names are carried explicitly rather than inherited, all three cases agree with 1.0.6. Verified against an installed 1.0.6 and pinned in `test_return_surface.R`.
+
 ### All-missing outcome with weights (#370)
 
 `lm_robust(X ~ 1, weights = w, data = df)` where `X` is entirely `NA` errors in estimatr 1.x with "'x' must be an array of at least two dimensions", while the same model without weights returns an NA coefficient. The asymmetry matters when one model is fitted across many subgroups and some subgroup has no observed outcome. 2.0 returns the NA coefficient in both cases.
@@ -394,7 +406,31 @@ Because probabilities are matched to units by row position, `data` must contain 
 
 ### TSS computation vectorized
 
-The total sum of squares calculation replaced an `apply(y, 1, '-', colMeans(y))` column-mean sweep with `sweep(y, 2, colMeans(y))`, which is handled by a single optimized C routine rather than an R-level loop. Speedup on a 1,000-observation multivariate model: approximately 280 µs.
+The total sum of squares calculation replaced an `apply(y, 1, '-', colMeans(y))` column-mean sweep with direct centring and `colSums()`. 1.x ran an R-level loop over rows; an intermediate version of 2.0 used `sweep()`, which builds its subtrahend with `array()` and then transposes it with `aperm()`, so it materialised two extra n-by-k copies to do what recycling does in one. Speedup on a 1,000-observation multivariate model: approximately 280 µs, and two fewer allocations the size of the outcome on every fit.
+
+### Front-end overhead
+
+At n = 100,000 the numerical core of a fit is a small fraction of the call. Most of the rest was the model frame's row names.
+
+`stats::model.frame()` turns a data frame's compact automatic row names into a character vector as long as the data, and from there every object derived from the design matrix carries them: the fitted values from `X %*% beta`, the residuals formed from those, the row subset the cluster sort takes, and the `drop()` that turns each n-by-1 matrix into a vector. Only `fitted.values` keeps them in the returned object; estimatr returns residuals unnamed, as 1.0.6 did, so on that branch they were built only to be discarded.
+
+They are now taken off the design matrix and the outcome once, in `clean_model_data()`, where both are still unshared and stripping them is free, and put back on `fitted.values` once in `lm_return()`. Nothing in between has to carry them. `weights` is named to match, as before.
+
+The rest are local. Gaps in fixed-effect codes are detected with `tabulate()` rather than by hashing every observation with `sort(unique())`. Unweighted group sizes in the leverage computation are `tabulate()` rather than `rowsum()`, which rediscovers the groups it was already given, and the unit weight vector is no longer materialised on the one-way path that does not index it. The sums of squares behind the R-squared of a fixed-effects fit go through `crossprod()` instead of squaring the vector first. The absorbed group effects find a representative row per group by scatter assignment over the codes rather than by hashing all n of them. `sweep()` is gone from the total sum of squares, and the design matrix is no longer copied to itself when no column was dropped for collinearity.
+
+### The fixed-effects kernels
+
+Two things dominated a multi-way fixed-effects fit, and both were doing work they already had the answer to.
+
+`fe_leverage()` cross-tabulates each pair of factors. It built a composite index and handed it to `rowsum()`, which hashes all n observations to rediscover groups that are known to run 1..g, and then labels its result rows with those group values as strings, so the caller converted them back with `as.integer(rownames(.))`. At n = 100,000 over 1,000 by 30 groups that pair cost 7.3 ms, against 0.04 ms for a single counting pass, and there is one per factor pair. A dense weighted cross-tabulation in C++ (`xtab_cpp`) replaces it and serves the weighted case too, so the unit weight vector is no longer built for an unweighted fit. The masks and column offsets the leverage vector needs are now built only when a leverage vector is wanted, which is HC2 and HC3; every other `se_type` returns the rank without them.
+
+`demean_cpp()` rebuilt the group weight sums on every sweep of the alternating projections, though they depend only on the codes and the weights and are identical each time, and then made a second full pass over the matrix to find its largest absolute value for the convergence test. The sums are now computed once, the maximum is accumulated by the subtraction pass that already touches every cell, and an unweighted fit no longer multiplies each element by a 1.0 it had just read out of a vector of ones. Every result is bit-identical; there is simply less of it.
+
+Measured at n = 100,000 with two regressors, against 2.0.0 before this work: a plain fit 15.8 to 3.2 ms, a clustered fit 18.5 to 5.1 ms, a one-way fixed-effects fit 14.7 to 5.8 ms, a two-way fixed-effects fit 32.7 to 9.3 ms. On the cases that carry the most fixed-effects machinery: two-way HC2 36.7 to 12.8 ms, two-way weighted 35.0 to 12.6 ms.
+
+All of it is in `clean_model_data()`, `lm_robust_fit()`, `lm_return()` and the fixed-effects helpers, so `iv_robust()` and `lm_lin()` get it for nothing: 2SLS 20.0 to 5.5 ms, clustered 2SLS 30.0 to 7.6 ms, 2SLS with two-way fixed effects 37.8 to 14.4 ms, `lm_lin()` 26.0 to 6.1 ms.
+
+Every returned value is unchanged. Across 56 specifications covering each `se_type`, weights, clusters, multivariate outcomes, IV, and one to two fixed-effect factors, the largest relative difference from the previous version is 9e-15, and the names on every field are identical apart from the three naming bugs fixed below.
 
 ---
 

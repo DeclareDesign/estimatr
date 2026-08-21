@@ -95,22 +95,23 @@ lm_return <- function(return_list, model_data, formula) {
       }
     }
   }
-  if (return_list[["weighted"]]) {
-    names(return_list[["weights"]]) <- if (is.matrix(return_list[["fitted.values"]]))
-      rownames(return_list[["fitted.values"]])
-      else names(return_list[["fitted.values"]])
+  # The observation names were taken off the design matrix in
+  # clean_model_data() so that nothing in the fit had to carry them, and this
+  # is where they go back on. `fitted.values` is the only field that keeps
+  # them, as in 1.0.6; `weights` is named to match, as it was before.
+  obs_names <- if (!is.null(model_data)) model_data[["obs_names"]] else NULL
+  if (return_list[["weighted"]] && !is.null(return_list[["weights"]])) {
+    names(return_list[["weights"]]) <- obs_names
   }
-  return_list[["fitted.values"]] <- drop(return_list[["fitted.values"]])
+  fitted <- drop(return_list[["fitted.values"]])
+  if (!is.null(obs_names)) {
+    if (is.matrix(fitted)) rownames(fitted) <- obs_names else names(fitted) <- obs_names
+  }
+  return_list[["fitted.values"]] <- fitted
   return_list[["ei.iv"]] <- drop(return_list[["ei.iv"]])
-  # Residuals come back unnamed, as they did in 1.0.6. The names are the model
-  # frame's row names, and they arrive here only because `X %*% beta` inherits
-  # the design matrix's rownames: at n = 100,000 that is 6.4 MB of strings
-  # wrapped around 0.8 MB of numbers, and it made a fit with fixed effects
-  # smaller than the same fit without them, since the FE path never picked them
-  # up. `fitted.values` keeps its names, also as in 1.0.6.
-  resid <- drop(return_list[["residuals"]])
-  if (is.matrix(resid)) rownames(resid) <- NULL else names(resid) <- NULL
-  return_list[["residuals"]] <- resid
+  # Residuals come back unnamed, as they did in 1.0.6. They no longer acquire
+  # names to lose: the design matrix arrives here without row names at all.
+  return_list[["residuals"]] <- drop(return_list[["residuals"]])
   return(return_list)
 }
 
@@ -274,7 +275,21 @@ absorbed_group_effects <- function(fitted, coefficients, model_data) {
   # within group, so forming `fitted - X b` for all n observations to read one
   # value per group out of it does n-by-k work, and allocates two n-length
   # vectors, to produce `length(lv)` numbers.
-  idx <- match(ord, g)
+  # `match(ord, g)` hashes all n codes to find one row per group. The codes
+  # are contiguous 1..L, so a scatter assignment gets a representative row in
+  # one pass and no hash table. It lands on the group's LAST row rather than
+  # its first, which is the same number: the group effect is constant within
+  # group, which is the whole reason this is evaluated at one row at all.
+  rep_row <- integer(length(lv))
+  rep_row[g] <- seq_along(g)
+  # A level with no rows keeps its 0 from the initialisation, and 0 is a
+  # DROP index in R, not a missing one: it would silently shorten the result
+  # rather than leave a hole. `match()` returned NA here, and the effects come
+  # back NA for that level with the vector still one entry per level, which is
+  # what `dim<-` below and every consumer expect. Reachable whenever a factor
+  # carries a declared level the data never uses.
+  rep_row[rep_row == 0L] <- NA_integer_
+  idx <- rep_row[ord]
   effects <- fitted[idx] -
     drop(model_data[["Xoriginal"]][idx, , drop = FALSE] %*% coefficients)
   lv <- lv[ord]
