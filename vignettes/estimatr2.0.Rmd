@@ -15,7 +15,7 @@ library(estimatr)
 
 ## The short version
 
-estimatr 2.0 is a ground-up rewrite aimed at the DeclareDesign workflow: fit the same model thousands of times, as fast as possible, and get the same number every time. Almost everything you already wrote against 1.x runs unchanged and returns identical estimates, identical standard errors, identical confidence intervals, and identical objects, only faster. That claim is pinned by 801 test assertions, 336 of which compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error.
+estimatr 2.0 is a ground-up rewrite aimed at the DeclareDesign workflow: fit the same model thousands of times, as fast as possible, and get the same number every time. Almost everything you already wrote against 1.x runs unchanged and returns identical estimates, identical standard errors, identical confidence intervals, and identical objects, only faster. That claim is pinned by 1,722 test assertions, 336 of which compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, and a further 298 of which compare against implementations that share no lineage with estimatr at all. See [How this was checked].
 
 Two things break, and each one is a deliberate trade. `horvitz_thompson()` takes one probability argument instead of five. Two stargazer helpers are gone. Every standard error 1.x could compute, 2.0 can still compute. What changes is which one a *default* reaches for when you absorb fixed effects with clusters, and that default now says so out loud.
 
@@ -169,7 +169,7 @@ Unclustered fixed effects keep the `"HC2"` default at any number of factors, exa
 
 **The upside.** You can absorb a very large number of fixed effects and get a standard error quickly, which was previously impractical. 1.x computes HC2 from the full dummy hat matrix, so 40,000 observations across 2,000 blocks takes it 41 seconds; 2.0 returns the same number in 18 milliseconds. Two-way is where it tells most: 50,000 observations across 1,000 x 30 groups took 13.8 seconds and 970 MB in 1.x, and takes 36 milliseconds and 174 MB here. The memory that made wide fixed effects impractical is simply never allocated.
 
-**A rank-deficiency bug goes with it.** If one FE factor is spanned by the others -- a nested factor, or a disconnected design -- the FE design is rank deficient. 1.x expanded the dummies, let a pivoted QR drop the redundant columns, and read the hat values off the padded design, so its absorbed answer disagreed with its own explicit-dummy fit. Taking `diag(P_D)` through a pseudo-inverse is exact at any rank, so 2.0 returns the dummy-regression answer, and uses the design's true rank for the residual degrees of freedom rather than the nominal level count.
+**A rank-deficiency bug goes with it.** If one FE factor is spanned by the others (a nested factor, or a disconnected design), the FE design is rank deficient. 1.x expanded the dummies, let a pivoted QR drop the redundant columns, and read the hat values off the padded design, so its absorbed answer disagreed with its own explicit-dummy fit. Taking `diag(P_D)` through a pseudo-inverse is exact at any rank, so 2.0 returns the dummy-regression answer, and uses the design's true rank for the residual degrees of freedom rather than the nominal level count.
 
 ### 3. Functions that are gone
 
@@ -190,13 +190,15 @@ Three greps cover every breaking change. Whatever they do not find needs no atte
 | Grep for | Replace with | Where it bites |
 |---|---|---|
 | `ra_declaration`, `condition_pr_mat`, `simple =`, or `blocks`/`clusters` inside `horvitz_thompson()` | one `condition_prs =`, holding a declaration, a named vector, or a matrix | Horvitz-Thompson designs |
-| `fixed_effects` with no `se_type` named | nothing, or name the `se_type` you want | absorbed fixed effects: the default moved, see below |
+| `fixed_effects` with no `se_type` named, *and* `clusters` | nothing, or name the `se_type` you want | absorbed fixed effects with clusters: the default moved, see below |
 | `starprep`, `commarobust`, `declaration_to_condition_pr_mat`, `gen_pr_matrix_cluster`, `permutations_to_condition_pr_mat` | the first two have no replacement here; the last three are unnecessary | table output, HT internals |
 | `fixed_effects =` followed by anything that is not a `~` | wrap the grouping variable in a formula: `fixed_effects = ~ block` | code that passed a bare column name or a vector |
 
 The first row stops with an error naming its replacement. The third fails because the function does not exist. The fourth still runs, and still gives the 1.x answer, but warns: enforcing the formula is the resolution of issue #304, and a warning enforces it without breaking a working script.
 
-**The second row is the one to read carefully, because it moves a number.** With no `se_type` named, `lm_robust(y ~ z, fixed_effects = ~ block, clusters = cl)` gets CR2 from 1.x and CR0 from 2.0, and `lm_robust(y ~ z, fixed_effects = ~ block + year)` gets HC2 from 1.x and HC1 from 2.0. The point estimates are identical in both. Each warns once per session, so nothing changes silently and nothing spams a simulation loop. Writing `se_type = "HC1"` or `se_type = "CR0"` accepts the new default and removes the warning; writing `se_type = "HC2"` or `se_type = "CR2"` gets you the 1.x number exactly. A single unclustered factor is unaffected: the default is HC2 in both versions and the numbers are bit-identical. If a published fixed-effects standard error turns on which adjustment you used, name the `se_type` rather than taking the default.
+**The second row is the one to read carefully, because it moves a number, and it is the only place in the release where a default does.** With no `se_type` named, `lm_robust(y ~ z, fixed_effects = ~ block, clusters = cl)` gets CR2 from 1.x and CR0 from 2.0. The point estimate is identical; only the standard error moves. It warns once per session, so nothing changes silently and nothing spams a simulation loop. Writing `se_type = "CR0"` accepts the new default and removes the warning; writing `se_type = "CR2"` gets you the 1.x number exactly, at the cost of expanding the dummies.
+
+**Fixed effects without clusters are unaffected, at any number of factors.** The default is HC2 in both versions and the numbers are bit-identical, whether you absorb one factor or five. Earlier drafts of 2.0 did move this default to HC1 for two or more factors, on the belief that the leverage identity held only for one; it holds for any number, so there is nothing to trade away and the default stays where 1.x had it. If a published fixed-effects standard error turns on which adjustment you used, name the `se_type` rather than taking the default.
 
 ## What is new
 
@@ -348,6 +350,33 @@ Fixed effects were the second. Absorbing by alternating projections in C++ is th
 
 The rest is ordinary: one code path where 1.x has several, and the S3 surface generated rather than written out per class.
 
+## How this was checked
+
+estimatr 2.0.0 was written by Alexander Coppock working with Claude (Anthropic), across design, implementation, tests, benchmarks, and documentation. The disclosure belongs next to the evidence, because the evidence is the part that should decide whether you install it.
+
+**The first layer asks whether the rewrite changed an answer.** 336 assertions compare 2.0 against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, across every supported standard error type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes. A separate file pins the entire returned surface of sixteen fit types, names as well as values, because a package's compatibility surface is what it returns rather than what it exports: during development six fields went missing from fitted objects and a seventh returned a wrong value, and neither a `NAMESPACE` diff nor a search of every reverse dependency's source could see it, since no export changed and no call site changed either.
+
+**The second layer asks whether the answer is right, which the first cannot.** Anything estimatr inherited from 1.0.6, error included, passes a comparison against 1.0.6 in silence. So 298 further assertions compare against implementations built independently of this one:
+
+| checked against | what it covers | how |
+|---|---|---|
+| `sandwich` | HC0 through HC3 and both cluster corrections, weighted and not | live, same session, 1e-10 |
+| `clubSandwich` | CR2 and its Satterthwaite degrees of freedom, including under absorption | live, same session, 1e-10 |
+| Stata `regress`, `areg`, `ivregress` | `se_type = "stata"`, with and without absorbed fixed effects | frozen output, tolerance per value |
+| `fixest`, `plm` | absorption, by two independent routes | recorded fixture, versions recorded |
+| `blkvar` | the blocked-design variance, from the authors of the estimator | live |
+| a hand-built Lin specification | `lm_lin`, including its weighted paths | live, all 36 cells |
+
+estimatr matches `sandwich` and `clubSandwich` to machine precision everywhere the two overlap, weighted included, with the CR2 Satterthwaite degrees of freedom exact.
+
+`sandwich` and `clubSandwich` are compared live, in one session, because both sides then run on one BLAS and can be held far tighter than any recording. `fixest` and `plm` are recorded instead, with their versions, because both change small-sample defaults between releases and a live test would fail on somebody else's release note rather than on anything here. Stata tolerances are derived per value from the digits Stata actually printed, since the printed precision spans four orders of magnitude across those tables and one constant would be either far too loose or far too tight.
+
+**Where the answers genuinely differ, the difference is asserted rather than dropped.** A comparison quietly excluded because it disagrees looks exactly like one that was never written, on any green run. Weighted HC2 against Stata is therefore pinned twice, as equal to the R reference to machine precision and as different from Stata by a bounded amount, and weighted 2SLS root MSE the same way.
+
+**One divergence from `sandwich` is deliberate, and it is the one to know about if you compare the two.** For `iv_robust()` with HC2 or HC3, estimatr computes leverage as `h = xhat'(Xhat'Xhat)^-1 xhat`, from the second stage alone; `sandwich` uses `h = xhat'(Xhat'Xhat)^-1 x`. Both sum to K, and the 2SLS hat matrix is idempotent but not symmetric, so the exact homoskedastic expectation is `1 - 2h + [HH']_ii` and neither convention computes it. The HC2 unbiasedness argument does not extend uniquely to 2SLS, so this is a choice rather than a bug on either side. What settles it here is boundedness: estimatr's is the diagonal of an orthogonal projection and so lies in [0, 1], which means HC2 is always defined, while `sandwich`'s is unbounded. Across 3,000 simulated weak-first-stage designs it exceeded 1 in 10.8% of them, reaching 309, and `sandwich` returns `NaN` there with a warning of its own. Where both are defined the two are interchangeable, with identical interval widths and identical coverage. estimatr's convention is also bit-identical to 1.0.6, so this is not something 2.0 changed.
+
+**What none of this covers.** Every number quoted here is from one machine, and a local check cannot see the cross-platform floor: the first CI run after the comparison fixture was frozen failed eleven assertions on Ubuntu and Windows and none on macOS, where the fixture had been recorded, and every difference was too small to print. Recorded comparisons therefore run at 1e-9, set from the worst case in the fixture rather than by taste. The multi-arm Horvitz-Thompson contrast has no reference implementation anywhere, since 1.x refuses the case outright, so it is ours to defend rather than something checked against a second opinion; see [Current status].
+
 ## The estimatr issue list
 
 All 71 issues open on `DeclareDesign/estimatr` at the time of the rewrite were run against both versions, one reproducer at a time. Where they landed:
@@ -369,7 +398,7 @@ One defect turned up that has no issue behind it, and it is worth knowing if you
 
 ## Current status
 
-The test suite is 801 assertions with none skipped, `R CMD check --as-cran` is clean, and the numerical comparisons against 1.0.6 run across 50 seeds per design type for every Horvitz-Thompson design family.
+The test suite is 1,722 assertions with none failing, `R CMD check --as-cran` is clean, and the numerical comparisons against 1.0.6 run across 50 seeds per design type for every Horvitz-Thompson design family.
 
 What follows is the list of places where 2.0 deliberately returns a different number from 1.x. In each one the 1.x number is wrong.
 

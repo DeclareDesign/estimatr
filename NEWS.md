@@ -6,6 +6,18 @@ See `vignette("estimatr2.0")` for a user-facing tour of what changes and what do
 
 ---
 
+## How this version was written
+
+estimatr 2.0.0 was written by Alexander Coppock working with Claude (Anthropic), across design, implementation, tests, benchmarks, and documentation. This note is here because a ground-up rewrite of a widely used estimation package should say how it was produced, and because the answer changes what evidence you are entitled to want before installing it.
+
+**What the evidence is.** Interfaces are unchanged from 1.0.6, and run side by side on one machine the numbers agree to 1e-12 wherever both versions answer. The test suite is 1,722 assertions with no failures, green on five platforms (Ubuntu release, devel and oldrel-1, macOS, Windows) with identical counts on each. Of those, 336 compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, and `tests/testthat/test_return_surface.R` pins the entire returned surface of sixteen fit types, names as well as values, so a field cannot silently go missing. All 35 CRAN reverse dependencies were checked.
+
+**Why that is not enough on its own, and what was added.** Agreement with 1.0.6 establishes that the rewrite changed no answer. It cannot establish that the answer was right, and any error inherited from 1.0.6 passes it in silence. So 298 further assertions check estimatr against something built independently of it: `sandwich` and `clubSandwich` compared live in the same session, `fixest` and `plm` from a recorded fixture, Stata's `regress`, `areg` and `ivregress` from frozen output, and `blkvar` for the blocked-design variance, together with `lm_lin` checked against a Lin specification built by hand out of `lm_robust`. estimatr matches `sandwich` and `clubSandwich` to machine precision everywhere the two overlap, weighted included, with the CR2 Satterthwaite degrees of freedom exact.
+
+**Where a divergence is real, it is asserted from both sides rather than dropped.** The weighted HC2 comparison against Stata is pinned twice, as equal to the R reference to machine precision and as different from Stata by a bounded amount. The same is done for weighted 2SLS root MSE, and for the `iv_robust` HC2 leverage convention, which differs from `sandwich`'s deliberately and is discussed in `vignette("estimatr2.0")`. A comparison that is quietly excluded because it disagrees is indistinguishable, on a green run, from one that was never written.
+
+---
+
 ## Found by `revdepcheck`, and fixed here
 
 Running the 35 CRAN reverse dependencies turned up six fields that had gone
@@ -145,12 +157,12 @@ One remains:
 
 All public functions from 1.x that are relevant to the DeclareDesign workflow are present with identical interfaces:
 
-- `lm_robust()` — OLS with HC0/HC1/HC2/HC3/CR0/CR2/stata SEs
-- `lm_lin()` — Lin (2013) covariate-adjusted estimator
-- `iv_robust()` — two-stage least squares with the same SE menu
-- `difference_in_means()` — Neyman variance, paired, blocked, and clustered designs
-- `horvitz_thompson()` — inverse probability weighting with Young's inequality variance
-- `lh_robust()` — linear hypothesis tests via `car::linearHypothesis` with robust variance
+- `lm_robust()`: OLS with HC0/HC1/HC2/HC3/CR0/CR2/stata SEs
+- `lm_lin()`: Lin (2013) covariate-adjusted estimator
+- `iv_robust()`: two-stage least squares with the same SE menu
+- `difference_in_means()`: Neyman variance, paired, blocked, and clustered designs
+- `horvitz_thompson()`: inverse probability weighting with Young's inequality variance
+- `lh_robust()`: linear hypothesis tests via `car::linearHypothesis` with robust variance
 - S3 methods: `tidy`, `glance`, `summary`, `print`, `predict`, `coef`, `confint`, `vcov`, `nobs`, `update`
 
 Return objects are structurally compatible with estimatr 1.0.6: field names, classes, and method dispatch are unchanged. Cross-version identity tests confirm coefficient and standard error agreement across all supported SE types, to 1e-12 when both versions are run on the same machine and to 1e-9 against the recorded fixture the suite ships.
@@ -167,7 +179,7 @@ Absorbed fixed effects used to refuse `se_type = "HC2"` and `"HC3"`, on the grou
 P_[X | D] = P_D + P_{M_D X}
 ```
 
-so `h_ii` is the demeaned-X hat value plus `diag(P_D)`. With one factor `P_D` is diagonal and the second term is just `w_i / sum(w over i's group)`. With several it is not diagonal, but writing `D` with its widest factor in full dummies and the rest contrast-coded leaves `D'WD` with a diagonal leading block, so `diag(P_D)` costs a factorisation of order `sum_{k>1}(g_k - 1)` -- the narrowest the design allows -- and no dummy matrix is built at any point.
+so `h_ii` is the demeaned-X hat value plus `diag(P_D)`. With one factor `P_D` is diagonal and the second term is just `w_i / sum(w over i's group)`. With several it is not diagonal, but writing `D` with its widest factor in full dummies and the rest contrast-coded leaves `D'WD` with a diagonal leading block, so `diag(P_D)` costs a factorisation of order `sum_{k>1}(g_k - 1)`, the narrowest the design allows, and no dummy matrix is built at any point.
 
 Verified to machine precision against writing the dummies out, weighted and unweighted, balanced and unbalanced, from one factor to five, and against 1.x. At n = 40,000 with 2,000 groups, one-way HC2 takes 17.8 ms here against 41.3 s in 1.0.6. At n = 50,000 across 1,000 x 30 groups, two-way HC2 takes 36 ms and peaks at 174 MB, against 13.8 s and 970 MB before.
 
@@ -179,7 +191,7 @@ The identity generalises to any number of factors. What fails beyond one factor 
 P_[X | D] = P_D + P_{M_D X}
 ```
 
-so `h_ii` is the demeaned-X hat value plus `diag(P_D)`, whatever the number of factors. Writing the FE design with its widest factor in full dummies and the rest contrast-coded makes `D'WD` block-diagonal in its leading block, so `diag(P_D)` costs a factorisation of order `sum_{k>1}(g_k - 1)` -- as small as the design allows -- rather than an n-by-g dummy hat matrix. Inverting that block through its eigendecomposition rather than a solve means a **disconnected or nested** design, where `D` is rank deficient, gets the pseudo-inverse and the right projection anyway.
+so `h_ii` is the demeaned-X hat value plus `diag(P_D)`, whatever the number of factors. Writing the FE design with its widest factor in full dummies and the rest contrast-coded makes `D'WD` block-diagonal in its leading block, so `diag(P_D)` costs a factorisation of order `sum_{k>1}(g_k - 1)`, as small as the design allows, rather than an n-by-g dummy hat matrix. Inverting that block through its eigendecomposition rather than a solve means a **disconnected or nested** design, where `D` is rank deficient, gets the pseudo-inverse and the right projection anyway.
 
 `iv_robust()` gets the same treatment: its second stage runs on fitted regressors, but those are demeaned by the same fixed effects, so the decomposition applies unchanged. It never used the shortcut before, even for one factor.
 
@@ -187,7 +199,7 @@ so `h_ii` is the demeaned-X hat value plus `diag(P_D)`, whatever the number of f
 
 **What this is worth.** On 50,000 observations across 1,000 x 30 groups, `se_type = "HC2"` with two-way `fixed_effects` took 13.8 seconds and peaked at 970 MB; it now takes 36 milliseconds and peaks at 174 MB. The dummy matrix is never built, so the memory that used to make wide fixed effects impractical is simply not allocated.
 
-**A rank-deficiency bug, fixed.** When one FE factor is spanned by the others -- a nested factor, or a disconnected design -- the FE design is rank deficient, and the nominal count `sum(levels) - K + 1` overstates its rank. 1.0.6 used that nominal count for the residual degrees of freedom, and for HC2 and HC3 it expanded the dummies, let a pivoted QR drop the redundant columns, and then read the hat values off the padded design. Its absorbed answer therefore disagreed with its own explicit-dummy fit, and disagreed differently depending on the `se_type`.
+**A rank-deficiency bug, fixed.** When one FE factor is spanned by the others (a nested factor, or a disconnected design), the FE design is rank deficient, and the nominal count `sum(levels) - K + 1` overstates its rank. 1.0.6 used that nominal count for the residual degrees of freedom, and for HC2 and HC3 it expanded the dummies, let a pivoted QR drop the redundant columns, and then read the hat values off the padded design. Its absorbed answer therefore disagreed with its own explicit-dummy fit, and disagreed differently depending on the `se_type`.
 
 2.0 takes the exact rank from the same eigendecomposition that produces the leverage, and uses it for **every** `se_type`, so an absorbed fit and the same fit with the dummies written out now agree exactly on standard errors, degrees of freedom, p-values and intervals however degenerate the design is. Absorbing fixed effects is a computational choice and should not move the answer.
 
@@ -380,13 +392,13 @@ Both fields took whatever dimnames survived `data[["y"]] - fitted.values`, and R
 
 ### CR2 degrees-of-freedom computation: O(J²) → O(r²·J)
 
-CR2 standard errors require, for each cluster j, a scalar adjustment derived from the hat matrix block H_jj. The original 1.x implementation formed a J×J matrix `P_array` and computed a trace and Frobenius norm over it — O(J²) memory and compute when J is large.
+CR2 standard errors require, for each cluster j, a scalar adjustment derived from the hat matrix block H_jj. The original 1.x implementation formed a J×J matrix `P_array` and computed a trace and Frobenius norm over it, which is O(J²) memory and compute when J is large.
 
 2.0 uses an algebraic identity to reduce this to five r×r Gram matrix products, where r is the number of model parameters (typically ≪ J). For a model with 3 parameters and 500 clusters the allocation drops from a 500×500 matrix to five 3×3 matrices. Measured speedup on a 1,000-observation / 100-cluster CR2 model: approximately 2× end-to-end.
 
 ### Formula parsing bypass for non-IV calls
 
-`iv_robust()` requires `Formula::as.Formula()` to parse the two-sided formula `y ~ x | z`. `lm_robust()` and `lm_lin()` do not, but the original code called `as.Formula()` unconditionally in `clean_model_data()`. This path is now skipped for non-IV calls, saving approximately 80 µs per `lm_robust()` invocation — meaningful in simulations that call it thousands of times.
+`iv_robust()` requires `Formula::as.Formula()` to parse the two-sided formula `y ~ x | z`. `lm_robust()` and `lm_lin()` do not, but the original code called `as.Formula()` unconditionally in `clean_model_data()`. This path is now skipped for non-IV calls, saving approximately 80 µs per `lm_robust()` invocation, which is meaningful in simulations that call it thousands of times.
 
 ### Horvitz-Thompson variance: O(N²) → O(1)
 

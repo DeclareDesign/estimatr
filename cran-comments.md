@@ -20,6 +20,14 @@ breaking changes are listed in NEWS.md and in `vignette("estimatr2.0")`.
 <graeme.blair@gmail.com> to Alexander Coppock <acoppock@gmail.com>. Graeme Blair
 has written to CRAN separately to confirm the transfer. He remains an author.
 
+This version was written by the maintainer working with Claude (Anthropic).
+`NEWS.md` says so and sets out the evidence: interfaces unchanged from 1.0.6
+with the numbers agreeing to 1e-12 same-machine, a suite of 1,722 assertions
+green on five platforms, 336 of them against answers recorded from an installed
+1.0.6, 298 against independent implementations (`sandwich`, `clubSandwich`,
+Stata, `fixest`, `plm`, `blkvar`), and the full returned surface of sixteen fit
+types pinned by test. All 35 reverse dependencies were checked.
+
 ## Test environments
 
 * local macOS 15 (aarch64), R 4.6.0
