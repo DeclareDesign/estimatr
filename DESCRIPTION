@@ -36,7 +36,9 @@ Imports:
     rlang,
     stats
 Suggests:
+    AER,
     car,
+    clubSandwich,
     dplyr,
     emmeans,
     estimability,
@@ -44,6 +46,7 @@ Suggests:
     modelsummary,
     randomizr,
     rmarkdown,
+    sandwich,
     testthat (>= 3.0.0),
     texreg
 VignetteBuilder: knitr

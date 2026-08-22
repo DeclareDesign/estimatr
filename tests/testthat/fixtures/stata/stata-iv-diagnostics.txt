@@ -1,0 +1,156 @@
+(hp = wt);;small;weak1;1;30;22.998737;.00004146
+(hp = wt);;small;endog;1;29;37.5609;1.120e-06
+(hp = wt);;small;overid;.;.;.;.
+(hp = wt);[aweight = w];small;weak1;1;30;24.131227;.00002984
+(hp = wt);[aweight = w];small;endog;1;29;37.410397;1.158e-06
+(hp = wt);[aweight = w];small;overid;.;.;.;.
+(hp = wt);;rob;weak1;1;30;60.763169;1.068e-08
+(hp = wt);;rob;endog;1;29;35.460434;1.803e-06
+(hp = wt);;rob;overid;.;.;.;.
+(hp = wt);[aweight = w];rob;weak1;1;30;56.623663;2.175e-08
+(hp = wt);[aweight = w];rob;endog;1;29;35.955804;1.609e-06
+(hp = wt);[aweight = w];rob;overid;.;.;.;.
+(hp = wt);;cluster(cyl);weak1;1;2;111.06094;.00888425
+(hp = wt);;cluster(cyl);endog;1;2;30.699387;.0310641
+(hp = wt);;cluster(cyl);overid;.;.;.;.
+(hp = wt);[aweight = w];cluster(cyl);weak1;1;2;193.07404;.00513947
+(hp = wt);[aweight = w];cluster(cyl);endog;1;2;31.848856;.02999288
+(hp = wt);[aweight = w];cluster(cyl);overid;.;.;.;.
+(hp = wt);;small noconstant;weak1;1;31;282.49539;3.967e-17
+(hp = wt);;small noconstant;endog;1;30;13.040548;.00109784
+(hp = wt);;small noconstant;overid;.;.;.;.
+(hp = wt);[aweight = w];small noconstant;weak1;1;31;264.18222;1.012e-16
+(hp = wt);[aweight = w];small noconstant;endog;1;30;14.714903;.00059805
+(hp = wt);[aweight = w];small noconstant;overid;.;.;.;.
+(hp = wt);;rob noconstant;weak1;1;31;271.63797;6.863e-17
+(hp = wt);;rob noconstant;endog;1;30;21.814041;.00005897
+(hp = wt);;rob noconstant;overid;.;.;.;.
+(hp = wt);[aweight = w];rob noconstant;weak1;1;31;241.31276;3.547e-16
+(hp = wt);[aweight = w];rob noconstant;endog;1;30;24.632111;.00002586
+(hp = wt);[aweight = w];rob noconstant;overid;.;.;.;.
+(hp = wt);;cluster(cyl) noconstant;weak1;1;2;88.701936;.01108658
+(hp = wt);;cluster(cyl) noconstant;endog;1;2;3.9831298;.18407918
+(hp = wt);;cluster(cyl) noconstant;overid;.;.;.;.
+(hp = wt);[aweight = w];cluster(cyl) noconstant;weak1;1;2;71.014042;.01379109
+(hp = wt);[aweight = w];cluster(cyl) noconstant;endog;1;2;4.355972;.17215019
+(hp = wt);[aweight = w];cluster(cyl) noconstant;overid;.;.;.;.
+(hp am = wt gear);;small;weak1;2;29;16.699987;.00001495
+(hp am = wt gear);;small;weak2;2;29;35.541819;1.583e-08
+(hp am = wt gear);;small;endog;2;27;4.9756537;.014468
+(hp am = wt gear);;small;overid;.;.;.;.
+(hp am = wt gear);[aweight = w];small;weak1;2;29;17.879363;8.729e-06
+(hp am = wt gear);[aweight = w];small;weak2;2;29;34.107361;2.414e-08
+(hp am = wt gear);[aweight = w];small;endog;2;27;4.8550937;.0158049
+(hp am = wt gear);[aweight = w];small;overid;.;.;.;.
+(hp am = wt gear);;rob;weak1;2;29;27.565656;1.963e-07
+(hp am = wt gear);;rob;weak2;2;29;77.611179;2.277e-12
+(hp am = wt gear);;rob;endog;2;27;5.2051983;.01224657
+(hp am = wt gear);;rob;overid;.;.;.;.
+(hp am = wt gear);[aweight = w];rob;weak1;2;29;27.980359;1.703e-07
+(hp am = wt gear);[aweight = w];rob;weak2;2;29;73.995899;4.069e-12
+(hp am = wt gear);[aweight = w];rob;endog;2;27;4.9419293;.01482928
+(hp am = wt gear);[aweight = w];rob;overid;.;.;.;.
+(hp am = wt gear);;cluster(cyl);weak1;2;2;960.39475;.00104016
+(hp am = wt gear);;cluster(cyl);weak2;2;2;1878.568;.00053204
+(hp am = wt gear);;cluster(cyl);endog;2;2;4.803949;.17229648
+(hp am = wt gear);;cluster(cyl);overid;.;.;.;.
+(hp am = wt gear);[aweight = w];cluster(cyl);weak1;2;2;327.10182;.00304783
+(hp am = wt gear);[aweight = w];cluster(cyl);weak2;2;2;977.17346;.00102231
+(hp am = wt gear);[aweight = w];cluster(cyl);endog;2;2;3.8882561;.20457193
+(hp am = wt gear);[aweight = w];cluster(cyl);overid;.;.;.;.
+(hp am = wt gear);;small noconstant;weak1;2;30;140.11773;6.046e-16
+(hp am = wt gear);;small noconstant;weak2;2;30;68.76829;6.240e-12
+(hp am = wt gear);;small noconstant;endog;2;28;74.999626;5.680e-12
+(hp am = wt gear);;small noconstant;overid;.;.;.;.
+(hp am = wt gear);[aweight = w];small noconstant;weak1;2;30;129.98801;1.665e-15
+(hp am = wt gear);[aweight = w];small noconstant;weak2;2;30;75.861218;1.844e-12
+(hp am = wt gear);[aweight = w];small noconstant;endog;2;28;74.133263;6.514e-12
+(hp am = wt gear);[aweight = w];small noconstant;overid;.;.;.;.
+(hp am = wt gear);;rob noconstant;weak1;2;30;198.51053;5.013e-18
+(hp am = wt gear);;rob noconstant;weak2;2;30;76.755646;1.592e-12
+(hp am = wt gear);;rob noconstant;endog;2;28;90.63959;5.889e-13
+(hp am = wt gear);;rob noconstant;overid;.;.;.;.
+(hp am = wt gear);[aweight = w];rob noconstant;weak1;2;30;169.2255;4.583e-17
+(hp am = wt gear);[aweight = w];rob noconstant;weak2;2;30;86.85906;3.322e-13
+(hp am = wt gear);[aweight = w];rob noconstant;endog;2;28;91.067515;5.562e-13
+(hp am = wt gear);[aweight = w];rob noconstant;overid;.;.;.;.
+(hp am = wt gear);;cluster(cyl) noconstant;weak1;2;2;125.30453;.00791737
+(hp am = wt gear);;cluster(cyl) noconstant;weak2;2;2;13504.401;.00007404
+(hp am = wt gear);;cluster(cyl) noconstant;endog;2;2;260.8136;.00381951
+(hp am = wt gear);;cluster(cyl) noconstant;overid;.;.;.;.
+(hp am = wt gear);[aweight = w];cluster(cyl) noconstant;weak1;2;2;104.47309;.00948109
+(hp am = wt gear);[aweight = w];cluster(cyl) noconstant;weak2;2;2;8223.5428;.00012159
+(hp am = wt gear);[aweight = w];cluster(cyl) noconstant;endog;2;2;249.68439;.00398908
+(hp am = wt gear);[aweight = w];cluster(cyl) noconstant;overid;.;.;.;.
+gear (hp = wt);;small;weak1;1;29;32.413956;3.706e-06
+gear (hp = wt);;small;endog;1;28;14.269359;.00076059
+gear (hp = wt);;small;overid;.;.;.;.
+gear (hp = wt);[aweight = w];small;weak1;1;29;34.922532;2.042e-06
+gear (hp = wt);[aweight = w];small;endog;1;28;15.079776;.00057414
+gear (hp = wt);[aweight = w];small;overid;.;.;.;.
+gear (hp = wt);;rob;weak1;1;29;28.881051;8.971e-06
+gear (hp = wt);;rob;endog;1;28;16.492556;.00035663
+gear (hp = wt);;rob;overid;.;.;.;.
+gear (hp = wt);[aweight = w];rob;weak1;1;29;31.149152;5.054e-06
+gear (hp = wt);[aweight = w];rob;endog;1;28;16.768105;.00032565
+gear (hp = wt);[aweight = w];rob;overid;.;.;.;.
+gear (hp = wt);;cluster(cyl);weak1;1;2;675.0204;.00147815
+gear (hp = wt);;cluster(cyl);endog;1;2;8.4945694;.10031937
+gear (hp = wt);;cluster(cyl);overid;.;.;.;.
+gear (hp = wt);[aweight = w];cluster(cyl);weak1;1;2;131.09104;.0075421
+gear (hp = wt);[aweight = w];cluster(cyl);endog;1;2;8.5046145;.10021809
+gear (hp = wt);[aweight = w];cluster(cyl);overid;.;.;.;.
+gear (hp = wt);;small noconstant;weak1;1;30;39.331604;6.544e-07
+gear (hp = wt);;small noconstant;endog;1;29;3.9155489;.05740796
+gear (hp = wt);;small noconstant;overid;.;.;.;.
+gear (hp = wt);[aweight = w];small noconstant;weak1;1;30;37.965391;8.883e-07
+gear (hp = wt);[aweight = w];small noconstant;endog;1;29;3.812533;.06058323
+gear (hp = wt);[aweight = w];small noconstant;overid;.;.;.;.
+gear (hp = wt);;rob noconstant;weak1;1;30;94.273346;9.051e-11
+gear (hp = wt);;rob noconstant;endog;1;29;4.9821876;.0334979
+gear (hp = wt);;rob noconstant;overid;.;.;.;.
+gear (hp = wt);[aweight = w];rob noconstant;weak1;1;30;94.145441;9.193e-11
+gear (hp = wt);[aweight = w];rob noconstant;endog;1;29;5.2815305;.02895546
+gear (hp = wt);[aweight = w];rob noconstant;overid;.;.;.;.
+gear (hp = wt);;cluster(cyl) noconstant;weak1;1;2;78.227076;.01254329
+gear (hp = wt);;cluster(cyl) noconstant;endog;1;2;12.722345;.0704022
+gear (hp = wt);;cluster(cyl) noconstant;overid;.;.;.;.
+gear (hp = wt);[aweight = w];cluster(cyl) noconstant;weak1;1;2;97.948106;.01005575
+gear (hp = wt);[aweight = w];cluster(cyl) noconstant;endog;1;2;9.4946134;.09115158
+gear (hp = wt);[aweight = w];cluster(cyl) noconstant;overid;.;.;.;.
+gear (hp = wt am);;small;weak1;2;28;16.465278;.00001873
+gear (hp = wt am);;small;endog;1;28;11.127253;.00240949
+gear (hp = wt am);;small;overid;1;.;1.9409554;.16356483
+gear (hp = wt am);[aweight = w];small;weak1;2;28;17.974405;9.518e-06
+gear (hp = wt am);[aweight = w];small;endog;1;28;11.349395;.00221295
+gear (hp = wt am);[aweight = w];small;overid;1;.;2.1540878;.14219087
+gear (hp = wt am);;rob;weak1;2;28;12.963381;.0001035
+gear (hp = wt am);;rob;endog;1;28;12.930604;.00122733
+gear (hp = wt am);;rob;overid;1;.;1.6113311;.20430479
+gear (hp = wt am);[aweight = w];rob;weak1;2;28;14.174797;.00005594
+gear (hp = wt am);[aweight = w];rob;endog;1;28;12.433246;.00147299
+gear (hp = wt am);[aweight = w];rob;overid;1;.;1.8448118;.17438803
+gear (hp = wt am);;cluster(cyl);weak1;2;2;2299.2858;.00043473
+gear (hp = wt am);;cluster(cyl);endog;1;2;5.9125743;.13557085
+gear (hp = wt am);;cluster(cyl);overid;.;.;.;.
+gear (hp = wt am);[aweight = w];cluster(cyl);weak1;2;2;12866.727;.00007771
+gear (hp = wt am);[aweight = w];cluster(cyl);endog;1;2;5.4014526;.14572676
+gear (hp = wt am);[aweight = w];cluster(cyl);overid;.;.;.;.
+gear (hp = wt am);;small noconstant;weak1;2;29;20.821094;2.474e-06
+gear (hp = wt am);;small noconstant;endog;1;29;3.6331882;.06659292
+gear (hp = wt am);;small noconstant;overid;1;.;.23214555;.62993748
+gear (hp = wt am);[aweight = w];small noconstant;weak1;2;29;20.134738;3.288e-06
+gear (hp = wt am);[aweight = w];small noconstant;endog;1;29;3.9025848;.05779711
+gear (hp = wt am);[aweight = w];small noconstant;overid;1;.;.04860186;.82551425
+gear (hp = wt am);;rob noconstant;weak1;2;29;42.220045;2.574e-09
+gear (hp = wt am);;rob noconstant;endog;1;29;4.1280347;.05142994
+gear (hp = wt am);;rob noconstant;overid;1;.;.29829419;.58495379
+gear (hp = wt am);[aweight = w];rob noconstant;weak1;2;29;39.812501;4.828e-09
+gear (hp = wt am);[aweight = w];rob noconstant;endog;1;29;5.0398417;.03256522
+gear (hp = wt am);[aweight = w];rob noconstant;overid;1;.;.06945184;.79213657
+gear (hp = wt am);;cluster(cyl) noconstant;weak1;2;2;739.99192;.00134954
+gear (hp = wt am);;cluster(cyl) noconstant;endog;1;2;30.775677;.03099064
+gear (hp = wt am);;cluster(cyl) noconstant;overid;.;.;.;.
+gear (hp = wt am);[aweight = w];cluster(cyl) noconstant;weak1;2;2;233.38758;.00426644
+gear (hp = wt am);[aweight = w];cluster(cyl) noconstant;endog;1;2;52.241925;.01860907
+gear (hp = wt am);[aweight = w];cluster(cyl) noconstant;overid;.;.;.;.
