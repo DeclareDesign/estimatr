@@ -304,6 +304,26 @@ ht_prs_declaration <- function(decl, pi1, pi2, row_idx,
                 is_simple = is_simple))
   }
 
+  # A balanced declaration carrying a formula is cube-on-X: assignment is
+  # constrained so that the treated totals of the formula's columns track their
+  # targets. Joint inclusion probabilities for that design have no closed form,
+  # so the complete-randomization ones are used below. Measured against the true
+  # sampling distribution over six fixed populations, the resulting standard
+  # error ran from correct to twice too large, never below. Conservative, but the
+  # user loses the precision the design was chosen for, so say so.
+  # A balanced declaration WITHOUT a formula holds counts only, which is
+  # complete randomization in all but name, and needs no warning.
+  if (!is.null(decl$formula)) {
+    warning(
+      "This declaration balances covariates (", deparse(decl$formula), "). ",
+      "Horvitz-Thompson variance is computed as if assignment were complete ",
+      "randomization, which ignores that constraint, so the standard error is ",
+      "conservative. An exact variance for the cube design is not available; ",
+      "see Deville and Tille (2005) for an approximation.",
+      call. = FALSE
+    )
+  }
+
   # ra_complete (plain complete randomization)
   list(pi1 = pi1, pi2 = pi2, design = "complete",
        N_total = N_total, pi2_b = pi2[1L], pi1_b = pi1[1L])

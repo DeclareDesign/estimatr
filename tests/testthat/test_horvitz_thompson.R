@@ -305,3 +305,35 @@ test_that("HT missing Y: non-uniform pi uses correct row probabilities", {
   est_manual <- (sum(Y2_k) - sum(Y1_k)) / length(z_k)
   expect_equal(m_miss$coefficients[[1]], est_manual, tolerance = 1e-10)
 })
+test_that("a covariate-balanced declaration warns that HT ignores the constraint", {
+  skip_if_not_installed("randomizr")
+  set.seed(451)
+  N <- 40L
+  x <- rnorm(N)
+  p <- runif(N, 0.3, 0.7)
+
+  # Cube-on-X: the design constrains the treated total of x. HT has no joint
+  # inclusion probabilities for it and falls back to complete randomization.
+  d_form <- randomizr::declare_ra(prob_unit = p, formula = ~ x)
+  Z <- randomizr::conduct_ra(d_form)
+  Y <- x + rnorm(N)
+  expect_warning(
+    horvitz_thompson(Y ~ Z, data = data.frame(Y = Y, Z = Z), condition_prs = d_form),
+    "balances covariates"
+  )
+
+  # Counts only, no formula: complete randomization in all but name, no warning.
+  d_flat <- randomizr::declare_ra(prob_unit = p, ra_type = "balanced")
+  Z2 <- randomizr::conduct_ra(d_flat)
+  expect_silent(
+    horvitz_thompson(Y ~ Z, data = data.frame(Y = Y, Z = Z2), condition_prs = d_flat)
+  )
+
+  # And the estimate itself is untouched: only the variance uses joint
+  # probabilities, so the warning is about the interval, not the point.
+  ht <- suppressWarnings(
+    horvitz_thompson(Y ~ Z, data = data.frame(Y = Y, Z = Z), condition_prs = d_form)
+  )
+  manual <- sum(Z * Y / p) / N - sum((1 - Z) * Y / (1 - p)) / N
+  expect_equal(unname(ht$coefficients[[1L]]), manual, tolerance = 1e-8)
+})
