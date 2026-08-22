@@ -13,6 +13,12 @@ has_randomizr <- requireNamespace("randomizr", quietly = TRUE)
 library(estimatr)
 ```
 
+## Written with AI, and checked accordingly
+
+estimatr 2.0.0 was written by Alexander Coppock working with Claude (Anthropic), across design, implementation, tests, benchmarks, and documentation.
+
+It is checked twice over: against a recording of an installed estimatr 1.0.6, which shows the rewrite moved no answer, and against implementations that share no lineage with it (`sandwich`, `clubSandwich`, Stata, `fixest`, `plm`, `blkvar`), which shows the answers are right. [How this was checked] sets out both layers.
+
 ## The short version
 
 estimatr 2.0 is a ground-up rewrite aimed at the DeclareDesign workflow: fit the same model thousands of times, as fast as possible, and get the same number every time. Almost everything you already wrote against 1.x runs unchanged and returns identical estimates, identical standard errors, identical confidence intervals, and identical objects, only faster. That claim is pinned by 1,722 test assertions, 336 of which compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, and a further 298 of which compare against implementations that share no lineage with estimatr at all. See [How this was checked].
@@ -128,46 +134,38 @@ dat_ht <- data.frame(Y = rnorm(200) + 0.5 * Z, Z = Z)
 horvitz_thompson(Y ~ Z, data = dat_ht, condition_prs = decl)
 ```
 
-### 2. `fixed_effects` changes which standard error you get by default
+### 2. Clustered fixed effects get a different default standard error
 
-**One fixed-effect factor and no clusters is unaffected.** HC2 and HC3 are exact, the default is HC2, and both are what 1.x returns for the same call. This is the common case and it ports with no change to the numbers at all.
+**One default moves, and it is the only one.** `fixed_effects` used together with `clusters` now defaults to `se_type = "CR0"`, where 1.x defaulted to `"CR2"`. Every other `fixed_effects` call gives you exactly what 1.x gave you, to the last bit, only much faster. Point estimates are unchanged everywhere, including in the clustered case.
 
 ```{r}
-fit_fe <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~ bl)
-fit_fe$se_type
+dat$bl2 <- rep(1:20, times = 50)
+
+# unclustered, one factor: HC2, as in 1.x
+lm_robust(y ~ z + x, data = dat, fixed_effects = ~ bl)$se_type
+
+# unclustered, two factors: still HC2, as in 1.x
+lm_robust(y ~ z + x, data = dat, fixed_effects = ~ bl + bl2)$se_type
 ```
 
-The reason it works is an identity. HC2 and HC3 need the leverage values of the full design matrix, meaning the matrix with every fixed-effect dummy in it, and absorbing fixed effects by demeaning is exactly the decision not to build that matrix. But the projection onto the full design splits exactly into the projection onto the dummies and the projection onto the demeaned covariates:
+The change warns once per session rather than once per call, since absorbed fixed effects are usually fitted in a loop. Writing `se_type = "CR0"` accepts the new default and removes the warning; writing `se_type = "CR2"` gets the 1.x number back exactly, also without warning.
+
+**Why everything else got faster.** HC2 and HC3 are built from the leverage values of the full design matrix, the one with every fixed-effect dummy in it. Absorbing fixed effects by demeaning is precisely the decision not to build that matrix, which is why 1.x had to expand the dummies to compute them, and why it took 41 seconds to fit 40,000 observations across 2,000 blocks. The way out is an identity. The projection onto the full design splits exactly into the projection onto the dummies and the projection onto the demeaned covariates:
 
 ```
 P_[X | D] = P_D + P_{M_D X}
 ```
 
-so `h_ii` is the demeaned-X hat value plus `diag(P_D)`. With a single factor `P_D` is diagonal and that second term is simply `w_i / sum(w over i's group)`.
+so each leverage value is the demeaned-X hat value plus `diag(P_D)`, and that second piece is cheap: with one factor it is just each unit's weight share within its own group, and with several it costs a factorisation the size of the design's narrowest dimension. No dummy matrix is ever built, at any number of factors. Same numbers, without the matrix that made them slow.
 
-**This holds for any number of factors.** With several, `P_D` is no longer diagonal, but writing the FE design with its widest factor in full dummies and the rest contrast-coded leaves the leading block of `D'WD` diagonal, so `diag(P_D)` needs only a factorisation of size `sum_{k>1}(g_k - 1)`: for a panel of many units over a few periods, a handful of columns. The dummy matrix is never built. Verified to machine precision against writing the dummies out, weighted and unweighted, balanced and unbalanced, from one factor to five.
-
-What does *not* work is the tempting shortcut of adding up each factor's own within-group share. That drops the cross terms and is wrong in the third decimal place rather than by rounding; an earlier draft of 2.0 tested that version, found it wrong, and concluded there was no identity beyond one factor.
-
-**CR2 is the exception.** Its adjustment is built from cluster-level *blocks* of the hat matrix rather than from `h_ii`, and blocks do not decompose the way the diagonal does. There 2.0 does what 1.x did: it writes the dummies out and reads the hat values off the full design. The answer is exact and equal to 1.0.6.
+**Why CR2 is the exception.** Its adjustment comes from cluster-level *blocks* of the hat matrix rather than from the leverage diagonal, and blocks do not decompose the way the diagonal does. So CR2 still has to write the dummies out, which is roughly cubic in the number of levels and gives back the whole reason to absorb fixed effects in the first place. That is why it is the one default that moves. Ask for it by name and you still get it, exact and equal to 1.0.6:
 
 ```{r}
-dat$bl2 <- rep(1:20, times = 50)
-lm_robust(y ~ z + x, data = dat, fixed_effects = ~ bl + bl2, se_type = "HC2")$std.error
 lm_robust(y ~ z + x, data = dat, fixed_effects = ~ bl,
           clusters = cl, se_type = "CR2")$std.error
 ```
 
-**What that costs is why one default does not do it.** Expanding the dummies is roughly cubic in the number of levels, and that cost is the whole reason to absorb fixed effects rather than expand them. Only CR2 still needs the expansion, so it is the only default that moves:
-
-```{r}
-fit <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~ bl + bl2)
-fit$se_type
-```
-
-Unclustered fixed effects keep the `"HC2"` default at any number of factors, exactly as 1.x did. Any `fixed_effects` with `clusters` defaults to `"CR0"` where 1.x gave `"CR2"`, and warns once per session rather than once per call, since absorbed fixed effects are usually fitted in a loop. Writing `se_type = "CR0"` accepts the new default and removes the warning; writing `se_type = "CR2"` gets the 1.x number back, also without warning.
-
-**The upside.** You can absorb a very large number of fixed effects and get a standard error quickly, which was previously impractical. 1.x computes HC2 from the full dummy hat matrix, so 40,000 observations across 2,000 blocks takes it 41 seconds; 2.0 returns the same number in 18 milliseconds. Two-way is where it tells most: 50,000 observations across 1,000 x 30 groups took 13.8 seconds and 970 MB in 1.x, and takes 36 milliseconds and 174 MB here. The memory that made wide fixed effects impractical is simply never allocated.
+**What the speed buys.** Absorbing a large number of fixed effects and still getting HC2 was impractical before. 40,000 observations across 2,000 blocks takes 1.x 41 seconds and 2.0 18 milliseconds, for the same number. Two-way tells most: 50,000 observations across 1,000 x 30 groups took 13.8 seconds and 970 MB in 1.x, and takes 36 milliseconds and 174 MB here. The memory that made wide fixed effects impractical is never allocated.
 
 **A rank-deficiency bug goes with it.** If one FE factor is spanned by the others (a nested factor, or a disconnected design), the FE design is rank deficient. 1.x expanded the dummies, let a pivoted QR drop the redundant columns, and read the hat values off the padded design, so its absorbed answer disagreed with its own explicit-dummy fit. Taking `diag(P_D)` through a pseudo-inverse is exact at any rank, so 2.0 returns the dummy-regression answer, and uses the design's true rank for the residual degrees of freedom rather than the nominal level count.
 
@@ -180,8 +178,6 @@ starprep(lm(y ~ z, data = dat))
 ```
 
 `declaration_to_condition_pr_mat()`, `gen_pr_matrix_cluster()` and `permutations_to_condition_pr_mat()` are not exported. They built the `condition_pr_mat` that `horvitz_thompson()` no longer accepts, and the new variance does not need one. These three are simply absent rather than deprecated, because unlike the stargazer helpers they have no user-facing replacement to point at.
-
-HAC (Newey-West) and CR3 standard errors are still not implemented.
 
 ## Porting an existing script
 
@@ -352,7 +348,7 @@ The rest is ordinary: one code path where 1.x has several, and the S3 surface ge
 
 ## How this was checked
 
-estimatr 2.0.0 was written by Alexander Coppock working with Claude (Anthropic), across design, implementation, tests, benchmarks, and documentation. The disclosure belongs next to the evidence, because the evidence is the part that should decide whether you install it.
+The disclosure is at the top of this document. Here is the evidence behind it, which is the part that should actually decide whether you install this.
 
 **The first layer asks whether the rewrite changed an answer.** 336 assertions compare 2.0 against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, across every supported standard error type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes. A separate file pins the entire returned surface of sixteen fit types, names as well as values, because a package's compatibility surface is what it returns rather than what it exports: during development six fields went missing from fitted objects and a seventh returned a wrong value, and neither a `NAMESPACE` diff nor a search of every reverse dependency's source could see it, since no export changed and no call site changed either.
 
