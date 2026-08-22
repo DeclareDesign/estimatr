@@ -51,7 +51,11 @@ ok <- TRUE
 for (v in c("mpg", "hp", "am", "wt", "gear", "cyl", "drat", "carb")) {
   s <- get(paste0("data.sum.", v))
   if (is.null(s)) next
-  if (!isTRUE(all.equal(s, sum(d[[v]]), tolerance = 1e-12))) {
+  # Stata IC imports a CSV as float32, so a column sum agrees with ours only to
+  # single precision. 1e-6 is the right bar here: it still catches a genuinely
+  # different dataset by many orders of magnitude, where 1e-12 flagged 642.9 as
+  # a mismatch with 642.8999996 and read like a real problem.
+  if (!isTRUE(all.equal(s, sum(d[[v]]), tolerance = 1e-6))) {
     say("  MISMATCH on %s: Stata %.10g vs ours %.10g", v, s, sum(d[[v]])); ok <- FALSE
   }
 }

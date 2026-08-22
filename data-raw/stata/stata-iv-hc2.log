@@ -1,0 +1,1207 @@
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\WZB Dropbox\Macartan Humphreys\1_Projects\DeclareDesign\zero_evaluation\stata_check\stata-iv-hc2.log
+  log type:  text
+ opened on:  22 Aug 2026, 23:58:24
+
+. 
+. display "RESULT|meta.stata_version|`c(stata_version)'"
+RESULT|meta.stata_version|17
+
+. display "RESULT|meta.version|`c(version)'"
+RESULT|meta.version|17
+
+. display "RESULT|meta.flavor|`c(flavor)'"
+RESULT|meta.flavor|IC
+
+. display "RESULT|meta.os|`c(os)'"
+RESULT|meta.os|Windows
+
+. display "RESULT|meta.date|`c(current_date)'"
+RESULT|meta.date|22 Aug 2026
+
+. 
+. import delimited "mtcars.csv", clear case(preserve)
+(encoding automatically selected: ISO-8859-2)
+(11 vars, 32 obs)
+
+. 
+. // Fingerprint, so we can be certain your data is the data we have. The
+. // signature is Stata's own; the sums are a second check that does not depend
+. // on Stata's hashing.
+. datasignature
+  32:11(101401):516909457:1857957712
+
+. local sig "`r(datasignature)'"
+
+. display "RESULT|data.signature|`sig'"
+RESULT|data.signature|32:11(101401):516909457:1857957712
+
+. display "RESULT|data.N|`=_N'"
+RESULT|data.N|32
+
+. foreach v of varlist mpg hp am wt gear cyl drat carb {
+  2.     quietly summarize `v'
+  3.     display "RESULT|data.sum.`v'|" %24.17e r(sum)
+  4. }
+RESULT|data.sum.mpg| 6.42899999618530273e+02
+RESULT|data.sum.hp| 4.69400000000000000e+03
+RESULT|data.sum.am| 1.30000000000000000e+01
+RESULT|data.sum.wt| 1.02951999664306641e+02
+RESULT|data.sum.gear| 1.18000000000000000e+02
+RESULT|data.sum.cyl| 1.98000000000000000e+02
+RESULT|data.sum.drat| 1.15089999437332153e+02
+RESULT|data.sum.carb| 9.00000000000000000e+01
+
+. 
+. // A weight variable, defined exactly as in the 2019 do-files.
+. generate double w = drat / 5
+
+. 
+. // ---------------------------------------------------------------------------
+. // Helpers
+. // ---------------------------------------------------------------------------
+. 
+. capture program drop dumpfit
+
+. program define dumpfit
+  1.     args tag
+  2.     tempname b_ V_
+  3.     matrix `b_' = e(b)
+  4.     matrix `V_' = e(V)
+  5.     local k = colsof(`b_')
+  6.     local nm : colnames `b_'
+  7.     display "RESULT|`tag'.k|`k'"
+  8.     display "RESULT|`tag'.names|`nm'"
+  9.     display "RESULT|`tag'.N|" e(N)
+ 10.     display "RESULT|`tag'.df_r|" e(df_r)
+ 11.     forvalues i = 1/`k' {
+ 12.         display "RESULT|`tag'.b_`i'|" %24.17e `b_'[1,`i']
+ 13.         forvalues j = 1/`k' {
+ 14.             display "RESULT|`tag'.V_`i'_`j'|" %24.17e `V_'[`i',`j']
+ 15.         }
+ 16.     }
+ 17. end
+
+. 
+. // Run a command; record whether Stata accepted it, and dump the fit if so.
+. capture program drop tryfit
+
+. program define tryfit
+  1.     args tag cmdline
+  2.     capture noisily `cmdline'
+  3.     local rc = _rc
+  4.     display "RESULT|`tag'.rc|`rc'"
+  5.     if `rc' == 0 {
+  6.         dumpfit "`tag'"
+  7.     }
+  8.     else {
+  9.         display "RESULT|`tag'.refused|1"
+ 10.     }
+ 11. end
+
+. 
+. // ---------------------------------------------------------------------------
+. // 1. Does this Stata accept vce(hc2) / vce(hc3) for ivregress?
+. //
+. //    This is the question. rc == 0 means yes and the matrix follows; any other
+. //    return code means the option was refused, which is itself the answer.
+. //    Both the just-identified and the over-identified case are tried, because
+. //    the two leverage conventions separate further when the model is
+. //    over-identified.
+. // ---------------------------------------------------------------------------
+. 
+. tryfit iv_just_hc2   "ivregress 2sls mpg (hp am = wt gear), small vce(hc2)"
+option vce() incorrectly specified
+RESULT|iv_just_hc2.rc|198
+RESULT|iv_just_hc2.refused|1
+
+. tryfit iv_just_hc3   "ivregress 2sls mpg (hp am = wt gear), small vce(hc3)"
+option vce() incorrectly specified
+RESULT|iv_just_hc3.rc|198
+RESULT|iv_just_hc3.refused|1
+
+. tryfit iv_over_hc2   "ivregress 2sls mpg (hp = wt gear drat), small vce(hc2)"
+option vce() incorrectly specified
+RESULT|iv_over_hc2.rc|198
+RESULT|iv_over_hc2.refused|1
+
+. tryfit iv_over_hc3   "ivregress 2sls mpg (hp = wt gear drat), small vce(hc3)"
+option vce() incorrectly specified
+RESULT|iv_over_hc3.rc|198
+RESULT|iv_over_hc3.refused|1
+
+. tryfit iv_just_hc2_w "ivregress 2sls mpg (hp am = wt gear) [aweight = w], small vce(hc2)"
+option vce() incorrectly specified
+RESULT|iv_just_hc2_w.rc|198
+RESULT|iv_just_hc2_w.refused|1
+
+. 
+. // ---------------------------------------------------------------------------
+. // 2. What Stata will certainly give us.
+. //
+. //    vce(jackknife) is the useful one: HC3 exists as an approximation to the
+. //    delete-one jackknife, so whichever convention tracks Stata's jackknife
+. //    more closely has the better claim. The others are anchors, and two of
+. //    them reproduce rows we already hold from 2019, which lets us confirm your
+. //    Stata behaves like the Stata those came from before we trust anything new.
+. // ---------------------------------------------------------------------------
+. 
+. tryfit iv_just_unadj "ivregress 2sls mpg (hp am = wt gear), small"
+
+
+Instrumental variables 2SLS regression
+
+      Source |       SS       df       MS         Number of obs   =         32
+-------------+------------------------------      F(  2,    29)   =      44.81
+       Model |   851.35473     2  425.677365      Prob > F        =     0.0000
+    Residual |  274.692515    29  9.47215569      R-squared       =     0.7561
+-------------+------------------------------      Adj R-squared   =     0.7392
+       Total |  1126.04724    31  36.3241047      Root MSE        =     3.0777
+
+------------------------------------------------------------------------------
+         mpg | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+          hp |  -.0718452   .0126571    -5.68   0.000    -.0977319   -.0459585
+          am |   5.742761   1.509763     3.80   0.001     2.654948    8.830574
+       _cons |   28.29642   2.289031    12.36   0.000     23.61482    32.97801
+------------------------------------------------------------------------------
+Instrumented: hp am
+ Instruments: wt gear
+RESULT|iv_just_unadj.rc|0
+RESULT|iv_just_unadj.k|3
+RESULT|iv_just_unadj.names|hp am _cons
+RESULT|iv_just_unadj.N|32
+RESULT|iv_just_unadj.df_r|29
+RESULT|iv_just_unadj.b_1|-7.18451748055689010e-02
+RESULT|iv_just_unadj.V_1_1| 1.60202724312645284e-04
+RESULT|iv_just_unadj.V_1_2| 9.40022841744813688e-03
+RESULT|iv_just_unadj.V_1_3|-2.73185799171994613e-02
+RESULT|iv_just_unadj.b_2| 5.74276093149264977e+00
+RESULT|iv_just_unadj.V_2_1| 9.40022841744813688e-03
+RESULT|iv_just_unadj.V_2_2| 2.27938522232336238e+00
+RESULT|iv_just_unadj.V_2_3|-2.30489625255329012e+00
+RESULT|iv_just_unadj.b_3| 2.82964174389520693e+01
+RESULT|iv_just_unadj.V_3_1|-2.73185799171994613e-02
+RESULT|iv_just_unadj.V_3_2|-2.30489625255329012e+00
+RESULT|iv_just_unadj.V_3_3| 5.23966315950297279e+00
+
+. tryfit iv_just_rob   "ivregress 2sls mpg (hp am = wt gear), small rob"
+
+Instrumental variables 2SLS regression            Number of obs   =         32
+                                                  F(  2,    29)   =      41.37
+                                                  Prob > F        =     0.0000
+                                                  R-squared       =     0.7561
+                                                  Adj R-squared   =     0.7392
+                                                  Root MSE        =     3.0777
+
+------------------------------------------------------------------------------
+             |               Robust
+         mpg | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+          hp |  -.0718452   .0125622    -5.72   0.000    -.0975377   -.0461526
+          am |   5.742761   1.483356     3.87   0.001     2.708957    8.776565
+       _cons |   28.29642   2.188001    12.93   0.000     23.82145    32.77138
+------------------------------------------------------------------------------
+Instrumented: hp am
+ Instruments: wt gear
+RESULT|iv_just_rob.rc|0
+RESULT|iv_just_rob.k|3
+RESULT|iv_just_rob.names|hp am _cons
+RESULT|iv_just_rob.N|32
+RESULT|iv_just_rob.df_r|29
+RESULT|iv_just_rob.b_1|-7.18451748055689010e-02
+RESULT|iv_just_rob.V_1_1| 1.57808406815818368e-04
+RESULT|iv_just_rob.V_1_2| 8.12483716846833411e-03
+RESULT|iv_just_rob.V_1_3|-2.61819985438107826e-02
+RESULT|iv_just_rob.b_2| 5.74276093149264977e+00
+RESULT|iv_just_rob.V_2_1| 8.12483716846833411e-03
+RESULT|iv_just_rob.V_2_2| 2.20034529353211594e+00
+RESULT|iv_just_rob.V_2_3|-1.89204932794811787e+00
+RESULT|iv_just_rob.b_3| 2.82964174389520693e+01
+RESULT|iv_just_rob.V_3_1|-2.61819985438107826e-02
+RESULT|iv_just_rob.V_3_2|-1.89204932794811787e+00
+RESULT|iv_just_rob.V_3_3| 4.78734992377083923e+00
+
+. tryfit iv_just_cl    "ivregress 2sls mpg (hp am = wt gear), small vce(cluster cyl)"
+
+Instrumental variables 2SLS regression            Number of obs   =         32
+                                                  F(  2,     2)   =     108.38
+                                                  Prob > F        =     0.0091
+                                                  R-squared       =     0.7561
+                                                  Adj R-squared   =     0.7392
+                                                  Root MSE        =     3.0777
+
+                                    (Std. err. adjusted for 3 clusters in cyl)
+------------------------------------------------------------------------------
+             |               Robust
+         mpg | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+          hp |  -.0718452   .0063997   -11.23   0.008     -.099381   -.0443094
+          am |   5.742761   .8916463     6.44   0.023     1.906317    9.579205
+       _cons |   28.29642    .562254    50.33   0.000     25.87723     30.7156
+------------------------------------------------------------------------------
+Instrumented: hp am
+ Instruments: wt gear
+RESULT|iv_just_cl.rc|0
+RESULT|iv_just_cl.k|3
+RESULT|iv_just_cl.names|hp am _cons
+RESULT|iv_just_cl.N|32
+RESULT|iv_just_cl.df_r|2
+RESULT|iv_just_cl.b_1|-7.18451748055689010e-02
+RESULT|iv_just_cl.V_1_1| 4.09564802293898157e-05
+RESULT|iv_just_cl.V_1_2| 1.41621188407686934e-03
+RESULT|iv_just_cl.V_1_3|-3.10223760465808693e-03
+RESULT|iv_just_cl.b_2| 5.74276093149264977e+00
+RESULT|iv_just_cl.V_2_1| 1.41621188407686934e-03
+RESULT|iv_just_cl.V_2_2| 7.95033100228784928e-01
+RESULT|iv_just_cl.V_2_3| 1.38786359934425202e-01
+RESULT|iv_just_cl.b_3| 2.82964174389520693e+01
+RESULT|iv_just_cl.V_3_1|-3.10223760465808693e-03
+RESULT|iv_just_cl.V_3_2| 1.38786359934425202e-01
+RESULT|iv_just_cl.V_3_3| 3.16129543269175362e-01
+
+. tryfit iv_just_jack  "ivregress 2sls mpg (hp am = wt gear), small vce(jackknife)"
+(running ivregress on estimation sample)
+
+Jackknife replications (32)
+----+--- 1 ---+--- 2 ---+--- 3 ---+--- 4 ---+--- 5 
+................................
+
+Instrumental variables 2SLS regression            Number of obs   =         32
+                                                  Replications    =         32
+                                                  F(  2,    31)   =      36.48
+                                                  Prob > F        =     0.0000
+                                                  R-squared       =     0.7561
+                                                  Adj R-squared   =     0.7392
+                                                  Root MSE        =     3.0777
+
+------------------------------------------------------------------------------
+             |              Jackknife
+         mpg | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+          hp |  -.0718452   .0175173    -4.10   0.000     -.107572   -.0361184
+          am |   5.742761   1.995966     2.88   0.007     1.671961    9.813561
+       _cons |   28.29642   3.015615     9.38   0.000     22.14603    34.44681
+------------------------------------------------------------------------------
+Instrumented: hp am
+ Instruments: wt gear
+RESULT|iv_just_jack.rc|0
+RESULT|iv_just_jack.k|3
+RESULT|iv_just_jack.names|hp am _cons
+RESULT|iv_just_jack.N|32
+RESULT|iv_just_jack.df_r|31
+RESULT|iv_just_jack.b_1|-7.18451748055689010e-02
+RESULT|iv_just_jack.V_1_1| 3.06856624526525646e-04
+RESULT|iv_just_jack.V_1_2| 2.32224389615938616e-02
+RESULT|iv_just_jack.V_1_3|-5.14368702938670930e-02
+RESULT|iv_just_jack.b_2| 5.74276093149264977e+00
+RESULT|iv_just_jack.V_2_1| 2.32224389615938616e-02
+RESULT|iv_just_jack.V_2_2| 3.98388051640640128e+00
+RESULT|iv_just_jack.V_2_3|-4.52388306746209867e+00
+RESULT|iv_just_jack.b_3| 2.82964174389520693e+01
+RESULT|iv_just_jack.V_3_1|-5.14368702938670930e-02
+RESULT|iv_just_jack.V_3_2|-4.52388306746209867e+00
+RESULT|iv_just_jack.V_3_3| 9.09393613500501274e+00
+
+. tryfit iv_over_unadj "ivregress 2sls mpg (hp = wt gear drat), small"
+
+
+Instrumental variables 2SLS regression
+
+      Source |       SS       df       MS         Number of obs   =         32
+-------------+------------------------------      F(  1,    30)   =      39.72
+       Model |  577.165121     1  577.165121      Prob > F        =     0.0000
+    Residual |  548.882124    30  18.2960708      R-squared       =     0.5126
+-------------+------------------------------      Adj R-squared   =     0.4963
+       Total |  1126.04724    31  36.3241047      Root MSE        =     4.2774
+
+------------------------------------------------------------------------------
+         mpg | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+          hp |  -.0945817   .0150067    -6.30   0.000    -.1252294    -.063934
+       _cons |   33.96458    2.32754    14.59   0.000     29.21111    38.71805
+------------------------------------------------------------------------------
+Instrumented: hp
+ Instruments: wt gear drat
+RESULT|iv_over_unadj.rc|0
+RESULT|iv_over_unadj.k|2
+RESULT|iv_over_unadj.names|hp _cons
+RESULT|iv_over_unadj.N|32
+RESULT|iv_over_unadj.df_r|30
+RESULT|iv_over_unadj.b_1|-9.45817030053620472e-02
+RESULT|iv_over_unadj.V_1_1| 2.25200565877327715e-04
+RESULT|iv_over_unadj.V_1_2|-3.30341080071305110e-02
+RESULT|iv_over_unadj.b_2| 3.39645785476781157e+01
+RESULT|iv_over_unadj.V_2_1|-3.30341080071305110e-02
+RESULT|iv_over_unadj.V_2_2| 5.41744293084955775e+00
+
+. tryfit iv_over_rob   "ivregress 2sls mpg (hp = wt gear drat), small rob"
+
+Instrumental variables 2SLS regression            Number of obs   =         32
+                                                  F(  1,    30)   =      27.67
+                                                  Prob > F        =     0.0000
+                                                  R-squared       =     0.5126
+                                                  Adj R-squared   =     0.4963
+                                                  Root MSE        =     4.2774
+
+------------------------------------------------------------------------------
+             |               Robust
+         mpg | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+          hp |  -.0945817   .0179814    -5.26   0.000    -.1313046   -.0578588
+       _cons |   33.96458   2.470681    13.75   0.000     28.91877    39.01038
+------------------------------------------------------------------------------
+Instrumented: hp
+ Instruments: wt gear drat
+RESULT|iv_over_rob.rc|0
+RESULT|iv_over_rob.k|2
+RESULT|iv_over_rob.names|hp _cons
+RESULT|iv_over_rob.N|32
+RESULT|iv_over_rob.df_r|30
+RESULT|iv_over_rob.b_1|-9.45817030053620472e-02
+RESULT|iv_over_rob.V_1_1| 3.23329770314965536e-04
+RESULT|iv_over_rob.V_1_2|-4.25723817406127858e-02
+RESULT|iv_over_rob.b_2| 3.39645785476781157e+01
+RESULT|iv_over_rob.V_2_1|-4.25723817406127858e-02
+RESULT|iv_over_rob.V_2_2| 6.10426604644459658e+00
+
+. tryfit iv_over_jack  "ivregress 2sls mpg (hp = wt gear drat), small vce(jackknife)"
+(running ivregress on estimation sample)
+
+Jackknife replications (32)
+----+--- 1 ---+--- 2 ---+--- 3 ---+--- 4 ---+--- 5 
+................................
+
+Instrumental variables 2SLS regression            Number of obs   =         32
+                                                  Replications    =         32
+                                                  F(  1,    31)   =      13.81
+                                                  Prob > F        =     0.0008
+                                                  R-squared       =     0.5126
+                                                  Adj R-squared   =     0.4963
+                                                  Root MSE        =     4.2774
+
+------------------------------------------------------------------------------
+             |              Jackknife
+         mpg | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+          hp |  -.0945817   .0254484    -3.72   0.001    -.1464842   -.0426793
+       _cons |   33.96458   3.383413    10.04   0.000     27.06406     40.8651
+------------------------------------------------------------------------------
+Instrumented: hp
+ Instruments: wt gear drat
+RESULT|iv_over_jack.rc|0
+RESULT|iv_over_jack.k|2
+RESULT|iv_over_jack.names|hp _cons
+RESULT|iv_over_jack.N|32
+RESULT|iv_over_jack.df_r|31
+RESULT|iv_over_jack.b_1|-9.45817030053620472e-02
+RESULT|iv_over_jack.V_1_1| 6.47623428055235737e-04
+RESULT|iv_over_jack.V_1_2|-8.41417574230787224e-02
+RESULT|iv_over_jack.b_2| 3.39645785476781157e+01
+RESULT|iv_over_jack.V_2_1|-8.41417574230787224e-02
+RESULT|iv_over_jack.V_2_2| 1.14474841332412325e+01
+
+. 
+. // OLS hc2/hc3 for contrast. These we already match exactly, so if any of them
+. // disagrees with what we hold, the problem is the data or the Stata version
+. // rather than anything to do with 2SLS.
+. tryfit ols_hc2 "regress mpg hp, vce(hc2)"
+
+Linear regression                               Number of obs     =         32
+                                                F(1, 30)          =      21.50
+                                                Prob > F          =     0.0001
+                                                R-squared         =     0.6024
+                                                Root MSE          =      3.863
+
+------------------------------------------------------------------------------
+             |             Robust HC2
+         mpg | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+          hp |  -.0682283   .0147147    -4.64   0.000    -.0982798   -.0381768
+       _cons |   30.09886   2.193012    13.72   0.000     25.62013    34.57759
+------------------------------------------------------------------------------
+RESULT|ols_hc2.rc|0
+RESULT|ols_hc2.k|2
+RESULT|ols_hc2.names|hp _cons
+RESULT|ols_hc2.N|32
+RESULT|ols_hc2.df_r|30
+RESULT|ols_hc2.b_1|-6.82282780488223800e-02
+RESULT|ols_hc2.V_1_1| 2.16523373799533739e-04
+RESULT|ols_hc2.V_1_2|-3.06269831946713034e-02
+RESULT|ols_hc2.b_2| 3.00988605243657048e+01
+RESULT|ols_hc2.V_2_1|-3.06269831946713034e-02
+RESULT|ols_hc2.V_2_2| 4.80930193528896677e+00
+
+. tryfit ols_hc3 "regress mpg hp, vce(hc3)"
+
+Linear regression                               Number of obs     =         32
+                                                F(1, 30)          =      16.89
+                                                Prob > F          =     0.0003
+                                                R-squared         =     0.6024
+                                                Root MSE          =      3.863
+
+------------------------------------------------------------------------------
+             |             Robust HC3
+         mpg | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+          hp |  -.0682283   .0166019    -4.11   0.000    -.1021339   -.0343226
+       _cons |   30.09886   2.410067    12.49   0.000     25.17685    35.02087
+------------------------------------------------------------------------------
+RESULT|ols_hc3.rc|0
+RESULT|ols_hc3.k|2
+RESULT|ols_hc3.names|hp _cons
+RESULT|ols_hc3.N|32
+RESULT|ols_hc3.df_r|30
+RESULT|ols_hc3.b_1|-6.82282780488223800e-02
+RESULT|ols_hc3.V_1_1| 2.75624186482663488e-04
+RESULT|ols_hc3.V_1_2|-3.81761343428958580e-02
+RESULT|ols_hc3.b_2| 3.00988605243657048e+01
+RESULT|ols_hc3.V_2_1|-3.81761343428958580e-02
+RESULT|ols_hc3.V_2_2| 5.80842220257656017e+00
+
+. 
+. // ---------------------------------------------------------------------------
+. // 3. ivreg2, only if it happens to be installed. Not required.
+. // ---------------------------------------------------------------------------
+. 
+. capture which ivreg2
+
+. local has_ivreg2 = (_rc == 0)
+
+. display "RESULT|ivreg2.installed|`has_ivreg2'"
+RESULT|ivreg2.installed|0
+
+. if `has_ivreg2' {
+.     tryfit ivreg2_rob "ivreg2 mpg (hp am = wt gear), robust small"
+. }
+
+. 
+. // ---------------------------------------------------------------------------
+. // 4. The two candidate leverage vectors, computed in Mata.
+. //
+. //    This is not Stata's opinion, it is our arithmetic done in Stata's linear
+. //    algebra rather than R's. It matters for two reasons: if vce(hc2) above
+. //    was accepted, comparing it against these two says which convention Stata
+. //    chose; and if it was refused, these still confirm that the two candidates
+. //    are what we think they are, computed by an independent implementation.
+. //
+. //    Column order is (hp, am, _cons), matching how ivregress reports.
+. // ---------------------------------------------------------------------------
+. 
+. mata:
+------------------------------------------------- mata (type end to exit) ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+: void dumpiv(string scalar yv, string rowvector xv, string rowvector zv,
+>             string scalar tag)
+> {
+>     real colvector  y, u, ha, hb, hx, b, sel, yi, e
+>     real matrix     X, Z, PZX, Bread, H, IH, V, bj, D, Vj, Xi, Zi, Pi, dens
+>     real scalar     n, k, i, j, t
+>     real rowvector  bbar
+>     string rowvector tags
+> 
+>     y = st_data(., yv)
+>     n = rows(y)
+>     X = st_data(., xv), J(n, 1, 1)
+>     Z = st_data(., zv), J(n, 1, 1)
+>     k = cols(X)
+> 
+>     PZX   = Z * (invsym(quadcross(Z, Z)) * quadcross(Z, X))
+>     Bread = invsym(quadcross(PZX, PZX))
+>     b     = Bread * quadcross(PZX, y)
+>     u     = y - X * b
+> 
+>     ha = rowsum((PZX * Bread) :* PZX)   // second-stage leverage (estimatr)
+>     hb = rowsum((PZX * Bread) :* X)     // influence             (sandwich)
+> 
+>     H  = X * Bread * PZX'
+>     IH = I(n) - H
+>     hx = diagonal(IH * IH')             // exact E[e^2]/sigma^2
+> 
+>     printf("RESULT|%s.mata.n|%g\n", tag, n)
+>     printf("RESULT|%s.mata.k|%g\n", tag, k)
+>     printf("RESULT|%s.mata.sum_ha|%24.17e\n", tag, sum(ha))
+>     printf("RESULT|%s.mata.sum_hb|%24.17e\n", tag, sum(hb))
+>     printf("RESULT|%s.mata.max_ha|%24.17e\n", tag, max(ha))
+>     printf("RESULT|%s.mata.max_hb|%24.17e\n", tag, max(hb))
+>     printf("RESULT|%s.mata.max_asym|%24.17e\n", tag, max(abs(H - H')))
+>     printf("RESULT|%s.mata.max_idem|%24.17e\n", tag, max(abs(H * H - H)))
+> 
+>     for (i = 1; i <= n; i++) {
+>         printf("RESULT|%s.mata.ha_%g|%24.17e\n", tag, i, ha[i])
+>         printf("RESULT|%s.mata.hb_%g|%24.17e\n", tag, i, hb[i])
+>         printf("RESULT|%s.mata.hx_%g|%24.17e\n", tag, i, hx[i])
+>         printf("RESULT|%s.mata.u_%g|%24.17e\n",  tag, i, u[i])
+>     }
+>     for (i = 1; i <= k; i++)
+>         printf("RESULT|%s.mata.b_%g|%24.17e\n", tag, i, b[i])
+> 
+>     // sqrt of a negative entry gives a missing value rather than an error,
+>     // which is exactly the behaviour we want recorded for convention (B).
+>     dens = (sqrt(1 :- ha), sqrt(1 :- hb), sqrt(hx),
+>             (1 :- ha), (1 :- hb), hx, J(n, 1, 1))
+>     tags = ("hc2_a", "hc2_b", "hc2_x", "hc3_a", "hc3_b", "hc3_x", "hc0")
+>     for (t = 1; t <= 7; t++) {
+>         e = u :/ dens[., t]
+>         V = Bread * quadcross(PZX :* e, PZX :* e) * Bread
+>         for (i = 1; i <= k; i++)
+>             for (j = 1; j <= k; j++)
+>                 printf("RESULT|%s.mata.%s.V_%g_%g|%24.17e\n",
+>                        tag, tags[t], i, j, V[i, j])
+>     }
+> 
+>     // Exact delete-one jackknife, to cross-check Stata's vce(jackknife).
+>     bj = J(n, k, .)
+>     for (i = 1; i <= n; i++) {
+>         sel = (1::n) :!= i
+>         yi = select(y, sel); Xi = select(X, sel); Zi = select(Z, sel)
+>         Pi = Zi * (invsym(quadcross(Zi, Zi)) * quadcross(Zi, Xi))
+>         bj[i, .] = (invsym(quadcross(Pi, Pi)) * quadcross(Pi, yi))'
+>     }
+>     bbar = mean(bj)
+>     D    = bj :- bbar
+>     Vj   = ((n - 1) / n) * quadcross(D, D)
+>     for (i = 1; i <= k; i++)
+>         for (j = 1; j <= k; j++)
+>             printf("RESULT|%s.mata.jack.V_%g_%g|%24.17e\n", tag, i, j, Vj[i, j])
+> }
+
+: end
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+. 
+. // Column order is (hp, am, _cons), matching how ivregress reports.
+. mata: dumpiv("mpg", ("hp", "am"), ("wt", "gear"), "mtcars")
+RESULT|mtcars.mata.n|32
+RESULT|mtcars.mata.k|3
+RESULT|mtcars.mata.sum_ha| 2.99999999999999822e+00
+RESULT|mtcars.mata.sum_hb| 2.99999999999997824e+00
+RESULT|mtcars.mata.max_ha| 2.28908262562720011e-01
+RESULT|mtcars.mata.max_hb| 4.46878429502519325e-01
+RESULT|mtcars.mata.max_asym| 2.91399043462752194e-01
+RESULT|mtcars.mata.max_idem| 2.72004641033163352e-15
+RESULT|mtcars.mata.ha_1| 4.34918323745187296e-02
+RESULT|mtcars.mata.hb_1| 5.66332941214031382e-02
+RESULT|mtcars.mata.hx_1| 9.82347497994702557e-01
+RESULT|mtcars.mata.u_1|-5.13620914183191957e+00
+RESULT|mtcars.mata.ha_2| 3.75530372694745443e-02
+RESULT|mtcars.mata.hb_2| 5.13250312264707936e-02
+RESULT|mtcars.mata.hx_2| 9.92964023784567051e-01
+RESULT|mtcars.mata.u_2|-5.13620914183191957e+00
+RESULT|mtcars.mata.ha_3| 5.89816416930634760e-02
+RESULT|mtcars.mata.hb_3| 7.08548134888148939e-02
+RESULT|mtcars.mata.hx_3| 9.59854989554760008e-01
+RESULT|mtcars.mata.u_3|-4.55757787646604839e+00
+RESULT|mtcars.mata.ha_4| 7.38251392709776966e-02
+RESULT|mtcars.mata.hb_4| 9.38556695578700306e-02
+RESULT|mtcars.mata.hx_4| 9.35600458133162061e-01
+RESULT|mtcars.mata.u_4| 1.00655140819115019e+00
+RESULT|mtcars.mata.ha_5| 6.41372504292968410e-02
+RESULT|mtcars.mata.hb_5| 5.23074032570861325e-02
+RESULT|mtcars.mata.hx_5| 9.57078501715704966e-01
+RESULT|mtcars.mata.u_5| 2.97648891496231904e+00
+RESULT|mtcars.mata.ha_6| 6.35263443355504054e-02
+RESULT|mtcars.mata.hb_6| 8.65074933134580559e-02
+RESULT|mtcars.mata.hx_6| 9.60956250124980760e-01
+RESULT|mtcars.mata.u_6|-2.65267370289724269e+00
+RESULT|mtcars.mata.ha_7| 6.08966467817216098e-02
+RESULT|mtcars.mata.hb_7| 2.74080910513068293e-02
+RESULT|mtcars.mata.hx_7| 1.10034675810965665e+00
+RESULT|mtcars.mata.u_7| 3.60565057914756437e+00
+RESULT|mtcars.mata.ha_8| 3.93863321674101929e-02
+RESULT|mtcars.mata.hb_8|-1.01259968224372901e-02
+RESULT|mtcars.mata.hx_8| 1.28080287592672137e+00
+RESULT|mtcars.mata.u_8| 5.57983017523834946e-01
+RESULT|mtcars.mata.ha_9| 3.85917739169108348e-02
+RESULT|mtcars.mata.hb_9| 1.65054069995223401e-03
+RESULT|mtcars.mata.hx_9| 1.15452598681468222e+00
+RESULT|mtcars.mata.u_9| 1.32887340463788917e+00
+RESULT|mtcars.mata.ha_10| 4.80548313011657513e-02
+RESULT|mtcars.mata.hb_10| 6.03971801011862763e-04
+RESULT|mtcars.mata.hx_10| 1.09834695677154448e+00
+RESULT|mtcars.mata.u_10|-2.59460174927273357e-01
+RESULT|mtcars.mata.ha_11| 4.80548313011657513e-02
+RESULT|mtcars.mata.hb_11| 6.03971801011862763e-04
+RESULT|mtcars.mata.hx_11| 1.09834695677154448e+00
+RESULT|mtcars.mata.u_11|-1.65946170080617961e+00
+RESULT|mtcars.mata.ha_12| 6.45195287834479103e-02
+RESULT|mtcars.mata.hb_12| 6.33039361485482760e-02
+RESULT|mtcars.mata.hx_12| 9.36265107894386883e-01
+RESULT|mtcars.mata.u_12| 1.03571364458098358e+00
+RESULT|mtcars.mata.ha_13| 5.92778102636885088e-02
+RESULT|mtcars.mata.hb_13| 5.60168169089716311e-02
+RESULT|mtcars.mata.hx_13| 9.50839346373540062e-01
+RESULT|mtcars.mata.u_13| 1.93571326311125702e+00
+RESULT|mtcars.mata.ha_14| 5.93081491723699700e-02
+RESULT|mtcars.mata.hb_14| 5.70884505883350324e-02
+RESULT|mtcars.mata.hx_14| 9.48696079014813121e-01
+RESULT|mtcars.mata.u_14|-1.64286164684153135e-01
+RESULT|mtcars.mata.ha_15| 1.74308790640855804e-01
+RESULT|mtcars.mata.hb_15| 1.15688088176012255e-01
+RESULT|mtcars.mata.hx_15| 8.50079925930990910e-01
+RESULT|mtcars.mata.u_15|-3.16815698527978817e+00
+RESULT|mtcars.mata.ha_16| 2.02529681871758349e-01
+RESULT|mtcars.mata.hb_16| 1.35587605884713747e-01
+RESULT|mtcars.mata.hx_16| 8.23633695082501172e-01
+RESULT|mtcars.mata.u_16|-2.44970523722409794e+00
+RESULT|mtcars.mata.ha_17| 1.89333461061186648e-01
+RESULT|mtcars.mata.hb_17| 1.48977173357106363e-01
+RESULT|mtcars.mata.hx_17| 8.23226148132836677e-01
+RESULT|mtcars.mata.u_17| 2.92797257559429980e+00
+RESULT|mtcars.mata.ha_18| 6.77514369556487528e-02
+RESULT|mtcars.mata.hb_18| 9.06449026167407135e-02
+RESULT|mtcars.mata.hx_18| 9.49818316989020195e-01
+RESULT|mtcars.mata.u_18| 3.10260469260194682e+00
+RESULT|mtcars.mata.ha_19| 1.31566382721774566e-01
+RESULT|mtcars.mata.hb_19| 1.40574053324199033e-01
+RESULT|mtcars.mata.hx_19| 8.74986941777356808e-01
+RESULT|mtcars.mata.u_19| 9.67703379753466209e-02
+RESULT|mtcars.mata.ha_20| 1.03466753125806887e-01
+RESULT|mtcars.mata.hb_20| 1.13200111117591346e-01
+RESULT|mtcars.mata.hx_20| 9.06275668360351783e-01
+RESULT|mtcars.mata.u_20| 4.53075951779637620e+00
+RESULT|mtcars.mata.ha_21| 1.43462326752793523e-01
+RESULT|mtcars.mata.hb_21| 1.41368492619087072e-01
+RESULT|mtcars.mata.hx_21| 8.70048308421826677e-01
+RESULT|mtcars.mata.u_21| 1.72564517188476430e-01
+RESULT|mtcars.mata.ha_22| 6.19387570065157295e-02
+RESULT|mtcars.mata.hb_22| 6.44507533877414635e-02
+RESULT|mtcars.mata.hx_22| 9.39578203929864020e-01
+RESULT|mtcars.mata.u_22|-2.01964121811636233e+00
+RESULT|mtcars.mata.ha_23| 6.42963643952056824e-02
+RESULT|mtcars.mata.hb_23| 6.48619243169399340e-02
+RESULT|mtcars.mata.hx_23| 9.38755862071467107e-01
+RESULT|mtcars.mata.u_23|-2.31964140885122561e+00
+RESULT|mtcars.mata.ha_24| 5.96816109220695279e-02
+RESULT|mtcars.mata.hb_24| 4.85628651339372816e-02
+RESULT|mtcars.mata.hx_24| 1.05803720994439598e+00
+RESULT|mtcars.mata.u_24| 2.60565057914756437e+00
+RESULT|mtcars.mata.ha_25| 5.97293313109228674e-02
+RESULT|mtcars.mata.hb_25| 5.92144190589996428e-02
+RESULT|mtcars.mata.hx_25| 9.43264470111877751e-01
+RESULT|mtcars.mata.u_25| 3.47648891496231904e+00
+RESULT|mtcars.mata.ha_26| 9.23284156260466143e-02
+RESULT|mtcars.mata.hb_26| 1.06371608564587619e-01
+RESULT|mtcars.mata.hx_26| 9.18364905093326245e-01
+RESULT|mtcars.mata.u_26|-1.99739759621641255e+00
+RESULT|mtcars.mata.ha_27| 1.33529501582229815e-01
+RESULT|mtcars.mata.hb_27| 1.00734329300596143e-01
+RESULT|mtcars.mata.hx_27| 9.01438714941194430e-01
+RESULT|mtcars.mata.u_27|-1.50126746313773296e+00
+RESULT|mtcars.mata.ha_28| 1.57575319404582914e-01
+RESULT|mtcars.mata.hb_28| 1.20629682675932798e-01
+RESULT|mtcars.mata.hx_28| 8.54319408286873694e-01
+RESULT|mtcars.mata.u_28| 4.47932600111506218e+00
+RESULT|mtcars.mata.ha_29| 1.81188456447231722e-01
+RESULT|mtcars.mata.hb_29| 2.84956801824285622e-01
+RESULT|mtcars.mata.hx_29| 9.17183052039479918e-01
+RESULT|mtcars.mata.u_29| 7.27947968960577896e-01
+RESULT|mtcars.mata.ha_30| 1.49810719461082265e-01
+RESULT|mtcars.mata.hb_30| 1.55896253225472126e-01
+RESULT|mtcars.mata.hx_30| 8.51215929483237432e-01
+RESULT|mtcars.mata.u_30|-1.76627201653047905e+00
+RESULT|mtcars.mata.ha_31| 2.28908262562720011e-01
+RESULT|mtcars.mata.hb_31| 4.46878429502519325e-01
+RESULT|mtcars.mata.hx_31| 1.04401395040592560e+00
+RESULT|mtcars.mata.u_31| 5.02895518942111863e+00
+RESULT|mtcars.mata.ha_32| 3.89892790908045947e-02
+RESULT|mtcars.mata.hb_32| 5.33690187717123996e-02
+RESULT|mtcars.mata.hx_32| 9.88955471625852400e-01
+RESULT|mtcars.mata.u_32|-4.80805469810721675e+00
+RESULT|mtcars.mata.b_1|-7.18451748055690675e-02
+RESULT|mtcars.mata.b_2| 5.74276093149279632e+00
+RESULT|mtcars.mata.b_3| 2.82964174389517211e+01
+RESULT|mtcars.mata.hc2_a.V_1_1| 1.74933382188237980e-04
+RESULT|mtcars.mata.hc2_a.V_1_2| 9.35622356015436071e-03
+RESULT|mtcars.mata.hc2_a.V_1_3|-2.87853777644342876e-02
+RESULT|mtcars.mata.hc2_a.V_2_1| 9.35622356015436418e-03
+RESULT|mtcars.mata.hc2_a.V_2_2| 2.38929888672909607e+00
+RESULT|mtcars.mata.hc2_a.V_2_3|-2.11704845740066894e+00
+RESULT|mtcars.mata.hc2_a.V_3_1|-2.87853777644343500e-02
+RESULT|mtcars.mata.hc2_a.V_3_2|-2.11704845740067293e+00
+RESULT|mtcars.mata.hc2_a.V_3_3| 5.18929464870276735e+00
+RESULT|mtcars.mata.hc2_b.V_1_1| 2.07559276954198191e-04
+RESULT|mtcars.mata.hc2_b.V_1_2| 1.32999654202902960e-02
+RESULT|mtcars.mata.hc2_b.V_1_3|-3.45902418223754393e-02
+RESULT|mtcars.mata.hc2_b.V_2_1| 1.32999654202902995e-02
+RESULT|mtcars.mata.hc2_b.V_2_2| 2.78459615691331885e+00
+RESULT|mtcars.mata.hc2_b.V_2_3|-2.78184275447145346e+00
+RESULT|mtcars.mata.hc2_b.V_3_1|-3.45902418223754116e-02
+RESULT|mtcars.mata.hc2_b.V_3_2|-2.78184275447145124e+00
+RESULT|mtcars.mata.hc2_b.V_3_3| 6.20625985824561699e+00
+RESULT|mtcars.mata.hc2_x.V_1_1| 1.49798499469034116e-04
+RESULT|mtcars.mata.hc2_x.V_1_2| 6.75824079416409602e-03
+RESULT|mtcars.mata.hc2_x.V_1_3|-2.44615034572396653e-02
+RESULT|mtcars.mata.hc2_x.V_2_1| 6.75824079416416368e-03
+RESULT|mtcars.mata.hc2_x.V_2_2| 2.06939102243797191e+00
+RESULT|mtcars.mata.hc2_x.V_2_3|-1.65072392306098603e+00
+RESULT|mtcars.mata.hc2_x.V_3_1|-2.44615034572396792e-02
+RESULT|mtcars.mata.hc2_x.V_3_2|-1.65072392306097426e+00
+RESULT|mtcars.mata.hc2_x.V_3_3| 4.42842121599189298e+00
+RESULT|mtcars.mata.hc3_a.V_1_1| 2.15070385769576317e-04
+RESULT|mtcars.mata.hc3_a.V_1_2| 1.19420295040309661e-02
+RESULT|mtcars.mata.hc3_a.V_1_3|-3.51414565022051678e-02
+RESULT|mtcars.mata.hc3_a.V_2_1| 1.19420295040309557e-02
+RESULT|mtcars.mata.hc3_a.V_2_2| 2.88138393402851900e+00
+RESULT|mtcars.mata.hc3_a.V_2_3|-2.63153619557929286e+00
+RESULT|mtcars.mata.hc3_a.V_3_1|-3.51414565022051123e-02
+RESULT|mtcars.mata.hc3_a.V_3_2|-2.63153619557929330e+00
+RESULT|mtcars.mata.hc3_a.V_3_3| 6.25369097090129511e+00
+RESULT|mtcars.mata.hc3_b.V_1_1| 3.17845013460394343e-04
+RESULT|mtcars.mata.hc3_b.V_1_2| 2.41101182624777685e-02
+RESULT|mtcars.mata.hc3_b.V_1_3|-5.32891075539192738e-02
+RESULT|mtcars.mata.hc3_b.V_2_1| 2.41101182624777824e-02
+RESULT|mtcars.mata.hc3_b.V_2_2| 4.13001149027376879e+00
+RESULT|mtcars.mata.hc3_b.V_2_3|-4.69435198855727265e+00
+RESULT|mtcars.mata.hc3_b.V_3_1|-5.32891075539192460e-02
+RESULT|mtcars.mata.hc3_b.V_3_2|-4.69435198855726821e+00
+RESULT|mtcars.mata.hc3_b.V_3_3| 9.42146260305622718e+00
+RESULT|mtcars.mata.hc3_x.V_1_1| 1.58400332948195735e-04
+RESULT|mtcars.mata.hc3_x.V_1_2| 6.11746414827023070e-03
+RESULT|mtcars.mata.hc3_x.V_1_3|-2.54194261671476726e-02
+RESULT|mtcars.mata.hc3_x.V_2_1| 6.11746414827022550e-03
+RESULT|mtcars.mata.hc3_x.V_2_2| 2.16576793626397635e+00
+RESULT|mtcars.mata.hc3_x.V_2_3|-1.58856042193617286e+00
+RESULT|mtcars.mata.hc3_x.V_3_1|-2.54194261671476934e-02
+RESULT|mtcars.mata.hc3_x.V_3_2|-1.58856042193617575e+00
+RESULT|mtcars.mata.hc3_x.V_3_3| 4.54946985019314454e+00
+RESULT|mtcars.mata.hc0.V_1_1| 1.43013868676837949e-04
+RESULT|mtcars.mata.hc0.V_1_2| 7.36313368392483257e-03
+RESULT|mtcars.mata.hc0.V_1_3|-2.37274361803289230e-02
+RESULT|mtcars.mata.hc0.V_2_1| 7.36313368392482737e-03
+RESULT|mtcars.mata.hc0.V_2_2| 1.99406292226355686e+00
+RESULT|mtcars.mata.hc0.V_2_3|-1.71466970345305736e+00
+RESULT|mtcars.mata.hc0.V_3_1|-2.37274361803288814e-02
+RESULT|mtcars.mata.hc0.V_3_2|-1.71466970345305469e+00
+RESULT|mtcars.mata.hc0.V_3_3| 4.33853586841737116e+00
+RESULT|mtcars.mata.jack.V_1_1| 3.06856570785444453e-04
+RESULT|mtcars.mata.jack.V_1_2| 2.32224351397494894e-02
+RESULT|mtcars.mata.jack.V_1_3|-5.14368611169546686e-02
+RESULT|mtcars.mata.jack.V_2_1| 2.32224351397494894e-02
+RESULT|mtcars.mata.jack.V_2_2| 3.98387993082462932e+00
+RESULT|mtcars.mata.jack.V_2_3|-4.52388151648145875e+00
+RESULT|mtcars.mata.jack.V_3_1|-5.14368611169546686e-02
+RESULT|mtcars.mata.jack.V_3_2|-4.52388151648145875e+00
+RESULT|mtcars.mata.jack.V_3_3| 9.09393412278442170e+00
+
+. 
+. // ---------------------------------------------------------------------------
+. // 5. The weak-instrument file, where the two conventions cannot be confused.
+. // ---------------------------------------------------------------------------
+. 
+. import delimited "weak-iv.csv", clear case(preserve)
+(encoding automatically selected: ISO-8859-1)
+(4 vars, 40 obs)
+
+. datasignature
+  40:4(115147):3856996252:1971894994
+
+. local sig2 "`r(datasignature)'"
+
+. display "RESULT|weak.data.signature|`sig2'"
+RESULT|weak.data.signature|40:4(115147):3856996252:1971894994
+
+. display "RESULT|weak.data.N|`=_N'"
+RESULT|weak.data.N|40
+
+. foreach v of varlist y en x inst {
+  2.     quietly summarize `v'
+  3.     display "RESULT|weak.data.sum.`v'|" %24.17e r(sum)
+  4. }
+RESULT|weak.data.sum.y| 3.53992791897617281e+01
+RESULT|weak.data.sum.en|-3.84219804313033819e-01
+RESULT|weak.data.sum.x|-3.30525183491408825e+00
+RESULT|weak.data.sum.inst|-7.17874117195606232e-01
+
+. 
+. tryfit weak_hc2   "ivregress 2sls y (en = inst) x, small vce(hc2)"
+option vce() incorrectly specified
+RESULT|weak_hc2.rc|198
+RESULT|weak_hc2.refused|1
+
+. tryfit weak_hc3   "ivregress 2sls y (en = inst) x, small vce(hc3)"
+option vce() incorrectly specified
+RESULT|weak_hc3.rc|198
+RESULT|weak_hc3.refused|1
+
+. tryfit weak_unadj "ivregress 2sls y (en = inst) x, small"
+
+
+Instrumental variables 2SLS regression
+
+      Source |       SS       df       MS         Number of obs   =         40
+-------------+------------------------------      F(  2,    37)   =       0.01
+       Model | -51793.7614     2 -25896.8807      Prob > F        =     0.9949
+    Residual |   51902.086    37  1402.75908      R-squared       =          .
+-------------+------------------------------      Adj R-squared   =          .
+       Total |    108.3246    39  2.77755385      Root MSE        =     37.453
+
+------------------------------------------------------------------------------
+           y | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+          en |  -35.94557    3661.05    -0.01   0.992    -7453.937    7382.046
+           x |  -.9445278   153.1872    -0.01   0.995    -311.3312    309.4421
+       _cons |   .4616595   48.18348     0.01   0.992    -97.16735    98.09067
+------------------------------------------------------------------------------
+Instrumented: en
+ Instruments: x inst
+RESULT|weak_unadj.rc|0
+RESULT|weak_unadj.k|3
+RESULT|weak_unadj.names|en x _cons
+RESULT|weak_unadj.N|40
+RESULT|weak_unadj.df_r|37
+RESULT|weak_unadj.b_1|-3.59455670113729866e+01
+RESULT|weak_unadj.V_1_1| 1.34032866098932065e+07
+RESULT|weak_unadj.V_1_2| 5.60460541780444211e+05
+RESULT|weak_unadj.V_1_3| 1.75056784813035774e+05
+RESULT|weak_unadj.b_2|-9.44527835254973525e-01
+RESULT|weak_unadj.V_2_1| 5.60460541780444211e+05
+RESULT|weak_unadj.V_2_2| 2.34663065186349559e+04
+RESULT|weak_unadj.V_2_3| 7.32255230918584493e+03
+RESULT|weak_unadj.b_3| 4.61659452653175595e-01
+RESULT|weak_unadj.V_3_1| 1.75056784813035774e+05
+RESULT|weak_unadj.V_3_2| 7.32255230918584493e+03
+RESULT|weak_unadj.V_3_3| 2.32164805351897576e+03
+
+. tryfit weak_rob   "ivregress 2sls y (en = inst) x, small rob"
+
+Instrumental variables 2SLS regression            Number of obs   =         40
+                                                  F(  2,    37)   =       0.01
+                                                  Prob > F        =     0.9930
+                                                  R-squared       =          .
+                                                  Adj R-squared   =          .
+                                                  Root MSE        =     37.453
+
+------------------------------------------------------------------------------
+             |               Robust
+           y | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+          en |  -35.94557   4085.329    -0.01   0.993    -8313.609    8241.718
+           x |  -.9445278   169.1819    -0.01   0.996    -343.7397    341.8506
+       _cons |   .4616595   54.03828     0.01   0.993    -109.0303    109.9536
+------------------------------------------------------------------------------
+Instrumented: en
+ Instruments: x inst
+RESULT|weak_rob.rc|0
+RESULT|weak_rob.k|3
+RESULT|weak_rob.names|en x _cons
+RESULT|weak_rob.N|40
+RESULT|weak_rob.df_r|37
+RESULT|weak_rob.b_1|-3.59455670113729866e+01
+RESULT|weak_rob.V_1_1| 1.66899165632910840e+07
+RESULT|weak_rob.V_1_2| 6.90909831676019239e+05
+RESULT|weak_rob.V_1_3| 2.19412197693447291e+05
+RESULT|weak_rob.b_2|-9.44527835254973525e-01
+RESULT|weak_rob.V_2_1| 6.90909831676019239e+05
+RESULT|weak_rob.V_2_2| 2.86225247601668489e+04
+RESULT|weak_rob.V_2_3| 9.08885887427256785e+03
+RESULT|weak_rob.b_3| 4.61659452653175595e-01
+RESULT|weak_rob.V_3_1| 2.19412197693447291e+05
+RESULT|weak_rob.V_3_2| 9.08885887427256785e+03
+RESULT|weak_rob.V_3_3| 2.92013589134382619e+03
+
+. tryfit weak_jack  "ivregress 2sls y (en = inst) x, small vce(jackknife)"
+(running ivregress on estimation sample)
+
+Jackknife replications (40)
+----+--- 1 ---+--- 2 ---+--- 3 ---+--- 4 ---+--- 5 
+........................................
+
+Instrumental variables 2SLS regression            Number of obs   =         40
+                                                  Replications    =         40
+                                                  F(  2,    39)   =       0.03
+                                                  Prob > F        =     0.9695
+                                                  R-squared       =          .
+                                                  Adj R-squared   =          .
+                                                  Root MSE        =     37.453
+
+------------------------------------------------------------------------------
+             |              Jackknife
+           y | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+          en |  -35.94557   509.6171    -0.07   0.944    -1066.743    994.8523
+           x |  -.9445278   25.63035    -0.04   0.971     -52.7868    50.89774
+       _cons |   .4616595   7.148706     0.06   0.949    -13.99796    14.92128
+------------------------------------------------------------------------------
+Instrumented: en
+ Instruments: x inst
+RESULT|weak_jack.rc|0
+RESULT|weak_jack.k|3
+RESULT|weak_jack.names|en x _cons
+RESULT|weak_jack.N|40
+RESULT|weak_jack.df_r|39
+RESULT|weak_jack.b_1|-3.59455670113729866e+01
+RESULT|weak_jack.V_1_1| 2.59709559039782820e+05
+RESULT|weak_jack.V_1_2| 1.29361662196684574e+04
+RESULT|weak_jack.V_1_3|-6.45251655215658957e+02
+RESULT|weak_jack.b_2|-9.44527835254973525e-01
+RESULT|weak_jack.V_2_1| 1.29361662196684574e+04
+RESULT|weak_jack.V_2_2| 6.56914742161156710e+02
+RESULT|weak_jack.V_2_3|-5.58184991988067623e+01
+RESULT|weak_jack.b_3| 4.61659452653175595e-01
+RESULT|weak_jack.V_3_1|-6.45251655215658957e+02
+RESULT|weak_jack.V_3_2|-5.58184991988067623e+01
+RESULT|weak_jack.V_3_3| 5.11040009586850417e+01
+
+. quietly regress en inst x
+
+. display "RESULT|weak.first_stage_r2|" %24.17e e(r2)
+RESULT|weak.first_stage_r2| 2.11727529833638517e-03
+
+. 
+. mata: dumpiv("y", ("en", "x"), ("inst", "x"), "weak")
+RESULT|weak.mata.n|40
+RESULT|weak.mata.k|3
+RESULT|weak.mata.sum_ha| 3.00000000000015987e+00
+RESULT|weak.mata.sum_hb| 2.99999999999999290e+00
+RESULT|weak.mata.max_ha| 1.78118020905492225e-01
+RESULT|weak.mata.max_hb| 4.99037110361357961e+01
+RESULT|weak.mata.max_asym| 1.08554986387420286e+02
+RESULT|weak.mata.max_idem| 2.20481410906359088e-11
+RESULT|weak.mata.ha_1| 1.40673410532069720e-01
+RESULT|weak.mata.hb_1|-1.23877943658517431e+01
+RESULT|weak.mata.hx_1| 1.85733690025777878e+03
+RESULT|weak.mata.u_1|-1.74127571426470595e+01
+RESULT|weak.mata.ha_2| 3.15693248431541604e-02
+RESULT|weak.mata.hb_2| 1.19427241630066838e+00
+RESULT|weak.mata.hx_2| 1.85656547229630041e+03
+RESULT|weak.mata.u_2|-1.60871059630505542e+01
+RESULT|weak.mata.ha_3| 1.12578619010349046e-01
+RESULT|weak.mata.hb_3|-1.00118367312972865e+01
+RESULT|weak.mata.hx_3| 7.20435060496460392e+03
+RESULT|weak.mata.u_3|-3.22214679742406673e+01
+RESULT|weak.mata.ha_4| 5.26652025603326357e-02
+RESULT|weak.mata.hb_4|-3.57732747980308830e+00
+RESULT|weak.mata.hx_4| 1.38565836200607919e+03
+RESULT|weak.mata.u_4|-1.33860212926301987e+01
+RESULT|weak.mata.ha_5| 1.06811303206122754e-01
+RESULT|weak.mata.hb_5|-8.45744739110297905e-02
+RESULT|weak.mata.hx_5| 6.31477454764994306e+00
+RESULT|weak.mata.u_5|-7.68055970802079324e-01
+RESULT|weak.mata.ha_6| 4.43457982794763506e-02
+RESULT|weak.mata.hb_6|-4.19592198632981273e+00
+RESULT|weak.mata.hx_6| 9.35390662657318103e+02
+RESULT|weak.mata.u_6|-1.09394691209223396e+01
+RESULT|weak.mata.ha_7| 3.15362595693357631e-02
+RESULT|weak.mata.hb_7| 1.35489806665839807e+00
+RESULT|weak.mata.hx_7| 3.95215650522116775e+04
+RESULT|weak.mata.u_7| 7.44264621926937053e+01
+RESULT|weak.mata.ha_8| 7.70343535966070414e-02
+RESULT|weak.mata.hb_8| 2.54534629509894295e+00
+RESULT|weak.mata.hx_8| 1.02911146871005030e+03
+RESULT|weak.mata.u_8|-1.24220689243375002e+01
+RESULT|weak.mata.ha_9| 1.19384973696621488e-01
+RESULT|weak.mata.hb_9| 7.95422709706149167e+00
+RESULT|weak.mata.hx_9| 2.08578316183267498e+03
+RESULT|weak.mata.u_9| 1.93522384603133517e+01
+RESULT|weak.mata.ha_10| 7.51084249910613511e-02
+RESULT|weak.mata.hb_10|-6.12684289779716340e-01
+RESULT|weak.mata.hx_10| 4.84388824160529202e+03
+RESULT|weak.mata.u_10| 2.66200840877725895e+01
+RESULT|weak.mata.ha_11| 5.85609527932728982e-02
+RESULT|weak.mata.hb_11| 1.95353578147068052e-02
+RESULT|weak.mata.hx_11| 3.01324941230708919e+03
+RESULT|weak.mata.u_11|-1.96992523861858153e+01
+RESULT|weak.mata.ha_12| 2.71101950105925027e-02
+RESULT|weak.mata.hb_12|-1.54184331971456645e+00
+RESULT|weak.mata.hx_12| 1.54681885236987182e+04
+RESULT|weak.mata.u_12| 4.52836305699090786e+01
+RESULT|weak.mata.ha_13| 3.17109491620767292e-02
+RESULT|weak.mata.hb_13| 3.25270823143674903e+00
+RESULT|weak.mata.hx_13| 2.01565063879192758e+03
+RESULT|weak.mata.u_13|-1.66292951664866777e+01
+RESULT|weak.mata.ha_14| 1.70241727153976008e-01
+RESULT|weak.mata.hb_14| 4.10626633261115686e+01
+RESULT|weak.mata.hx_14| 1.34149071429564247e+04
+RESULT|weak.mata.u_14| 4.52499676049750903e+01
+RESULT|weak.mata.ha_15| 2.62191100792367390e-02
+RESULT|weak.mata.hb_15|-1.74299430553628759e-01
+RESULT|weak.mata.hx_15| 5.04243509443901473e+02
+RESULT|weak.mata.u_15| 8.34716828603281513e+00
+RESULT|weak.mata.ha_16| 7.14633947377996126e-02
+RESULT|weak.mata.hb_16| 7.70051597001245591e-02
+RESULT|weak.mata.hx_16| 9.29199911901462117e-01
+RESULT|weak.mata.u_16| 1.42155987525755378e+00
+RESULT|weak.mata.ha_17| 3.48426373182284949e-02
+RESULT|weak.mata.hb_17| 8.26083443662796135e+00
+RESULT|weak.mata.hx_17| 2.68392774570171168e+04
+RESULT|weak.mata.u_17| 6.12106542356782342e+01
+RESULT|weak.mata.ha_18| 3.04693546822376871e-02
+RESULT|weak.mata.hb_18| 3.97165438296958495e+00
+RESULT|weak.mata.hx_18| 6.34845639202665097e+03
+RESULT|weak.mata.u_18|-3.18203264980956284e+01
+RESULT|weak.mata.ha_19| 3.87724689759495478e-02
+RESULT|weak.mata.hb_19| 7.33666155089488736e+00
+RESULT|weak.mata.hx_19| 1.44932552554871400e+04
+RESULT|weak.mata.u_19| 4.76283761200880846e+01
+RESULT|weak.mata.ha_20| 5.47577344778854003e-02
+RESULT|weak.mata.hb_20| 5.58515612238589032e+00
+RESULT|weak.mata.hx_20| 8.53878100548663861e+03
+RESULT|weak.mata.u_20| 3.27547069183195205e+01
+RESULT|weak.mata.ha_21| 2.75239985930733414e-02
+RESULT|weak.mata.hb_21|-1.26375607251893896e+00
+RESULT|weak.mata.hx_21| 2.22056949286736199e+04
+RESULT|weak.mata.u_21|-5.58601853306256970e+01
+RESULT|weak.mata.ha_22| 5.61080865310461252e-02
+RESULT|weak.mata.hb_22|-1.91070106380106033e+01
+RESULT|weak.mata.hx_22| 1.27077954674078119e+04
+RESULT|weak.mata.u_22|-4.29774047340967940e+01
+RESULT|weak.mata.ha_23| 1.05776705576369590e-01
+RESULT|weak.mata.hb_23| 4.99037110361357961e+01
+RESULT|weak.mata.hx_23| 3.07948845578240580e+04
+RESULT|weak.mata.u_23| 6.53500244888132187e+01
+RESULT|weak.mata.ha_24| 1.00526222637416451e-01
+RESULT|weak.mata.hb_24|-1.03197421485048295e+01
+RESULT|weak.mata.hx_24| 1.43903927243642511e+03
+RESULT|weak.mata.u_24| 1.40293372534221614e+01
+RESULT|weak.mata.ha_25| 1.61096950230029234e-01
+RESULT|weak.mata.hb_25| 3.57854411947922291e+00
+RESULT|weak.mata.hx_25| 6.06872546310282701e+02
+RESULT|weak.mata.u_25|-8.97964181281814078e+00
+RESULT|weak.mata.ha_26| 4.42182656752634351e-02
+RESULT|weak.mata.hb_26| 1.41894181591012547e+01
+RESULT|weak.mata.hx_26| 1.04127819133847606e+04
+RESULT|weak.mata.u_26|-4.17453784773079235e+01
+RESULT|weak.mata.ha_27| 2.96760057396589158e-02
+RESULT|weak.mata.hb_27| 2.35251773829529137e-01
+RESULT|weak.mata.hx_27| 4.24618660226857116e+01
+RESULT|weak.mata.u_27| 1.88155258929389468e+00
+RESULT|weak.mata.ha_28| 6.71281218756932252e-02
+RESULT|weak.mata.hb_28| 3.12188385250386773e+01
+RESULT|weak.mata.hx_28| 2.95965870079877022e+04
+RESULT|weak.mata.u_28|-6.53128428127176619e+01
+RESULT|weak.mata.ha_29| 1.78118020905492225e-01
+RESULT|weak.mata.hb_29|-2.34852596919592607e+01
+RESULT|weak.mata.hx_29| 9.08707322498352369e+03
+RESULT|weak.mata.u_29|-3.53380420993746611e+01
+RESULT|weak.mata.ha_30| 3.20226648775151987e-02
+RESULT|weak.mata.hb_30| 1.07614570199191229e+00
+RESULT|weak.mata.hx_30| 5.97866362782592842e+03
+RESULT|weak.mata.u_30|-2.93390402657103557e+01
+RESULT|weak.mata.ha_31| 5.51883055143854995e-02
+RESULT|weak.mata.hb_31|-2.23822653314617668e+01
+RESULT|weak.mata.hx_31| 1.88015625184700839e+04
+RESULT|weak.mata.u_31|-5.17622901876349530e+01
+RESULT|weak.mata.ha_32| 1.08880316798091958e-01
+RESULT|weak.mata.hb_32| 5.19357330805144102e+00
+RESULT|weak.mata.hx_32| 3.74973120243105029e+02
+RESULT|weak.mata.u_32|-5.08964914979040106e+00
+RESULT|weak.mata.ha_33| 1.31643941931667952e-01
+RESULT|weak.mata.hb_33|-1.46281565434530805e+01
+RESULT|weak.mata.hx_33| 7.04698746642633432e+03
+RESULT|weak.mata.u_33|-3.26598634450405143e+01
+RESULT|weak.mata.ha_34| 1.13377625992286069e-01
+RESULT|weak.mata.hb_34|-5.57060517095955721e+00
+RESULT|weak.mata.hx_34| 6.31946868974898166e+02
+RESULT|weak.mata.u_34| 9.79228013549957232e+00
+RESULT|weak.mata.ha_35| 5.30586485250445494e-02
+RESULT|weak.mata.hb_35| 9.02461932676594181e+00
+RESULT|weak.mata.hx_35| 4.80240132981886745e+03
+RESULT|weak.mata.u_35|-2.66894281290753028e+01
+RESULT|weak.mata.ha_36| 3.09757790925365428e-02
+RESULT|weak.mata.hb_36|-7.08916478371234421e-02
+RESULT|weak.mata.hx_36| 2.72737171619440533e+00
+RESULT|weak.mata.u_36| 2.33437637302571610e-01
+RESULT|weak.mata.ha_37| 1.01563928707354922e-01
+RESULT|weak.mata.hb_37|-6.42024913219412241e+00
+RESULT|weak.mata.hx_37| 1.05822011266062364e+04
+RESULT|weak.mata.u_37| 4.07875318284444148e+01
+RESULT|weak.mata.ha_38| 3.03586943039273055e-02
+RESULT|weak.mata.hb_38| 2.05879535268553848e+00
+RESULT|weak.mata.hx_38| 8.14661106702688926e+02
+RESULT|weak.mata.u_38|-1.11639398343607876e+01
+RESULT|weak.mata.ha_39| 1.46226973403749572e-01
+RESULT|weak.mata.hb_39|-5.83828691964965998e+01
+RESULT|weak.mata.hx_39| 4.45301517791601073e+04
+RESULT|weak.mata.u_39| 7.91333192455537215e+01
+RESULT|weak.mata.ha_40| 9.06745484131711299e-02
+RESULT|weak.mata.hb_40|-1.87677209550353985e+00
+RESULT|weak.mata.hx_40| 1.11169182770580903e+02
+RESULT|weak.mata.u_40| 4.80119518858190286e+00
+RESULT|weak.mata.b_1|-3.59455670113820816e+01
+RESULT|weak.mata.b_2|-9.44527835255314585e-01
+RESULT|weak.mata.b_3| 4.61659452653066182e-01
+RESULT|weak.mata.hc2_a.V_1_1| 1.76306840528472103e+07
+RESULT|weak.mata.hc2_a.V_1_2| 7.29722060048707062e+05
+RESULT|weak.mata.hc2_a.V_1_3| 2.31728265732044500e+05
+RESULT|weak.mata.hc2_a.V_2_1| 7.29722060048678308e+05
+RESULT|weak.mata.hc2_a.V_2_2| 3.02246692720049869e+04
+RESULT|weak.mata.hc2_a.V_2_3| 9.59749640689138323e+03
+RESULT|weak.mata.hc2_a.V_3_1| 2.31728265732030151e+05
+RESULT|weak.mata.hc2_a.V_3_2| 9.59749640689115404e+03
+RESULT|weak.mata.hc2_a.V_3_3| 3.08157195413304544e+03
+RESULT|weak.mata.hc2_b.V_1_1| 2.56009473386440135e+05
+RESULT|weak.mata.hc2_b.V_1_2| 1.06910379154408893e+04
+RESULT|weak.mata.hc2_b.V_1_3| 3.41026206257403692e+03
+RESULT|weak.mata.hc2_b.V_2_1| 1.06910379154446346e+04
+RESULT|weak.mata.hc2_b.V_2_2| 4.48221134459286532e+02
+RESULT|weak.mata.hc2_b.V_2_3| 1.42607011055766435e+02
+RESULT|weak.mata.hc2_b.V_3_1| 3.41026206257427111e+03
+RESULT|weak.mata.hc2_b.V_3_2| 1.42607011055727298e+02
+RESULT|weak.mata.hc2_b.V_3_3| 4.79055447745124923e+01
+RESULT|weak.mata.hc2_x.V_1_1| 2.26104025310106226e+03
+RESULT|weak.mata.hc2_x.V_1_2| 9.46119563616307460e+01
+RESULT|weak.mata.hc2_x.V_1_3| 2.85096321727006341e+01
+RESULT|weak.mata.hc2_x.V_2_1| 9.46119563616316270e+01
+RESULT|weak.mata.hc2_x.V_2_2| 3.96210187248007451e+00
+RESULT|weak.mata.hc2_x.V_2_3| 1.19329361191008676e+00
+RESULT|weak.mata.hc2_x.V_3_1| 2.85096321727020907e+01
+RESULT|weak.mata.hc2_x.V_3_2| 1.19329361191013561e+00
+RESULT|weak.mata.hc2_x.V_3_3| 3.63777759434454673e-01
+RESULT|weak.mata.hc3_a.V_1_1| 2.01763502665087134e+07
+RESULT|weak.mata.hc3_a.V_1_2| 8.34948191884760978e+05
+RESULT|weak.mata.hc3_a.V_1_3| 2.65138359614955145e+05
+RESULT|weak.mata.hc3_a.V_2_1| 8.34948191884701140e+05
+RESULT|weak.mata.hc3_a.V_2_2| 3.45771259240279178e+04
+RESULT|weak.mata.hc3_a.V_2_3| 1.09796650132876166e+04
+RESULT|weak.mata.hc3_a.V_3_1| 2.65138359614942747e+05
+RESULT|weak.mata.hc3_a.V_3_2| 1.09796650132878767e+04
+RESULT|weak.mata.hc3_a.V_3_3| 3.52329795344755257e+03
+RESULT|weak.mata.hc3_b.V_1_1| 3.75350905666492879e+05
+RESULT|weak.mata.hc3_b.V_1_2| 1.79739270676089218e+04
+RESULT|weak.mata.hc3_b.V_1_3| 4.15906634622369893e+02
+RESULT|weak.mata.hc3_b.V_2_1| 1.79739270676709712e+04
+RESULT|weak.mata.hc3_b.V_2_2| 8.76975899633354857e+02
+RESULT|weak.mata.hc3_b.V_2_3|-1.07123871621770377e+01
+RESULT|weak.mata.hc3_b.V_3_1| 4.15906634632090572e+02
+RESULT|weak.mata.hc3_b.V_3_2|-1.07123871625808533e+01
+RESULT|weak.mata.hc3_b.V_3_3| 6.30715565821033124e+01
+RESULT|weak.mata.hc3_x.V_1_1| 1.03799835315867131e+03
+RESULT|weak.mata.hc3_x.V_1_2| 4.34914884339561922e+01
+RESULT|weak.mata.hc3_x.V_1_3| 1.23341457234790681e+01
+RESULT|weak.mata.hc3_x.V_2_1| 4.34914884339559649e+01
+RESULT|weak.mata.hc3_x.V_2_2| 1.82229442333996339e+00
+RESULT|weak.mata.hc3_x.V_2_3| 5.16774277567520368e-01
+RESULT|weak.mata.hc3_x.V_3_1| 1.23341457234789544e+01
+RESULT|weak.mata.hc3_x.V_3_2| 5.16774277567518148e-01
+RESULT|weak.mata.hc3_x.V_3_3| 1.46581415510184110e-01
+RESULT|weak.mata.hc0.V_1_1| 1.54381728210589904e+07
+RESULT|weak.mata.hc0.V_1_2| 6.39091594300929341e+05
+RESULT|weak.mata.hc0.V_1_3| 2.02956282866632624e+05
+RESULT|weak.mata.hc0.V_2_1| 6.39091594300934346e+05
+RESULT|weak.mata.hc0.V_2_2| 2.64758354031799245e+04
+RESULT|weak.mata.hc0.V_2_3| 8.40719445871022617e+03
+RESULT|weak.mata.hc0.V_3_1| 2.02956282866646943e+05
+RESULT|weak.mata.hc0.V_3_2| 8.40719445871076823e+03
+RESULT|weak.mata.hc0.V_3_3| 2.70112569949579711e+03
+RESULT|weak.mata.jack.V_1_1| 2.59709548580931645e+05
+RESULT|weak.mata.jack.V_1_2| 1.29361659662157672e+04
+RESULT|weak.mata.jack.V_1_3|-6.45251655943998117e+02
+RESULT|weak.mata.jack.V_2_1| 1.29361659662157672e+04
+RESULT|weak.mata.jack.V_2_2| 6.56914745335098928e+02
+RESULT|weak.mata.jack.V_2_3|-5.58185021433220143e+01
+RESULT|weak.mata.jack.V_3_1|-6.45251655943998117e+02
+RESULT|weak.mata.jack.V_3_2|-5.58185021433220143e+01
+RESULT|weak.mata.jack.V_3_3| 5.11039998330899508e+01
+
+. 
+. display "RESULT|meta.done|1"
+RESULT|meta.done|1
+
+. 
+. log close
+      name:  <unnamed>
+       log:  C:\WZB Dropbox\Macartan Humphreys\1_Projects\DeclareDesign\zero_evaluation\stata_check\stata-iv-hc2.log
+  log type:  text
+ closed on:  22 Aug 2026, 23:58:27
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

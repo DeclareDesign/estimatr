@@ -42,6 +42,7 @@ Suggests:
     dplyr,
     emmeans,
     estimability,
+    ivreg,
     knitr,
     modelsummary,
     randomizr,

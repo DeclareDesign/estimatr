@@ -15,7 +15,7 @@ The vignette is the document to read first. It covers what does not change, what
 
 `lm_robust`, `lm_lin`, `iv_robust`, `lh_robust`, `difference_in_means` and `horvitz_thompson`, in roughly half the lines, with a Pashley and Miratrix (2021) blocked-variance estimator that 1.x does not have.
 
-Interfaces match 1.0.6 and, run side by side on one machine, the numbers match to 1e-12 across every supported standard error type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes. The suite is 1,722 assertions, of which 336 run against answers recorded from an installed estimatr 1.0.6 (`data-raw/make_estimatr_reference.R` produces the recording) at a tolerance of 1e-9, because a fixture recorded on one platform meets a different BLAS on another and the floor there is the linear algebra rather than this package.
+Interfaces match 1.0.6 and, run side by side on one machine, the numbers match to 1e-12 across every supported standard error type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes. The suite is 1,729 assertions, of which 336 run against answers recorded from an installed estimatr 1.0.6 (`data-raw/make_estimatr_reference.R` produces the recording) at a tolerance of 1e-9, because a fixture recorded on one platform meets a different BLAS on another and the floor there is the linear algebra rather than this package.
 
 ## What breaks
 
@@ -31,7 +31,7 @@ A clustered block holding a single treated or single control cluster is refused 
 
 ## Status
 
-`R CMD check --as-cran` clean, 1 NOTE (the maintainer change). Test suite 1,722 assertions, 0 failures, green on five platforms with identical counts on each.
+`R CMD check --as-cran` clean, 1 NOTE (the maintainer change). Test suite 1,729 assertions, 0 failures, green on five platforms with identical counts on each.
 
 A ledger of all 71 open estimatr issues against this implementation is in `notes/` (private): 26 fixed here, 7 out of scope, 6 not reproducible, 5 superseded by the rewrite, 4 still open.
 
@@ -39,4 +39,4 @@ Sibling branches: `DeclareDesign/fabricatr@rewrite`, `DeclareDesign/DeclareDesig
 
 ## How this was written
 
-estimatr 2.0.0 was written by Alexander Coppock working with Claude (Anthropic), across design, implementation, tests, benchmarks, and documentation. The evidence that should decide whether you install it is in `vignette("estimatr2.0")` under "How this was checked", and in `NEWS.md`: 336 assertions against a recording of an installed 1.0.6, and 298 more against implementations that share no lineage with estimatr, including `sandwich`, `clubSandwich`, Stata, `fixest`, `plm` and `blkvar`.
+estimatr 2.0.0 was written by Alexander Coppock working with Claude (Anthropic), across design, implementation, tests, benchmarks, and documentation. The evidence that should decide whether you install it is in `vignette("estimatr2.0")` under "How this was checked", and in `NEWS.md`: 336 assertions against a recording of an installed 1.0.6, and 305 more against implementations that share no lineage with estimatr, including `sandwich`, `clubSandwich`, `ivreg`, Stata, `fixest`, `plm` and `blkvar`.

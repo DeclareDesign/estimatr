@@ -164,30 +164,67 @@ test_that("iv_robust HC0, HC1 and CR0 match sandwich on AER::ivreg", {
   )
 })
 
-# Two-stage least squares admits two different leverage values, and this
-# package and sandwich pick different ones. Writing X-hat for the instrumented
-# design, this package uses the leverage of the second-stage regression,
+# Two-stage least squares admits two different leverage values, and which one
+# you get depends on which 2SLS implementation sandwich is handed. Writing
+# X-hat for the instrumented design, this package uses the leverage of the
+# second-stage regression,
 #
 #     h_i = xhat_i' (Xhat'Xhat)^-1 xhat_i,
 #
-# which is what HC2 and HC3 mean if 2SLS is read as least squares on Xhat.
-# sandwich uses the derivative of the fitted value with respect to y_i,
+# the diagonal of an orthogonal projection. The other candidate is the
+# derivative of the fitted value with respect to y_i,
 #
 #     h_i = xhat_i' (Xhat'Xhat)^-1 x_i,
 #
-# which is the influence reading. Both sum to K, so neither is malformed, and
-# the choice is a convention rather than an error. The difference reaches 1e-4
-# relative on the data below and is inherited unchanged from estimatr 1.0.6,
-# where iv_robust HC2 is bit-identical to what this package returns.
+# the diagonal of H* = X(X'ZZ'Z^-1 Z'X)^-1 X'Z(Z'Z)^-1 Z', the matrix taking y
+# to the fitted values. Both sum to K.
 #
-# Constructing both by hand is what makes this a test rather than a note: it
-# says which convention each package uses, so a change to either is a failure
-# with a diagnosis attached.
+# This is not an open question in the literature, and this package is on the
+# settled side of it. Belsley, Kuh and Welsch (1980) treat 2SLS diagnostics,
+# observe that H* is idempotent but asymmetric, and recommend the second-stage
+# hatvalues precisely because the diagonal of an asymmetric matrix is not a
+# leverage. Fox, Kleiber and Zeileis implement that recommendation as the
+# default in the ivreg package, whose vignette states that the diagonal
+# elements of H* "can't be treated as summary measures of leverage, that is,
+# as hatvalues". Zeileis is also the author of sandwich.
+#
+# So the divergence is not with sandwich. It is with AER::ivreg, whose
+# hatvalues method predates ivreg and returns diag(H*): the very quantity
+# ivreg's authors deprecate. sandwich itself has no leverage convention of its
+# own; it calls hatvalues() on whatever fit it is given. Handed a fit from the
+# maintained implementation, it agrees with this package exactly, which is what
+# the first test below asserts.
+#
+# The difference against AER's convention is not small, and an earlier version
+# of this comment said it was. It reaches 8.6% at HC2 and 18.5% at HC3 on mtcars,
+# where both are defined; see the vignette. Constructing both by hand is what
+# makes the second test a test rather than a note.
 
-test_that("iv_robust HC2 and HC3 use second-stage leverage, sandwich uses influence", {
-  skip_if_not_installed("AER")
+test_that("iv_robust HC2 and HC3 match sandwich on an ivreg::ivreg fit", {
+  skip_if_not_installed("ivreg")
   di <- iv_test_data()
-  mi <- AER::ivreg(y ~ en + x | inst + x, data = di)
+  mi <- ivreg::ivreg(y ~ en + x | inst + x, data = di)
+
+  for (type in c("HC2", "HC3")) {
+    fit <- iv_robust(y ~ en + x | inst + x, data = di, se_type = type)
+    expect_equal(
+      unname(fit$std.error),
+      unname(sqrt(diag(sandwich::vcovHC(mi, type = type)))),
+      tolerance = LIVE_TOL
+    )
+  }
+
+  # And the agreement is at the level of the leverage itself, not a
+  # coincidence of the sandwich filling.
+  X <- model.matrix(~ en + x, di)
+  Z <- model.matrix(~ inst + x, di)
+  xhat <- Z %*% solve(crossprod(Z), crossprod(Z, X))
+  h_second_stage <- rowSums((xhat %*% solve(crossprod(xhat))) * xhat)
+  expect_equal(unname(hatvalues(mi)), unname(h_second_stage), tolerance = LIVE_TOL)
+})
+
+test_that("iv_robust uses second-stage leverage, not the influence diagonal", {
+  di <- iv_test_data()
 
   X <- model.matrix(~ en + x, di)
   Z <- model.matrix(~ inst + x, di)
@@ -212,13 +249,11 @@ test_that("iv_robust HC2 and HC3 use second-stage leverage, sandwich uses influe
 
     expect_equal(unname(fit$vcov), unname(meat_vcov(h_second_stage, power)),
                  tolerance = LIVE_TOL, label = paste0("iv ", ty, " second-stage leverage"))
-    expect_equal(unname(sandwich::vcovHC(mi, type = ty)),
-                 unname(meat_vcov(h_influence, power)),
-                 tolerance = LIVE_TOL, label = paste0("sandwich iv ", ty, " influence"))
-
     # The two are genuinely different, bounded from both sides so that a change
-    # in the size of the gap is a failure rather than a silent drift.
-    rel <- max(abs(sqrt(diag(fit$vcov)) - sqrt(diag(sandwich::vcovHC(mi, type = ty)))) /
+    # in the size of the gap is a failure rather than a silent drift. On this
+    # data the gap is small; on mtcars it reaches 8.6% at HC2 and 18.5% at HC3.
+    rel <- max(abs(sqrt(diag(meat_vcov(h_second_stage, power))) -
+                     sqrt(diag(meat_vcov(h_influence, power)))) /
                  sqrt(diag(fit$vcov)))
     expect_gt(rel, 1e-6)
     expect_lt(rel, 1e-2)
@@ -277,18 +312,18 @@ test_that("the 2SLS hat matrix is idempotent but not symmetric", {
 
 # Why this package keeps its convention.
 #
-# The two candidate leverages are not equally well behaved. Second-stage
-# leverage is the diagonal of an orthogonal projection onto the column space of
-# Xhat, so it lies in [0, 1] by construction and 1 - h is never negative. The
-# influence version is the diagonal of a matrix that is idempotent but not
-# symmetric, and it carries no such bound: when the first stage is weak it
-# routinely exceeds 1, at which point sqrt(1 - h) is undefined and the HC2
-# standard errors are NaN. sandwich says so itself, warning that "HC2
-# covariances are numerically unstable for hat values close to 1".
+# Second-stage leverage is the diagonal of an orthogonal projection onto the
+# column space of Xhat, so it lies in [0, 1] by construction and 1 - h is never
+# negative. diag(H*) carries no such bound, because H* is idempotent but not
+# symmetric: on mtcars it is already negative for one observation, and when the
+# first stage is weak it routinely exceeds 1, at which point sqrt(1 - h) is
+# undefined and the HC2 standard errors are NaN. sandwich says as much itself,
+# warning that "HC2 covariances are numerically unstable for hat values close
+# to 1".
 #
-# So where both are defined the two agree closely and neither is preferable,
-# and where they differ it is because one of them has stopped being computable.
-# That is the argument for leaving iv_robust as it is.
+# That boundedness argument is Belsley, Kuh and Welsch's, not this package's,
+# and it is why the maintained implementation adopted it. The test below is
+# kept because it fixes the regime where the two conventions visibly separate.
 
 test_that("second-stage leverage stays in [0, 1] where influence leverage does not", {
   # A deliberately weak first stage: the instrument explains almost none of the
@@ -318,9 +353,48 @@ test_that("second-stage leverage stays in [0, 1] where influence leverage does n
   fit <- iv_robust(y ~ en + x | inst + x, data = di, se_type = "HC2")
   expect_true(all(is.finite(fit$std.error)))
 
-  skip_if_not_installed("AER")
-  mi <- AER::ivreg(y ~ en + x | inst + x, data = di)
-  expect_true(any(!is.finite(
-    suppressWarnings(sqrt(diag(sandwich::vcovHC(mi, type = "HC2"))))
-  )))
+  # Under the influence convention HC2 is not merely inaccurate here, it is
+  # undefined: 1 - h goes negative, so its square root does not exist. Asserted
+  # by hand rather than through a package, since which convention a given 2SLS
+  # object dispatches to depends on which packages are loaded.
+  expect_true(any(1 - h_influence < 0))
+  expect_true(any(is.nan(suppressWarnings(sqrt(1 - h_influence)))))
+})
+
+# The size of the gap, pinned on data outside this package's control.
+#
+# The vignette quotes these figures, so they are measured here rather than
+# asserted there. mtcars is the example the ivreg documentation itself uses,
+# and both conventions are well defined on it: the influence diagonal reaches
+# -0.0101 but never exceeds 1, so nothing is NaN and the comparison is between
+# two computable answers rather than between an answer and a failure.
+
+test_that("the two conventions differ by 8.6% at HC2 and 18.5% at HC3 on mtcars", {
+  X <- model.matrix(~ hp + am, mtcars)
+  Z <- model.matrix(~ wt + gear, mtcars)
+  xhat <- Z %*% solve(crossprod(Z), crossprod(Z, X))
+  bread <- solve(crossprod(xhat))
+
+  h_second_stage <- rowSums((xhat %*% bread) * xhat)
+  h_influence <- rowSums((xhat %*% bread) * X)
+
+  # Both are well defined here, and the influence diagonal goes negative.
+  expect_true(all(h_second_stage >= 0 & h_second_stage <= 1))
+  expect_lt(min(h_influence), 0)
+  expect_lt(max(h_influence), 1)
+
+  resid <- as.vector(mtcars$mpg - X %*% (bread %*% crossprod(xhat, mtcars$mpg)))
+  se_of <- function(h, power) {
+    meat <- crossprod(xhat, (resid^2 / (1 - h)^power) * xhat)
+    sqrt(diag(bread %*% meat %*% bread))
+  }
+
+  # HC2 divides the squared residual by (1 - h), HC3 by (1 - h)^2. Bounds are
+  # set from the measured spread across the three coefficients, 7.4-8.6% and
+  # 16.5-18.5%, so a drift in either direction fails.
+  for (spec in list(list(p = 1, lo = 0.07, hi = 0.09),
+                    list(p = 2, lo = 0.16, hi = 0.19))) {
+    ratio <- 1 - se_of(h_second_stage, spec$p) / se_of(h_influence, spec$p)
+    expect_true(all(ratio > spec$lo & ratio < spec$hi))
+  }
 })
