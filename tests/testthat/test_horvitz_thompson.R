@@ -306,7 +306,9 @@ test_that("HT missing Y: non-uniform pi uses correct row probabilities", {
   expect_equal(m_miss$coefficients[[1]], est_manual, tolerance = 1e-10)
 })
 test_that("a covariate-balanced declaration warns that HT ignores the constraint", {
-  skip_if_not_installed("randomizr")
+  # formula, prob_unit and ra_type = "balanced" all arrive in randomizr 2.0.1.
+  # A presence guard is not enough: 1.0.1 is installed and has none of them.
+  skip_if_not_installed("randomizr", "2.0.1")
   set.seed(451)
   N <- 40L
   x <- rnorm(N)
