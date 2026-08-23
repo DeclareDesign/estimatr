@@ -134,7 +134,12 @@ lm_lin <- function(formula,
     sort(unique(drop(treatment)))
   }
 
-  if (any(!(treatment %in% c(0, 1)))) {
+  # The second clause is 1.0.6's and had been dropped. Without an intercept
+  # there is no baseline to absorb the control group, so a 0/1 treatment has to
+  # expand into both indicators: `lm_lin(y ~ z - 1)` returned `z, x_c, z:x_c`
+  # and lost the control-group intercept entirely, where 1.0.6 returned
+  # `z0, z1, z0:x_c, z1:x_c`.
+  if (any(!(treatment %in% c(0, 1))) || (!has_intercept && ncol(treatment) == 1L)) {
     vals <- sort(unique(treatment))
     if (has_intercept) vals <- vals[-1]
 

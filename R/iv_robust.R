@@ -97,6 +97,18 @@ iv_robust <- function(formula,
                            leverage = needs_fe_leverage(se_type))
     fe_rank <- fe_proj[["rank"]]
     fe_lev <- fe_proj[["leverage"]]
+
+    # There is nothing to instrument once the fixed effects have absorbed the
+    # whole design. 1.0.6 reached the solver and died on "length of 'dimnames'
+    # [2] not equal to array extent"; lm_robust() answers this case, so say
+    # which function to call rather than repeating the cryptic failure.
+    if (ncol(model_data[["design_matrix"]]) == 0L) {
+      stop(
+        "The model has no regressors left once `fixed_effects` are absorbed, ",
+        "so there is nothing to instrument.\nUse `lm_robust()` with the same ",
+        "`fixed_effects` if the absorbed fit is what you want."
+      )
+    }
   }
 
   # -----------
@@ -398,6 +410,13 @@ sargan_chisq <- function(model_data, ss_residuals) {
   nrow(model_data$instrument_matrix) * ss_resid_lm[["r.squared"]]
 }
 
+# Wooldridge's robust score test for over-identifying restrictions, as 1.0.6
+# computed it. The rewrite had replaced the construction with `n * R^2` of the
+# second-stage residuals on [Z, xhat], which is algebraically the Sargan
+# statistic rather than the robust score test, and indexed `first_stage_fits`
+# by the endogenous variable names after renaming its columns `fit_<name>`, so
+# every over-identified fit with a non-classical `se_type` errored with
+# "subscript out of bounds" instead of returning either number.
 wooldridge_score_chisq <- function(model_data,
                                     endog,
                                     instruments,
@@ -405,22 +424,32 @@ wooldridge_score_chisq <- function(model_data,
                                     first_stage_fits,
                                     m) {
 
-  aug_instrument_mat <- cbind(
-    model_data$instrument_matrix,
-    first_stage_fits[, endog[!(endog %in% colnames(model_data$instrument_matrix))], drop = FALSE]
+  excess <- model_data$instrument_matrix[, instruments[seq_len(m)], drop = FALSE]
+  exogenous <- setdiff(colnames(model_data$design_matrix), endog)
+
+  qhat_fit <- lm_robust_fit(
+    y = excess,
+    X = cbind(
+      model_data$design_matrix[, exogenous, drop = FALSE],
+      first_stage_fits
+    ),
+    weights = model_data$weights,
+    cluster = model_data$cluster,
+    se_type = "none",
+    has_int = TRUE,
+    ci = FALSE,
+    return_fit = TRUE,
+    return_vcov = FALSE
   )
 
-  wooldridge_lm <- lm_robust_fit(
-    y = ss_residuals,
-    X = aug_instrument_mat,
-    weights = NULL,
-    cluster = NULL,
-    se_type = "classical",
-    has_int = attr(model_data$terms, "intercept"),
-    return_fit = FALSE,
-    return_vcov = FALSE,
-    ci = FALSE
-  )
+  kmat <- as.matrix(excess - qhat_fit[["fitted.values"]]) * as.vector(ss_residuals)
+  if (!is.null(model_data[["weights"]])) {
+    kmat <- kmat * model_data[["weights"]]
+  }
 
-  nrow(aug_instrument_mat) * wooldridge_lm[["r.squared"]]
+  # Regress a vector of ones on kmat with no intercept. The statistic is
+  # n - SSR, and SSR is `sum(residuals)` rather than `sum(residuals^2)`
+  # because the residuals are orthogonal to kmat and the outcome is 1.
+  kmat_fit <- lm.fit(kmat, as.matrix(rep(1, length(ss_residuals))))
+  length(ss_residuals) - sum(residuals(kmat_fit))
 }

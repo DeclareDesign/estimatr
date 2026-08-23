@@ -201,7 +201,7 @@ test_that("HT errors when the declaration does not cover the data rows", {
   dat$Z <- randomizr::conduct_ra(decl)
   expect_error(
     horvitz_thompson(y ~ Z, data = dat[1:20, ], condition_prs = decl),
-    "declares 40 units but `data` has 20 rows"
+    "declares 40 units but the data has 20 rows"
   )
 })
 
@@ -338,4 +338,30 @@ test_that("a covariate-balanced declaration warns that HT ignores the constraint
   )
   manual <- sum(Z * Y / p) / N - sum((1 - Z) * Y / (1 - p)) / N
   expect_equal(unname(ht$coefficients[[1L]]), manual, tolerance = 1e-8)
+})
+
+
+test_that("A6: the declaration is indexed by original row with or without `data`", {
+  # surv_idx fell back to post-na.omit positions whenever the variables came
+  # from the calling environment, so each surviving unit was paired with
+  # another unit's assignment probabilities. Both the estimate and its standard
+  # error moved.
+  set.seed(9); N_a6 <- 40
+  bl_a6 <- rep(1:4, each = 10)
+  decl <- randomizr::declare_ra(blocks = bl_a6, block_m = c(2, 4, 6, 8))
+  Z_a6 <- randomizr::conduct_ra(decl)
+  Y_a6 <- rnorm(N_a6) + Z_a6
+  Y_a6[3] <- NA
+  dat_a6 <- data.frame(Y_a6 = Y_a6, Z_a6 = Z_a6)
+
+  with_data <- horvitz_thompson(Y_a6 ~ Z_a6, data = dat_a6, condition_prs = decl)
+  from_env  <- horvitz_thompson(Y_a6 ~ Z_a6, condition_prs = decl)
+  expect_equal(with_data$coefficients, from_env$coefficients)
+  expect_equal(with_data$std.error, from_env$std.error)
+  expect_equal(with_data$nobs, N_a6 - 1L)
+
+  # the size check applies to the environment route too
+  short <- randomizr::declare_ra(N = 30, m = 15)
+  expect_error(horvitz_thompson(Y_a6 ~ Z_a6, condition_prs = short),
+               "declares 30 units but the data has 40 rows")
 })

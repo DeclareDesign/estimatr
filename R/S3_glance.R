@@ -34,7 +34,11 @@ glance.lm_robust <- function(x, ...) {
     ),
     retrieve_fstatistic(x),
     data.frame(
-      df.residual = x[["df"]][1],
+      # x[["df"]] is the per-coefficient degrees of freedom, which under CR2
+      # is Satterthwaite and is not the residual df at all: on a 10-cluster
+      # fit it read 8.56 where the residual df is 98. glance.iv_robust() has
+      # always used df.residual; both do now.
+      df.residual = x[["df.residual"]],
       nobs = as.integer(x[["nobs"]]),
       se_type = x[["se_type"]],
       stringsAsFactors = FALSE

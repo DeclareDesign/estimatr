@@ -108,20 +108,30 @@ horvitz_thompson <- function(formula,
   Z  <- mf[[all.vars(m_formula[[3L]])[1L]]]
 
   # Track which original-data rows survived na.omit so we can index the
-  # ra_declaration's probability matrix correctly when rows are dropped.
+  # ra_declaration's probability matrix correctly when rows are dropped. The
+  # declaration is indexed by ORIGINAL row, so the count of original rows is
+  # what matters, not whether `data` was passed: this used to fall back to
+  # post-drop positions whenever the variables came from the calling
+  # environment, which silently paired each unit with another unit's
+  # probabilities and moved both the estimate and its standard error.
   na_dropped <- attr(mf, "na.action")
-  if (!is.null(data_df) && !is.null(na_dropped)) {
-    surv_idx <- setdiff(seq_len(nrow(data_df)), as.integer(na_dropped))
+  n_original <- if (!is.null(data_df)) {
+    nrow(data_df)
   } else {
-    surv_idx <- seq_len(nrow(mf))
+    nrow(mf) + length(na_dropped)
+  }
+  surv_idx <- if (is.null(na_dropped)) {
+    seq_len(n_original)
+  } else {
+    setdiff(seq_len(n_original), as.integer(na_dropped))
   }
 
-  if (inherits(cpr, "ra_declaration") && !is.null(data_df) &&
-      nrow(cpr$probabilities_matrix) != nrow(data_df))
+  if (inherits(cpr, "ra_declaration") &&
+      nrow(cpr$probabilities_matrix) != n_original)
     stop("`condition_prs` declares ", nrow(cpr$probabilities_matrix),
-         " units but `data` has ", nrow(data_df), " rows. The declaration ",
-         "must cover exactly the rows of `data`, in the same order, so that ",
-         "each unit is matched to its own assignment probabilities.")
+         " units but the data has ", n_original, " rows. The declaration ",
+         "must cover exactly the rows of the data, in the same order, so ",
+         "that each unit is matched to its own assignment probabilities.")
 
   # The estimand is the average effect over every unit the assignment
   # probabilities refer to, so N is the whole analysis sample and not just

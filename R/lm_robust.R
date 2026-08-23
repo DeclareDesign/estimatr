@@ -139,6 +139,10 @@ lm_robust <- function(formula,
       tss_full <- sum(diag(crossprod(yoriginal - mean(yoriginal))))
       r2_full <- 1 - rss / tss_full
       return_list <- list(
+        # `term` must be present even though it is empty: `$term` on a list
+        # partially matches `terms` when it is absent, and summarize_tidy()
+        # then tried to use the terms formula as row names.
+        term          = character(0),
         coefficients  = setNames(numeric(0), character(0)),
         std.error     = setNames(numeric(0), character(0)),
         statistic     = setNames(numeric(0), character(0)),
@@ -156,9 +160,14 @@ lm_robust <- function(formula,
         fes           = TRUE,
         nobs          = n_obs,
         rank          = 0L,
+        k             = 0L,
         proj_r.squared  = 0,
+        proj_adj.r.squared = 0,
+        proj_tss        = rss,
         r.squared       = r2_full,
         adj.r.squared   = 1 - (1 - r2_full) * (n_obs - 1L) / df_r,
+        alpha           = alpha,
+        clustered       = !is.null(model_data[["cluster"]]),
         contrasts     = attr(model_data$design_matrix, "contrasts"),
         terms         = model_data$terms,
         xlevels       = model_data$xlevels,
@@ -167,7 +176,16 @@ lm_robust <- function(formula,
         weights       = model_data$weights,
         outcome       = deparse(formula[[2]], nlines = 5)
       )
+      # Absorbed group effects, as the ordinary fixed-effects path stores them,
+      # so predict() can put them back. With no regressors they are the fitted
+      # values themselves.
+      return_list[["fixed_effects"]] <- absorbed_group_effects(
+        return_list[["fitted.values"]], return_list[["coefficients"]], model_data
+      )
       return_list[["call"]] <- match.call()
+      # Without this the fit came back as a bare list, so print(), tidy(),
+      # summary() and every other method dispatched on nothing.
+      class(return_list) <- "lm_robust"
       return(return_list)
     }
   }

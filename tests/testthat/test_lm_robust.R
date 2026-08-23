@@ -260,8 +260,11 @@ test_that("#345: lm_robust returns residuals on the scale of the data", {
   expect_equal(length(m$residuals), n)
   expect_equal(unname(m$residuals), unname(residuals(lm(y ~ x + z, data = dat))),
                tolerance = 1e-12)
-  # the default S3 method finds the field, so residuals() just works
-  expect_equal(residuals(m), m$residuals)
+  # estimatr registers no residuals method: the default one reads the field.
+  # Named explicitly, because clubSandwich registers a `residuals.lm_robust` of
+  # its own, so merely loading that namespace anywhere in the suite changes
+  # which method a bare `residuals(m)` would be testing.
+  expect_equal(getS3method("residuals", "default")(m), m$residuals)
   expect_equal(unname(m$residuals + m$fitted.values), dat$y, tolerance = 1e-12)
 })
 
@@ -587,6 +590,45 @@ test_that("#389: glance() works with multiple endogenous regressors", {
   expect_equal(g$statistic.weakinst, unname(min(fs[grep("(^|:)value$", names(fs))])))
 })
 
+test_that("over-identified diagnostics work for every se_type, not just classical", {
+  # `first_stage_fits` has its columns renamed `fit_<endog>`, and the rewritten
+  # robust branch then indexed it by the bare endogenous names, so every
+  # over-identified fit with a non-classical se_type died with "subscript out
+  # of bounds". The classical branch took a different function and was fine,
+  # which is why the whole path had no test.
+  set.seed(2); n <- 500
+  d <- data.frame(z1 = rnorm(n), z2 = rnorm(n), z3 = rnorm(n), w = rnorm(n))
+  d$x <- d$z1 + 0.5 * d$z2 + 0.3 * d$z3 + rnorm(n)
+  d$y <- d$x + d$w + rnorm(n)
+  fml <- y ~ x + w | z1 + z2 + z3 + w
+
+  for (ty in c("classical", "HC0", "HC1", "HC2", "HC3")) {
+    m <- iv_robust(fml, data = d, se_type = ty, diagnostics = TRUE)
+    ov <- m$diagnostic_overid_test
+    expect_equal(names(ov), c("value", "df", "p.value"), info = ty)
+    expect_true(is.finite(ov[["value"]]), info = ty)
+    expect_equal(unname(ov[["df"]]), 2, info = ty)   # 3 instruments, 1 endogenous
+  }
+
+  # The classical branch is Sargan's statistic, which AER computes
+  # independently.
+  skip_if_not_installed("AER")
+  sargan <- summary(AER::ivreg(fml, data = d), diagnostics = TRUE)$diagnostics["Sargan", ]
+  cl <- iv_robust(fml, data = d, se_type = "classical", diagnostics = TRUE)
+  expect_equal(cl$diagnostic_overid_test[["value"]], sargan[["statistic"]],
+               tolerance = 1e-10)
+  expect_equal(cl$diagnostic_overid_test[["p.value"]], sargan[["p-value"]],
+               tolerance = 1e-10)
+
+  # The robust branch is Wooldridge's score test, a different statistic, and
+  # every non-classical se_type shares it.
+  rb <- vapply(c("HC0", "HC1", "HC2", "HC3"), function(ty) {
+    iv_robust(fml, data = d, se_type = ty, diagnostics = TRUE)$diagnostic_overid_test[["value"]]
+  }, numeric(1))
+  expect_equal(unname(diff(range(rb))), 0)
+  expect_false(isTRUE(all.equal(rb[["HC0"]], cl$diagnostic_overid_test[["value"]])))
+})
+
 test_that("#397: model.frame() on iv_robust returns the model variables", {
   m <- iv_robust(mpg ~ wt + hp | am + hp, data = mtcars)
   mf <- z_model_frame(m)
@@ -650,4 +692,64 @@ test_that("#377: augment(newdata =) predicts without residuals", {
 test_that("#377: augment() refuses multivariate outcomes", {
   m <- lm_robust(cbind(y, x) ~ z, data = dat)
   expect_error(estimatr:::augment.lm_robust(m), "multiple outcomes")
+})
+
+
+# ---- regressions from 1.0.6 found in the 2026-08-23 review ----
+
+test_that("A4: lm_lin without an intercept expands a 0/1 treatment", {
+  # Without an intercept there is no baseline to absorb the control group, so
+  # both indicators are needed. 2.0 expanded only when the treatment took
+  # values outside {0, 1}, and returned `z, x1_c, z:x1_c`, losing the
+  # control-group intercept; 1.0.6 returned all four terms.
+  set.seed(1); N <- 100
+  d <- data.frame(z = rbinom(N, 1, 0.5), x1 = rnorm(N))
+  d$y <- d$z + d$x1 + rnorm(N)
+
+  m <- lm_lin(y ~ z - 1, covariates = ~ x1, data = d)
+  expect_equal(names(coef(m)), c("z0", "z1", "z0:x1_c", "z1:x1_c"))
+  # equal to the same model fitted by hand, which is what the terms mean
+  d$x1_c <- d$x1 - mean(d$x1)
+  hand <- lm_robust(y ~ factor(z):x1_c + factor(z) - 1, data = d, se_type = "HC2")
+  expect_equal(unname(coef(m)), unname(coef(hand)), tolerance = 1e-10)
+  expect_equal(length(predict(m, newdata = d)), N)
+
+  # the intercept form is unchanged
+  expect_equal(names(coef(lm_lin(y ~ z, covariates = ~ x1, data = d))),
+               c("(Intercept)", "z", "x1_c", "z:x1_c"))
+})
+
+test_that("A5: a fit with nothing but fixed effects is a fit, not a bare list", {
+  set.seed(1); N <- 100
+  d <- data.frame(y = rnorm(N), bl = sample(5, N, TRUE))
+  m <- lm_robust(y ~ 1, fixed_effects = ~ bl, data = d)
+
+  expect_s3_class(m, "lm_robust")
+  expect_equal(m$df.residual, lm(y ~ factor(bl), data = d)$df.residual)
+  expect_equal(m$r.squared, summary(lm(y ~ factor(bl), data = d))$r.squared,
+               tolerance = 1e-10)
+  # every method reads it without erroring, which is what the class buys
+  expect_output(print(m))
+  expect_s3_class(tidy(m), "data.frame")
+  expect_equal(nrow(glance(m)), 1L)
+  expect_equal(nobs(m), N)
+  expect_equal(length(predict(m, newdata = d)), N)
+
+  # iv_robust cannot answer this and says which function can, rather than
+  # dying on "length of 'dimnames' [2] not equal to array extent" as 1.0.6 did
+  expect_error(iv_robust(y ~ 1 | 1, fixed_effects = ~ bl, data = d),
+               "nothing to instrument")
+})
+
+test_that("B10: glance() reports the residual df, not the first coefficient's", {
+  # x[["df"]] is per-coefficient and under CR2 is Satterthwaite, so the column
+  # named df.residual read 8.56 on a 10-cluster fit whose residual df is 98.
+  set.seed(1); N <- 100
+  d <- data.frame(y = rnorm(N), x = rnorm(N), cl = sample(10, N, TRUE))
+  m <- lm_robust(y ~ x, clusters = cl, data = d, se_type = "CR2")
+  expect_equal(glance(m)$df.residual, m$df.residual)
+  expect_false(isTRUE(all.equal(m$df.residual, unname(m$df[[1]]))))
+  # and it agrees with the iv_robust method, which always used df.residual
+  mi <- iv_robust(y ~ x | x, data = d, clusters = cl, se_type = "CR2")
+  expect_equal(glance(mi)$df.residual, mi$df.residual)
 })
