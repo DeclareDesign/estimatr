@@ -36,8 +36,8 @@ n <- nrow(dat)
 test_that("FE demeaning gives same coefs as dummy regression", {
   m_fe    <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl)
   m_dummy <- lm_robust(y ~ z + x + factor(bl), data = dat)
-  expect_equal(unname(coef(m_fe)["z"]), unname(coef(m_dummy)["z"]), tolerance = 1e-10)
-  expect_equal(unname(coef(m_fe)["x"]), unname(coef(m_dummy)["x"]), tolerance = 1e-10)
+  expect_equal(unname(coef(m_fe)["z"]), unname(coef(m_dummy)["z"]), tolerance = 1e-9)
+  expect_equal(unname(coef(m_fe)["x"]), unname(coef(m_dummy)["x"]), tolerance = 1e-9)
 })
 
 test_that("FE residuals equal dummy regression residuals", {
@@ -45,7 +45,7 @@ test_that("FE residuals equal dummy regression residuals", {
   m_dummy <- lm_robust(y ~ z + x + factor(bl), data = dat)
   resid_fe    <- dat$y - m_fe$fitted.values
   resid_dummy <- dat$y - m_dummy$fitted.values
-  expect_equal(resid_fe, resid_dummy, tolerance = 1e-10)
+  expect_equal(resid_fe, resid_dummy, tolerance = 1e-9)
 })
 
 test_that("FE df.residual is n - k - (B-1) - 1", {
@@ -77,7 +77,7 @@ test_that("HC2 and HC3 now work with one-way FE and match the dummy regression",
   for (se in c("HC2", "HC3")) {
     fe  <- lm_robust(y ~ z, data = dat, fixed_effects = ~bl, se_type = se)
     dum <- lm_robust(y ~ z + factor(bl), data = dat, se_type = se)
-    expect_equal(unname(fe$std.error), unname(dum$std.error["z"]), tolerance = 1e-10)
+    expect_equal(unname(fe$std.error), unname(dum$std.error["z"]), tolerance = 1e-9)
   }
 })
 
@@ -87,7 +87,7 @@ test_that("HC2 and HC3 with two-way FE match the dummy regression", {
   for (se in c("HC2", "HC3")) {
     fe  <- lm_robust(y ~ z, data = dat2, fixed_effects = ~ bl + bl2, se_type = se)
     dum <- lm_robust(y ~ z + factor(bl) + bl2, data = dat2, se_type = se)
-    expect_equal(unname(fe$std.error), unname(dum$std.error["z"]), tolerance = 1e-10)
+    expect_equal(unname(fe$std.error), unname(dum$std.error["z"]), tolerance = 1e-9)
   }
 })
 
@@ -95,8 +95,8 @@ test_that("CR2 with FE matches the dummy regression", {
   fe  <- lm_robust(y ~ z, data = dat, fixed_effects = ~ bl, clusters = cl,
                    se_type = "CR2")
   dum <- lm_robust(y ~ z + factor(bl), data = dat, clusters = cl, se_type = "CR2")
-  expect_equal(unname(fe$std.error), unname(dum$std.error["z"]), tolerance = 1e-10)
-  expect_equal(unname(fe$df), unname(dum$df["z"]), tolerance = 1e-10)
+  expect_equal(unname(fe$std.error), unname(dum$std.error["z"]), tolerance = 1e-9)
+  expect_equal(unname(fe$df), unname(dum$df["z"]), tolerance = 1e-9)
 })
 
 test_that("HC1 with FE does not warn", {
@@ -245,7 +245,7 @@ test_that("iv_robust with FE coefs match FWL manually", {
 
   m_fe  <- iv_robust(y ~ z | iv, data = dat, fixed_effects = ~bl, se_type = "HC1")
   m_man <- iv_robust(y ~ z | iv, data = dat_dm, se_type = "HC1")
-  expect_equal(unname(coef(m_fe)["z"]), unname(coef(m_man)["z"]), tolerance = 1e-10)
+  expect_equal(unname(coef(m_fe)["z"]), unname(coef(m_man)["z"]), tolerance = 1e-9)
 })
 
 test_that("iv_robust FE diagnostics are suppressed with warning", {
@@ -425,7 +425,9 @@ test_that("absorbed CR2 matches the dummy expansion when two FE columns drop", {
     cluster = d$cl, type = "CR2"
   )
   # tight, not testthat's default 1.5e-8: these are three routes to one number
-  # computed in one session, and the gap the bug left was 3.1%
+  # computed in one session, and the gap the bug left was 3.1%. 1e-9 rather
+  # than tighter because this is set on macOS and runs on the CI matrix; the
+  # measured gap here is 4.5e-11.
   expect_equal(absorbed$std.error[["x"]], dummies$std.error[["x"]], tolerance = 1e-9)
   expect_equal(absorbed$std.error[["x"]], sqrt(cs["x", "x"]), tolerance = 1e-9)
   expect_equal(absorbed$df[["x"]], dummies$df[["x"]], tolerance = 1e-9)

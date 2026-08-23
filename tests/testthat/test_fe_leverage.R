@@ -4,9 +4,19 @@ library(estimatr)
 # in one session on one BLAS: the absorbed fit and the same model with the
 # dummies written out. testthat's default 1.5e-8 is far looser than that can be
 # held, and a drift below it would pass in silence, so the comparisons here are
-# `expect_same()` at 1e-10, which is the tightest the measured worst case allows (a disconnected two-way HC0 pair differs by 5e-11 relative). Use plain `expect_same()` for anything that is not
-# an absorbed-versus-expanded pair.
-FE_TOL <- 1e-10
+# `expect_same()`. Use plain `expect_equal()` for anything that is not an
+# absorbed-versus-expanded pair; comparisons against the 1.0.6 recording stay at
+# REF_TOL, which is a different question.
+#
+# 1e-9 is set from the measured worst case across all 14,125 values compared
+# here, which is 5.5e-11 on a disconnected two-way design where the
+# pseudo-inverse is doing the work. That leaves ~18x of headroom, and this
+# number is set on macOS and has to survive Ubuntu, Windows and R-devel, where
+# the linear algebra is not the same. An earlier draft used 1e-10, which left
+# 1.8x and would have been a coin flip on the CI matrix for no gain: the point
+# of this constant is to catch a drift three orders of magnitude below
+# testthat's default, and 1e-9 still does that with 15x to spare.
+FE_TOL <- 1e-9
 expect_same <- function(object, expected, ...) {
   expect_equal(object, expected, ..., tolerance = FE_TOL)
 }
