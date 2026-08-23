@@ -225,6 +225,35 @@ The condition-probability-matrix helpers `declaration_to_condition_pr_mat()`, `g
 
 ---
 
+## Errors in 1.0.6, and whether one could have reached a published result
+
+Every item below was reproduced against an installed estimatr 1.0.6, not inferred from the rewrite's own code. Each says which direction it moves a result, because that decides whether it costs a finding or manufactures one. Anything in this section is worth re-checking in existing work; anything not in it, including everything in the sections above about the rewrite's internals, was never in a released version.
+
+**HC3 returns a silently inflated standard error, and HC2 returns `NaN`, on a near-saturated design.** On `Y ~ Z * factor(x)` with 25 levels of `x` in 40 rows, 1.0.6 gives `se(Z) = 39.5` against a classical standard error of `1.42`, with no warning of any kind, and roughly 39.5 on nearly every other coefficient in the table. HC2 gives `NaN` for all of them. **The direction is upward, so the cost is a finding lost rather than one invented**, but the magnitude is large enough that a real effect disappears. Saturated specifications and treatment-by-stratum interactions produce this readily. See the #395 entry below for the mechanism.
+
+**Horvitz-Thompson with a `permutation_matrix` design is anti-conservative.** Enumerating all ten assignments of a 5-cluster, m = 2 design, 1.0.6's mean estimated variance is **0.838 of the true sampling variance**, and it returns `NA` on one of the ten. Pairs of units that can never appear together contribute a term no design of that shape identifies, and 1.0.6 left them out rather than bounding them. **The direction is downward: intervals too narrow, over-rejection.** 2.0 applies the Aronow and Samii (2013) bound instead, so the standard error is larger on purpose.
+
+**Zero weights are counted as observations.** `nobs` and `df.residual` counted rows whose weight is 0, so `classical` standard errors come back too small by an amount that grows with the share of rows zeroed:
+
+| rows with weight 0 | 1.0.6 | correct | understated by |
+|---|---|---|---|
+| 5% | 0.075644 | 0.077630 | 2.6% |
+| 25% | 0.070667 | 0.081737 | 13.5% |
+| 50% | 0.066432 | 0.094427 | 29.6% |
+| 75% | 0.072028 | 0.146289 | 50.8% |
+
+**The direction is downward.** Two things limit the blast: `HC0`, `HC2` and `HC3` are untouched to within 0.1%, so the package default was mostly safe, and only `classical`, `HC1` and `stata` move materially. Trimming an inverse-probability weight to zero, or using 0/1 weights to subset, is the way into it.
+
+**A `clusters` variable with one level gives CR2 standard errors of about `1.5e-17`**, with no warning. CR2's degrees of freedom are Satterthwaite, so the `J - 1 = 0` guard that catches the other cluster-robust estimators never fires. One level is usually the symptom of a cluster variable that collapsed upstream, so the failure converts a data-handling mistake into an apparently infinitely precise estimate. 2.0 errors.
+
+**`offset()` in a formula is silently ignored.** Not a standard error problem: the coefficient itself is the one from the model without the offset. On a probe where the offset model gives `0.953607`, 1.0.6 returns `0.904333`, which is `lm()` with the term deleted. 2.0 errors and names the rewrite (`y - <offset> ~ x`).
+
+**`glance()` reports the first coefficient's degrees of freedom in a column named `df.residual`.** Under CR2 that is a Satterthwaite quantity: `4.83` on a fit whose residual degrees of freedom are 98. No estimate moves; a reported table is wrong.
+
+**`emmeans::emmeans()` on an `lm_robust` fit fails unless emmeans happens to be attached**, with "Perhaps a 'data' or 'params' argument is needed". An error rather than a wrong number.
+
+---
+
 ## Bug fixes
 
 ### Weighted R² formula: investigated, no change (affects `lm_robust`, `lm_lin`, `iv_robust`)
@@ -349,7 +378,7 @@ With two or more clusters per arm the estimator is exact. With one it is too sma
 
 A near-saturated design also produces observations that the fit reproduces exactly, whose leverage is 1. That case is benign on its own: the residual is exactly 0, HC2's contribution is a 0/0 that resolves to 0, and the standard error comes back finite. The failure is leverage computed marginally *above* 1, which rounding produces on the same designs and which no projection diagonal can actually take. `1 - h` is then a small negative number, and the two estimators failed differently: HC2 divided by it and took the square root of a negative meat, so every standard error in the fit was `NaN` however small the offending term, while HC3 squared the denominator, which cancels the sign, and returned a finite number carrying a large spurious term without warning. The silent one was the worse failure.
 
-2.0 sets the denominator to 0 wherever `1 - h <= 0`, so both estimators drop those observations from the variance instead, and warns with a count of how many were dropped and which `se_type` did it. `CR2` never forms `1 - h` and needs no guard: it eigendecomposes a per-cluster matrix and keeps only directions above `1e-12`, so a cluster that is fitted exactly already contributes 0. One consequence is worth naming: on a design with a singleton fixed-effect group, the absorbed fit and the same model with explicit dummies used to disagree, the first finite and the second `NaN`. They now agree.
+Both failures are 1.0.6's as well as the rewrite's, confirmed by running it: on the probe design 1.0.6 returns `NaN` for HC2 and `39.5` for HC3 against a classical `1.42`, silently. 2.0 sets the denominator to 0 wherever `1 - h <= 0`, so both estimators drop those observations from the variance instead, and warns with a count of how many were dropped and which `se_type` did it. `CR2` never forms `1 - h` and needs no guard: it eigendecomposes a per-cluster matrix and keeps only directions above `1e-12`, so a cluster that is fitted exactly already contributes 0. One consequence is worth naming: on a design with a singleton fixed-effect group, the absorbed fit and the same model with explicit dummies used to disagree, the first finite and the second `NaN`. They now agree.
 
 ### `predict()` with fixed effects (#403, #404)
 
