@@ -182,6 +182,9 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
   Eigen::MatrixXd Vcov_hat;
   Eigen::VectorXd dof = Eigen::VectorXd::Constant(npars, -99.0);
   Eigen::VectorXd res_var = Eigen::VectorXd::Constant(ny, -99.0);
+  // Reported back so R can warn on the condition itself rather than on a NaN,
+  // which is no longer the symptom once the denominator is guarded.
+  int n_leverage_above_one = 0;
 
   if (se_type == "classical") {
     Eigen::MatrixXd s2 = AtA(ei)/((double)n - (double)r_fe);
@@ -249,6 +252,19 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
         }
 
         Eigen::ArrayXd denom = 1.0 - hii.array();
+
+        // A hat value is a projection diagonal and cannot exceed 1. Where the
+        // computed one does, the observation is fitted exactly up to rounding
+        // and its contribution is the same 0/0 that leverage of exactly 1
+        // resolves to 0 below. Left alone the two estimators fail differently
+        // and neither failure is informative: HC2 divides by a small negative
+        // number, half_meat then takes the square root of it, and every
+        // standard error in the fit is NaN however small the offending term;
+        // HC3 squares the denominator, which cancels the sign, so it returns a
+        // finite number carrying a spurious positive term and says nothing.
+        // Setting the denominator to 0 sends both through the isfinite trap.
+        n_leverage_above_one = (denom < 0.0).count();
+        denom = (denom <= 0.0).select(0.0, denom);
         if (hc3) denom = denom.square();
 
         for (int m = 0; m < ny; m++) {
@@ -471,7 +487,8 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
   return List::create(_["Vcov_hat"]= Vcov_hat,
                       _["dof"]= dof,
-                      _["res_var"]= res_var);
+                      _["res_var"]= res_var,
+                      _["n_leverage_above_one"]= n_leverage_above_one);
 }
 
 // ---------------------------------------------------------------------------

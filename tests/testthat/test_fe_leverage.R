@@ -490,12 +490,15 @@ test_that("the FE rank matches a pivoted QR of the dummy design", {
   expect_lt(qr(D)$rank, nominal)
 })
 
-test_that("a singleton FE group keeps its 1.0.6 behaviour", {
-  # One group holds a single observation, so its leverage is exactly 1 and HC2
-  # divides by zero for it. estimatr 1.0.6 returns a finite standard error from
-  # the absorbed fit (the observation contributes nothing to the meat) and NaN
-  # from the explicit-dummy fit. That asymmetry is inherited deliberately: it
-  # is what the released package does. Pinned so it cannot drift unnoticed.
+test_that("a singleton FE group agrees absorbed and expanded, for every se_type", {
+  # One group holds a single observation, so its leverage is 1 and the fit is
+  # exact for it. The absorbed fit has always returned a finite standard error
+  # here, because that observation contributes nothing to the meat. The
+  # explicit-dummy fit used to return NaN instead: the wider design puts its
+  # computed hat value marginally above 1, and HC2 divided by the resulting
+  # negative number. The leverage guard resolves both to the same zero
+  # contribution, so the two routes now agree rather than disagreeing by an
+  # accident of which design matrix was formed (estimatr #395).
   set.seed(11)
   k <- 200
   d <- data.frame(y = rnorm(k), x = rnorm(k), g = c(1L, sample(2:20, k - 1, TRUE)))
@@ -505,10 +508,13 @@ test_that("a singleton FE group keeps its 1.0.6 behaviour", {
   expect_true(is.finite(fe$std.error[["x"]]))
   expect_equal(fe$df.residual, lm(y ~ x + factor(g), data = d)$df.residual)
 
-  # HC1 and HC3 agree with the dummy fit exactly even here
-  for (se in c("HC1", "HC3")) {
+  for (se in c("HC1", "HC2", "HC3")) {
     a <- lm_robust(y ~ x, fixed_effects = ~ g, data = d, se_type = se)
-    b <- lm_robust(y ~ x + factor(g), data = d, se_type = se)
+    # the expanded design is where the hat value lands above 1, so it warns
+    b <- suppressWarnings(
+      lm_robust(y ~ x + factor(g), data = d, se_type = se)
+    )
+    expect_true(is.finite(b$std.error[["x"]]), info = se)
     expect_equal(unname(a$std.error), unname(b$std.error["x"]), info = se)
   }
 })
