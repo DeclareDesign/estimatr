@@ -47,7 +47,16 @@ estimatr, at a fraction of the time and memory.
 factors, since its adjustment is built from cluster-level blocks of the hat
 matrix rather than from \code{h_ii}. It is available with \code{fixed_effects} but
 pays for the expansion, and is refused in combination with \code{weights}, as in
-estimatr 1.0.6.}
+estimatr 1.0.6.
+
+One more thing about \code{"CR2"} under \code{weights}, inherited from 1.0.6 and
+worth stating because it is invisible at the call site: its small-sample
+adjustment is built against a working model with identity covariance,
+\code{Phi = I}, where the weighted \code{"HC2"} adjustment is built against precision
+weights. In \code{clubSandwich}'s terms the weighted CR2 here matches
+\code{vcovCR(..., inverse_var = FALSE)} and the weighted HC2 matches
+\code{inverse_var = TRUE}. The two are each internally consistent; they are not
+the same convention as one another.}
 
 \item{se_type}{The standard error type. Defaults depend on whether clusters
 and/or fixed effects are present:

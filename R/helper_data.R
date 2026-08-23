@@ -278,7 +278,7 @@ demean_fes <- function(model_data) {
   fe_codes  <- lapply(seq_len(ncol(codes)), function(k) codes[, k])
   fe_levels <- vapply(model_data[["fe_level_names"]], length, 0L)
   # At this point model_data[["weights"]] is the RAW weight vector (not yet
-  # sqrt-transformed — that happens in lm_robust_fit / prep_lm_data).
+  # sqrt-transformed: that happens in lm_robust_fit / prep_lm_data).
   # WLS group means use raw weights as the metric.
   w       <- model_data[["weights"]] %||% numeric(0L)
   has_int <- attr(model_data$terms, "intercept")

@@ -25,9 +25,9 @@ has written to CRAN separately to confirm the transfer. He remains an author.
 This version was written by the maintainer working with Claude (Anthropic).
 `NEWS.md` says so and sets out the evidence: signatures unchanged except
 `horvitz_thompson()`'s probability arguments, with the numbers agreeing to 1e-12
-same-machine, a suite of 1,729 assertions
+same-machine, a suite of 1,873 assertions
 green on five platforms, 336 of them against answers recorded from an installed
-1.0.6, 305 against independent implementations (`sandwich`, `clubSandwich`,
+1.0.6, 343 against independent implementations (`sandwich`, `clubSandwich`,
 `ivreg`, Stata, `fixest`, `plm`, `blkvar`), and the full returned surface of sixteen fit
 types pinned by test. All 35 reverse dependencies were checked.
 

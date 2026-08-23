@@ -22,7 +22,7 @@ horvitz_thompson(
 
 \item{condition_prs}{Treatment probability specification. One of:
 \itemize{
-\item An \code{ra_declaration} from \pkg{randomizr} — \strong{strongly
+\item An \code{ra_declaration} from \pkg{randomizr}: \strong{strongly
 preferred.}  All standard designs (simple/Bernoulli, complete,
 blocked, clustered, blocked-and-clustered, and arbitrary permutation
 matrices) are supported, and the variance estimator uses exact
@@ -30,7 +30,7 @@ design-aware joint inclusion probabilities.  Any design for which
 you know the block structure, cluster structure, marginal treatment
 probabilities, and whether randomization is simple or complete can
 be expressed as \code{declare_ra(blocks = bl, clusters = cl,
-    prob = pi, simple = FALSE)} — there is no parametric design that
+    prob = pi, simple = FALSE)}. There is no parametric design that
 requires the alternatives below.  For fully custom designs, use
 \code{declare_ra(permutation_matrix = perm)}.
 \item A named numeric vector of marginal condition probabilities,
@@ -40,7 +40,8 @@ any design but exact only for Bernoulli (simple) randomization.
 For complete or blocked designs this overstates uncertainty; use
 an \code{ra_declaration} to get the tighter design-aware variance.
 \item A two-column matrix or data frame of per-unit probabilities with
-columns named by condition labels.  Same conservative variance as (b).
+columns named by condition labels. Same conservative Young's bound
+as the named vector above.
 }}
 
 \item{condition1}{Label of the control condition (first sorted condition

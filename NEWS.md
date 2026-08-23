@@ -10,9 +10,9 @@ See `vignette("estimatr2.0")` for a user-facing tour of what changes and what do
 
 estimatr 2.0.0 was written by Alexander Coppock working with Claude (Anthropic), across design, implementation, tests, benchmarks, and documentation. This note is here because a ground-up rewrite of a widely used estimation package should say how it was produced, and because the answer changes what evidence you are entitled to want before installing it.
 
-**What the evidence is.** The six estimators keep their signatures, with one exception: `horvitz_thompson()`, whose five probability arguments consolidate into `condition_prs`. Removals are listed under What is dropped. Run side by side on one machine, the numbers agree to 1e-12 wherever both versions answer. The test suite is 1,729 assertions with no failures, green on five platforms (Ubuntu release, devel and oldrel-1, macOS, Windows) with identical counts on each. Of those, 336 compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, and `tests/testthat/test_return_surface.R` pins the entire returned surface of sixteen fit types, names as well as values, so a field cannot silently go missing. All 35 CRAN reverse dependencies were checked.
+**What the evidence is.** The six estimators keep their signatures, with one exception: `horvitz_thompson()`, whose five probability arguments consolidate into `condition_prs`. Removals are listed under What is dropped. Run side by side on one machine, the numbers agree to 1e-12 wherever both versions answer. The test suite is 1,873 assertions with no failures locally, and 1,861 under `R CMD check`, where the one skip is `blkvar` (GitHub only). Of those, 336 compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, and 343 compare against something built independently of this package: `sandwich` (50), `clubSandwich` (13), Stata (91), `fixest` and `plm` (19), `blkvar` (38), and a Lin specification written out by hand (132). `tests/testthat/test_return_surface.R` pins the entire returned surface of sixteen fit types, names as well as values, so a field cannot silently go missing. All 35 CRAN reverse dependencies were checked.
 
-**Why that is not enough on its own, and what was added.** Agreement with 1.0.6 establishes that the rewrite changed no answer. It cannot establish that the answer was right, and any error inherited from 1.0.6 passes it in silence. So 305 further assertions check estimatr against something built independently of it: `sandwich`, `clubSandwich` and `ivreg` compared live in the same session, `fixest` and `plm` from a recorded fixture, Stata's `regress`, `areg` and `ivregress` from frozen output, and `blkvar` for the blocked-design variance, together with `lm_lin` checked against a Lin specification built by hand out of `lm_robust`. estimatr matches `sandwich`, `clubSandwich` and `ivreg` to machine precision everywhere they overlap, weighted included, with the CR2 Satterthwaite degrees of freedom exact.
+**Why that is not enough on its own, and what was added.** Agreement with 1.0.6 establishes that the rewrite changed no answer. It cannot establish that the answer was right, and any error inherited from 1.0.6 passes it in silence. So 343 further assertions check estimatr against something built independently of it: `sandwich`, `clubSandwich` and `ivreg` compared live in the same session, `fixest` and `plm` from a recorded fixture, Stata's `regress`, `areg` and `ivregress` from frozen output, and `blkvar` for the blocked-design variance, together with `lm_lin` checked against a Lin specification built by hand out of `lm_robust`. estimatr matches `sandwich`, `clubSandwich` and `ivreg` to machine precision everywhere they overlap, weighted included, with the CR2 Satterthwaite degrees of freedom exact.
 
 **Where a divergence is real, it is asserted from both sides rather than dropped.** The weighted HC2 comparison against Stata is pinned twice, as equal to the R reference to machine precision and as different from Stata by a bounded amount. The same is done for weighted 2SLS root MSE. The `iv_robust` HC2 leverage convention is pinned the other way round: estimatr matches `sandwich::vcovHC()` on an `ivreg::ivreg()` fit exactly, and differs from `AER::ivreg()`, whose `hatvalues()` method predates the `ivreg` package and returns a quantity `ivreg`'s own authors decline to treat as leverage. See `vignette("estimatr2.0")`. A comparison that is quietly excluded because it disagrees is indistinguishable, on a green run, from one that was never written.
 
@@ -102,11 +102,13 @@ reverse-dependency run is what surfaced the mistake.
 
 **HC2, HC3 and CR2 work with `fixed_effects` again.** 1.0.6 built the full
 dummy matrix and took the hat values off the `[X | FE dummies]` design whenever
-the requested `se_type` needed them. 2.0 does the same. One fixed-effect factor
-still takes the cheap route through the leverage identity below; everything
-else expands the dummies. Every case is exact and equal to the explicit-dummy
-fit, and equal to 1.0.6, which the fixture now records. The one combination
-1.0.6 also refused, weighted CR2 with `fixed_effects`, is still refused.
+the requested `se_type` needed them. HC2 and HC3 now reach the same numbers
+without building it, at any number of factors, through the leverage
+decomposition below. CR2 is the exception and still expands, because its
+adjustment is built from cluster-level blocks of the hat matrix rather than
+from `h_ii`. Every case is exact and equal to the explicit-dummy fit, and equal
+to 1.0.6, which the fixture now records. The one combination 1.0.6 also
+refused, weighted CR2 with `fixed_effects`, is still refused.
 
 **A bare grouping vector passed to `fixed_effects` warns instead of erroring.**
 1.x accepted a bare column name or an already-evaluated vector. Issue #304
@@ -173,17 +175,11 @@ Return objects are structurally compatible with estimatr 1.0.6: field names, cla
 
 ## HC2 and HC3 with fixed effects
 
-Absorbed fixed effects used to refuse `se_type = "HC2"` and `"HC3"`, on the grounds that they need hat values from the full `[dummies | X]` design while absorption leaves only the demeaned ones. The hat values in fact decompose exactly, for any number of FE factors:
-
-```
-P_[X | D] = P_D + P_{M_D X}
-```
-
-so `h_ii` is the demeaned-X hat value plus `diag(P_D)`. With one factor `P_D` is diagonal and the second term is just `w_i / sum(w over i's group)`. With several it is not diagonal, but writing `D` with its widest factor in full dummies and the rest contrast-coded leaves `D'WD` with a diagonal leading block, so `diag(P_D)` costs a factorisation of order `sum_{k>1}(g_k - 1)`, the narrowest the design allows, and no dummy matrix is built at any point.
+Absorbed fixed effects used to refuse `se_type = "HC2"` and `"HC3"`, on the grounds that they need hat values from the full `[dummies | X]` design while absorption leaves only the demeaned ones. The hat values in fact decompose exactly, for any number of FE factors, and the decomposition is written out below.
 
 Verified to machine precision against writing the dummies out, weighted and unweighted, balanced and unbalanced, from one factor to five, and against 1.x. At n = 40,000 with 2,000 groups, one-way HC2 takes 17.8 ms here against 41.3 s in 1.0.6. At n = 50,000 across 1,000 x 30 groups, two-way HC2 takes 36 ms and peaks at 174 MB, against 13.8 s and 970 MB before.
 
-**The default with fixed effects therefore returns to `"HC2"`**, at any number of factors, which is the package default everywhere else and is what 1.x returns for the same call. It had fallen back to `"stata"` only because HC2 was unaffordable.
+**The default with fixed effects therefore returns to `"HC2"`**, at any number of factors, which is the package default everywhere else and is what 1.x returns for the same call. An earlier draft of 2.0 fell back to `"HC1"` for two or more factors, on the understanding that HC2 there meant expanding the dummies. It does not.
 
 The identity generalises to any number of factors. What fails beyond one factor is the *sum of each factor's own within-group share*, which ignores the cross terms and is wrong in the third decimal place; that is what an earlier draft tested and rejected. The projection itself decomposes exactly:
 
@@ -308,7 +304,7 @@ A regressor collinear with the others is dropped and returned as an NA coefficie
 - **#365, replace AER tests with ivreg**, and **#402, skip tests relying on suggested packages.** Both are true by construction here: the suite never used AER, and every test needing `randomizr`, `carData` or `blkvar` is guarded with `skip_if_not_installed()`. The comparisons against 1.0.6 need no guard at all, because they read recorded answers rather than calling the older version.
 - **#260, bad defaulting to matched pairs.** The reporter has 17 blocks, one of which holds a single treated and single control unit, and estimatr 1.x collapses the whole design to matched pairs on 16 degrees of freedom. With two or more such blocks 2.0 now estimates the design properly; with exactly one, as here, it errors naming the block, because one small block leaves nothing to estimate its contribution against.
 
-`R CMD check` runs clean: 0 errors, 0 warnings, 0 notes.
+`R CMD check --as-cran` runs with 0 errors, 0 warnings and 1 NOTE, the maintainer change.
 
 ### Blocked designs with blocks of different sizes (#336)
 
@@ -479,7 +475,7 @@ With **two or more** FE factors the naive version of the identity fails, by roug
 
 What changes is only what a **default** will reach for, and only in the clustered case. Expanding the dummies is roughly O(g^3) in the number of levels, so no default expands them; `"CR2"` is the only estimator that still needs the expansion, so `fixed_effects` with `clusters` defaults to `"CR0"` with a warning, shown once per session, that names what 1.0.6 returned and names the `se_type` that accepts the new default. Writing `se_type = "CR0"` removes it. Unclustered fits keep the `"HC2"` default at any number of factors, as in 1.0.6.
 
-**Multi-way FE.** Two-way (and higher) FE are supported via alternating projections that iterate to convergence (tolerance 1e-8, maximum 50 iterations).
+**Multi-way FE.** Two-way (and higher) FE are supported via alternating projections that iterate to convergence (tolerance 1e-8, maximum 100 sweeps, after which it warns).
 
 **Return object additions.** FE models add:
 - `fes`: logical flag indicating whether fixed effects were used

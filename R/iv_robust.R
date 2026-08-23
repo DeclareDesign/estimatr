@@ -451,6 +451,6 @@ wooldridge_score_chisq <- function(model_data,
   # Regress a vector of ones on kmat with no intercept. The statistic is
   # n - SSR, and SSR is `sum(residuals)` rather than `sum(residuals^2)`
   # because the residuals are orthogonal to kmat and the outcome is 1.
-  kmat_fit <- lm.fit(kmat, as.matrix(rep(1, length(ss_residuals))))
-  length(ss_residuals) - sum(residuals(kmat_fit))
+  kmat_fit <- stats::lm.fit(kmat, as.matrix(rep(1, length(ss_residuals))))
+  length(ss_residuals) - sum(stats::residuals(kmat_fit))
 }

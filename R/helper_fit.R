@@ -1,4 +1,4 @@
-#' Internal method that creates linear fits (no fixed effects)
+#' Internal method that creates linear fits
 #'
 #' @param y numeric outcome vector or matrix
 #' @param X numeric design matrix
@@ -14,8 +14,10 @@
 #' @param iv_stage list of length one or two for 2SLS stages
 #' @param fe_rank integer, degrees of freedom absorbed by fixed effects
 #' @param femat optional numeric matrix of fixed-effect dummies for the
-#'   estimation sample, supplying the columns HC2, HC3 and CR2 need from the
-#'   full design. `NULL` unless the requested `se_type` requires it.
+#'   estimation sample. Only `CR2` needs it: its adjustment is built from
+#'   cluster-level blocks of the hat matrix, which do not decompose the way the
+#'   diagonal does. HC2 and HC3 take `fe_leverage` instead. `NULL` unless the
+#'   requested `se_type` requires it.
 #' @param fe_leverage numeric vector of per-observation leverage contributed by
 #'   the absorbed fixed effects, or `NULL`. `h_ii` of the full design splits
 #'   exactly into the demeaned-X leverage plus this term, for any number of FE

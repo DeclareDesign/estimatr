@@ -24,6 +24,15 @@
 #'   matrix rather than from `h_ii`. It is available with `fixed_effects` but
 #'   pays for the expansion, and is refused in combination with `weights`, as in
 #'   estimatr 1.0.6.
+#'
+#'   One more thing about `"CR2"` under `weights`, inherited from 1.0.6 and
+#'   worth stating because it is invisible at the call site: its small-sample
+#'   adjustment is built against a working model with identity covariance,
+#'   `Phi = I`, where the weighted `"HC2"` adjustment is built against precision
+#'   weights. In `clubSandwich`'s terms the weighted CR2 here matches
+#'   `vcovCR(..., inverse_var = FALSE)` and the weighted HC2 matches
+#'   `inverse_var = TRUE`. The two are each internally consistent; they are not
+#'   the same convention as one another.
 #' @param se_type The standard error type. Defaults depend on whether clusters
 #'   and/or fixed effects are present:
 #'   \itemize{

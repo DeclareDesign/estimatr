@@ -2,7 +2,7 @@
 % Please edit documentation in R/helper_fit.R
 \name{lm_robust_fit}
 \alias{lm_robust_fit}
-\title{Internal method that creates linear fits (no fixed effects)}
+\title{Internal method that creates linear fits}
 \usage{
 lm_robust_fit(
   y,
@@ -56,11 +56,13 @@ factors, which is what makes HC2 and HC3 available under \code{fixed_effects}
 without building the dummy matrix.}
 
 \item{femat}{optional numeric matrix of fixed-effect dummies for the
-estimation sample, supplying the columns HC2, HC3 and CR2 need from the
-full design. \code{NULL} unless the requested \code{se_type} requires it.}
+estimation sample. Only \code{CR2} needs it: its adjustment is built from
+cluster-level blocks of the hat matrix, which do not decompose the way the
+diagonal does. HC2 and HC3 take \code{fe_leverage} instead. \code{NULL} unless the
+requested \code{se_type} requires it.}
 }
 \description{
-Internal method that creates linear fits (no fixed effects)
+Internal method that creates linear fits
 }
 \examples{
 # The fitter behind lm_robust(), exported for packages that have already
