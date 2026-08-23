@@ -339,11 +339,22 @@ test_that("#395: NaN standard errors from leverage-1 points are explained", {
   set.seed(7); N <- 50
   d <- data.frame(x = sample(1:40, N, TRUE), Z = sample(0:1, N, TRUE))
   d$Y <- 0.1 * d$Z + d$x + rnorm(N)
-  # the design is also rank deficient, so the collinearity warning fires too
-  expect_warning(
-    expect_warning(lm_lin(Y ~ Z, covariates = ~ as.factor(x), data = d), "leverage"),
-    "collinear"
+  # This design is rank deficient AND near-saturated, so several warnings fire
+  # together: collinearity, leverage, and on some platforms a negative variance
+  # diagonal. Collect them instead of nesting expect_warning(), which pins the
+  # count as well as the content and so breaks whenever another one is added --
+  # as it did on all five CI platforms and on none locally.
+  ws <- character(0)
+  withCallingHandlers(
+    lm_lin(Y ~ Z, covariates = ~ as.factor(x), data = d),
+    warning = function(w) {
+      ws <<- c(ws, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
   )
+  expect_true(any(grepl("leverage", ws)))
+  expect_true(any(grepl("collinear", ws)))
+  expect_false(any(grepl("NaNs produced", ws, fixed = TRUE)))
   # classical SEs do not use leverage, so they stay finite
   m <- suppressWarnings(lm_lin(Y ~ Z, covariates = ~ as.factor(x), data = d,
                                se_type = "classical"))

@@ -271,7 +271,26 @@ lm_robust_fit <- function(y,
         n_eff = N
       )
 
-      return_list$std.error[est_exists] <- sqrt(diag(vcov_fit$Vcov_hat))
+      # A variance diagonal can come back negative on a design that is close
+      # enough to singular for the sandwich, a difference of large and nearly
+      # equal quantities, to lose the difference to rounding. `sqrt()` would
+      # then emit R's bare "NaNs produced", which names neither the fit nor the
+      # reason, and which the leverage guard made visible by no longer sending
+      # the whole matrix to NaN first. The NaN is the honest answer and is
+      # kept; only the anonymous warning goes.
+      var_hat <- diag(vcov_fit$Vcov_hat)
+      neg_var <- !is.na(var_hat) & var_hat < 0
+      var_hat[neg_var] <- NaN
+      return_list$std.error[est_exists] <- sqrt(var_hat)
+      if (any(neg_var)) {
+        warning(
+          sum(neg_var), " of ", length(var_hat), " variance estimates came out ",
+          "negative, so those standard errors are NaN. The design is close to ",
+          "singular, and the sandwich estimator loses the difference between ",
+          "two nearly equal quantities to rounding. Drop covariates, or use ",
+          "`se_type = \"classical\"`."
+        )
+      }
 
       # HC2 and HC3 divide by (1 - h_ii). A near-saturated design produces
       # observations that are fitted exactly, whose computed hat value can land
