@@ -68,13 +68,27 @@ test_that("HT clustered simple: estimate and SE identical to estimatr", {
   expect_equal(r$mz$std.error[[1]],    r$me$std.error[[1]],    tolerance = REF_TOL)
 })
 
-test_that("HT custom permutation: SE identical to estimatr", {
+test_that("HT custom permutation: estimate identical to estimatr, SE deliberately larger", {
+  # KNOWN DIVERGENCE, asserted from both sides.
+  #
+  # The point estimate is bit-identical to 1.0.6. The standard error is not,
+  # and is not meant to be. This design has 62 pairs of units that can never
+  # both be treated and 5 that can never be split across the two conditions.
+  # Those pairs contribute terms no design of this shape can identify, and
+  # 1.0.6 simply left them out. Dropping them is anti-conservative rather than
+  # merely different: enumerating a 5-cluster, m = 2 design gives a mean
+  # estimated variance BELOW the true sampling variance on two of four outcome
+  # draws (ratios 0.75 and 0.59), where the bounded version is at or above 1
+  # every time. 2.0 bounds them by Young's inequality instead, which is why the
+  # number here is larger.
   me <- ref("ht_perm")
   decl <- randomizr::declare_ra(permutation_matrix = me$permutation_matrix)
   dat$Z <- me$Z
   mz <- horvitz_thompson(y ~ Z, data = dat, condition_prs = decl)
   expect_equal(mz$coefficients[[1]], me$coefficients[[1]], tolerance = REF_TOL)
-  expect_equal(mz$std.error[[1]],    me$std.error[[1]],    tolerance = REF_TOL)
+  expect_gt(mz$std.error[[1]], me$std.error[[1]])
+  expect_equal(me$std.error[[1]], 0.494371, tolerance = 1e-5)
+  expect_equal(mz$std.error[[1]] / me$std.error[[1]], 1.132, tolerance = 1e-3)
 })
 
 # ---- named scalar probability vector ----
@@ -364,4 +378,91 @@ test_that("A6: the declaration is indexed by original row with or without `data`
   short <- randomizr::declare_ra(N = 30, m = 15)
   expect_error(horvitz_thompson(Y_a6 ~ Z_a6, condition_prs = short),
                "declares 30 units but the data has 40 rows")
+})
+
+
+# ---- ra_custom variance (review B2, C5) ----
+
+test_that("B2: a permutation-matrix design gets a finite, conservative variance", {
+  # ht_var_custom() built its coefficients as 1 - pi_i*pi_j/p_ij over the
+  # observed pairs only. A pair that can never appear together has p_ij = 0,
+  # so the coefficient was -Inf and the whole variance came back NA, silently,
+  # on every draw. Those terms are unidentifiable, not missing: they are now
+  # bounded by Young's inequality (Aronow and Samii 2013) and estimated from
+  # the draws in which each member is the one that appears.
+  #
+  # The design is small enough to enumerate, so the bound is checked against
+  # the true sampling variance rather than against another estimatr code path.
+  set.seed(4)
+  K <- 5; per <- 2; N_b2 <- K * per
+  cl_b2 <- rep(1:K, each = per)
+  combos <- utils::combn(K, 2)
+  perm <- sapply(seq_len(ncol(combos)),
+                 function(j) as.integer(cl_b2 %in% combos[, j]))
+  y0 <- rnorm(N_b2); y1 <- y0 + 1 + rnorm(N_b2, sd = 0.5)
+  truth <- mean(y1) - mean(y0)
+
+  decl <- randomizr::declare_ra(permutation_matrix = perm)
+  est <- se <- numeric(ncol(perm))
+  for (j in seq_len(ncol(perm))) {
+    Z_b2 <- perm[, j]
+    Y_b2 <- ifelse(Z_b2 == 1, y1, y0)
+    m <- horvitz_thompson(Y_b2 ~ Z_b2, condition_prs = decl)
+    est[j] <- unname(m$coefficients)
+    se[j] <- unname(m$std.error)
+  }
+
+  expect_true(all(is.finite(se)))          # every one of these was NA
+  expect_equal(mean(est), truth)           # every draw is equally likely
+  expect_gte(mean(se^2), mean((est - truth)^2))
+
+  # The closed-form clustered declaration knows the structure the permutation
+  # matrix only implies, so it is the tighter of the two, never the looser.
+  decl_cl <- randomizr::declare_ra(clusters = cl_b2, m = 2)
+  for (j in 1:4) {
+    Z_b2 <- perm[, j]
+    Y_b2 <- ifelse(Z_b2 == 1, y1, y0)
+    expect_gte(
+      horvitz_thompson(Y_b2 ~ Z_b2, condition_prs = decl)$std.error,
+      horvitz_thompson(Y_b2 ~ Z_b2, condition_prs = decl_cl)$std.error
+    )
+  }
+})
+
+test_that("B2: m = 1 leaves every treated pair unobservable and still answers", {
+  # With one treated unit no two treated units are ever seen together, so every
+  # within-condition-2 pair has p_ij = 0 and the old arithmetic had nothing
+  # left to divide by.
+  set.seed(21)
+  N_m1 <- 6
+  perm <- sapply(seq_len(N_m1), function(j) as.integer(seq_len(N_m1) == j))
+  y0 <- rnorm(N_m1); y1 <- y0 + 1 + rnorm(N_m1, sd = 0.5)
+  decl <- randomizr::declare_ra(permutation_matrix = perm)
+  truth <- mean(y1) - mean(y0)
+
+  est <- se <- numeric(N_m1)
+  for (j in seq_len(N_m1)) {
+    Z_m1 <- perm[, j]
+    Y_m1 <- ifelse(Z_m1 == 1, y1, y0)
+    m <- horvitz_thompson(Y_m1 ~ Z_m1, condition_prs = decl)
+    est[j] <- unname(m$coefficients); se[j] <- unname(m$std.error)
+  }
+  expect_true(all(is.finite(se)))
+  expect_equal(mean(est), truth)
+  expect_gte(mean(se^2), mean((est - truth)^2))
+})
+
+test_that("C5: the Bernoulli variance equals Young's bound written out by hand", {
+  # The multi-arm tests compare two estimatr code paths to each other. This one
+  # writes the formula out: for simple randomization at a constant p the bound
+  # is (sum(Z y^2/p^2) + sum((1-Z) y^2/(1-p)^2)) / N^2.
+  set.seed(5)
+  N_c5 <- 40; p <- 0.4
+  Z_c5 <- rbinom(N_c5, 1, p)
+  Y_c5 <- rnorm(N_c5) + Z_c5
+  m <- horvitz_thompson(Y_c5 ~ Z_c5, condition_prs = c(`0` = 1 - p, `1` = p))
+  hand <- (sum(Z_c5 * Y_c5^2 / p^2) + sum((1 - Z_c5) * Y_c5^2 / (1 - p)^2)) / N_c5^2
+  expect_equal(unname(m$std.error), sqrt(hand))
+  expect_equal(unname(m$coefficients),
+               (sum(Z_c5 * Y_c5 / p) - sum((1 - Z_c5) * Y_c5 / (1 - p))) / N_c5)
 })

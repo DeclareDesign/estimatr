@@ -169,7 +169,22 @@ horvitz_thompson <- function(formula,
   std.error <- NA_real_
   if (se_type == "youngs") {
     var_est <- ht_youngs(Y2, Y1, N, prs, t2, t1)
-    if (isTRUE(var_est >= 0)) std.error <- sqrt(var_est)
+    if (isTRUE(var_est >= 0)) {
+      std.error <- sqrt(var_est)
+    } else {
+      # A conservative bound that comes out negative is a fact about this
+      # realization, not a bug, but returning NA without a word made a design
+      # whose variance is never estimable look like one that merely happened
+      # to miss.
+      warning(
+        "The variance bound came out ",
+        if (is.na(var_est)) "undefined" else "negative",
+        " for this assignment, so the standard error is NA. This happens when ",
+        "the design leaves the estimator's cross terms unidentified; a ",
+        "declaration with the design's block and cluster structure, rather ",
+        "than a bare permutation matrix, gives a variance that is estimable."
+      )
+    }
   }
 
   # ---- return ----
@@ -511,20 +526,58 @@ ht_var_blocked_clustered <- function(Y2, Y1, N, t2, t1,
 # not (p_ij - pi_i*pi_j).  This is the correct formula (verified against the
 # C++ ht_var_partial and ht_covar_partial for complete randomization designs).
 ht_var_custom <- function(Y2, Y1, N, joint_mat, pi2, pi1, t2, t1, n) {
-  # joint_mat is 2n×2n: rows/cols 1:n = condition1, n+1:2n = condition2
-  p22 <- joint_mat[n + t2, n + t2, drop = FALSE]
-  p11 <- joint_mat[t1,     t1,     drop = FALSE]
-  p21 <- joint_mat[n + t2, t1,     drop = FALSE]
+  # joint_mat is 2n×2n over every in-study unit: rows/cols 1:n are condition1,
+  # n+1:2n are condition2. The blocks below are the OBSERVED pairs, which are
+  # the only ones the design lets the estimator see.
+  i2 <- n + t2
+  i1 <- t1
+  p22 <- joint_mat[i2, i2, drop = FALSE]
+  p11 <- joint_mat[i1, i1, drop = FALSE]
+  p21 <- joint_mat[i2, i1, drop = FALSE]
 
-  # Off-diagonal correction matrices: A[i,j] = 1 - pi_i*pi_j / p_ij
-  # Diagonal is zero (self-variance already in sum(Y^2)).
-  B22 <- 1 - outer(pi2, pi2) / p22; diag(B22) <- 0
-  B11 <- 1 - outer(pi1, pi1) / p11; diag(B11) <- 0
-  B21 <- 1 - outer(pi2, pi1) / p21   # no diagonal: i and j are different units
+  # Off-diagonal correction matrices: A[i,j] = 1 - pi_i*pi_j / p_ij.
+  # Diagonal is zero (self-variance already in sum(Y^2)). The coefficient is
+  # unbiased only where p_ij > 0; a pair that can never appear together
+  # contributes a term the design cannot identify at any sample size, and left
+  # as 1 - x/0 it made the whole variance -Inf and then a silent NA.
+  young_ratio <- function(pi_a, pi_b, p) {
+    out <- 1 - outer(pi_a, pi_b) / p
+    out[p == 0] <- 0
+    out
+  }
+  B22 <- young_ratio(pi2, pi2, p22); diag(B22) <- 0
+  B11 <- young_ratio(pi1, pi1, p11); diag(B11) <- 0
+  B21 <- young_ratio(pi2, pi1, p21)  # no diagonal: i and j are different units
 
   vp22 <- sum(outer(Y2, Y2) * B22)
   vp11 <- sum(outer(Y1, Y1) * B11)
   vc   <- sum(outer(Y2, Y1) * B21)
 
-  (sum(Y2^2) + sum(Y1^2) + vp22 + vp11 - 2 * vc) / N^2
+  # Young's inequality for the pairs just zeroed (Aronow and Samii 2013). For
+  # an ordered pair the unidentified term is at most (y_i^2 + y_j^2)/2 within a
+  # condition and y_i^2 + y_j^2 across the two, and summing over both orders
+  # leaves y_i^2 once per zero-probability partner. y_i^2 is estimated from the
+  # one observation of it, Z_i y_i^2 / pi_i, which is pi_i * Y_i^2 on the
+  # observed units. The partner counts run over every in-study unit, not only
+  # the observed ones: a pair with p_ij = 0 can never have both members
+  # observed, so the partner is counted here and estimated on the draws where
+  # it is the one that appears.
+  y2sq <- pi2 * Y2^2
+  y1sq <- pi1 * Y1^2
+  cond2 <- (n + 1L):(2L * n)
+  cond1 <- seq_len(n)
+  z22 <- joint_mat[i2, cond2, drop = FALSE] == 0
+  z11 <- joint_mat[i1, cond1, drop = FALSE] == 0
+  # p21[i, i] is 0 for every unit, since no unit is in both conditions, but
+  # that term is the one sum(Y2^2) + sum(Y1^2) already bounds. Only distinct
+  # units are counted here.
+  z21 <- joint_mat[i2, cond1, drop = FALSE] == 0
+  z21[cbind(seq_along(t2), t2)] <- FALSE
+  z12 <- joint_mat[cond2, i1, drop = FALSE] == 0
+  z12[cbind(t1, seq_along(t1))] <- FALSE
+
+  youngs <- sum(y2sq * (rowSums(z22) + rowSums(z21))) +
+    sum(y1sq * (rowSums(z11) + colSums(z12)))
+
+  (sum(Y2^2) + sum(Y1^2) + vp22 + vp11 - 2 * vc + youngs) / N^2
 }
