@@ -430,3 +430,31 @@ test_that("absorbed CR2 matches the dummy expansion when two FE columns drop", {
   expect_equal(absorbed$std.error[["x"]], sqrt(cs["x", "x"]), tolerance = 1e-9)
   expect_equal(absorbed$df[["x"]], dummies$df[["x"]], tolerance = 1e-9)
 })
+
+
+test_that("B3: multi-way demeaning that runs out of sweeps says so", {
+  # Alternating projections are exact in one sweep for a single factor and
+  # converge geometrically for several, at a rate set by how well connected the
+  # factors are. The cap was silent, so a weakly connected design returned
+  # coefficients that were wrong rather than approximate, with no signal.
+  set.seed(11); n <- 3000
+  worker <- sample(300, n, TRUE)
+  d <- data.frame(
+    worker = worker,
+    firm = pmin(((worker - 1) %/% 10) + 1 + sample(0:1, n, TRUE), 30),
+    x = rnorm(n)
+  )
+  d$y <- 1.45 * d$x + rnorm(n) + d$worker * 0.01 + d$firm * 0.02
+
+  expect_warning(
+    lm_robust(y ~ x, fixed_effects = ~ worker + firm, data = d),
+    "did not converge"
+  )
+  a <- suppressWarnings(lm_robust(y ~ x, fixed_effects = ~ worker + firm, data = d))
+  b <- lm(y ~ x + factor(worker) + factor(firm), data = d)
+  # it really has not converged: the answer differs from the exact fit
+  expect_gt(abs(coef(a)[["x"]] - coef(b)[["x"]]), 1e-8)
+
+  # a single factor converges in one sweep and must stay silent
+  expect_silent(lm_robust(y ~ x, fixed_effects = ~ worker, data = d))
+})

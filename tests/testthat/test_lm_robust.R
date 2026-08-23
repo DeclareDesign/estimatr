@@ -753,3 +753,29 @@ test_that("B10: glance() reports the residual df, not the first coefficient's", 
   mi <- iv_robust(y ~ x | x, data = d, clusters = cl, se_type = "CR2")
   expect_equal(glance(mi)$df.residual, mi$df.residual)
 })
+
+
+test_that("B6: one cluster is refused rather than answered with a zero", {
+  # Every cluster-robust estimator here divides by J - 1 somewhere except CR2,
+  # whose Satterthwaite degrees of freedom never reach that guard, so a single
+  # cluster produced standard errors of order 1e-17 and no warning.
+  set.seed(1); N <- 60
+  d <- data.frame(y = rnorm(N), x = rnorm(N), one = 1L)
+  for (se in c("CR0", "CR2", "stata")) {
+    expect_error(lm_robust(y ~ x, clusters = one, data = d, se_type = se),
+                 "only one level", info = se)
+  }
+  expect_error(iv_robust(y ~ x | x, clusters = one, data = d), "only one level")
+})
+
+test_that("B13: a character cluster is coerced rather than handed to the C++", {
+  set.seed(1); N <- 60
+  d <- data.frame(y = rnorm(N), x = rnorm(N), cl = sample(6, N, TRUE))
+  d$clch <- paste0("g", d$cl)
+  for (se in c("CR0", "CR2", "stata")) {
+    a <- lm_robust(y ~ x, clusters = clch, data = d, se_type = se)
+    b <- lm_robust(y ~ x, clusters = cl, data = d, se_type = se)
+    expect_equal(a$std.error, b$std.error, info = se)
+    expect_equal(a$nclusters, 6L, info = se)
+  }
+})

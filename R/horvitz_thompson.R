@@ -245,12 +245,15 @@ ht_prs <- function(cpr, Z, condition1, condition2, row_idx, data_df) {
                               c1_col, c2_col, condition1, condition2))
   }
 
-  # Named scalar vector: e.g. c("0"=0.4, "1"=0.6)
-  if (is.numeric(cpr) && !is.null(names(cpr)) && length(cpr) <= 10L) {
+  # Named scalar vector: e.g. c("0"=0.4, "1"=0.6). What makes it one is that
+  # its names ARE the condition labels, not that it is short: a per-unit
+  # probability vector carrying unit names was classified here whenever the
+  # study had ten units or fewer, and every unit then got condition 1's
+  # probability.
+  if (is.numeric(cpr) && !is.null(names(cpr)) &&
+      all(c(as.character(condition1), as.character(condition2)) %in% names(cpr))) {
     c1_pr <- cpr[as.character(condition1)]
     c2_pr <- cpr[as.character(condition2)]
-    if (any(is.na(c(c1_pr, c2_pr))))
-      stop("condition1/condition2 not found in condition_prs names.")
     return(list(pi1 = rep_len(c1_pr, n), pi2 = rep_len(c2_pr, n),
                 design = "simple"))
   }

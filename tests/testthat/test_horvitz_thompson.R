@@ -466,3 +466,29 @@ test_that("C5: the Bernoulli variance equals Young's bound written out by hand",
   expect_equal(unname(m$coefficients),
                (sum(Z_c5 * Y_c5 / p) - sum((1 - Z_c5) * Y_c5 / (1 - p))) / N_c5)
 })
+
+
+test_that("B12: a per-unit probability vector is not read as condition labels", {
+  # ht_prs() took any named numeric of length <= 10 for a named scalar vector,
+  # so in a study of ten units or fewer a per-unit probability vector was
+  # looked up by condition label, every lookup missed, and the call errored --
+  # or, with unit names that happened to include the labels, silently gave
+  # every unit the wrong probability. What makes it a scalar vector is that its
+  # names ARE the condition labels.
+  set.seed(3); N_b12 <- 8
+  Z_b12 <- rbinom(N_b12, 1, 0.5)
+  Y_b12 <- rnorm(N_b12) + Z_b12
+  pu <- setNames(seq(0.3, 0.7, length.out = N_b12), paste0("u", seq_len(N_b12)))
+
+  m <- horvitz_thompson(Y_b12 ~ Z_b12, condition_prs = pu)
+  hand <- (sum(Z_b12 * Y_b12^2 / pu^2) +
+             sum((1 - Z_b12) * Y_b12^2 / (1 - pu)^2)) / N_b12^2
+  expect_equal(unname(m$std.error), sqrt(hand))
+  expect_equal(unname(m$coefficients),
+               (sum(Z_b12 * Y_b12 / pu) -
+                  sum((1 - Z_b12) * Y_b12 / (1 - pu))) / N_b12)
+
+  # the named scalar form is unaffected
+  ms <- horvitz_thompson(Y_b12 ~ Z_b12, condition_prs = c(`0` = 0.5, `1` = 0.5))
+  expect_true(is.finite(ms$std.error))
+})

@@ -102,6 +102,14 @@ lm_robust_fit <- function(y,
     data[["X_first_stage"]] <- iv_stage[[2]]
   }
   if (clustered) {
+    # The C++ takes integer codes. A character cluster used to reach it and
+    # come back as an Rcpp type error, or abort the process outright under a
+    # debug build. Coercing here also makes `nclusters` right for a character
+    # vector, which `length(unique())` would have got by luck rather than by
+    # construction.
+    if (!is.integer(cluster)) {
+      cluster <- as.integer(as.factor(cluster))
+    }
     data[["cluster"]] <- cluster
   }
 
@@ -691,6 +699,19 @@ prep_data <- function(data,
     }
 
     data[["J"]] <- length(unique(data[["cluster"]]))
+
+    # Every cluster-robust estimator here divides by J - 1 somewhere, except
+    # CR2, whose degrees of freedom are Satterthwaite and so never hit the
+    # J - 1 = 0 guard. With one cluster CR2 returned standard errors of order
+    # 1e-17 and said nothing, which reads as a precisely estimated zero.
+    if (data[["J"]] < 2L) {
+      stop(
+        "`clusters` has only one level, so there is no between-cluster ",
+        "variation for a cluster-robust variance to estimate.\nDrop ",
+        "`clusters`, or use `se_type = \"classical\"` if the clustering is ",
+        "not the level you meant to inference over."
+      )
+    }
   } else {
     data[["J"]] <- 1
   }

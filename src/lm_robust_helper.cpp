@@ -521,7 +521,7 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 // absolute change across all cells falls below eps * (1 + max|mat|).
 // ---------------------------------------------------------------------------
 // [[Rcpp::export]]
-Eigen::MatrixXd demean_cpp(Eigen::MatrixXd mat,
+Rcpp::NumericMatrix demean_cpp(Eigen::MatrixXd mat,
                             Rcpp::List       fe_codes_list,
                             Rcpp::NumericVector weights,
                             double eps      = 1e-8,
@@ -574,9 +574,16 @@ Eigen::MatrixXd demean_cpp(Eigen::MatrixXd mat,
   // max|mat| after the final sweep, accumulated by the subtraction pass below
   // rather than by a separate full pass over the matrix.
   double max_abs = 0.0;
+  // Reported back so the caller can say the sweeps ran out. Alternating
+  // projections converge geometrically at a rate set by how well connected the
+  // factors are, so a weakly connected design can still be moving when the cap
+  // is reached, and the answer is then simply wrong rather than approximate.
+  int iters_used = 0;
+  bool converged = (n_fe <= 1);
 
   for (int iter = 0; iter < max_iter; ++iter) {
     double max_delta = 0.0;
+    iters_used = iter + 1;
 
     for (int k = 0; k < n_fe; ++k) {
       const std::vector<int>& g = fe[k];
@@ -636,10 +643,13 @@ Eigen::MatrixXd demean_cpp(Eigen::MatrixXd mat,
 
     // Convergence: change small relative to current scale
     double scale = 1.0 + max_abs;
-    if (max_delta < eps * scale) break;
+    if (max_delta < eps * scale) { converged = true; break; }
   }
 
-  return mat;
+  Rcpp::NumericMatrix out(Rcpp::wrap(mat));
+  out.attr("iterations") = iters_used;
+  out.attr("converged") = converged;
+  return out;
 }
 
 // Weighted cross-tabulation of two integer code vectors into a dense matrix.

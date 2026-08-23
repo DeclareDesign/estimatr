@@ -70,7 +70,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // demean_cpp
-Eigen::MatrixXd demean_cpp(Eigen::MatrixXd mat, Rcpp::List fe_codes_list, Rcpp::NumericVector weights, double eps, int max_iter);
+Rcpp::NumericMatrix demean_cpp(Eigen::MatrixXd mat, Rcpp::List fe_codes_list, Rcpp::NumericVector weights, double eps, int max_iter);
 RcppExport SEXP _estimatr_demean_cpp(SEXP matSEXP, SEXP fe_codes_listSEXP, SEXP weightsSEXP, SEXP epsSEXP, SEXP max_iterSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
