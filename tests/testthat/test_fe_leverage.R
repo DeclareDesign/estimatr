@@ -1,5 +1,16 @@
 library(estimatr)
 
+# Every comparison in this file is between two routes to one number, computed
+# in one session on one BLAS: the absorbed fit and the same model with the
+# dummies written out. testthat's default 1.5e-8 is far looser than that can be
+# held, and a drift below it would pass in silence, so the comparisons here are
+# `expect_same()` at 1e-10, which is the tightest the measured worst case allows (a disconnected two-way HC0 pair differs by 5e-11 relative). Use plain `expect_same()` for anything that is not
+# an absorbed-versus-expanded pair.
+FE_TOL <- 1e-10
+expect_same <- function(object, expected, ...) {
+  expect_equal(object, expected, ..., tolerance = FE_TOL)
+}
+
 # HC2 and HC3 with absorbed fixed effects.
 #
 # These used to be refused, on the grounds that they need hat values from the
@@ -25,9 +36,9 @@ for (nm in names(configs)) {
       d <- configs[[nm]]
       fe  <- lm_robust(y ~ x + z, fixed_effects = ~ g, data = d, se_type = se)
       dum <- lm_robust(y ~ x + z + factor(g), data = d, se_type = se)
-      expect_equal(unname(fe$std.error),
+      expect_same(unname(fe$std.error),
                    unname(dum$std.error[c("x", "z")]))
-      expect_equal(unname(fe$coefficients),
+      expect_same(unname(fe$coefficients),
                    unname(dum$coefficients[c("x", "z")]))
     })
   }
@@ -41,7 +52,7 @@ test_that("the identity survives weights", {
                        se_type = se, weights = wts)
       dum <- lm_robust(y ~ x + z + factor(g), data = d,
                        se_type = se, weights = wts)
-      expect_equal(unname(fe$std.error), unname(dum$std.error[c("x", "z")]),
+      expect_same(unname(fe$std.error), unname(dum$std.error[c("x", "z")]),
                    info = paste(nm, se))
     }
   }
@@ -55,12 +66,15 @@ test_that("absorbed FE agrees with estimatr for HC2 and HC3", {
     for (se in c("HC2", "HC3")) {
       a <- lm_robust(y ~ x + z, fixed_effects = ~ g, data = d, se_type = se)
       b <- ref(paste0("lev_", nm, "_", se))
+      # `b` is the 1.0.6 recording, not a same-session computation, so these
+      # stay at REF_TOL: comparing a fixture more tightly would test the
+      # runner's BLAS rather than this package.
       expect_equal(unname(a$std.error), unname(b$std.error),
                    tolerance = REF_TOL, info = paste(nm, se))
       # df, and so every p-value and interval, has to match too. Comparing
       # only the standard error is what let the absorbed rank go missing from
       # the residual degrees of freedom without a test noticing.
-      expect_equal(unname(a$df), unname(b$df), info = paste(nm, se))
+      expect_equal(unname(a$df), unname(b$df), tolerance = REF_TOL, info = paste(nm, se))
       expect_equal(unname(a$p.value), unname(b$p.value),
                    tolerance = REF_TOL, info = paste(nm, se))
       expect_equal(unname(a$conf.low), unname(b$conf.low),
@@ -76,7 +90,7 @@ test_that("absorbed FE agrees with estimatr under weights", {
                    se_type = se, weights = wts)
     b <- ref(paste0("levw_unbalanced_", se))
     expect_equal(unname(a$std.error), unname(b$std.error), tolerance = REF_TOL)
-    expect_equal(unname(a$df), unname(b$df))
+    expect_equal(unname(a$df), unname(b$df), tolerance = REF_TOL)
     expect_equal(unname(a$p.value), unname(b$p.value), tolerance = REF_TOL)
   }
 })
@@ -88,7 +102,7 @@ test_that("one-way FE keeps the package default of HC2", {
   # unaffordable any more, and HC2 is also what estimatr returns for this call,
   # so falling back would be a silent disagreement with the released package.
   d <- configs$balanced
-  expect_equal(lm_robust(y ~ x + z, fixed_effects = ~ g, data = d)$se_type, "HC2")
+  expect_same(lm_robust(y ~ x + z, fixed_effects = ~ g, data = d)$se_type, "HC2")
 })
 
 test_that("multi-way FE keeps the HC2 default too, and stays silent", {
@@ -101,7 +115,7 @@ test_that("multi-way FE keeps the HC2 default too, and stays silent", {
                   a = factor(rep(1:15, each = 20)),
                   b = factor(rep(1:20, times = 15)))
   expect_no_warning(fit <- lm_robust(y ~ x, fixed_effects = ~ a + b, data = d))
-  expect_equal(fit$se_type, "HC2")
+  expect_same(fit$se_type, "HC2")
 })
 
 # ---- what the dummy expansion supplies, and what it costs ----
@@ -119,8 +133,8 @@ test_that("two-way FE gets HC2 and HC3 from the leverage identity", {
   for (se in c("HC2", "HC3")) {
     fe  <- lm_robust(y ~ x, fixed_effects = ~ a + b, data = d, se_type = se)
     dum <- lm_robust(y ~ x + a + b, data = d, se_type = se)
-    expect_equal(unname(fe$std.error), unname(dum$std.error["x"]))
-    expect_equal(unname(fe$df), unname(dum$df["x"]))
+    expect_same(unname(fe$std.error), unname(dum$std.error["x"]))
+    expect_same(unname(fe$df), unname(dum$df["x"]))
   }
 })
 
@@ -133,8 +147,8 @@ test_that("CR2 with one FE factor matches the dummy expansion", {
   fe  <- lm_robust(y ~ x + z, fixed_effects = ~ g, clusters = cl, data = d,
                    se_type = "CR2")
   dum <- lm_robust(y ~ x + z + g, clusters = cl, data = d, se_type = "CR2")
-  expect_equal(unname(fe$std.error), unname(dum$std.error[c("x", "z")]))
-  expect_equal(unname(fe$df), unname(dum$df[c("x", "z")]))
+  expect_same(unname(fe$std.error), unname(dum$std.error[c("x", "z")]))
+  expect_same(unname(fe$df), unname(dum$df[c("x", "z")]))
 })
 
 test_that("weighted CR2 with FE is still refused, as in 1.0.6", {
@@ -156,7 +170,7 @@ test_that("the clustered FE default warns rather than switching silently", {
     fit <- lm_robust(y ~ x + z, fixed_effects = ~ g, clusters = cl, data = d),
     "`se_type` defaults to"
   )
-  expect_equal(fit$se_type, "CR0")
+  expect_same(fit$se_type, "CR0")
   expect_no_warning(
     lm_robust(y ~ x + z, fixed_effects = ~ g, clusters = cl, data = d, se_type = "CR0")
   )
@@ -181,7 +195,7 @@ test_that("the default warnings fire once per session, not once per call", {
 test_that("one-way unclustered FE keeps the HC2 default and stays silent", {
   d <- configs$balanced
   expect_no_warning(fit <- lm_robust(y ~ x + z, fixed_effects = ~ g, data = d))
-  expect_equal(fit$se_type, "HC2")
+  expect_same(fit$se_type, "HC2")
 })
 
 # ---- the leverage identity itself ----
@@ -203,7 +217,7 @@ test_that("the FE leverage vector is the group weight share", {
   out <- estimatr:::demean_fes(md)
   # demean_fes() carries the group codes; the leverage is computed from them
   # when the requested se_type wants it.
-  expect_equal(estimatr:::fe_leverage(out$fe_codes, d$wts)$leverage,
+  expect_same(estimatr:::fe_leverage(out$fe_codes, d$wts)$leverage,
                d$wts / ave(d$wts, d$g, FUN = sum))
 })
 
@@ -268,7 +282,7 @@ for (nm in names(fe_cfgs)) {
         z <- sample(g, n, TRUE); z[seq_len(g)] <- seq_len(g); as.integer(z)
       })
       w <- if (wtd) runif(n, 0.2, 5) else NULL
-      expect_equal(estimatr:::fe_leverage(codes, w)$leverage,
+      expect_same(estimatr:::fe_leverage(codes, w)$leverage,
                    dense_fe_leverage(codes, w))
     })
   }
@@ -280,23 +294,23 @@ test_that("fe_leverage handles a disconnected design", {
   set.seed(23)
   codes <- list(as.integer(c(sample(1:10, 300, TRUE), sample(11:20, 300, TRUE))),
                 as.integer(c(sample(1:4, 300, TRUE),  sample(5:8, 300, TRUE))))
-  expect_equal(estimatr:::fe_leverage(codes)$leverage, dense_fe_leverage(codes))
+  expect_same(estimatr:::fe_leverage(codes)$leverage, dense_fe_leverage(codes))
   w <- runif(600, 0.3, 3)
-  expect_equal(estimatr:::fe_leverage(codes, w)$leverage,
+  expect_same(estimatr:::fe_leverage(codes, w)$leverage,
                dense_fe_leverage(codes, w))
   # D loses one column per extra connected component, and the rank comes back
   # from the same eigendecomposition that produced the leverage.
-  expect_equal(estimatr:::fe_leverage(codes)$rank, qr(dense_fe_design(codes))$rank)
+  expect_same(estimatr:::fe_leverage(codes)$rank, qr(dense_fe_design(codes))$rank)
   # rank-only must agree with the full call, and skip the vector
   cheap <- estimatr:::fe_leverage(codes, leverage = FALSE)
   expect_null(cheap$leverage)
-  expect_equal(cheap$rank, estimatr:::fe_leverage(codes)$rank)
+  expect_same(cheap$rank, estimatr:::fe_leverage(codes)$rank)
 })
 
 test_that("a singleton fixed-effect group has leverage exactly one", {
   codes <- list(as.integer(c(1L, sample(2:20, 499, TRUE))),
                 as.integer(sample(1:5, 500, TRUE)))
-  expect_equal(estimatr:::fe_leverage(codes)$leverage[1], 1)
+  expect_same(estimatr:::fe_leverage(codes)$leverage[1], 1)
 })
 
 test_that("multi-way HC2 and HC3 equal the explicit-dummy fit", {
@@ -310,16 +324,16 @@ test_that("multi-way HC2 and HC3 equal the explicit-dummy fit", {
   for (se in c("HC2", "HC3")) {
     fe  <- lm_robust(y ~ x + z, fixed_effects = ~ a + b, data = d, se_type = se)
     dum <- lm_robust(y ~ x + z + a + b, data = d, se_type = se)
-    expect_equal(unname(fe$std.error), unname(dum$std.error[c("x", "z")]))
+    expect_same(unname(fe$std.error), unname(dum$std.error[c("x", "z")]))
 
     fe3  <- lm_robust(y ~ x + z, fixed_effects = ~ a + b + cc, data = d, se_type = se)
     dum3 <- lm_robust(y ~ x + z + a + b + cc, data = d, se_type = se)
-    expect_equal(unname(fe3$std.error), unname(dum3$std.error[c("x", "z")]))
+    expect_same(unname(fe3$std.error), unname(dum3$std.error[c("x", "z")]))
 
     few  <- lm_robust(y ~ x + z, fixed_effects = ~ a + b, data = d,
                       weights = wt, se_type = se)
     dumw <- lm_robust(y ~ x + z + a + b, data = d, weights = wt, se_type = se)
-    expect_equal(unname(few$std.error), unname(dumw$std.error[c("x", "z")]))
+    expect_same(unname(few$std.error), unname(dumw$std.error[c("x", "z")]))
   }
 })
 
@@ -333,8 +347,8 @@ test_that("iv_robust gets multi-way HC2 and HC3 from the identity too", {
   for (se in c("HC2", "HC3")) {
     fe  <- iv_robust(y ~ z | iv, fixed_effects = ~ a + b, data = d, se_type = se)
     dum <- iv_robust(y ~ z + a + b | iv + a + b, data = d, se_type = se)
-    expect_equal(unname(fe$std.error), unname(dum$std.error["z"]))
-    expect_equal(unname(fe$coefficients), unname(dum$coefficients["z"]))
+    expect_same(unname(fe$std.error), unname(dum$std.error["z"]))
+    expect_same(unname(fe$coefficients), unname(dum$coefficients["z"]))
   }
 })
 
@@ -351,7 +365,7 @@ test_that("multi-way FE agrees with estimatr, including df", {
     a <- lm_robust(y ~ z + x, data = fe, fixed_effects = ~ bl + cl, se_type = se)
     b <- ref(paste0("fe_2way_", se))
     expect_equal(unname(a$std.error), unname(b$std.error), tolerance = REF_TOL)
-    expect_equal(unname(a$df), unname(b$df))
+    expect_equal(unname(a$df), unname(b$df), tolerance = REF_TOL)
     expect_equal(unname(a$p.value), unname(b$p.value), tolerance = REF_TOL)
   }
 })
@@ -363,13 +377,13 @@ test_that("multi-way weighted and three-way agree with estimatr", {
                    weights = w, se_type = se)
     b <- ref(paste0("fe_2way_w_", se))
     expect_equal(unname(a$std.error), unname(b$std.error), tolerance = REF_TOL)
-    expect_equal(unname(a$df), unname(b$df))
+    expect_equal(unname(a$df), unname(b$df), tolerance = REF_TOL)
 
     a3 <- lm_robust(y ~ z + x, data = fe, fixed_effects = ~ bl + cl + c3,
                     se_type = se)
     b3 <- ref(paste0("fe_3way_", se))
     expect_equal(unname(a3$std.error), unname(b3$std.error), tolerance = REF_TOL)
-    expect_equal(unname(a3$df), unname(b3$df))
+    expect_same(unname(a3$df), unname(b3$df))
   }
 })
 
@@ -377,9 +391,9 @@ test_that("the multi-way default returns what 1.0.6 returned", {
   fe <- ref_data_fe_multiway()
   a <- lm_robust(y ~ z + x, data = fe, fixed_effects = ~ bl + cl)
   b <- ref("fe_2way_default")
-  expect_equal(a$se_type, "HC2")
+  expect_same(a$se_type, "HC2")
   expect_equal(unname(a$std.error), unname(b$std.error), tolerance = REF_TOL)
-  expect_equal(unname(a$df), unname(b$df))
+  expect_same(unname(a$df), unname(b$df))
 })
 
 
@@ -409,8 +423,8 @@ test_that("a nested fixed-effect factor matches the explicit-dummy fit", {
                        data = d, se_type = se),
       "collinear"
     )
-    expect_equal(unname(fe$std.error), unname(dum$std.error[c("z", "x")]))
-    expect_equal(unname(fe$df), unname(dum$df[c("z", "x")]))
+    expect_same(unname(fe$std.error), unname(dum$std.error[c("z", "x")]))
+    expect_same(unname(fe$df), unname(dum$df[c("z", "x")]))
   }
 })
 
@@ -422,7 +436,7 @@ test_that("the exact FE rank is used, not the nominal level count", {
                   c3 = rep(1:5, length.out = 200))
   # nominal would be (20 + 10 + 5) - 3 + 1 = 33; the true rank is 29.
   fit <- lm_robust(y ~ x, data = d, fixed_effects = ~ bl + cl + c3)
-  expect_equal(fit$df.residual, n - 1L - 29L)
+  expect_same(fit$df.residual, n - 1L - 29L)
 })
 
 
@@ -470,10 +484,10 @@ for (nm in names(degenerate_designs)) {
     for (se in c("HC0", "HC1", "HC2", "HC3", "classical")) {
       fe <- lm_robust(y ~ x, fixed_effects = fe_form, data = d, se_type = se)
       dum <- suppressWarnings(lm_robust(dum_form, data = d, se_type = se))
-      expect_equal(unname(fe$std.error), unname(dum$std.error["x"]),
+      expect_same(unname(fe$std.error), unname(dum$std.error["x"]),
                    info = paste(nm, se))
-      expect_equal(unname(fe$df), unname(dum$df["x"]), info = paste(nm, se))
-      expect_equal(unname(fe$df.residual), unname(dum$df.residual),
+      expect_same(unname(fe$df), unname(dum$df["x"]), info = paste(nm, se))
+      expect_same(unname(fe$df.residual), unname(dum$df.residual),
                    info = paste(nm, se))
     }
   })
@@ -484,7 +498,7 @@ test_that("the FE rank matches a pivoted QR of the dummy design", {
   D <- model.matrix(~ 0 + factor(bl) + factor(cl) + factor(c3), data = d)
   # rank of the FE design alone, less nothing: qr() is the reference
   fit <- lm_robust(y ~ x, fixed_effects = ~ bl + cl + c3, data = d)
-  expect_equal(fit$df.residual, nrow(d) - 1L - qr(D)$rank)
+  expect_same(fit$df.residual, nrow(d) - 1L - qr(D)$rank)
   # and the nominal count would have been wrong
   nominal <- (20 + 10 + 5) - 3 + 1
   expect_lt(qr(D)$rank, nominal)
@@ -502,11 +516,11 @@ test_that("a singleton FE group agrees absorbed and expanded, for every se_type"
   set.seed(11)
   k <- 200
   d <- data.frame(y = rnorm(k), x = rnorm(k), g = c(1L, sample(2:20, k - 1, TRUE)))
-  expect_equal(sum(d$g == 1L), 1L)
+  expect_same(sum(d$g == 1L), 1L)
 
   fe <- lm_robust(y ~ x, fixed_effects = ~ g, data = d, se_type = "HC2")
   expect_true(is.finite(fe$std.error[["x"]]))
-  expect_equal(fe$df.residual, lm(y ~ x + factor(g), data = d)$df.residual)
+  expect_same(fe$df.residual, lm(y ~ x + factor(g), data = d)$df.residual)
 
   for (se in c("HC1", "HC2", "HC3")) {
     a <- lm_robust(y ~ x, fixed_effects = ~ g, data = d, se_type = se)
@@ -515,7 +529,7 @@ test_that("a singleton FE group agrees absorbed and expanded, for every se_type"
       lm_robust(y ~ x + factor(g), data = d, se_type = se)
     )
     expect_true(is.finite(b$std.error[["x"]]), info = se)
-    expect_equal(unname(a$std.error), unname(b$std.error["x"]), info = se)
+    expect_same(unname(a$std.error), unname(b$std.error["x"]), info = se)
   }
 })
 
@@ -530,11 +544,11 @@ test_that("a single-level fixed effect alongside others is absorbed, not an erro
   for (se in c("HC0", "HC1", "HC2", "HC3", "classical")) {
     both <- lm_robust(y ~ x, fixed_effects = ~ g + const, data = d, se_type = se)
     one <- lm_robust(y ~ x, fixed_effects = ~ g, data = d, se_type = se)
-    expect_equal(unname(both$std.error), unname(one$std.error), info = se)
-    expect_equal(both$df.residual, one$df.residual, info = se)
+    expect_same(unname(both$std.error), unname(one$std.error), info = se)
+    expect_same(both$df.residual, one$df.residual, info = se)
   }
   # and the rank is the one-way rank, not one more
-  expect_equal(
+  expect_same(
     estimatr:::fe_leverage(list(as.integer(d$g), rep(1L, n)))$rank,
     estimatr:::fe_leverage(list(as.integer(d$g)))$rank
   )

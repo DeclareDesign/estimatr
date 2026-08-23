@@ -128,7 +128,7 @@ lm_robust <- function(formula,
     # eigendecomposition that gives the leverage, so it is used for every
     # se_type; only HC2 and HC3 also need the vector.
     fe_proj <- fe_leverage(model_data[["fe_codes"]], model_data[["weights"]],
-                           leverage = needs_fe_leverage(se_type))
+                           leverage = needs_fe_leverage(se_type, !is.null(model_data[["cluster"]])))
     fe_rank <- fe_proj[["rank"]]
     fe_lev <- fe_proj[["leverage"]]
 
@@ -137,13 +137,7 @@ lm_robust <- function(formula,
       df_r <- n_obs - fe_rank
       residuals_proj <- drop(model_data$outcome)
       fitted_full <- drop(yoriginal) - residuals_proj
-      if (!is.null(model_data[["obs_names"]])) {
-        if (is.matrix(fitted_full)) {
-          rownames(fitted_full) <- model_data[["obs_names"]]
-        } else {
-          names(fitted_full) <- model_data[["obs_names"]]
-        }
-      }
+      fitted_full <- attach_obs_names(fitted_full, model_data)
       ss <- fe_r2(yoriginal, residuals_proj, model_data[["weights"]])
       rss <- ss[["rss"]]
       tss_full <- ss[["tss"]]
@@ -215,7 +209,7 @@ lm_robust <- function(formula,
       iv_stage = list(0),
       fe_rank = fe_rank,
       fe_leverage = fe_lev,
-      femat = if (has_fe && needs_fe_dummies(se_type, model_data))
+      femat = if (has_fe && needs_fe_dummies(se_type))
         fe_dummy_matrix(model_data)
         else NULL
     )
@@ -240,13 +234,7 @@ lm_robust <- function(formula,
     fitted_full <- drop(yoriginal) - residuals_proj
     # yoriginal comes from the stripped model data, so the names go back on
     # here, exactly as lm_return() does it for a fit without fixed effects.
-    if (!is.null(model_data[["obs_names"]])) {
-      if (is.matrix(fitted_full)) {
-        rownames(fitted_full) <- model_data[["obs_names"]]
-      } else {
-        names(fitted_full) <- model_data[["obs_names"]]
-      }
-    }
+    fitted_full <- attach_obs_names(fitted_full, model_data)
     return_list[["fitted.values"]] <- fitted_full
 
     # Absorbed group effects, so predict() can put them back.

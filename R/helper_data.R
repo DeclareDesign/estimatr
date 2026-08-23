@@ -507,18 +507,35 @@ fe_dummy_matrix <- function(model_data) {
 # user asked for, before check_se_type() fills in a default: a default must
 # never trigger the expansion, which is what keeps absorption fast.
 #' @noRd
-needs_fe_dummies <- function(se_type, model_data) {
+needs_fe_dummies <- function(se_type) {
   # HC2 and HC3 come from fe_leverage() for any number of factors. CR2 needs
   # the whole per-cluster block of the hat matrix, not just its diagonal, and
   # has no such decomposition, so it is the only case left that expands.
   isTRUE(se_type == "CR2")
 }
 
-# Whether the fit wants the leverage vector. A NULL `se_type` is the default,
-# which under `fixed_effects` is HC2, so it does.
+# Whether the fit wants the leverage vector. It is asked before check_se_type()
+# has resolved a NULL `se_type`, so the default has to be worked out here too:
+# HC2 without clusters, CR0 with them. Answering TRUE for a clustered fit built
+# a whole leverage vector that nothing then read.
 #' @noRd
-needs_fe_leverage <- function(se_type) {
-  is.null(se_type) || se_type %in% c("HC2", "HC3")
+needs_fe_leverage <- function(se_type, clustered = FALSE) {
+  if (is.null(se_type)) return(!clustered)
+  se_type %in% c("HC2", "HC3")
+}
+
+# The model frame's row names are carried once, in `model_data[["obs_names"]]`,
+# and attached once, to `fitted.values`. Nothing between the two carries them:
+# an n-length character vector on every derived object was two thirds of a
+# plain fit at n = 100,000. The fixed-effects paths rebuild `fitted.values`
+# after lm_return() has already done this, so they have to do it again, and
+# this is the one place that knows how.
+#' @noRd
+attach_obs_names <- function(x, model_data) {
+  nms <- model_data[["obs_names"]]
+  if (is.null(nms)) return(x)
+  if (is.matrix(x)) rownames(x) <- nms else names(x) <- nms
+  x
 }
 
 # Demean an arbitrary matrix by the same FE structure as model_data.

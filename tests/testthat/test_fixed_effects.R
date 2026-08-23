@@ -77,7 +77,7 @@ test_that("HC2 and HC3 now work with one-way FE and match the dummy regression",
   for (se in c("HC2", "HC3")) {
     fe  <- lm_robust(y ~ z, data = dat, fixed_effects = ~bl, se_type = se)
     dum <- lm_robust(y ~ z + factor(bl), data = dat, se_type = se)
-    expect_equal(unname(fe$std.error), unname(dum$std.error["z"]))
+    expect_equal(unname(fe$std.error), unname(dum$std.error["z"]), tolerance = 1e-10)
   }
 })
 
@@ -87,7 +87,7 @@ test_that("HC2 and HC3 with two-way FE match the dummy regression", {
   for (se in c("HC2", "HC3")) {
     fe  <- lm_robust(y ~ z, data = dat2, fixed_effects = ~ bl + bl2, se_type = se)
     dum <- lm_robust(y ~ z + factor(bl) + bl2, data = dat2, se_type = se)
-    expect_equal(unname(fe$std.error), unname(dum$std.error["z"]))
+    expect_equal(unname(fe$std.error), unname(dum$std.error["z"]), tolerance = 1e-10)
   }
 })
 
@@ -95,8 +95,8 @@ test_that("CR2 with FE matches the dummy regression", {
   fe  <- lm_robust(y ~ z, data = dat, fixed_effects = ~ bl, clusters = cl,
                    se_type = "CR2")
   dum <- lm_robust(y ~ z + factor(bl), data = dat, clusters = cl, se_type = "CR2")
-  expect_equal(unname(fe$std.error), unname(dum$std.error["z"]))
-  expect_equal(unname(fe$df), unname(dum$df["z"]))
+  expect_equal(unname(fe$std.error), unname(dum$std.error["z"]), tolerance = 1e-10)
+  expect_equal(unname(fe$df), unname(dum$df["z"]), tolerance = 1e-10)
 })
 
 test_that("HC1 with FE does not warn", {

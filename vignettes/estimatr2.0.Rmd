@@ -21,7 +21,7 @@ It is checked twice over: against a recording of an installed estimatr 1.0.6, wh
 
 ## The short version
 
-estimatr 2.0 is a ground-up rewrite aimed at the DeclareDesign workflow: fit the same model thousands of times, as fast as possible, and get the same number every time. Almost everything you already wrote against 1.x runs unchanged and returns identical estimates, identical standard errors, identical confidence intervals, and identical objects, only faster. That claim is pinned by 1,873 test assertions, 336 of which compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, and a further 343 of which compare against implementations that share no lineage with estimatr at all. See [How this was checked].
+estimatr 2.0 is a ground-up rewrite aimed at the DeclareDesign workflow: fit the same model thousands of times, as fast as possible, and get the same number every time. Almost everything you already wrote against 1.x runs unchanged and returns identical estimates, identical standard errors, identical confidence intervals, and identical objects, only faster. That claim is pinned by 2,235 test assertions, 695 of which compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, and a further 343 of which compare against implementations that share no lineage with estimatr at all. See [How this was checked].
 
 Two things break, and each one is a deliberate trade. `horvitz_thompson()` takes one probability argument instead of five. Two stargazer helpers are gone. Every standard error 1.x could compute, 2.0 can still compute. What changes is which one a *default* reaches for when you absorb fixed effects with clusters, and that default now says so out loud.
 
@@ -350,7 +350,7 @@ The rest is ordinary: one code path where 1.x has several, and the S3 surface ge
 
 The disclosure is at the top of this document. Here is the evidence behind it, which is the part that should actually decide whether you install this.
 
-**The first layer asks whether the rewrite changed an answer.** 336 assertions compare 2.0 against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, across every supported standard error type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes. A separate file pins the entire returned surface of sixteen fit types, names as well as values, because a package's compatibility surface is what it returns rather than what it exports: during development six fields went missing from fitted objects and a seventh returned a wrong value, and neither a `NAMESPACE` diff nor a search of every reverse dependency's source could see it, since no export changed and no call site changed either.
+**The first layer asks whether the rewrite changed an answer.** 695 assertions compare 2.0 against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, across every supported standard error type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes. A separate file pins the entire returned surface of sixteen fit types, names as well as values, because a package's compatibility surface is what it returns rather than what it exports: during development six fields went missing from fitted objects and a seventh returned a wrong value, and neither a `NAMESPACE` diff nor a search of every reverse dependency's source could see it, since no export changed and no call site changed either.
 
 **The second layer asks whether the answer is right, which the first cannot.** Anything estimatr inherited from 1.0.6, error included, passes a comparison against 1.0.6 in silence. So 343 further assertions compare against implementations built independently of this one:
 
@@ -401,7 +401,7 @@ One defect turned up that has no issue behind it, and it is worth knowing if you
 
 ## Current status
 
-The test suite is 1,873 assertions with none failing, `R CMD check --as-cran` gives 0 errors, 0 warnings and 1 NOTE for the maintainer change, and the numerical comparisons against 1.0.6 run across 50 seeds per design type for every Horvitz-Thompson design family.
+The test suite is 2,235 assertions with none failing, `R CMD check --as-cran` gives 0 errors, 0 warnings and 1 NOTE for the maintainer change, and the numerical comparisons against 1.0.6 run across 50 seeds per design type for every Horvitz-Thompson design family.
 
 What follows is the list of places where 2.0 deliberately returns a different number from 1.x. In each one the 1.x number is wrong.
 

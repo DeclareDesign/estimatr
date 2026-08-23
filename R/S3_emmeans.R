@@ -4,7 +4,11 @@
 #' @importFrom utils getS3method
 
 recover_data.lm_robust <- function(object, ...) {
-  data <- getS3method("recover_data", "lm")(object, ...)
+  # `envir` is not optional. `recover_data` is emmeans' generic, so without it
+  # getS3method() searches the caller's path and fails outright whenever
+  # emmeans has been loaded rather than attached, which is what
+  # `emmeans::emmeans(...)` does.
+  data <- getS3method("recover_data", "lm", envir = asNamespace("emmeans"))(object, ...)
   if (object$rank < object$k)
     attr(data, "pass.it.on") <- TRUE
   data

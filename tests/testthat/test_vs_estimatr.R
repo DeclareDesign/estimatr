@@ -21,14 +21,25 @@ LM_FIELDS <- c(INFERENCE_FIELDS, "fitted.values", "res_var", "fstatistic", "df.r
 # REF_TOL is the cross-platform floor; see helper-reference.R for why an exact
 # comparison against a recording is a test of the runner's BLAS rather than of
 # this package.
+# A field the fixture does not carry is not a comparison; a field the fixture
+# carries and 2.0 does not is a field that has gone missing, which is the thing
+# this file exists to catch. Skipping on either side made the second case pass
+# in silence, and only the sixteen surface_* fits in test_return_surface.R
+# stood between that and a released regression.
 check_identical <- function(e0, ez, fields, label = "") {
+  compared <- 0L
   for (nm in fields) {
     a <- e0[[nm]]
+    if (is.null(a)) next
     b <- ez[[nm]]
-    if (is.null(a) || is.null(b)) next
     info_msg <- if (nzchar(label)) paste0("[", label, "] ", nm) else nm
+    expect_false(is.null(b), label = paste0(info_msg, " is missing from 2.0"))
+    if (is.null(b)) next
     expect_equal(a, b, tolerance = REF_TOL, label = info_msg)
+    compared <- compared + 1L
   }
+  expect_gt(compared, 0L)
+  invisible(compared)
 }
 
 dat <- ref_data_vs()

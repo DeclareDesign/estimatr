@@ -128,3 +128,30 @@ test_that("newdata carrying only one treatment level still predicts", {
   fit_z <- lm_lin(y ~ zf, covariates = ~ x, data = lin_dat)
   expect_equal(unname(predict(fit_z, newdata = nd)), ref("post_predict_one_level"))
 })
+
+
+test_that("C3: emmeans works when its namespace is loaded rather than attached", {
+  # recover_data.lm_robust called getS3method("recover_data", "lm") with no
+  # `envir`, so the lookup searched the caller's path for a generic that lives
+  # in emmeans. `emmeans::emmeans(...)` loads the namespace without attaching
+  # it, which is the ordinary way to call it, and every such call failed with
+  # "no function 'recover_data' could be found" -- surfaced to the user as
+  # "Perhaps a 'data' or 'params' argument is needed".
+  skip_if_not_installed("emmeans")
+  set.seed(1); n <- 100
+  d <- data.frame(y = rnorm(n), g = factor(sample(3, n, TRUE)))
+
+  em <- as.data.frame(emmeans::emmeans(
+    lm_robust(y ~ g, data = d, se_type = "classical"), "g"
+  ))
+  el <- as.data.frame(emmeans::emmeans(lm(y ~ g, data = d), "g"))
+  expect_equal(em$emmean, el$emmean, tolerance = 1e-12)
+  # classical standard errors are lm's, so the whole path is checked and not
+  # only that it returns something
+  expect_equal(em$SE, el$SE, tolerance = 1e-12)
+
+  # and the robust default really does reach emmeans, rather than being
+  # silently replaced by lm's
+  hc2 <- as.data.frame(emmeans::emmeans(lm_robust(y ~ g, data = d), "g"))
+  expect_false(isTRUE(all.equal(hc2$SE, el$SE)))
+})
