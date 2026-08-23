@@ -162,9 +162,15 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
                  const String se_type,
                  const std::vector<bool> & which_covs,
                  const int& fe_rank,
-                 const Rcpp::Nullable<Rcpp::NumericVector> & fe_leverage) {
+                 const Rcpp::Nullable<Rcpp::NumericVector> & fe_leverage,
+                 const int& n_eff) {
 
   const int n(X.rows()), r(XtX_inv.cols()), ny(ei.cols());
+  // `n` sizes the loops and the matrices; `n_use` counts observations for the
+  // degrees of freedom and the HC1/stata scale factors. They differ when rows
+  // carry zero weight: such a row contributes nothing to the fit and is not an
+  // observation, which is how `lm()` counts it too. -1 means "no distinction".
+  const int n_use = (n_eff > 0) ? n_eff : n;
   // Two different things, which used to share one variable. `r_fe` is the RANK
   // consumed by the fit, which sets the residual degrees of freedom and the
   // HC1/stata scale factors; absorbed fixed effects consume it whether or not
@@ -203,14 +209,14 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
   int n_leverage_above_one = 0;
 
   if (se_type == "classical") {
-    Eigen::MatrixXd s2 = AtA(ei)/((double)n - (double)r_fe);
+    Eigen::MatrixXd s2 = AtA(ei)/((double)n_use - (double)r_fe);
     Vcov_hat = Kr(s2, XtX_inv);
     res_var = s2.diagonal();
 
   } else {
     Eigen::MatrixXd temp_omega = ei.array().pow(2);
 
-    res_var = temp_omega.colwise().sum()/((double)n - (double)r_fe);
+    res_var = temp_omega.colwise().sum()/((double)n_use - (double)r_fe);
 
     Eigen::MatrixXd bread(npars, npars);
     Eigen::MatrixXd half_meat(sandwich_size, npars);
@@ -429,18 +435,18 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
     Vcov_hat =
       Vcov_hat *
-      (double)n / ((double)n - (double)r_fe);
+      (double)n_use / ((double)n_use - (double)r_fe);
 
   } else if (se_type == "stata") {
 
     Vcov_hat =
       Vcov_hat *
-      (((double)J * (n - 1)) / (((double)J - 1) * (n - r_fe)));
+      (((double)J * (n_use - 1)) / (((double)J - 1) * (n_use - r_fe)));
   }
 
   if (ci) {
     if ( !clustered ) {
-      dof.fill(n - r_fe);
+      dof.fill(n_use - r_fe);
     } else if (!cr2) {
       dof.fill(J - 1);
     } else {

@@ -146,7 +146,13 @@ lm_robust_fit <- function(y,
 
   est_exists <- !is.na(fit$beta_hat)
   covs_used <- which(est_exists[, 1])
-  N <- nrow(data[["X"]])
+  # A zero-weight row contributes nothing to the fit, so it is not an
+  # observation for the residual degrees of freedom or the HC1/stata scale
+  # factors. `lm()` counts it the same way: ten zero weights among 100 rows
+  # gave df.residual 98 here against `lm()`'s 88, which moved every classical
+  # and HC1 standard error and every p-value. The row stays in `residuals` and
+  # `fitted.values`, as `lm()` keeps it.
+  N <- if (weighted) sum(weights > 0) else nrow(data[["X"]])
 
   x_rank <- length(covs_used)
   tot_rank <- x_rank + fe_rank
@@ -259,7 +265,8 @@ lm_robust_fit <- function(y,
         fe_rank = fe_rank,
         # Only HC2/HC3 consume this; it is NULL for every other se_type and for
         # multi-way FE, so the C++ falls back to the plain hat value.
-        fe_leverage = if (se_type %in% c("HC2", "HC3")) fe_leverage else NULL
+        fe_leverage = if (se_type %in% c("HC2", "HC3")) fe_leverage else NULL,
+        n_eff = N
       )
 
       return_list$std.error[est_exists] <- sqrt(diag(vcov_fit$Vcov_hat))

@@ -245,8 +245,9 @@ iv_robust <- function(formula,
     return_list[["fitted.values"]] <- fitted_full
 
     n_obs <- nrow(yoriginal)
-    tss_full <- sum((yoriginal - mean(yoriginal))^2)
-    r2_full  <- 1 - sum(residuals_proj^2) / tss_full
+    ss <- fe_r2(yoriginal, residuals_proj, model_data[["weights"]])
+    tss_full <- ss[["tss"]]
+    r2_full  <- 1 - ss[["rss"]] / tss_full
     return_list[["r.squared"]]     <- r2_full
     return_list[["adj.r.squared"]] <- 1 - (1 - r2_full) * (n_obs - 1L) / return_list[["df.residual"]]
     return_list[["tss"]]           <- tss_full

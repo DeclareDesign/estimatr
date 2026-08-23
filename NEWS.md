@@ -1,6 +1,6 @@
 # estimatr 2.0.0
 
-estimatr 2.0.0 is a ground-up rewrite aimed at the DeclareDesign use case: OLS, Lin-adjusted OLS, 2SLS IV, difference-in-means, Horvitz-Thompson, and linear hypothesis tests with heteroskedasticity- and cluster-robust standard errors. It fixes several long-standing correctness bugs, improves performance on the critical path, adds feols-style fixed effects absorption, and replaces the O(N²) Horvitz-Thompson variance with a design-aware O(1) computation. Interfaces are unchanged from 1.0.6 and, run side by side on one machine, the numbers agree to 1e-12 wherever both versions answer.
+estimatr 2.0.0 is a ground-up rewrite aimed at the DeclareDesign use case: OLS, Lin-adjusted OLS, 2SLS IV, difference-in-means, Horvitz-Thompson, and linear hypothesis tests with heteroskedasticity- and cluster-robust standard errors. It fixes several long-standing correctness bugs, improves performance on the critical path, adds feols-style fixed effects absorption, and replaces the O(N²) Horvitz-Thompson variance with a design-aware O(1) computation. The six estimators keep their signatures, with one exception: `horvitz_thompson()`, whose five probability arguments consolidate into `condition_prs`. Removals are listed under What is dropped. Run side by side on one machine, the numbers agree to 1e-12 wherever both versions answer.
 
 See `vignette("estimatr2.0")` for a user-facing tour of what changes and what does not.
 
@@ -10,7 +10,7 @@ See `vignette("estimatr2.0")` for a user-facing tour of what changes and what do
 
 estimatr 2.0.0 was written by Alexander Coppock working with Claude (Anthropic), across design, implementation, tests, benchmarks, and documentation. This note is here because a ground-up rewrite of a widely used estimation package should say how it was produced, and because the answer changes what evidence you are entitled to want before installing it.
 
-**What the evidence is.** Interfaces are unchanged from 1.0.6, and run side by side on one machine the numbers agree to 1e-12 wherever both versions answer. The test suite is 1,729 assertions with no failures, green on five platforms (Ubuntu release, devel and oldrel-1, macOS, Windows) with identical counts on each. Of those, 336 compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, and `tests/testthat/test_return_surface.R` pins the entire returned surface of sixteen fit types, names as well as values, so a field cannot silently go missing. All 35 CRAN reverse dependencies were checked.
+**What the evidence is.** The six estimators keep their signatures, with one exception: `horvitz_thompson()`, whose five probability arguments consolidate into `condition_prs`. Removals are listed under What is dropped. Run side by side on one machine, the numbers agree to 1e-12 wherever both versions answer. The test suite is 1,729 assertions with no failures, green on five platforms (Ubuntu release, devel and oldrel-1, macOS, Windows) with identical counts on each. Of those, 336 compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, and `tests/testthat/test_return_surface.R` pins the entire returned surface of sixteen fit types, names as well as values, so a field cannot silently go missing. All 35 CRAN reverse dependencies were checked.
 
 **Why that is not enough on its own, and what was added.** Agreement with 1.0.6 establishes that the rewrite changed no answer. It cannot establish that the answer was right, and any error inherited from 1.0.6 passes it in silence. So 305 further assertions check estimatr against something built independently of it: `sandwich`, `clubSandwich` and `ivreg` compared live in the same session, `fixest` and `plm` from a recorded fixture, Stata's `regress`, `areg` and `ivregress` from frozen output, and `blkvar` for the blocked-design variance, together with `lm_lin` checked against a Lin specification built by hand out of `lm_robust`. estimatr matches `sandwich`, `clubSandwich` and `ivreg` to machine precision everywhere they overlap, weighted included, with the CR2 Satterthwaite degrees of freedom exact.
 
@@ -218,6 +218,10 @@ Fixing this exposed a latent crash: `r_fe` was left at `r + fe_rank` when the me
 The condition-probability-matrix helpers `declaration_to_condition_pr_mat()`, `gen_pr_matrix_cluster()`, and `permutations_to_condition_pr_mat()` go with the Horvitz-Thompson arguments above: the new variance computation does not build that matrix.
 
 **`extract.lm_robust()` and `extract.iv_robust()` are kept**, for \pkg{texreg}, which is their only consumer. They are exported as plain functions rather than registered as S3 methods because texreg looks them up by name.
+
+**The `alo_star_men` dataset.** `data/alo_star_men.rda` and its documentation are removed, so `data(alo_star_men)` errors. It was an example dataset for the vignettes, and those go too.
+
+**The nine 1.0.6 vignettes**, including the widely cited `mathematical-notes`. `vignette("estimatr2.0")` is the one that ships. The 1.0.6 versions remain on the frozen 1.0.6 pkgdown site.
 
 **HAC (Newey-West) standard errors.** Not implemented.
 

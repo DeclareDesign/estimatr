@@ -12,17 +12,20 @@
 
 ## Submission
 
-estimatr 2.0.0 is a rewrite of the package. Interfaces are unchanged from 1.0.6
-and the numerical results agree to 1e-12 wherever both versions answer; the
-breaking changes are listed in NEWS.md and in `vignette("estimatr2.0")`.
+estimatr 2.0.0 is a rewrite of the package. The six estimators keep their
+signatures, with one exception: `horvitz_thompson()`, whose five probability
+arguments consolidate into `condition_prs`. Numerical results agree to 1e-12
+wherever both versions answer. The removals and the breaking changes are listed
+in NEWS.md and in `vignette("estimatr2.0")`.
 
 **This submission changes the maintainer** from Graeme Blair
 <graeme.blair@gmail.com> to Alexander Coppock <acoppock@gmail.com>. Graeme Blair
 has written to CRAN separately to confirm the transfer. He remains an author.
 
 This version was written by the maintainer working with Claude (Anthropic).
-`NEWS.md` says so and sets out the evidence: interfaces unchanged from 1.0.6
-with the numbers agreeing to 1e-12 same-machine, a suite of 1,729 assertions
+`NEWS.md` says so and sets out the evidence: signatures unchanged except
+`horvitz_thompson()`'s probability arguments, with the numbers agreeing to 1e-12
+same-machine, a suite of 1,729 assertions
 green on five platforms, 336 of them against answers recorded from an installed
 1.0.6, 305 against independent implementations (`sandwich`, `clubSandwich`,
 `ivreg`, Stata, `fixest`, `plm`, `blkvar`), and the full returned surface of sixteen fit

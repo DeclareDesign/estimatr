@@ -408,7 +408,7 @@ test_that("#395: the leverage guard drops exactly the 1 - h < 0 observations", {
     estimatr:::lm_variance(
       X = X, Xunweighted = NULL, XtX_inv = M, ei = ei, weight_mean = 1,
       cluster = NULL, J = 0L, ci = TRUE, se_type = se_type,
-      which_covs = TRUE, fe_rank = 0L, fe_leverage = NULL
+      which_covs = TRUE, fe_rank = 0L, fe_leverage = NULL, n_eff = -1L
     )
   }
 
@@ -778,4 +778,70 @@ test_that("B13: a character cluster is coerced rather than handed to the C++", {
     expect_equal(a$std.error, b$std.error, info = se)
     expect_equal(a$nclusters, 6L, info = se)
   }
+})
+
+
+test_that("B5: zero weights are not observations", {
+  # N was nrow(X), so ten zero weights among 100 rows gave df.residual 98
+  # where lm() gives 88, and every classical, HC1 and stata standard error and
+  # every p-value moved with it. A zero-weight row stays in residuals and
+  # fitted.values, as lm() keeps it; it is only the counting that changes.
+  set.seed(1); N_b5 <- 100
+  d <- data.frame(x = rnorm(N_b5))
+  d$y <- d$x + rnorm(N_b5)
+  w_b5 <- runif(N_b5); w_b5[1:10] <- 0
+
+  m <- lm_robust(y ~ x, data = d, weights = w_b5, se_type = "classical")
+  l <- lm(y ~ x, data = d, weights = w_b5)
+  expect_equal(m$df.residual, l$df.residual)
+  expect_equal(m$nobs, nobs(l))
+  expect_equal(m$std.error[["x"]],
+               summary(l)$coefficients["x", "Std. Error"], tolerance = 1e-12)
+  expect_equal(length(m$residuals), N_b5)
+
+  # and the definition of a zero weight: the same answer as deleting the row
+  keep <- w_b5 > 0
+  for (se in c("classical", "HC0", "HC1", "HC2", "HC3")) {
+    expect_equal(
+      lm_robust(y ~ x, data = d, weights = w_b5, se_type = se)$std.error[["x"]],
+      lm_robust(y ~ x, data = d[keep, ], weights = w_b5[keep],
+                se_type = se)$std.error[["x"]],
+      tolerance = 1e-12, info = se
+    )
+  }
+})
+
+test_that("B9: fitting does not advance the RNG", {
+  # The hidden variable names were built with sample.int(), so every fit moved
+  # the seed. This package lives inside DeclareDesign simulation loops, where
+  # that changes what the next draw is.
+  set.seed(1); N_b9 <- 50
+  d <- data.frame(y = rnorm(N_b9), x = rnorm(N_b9), w = runif(N_b9),
+                  bl = sample(5, N_b9, TRUE), cl = sample(8, N_b9, TRUE))
+
+  # The fits themselves are beside the point here; only whether they move the
+  # seed is.
+  draw_after <- function(expr) {
+    set.seed(99)
+    suppressWarnings(force(expr))
+    rnorm(1)
+  }
+  baseline <- draw_after(NULL)
+  expect_equal(draw_after(lm_robust(y ~ x, data = d)), baseline)
+  expect_equal(draw_after(lm_robust(y ~ x, weights = w, fixed_effects = ~ bl,
+                                    clusters = cl, data = d)), baseline)
+  expect_equal(draw_after(lm_lin(y ~ x, covariates = ~ w, data = d)), baseline)
+})
+
+test_that("B11: an offset() term is refused rather than ignored", {
+  # It was parsed and never read, so the fit came back as though the term were
+  # absent: a silently different model, not a refused one.
+  set.seed(1); N_b11 <- 100
+  d <- data.frame(x = rnorm(N_b11), off = rnorm(N_b11))
+  d$y <- d$x + 2 * d$off + rnorm(N_b11)
+  expect_error(lm_robust(y ~ x + offset(off), data = d), "not supported")
+
+  # the rewrite the message names is exact
+  expect_equal(coef(lm_robust(I(y - off) ~ x, data = d))[["x"]],
+               coef(lm(y ~ x + offset(off), data = d))[["x"]])
 })

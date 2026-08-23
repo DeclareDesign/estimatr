@@ -22,8 +22,21 @@ clean_model_data <- function(data, datargs, estimator = "") {
     )
   )
 
+  # The hidden names only have to be unlikely to collide with a user's own
+  # variables, and a counter does that as well as a random draw. `sample.int()`
+  # advanced the RNG on every fit, which matters because this package spends
+  # most of its life inside DeclareDesign simulation loops, where a call that
+  # silently moves the seed changes what the next draw is.
+  hidden_name <- local({
+    i <- 0L
+    function(prefix) {
+      i <<- i + 1L
+      sprintf(".__%s%%estimatr%d__", prefix, i)
+    }
+  })
+
   for (da in to_process) {
-    name <- sprintf(".__%s%%%d__", da, sample.int(.Machine$integer.max, 1))
+    name <- hidden_name(da)
     m_formula_env[[name]] <- eval_tidy(mfargs[[da]], data = data)
     mfargs[[da]] <- sym(name)
   }
@@ -31,7 +44,7 @@ clean_model_data <- function(data, datargs, estimator = "") {
   # fixed_effects: evaluate and store as factor matrix in formula env so
   # model.frame can attach it as an ancillary variable
   if ("fixed_effects" %in% names(mfargs)) {
-    name <- sprintf(".__fixed_effects%%%d__", sample.int(.Machine$integer.max, 1))
+    name <- hidden_name("fixed_effects")
     fe_formula <- eval_tidy(mfargs[["fixed_effects"]], data = data)
     # 1.x also accepted a bare column name or an already-evaluated grouping
     # vector. estimatr issue #304 asked for the formula to be enforced; a
@@ -136,6 +149,19 @@ clean_model_data <- function(data, datargs, estimator = "") {
   # strings, but building the strings is not the cost, and measures near zero.
   # Carrying 100,000 of them through each intermediate is.
   y_resp <- stats::model.response(mf, type = "numeric")
+
+  # `offset()` in the formula was parsed and then never read, so the fit came
+  # back as though the term were absent: a silently different model, not a
+  # refused one. Refusing it names the rewrite, which is exact rather than
+  # approximate, and costs the caller one line.
+  if (!is.null(stats::model.offset(mf))) {
+    stop(
+      "`offset()` terms are not supported.\nSubtract the offset from the ",
+      "outcome instead: `y - <offset> ~ x` fits the same model, and its ",
+      "coefficients and standard errors are the ones `offset()` would give."
+    )
+  }
+
   dm <- stats::model.matrix(design_terms, data = mf)
   obs_names <- rownames(dm)
   dimnames(dm) <- list(NULL, colnames(dm))

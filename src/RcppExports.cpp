@@ -48,8 +48,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // lm_variance
-List lm_variance(Eigen::Map<Eigen::MatrixXd>& X, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Eigen::Map<Eigen::MatrixXd>& XtX_inv, const Eigen::Map<Eigen::MatrixXd>& ei, const double weight_mean, const Rcpp::Nullable<Rcpp::IntegerVector>& cluster, const int& J, const bool& ci, const String se_type, const std::vector<bool>& which_covs, const int& fe_rank, const Rcpp::Nullable<Rcpp::NumericVector>& fe_leverage);
-RcppExport SEXP _estimatr_lm_variance(SEXP XSEXP, SEXP XunweightedSEXP, SEXP XtX_invSEXP, SEXP eiSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP se_typeSEXP, SEXP which_covsSEXP, SEXP fe_rankSEXP, SEXP fe_leverageSEXP) {
+List lm_variance(Eigen::Map<Eigen::MatrixXd>& X, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Eigen::Map<Eigen::MatrixXd>& XtX_inv, const Eigen::Map<Eigen::MatrixXd>& ei, const double weight_mean, const Rcpp::Nullable<Rcpp::IntegerVector>& cluster, const int& J, const bool& ci, const String se_type, const std::vector<bool>& which_covs, const int& fe_rank, const Rcpp::Nullable<Rcpp::NumericVector>& fe_leverage, const int& n_eff);
+RcppExport SEXP _estimatr_lm_variance(SEXP XSEXP, SEXP XunweightedSEXP, SEXP XtX_invSEXP, SEXP eiSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP se_typeSEXP, SEXP which_covsSEXP, SEXP fe_rankSEXP, SEXP fe_leverageSEXP, SEXP n_effSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -65,7 +65,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::vector<bool>& >::type which_covs(which_covsSEXP);
     Rcpp::traits::input_parameter< const int& >::type fe_rank(fe_rankSEXP);
     Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericVector>& >::type fe_leverage(fe_leverageSEXP);
-    rcpp_result_gen = Rcpp::wrap(lm_variance(X, Xunweighted, XtX_inv, ei, weight_mean, cluster, J, ci, se_type, which_covs, fe_rank, fe_leverage));
+    Rcpp::traits::input_parameter< const int& >::type n_eff(n_effSEXP);
+    rcpp_result_gen = Rcpp::wrap(lm_variance(X, Xunweighted, XtX_inv, ei, weight_mean, cluster, J, ci, se_type, which_covs, fe_rank, fe_leverage, n_eff));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -116,7 +117,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_estimatr_AtA", (DL_FUNC) &_estimatr_AtA, 1},
     {"_estimatr_Kr", (DL_FUNC) &_estimatr_Kr, 2},
     {"_estimatr_lm_solver", (DL_FUNC) &_estimatr_lm_solver, 3},
-    {"_estimatr_lm_variance", (DL_FUNC) &_estimatr_lm_variance, 12},
+    {"_estimatr_lm_variance", (DL_FUNC) &_estimatr_lm_variance, 13},
     {"_estimatr_demean_cpp", (DL_FUNC) &_estimatr_demean_cpp, 5},
     {"_estimatr_xtab_cpp", (DL_FUNC) &_estimatr_xtab_cpp, 5},
     {"_estimatr_naomitwhy", (DL_FUNC) &_estimatr_naomitwhy, 2},

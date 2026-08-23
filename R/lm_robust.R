@@ -135,8 +135,9 @@ lm_robust <- function(formula,
           names(fitted_full) <- model_data[["obs_names"]]
         }
       }
-      rss <- sum(diag(crossprod(residuals_proj)))
-      tss_full <- sum(diag(crossprod(yoriginal - mean(yoriginal))))
+      ss <- fe_r2(yoriginal, residuals_proj, model_data[["weights"]])
+      rss <- ss[["rss"]]
+      tss_full <- ss[["tss"]]
       r2_full <- 1 - rss / tss_full
       return_list <- list(
         # `term` must be present even though it is empty: `$term` on a list
@@ -244,16 +245,12 @@ lm_robust <- function(formula,
       return_list[["fitted.values"]], return_list[["coefficients"]], model_data
     )
 
-    # Full model R2 using original Y
+    # Full model R2 using original Y, weighted where the fit is and one value
+    # per outcome column, as the same model with explicit dummies reports.
     n_obs <- nrow(yoriginal)
-    y_mean <- mean(yoriginal)
-    # `crossprod()` reads the columns without materialising their squares, so
-    # the two sums of squares cost one n-length temporary between them instead
-    # of three. A multivariate outcome is n-by-k here, and both totals are
-    # pooled across the k columns as they have always been, so it is the trace
-    # that is wanted and not the whole k-by-k matrix.
-    tss_full <- sum(diag(crossprod(yoriginal - y_mean)))
-    rss_full <- sum(diag(crossprod(residuals_proj)))
+    ss <- fe_r2(yoriginal, residuals_proj, model_data[["weights"]])
+    tss_full <- ss[["tss"]]
+    rss_full <- ss[["rss"]]
     r2_full  <- 1 - rss_full / tss_full
     return_list[["r.squared"]]     <- r2_full
     return_list[["adj.r.squared"]] <- 1 - (1 - r2_full) * (n_obs - 1L) / return_list[["df.residual"]]

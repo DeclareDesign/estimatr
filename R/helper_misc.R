@@ -299,3 +299,23 @@ absorbed_group_effects <- function(fitted, coefficients, model_data) {
   dimnames(effects) <- list(paste0(colnames(fe), lv))
   effects
 }
+
+# Full-model R^2 for an absorbed fixed-effects fit, on the original outcome.
+#
+# The FE branches used `mean(yoriginal)` and raw residuals, so a weighted fit
+# reported an unweighted R^2 (0.6564 against 0.6432 from the same model with
+# dummies and from `lm()`), and a multivariate outcome was pooled into one
+# number where the dummy fit gives one per column. `w` is the RAW weight
+# vector, as `demean_fes()` leaves it, or NULL.
+fe_r2 <- function(yoriginal, residuals_proj, w) {
+  y <- as.matrix(yoriginal)
+  e <- as.matrix(residuals_proj)
+  n <- nrow(y)
+  if (is.null(w)) {
+    ymw <- y - rep(colMeans(y), each = n)
+    list(tss = colSums(ymw * ymw), rss = colSums(e * e))
+  } else {
+    ymw <- y - rep(drop(crossprod(w, y) / sum(w)), each = n)
+    list(tss = colSums(ymw * ymw * w), rss = colSums(e * e * w))
+  }
+}

@@ -458,3 +458,31 @@ test_that("B3: multi-way demeaning that runs out of sweeps says so", {
   # a single factor converges in one sweep and must stay silent
   expect_silent(lm_robust(y ~ x, fixed_effects = ~ worker, data = d))
 })
+
+
+test_that("B4: the fixed-effects R-squared is weighted and per outcome", {
+  # The FE branch used mean(yoriginal) and raw residuals, so a weighted fit
+  # reported an unweighted R-squared, and a multivariate outcome was pooled
+  # into one number where the same model with dummies gives one per column.
+  set.seed(2); n <- 300
+  d <- data.frame(x = rnorm(n), bl = sample(8, n, TRUE), w = runif(n, 0.2, 3))
+  d$y <- d$x + d$bl * 0.3 + rnorm(n)
+  d$y2 <- d$y + rnorm(n)
+
+  wf <- lm_robust(y ~ x, fixed_effects = ~ bl, data = d, weights = w)
+  lw <- summary(lm(y ~ x + factor(bl), data = d, weights = w))
+  expect_equal(wf$r.squared, lw$r.squared, tolerance = 1e-12)
+  expect_equal(wf$adj.r.squared, lw$adj.r.squared, tolerance = 1e-12)
+
+  uf <- lm_robust(y ~ x, fixed_effects = ~ bl, data = d)
+  lu <- summary(lm(y ~ x + factor(bl), data = d))
+  expect_equal(uf$r.squared, lu$r.squared, tolerance = 1e-12)
+
+  mv <- lm_robust(cbind(y, y2) ~ x, fixed_effects = ~ bl, data = d)
+  dm <- lm_robust(cbind(y, y2) ~ x + factor(bl), data = d)
+  expect_equal(length(mv$r.squared), 2L)
+  expect_equal(unname(mv$r.squared), unname(dm$r.squared), tolerance = 1e-12)
+
+  ivw <- iv_robust(y ~ x | x, fixed_effects = ~ bl, data = d, weights = w)
+  expect_equal(ivw$r.squared, lw$r.squared, tolerance = 1e-12)
+})
