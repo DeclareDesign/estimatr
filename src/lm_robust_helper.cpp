@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <functional>
 using namespace Rcpp;
 
 // Much of what follows is modified from RcppEigen Vignette by Douglas Bates and Dirk Eddelbuettel
@@ -32,6 +33,11 @@ Eigen::MatrixXd Kr(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B) {
 Eigen::MatrixXd getMeatXtX(Eigen::Map<Eigen::MatrixXd>& X,
                            const Eigen::MatrixXd& XtX_inv) {
   Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR(X);
+  // The same 1e-7 threshold lm_solver() uses, and for the same reason: Eigen's
+  // default is tight enough that an exactly collinear column can survive as a
+  // pivot of order 1e-14. The two must agree, or the meat is read off a rank
+  // the coefficients were not fitted at.
+  PQR.setThreshold(1e-7);
   const Eigen::ColPivHouseholderQR<Eigen::MatrixXd>::PermutationType Pmat(PQR.colsPermutation());
 
   int r = PQR.rank();
@@ -53,6 +59,16 @@ Eigen::MatrixXd getMeatXtX(Eigen::Map<Eigen::MatrixXd>& X,
   R_inv = P * R_inv * P;
 
   Eigen::MatrixXd meatXtX_inv = R_inv * R_inv.transpose();
+
+  // Compacting X by removing the tossed columns one at a time is only correct
+  // in descending index order: each left shift moves every column to the right
+  // of the removed one, so a later removal at a HIGHER index would then name
+  // the wrong column. The QR hands back its permutation in pivot order, which
+  // is descending only by accident. With one redundant column there is nothing
+  // to order, which is why every rank-deficient-by-one probe agreed and CR2
+  // with fixed effects was wrong only when two or more columns went.
+  std::sort(Pmat_toss.data(), Pmat_toss.data() + Pmat_toss.size(),
+            std::greater<int>());
 
   for (Eigen::Index i=0; i<Pmat_toss.size(); i++) {
     if (Pmat_toss(i) < X.cols())

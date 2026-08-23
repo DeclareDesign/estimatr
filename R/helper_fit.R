@@ -446,41 +446,6 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE,
   cl_se_types  <- c("CR0", "CR2", "stata")
   rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata")
 
-  # HC2 and HC3 need the hat values of the full [dummies | X] design. Those
-  # split exactly into the demeaned-X leverage plus fe_leverage(), for ANY
-  # number of fixed-effect factors, so they are exact and cheap here and carry
-  # no restriction. The identity is stated and verified in fe_leverage().
-  if (has_fe && has_fe_leverage && !is.null(se_type) &&
-      se_type %in% c("HC2", "HC3")) {
-    return(se_type)
-  }
-
-  # CR2 is the one case left that has to materialise the dummies: it needs the
-  # whole per-cluster block of the hat matrix, which does not decompose.
-  if (has_fe && !is.null(se_type) && se_type %in% c("HC2", "HC3", "CR2")) {
-    # 1.0.6 refused this combination too: the CR2 adjustment needs the design
-    # weighted by w rather than by sqrt(w), and the absorbed dummies are not
-    # carried in a form that supports it.
-    if (se_type == "CR2" && weighted) {
-      stop(
-        "`se_type = \"CR2\"` cannot be combined with `weights` and ",
-        "`fixed_effects`.\nUse `se_type = \"stata\"`, or replace ",
-        "`fixed_effects` with explicit dummies:\n",
-        "  lm_robust(y ~ x + factor(fe_var), weights = w, clusters = cl, ",
-        "se_type = \"CR2\")"
-      )
-    }
-    if (!fe_dummies) {
-      stop(
-        "`se_type = \"", se_type, "\"` requires hat values from the full ",
-        "[X | FE dummies] design matrix, which were not supplied.\n",
-        "Call `lm_robust()` or `iv_robust()`, which build them, or pass ",
-        "`femat` to `lm_robust_fit()`."
-      )
-    }
-    return(se_type)
-  }
-
   if (clustered) {
     if (is.null(se_type)) {
       # CR2 under `fixed_effects` is computable, but only by expanding the
@@ -529,6 +494,46 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE,
       )
     }
     if (se_type == "stata") se_type <- "HC1"
+  }
+
+  # Only now the fixed-effects branches. They used to run first and return
+  # before the menu above, so `fixed_effects` with `clusters` and
+  # `se_type = "HC2"` was accepted and silently ignored the clusters, and
+  # `fixed_effects` with `se_type = "CR2"` and no clusters reached the C++ with
+  # a NULL cluster vector. 1.0.6 errored on both. Whether an se_type is on the
+  # menu does not depend on the fixed effects, so the menu is checked first.
+
+  # HC2 and HC3 need the hat values of the full [dummies | X] design. Those
+  # split exactly into the demeaned-X leverage plus fe_leverage(), for ANY
+  # number of fixed-effect factors, so they are exact and cheap here and carry
+  # no restriction. The identity is stated and verified in fe_leverage().
+  if (has_fe && has_fe_leverage && se_type %in% c("HC2", "HC3")) {
+    return(se_type)
+  }
+
+  # CR2 is the one case left that has to materialise the dummies: it needs the
+  # whole per-cluster block of the hat matrix, which does not decompose.
+  if (has_fe && se_type %in% c("HC2", "HC3", "CR2")) {
+    # 1.0.6 refused this combination too: the CR2 adjustment needs the design
+    # weighted by w rather than by sqrt(w), and the absorbed dummies are not
+    # carried in a form that supports it.
+    if (se_type == "CR2" && weighted) {
+      stop(
+        "`se_type = \"CR2\"` cannot be combined with `weights` and ",
+        "`fixed_effects`.\nUse `se_type = \"stata\"`, or replace ",
+        "`fixed_effects` with explicit dummies:\n",
+        "  lm_robust(y ~ x + factor(fe_var), weights = w, clusters = cl, ",
+        "se_type = \"CR2\")"
+      )
+    }
+    if (!fe_dummies) {
+      stop(
+        "`se_type = \"", se_type, "\"` requires hat values from the full ",
+        "[X | FE dummies] design matrix, which were not supplied.\n",
+        "Call `lm_robust()` or `iv_robust()`, which build them, or pass ",
+        "`femat` to `lm_robust_fit()`."
+      )
+    }
   }
 
   return(se_type)

@@ -349,3 +349,84 @@ test_that("a fixed-effects factor with unused trailing levels gives NA effects",
   expect_equal(length(mh$fixed_effects), 6L)
   expect_false(anyNA(mh$fixed_effects))
 })
+
+
+# ---- se_type validation runs before the fixed-effects branches ----
+
+test_that("`fixed_effects` does not put an se_type back on the menu", {
+  # check_se_type() used to test the fixed-effects cases first and return
+  # before the cluster/no-cluster menu, so `fixed_effects` widened the menu:
+  # HC2 with `clusters` was accepted and the clusters were then silently
+  # ignored, and CR2 with no `clusters` reached the C++ with a NULL cluster
+  # vector. 1.0.6 errored on both. The message must not depend on whether
+  # `fixed_effects` was passed.
+  set.seed(1); n <- 200
+  d <- data.frame(y = rnorm(n), x = rnorm(n),
+                  bl = sample(10, n, TRUE), cl = sample(20, n, TRUE))
+
+  for (se in c("HC0", "HC1", "HC2", "HC3", "classical")) {
+    expect_error(
+      lm_robust(y ~ x, fixed_effects = ~ bl, clusters = cl, data = d, se_type = se),
+      "when `clusters` are specified", info = se
+    )
+  }
+  for (se in c("CR0", "CR2")) {
+    expect_error(
+      lm_robust(y ~ x, fixed_effects = ~ bl, data = d, se_type = se),
+      "reserved for a case with clusters", info = se
+    )
+  }
+  expect_error(
+    iv_robust(y ~ x | bl, fixed_effects = ~ cl, data = d, se_type = "CR2"),
+    "reserved for a case with clusters"
+  )
+
+  # every combination that was always legal still is, and the defaults hold
+  expect_silent(lm_robust(y ~ x, fixed_effects = ~ bl, data = d, se_type = "HC2"))
+  expect_equal(lm_robust(y ~ x, fixed_effects = ~ bl, data = d)$se_type, "HC2")
+  cr <- suppressWarnings(
+    lm_robust(y ~ x, fixed_effects = ~ bl, clusters = cl, data = d, se_type = "CR2")
+  )
+  expect_equal(cr$se_type, "CR2")
+  expect_equal(
+    suppressWarnings(lm_robust(y ~ x, fixed_effects = ~ bl, clusters = cl, data = d))$se_type,
+    "CR0"
+  )
+})
+
+# ---- CR2 with a fixed-effects design short of full rank by two or more ----
+
+test_that("absorbed CR2 matches the dummy expansion when two FE columns drop", {
+  # getMeatXtX() compacted the design by removing tossed columns in QR pivot
+  # order, which is only correct in descending order: the first left shift
+  # renumbers every column after it, so the second removal took the wrong one.
+  # One redundant column is exact either way, which is why the nested and
+  # disconnected two-factor probes all agreed and this stayed hidden. B3 below
+  # is a coarsening of A, so the FE design is short by two.
+  skip_if_not_installed("clubSandwich")
+  set.seed(3); n <- 400
+  d <- data.frame(A = sample(1:12, n, TRUE), C = sample(1:6, n, TRUE))
+  d$B3 <- ((d$A - 1) %/% 3) + 1
+  d$cl <- sample(1:25, n, TRUE)
+  d$x <- rnorm(n)
+  d$y <- 0.5 * d$x + d$A * 0.1 + d$C * 0.2 + rnorm(n)
+
+  absorbed <- lm_robust(y ~ x, fixed_effects = ~ A + B3 + C, data = d,
+                        clusters = cl, se_type = "CR2")
+  dummies <- suppressWarnings(
+    lm_robust(y ~ x + factor(A) + factor(B3) + factor(C), data = d,
+              clusters = cl, se_type = "CR2")
+  )
+  # three columns are dropped, so the bug had something to reorder
+  expect_gte(sum(is.na(dummies$coefficients)), 2L)
+
+  cs <- clubSandwich::vcovCR(
+    lm(y ~ x + factor(A) + factor(B3) + factor(C), data = d),
+    cluster = d$cl, type = "CR2"
+  )
+  # tight, not testthat's default 1.5e-8: these are three routes to one number
+  # computed in one session, and the gap the bug left was 3.1%
+  expect_equal(absorbed$std.error[["x"]], dummies$std.error[["x"]], tolerance = 1e-9)
+  expect_equal(absorbed$std.error[["x"]], sqrt(cs["x", "x"]), tolerance = 1e-9)
+  expect_equal(absorbed$df[["x"]], dummies$df[["x"]], tolerance = 1e-9)
+})
