@@ -269,7 +269,7 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
         }
 
         if (fe_leverage.isNotNull()) {
-          Rcpp::NumericVector fe_lev(fe_leverage);
+          Rcpp::NumericVector fe_lev = Rcpp::as<Rcpp::NumericVector>(fe_leverage);
           for (int i = 0; i < n; i++) hii(i) += fe_lev[i];
         }
 
