@@ -10,7 +10,7 @@
 |collate  |en_US.UTF-8                                         |
 |ctype    |en_US.UTF-8                                         |
 |tz       |America/Chicago                                     |
-|date     |2026-08-20                                          |
+|date     |2026-08-23                                          |
 |pandoc   |3.9.0.2 @ /opt/homebrew/bin/pandoc                  |
 |quarto   |1.10.18 @ /Users/alexandercoppock/.local/bin/quarto |
 
@@ -26,9 +26,10 @@
 
 # Revdeps
 
-## New problems (1)
+## New problems (2)
 
 |package     |version |error  |warning |note |
 |:-----------|:-------|:------|:-------|:----|
 |[eventstudyr](problems.md#eventstudyr)|1.2.0   |__+1__ |        |     |
+|[projoint](problems.md#projoint)|1.1.3   |__+1__ |        |     |
 

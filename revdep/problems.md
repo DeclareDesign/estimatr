@@ -31,3 +31,38 @@ Run `revdepcheck::revdep_details(, "eventstudyr")` for more info
        Execution halted
      ```
 
+# projoint (1.1.3)
+
+* GitHub: <https://github.com/yhoriuchi/projoint>
+* Email: <mailto:yusaku.horiuchi@gmail.com>
+* GitHub mirror: <https://github.com/cran/projoint>
+
+Run `revdepcheck::revdep_details(, "projoint")` for more info
+
+## Newly broken
+
+*   checking running R code from vignettes ...
+     ```
+       ‘analyze.Rmd’ using ‘UTF-8’... failed
+       ‘correct.Rmd’ using ‘UTF-8’... OK
+       ‘design.Rmd’ using ‘UTF-8’... OK
+       ‘explore.Rmd’ using ‘UTF-8’... OK
+       ‘faq.Rmd’ using ‘UTF-8’... OK
+       ‘read.Rmd’ using ‘UTF-8’... OK
+       ‘structure.Rmd’ using ‘UTF-8’... OK
+      ERROR
+     Errors in running code in vignettes:
+     when running code in ‘analyze.Rmd’
+       ...
+     
+     > predicted_irr <- predict_tau(out1_arranged)
+     
+       When sourcing ‘analyze.R’:
+     Error: ℹ In argument: `estimatr::tidy(...)`.
+     ℹ In group 1: `x = 1`.
+     Caused by error in `prep_data()`:
+     ! `clusters` has only one level, so there is no between-cluster variation for a cluster-robust variance to estimate.
+     Drop `clusters`, or use `se_type = "classical"` if the clustering is not the level you meant to inference over.
+     Execution halted
+     ```
+
