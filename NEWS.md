@@ -181,7 +181,7 @@ Return objects are structurally compatible with estimatr 1.0.6: field names, cla
 
 Absorbed fixed effects used to refuse `se_type = "HC2"` and `"HC3"`, on the grounds that they need hat values from the full `[dummies | X]` design while absorption leaves only the demeaned ones. The hat values in fact decompose exactly, for any number of FE factors, and the decomposition is written out below.
 
-Verified to machine precision against writing the dummies out, weighted and unweighted, balanced and unbalanced, from one factor to five, and against 1.x. At n = 40,000 with 2,000 groups, one-way HC2 takes 17.8 ms here against 41.3 s in 1.0.6. At n = 50,000 across 1,000 x 30 groups, two-way HC2 takes 36 ms and peaks at 174 MB, against 13.8 s and 970 MB before.
+Verified to machine precision against writing the dummies out, weighted and unweighted, balanced and unbalanced, from one factor to five, and against 1.x. At n = 40,000 with 2,000 groups, one-way HC2 takes about 4 ms here against 41.0 s in 1.0.6. At n = 50,000 across 1,000 x 30 groups, two-way HC2 takes 7 ms against 12.5 s before, and the R process peaks at 292 MB against 1,564 MB, of which 265 MB is an empty session with the package loaded.
 
 **The default with fixed effects therefore returns to `"HC2"`**, at any number of factors, which is the package default everywhere else and is what 1.x returns for the same call. An earlier draft of 2.0 fell back to `"HC1"` for two or more factors, on the understanding that HC2 there meant expanding the dummies. It does not.
 
@@ -197,7 +197,7 @@ so `h_ii` is the demeaned-X hat value plus `diag(P_D)`, whatever the number of f
 
 `"CR2"` is the exception. Its adjustment is built from cluster-level *blocks* of the hat matrix rather than from `h_ii`, and blocks do not decompose the way the diagonal does, so CR2 with `fixed_effects` still expands the dummies exactly as 1.0.6 did. It is available and exact; it simply costs what 1.0.6 charged for it.
 
-**What this is worth.** On 50,000 observations across 1,000 x 30 groups, `se_type = "HC2"` with two-way `fixed_effects` took 13.8 seconds and peaked at 970 MB; it now takes 36 milliseconds and peaks at 174 MB. The dummy matrix is never built, so the memory that used to make wide fixed effects impractical is simply not allocated.
+**What this is worth.** On 50,000 observations across 1,000 x 30 groups, `se_type = "HC2"` with two-way `fixed_effects` took 12.5 seconds in an R process peaking at 1,564 MB; it now takes 7 milliseconds in one peaking at 292 MB, and 265 MB of that is an empty session with the package loaded. The dummy matrix is never built, so the memory that used to make wide fixed effects impractical is simply not allocated. It is built in C++ rather than in R, which is why `gc()` never reported it and only the process's resident size does.
 
 **A rank-deficiency bug, fixed.** When one FE factor is spanned by the others (a nested factor, or a disconnected design), the FE design is rank deficient, and the nominal count `sum(levels) - K + 1` overstates its rank. 1.0.6 used that nominal count for the residual degrees of freedom, and for HC2 and HC3 it expanded the dummies, let a pivoted QR drop the redundant columns, and then read the hat values off the padded design. Its absorbed answer therefore disagreed with its own explicit-dummy fit, and disagreed differently depending on the `se_type`.
 
@@ -333,7 +333,7 @@ A regressor collinear with the others is dropped and returned as an NA coefficie
 ### Closed by the rewrite rather than by a fix
 
 - **#233, Horvitz-Thompson messages.** estimatr 1.x prints `` `simple` = FALSE, using complete cluster randomization `` and `` `condition_prs` not found, estimating probability of treatment to be constant... `` on every call, which in a simulation means every iteration. 2.0 requires `condition_prs`, so it never guesses a probability and never prints either message.
-- **#334, faster fixed effects.** The issue asks for `fixest`'s algorithm. 2.0 uses it: alternating projections in C++, 200x to 4,000x faster on the designs measured above.
+- **#334, faster fixed effects.** The issue asks for `fixest`'s algorithm. 2.0 uses it: alternating projections in C++, 4x to 10,000x faster on the designs measured above, the range widening with the number of levels.
 - **#365, replace AER tests with ivreg**, and **#402, skip tests relying on suggested packages.** Both are true by construction here: the suite never used AER, and every test needing `randomizr`, `carData` or `blkvar` is guarded with `skip_if_not_installed()`. The comparisons against 1.0.6 need no guard at all, because they read recorded answers rather than calling the older version.
 - **#260, bad defaulting to matched pairs.** The reporter has 17 blocks, one of which holds a single treated and single control unit, and estimatr 1.x collapses the whole design to matched pairs on 16 degrees of freedom. With two or more such blocks 2.0 now estimates the design properly; with exactly one, as here, it errors naming the block, because one small block leaves nothing to estimate its contribution against.
 
@@ -489,7 +489,7 @@ Fixed effects absorption is implemented using the Frisch-Waugh-Lovell theorem wi
 
 ```r
 lm_robust(y ~ z, data = dat, fixed_effects = ~block)
-# se_type = "HC2", bit-identical to 1.x, 17.8 ms where 1.0.6 takes 41.3 s
+# se_type = "HC2", bit-identical to 1.x, 4.1 ms where 1.0.6 takes 41.0 s
 # at n = 40,000 with 2,000 blocks
 
 lm_robust(y ~ z, data = dat, fixed_effects = ~block, clusters = cl)

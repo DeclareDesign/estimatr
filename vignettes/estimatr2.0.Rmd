@@ -27,7 +27,7 @@ estimatr 2.0 is a ground-up rewrite aimed at the DeclareDesign workflow: fit the
 
 Two things break, and each one is a deliberate trade. `horvitz_thompson()` takes one probability argument instead of five. Two stargazer helpers are gone. Every standard error 1.x could compute, 2.0 can still compute. What changes is which one a *default* reaches for when you absorb fixed effects with clusters, and that default now says so out loud.
 
-The gains concentrate where the algorithms changed. Ordinary `lm_robust()` is about twice as fast. Absorbed fixed effects are 133x faster at 500 blocks and 2,318x faster at 2,000, returning bit-identical numbers. Horvitz-Thompson under complete randomization is 888x faster at N = 3,000, because the N-by-N joint inclusion probability matrix is never built.
+The gains concentrate where the algorithms changed. Ordinary `lm_robust()` is about two and a half times as fast. Absorbed fixed effects are about 470x faster at 500 blocks and about 10,000x faster at 2,000, returning bit-identical numbers. Horvitz-Thompson under complete randomization is about 1,000x faster at N = 3,000, because the N-by-N joint inclusion probability matrix is never built.
 
 ## Getting it
 
@@ -167,9 +167,11 @@ lm_robust(y ~ z + x, data = dat, fixed_effects = ~ bl,
           clusters = cl, se_type = "CR2")$std.error
 ```
 
-**What the speed buys.** Absorbing a large number of fixed effects and still getting HC2 was impractical before. 40,000 observations across 2,000 blocks takes 1.x 41 seconds and 2.0 18 milliseconds, for the same number. Two-way tells most: 50,000 observations across 1,000 x 30 groups took 13.8 seconds and 970 MB in 1.x, and takes 36 milliseconds and 174 MB here. The memory that made wide fixed effects impractical is never allocated.
+**What the speed buys.** Absorbing a large number of fixed effects and still getting HC2 was impractical before. 40,000 observations across 2,000 blocks takes 1.x 41 seconds and 2.0 about 4 milliseconds, for a bit-identical number. Two-way tells most: 50,000 observations across 1,000 x 30 groups takes 1.x 12.5 seconds and 2.0 7 milliseconds. The memory is the more telling half. Peak resident set size for the whole R process is 1,564 MB in 1.x against 292 MB here, and 265 MB of that 292 is an empty R session with the package loaded, so the fit itself costs about 27 MB where 1.x needed 1.3 GB. The dummy matrix that made wide fixed effects impractical is never allocated, and because it is built in C++ rather than in R, `gc()` never saw it and only the process's resident size does.
 
 **A rank-deficiency bug goes with it.** If one FE factor is spanned by the others (a nested factor, or a disconnected design), the FE design is rank deficient. 1.x expanded the dummies, let a pivoted QR drop the redundant columns, and read the hat values off the padded design, so its absorbed answer disagreed with its own explicit-dummy fit. Taking `diag(P_D)` through a pseudo-inverse is exact at any rank, so 2.0 returns the dummy-regression answer, and uses the design's true rank for the residual degrees of freedom rather than the nominal level count.
+
+The two-way example just above is one of these designs, which is worth knowing because it was not constructed to be. Its 1,029 fixed-effect columns have rank 1,020, so nine levels are spanned by the others. 2.0's absorbed standard error matches its own explicit-dummy fit to 4.3e-17; 1.0.6's disagrees with its own by 1.9e-6, in the fourth significant digit. That is the only row in this vignette where the two versions do not agree to floating point, and the disagreement is 1.x being wrong rather than a change of convention.
 
 ### 3. Functions that are gone
 
@@ -285,39 +287,45 @@ Standard errors agree to 1e-10 with `blkvar::block_estimator(method = "hybrid_p"
 
 ## Speed
 
-Median times over 100 replications, fewer for the slowest cells, on an Apple M4 Pro under R 4.6.0, comparing estimatr 1.0.6 to 2.0.0 in separate R sessions. Both versions were run on this one machine, so the comparison is not limited by the platform: coefficients and standard errors agree to 1e-12 in every row, and in the fixed-effects table they are bit-identical. There is no row where 2.0 is slower; the smallest gain is 1.2x.
+Median times on an Apple M4 Pro under R 4.6.0, comparing estimatr 1.0.6 to 2.0.0. Both versions were run on this one machine, so the comparison is not limited by the platform.
+
+**Every cell below was measured in its own fresh R process**, 200 replications where a call is cheap and as few as 5 where one call takes 41 seconds. That is not fussiness. The 1.0.6 cells that build a large matrix are bound by garbage collection rather than by arithmetic, so their timings depend on how much the heap had already grown when they ran: measured in sequence after the fixed-effects rows, Horvitz-Thompson at N = 1000 reports 9.6 ms, and measured in a fresh process it reports 53.1 ms. The second number is the one a user meets. A benchmark whose value depends on which benchmark ran before it is not a measurement, so each row gets a process of its own.
+
+The two versions return the same answers, and more exactly than the previous version of this table claimed: **15 of the 18 rows are bit-identical in both coefficients and standard errors**, including every row of the first table, and the largest disagreement anywhere is 1.4e-17, in one Horvitz-Thompson standard error. **No row is slower in 2.0, and the number that bounds the gain is 1.3x**, at weighted CR2, where the two versions do nearly the same work.
+
+The two cells with the largest allocations, 2,000 blocks and Horvitz-Thompson at N = 3,000, move by a few percent from run to run even in fresh processes, so their ratios are given to two significant figures. Everything below comes from `data-raw/benchmark_vignette.R`, which is the source of these tables and reproduces them.
 
 | task | 1.0.6 | 2.0.0 | speedup |
 |---|---:|---:|---:|
-| `lm_robust`, HC2, n = 1000 | 0.93 ms | 0.50 ms | 1.9x |
-| `lm_robust`, classical, n = 1000 | 0.87 ms | 0.42 ms | 2.1x |
-| `lm_robust`, CR2, 100 clusters | 1.22 ms | 0.73 ms | 1.7x |
-| `lm_robust`, CR2, weighted | 1.03 ms | 0.83 ms | 1.2x |
-| `lm_robust`, CR2, n = 5000, 500 clusters | 5.16 ms | 2.35 ms | 2.2x |
-| `lm_robust`, HC2, n = 100 | 0.50 ms | 0.35 ms | 1.4x |
-| `lm_lin` | 1.10 ms | 0.62 ms | 1.8x |
-| `iv_robust` | 1.18 ms | 0.84 ms | 1.4x |
-| `difference_in_means` | 0.74 ms | 0.61 ms | 1.2x |
+| `lm_robust`, HC2, n = 1000 | 0.90 ms | 0.36 ms | 2.5x |
+| `lm_robust`, classical, n = 1000 | 0.84 ms | 0.34 ms | 2.5x |
+| `lm_robust`, CR2, 100 clusters | 1.21 ms | 0.66 ms | 1.8x |
+| `lm_robust`, CR2, weighted | 1.00 ms | 0.75 ms | 1.3x |
+| `lm_robust`, CR2, n = 5000, 500 clusters | 4.96 ms | 1.78 ms | 2.8x |
+| `lm_robust`, HC2, n = 100 | 0.50 ms | 0.33 ms | 1.5x |
+| `lm_lin` | 1.09 ms | 0.49 ms | 2.2x |
+| `iv_robust` | 1.20 ms | 0.72 ms | 1.7x |
+| `difference_in_means` | 0.70 ms | 0.42 ms | 1.7x |
 
-A simulation that calls `lm_robust()` 10,000 times saves about four seconds at n = 1000. That is the boring, everywhere-at-once gain. The interesting gains show up in the two places where the algorithms actually changed.
+A simulation that calls `lm_robust()` 10,000 times saves about five seconds at n = 1000. That is the boring, everywhere-at-once gain. The interesting gains show up in the two places where the algorithms actually changed.
 
 **Fixed effects.** 2.0 absorbs fixed effects by alternating projections in C++, the algorithm `fixest::feols` uses, rather than by building the full design matrix of dummies. Both versions default to HC2 here and return bit-identical numbers, so the default column is a like-for-like comparison.
 
 | design | 1.0.6, default (HC2) | 2.0.0, default (HC2) | speedup | 1.0.6, HC1 | 2.0.0, HC1 | speedup |
 |---|---:|---:|---:|---:|---:|---:|
-| 50 blocks, n = 1000 | 2.3 ms | 0.9 ms | 2.7x | 1.7 ms | 0.8 ms | 2.2x |
-| 500 blocks, n = 10,000 | 579 ms | 4.3 ms | 133x | 13.5 ms | 3.7 ms | 3.7x |
-| 2000 blocks, n = 40,000 | 41,280 ms | 17.8 ms | 2318x | 126 ms | 15.8 ms | 8.0x |
+| 50 blocks, n = 1000 | 2.27 ms | 0.54 ms | 4.2x | 1.68 ms | 0.54 ms | 3.1x |
+| 500 blocks, n = 10,000 | 563 ms | 1.19 ms | 470x | 14.2 ms | 1.16 ms | 12.2x |
+| 2000 blocks, n = 40,000 | 41,002 ms | 4.17 ms | 9,800x | 124 ms | 3.82 ms | 32.4x |
 
-The default column is where the algorithms differ most, because HC2 requires the hat matrix of the full design including every dummy, and 1.x builds it. That is why 40,000 observations with 2,000 blocks takes 1.0.6 41 seconds. The HC1 column shows the same computation with a standard error that never needed the full hat matrix, where 2.0 is still 2x to 8x faster because the demeaning itself is faster.
+The default column is where the algorithms differ most, because HC2 requires the hat matrix of the full design including every dummy, and 1.x builds it. That is why 40,000 observations with 2,000 blocks takes 1.0.6 41 seconds. The HC1 column shows the same computation with a standard error that never needed the full hat matrix, where 2.0 is still 3x to 32x faster because the demeaning itself is faster.
 
 **Horvitz-Thompson.** 1.x builds the full N-by-N joint inclusion probability matrix. 2.0 derives the same variance from scalar sufficient statistics, so the complete-randomization case is O(1) in N rather than O(N²).
 
 | design | 1.0.6 | 2.0.0 | speedup |
 |---|---:|---:|---:|
-| complete, N = 200 | 1.05 ms | 0.10 ms | 10x |
-| complete, N = 1000 | 52.3 ms | 0.16 ms | 322x |
-| complete, N = 3000 | 309 ms | 0.35 ms | 888x |
+| complete, N = 200 | 1.01 ms | 0.11 ms | 8.9x |
+| complete, N = 1000 | 53.1 ms | 0.17 ms | 308x |
+| complete, N = 3000 | 362 ms | 0.32 ms | 1,100x |
 
 Standard errors are identical to floating-point precision for simple, complete, blocked, clustered, and blocked-and-clustered designs.
 
@@ -340,9 +348,11 @@ microbenchmark(lm_robust(y ~ z + x, data = dat, clusters = cl), times = 100)
 
 ## Why rewrite at all
 
-1.x is about 6,782 lines; 2.0 is about 3,377. The reduction is not uniform, and where it came from is the interesting part.
+**2.0 is not a smaller package, and an earlier version of this section said it was.** Counted the same way on both branches, `R/` and `src/` together are 6,866 lines in 1.0.6 and 6,334 in 2.0, a reduction of 8 percent. Strip blank lines and comments and the two are within half a percent of each other, 4,072 against 4,050. The claim that 2.0 was half the size came from comparing 1.x's total lines against 2.0's code-only lines, which is two measurements rather than one comparison, and it does not survive counting both sides alike.
 
-The Horvitz-Thompson variance was the largest saving and the one that looked least likely. 1.x builds the full N-by-N matrix of joint inclusion probabilities, with 538 lines of helpers to construct it for each design family. Young's inequality bound for any complete-randomization design reduces to six scalar sufficient statistics per block, so the matrix never has to exist. Designs that cannot be described parametrically are a permutation matrix, and `tcrossprod()` handles those in one line. The whole estimator is 431 lines, and it is faster by a factor that grows with N.
+What did happen is that the complexity moved, and where it moved is the interesting part. Roxygen went from 1,597 lines to 773, because the S3 surface is generated rather than written out per class. C++ grew, from 509 lines to 692. The savings were real and they were spent: on the Pashley and Miratrix blocked-variance estimator, which 1.x does not have at all, on a wider `predict()`, and on the error messages that this release adds wherever 1.x returned a silent number.
+
+The Horvitz-Thompson variance was the largest saving and the one that looked least likely. 1.x builds the full N-by-N matrix of joint inclusion probabilities, with 538 lines of helpers to construct it for each design family. Young's inequality bound for any complete-randomization design reduces to six scalar sufficient statistics per block, so the matrix never has to exist. Designs that cannot be described parametrically are a permutation matrix, and `tcrossprod()` handles those in one line. Counting code lines on both sides alike, the estimator and its helper go from 746 lines to 339, and it is faster by a factor that grows with N.
 
 Fixed effects were the second. Absorbing by alternating projections in C++ is the `feols` algorithm, and it makes the number of fixed effects almost free. The leverage identity then buys back HC2 and HC3 at the cost of a single vector, which is why absorption no longer costs a standard error type in the common case.
 

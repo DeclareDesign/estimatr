@@ -19,7 +19,7 @@ Three vignettes ship with the package:
 
 ## What it is
 
-`lm_robust`, `lm_lin`, `iv_robust`, `lh_robust`, `difference_in_means` and `horvitz_thompson`, in roughly half the lines, with a Pashley and Miratrix (2021) blocked-variance estimator that 1.x does not have.
+`lm_robust`, `lm_lin`, `iv_robust`, `lh_robust`, `difference_in_means` and `horvitz_thompson`, with a Pashley and Miratrix (2021) blocked-variance estimator that 1.x does not have.
 
 The six estimators keep their 1.0.6 signatures, except `horvitz_thompson()`, whose five probability arguments consolidate into `condition_prs`; the removals are below. Run side by side on one machine, the numbers match to 1e-12 across every supported standard error type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes. The suite is 2,236 assertions, of which 695 run against answers recorded from an installed estimatr 1.0.6 (`data-raw/make_estimatr_reference.R` produces the recording) at a tolerance of 1e-9, because a fixture recorded on one platform meets a different BLAS on another and the floor there is the linear algebra rather than this package.
 
