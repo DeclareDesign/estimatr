@@ -3,11 +3,13 @@
        - Graeme Blair has not yet written to CRAN to confirm the maintainer
          transfer. He was asked by text on 2026-08-26, so this is waiting on
          him. His message needs to cover fabricatr too.
-       - The eventstudyr maintainer has not actually been emailed.
-       - The projoint maintainer has not actually been emailed.
-       The two revdep notices should go out about two weeks before the
-       submission, not with it, so they set the earliest submission date.
+       That is the only line left. Do not delete this block until it is
+       true, then delete the whole block.
      Closed since 2026-08-23:
+       - Both reverse-dependency maintainers were emailed on 2026-08-26,
+         which is what the two sentences below claim. CRAN wants that notice
+         to arrive ahead of the submission rather than with it, so the
+         earliest sensible submission date is about 2026-09-09.
        - win-builder is back Status: 1 NOTE on devel and release, the
          maintainer change and nothing else, and the built zip was checked
          to carry this tarball's DESCRIPTION rather than an older one.
@@ -61,9 +63,9 @@ An earlier run of this release broke four. Three of those breaks were regression
 
 Two remain, and in both cases the package is reading something 1.0.6 should not have produced.
 
-`eventstudyr` fails on three assertions that read a fitted object's `felevels` list by the element name `V1`. estimatr 1.0.6 named those elements after their terms except with a single fixed-effect factor on a model fitted with missing data, where it fell back to `V1`; this release names them consistently. Keeping 1.0.6's behaviour would mean keeping a bug that loses the term name, which also killed CR2 outright and broke `predict()` on those fits. No estimate changes: eventstudyr's one-way branch sizes its degrees-of-freedom correction as `1 + rank` without consulting the field, and its comparisons against recorded Stata output are unaffected. Its maintainer has been notified.
+`eventstudyr` fails on three assertions that read a fitted object's `felevels` list by the element name `V1`. estimatr 1.0.6 named those elements after their terms except with a single fixed-effect factor on a model fitted with missing data, where it fell back to `V1`; this release names them consistently. Keeping 1.0.6's behaviour would mean keeping a bug that loses the term name, which also killed CR2 outright and broke `predict()` on those fits. No estimate changes: eventstudyr's one-way branch sizes its degrees-of-freedom correction as `1 + rank` without consulting the field, and its comparisons against recorded Stata output are unaffected. Its maintainer was emailed on 2026-08-26.
 
-`projoint`'s `analyze.Rmd` vignette fails because this release refuses a cluster-robust variance when the data contain a single cluster. `predict_tau()` groups respondents by how many attributes match and fits an intercept-only model within each group; its first group holds one observation belonging to one cluster. 1.0.6 returned a standard error of 5.9e-17 for that fit, with a t statistic of 1.1e15, a p value of 5.7e-16 and a zero-width confidence interval, silently. projoint already treats that output as unusable: two lines below the call it drops any row whose standard error is at or below `.Machine$double.eps`, under the comment "remove if the standard error is extremely small". The error now fires before that filter can run. The fix on their side is to drop the groups that cannot support the fit before calling rather than after, and its maintainer has been notified.
+`projoint`'s `analyze.Rmd` vignette fails because this release refuses a cluster-robust variance when the data contain a single cluster. `predict_tau()` groups respondents by how many attributes match and fits an intercept-only model within each group; its first group holds one observation belonging to one cluster. 1.0.6 returned a standard error of 5.9e-17 for that fit, with a t statistic of 1.1e15, a p value of 5.7e-16 and a zero-width confidence interval, silently. projoint already treats that output as unusable: two lines below the call it drops any row whose standard error is at or below `.Machine$double.eps`, under the comment "remove if the standard error is extremely small". The error now fires before that filter can run. The fix on their side is to drop the groups that cannot support the fit before calling rather than after. Its maintainer was emailed on 2026-08-26, with the replacement lines and a check that they return the same numbers.
 
 One default changes, away from an estimator that would require expanding the fixed effects into dummies. Absorbed fixed effects with clusters default to CR0 where 1.0.6 defaulted to CR2, and emit a warning, once per session, that names the 1.0.6 default and names the `se_type` that accepts the new one. Naming `se_type = "CR2"` returns the 1.0.6 number exactly. Unclustered absorbed fixed effects keep 1.0.6's HC2 default at any number of factors: HC2 and HC3 no longer need the dummies, so there is nothing to trade away.
 
