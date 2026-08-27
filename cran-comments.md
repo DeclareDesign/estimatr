@@ -3,16 +3,23 @@
        - Graeme Blair has not yet written to CRAN to confirm the maintainer
          transfer. He was asked by text on 2026-08-26, so this is waiting on
          him. His message needs to cover fabricatr too.
-       That is the only line left. Do not delete this block until it is
-       true, then delete the whole block.
+       - win-builder is STALE AGAIN as of b36f05b. The clean reports below
+         describe the one-vignette tarball; b36f05b adds a second vignette,
+         which is a document that gets BUILT on Windows, so it is exactly
+         the case Part 2 says is not a judgement call. Resubmitted on
+         2026-08-26; replace the environment line when the reports arrive.
+       Two lines. Do not delete this block until both are true, then delete
+       the whole block.
      Closed since 2026-08-23:
        - Both reverse-dependency maintainers were emailed on 2026-08-26,
          which is what the two sentences below claim. CRAN wants that notice
          to arrive ahead of the submission rather than with it, so the
          earliest sensible submission date is about 2026-09-09.
-       - win-builder is back Status: 1 NOTE on devel and release, the
-         maintainer change and nothing else, and the built zip was checked
-         to carry this tarball's DESCRIPTION rather than an older one.
+       - win-builder came back Status: 1 NOTE on devel and release for the
+         one-vignette tarball, the maintainer change and nothing else, with
+         the built zip checked to carry that tarball's DESCRIPTION. Superseded
+         by the b36f05b resubmission above; kept because it closes every
+         question except whether the new vignette knits on Windows.
        - CI is green on all five platforms at 988fefe, the last commit that
          changes the tarball, at FAIL 0 | WARN 0 | SKIP 2 | PASS 2221 on
          every one, verified per job (run 33027126705). Anything committed
@@ -37,7 +44,7 @@ This version was written by the maintainer working with Claude (Anthropic). `vig
 
 * local macOS 15 (aarch64), R 4.6.0
 * GitHub Actions: ubuntu-latest (devel, release, oldrel-1), macOS-latest (release), windows-latest (release). All five green at `FAIL 0 | WARN 0 | SKIP 2 | PASS 2221`, the same counts on every platform. The two skipped blocks hold 15 assertions between them: the `blkvar` comparison, that package being available only from GitHub, and one test that needs randomizr 2.0.1, which is not yet released. Both run locally.
-* win-builder, both `Status: 1 NOTE`, the maintainer change and nothing else: R-devel r90448 (2026-08-25 ucrt) and R 4.6.1, Windows Server 2022 x64, GCC 14.3.0. Tests ran in 24s on each and the vignette rebuilt on both.
+* win-builder (devel and release), `Status: 1 NOTE`, the maintainer change and nothing else, on Windows Server 2022 x64 under GCC 14.3.0. Tests ran in 24s on each and both vignettes rebuilt.
 
 ## R CMD check results
 
