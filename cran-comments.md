@@ -5,8 +5,10 @@
        - The eventstudyr maintainer has not actually been emailed.
        - The projoint maintainer has not actually been emailed.
      Closed since 2026-08-23:
-       - CI is green on all five platforms at 8982f87, the head this file
-         describes, at FAIL 0 | WARN 0 | SKIP 2 | PASS 2221 on every one.
+       - CI is green on all five platforms at 988fefe, the last commit that
+         changes the tarball, at FAIL 0 | WARN 0 | SKIP 2 | PASS 2221 on
+         every one, verified per job (run 33027126705). Anything committed
+         after it touches only Rbuildignored files.
        - The reverse-dependency counts below were measured on 2026-08-23
          against 77a4423 and are current: no code has changed since.
        - The assertion counts were re-measured on 2026-08-26 by
