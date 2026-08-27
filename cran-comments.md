@@ -1,14 +1,17 @@
 <!-- NOT READY TO SUBMIT. Delete this block once every line below is true.
-     Outstanding as of 2026-08-23:
+     Outstanding as of 2026-08-26:
        - Graeme Blair's maintainer-transfer email to CRAN has not been sent.
-       - win-builder has not been run.
+       - win-builder has not been run against this tarball.
        - The eventstudyr maintainer has not actually been emailed.
        - The projoint maintainer has not actually been emailed.
-       - CI is green on all five platforms as of 245296d, but has NOT run
-         against the eleven commits that follow it, which include the
-         fixed-effects leverage work.
+     Closed since 2026-08-23:
+       - CI is green on all five platforms at 8982f87, the head this file
+         describes, at FAIL 0 | WARN 0 | SKIP 2 | PASS 2221 on every one.
        - The reverse-dependency counts below were measured on 2026-08-23
-         against 77a4423 and are current.
+         against 77a4423 and are current: no code has changed since.
+       - The assertion counts were re-measured on 2026-08-26 by
+         data-raw/count_assertions.R. The 343 this file used to quote was the
+         sum of six file totals rather than of the comparisons in them.
      Every claim in the sections below is written for the submitted state, so
      do not send this file while this block is still here. -->
 
@@ -16,14 +19,14 @@
 
 estimatr 2.0.0 is a rewrite of the package. The six estimators keep their signatures, with one exception: `horvitz_thompson()`, whose five probability arguments consolidate into `condition_prs`. Numerical results agree to 1e-12 wherever both versions answer. The removals and the breaking changes are listed in NEWS.md and in `vignette("estimatr2.0")`.
 
-**This submission changes the maintainer** from Graeme Blair <graeme.blair@gmail.com> to Alexander Coppock <acoppock@gmail.com>. Graeme Blair has written to CRAN separately to confirm the transfer. He remains an author.
+**This submission changes the maintainer** from Graeme Blair <graeme.blair@gmail.com> to Alexander Coppock <acoppock@gmail.com>. Graeme Blair has written to CRAN separately to confirm the transfer. He remains an author. One other change to `Authors@R`: Macartan Humphreys has asked to be listed as a contributor rather than an author, and his role moves from `aut` to `ctb`.
 
-This version was written by the maintainer working with Claude (Anthropic). `NEWS.md` says so and sets out the evidence: signatures unchanged except `horvitz_thompson()`'s probability arguments, with the numbers agreeing to 1e-12 same-machine, a suite of 2,235 assertions green on five platforms, 695 of them against answers recorded from an installed 1.0.6, 343 against independent implementations (`sandwich`, `clubSandwich`, `ivreg`, Stata, `fixest`, `plm`, `blkvar`), and the full returned surface of sixteen fit types pinned by test. Every reverse dependency was checked.
+This version was written by the maintainer working with Claude (Anthropic). `NEWS.md` says so and sets out the evidence: signatures unchanged except `horvitz_thompson()`'s probability arguments, with the numbers agreeing to 1e-12 same-machine, a suite of 2,236 assertions green on five platforms bar the 15 that need packages CRAN does not serve, 695 against answers recorded from an installed 1.0.6, 268 against independent implementations (`sandwich`, `clubSandwich`, `ivreg`, Stata, `fixest`, `plm`, `blkvar`), and the full returned surface of sixteen fit types pinned by test. Every reverse dependency was checked.
 
 ## Test environments
 
 * local macOS 15 (aarch64), R 4.6.0
-* GitHub Actions: ubuntu-latest (devel, release, oldrel-1), macOS-latest (release), windows-latest (release). All five green, each reporting the same counts; the single skip is a test guarded on `blkvar`, which is not on CRAN.
+* GitHub Actions: ubuntu-latest (devel, release, oldrel-1), macOS-latest (release), windows-latest (release). All five green at `FAIL 0 | WARN 0 | SKIP 2 | PASS 2221`, the same counts on every platform. The two skipped blocks hold 15 assertions between them: the `blkvar` comparison, that package being available only from GitHub, and one test that needs randomizr 2.0.1, which is not yet released. Both run locally.
 * win-builder (devel and release)
 
 ## R CMD check results
