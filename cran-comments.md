@@ -1,10 +1,14 @@
 <!-- NOT READY TO SUBMIT. Delete this block once every line below is true.
      Outstanding as of 2026-08-26:
        - Graeme Blair's maintainer-transfer email to CRAN has not been sent.
-       - win-builder has not been run against this tarball.
        - The eventstudyr maintainer has not actually been emailed.
        - The projoint maintainer has not actually been emailed.
+       The two revdep notices should go out about two weeks before the
+       submission, not with it, so they set the earliest submission date.
      Closed since 2026-08-23:
+       - win-builder is back Status: 1 NOTE on devel and release, the
+         maintainer change and nothing else, and the built zip was checked
+         to carry this tarball's DESCRIPTION rather than an older one.
        - CI is green on all five platforms at 988fefe, the last commit that
          changes the tarball, at FAIL 0 | WARN 0 | SKIP 2 | PASS 2221 on
          every one, verified per job (run 33027126705). Anything committed
@@ -29,7 +33,7 @@ This version was written by the maintainer working with Claude (Anthropic). `NEW
 
 * local macOS 15 (aarch64), R 4.6.0
 * GitHub Actions: ubuntu-latest (devel, release, oldrel-1), macOS-latest (release), windows-latest (release). All five green at `FAIL 0 | WARN 0 | SKIP 2 | PASS 2221`, the same counts on every platform. The two skipped blocks hold 15 assertions between them: the `blkvar` comparison, that package being available only from GitHub, and one test that needs randomizr 2.0.1, which is not yet released. Both run locally.
-* win-builder (devel and release)
+* win-builder, both `Status: 1 NOTE`, the maintainer change and nothing else: R-devel r90448 (2026-08-25 ucrt) and R 4.6.1, Windows Server 2022 x64, GCC 14.3.0. Tests ran in 24s on each and the vignette rebuilt on both.
 
 ## R CMD check results
 
