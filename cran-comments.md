@@ -1,6 +1,8 @@
 <!-- NOT READY TO SUBMIT. Delete this block once every line below is true.
      Outstanding as of 2026-08-26:
-       - Graeme Blair's maintainer-transfer email to CRAN has not been sent.
+       - Graeme Blair has not yet written to CRAN to confirm the maintainer
+         transfer. He was asked by text on 2026-08-26, so this is waiting on
+         him. His message needs to cover fabricatr too.
        - The eventstudyr maintainer has not actually been emailed.
        - The projoint maintainer has not actually been emailed.
        The two revdep notices should go out about two weeks before the
