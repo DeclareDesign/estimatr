@@ -26,7 +26,9 @@ LazyData: true
 Suggests: fabricatr (>= 0.10.0), randomizr (>= 0.20.0), AER,
         clubSandwich, emmeans (>= 1.4), estimability, margins,
         modelsummary, prediction, RcppEigen, sandwich, stargazer,
-        testthat, car
+        testthat, car, DeclareDesign, GGally, ggplot2, huxtable, knitr,
+        lmtest, magrittr, microbenchmark, purrr, rsample, tidyverse,
+        xtable
 Enhances: texreg
 NeedsCompilation: yes
 Packaged: 2025-02-28 18:37:05 UTC; gblair
