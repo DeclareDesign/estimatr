@@ -1,0 +1,137 @@
+---
+title: "estimatr in the tidyverse"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{estimatr in the tidyverse}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", message = FALSE,
+                      warning = FALSE, fig.width = 6, fig.height = 3.5)
+have <- function(...) all(vapply(c(...), requireNamespace, logical(1), quietly = TRUE))
+library(estimatr)
+options(digits = 3)
+```
+
+Everything estimatr returns is a list, and `tidy()` turns the part you want into a data frame. From there the tidyverse applies unchanged. What follows uses `lm_robust()`, but `tidy()` works the same way on `lm_lin()`, `iv_robust()`, `lh_robust()`, `difference_in_means()` and `horvitz_thompson()` fits.
+
+The examples use the Swiss fertility data that ships with R.
+
+## Getting tidy
+
+```{r}
+fit <- lm_robust(Fertility ~ Agriculture + Catholic, data = swiss)
+tidy(fit)
+```
+
+One row per coefficient, and an `outcome` column, which matters because `lm_robust()` accepts a matrix of outcomes and fits them all at once.
+
+`glance()` gives the one-row model summary instead.
+
+```{r}
+glance(fit)
+```
+
+## dplyr
+
+```{r, eval = have("dplyr")}
+library(dplyr)
+
+fit |>
+  tidy() |>
+  filter(term != "(Intercept)") |>
+  mutate(significant = p.value <= 0.05) |>
+  select(term, estimate, std.error, significant)
+```
+
+## ggplot2
+
+A coefficient plot is the tidy data frame with `geom_pointrange()` on it.
+
+```{r, eval = have("dplyr", "ggplot2")}
+library(ggplot2)
+
+gg_df <- fit |>
+  tidy() |>
+  filter(term != "(Intercept)")
+
+ggplot(gg_df, aes(x = estimate, y = term)) +
+  geom_vline(xintercept = 0, linetype = 2, colour = "grey50") +
+  geom_pointrange(aes(xmin = conf.low, xmax = conf.high)) +
+  labs(x = "Estimate, with 95% confidence interval", y = NULL) +
+  theme_minimal()
+```
+
+`geom_smooth()` takes `lm_robust` as a method, so the ribbon reflects the robust variance rather than the classical one.
+
+```{r, eval = have("ggplot2")}
+ggplot(swiss, aes(x = Agriculture, y = Fertility)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm_robust", formula = y ~ x) +
+  theme_minimal()
+```
+
+The formula can be anything `lm_robust()` accepts, polynomials included.
+
+```{r, eval = have("ggplot2")}
+ggplot(swiss, aes(x = Agriculture, y = Fertility)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm_robust", formula = y ~ poly(x, 3, raw = TRUE)) +
+  theme_minimal()
+```
+
+## Many models with purrr
+
+Fitting the same model on subsets, then stacking the results:
+
+```{r, eval = have("dplyr", "purrr")}
+library(purrr)
+
+swiss |>
+  mutate(educated = Education > 8) |>
+  split(~ educated) |>
+  map(\(d) lm_robust(Fertility ~ Catholic, data = d)) |>
+  map(tidy) |>
+  list_rbind(names_to = "educated") |>
+  filter(term == "Catholic")
+```
+
+Fitting different outcomes on the same regressor:
+
+```{r, eval = have("dplyr", "purrr")}
+c("Fertility", "Education", "Agriculture") |>
+  map(\(y) lm_robust(reformulate("Catholic", y), data = swiss)) |>
+  map(tidy) |>
+  list_rbind() |>
+  filter(term == "Catholic")
+```
+
+Several outcomes at once is also a single call, and considerably faster, since the design matrix is factorized once:
+
+```{r}
+tidy(lm_robust(cbind(Fertility, Education, Agriculture) ~ Catholic, data = swiss))
+```
+
+## Bootstrapping
+
+`tidy()` output stacks, so a bootstrap is a loop over resamples.
+
+```{r, eval = have("dplyr", "purrr")}
+set.seed(1)
+
+boot <- map(1:200, \(i) {
+  d <- swiss[sample(nrow(swiss), replace = TRUE), ]
+  tidy(lm_robust(Fertility ~ Catholic + Agriculture, data = d))
+}) |>
+  list_rbind()
+
+boot |>
+  group_by(term) |>
+  summarise(bootstrap_se = sd(estimate)) |>
+  left_join(tidy(lm_robust(Fertility ~ Catholic + Agriculture, data = swiss)) |>
+              select(term, hc2_se = std.error), by = "term")
+```
+
+The bootstrap standard errors and the HC2 standard errors are close, which is the expected result: both are estimating the same thing without assuming homoskedasticity.

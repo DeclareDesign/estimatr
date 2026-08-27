@@ -1,0 +1,271 @@
+---
+title: "Getting started with estimatr"
+output: rmarkdown::html_vignette
+bibliography: estimatr.bib
+link-citations: yes
+vignette: >
+  %\VignetteIndexEntry{Getting started with estimatr}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", message = FALSE)
+has_randomizr <- requireNamespace("randomizr", quietly = TRUE)
+has_texreg <- requireNamespace("texreg", quietly = TRUE)
+library(estimatr)
+options(digits = 4)
+```
+
+estimatr provides a small set of estimators for design-based inference, with the variance estimators and degrees-of-freedom corrections that social scientists actually use, and it fits them quickly. Base R and most packages default to classical standard errors, which are rarely the ones you want for experimental or survey data; getting robust or cluster-robust standard errors usually means fitting a model in one package and correcting it in another. Here the correction is an argument.
+
+Six estimators, and everything else in the package supports them:
+
+| function | what it estimates |
+|---|---|
+| `lm_robust()` | linear regression with heteroskedasticity-robust or cluster-robust standard errors |
+| `lm_lin()` | a treatment effect adjusted for pre-treatment covariates, following @lin2013 |
+| `iv_robust()` | two-stage least squares |
+| `difference_in_means()` | a difference in means, with the variance that matches the randomization |
+| `horvitz_thompson()` | an average treatment effect by inverse probability weighting |
+| `lh_robust()` | a linear combination of coefficients, or several tested jointly |
+
+This vignette shows each of them on one running example. `vignette("mathematical-notes")` gives the definitions and the citations; `vignette("estimatr2.0")` is for readers coming from estimatr 1.x, and lists what changed.
+
+## The example data
+
+One hundred units and a pre-treatment covariate, with the same experiment run three ways: complete random assignment of half the sample, cluster assignment of ten of twenty clusters, and block assignment of five units within each of ten blocks.
+
+```{r}
+set.seed(42)
+N <- 100
+
+dat <- data.frame(
+  x  = runif(N),
+  cl = rep(letters[1:20], each = 5)
+)
+dat$y0 <- rnorm(N, mean = dat$x)   # control potential outcome
+dat$y1 <- dat$y0 + 0.35            # treatment potential outcome, a constant effect
+
+# Complete random assignment: exactly 50 treated
+dat$z <- 0
+dat$z[sample(N, N / 2)] <- 1
+dat$y <- ifelse(dat$z == 1, dat$y1, dat$y0)
+
+# Cluster random assignment: exactly 10 of the 20 clusters treated
+treated_clusters <- sample(unique(dat$cl), 10)
+dat$z_cl <- as.integer(dat$cl %in% treated_clusters)
+dat$y_cl <- ifelse(dat$z_cl == 1, dat$y1, dat$y0)
+
+# Block random assignment: ten blocks defined by the covariate, five of the
+# ten units in each block treated
+dat$block <- cut(dat$x, breaks = quantile(dat$x, seq(0, 1, 0.1)),
+                 labels = FALSE, include.lowest = TRUE)
+dat$z_bl <- ave(dat$z, dat$block, FUN = function(g) sample(rep(0:1, each = 5)))
+dat$y_bl <- ifelse(dat$z_bl == 1, dat$y1, dat$y0)
+
+head(dat)
+```
+
+The true average treatment effect is 0.35 by construction, so you can see how each estimator does.
+
+## `lm_robust()`
+
+Usage follows `lm()`. The difference is the default standard error: HC2 rather than classical.
+
+```{r}
+fit <- lm_robust(y ~ z + x, data = dat)
+fit
+```
+
+`summary()` adds the R-squared and the F statistic; `tidy()` returns the coefficient table as a data frame, which is usually what you want next.
+
+```{r}
+tidy(fit)
+```
+
+### Clustered standard errors
+
+Pass the name of the cluster variable. The default becomes CR2, the cluster analogue of HC2, using the small-sample correction of @pustejovskytipton2018.
+
+```{r}
+# Ignoring the clustered assignment understates the standard error
+tidy(lm_robust(y_cl ~ z_cl + x, data = dat))[2, ]
+
+# Accounting for it
+tidy(lm_robust(y_cl ~ z_cl + x, data = dat, clusters = cl))[2, ]
+```
+
+Notice the degrees of freedom as well as the standard error. Under CR2 they are computed per coefficient by a Satterthwaite approximation, so they are not the residual degrees of freedom and they differ across terms in one fit.
+
+### Choosing a different variance estimator
+
+`se_type` takes `"classical"`, `"HC0"`, `"HC1"` (equivalently `"stata"`), `"HC2"`, `"HC3"` without clusters, and `"CR0"`, `"stata"`, `"CR2"` with them. Reproducing Stata is a matter of asking for it.
+
+```{r}
+c(
+  HC2       = lm_robust(y ~ z + x, data = dat, se_type = "HC2")$std.error[["z"]],
+  classical = lm_robust(y ~ z + x, data = dat, se_type = "classical")$std.error[["z"]],
+  stata     = lm_robust(y ~ z + x, data = dat, se_type = "stata")$std.error[["z"]]
+)
+```
+
+### Fixed effects
+
+`fixed_effects` takes a right-sided formula and absorbs those groups rather than adding them as dummy columns. The estimates and standard errors are identical to writing the dummies out, and on wide fixed effects it is dramatically faster: 40,000 observations across 2,000 blocks takes 1.x 41 seconds and 2.0 18 milliseconds.
+
+```{r}
+lm_robust(y_bl ~ z_bl, data = dat, fixed_effects = ~ block)
+
+# The same numbers, the slow way
+tidy(lm_robust(y_bl ~ z_bl + factor(block), data = dat))[2, 1:4]
+```
+
+The absorbed levels are kept in `fit$felevels`. One caution, and it is the only default that moved in 2.0: `fixed_effects` combined with `clusters` now defaults to `se_type = "CR0"` where 1.x defaulted to `"CR2"`, because CR2 is the one estimator that still has to expand the dummies. It warns once per session, and asking for `se_type = "CR2"` by name gets the 1.x number back.
+
+### Weights
+
+```{r}
+dat$w <- runif(N, 0.5, 1.5)
+tidy(lm_robust(y ~ z + x, data = dat, weights = w))[2, ]
+```
+
+Weighted HC2 and HC3 differ from Stata's, because the two use different definitions of the hat matrix. `vignette("mathematical-notes")` sets out the difference and why estimatr follows the R convention.
+
+## `lm_lin()`
+
+Adjusting for pre-treatment covariates is standard practice, but @freedman2008 showed that doing it with an ordinary regression can bias the estimated treatment effect. @lin2013 proposed the fix: center every covariate, interact each with treatment, and regress the outcome on treatment, the centered covariates, and the interactions.
+
+`lm_lin()` does the pre-processing for you. It takes the treatment in `formula` and the covariates in a right-sided `covariates` formula; everything else is `lm_robust()`'s.
+
+```{r}
+lin_fit <- lm_lin(y ~ z, covariates = ~ x, data = dat)
+tidy(lin_fit)
+```
+
+The `z` row is the estimate of the average treatment effect. Centering is what makes it so: at the covariate means the interaction terms drop out. The centers used are returned in `scaled_center`, and centering happens after any function in the formula is evaluated, so `~ log(x)` centers the log.
+
+```{r}
+lin_fit$scaled_center
+```
+
+## `iv_robust()`
+
+Two-stage least squares, with the same `se_type` menu. Instruments go after a vertical bar.
+
+```{r}
+# Manufacturing an instrument for the example: `inst` shifts `x`
+dat$inst <- dat$x + rnorm(N, sd = 0.3)
+iv_fit <- iv_robust(y ~ x | inst, data = dat)
+summary(iv_fit)
+```
+
+`diagnostics = TRUE` adds the weak-instrument, Wu-Hausman and Sargan tests. `residuals()` returns the structural residuals, $y - X\widehat{\beta}$, rather than the second-stage ones.
+
+## `difference_in_means()`
+
+A difference in means is simple until the design is blocked or clustered, at which point the point estimate has to average over blocks and the variance has to reflect how units were actually assigned. `difference_in_means()` picks the estimator that matches the design and tells you which one it picked.
+
+```{r}
+dim_fit <- difference_in_means(y ~ z, data = dat)
+dim_fit
+dim_fit$design
+```
+
+With no blocks or clusters, the variance and degrees of freedom are what `t.test()` computes. Pass `clusters` and the design changes, and so does the estimator:
+
+```{r}
+dim_cl <- difference_in_means(y_cl ~ z_cl, data = dat, clusters = cl)
+dim_cl$design
+tidy(dim_cl)
+```
+
+`blocks` works the same way. estimatr 2.0 accepts blocked designs that 1.x refused, using the estimators of @pashleymiratrix2021: blocks with at least two treated and two control units carry their own variance, blocks with a singleton arm have their variance estimated across such blocks, and a design holding both kinds combines the two. Always check `design` rather than assuming.
+
+```{r}
+# The blocked version of the experiment
+dim_bl <- difference_in_means(y_bl ~ z_bl, data = dat, blocks = block)
+dim_bl$design
+tidy(dim_bl)
+
+# Matched pairs are recognised as such
+difference_in_means(extra ~ group, data = sleep, blocks = ID)$design
+```
+
+## `horvitz_thompson()`
+
+When you know how treatment was assigned, you can estimate the average treatment effect without a model, by weighting each observed outcome by the inverse of the probability of the condition it was observed under. The estimator is unbiased, and it handles designs that regression handles awkwardly: clusters of unequal size, per-unit probabilities that differ, assignment schemes with dependence across units.
+
+`condition_prs` is the one argument that describes the design. In its simplest form it is a named vector of condition probabilities:
+
+```{r}
+horvitz_thompson(y ~ z, data = dat, condition_prs = c("0" = 0.5, "1" = 0.5))
+```
+
+Better, pass the randomization declaration itself. A declaration carries the block structure, the cluster structure, the per-unit probabilities and whether assignment was simple or complete, which is what lets estimatr use the design-aware variance rather than a bound that is valid for any design but tight only for Bernoulli assignment.
+
+```{r, eval = has_randomizr}
+library(randomizr)
+decl <- declare_ra(N = N, prob = 0.5, simple = FALSE)
+horvitz_thompson(y ~ z, data = dat, condition_prs = decl)
+```
+
+Clustered and blocked designs work the same way: describe the design once, in the declaration.
+
+```{r, eval = has_randomizr}
+decl_cl <- declare_ra(clusters = dat$cl, prob = 0.5, simple = FALSE)
+horvitz_thompson(y_cl ~ z_cl, data = dat, condition_prs = decl_cl)
+```
+
+A design you cannot describe parametrically becomes a permutation matrix, which `declare_ra()` also accepts, and which replaces the `condition_pr_mat` machinery of 1.x.
+
+```{r, eval = has_randomizr}
+perms <- replicate(200, sample(rep(0:1, each = N / 2)))
+decl_custom <- declare_ra(permutation_matrix = perms)
+horvitz_thompson(y ~ z, data = dat, condition_prs = decl_custom)$std.error
+```
+
+With more than two arms, `condition1` and `condition2` select the contrast. The estimand stays the average treatment effect over all N units of the design, so `data` must carry one row per unit including the arms outside the contrast.
+
+## `lh_robust()`
+
+To test a linear combination of coefficients, or several at once, `lh_robust()` fits the model and applies `car::linearHypothesis()` to it, keeping the robust variance and the degrees of freedom of the fit.
+
+```{r}
+lh_fit <- lh_robust(y ~ z + x, data = dat, linear_hypothesis = "z + 2*x = 0")
+tidy(lh_fit)
+```
+
+Several restrictions give a joint Wald test as well, which 1.x declined to compute.
+
+```{r}
+joint <- lh_robust(y ~ z + x, data = dat, linear_hypothesis = c("z = 0", "x = 0"))
+joint$joint_hypothesis
+```
+
+## Working with the output
+
+Every estimator returns an object supporting the S3 methods you would expect: `summary()`, `print()`, `tidy()`, `glance()`, `coef()`, `confint()`, `vcov()`, `nobs()`, and, for the regression estimators, `predict()`, `residuals()` and `update()`.
+
+```{r}
+glance(fit)
+confint(fit)
+```
+
+Regression tables work through the usual packages. `texreg` and `modelsummary` both take `lm_robust` objects directly.
+
+```{r, eval = has_texreg, results = "asis"}
+texreg::htmlreg(list(fit, lin_fit), include.ci = FALSE, caption = "")
+```
+
+`emmeans` also has methods for `lm_robust` fits, for estimated marginal means and contrasts.
+
+Note that `starprep()` and `commarobust()`, the stargazer helpers from 1.x, are gone in 2.0. Both remain as names that error and say so.
+
+## Where to go next
+
+- `vignette("mathematical-notes")` for the definition of every estimator and variance above, with citations.
+- `vignette("estimatr_guarantees")` for what the package promises to compute correctly, and the measurement of each promise.
+- `vignette("estimatr2.0")` if you are porting code from estimatr 1.x.
+
+# References

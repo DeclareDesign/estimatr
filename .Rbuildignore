@@ -11,3 +11,5 @@
 ^data-raw$
 ^cran-comments\.md$
 ^revdep$
+^vignettes/estimatr-in-the-tidyverse\.Rmd$
+^vignettes/regression-tables\.Rmd$

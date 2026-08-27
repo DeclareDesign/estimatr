@@ -7,7 +7,16 @@ install.packages("estimatr")
 vignette("estimatr2.0")
 ```
 
-The vignette is the document to read first. It covers what does not change, what changes and why, how to port a 1.x script, and the benchmarks.
+The vignette is the document to read first if you are coming from 1.x. It covers what does not change, what changes and why, how to port a 1.x script, and the benchmarks.
+
+Four vignettes ship with the package:
+
+| vignette | what it is for |
+|---|---|
+| `estimatr2.0` | porting from 1.x: what changed, why, and the benchmarks |
+| `getting-started` | the six estimators, on one worked example |
+| `mathematical-notes` | the definition of every estimator and variance, with citations |
+| `estimatr_guarantees` | what the package promises to compute correctly, measured when the vignette builds |
 
 ## What it is
 
