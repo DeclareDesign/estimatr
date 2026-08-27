@@ -1,0 +1,226 @@
+---
+title: "What estimatr guarantees"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{What estimatr guarantees}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", message = FALSE)
+```
+
+## Written with AI, and checked accordingly
+
+estimatr 2.0.0 was written by Alexander Coppock working with Claude (Anthropic), across design, implementation, tests, benchmarks and documentation.
+
+While the code base has been reviewed, it was not written by hand. The guarantee offered here is therefore not that every line has been vouched for. It is narrower and it is checkable: **estimatr implements these estimators correctly**, and the way that is shown is validation to machine precision against the definitions themselves. The table below states each promise in words, writes the reference quantity out in R, and reports how far estimatr's answer sits from it, live, in this document.
+
+Two further layers are checked outside it. Every estimator reproduces estimatr 1.0.6's numbers wherever both versions answer, checked in `tests/testthat/test_vs_estimatr.R` against 695 values recorded from an installed 1.0.6. A further 268 assertions compare against implementations that share no lineage with this one, `sandwich`, `clubSandwich`, `ivreg`, Stata, `fixest`, `plm` and `blkvar`, in the five `tests/testthat/test_vs_*.R` files. `vignette("estimatr2.0")` sets out both layers under "How this was checked"; the suite holds 2,236 assertions in total.
+
+## What a guarantee looks like here
+
+**An identity holds to machine precision or it is broken.** Every row below computes the same number two ways: once by calling estimatr, and once from the definition, written out in this document in a few lines of base R. There is no tolerance to argue about and no sampling error to allow for, because nothing here is random. The two quantities are the same number, so the check reports the largest relative gap between them and expects an answer near the floor of double-precision arithmetic.
+
+The reference side is written here rather than taken from another package on purpose. A comparison against `sandwich` shows that two implementations agree; a comparison against the formula shows what the estimator is.
+
+```{r}
+library(estimatr)
+
+# The same number, computed two ways.
+identity_holds <- function(ours, theirs, tol = 1e-10) {
+  gap <- max(abs(ours - theirs) / pmax(abs(theirs), 1))
+  list(result = sprintf("largest relative gap %.1e", gap), holds = gap < tol)
+}
+```
+
+## The data being checked
+
+One hundred units, one binary treatment, a covariate, weights, ten groups for the fixed-effects row, twenty clusters, and an instrument. Drawn once, at a fixed seed, and reused by every row: the point of the table is arithmetic rather than sampling, so nothing below is replicated.
+
+```{r}
+set.seed(20260826)
+N <- 100
+
+d <- data.frame(
+  z  = rbinom(N, 1, 0.5),
+  x  = rnorm(N),
+  w  = runif(N, 0.5, 2),
+  g  = rep(1:10, each = 10),
+  cl = rep(1:20, each = 5),
+  inst = rnorm(N)
+)
+d$en <- d$inst + rnorm(N, 0, 0.5)
+d$y <- 1 + 0.5 * d$z + 2 * d$x + d$en + rnorm(N)
+```
+
+The reference quantities, written out. Each is the definition the corresponding argument names.
+
+```{r}
+# The heteroskedasticity-consistent family.
+hc_vcov <- function(fit, type) {
+  X <- model.matrix(fit)
+  e <- residuals(fit)
+  bread <- solve(crossprod(X))
+  h <- rowSums((X %*% bread) * X)
+  n <- nrow(X)
+  k <- ncol(X)
+  adj <- switch(type,
+    HC0 = e^2,
+    HC1 = e^2 * n / (n - k),
+    HC2 = e^2 / (1 - h),
+    HC3 = e^2 / (1 - h)^2
+  )
+  bread %*% crossprod(X * sqrt(adj)) %*% bread
+}
+
+# The cluster-robust sandwich. CR0 applies no finite-cluster correction;
+# se_type = "stata" multiplies it by G/(G-1) * (n-1)/(n-k).
+cr_vcov <- function(fit, cluster, stata = FALSE) {
+  X <- model.matrix(fit)
+  e <- residuals(fit)
+  bread <- solve(crossprod(X))
+  meat <- Reduce(`+`, lapply(split(seq_len(nrow(X)), cluster), function(i) {
+    tcrossprod(crossprod(X[i, , drop = FALSE], e[i]))
+  }))
+  v <- bread %*% meat %*% bread
+  if (!stata) return(v)
+  G <- length(unique(cluster))
+  v * (G / (G - 1)) * ((nrow(X) - 1) / (nrow(X) - ncol(X)))
+}
+
+# Two-stage least squares: regress the endogenous regressor on the
+# instruments, then the outcome on the fitted values.
+tsls_coef <- function(y, X, Z) {
+  xhat <- Z %*% solve(crossprod(Z), crossprod(Z, X))
+  as.vector(solve(crossprod(xhat), crossprod(xhat, y)))
+}
+
+# Horvitz-Thompson, from its definition: each observed outcome divided by the
+# probability of the condition under which it was observed.
+ht_estimate <- function(y, z, pr) {
+  mean(y * z / pr) - mean(y * (1 - z) / (1 - pr))
+}
+```
+
+## What estimatr promises
+
+```{r}
+checks <- list(
+
+  list("lm_robust()", "the point estimates are least squares",
+       identity_holds(coef(lm_robust(y ~ z + x, data = d)),
+                      coef(lm(y ~ z + x, data = d)))),
+
+  list("lm_robust(weights = )", "the weighted fit is weighted least squares",
+       identity_holds(coef(lm_robust(y ~ z + x, data = d, weights = w)),
+                      coef(lm(y ~ z + x, data = d, weights = w)))),
+
+  list("lm_robust(se_type = 'classical')", "the variance is the textbook one",
+       identity_holds(lm_robust(y ~ z + x, data = d, se_type = "classical")$vcov,
+                      vcov(lm(y ~ z + x, data = d)))),
+
+  list("lm_robust(se_type = 'HC0'..'HC3')", "each is its own definition, written out",
+       local({
+         fit_lm <- lm(y ~ z + x, data = d)
+         gaps <- vapply(c("HC0", "HC1", "HC2", "HC3"), function(ty) {
+           ref <- hc_vcov(fit_lm, ty)
+           ours <- lm_robust(y ~ z + x, data = d, se_type = ty)$vcov
+           max(abs(ours - ref) / pmax(abs(ref), 1))
+         }, numeric(1))
+         list(result = sprintf("largest relative gap %.1e, over all four", max(gaps)),
+              holds = max(gaps) < 1e-10)
+       })),
+
+  list("lm_robust(clusters = )", "CR0 is the cluster sandwich, written out",
+       identity_holds(lm_robust(y ~ z + x, data = d, clusters = cl,
+                                se_type = "CR0")$vcov,
+                      cr_vcov(lm(y ~ z + x, data = d), d$cl))),
+
+  list("lm_robust(se_type = 'stata')", "it is CR0 times Stata's two corrections",
+       identity_holds(lm_robust(y ~ z + x, data = d, clusters = cl,
+                                se_type = "stata")$vcov,
+                      cr_vcov(lm(y ~ z + x, data = d), d$cl, stata = TRUE))),
+
+  list("lm_robust(fixed_effects = )", "absorbing a factor changes the speed, not the answer",
+       local({
+         absorbed <- lm_robust(y ~ z + x, data = d, fixed_effects = ~ g)
+         dummies <- lm_robust(y ~ z + x + factor(g), data = d)
+         keep <- c("z", "x")
+         identity_holds(c(coef(absorbed)[keep], absorbed$std.error[keep]),
+                        c(coef(dummies)[keep], dummies$std.error[keep]))
+       })),
+
+  list("lm_lin()", "it is the Lin specification a user could write by hand",
+       local({
+         fit <- lm_lin(y ~ z, covariates = ~ x, data = d)
+         dd <- d
+         dd$x_c <- dd$x - mean(dd$x)
+         ref <- lm_robust(y ~ z * x_c, data = dd)
+         identity_holds(c(coef(fit)[["z"]], fit$std.error[["z"]]),
+                        c(coef(ref)[["z"]], ref$std.error[["z"]]))
+       })),
+
+  list("difference_in_means()", "it is lm_robust at HC2 for a two-arm design",
+       local({
+         dim_fit <- difference_in_means(y ~ z, data = d)
+         ols <- lm_robust(y ~ z, data = d, se_type = "HC2")
+         identity_holds(c(dim_fit$coefficients[["z"]], dim_fit$std.error[["z"]]),
+                        c(ols$coefficients[["z"]], ols$std.error[["z"]]))
+       })),
+
+  list("iv_robust()", "the point estimates are two-stage least squares",
+       identity_holds(unname(coef(iv_robust(y ~ en + x | inst + x, data = d))),
+                      tsls_coef(d$y, model.matrix(~ en + x, d),
+                                model.matrix(~ inst + x, d)))),
+
+  list("horvitz_thompson()", "the estimate is the Horvitz-Thompson estimator",
+       local({
+         pr <- rep(0.5, N)
+         fit <- horvitz_thompson(y ~ z, data = d, condition_prs = pr)
+         identity_holds(fit$coefficients[[1]], ht_estimate(d$y, d$z, pr))
+       })),
+
+  list("lh_robust()", "a linear hypothesis is the delta method on the fit",
+       local({
+         fit <- lm_robust(y ~ z + x, data = d)
+         lh <- lh_robust(y ~ z + x, data = d, linear_hypothesis = "z + x = 0")
+         a <- c(0, 1, 1)
+         identity_holds(c(lh$lh$coefficients[[1]], lh$lh$std.error[[1]]),
+                        c(sum(a * coef(fit)),
+                          sqrt(drop(t(a) %*% fit$vcov %*% a))))
+       }))
+)
+
+guarantees <- data.frame(
+  Function = vapply(checks, function(x) x[[1]], character(1)),
+  Promise = vapply(checks, function(x) x[[2]], character(1)),
+  Measured = vapply(checks, function(x) x[[3]]$result, character(1)),
+  Holds = vapply(checks, function(x) x[[3]]$holds, logical(1))
+)
+```
+
+```{r echo=FALSE}
+knitr::kable(guarantees, row.names = FALSE)
+```
+
+```{r}
+stopifnot(all(guarantees$Holds))
+```
+
+Every promise in the table is met. The numbers are computed when the vignette is built, so they are what your installed copy produces rather than values recorded from a run somewhere else.
+
+That last line is `stopifnot()` rather than a printed `TRUE` on purpose. A vignette that computes its own table can report `FALSE` in a cell and still build, which would leave a broken promise sitting inside a clean `R CMD check`. Written this way the document refuses to build, so the check fails and the table cannot quietly disagree with the sentence above it. The margin is wide enough for that to be safe: the gaps are at 1e-15 or below against a tolerance of 1e-10, so the linear algebra library on your machine would have to be five orders of magnitude worse than the one this was written on before the build broke.
+
+## What this does not cover
+
+The table is a demonstration, not a proof, and it is deliberately a small one.
+
+**It says nothing about what these estimators are good for.** That `difference_in_means()` computes the difference in means is a fact about this package. Whether that quantity is unbiased for your estimand, whether its interval covers, whether covariate adjustment helps you: none of that is estimatr's to guarantee, and none of it is checked here. The guarantee is implementation, and the demonstration is arithmetic.
+
+**It checks one configuration per promise.** The test suite checks many: the same identities across weighted and unweighted fits, single and multivariate outcomes, one and two absorbed factors, instrumental variables with and without clusters, and the rank-deficient and near-saturated designs that have caused bugs. That is where a guarantee is enforced. What this document adds is that the promises are stated in words a reader can disagree with, and measured where a reader can watch.
+
+**Agreement with a formula written here is not agreement with the literature.** Transcribing HC2 into this document and matching it shows estimatr computes what it says. It cannot show that the definition is the one the field settled on. That question is answered in the suite, against `sandwich`, `clubSandwich`, `ivreg`, Stata's `regress`, `areg` and `ivregress`, `fixest`, `plm` and `blkvar`, none of which shares any lineage with this package. Two known divergences are pinned from both sides there rather than dropped: weighted HC2 and HC3 differ from Stata by a bounded amount, and `iv_robust()` uses second-stage leverage, which agrees with `ivreg` exactly and departs from `AER::ivreg()`'s deprecated `hatvalues()` method by up to 18.5%.
+
+**The data here are well conditioned, and that is where the interesting failures are not.** Every fit above is full rank with far more observations than parameters. Leverage exactly equal to one is benign; leverage marginally above one is not, and HC2 and HC3 are guarded there rather than answered, warning and contributing zero for the offending rows. A cluster-robust variance on a single cluster is refused outright, where 1.0.6 returned a standard error of 5.9e-17 and a zero-width interval in silence. Those are documented in `NEWS.md`, and none of them is visible in a table built on `rnorm()`.

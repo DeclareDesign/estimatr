@@ -35,4 +35,4 @@ Every open estimatr issue was read against this implementation: 26 are fixed her
 
 ## How this was written
 
-estimatr 2.0.0 was written by Alexander Coppock working with Claude (Anthropic), across design, implementation, tests, benchmarks, and documentation. The evidence that should decide whether you install it is in `vignette("estimatr2.0")` under "How this was checked", and in `NEWS.md`: 695 assertions against a recording of an installed 1.0.6, and 268 more against implementations that share no lineage with estimatr, including `sandwich`, `clubSandwich`, `ivreg`, Stata, `fixest`, `plm` and `blkvar`.
+estimatr 2.0.0 was written with AI. `vignette("estimatr_guarantees")` says so in full and, in the same document, states what the package guarantees and measures each guarantee to machine precision against the definition, computed when the vignette is built. That is the evidence that should decide whether you install it.
