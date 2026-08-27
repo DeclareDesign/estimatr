@@ -30,12 +30,12 @@ Authors:
   \item Alexander Coppock \email{acoppock@gmail.com}
   \item Graeme Blair \email{graeme.blair@gmail.com}
   \item Jasper Cooper \email{jjc2247@columbia.edu}
-  \item Macartan Humphreys \email{macartan@gmail.com}
   \item Luke Sonnet \email{luke.sonnet@gmail.com}
 }
 
 Other contributors:
 \itemize{
+  \item Macartan Humphreys \email{macartan@gmail.com} [contributor]
   \item Neal Fultz \email{nfultz@gmail.com} [contributor]
   \item Lily Medina \email{lilymiru@gmail.com} [contributor]
   \item Russell Lenth \email{russell-lenth@uiowa.edu} [contributor]
