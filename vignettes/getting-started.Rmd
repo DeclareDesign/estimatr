@@ -264,8 +264,7 @@ Note that `starprep()` and `commarobust()`, the stargazer helpers from 1.x, are 
 
 ## Where to go next
 
-- `vignette("mathematical-notes")` for the definition of every estimator and variance above, with citations.
-- `vignette("estimatr_guarantees")` for what the package promises to compute correctly, and the measurement of each promise.
+- `vignette("mathematical-notes")` for the definition of every estimator and variance above, each with its citation and with a live check that estimatr computes what the definition says.
 - `vignette("estimatr2.0")` if you are porting code from estimatr 1.x.
 
 # References

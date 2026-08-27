@@ -4,12 +4,12 @@
          transfer. He was asked by text on 2026-08-26, so this is waiting on
          him. His message needs to cover fabricatr too.
        - win-builder is STALE AGAIN. The clean reports below describe the
-         one-vignette tarball; the tarball now carries FOUR vignettes, all
+         one-vignette tarball; the tarball now carries THREE vignettes, all
          of which get BUILT on Windows, so it is exactly the case Part 2
-         says is not a judgement call. The 2026-08-26 resubmission covered
-         two of them and is itself now superseded. Resubmit against the
-         four-vignette tarball and replace the environment line when the
-         reports arrive.
+         says is not a judgement call. The 2026-08-26 resubmission is itself
+         superseded: the vignette it added has since been merged into
+         mathematical-notes. Resubmit against the three-vignette tarball and
+         replace the environment line when the reports arrive.
        Two lines. Do not delete this block until both are true, then delete
        the whole block.
      Closed since 2026-08-23:
@@ -21,7 +21,7 @@
          one-vignette tarball, the maintainer change and nothing else, with
          the built zip checked to carry that tarball's DESCRIPTION. Superseded
          twice over now; kept because it closes every question except whether
-         the three added vignettes knit on Windows.
+         the two added vignettes knit on Windows.
        - CI is green on all five platforms at 988fefe, the last commit that
          changes the tarball, at FAIL 0 | WARN 0 | SKIP 2 | PASS 2221 on
          every one, verified per job (run 33027126705). Anything committed
@@ -40,7 +40,7 @@ estimatr 2.0.0 is a rewrite of the package. The six estimators keep their signat
 
 **This submission changes the maintainer** from Graeme Blair <graeme.blair@gmail.com> to Alexander Coppock <acoppock@gmail.com>. Graeme Blair has written to CRAN separately to confirm the transfer. He remains an author. One other change to `Authors@R`: Macartan Humphreys has asked to be listed as a contributor rather than an author, and his role moves from `aut` to `ctb`.
 
-This version was written by the maintainer working with Claude (Anthropic). `vignette("estimatr_guarantees")` is where that is disclosed to users, and it states what the package guarantees and measures each guarantee to machine precision against the definition when the vignette is built. The evidence for this release: signatures unchanged except `horvitz_thompson()`'s probability arguments, with the numbers agreeing to 1e-12 same-machine, a suite of 2,236 assertions green on five platforms bar the 15 that need packages CRAN does not serve, 695 against answers recorded from an installed 1.0.6, 268 against independent implementations (`sandwich`, `clubSandwich`, `ivreg`, Stata, `fixest`, `plm`, `blkvar`), and the full returned surface of sixteen fit types pinned by test. Every reverse dependency was checked.
+This version was written by the maintainer working with Claude (Anthropic). `vignette("mathematical-notes")` is where that is disclosed to users, and it pairs each estimator's definition with a measurement of estimatr against that definition, to machine precision, computed when the vignette is built; the vignette ends in `stopifnot()`, so a broken identity fails the check rather than printing FALSE in a table. The evidence for this release: signatures unchanged except `horvitz_thompson()`'s probability arguments, with the numbers agreeing to 1e-12 same-machine, a suite of 2,236 assertions green on five platforms bar the 15 that need packages CRAN does not serve, 695 against answers recorded from an installed 1.0.6, 268 against independent implementations (`sandwich`, `clubSandwich`, `ivreg`, Stata, `fixest`, `plm`, `blkvar`), and the full returned surface of sixteen fit types pinned by test. Every reverse dependency was checked.
 
 ## Test environments
 

@@ -12,7 +12,7 @@ The maintainer changes with this release, from Graeme Blair to Alexander Coppock
 
 ## How this version was written, and how to check it
 
-estimatr 2.0.0 was written with AI. `vignette("estimatr_guarantees")` says so in full and, in the same document, states what the package guarantees and measures every guarantee when the vignette is built, to machine precision against the definition written out beside it. What that guarantee is, and what it deliberately is not, is set out there rather than here.
+estimatr 2.0.0 was written with AI. `vignette("mathematical-notes")` says so in full and, in the same document, gives every estimator its mathematical definition and then measures estimatr against that definition when the vignette is built, to machine precision, immediately underneath. What that guarantee is, and what it deliberately is not, is set out there rather than here.
 
 The evidence behind the release, the counts and the two checking layers, is in that vignette and in `vignette("estimatr2.0")` under "How this was checked". Wherever one of those counts appears it comes from `data-raw/count_assertions.R`, which measures it rather than remembering it. That script exists because the counts were four remembered numbers and drifted twice.
 

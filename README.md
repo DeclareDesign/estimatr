@@ -9,14 +9,13 @@ vignette("estimatr2.0")
 
 The vignette is the document to read first if you are coming from 1.x. It covers what does not change, what changes and why, how to port a 1.x script, and the benchmarks.
 
-Four vignettes ship with the package:
+Three vignettes ship with the package:
 
 | vignette | what it is for |
 |---|---|
 | `estimatr2.0` | porting from 1.x: what changed, why, and the benchmarks |
 | `getting-started` | the six estimators, on one worked example |
-| `mathematical-notes` | the definition of every estimator and variance, with citations |
-| `estimatr_guarantees` | what the package promises to compute correctly, measured when the vignette builds |
+| `mathematical-notes` | every estimator defined, cited, and then validated against its own definition |
 
 ## What it is
 
@@ -44,4 +43,4 @@ Every open estimatr issue was read against this implementation: 26 are fixed her
 
 ## How this was written
 
-estimatr 2.0.0 was written with AI. `vignette("estimatr_guarantees")` says so in full and, in the same document, states what the package guarantees and measures each guarantee to machine precision against the definition, computed when the vignette is built. That is the evidence that should decide whether you install it.
+estimatr 2.0.0 was written with AI. `vignette("mathematical-notes")` says so in full and, in the same document, states each estimator's definition in mathematics and then, immediately underneath, measures estimatr against that definition to machine precision, computed when the vignette is built. Sixteen such checks, and the vignette refuses to build if any of them fails. That is the evidence that should decide whether you install it.

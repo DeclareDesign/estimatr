@@ -1,0 +1,42 @@
+url: https://declaredesign.org/r/estimatr
+
+template:
+  bootstrap: 5
+  bslib:
+    primary: "#0054AD"
+    border-radius: 0.5rem
+    btn-border-radius: 0.25rem
+
+development:
+  mode: auto
+
+navbar:
+  left:
+  - text: Getting started
+    href: articles/getting-started.html
+  - text: Reference
+    href: reference/index.html
+  - text: Articles
+    menu:
+     - text: Getting started with estimatr
+       href: articles/getting-started.html
+     - text: Mathematical notes and guarantees
+       href: articles/mathematical-notes.html
+     - text: estimatr 2.0, what changes and why
+       href: articles/estimatr2.0.html
+     - text: estimatr in the tidyverse
+       href: articles/estimatr-in-the-tidyverse.html
+     - text: Regression tables with estimatr
+       href: articles/regression-tables.html
+  right:
+  - text: declaredesign.org
+    href: https://declaredesign.org
+
+articles:
+- title: All vignettes
+  contents:
+  - getting-started
+  - mathematical-notes
+  - estimatr2.0
+  - estimatr-in-the-tidyverse
+  - regression-tables

@@ -1,10 +1,10 @@
 ---
-title: "Mathematical notes for estimatr"
+title: "Mathematical notes and guarantees for estimatr"
 output: rmarkdown::html_vignette
 bibliography: estimatr.bib
 link-citations: yes
 vignette: >
-  %\VignetteIndexEntry{Mathematical notes for estimatr}
+  %\VignetteIndexEntry{Mathematical notes and guarantees for estimatr}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -12,21 +12,60 @@ vignette: >
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", message = FALSE)
 library(estimatr)
-set.seed(42)
 options(digits = 4)
 ```
 
-## What this document is
+## Written with AI, and checked accordingly
 
-Definitions. For each estimator estimatr provides, what quantity it computes, what variance it reports, how many degrees of freedom it uses, and which paper the choice comes from.
+estimatr 2.0.0 was written by Alexander Coppock working with Claude (Anthropic), across design, implementation, tests, benchmarks and documentation.
 
-It is descriptive rather than promissory. Whether the estimator suits your design is a question for the papers cited here; whether estimatr computes what the definition says is a separate question, answered in `vignette("estimatr_guarantees")`, which takes the definitions written below, transcribes them into R, and measures the gap. Reading order does not matter much, but the two documents divide the work that way: this one says what the estimator is, that one shows the implementation matches.
+While the code base has been reviewed, it was not written by hand. The guarantee offered here is therefore not that every line has been vouched for. It is narrower and it is checkable: **estimatr implements these estimators correctly**, and the way that is shown is validation to machine precision against the definitions themselves.
 
-Code appears below only to make a definition concrete. Nothing here is a check, and nothing here is a simulation.
+Which is what this document is. Every estimator gets its definition, stated in mathematics with the paper it comes from, and then, immediately underneath, the same quantity computed twice: once by calling estimatr, and once from the definition transcribed into a few lines of base R. The gap between the two is printed where you can see it.
+
+Two further layers are checked outside this document. Every estimator reproduces estimatr 1.0.6's numbers wherever both versions answer, checked in `tests/testthat/test_vs_estimatr.R` against 695 values recorded from an installed 1.0.6. A further 268 assertions compare against implementations that share no lineage with this one: `sandwich`, `clubSandwich`, `ivreg`, Stata, `fixest`, `plm` and `blkvar`, in the five `tests/testthat/test_vs_*.R` files. `vignette("estimatr2.0")` sets out both layers under "How this was checked"; the suite holds 2,236 assertions in total.
+
+## How the checking works
+
+**An identity holds to machine precision or it is broken.** Nothing below is random and nothing is replicated, so there is no sampling error to allow for and no tolerance to argue about. The two quantities being compared are the same number, and what gets reported is the largest relative gap between them, expected to sit near the floor of double-precision arithmetic.
+
+The reference side is written in this document rather than borrowed from another package, on purpose. A comparison against `sandwich` shows that two implementations agree. A comparison against the formula shows what the estimator is, which is the question a reader of mathematical notes is actually asking. It also leaves the document depending on nothing but estimatr, so no check can vanish because a suggested package is missing.
+
+```{r}
+CHECKS <- list()
+
+check <- function(label, ours, theirs, tol = 1e-10) {
+  gap <- max(abs(ours - theirs) / pmax(abs(theirs), 1))
+  CHECKS[[label]] <<- gap
+  data.frame(gap = sprintf("%.1e", gap), holds = gap < tol)
+}
+```
+
+Each section calls `check()` once, prints its own result, and adds it to a running list. [Every promise in one table] collects them at the end and the document refuses to build if any of them fails.
 
 ## Notation
 
 Throughout, $\mathbf{X}$ is the $N \times K$ design matrix, $\mathbf{y}$ the outcome, $\mathbf{e} = \mathbf{y} - \mathbf{X}\widehat{\beta}$ the residuals, and $\mathbf{x}_i$ the $i$th row of $\mathbf{X}$. $\mathbf{W}$ is a diagonal matrix of weights scaled to sum to one, and $\mathrm{diag}[\cdot]$ builds a diagonal matrix from a vector. For clustered designs, $S$ is the number of clusters and $\mathbf{X}_s$ and $\mathbf{e}_s$ are the rows belonging to cluster $s$. For blocked designs, $J$ is the number of blocks and $N_j$ the size of block $j$.
+
+## The data used throughout
+
+One hundred units, a binary treatment, a covariate, weights, ten groups for the fixed-effects section, twenty clusters, and an instrument with the endogenous regressor it shifts. Drawn once, at a fixed seed, and reused by every check below.
+
+```{r}
+set.seed(20260826)
+N <- 100
+
+d <- data.frame(
+  z  = rbinom(N, 1, 0.5),
+  x  = rnorm(N),
+  w  = runif(N, 0.5, 2),
+  g  = rep(1:10, each = 10),
+  cl = rep(1:20, each = 5),
+  inst = rnorm(N)
+)
+d$en <- d$inst + rnorm(N, 0, 0.5)
+d$y <- 1 + 0.5 * d$z + 2 * d$x + d$en + rnorm(N)
+```
 
 # `lm_robust`
 
@@ -37,6 +76,14 @@ Throughout, $\mathbf{X}$ is the $N \times K$ design matrix, $\mathbf{y}$ the out
 \]
 
 The solver is a rank-revealing column-pivoting QR factorization from the Eigen C++ library, reached through `RcppEigen`, so $(\mathbf{X}^{\top}\mathbf{X})^{-1}$ is never formed explicitly. On a rank-deficient design the pivoting can drop a different column than `lm()` drops; the fitted values and the variance are the same either way, but which coefficient comes back `NA` may differ. Unlike 1.x, estimatr names the dropped terms in a warning rather than leaving them to be noticed in the output. Setting `try_cholesky = TRUE` substitutes a Cholesky factorization, which is faster and is guaranteed only when $\mathbf{X}$ has full rank.
+
+**The promise: the point estimates are least squares.** `lm()` is the reference, since it solves the same problem by a different factorization.
+
+```{r}
+check("lm_robust()",
+      coef(lm_robust(y ~ z + x, data = d)),
+      coef(lm(y ~ z + x, data = d)))
+```
 
 ## Weights
 
@@ -49,6 +96,14 @@ Weights are scaled to sum to one, then each row of the design matrix and each ou
 @romanowolf2017 set out the properties that recommend the estimator. Everything below applies to the transformed data, so $(\mathbf{X}^{\top}\mathbf{X})^{-1}$ should be read as $(\mathbf{X}^{\top}\mathbf{W}\mathbf{X})^{-1}$ and $\mathbf{X}$ as $\mathbf{W}^{1/2}\mathbf{X}$ wherever weights are in play.
 
 A row with weight zero contributes nothing to the fit and is not counted as an observation in the residual degrees of freedom or in the HC1 and `"stata"` scale factors, which is how `lm()` counts it too. The row is still returned in `residuals` and `fitted.values`.
+
+**The promise: the weighted fit is weighted least squares.**
+
+```{r}
+check("lm_robust(weights = )",
+      coef(lm_robust(y ~ z + x, data = d, weights = w)),
+      coef(lm(y ~ z + x, data = d, weights = w)))
+```
 
 ## Heteroskedasticity-robust variance
 
@@ -64,6 +119,43 @@ The default is HC2, from @mackinnonwhite1985. It is the choice that lines up wit
 
 where $h_{ii} = \mathbf{x}_i(\mathbf{X}^{\top}\mathbf{X})^{-1}\mathbf{x}_i^{\top}$ is the $i$th leverage value. @longervin2000 review the family and its small-sample behaviour.
 
+Transcribed, the four robust members of that column are one function. `bread` is $(\mathbf{X}^{\top}\mathbf{X})^{-1}$, `h` the leverage diagonal, and `adj` the bracketed term that distinguishes them.
+
+```{r}
+hc_vcov <- function(fit, type) {
+  X <- model.matrix(fit)
+  e <- residuals(fit)
+  bread <- solve(crossprod(X))
+  h <- rowSums((X %*% bread) * X)
+  n <- nrow(X)
+  k <- ncol(X)
+  adj <- switch(type,
+    HC0 = e^2,
+    HC1 = e^2 * n / (n - k),
+    HC2 = e^2 / (1 - h),
+    HC3 = e^2 / (1 - h)^2
+  )
+  bread %*% crossprod(X * sqrt(adj)) %*% bread
+}
+```
+
+**The promise: the classical variance is the textbook one, and each robust variance is its own row of that table.**
+
+```{r}
+fit_lm <- lm(y ~ z + x, data = d)
+
+check("lm_robust(se_type = 'classical')",
+      lm_robust(y ~ z + x, data = d, se_type = "classical")$vcov,
+      vcov(fit_lm))
+
+do.call(rbind, lapply(c("HC0", "HC1", "HC2", "HC3"), function(ty) {
+  cbind(se_type = ty,
+        check(paste0("lm_robust(se_type = '", ty, "')"),
+              lm_robust(y ~ z + x, data = d, se_type = ty)$vcov,
+              hc_vcov(fit_lm, ty)))
+}))
+```
+
 ### Leverage at and above one
 
 HC2 and HC3 divide by $1 - h_{ii}$, so a leverage value at or above one is a special case rather than an ordinary one.
@@ -71,6 +163,8 @@ HC2 and HC3 divide by $1 - h_{ii}$, so a leverage value at or above one is a spe
 Leverage exactly equal to one is benign. The residual is exactly zero, the contribution is a $0/0$ that resolves to zero, and the standard error is finite. Leverage marginally above one is not benign, and it happens: a near-saturated design can compute $h_{ii} = 1 + 10^{-16}$, at which point $1 - h_{ii}$ is negative. Under HC3 that row contributes a negative term to a variance. Under HC2 the implementation takes a square root of it, so a single such row turns *every* standard error in the fit into `NaN`, however small the offending quantity.
 
 estimatr 2.0 sets the contribution of any row with $1 - h_{ii} \le 0$ to zero and warns, naming how many rows were affected. estimatr 1.0.6 returned `NaN` for HC2 and a silently inflated number for HC3 on the same designs. The CR2 estimator below has no analogous hole: it never forms $1 - h_{ii}$, and the eigenvalue clamp described there covers the degenerate case.
+
+Note what the check above does and does not cover. `d` is well conditioned, with a hundred observations and three parameters, so no leverage in it comes near one. The degenerate designs are checked in the suite, not here, which is a limit this document shares with any table built on `rnorm()`.
 
 ## Cluster-robust variance
 
@@ -82,7 +176,36 @@ The cluster-robust estimators are the analogues of the heteroskedasticity-consis
 | `"stata"` | $\frac{N-1}{N-K}\frac{S}{S-1}\times$ the CR0 expression | $S-1$ |
 | `"CR2"` (default) | $(\mathbf{X}^{\top}\mathbf{X})^{-1}\sum_{s=1}^{S}\left[\mathbf{X}_s^\top\mathbf{A}_s\mathbf{e}_s\mathbf{e}_s^\top\mathbf{A}_s^\top\mathbf{X}_s\right](\mathbf{X}^{\top}\mathbf{X})^{-1}$ | Satterthwaite, below |
 
-The CR2 adjustment matrices come from
+Transcribed, CR0 is the same bread with the meat summed over clusters instead of over observations, and `"stata"` is CR0 times two finite-sample corrections.
+
+```{r}
+cr_vcov <- function(fit, cluster, stata = FALSE) {
+  X <- model.matrix(fit)
+  e <- residuals(fit)
+  bread <- solve(crossprod(X))
+  meat <- Reduce(`+`, lapply(split(seq_len(nrow(X)), cluster), function(i) {
+    tcrossprod(crossprod(X[i, , drop = FALSE], e[i]))
+  }))
+  v <- bread %*% meat %*% bread
+  if (!stata) return(v)
+  G <- length(unique(cluster))
+  v * (G / (G - 1)) * ((nrow(X) - 1) / (nrow(X) - ncol(X)))
+}
+```
+
+**The promise: CR0 is the cluster sandwich, and `"stata"` is CR0 times Stata's two corrections.**
+
+```{r}
+check("lm_robust(clusters = )",
+      lm_robust(y ~ z + x, data = d, clusters = cl, se_type = "CR0")$vcov,
+      cr_vcov(fit_lm, d$cl))
+
+check("lm_robust(se_type = 'stata')",
+      lm_robust(y ~ z + x, data = d, clusters = cl, se_type = "stata")$vcov,
+      cr_vcov(fit_lm, d$cl, stata = TRUE))
+```
+
+CR2 is the one member of the family whose reference is not a few lines of base R, so it is checked in the suite against `clubSandwich` instead, live and at $10^{-10}$. The adjustment matrices come from
 
 $$
 \begin{aligned}
@@ -121,7 +244,19 @@ so each leverage value of the full design is the leverage value of the *demeaned
 - **One factor.** $\mathbf{P_D}$ is diagonal and the term is the unit's share of its own group's weight, $w_i / \sum_{j \in g(i)} w_j$. Unweighted, that is one over the group's size.
 - **Several factors.** Write $\mathbf{D}$ with the widest factor in full dummies and the rest contrast-coded. The leading block of $\mathbf{D}^\top\mathbf{W}\mathbf{D}$ is then diagonal, so block inversion needs only the Schur complement, a matrix of side $\sum_{k>1}(g_k - 1)$: the design's narrowest dimension rather than its widest. No dummy matrix is built at any number of factors.
 
-The identity holds for any number of factors, so HC2 and HC3 carry no restriction under `fixed_effects` and are bit-identical to the dummy regression. CR2 is the exception: its correction comes from cluster-level *blocks* of the hat matrix rather than from the diagonal, and blocks do not decompose this way, so CR2 still expands the dummies. That cost, roughly cubic in the number of levels, is why `fixed_effects` combined with `clusters` defaults to CR0 in 2.0 where 1.x defaulted to CR2. It is the only default that moved in the release, it warns once per session, and naming `se_type = "CR2"` still gets the 1.x number exactly.
+The identity holds for any number of factors, so HC2 and HC3 carry no restriction under `fixed_effects`. CR2 is the exception: its correction comes from cluster-level *blocks* of the hat matrix rather than from the diagonal, and blocks do not decompose this way, so CR2 still expands the dummies. That cost, roughly cubic in the number of levels, is why `fixed_effects` combined with `clusters` defaults to CR0 in 2.0 where 1.x defaulted to CR2. It is the only default that moved in the release, it warns once per session, and naming `se_type = "CR2"` still gets the 1.x number exactly.
+
+**The promise: absorbing a factor changes the speed, not the answer.** The reference is the dummy regression the absorption is supposed to reproduce, coefficients and standard errors alike.
+
+```{r}
+absorbed <- lm_robust(y ~ z + x, data = d, fixed_effects = ~ g)
+dummies  <- lm_robust(y ~ z + x + factor(g), data = d)
+keep <- c("z", "x")
+
+check("lm_robust(fixed_effects = )",
+      c(coef(absorbed)[keep], absorbed$std.error[keep]),
+      c(coef(dummies)[keep], dummies$std.error[keep]))
+```
 
 ### Rank
 
@@ -133,16 +268,9 @@ The Schur complement is inverted through its eigendecomposition rather than a so
 
 which is what estimatr uses for the residual degrees of freedom. The nominal count $\sum_k g_k - K + 1$ overstates the rank whenever one factor is partly spanned by the others, and 1.x used the nominal count, so its absorbed fit disagreed with its own explicit-dummy fit on such designs. `lm()` and `plm` report the exact rank; `fixest` reports the nominal one unless asked for `ssc(K.exact = TRUE)`.
 
-```{r}
-# The absorbed fit and the dummy regression agree, including on the HC2
-# standard error that 1.x had to build the dummy matrix to reach.
-lm_robust(mpg ~ hp, data = mtcars, fixed_effects = ~ cyl)$std.error
-lm_robust(mpg ~ hp + factor(cyl), data = mtcars)$std.error["hp"]
-```
-
 ## Weights and the hat matrix: where Stata differs
 
-With weights, `lm_robust()`'s HC2 and HC3 standard errors do not match Stata's `vce(hc2)` and `vce(hc3)`. The cause is a difference in how the hat matrix is defined, and the choice is a convention rather than an error on either side.
+With weights, `lm_robust()`'s HC2 and HC3 standard errors do not match Stata's `vce(hc2)` and `vce(hc3)`. The cause is a difference in how the hat matrix is defined, and the choice is a convention rather than an error on either side. It is the one place in this document where a definition is contested, so there is no identity to check and the section reports a disagreement instead.
 
 Stata uses
 
@@ -161,10 +289,10 @@ Only HC2 and HC3 depend on the hat matrix, so the divergence is confined to thos
 Two arguments favour $\mathbf{H}_R$. It is what you get by rescaling the data by $\sqrt{w_i}$ and running ordinary least squares, so it follows if you regard the weighted model as a rescaling of the unweighted one. Its diagonal elements are also the weighted leverages in the sense of @livalliant2009, where $\mathbf{H}_{\text{Stata}}$ would have to be weighted a second time to recover them. Against that, Stata's convention has the weight of Stata behind it, and the differences are small. The choice is genuinely open, which is why estimatr pins it from both sides in the suite rather than treating either answer as the error.
 
 ```{r}
-lm_robust(mpg ~ hp, data = mtcars, weights = wt, se_type = "HC2")
+lm_robust(mpg ~ hp, data = mtcars, weights = wt, se_type = "HC2")$std.error
 ```
 
-Stata 13 reports 0.0143083 for the same fit, about one percent below the number above. Python's `statsmodels` returns estimatr's. Change `se_type` to `"HC1"` and Stata and estimatr agree exactly, which is what the suite pins alongside the divergence.
+Stata 13 reports 0.0143083 on `hp` for the same fit, about one percent below the number above. Python's `statsmodels` returns estimatr's. Change `se_type` to `"HC1"` and Stata and estimatr agree exactly.
 
 ## Confidence intervals and testing
 
@@ -195,12 +323,17 @@ Centering is what makes $\tau$ the estimate of the average treatment effect: at 
 
 Multi-valued treatments are handled by building a full set of dummies and interacting each with the centered covariates. Everything else, weights, clusters, `se_type`, is `lm_robust()`'s.
 
+**The promise: it is the Lin specification a user could write by hand.** The reference is that specification, written by hand.
+
 ```{r}
-dat <- data.frame(x = rnorm(40, mean = 2.3), z = rep(0:1, 20))
-dat$y <- rnorm(40) + dat$x + 0.35 * dat$z
-fit <- lm_lin(y ~ z, covariates = ~ x, data = dat)
-fit$scaled_center
-tidy(fit)[, c("term", "estimate", "std.error")]
+dd <- d
+dd$x_c <- dd$x - mean(dd$x)
+lin  <- lm_lin(y ~ z, covariates = ~ x, data = d)
+byhand <- lm_robust(y ~ z * x_c, data = dd)
+
+check("lm_lin()",
+      c(coef(lin)[["z"]], lin$std.error[["z"]]),
+      c(coef(byhand)[["z"]], byhand$std.error[["z"]]))
 ```
 
 # `iv_robust`
@@ -214,6 +347,19 @@ tidy(fit)[, c("term", "estimate", "std.error")]
 \]
 
 with $\mathbf{X}$ the regressors, endogenous ones included, and $\mathbf{Z}$ the instruments. Equivalently: regress $\mathbf{X}$ on $\mathbf{Z}$ to get $\widehat{\mathbf{X}} = \mathbf{Z}\widehat{\beta}_{FS}$, then regress $\mathbf{y}$ on $\widehat{\mathbf{X}}$. Weights are handled as in `lm_robust()`, by rescaling before estimation.
+
+**The promise: the point estimates are two-stage least squares.** The reference is the two stages, run as two stages.
+
+```{r}
+tsls_coef <- function(y, X, Z) {
+  xhat <- Z %*% solve(crossprod(Z), crossprod(Z, X))
+  as.vector(solve(crossprod(xhat), crossprod(xhat, y)))
+}
+
+check("iv_robust()",
+      unname(coef(iv_robust(y ~ en + x | inst + x, data = d))),
+      tsls_coef(d$y, model.matrix(~ en + x, d), model.matrix(~ inst + x, d)))
+```
 
 ## Variance
 
@@ -247,6 +393,38 @@ Stata's `ivregress 2sls` applies no finite-sample correction and uses z-tests un
 | `clusters = cl, se_type = "stata"` | `ivregress 2sls y (x = z), vce(cl cl) small` |
 | `se_type = "HC2"` (default), `"HC3"`, `"CR2"` | no equivalent |
 
+# `lh_robust`
+
+`lh_robust()` fits a model with `lm_robust()` and then tests linear restrictions on it through `car::linearHypothesis()`, keeping the robust variance and the degrees of freedom of the fit rather than recomputing them classically.
+
+For a restriction vector $\mathbf{a}$, the estimate and its standard error are the delta method applied to a linear function of the coefficients:
+
+\[
+\widehat{\theta} = \mathbf{a}^\top\widehat{\beta},
+\qquad
+\mathrm{se}(\widehat{\theta}) = \sqrt{\mathbf{a}^\top\widehat{\mathbb{V}}\mathbf{a}}
+\]
+
+with $\widehat{\mathbb{V}}$ whichever variance the fit was asked for. Several restrictions at once, stacked into a matrix $\mathbf{R}$ against targets $\mathbf{q}$, additionally give a Wald statistic
+
+\[
+F = \frac{(\mathbf{R}\widehat{\beta} - \mathbf{q})^\top\left[\mathbf{R}\widehat{\mathbb{V}}\mathbf{R}^\top\right]^{-1}(\mathbf{R}\widehat{\beta} - \mathbf{q})}{\mathrm{rank}(\mathbf{R})}
+\]
+
+on $\mathrm{rank}(\mathbf{R})$ and the fit's residual degrees of freedom, returned in the `joint_hypothesis` element. estimatr 1.x declines to compute it.
+
+**The promise: a linear hypothesis is the delta method on the fit.**
+
+```{r}
+fit <- lm_robust(y ~ z + x, data = d)
+lh <- lh_robust(y ~ z + x, data = d, linear_hypothesis = "z + x = 0")
+a <- c(0, 1, 1)
+
+check("lh_robust()",
+      c(lh$lh$coefficients[[1]], lh$lh$std.error[[1]]),
+      c(sum(a * coef(fit)), sqrt(drop(t(a) %*% fit$vcov %*% a))))
+```
+
 # `difference_in_means`
 
 `difference_in_means()` picks the point estimate, variance, and degrees of freedom that match the design, and reports which one it used in the `design` element of the fitted object. The design is inferred from which of `blocks` and `clusters` are supplied, and from the shape of the blocks.
@@ -277,6 +455,19 @@ With weights, the estimate and its variance are handed to `lm_robust()` with HC2
 | Matched-pair clustered | $\frac{J}{(J-1)N^2}\sum_j\left(N_j\widehat{\tau}_j - \frac{N\widehat{\tau}}{J}\right)^2$ | $J-1$ |
 
 The unblocked variance and its degrees of freedom are what R's `t.test()` computes. The clustered variance is the one @gerbergreen2012 recommend in their equation 3.23 when clusters are of even size. The matched-pair clustered variance is the SATE variance of @imaietal2009, their equation 6, with the degrees of freedom they suggest.
+
+That first row has a second description: the Neyman variance of a two-arm experiment is exactly what HC2 returns on a regression of the outcome on the treatment indicator, which is @samiiaronow2012's equivalence and the reason HC2 is the package default.
+
+**The promise: for a two-arm design it is `lm_robust()` at HC2.**
+
+```{r}
+dim_fit <- difference_in_means(y ~ z, data = d)
+ols <- lm_robust(y ~ z, data = d, se_type = "HC2")
+
+check("difference_in_means()",
+      c(dim_fit$coefficients[["z"]], dim_fit$std.error[["z"]]),
+      c(ols$coefficients[["z"]], ols$std.error[["z"]]))
+```
 
 ## Variance for blocked designs
 
@@ -367,6 +558,19 @@ for the inverse-probability-weighted outcome of a unit observed in condition $z$
 
 $N$ is the number of units the *design* covers, which matters with more than two arms. `condition1` and `condition2` select the contrast, but the estimand remains the average treatment effect over every unit of the design, so the estimator divides by $N$ rather than by the number of units landing in the two selected conditions, and `data` must carry one row per unit including the arms outside the contrast. A declaration whose size does not match `nrow(data)` is an error rather than a silent misalignment.
 
+**The promise: the estimate is the Horvitz-Thompson estimator.** Two lines is the whole definition.
+
+```{r}
+ht_estimate <- function(y, z, pr) {
+  mean(y * z / pr) - mean(y * (1 - z) / (1 - pr))
+}
+
+pr <- rep(0.5, N)
+check("horvitz_thompson()",
+      horvitz_thompson(y ~ z, data = d, condition_prs = pr)$coefficients[[1]],
+      ht_estimate(d$y, d$z, pr))
+```
+
 ## Variance
 
 The variance estimator is the conservative bound of @aronowmiddleton2013, built from Young's inequality. In its general form,
@@ -391,6 +595,17 @@ Everything below is that expression with $A_{ij}$ worked out for a particular de
 \[
 \widehat{\mathbb{V}}[\widehat{\tau}] = \frac{1}{N^2}\left[\sum_{i: z_i = 1}\widetilde{Y}_{1i}^2 + \sum_{i: z_i = 0}\widetilde{Y}_{0i}^2\right].
 \]
+
+Which is short enough to check directly, and it is the variance the estimate above was reported with, since a bare probability vector says nothing about dependence between units.
+
+```{r}
+Y1 <- d$y[d$z == 1] / 0.5
+Y0 <- d$y[d$z == 0] / 0.5
+
+check("horvitz_thompson() variance, simple randomization",
+      horvitz_thompson(y ~ z, data = d, condition_prs = pr)$std.error[[1]],
+      sqrt((sum(Y1^2) + sum(Y0^2)) / N^2))
+```
 
 **Complete randomization.** With $n$ units of which $m_1$ go to condition 1 and $m_0$ to condition 0, exchangeability gives the joint probabilities in closed form, $\pi_{11} = m_1(m_1-1)/(n(n-1))$ and so on, so $A_{ij}$ takes only three values:
 
@@ -451,5 +666,39 @@ Inference for the Horvitz-Thompson estimator rests on a normal approximation:
 \]
 
 with two-sided p-values from the same distribution.
+
+# Every promise in one table
+
+```{r echo = FALSE}
+knitr::kable(
+  data.frame(
+    Promise = names(CHECKS),
+    `Largest relative gap` = sprintf("%.1e", unlist(CHECKS)),
+    Holds = unlist(CHECKS) < 1e-10,
+    check.names = FALSE
+  ),
+  row.names = FALSE
+)
+```
+
+```{r}
+stopifnot(all(unlist(CHECKS) < 1e-10))
+```
+
+Every promise above is met. The numbers are computed when the vignette is built, so they are what your installed copy produces rather than values recorded from a run somewhere else.
+
+That last line is `stopifnot()` rather than a printed `TRUE` on purpose. A vignette that computes its own table can report `FALSE` in a cell and still build, which would leave a broken promise sitting inside a clean `R CMD check`. Written this way the document refuses to build, so the check fails and the table cannot quietly disagree with the sentences above it. The margin is wide enough for that to be safe: the gaps sit at 1e-15 or below against a tolerance of 1e-10, so the linear algebra library on your machine would have to be five orders of magnitude worse than the one this was written on before the build broke.
+
+# What this does not cover
+
+The checks above are a demonstration, not a proof, and they are deliberately a small set.
+
+**They say nothing about what these estimators are good for.** That `difference_in_means()` computes the difference in means is a fact about this package. Whether that quantity is unbiased for your estimand, whether its interval covers, whether covariate adjustment helps you: none of that is estimatr's to guarantee, and none of it is checked here. The papers cited throughout are where those questions are answered. The guarantee is implementation, and the demonstration is arithmetic.
+
+**Each promise is checked in one configuration.** The test suite checks many: the same identities across weighted and unweighted fits, single and multivariate outcomes, one and two absorbed factors, instrumental variables with and without clusters, and the rank-deficient and near-saturated designs that have caused bugs. That is where a guarantee is enforced. What this document adds is that the promises are stated in words a reader can disagree with, next to the mathematics they are supposed to implement, and measured where a reader can watch.
+
+**Agreement with a formula written here is not agreement with the literature.** Transcribing HC2 into this document and matching it shows estimatr computes what it says. It cannot show that the definition is the one the field settled on, which is why every definition above carries its citation, and why the suite compares against `sandwich`, `clubSandwich`, `ivreg`, Stata's `regress`, `areg` and `ivregress`, `fixest`, `plm` and `blkvar`, none of which shares any lineage with this package. Two known divergences are pinned from both sides there rather than dropped: weighted HC2 and HC3 differ from Stata by a bounded amount, and `iv_robust()` uses second-stage leverage, which agrees with `ivreg` exactly and departs from `AER::ivreg()`'s deprecated `hatvalues()` method by up to 18.5 percent.
+
+**The data here are well conditioned, and that is where the interesting failures are not.** Every fit above is full rank with far more observations than parameters. Leverage exactly equal to one is benign; leverage marginally above one is not, and HC2 and HC3 are guarded there rather than answered, warning and contributing zero for the offending rows. A cluster-robust variance on a single cluster is refused outright, where 1.0.6 returned a standard error of 5.9e-17 and a zero-width interval in silence. Those are documented in `NEWS.md`, and none of them is visible in a table built on `rnorm()`.
 
 # References

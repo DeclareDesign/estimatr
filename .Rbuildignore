@@ -13,3 +13,6 @@
 ^revdep$
 ^vignettes/estimatr-in-the-tidyverse\.Rmd$
 ^vignettes/regression-tables\.Rmd$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

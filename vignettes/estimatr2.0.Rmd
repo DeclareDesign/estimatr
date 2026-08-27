@@ -15,9 +15,9 @@ library(estimatr)
 
 ## Written with AI, and checked accordingly
 
-estimatr 2.0.0 was written with AI. `vignette("estimatr_guarantees")` is where that is set out, alongside the guarantee it buys you: every estimator here is validated to machine precision against the definition it implements, measured when that vignette is built.
+estimatr 2.0.0 was written with AI. `vignette("mathematical-notes")` is where that is set out, alongside the guarantee it buys you: every estimator here is defined in mathematics and then validated to machine precision against that definition, measured when the vignette is built.
 
-New to the package rather than porting a script? `vignette("getting-started")` walks through the five estimators, and `vignette("mathematical-notes")` gives the definition of each with its citation.
+New to the package rather than porting a script? `vignette("getting-started")` walks through the six estimators, and `vignette("mathematical-notes")` gives the definition of each with its citation.
 
 This version is checked twice over besides: against a recording of an installed estimatr 1.0.6, which shows the rewrite moved no answer, and against implementations that share no lineage with it (`sandwich`, `clubSandwich`, `ivreg`, Stata, `fixest`, `plm`, `blkvar`), which shows the answers are right. [How this was checked] sets out both layers.
 
