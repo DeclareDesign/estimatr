@@ -856,3 +856,27 @@ test_that("B11: an offset() term is refused rather than ignored", {
   expect_equal(coef(lm_robust(I(y - off) ~ x, data = d))[["x"]],
                coef(lm(y ~ x + offset(off), data = d))[["x"]])
 })
+
+test_that("lh_robust survives a single-coefficient fit", {
+  # estimatr 1.0.6 errored here. Its degrees-of-freedom check read
+  #   if (length(lm_robust_fit$df) > 0 && var(lm_robust_fit$df > 0))
+  # with the "> 0" inside var() rather than outside, so it took the variance of
+  # a logical vector; and var() of a length-one vector is NA either way, so &&
+  # was handed NA and stopped. Every one-coefficient fit hit it. That is the
+  # shape Declaration 9.2 of Blair, Coppock and Humphreys (2023) uses, and it
+  # kept book.declaredesign.org from rebuilding between 2025-02 and 2026-08.
+  # The rewrite resolves df per hypothesis and has no such check; this pins
+  # that the one-coefficient path stays reachable.
+  set.seed(20260828)
+  d <- data.frame(age = rnorm(3, mean = 30, sd = 10))
+  m <- lh_robust(age ~ 1, data = d, linear_hypothesis = "(Intercept) = 20")
+  expect_s3_class(m, "lh_robust")
+
+  td <- tidy(m$lh)
+  expect_equal(nrow(td), 1L)
+  # the hypothesis value is the estimated intercept minus 20
+  expect_equal(td$estimate, mean(d$age) - 20)
+  # and the df must come from the fit rather than arriving as NA
+  expect_equal(td$df, nrow(d) - 1L)
+  expect_true(all(is.finite(c(td$std.error, td$statistic, td$p.value))))
+})
