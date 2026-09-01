@@ -184,6 +184,7 @@ test_that("tidy, glance, summary, and print work", {
   )
 
   ## lh_robust
+  skip_if_not_installed("car")
   lho <- lh_robust(
     mpg ~ cyl + am,
     data = mtcars,
@@ -1132,6 +1133,7 @@ test_that("update works", {
 })
 
 test_that("setting different alpha in lm_robust call leads to different CIs in tidy", {
+  skip_if_not_installed("fabricatr")
 
   set.seed(15)
   library(fabricatr)
@@ -1157,6 +1159,7 @@ test_that("setting different alpha in lm_robust call leads to different CIs in t
 })
 
 test_that("conf int for lh_robust works", {
+  skip_if_not_installed("fabricatr")
 
   set.seed(15)
   library(fabricatr)
