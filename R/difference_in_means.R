@@ -1,5 +1,12 @@
 #' Design-Based Difference-in-Means Estimator
 #'
+#' Estimates an average treatment effect as a difference in means, choosing
+#' the point estimator, the variance and the degrees of freedom that match
+#' the randomization rather than requiring you to name them. Unit, cluster,
+#' blocked, block-cluster, matched-pair and matched-pair cluster designs are
+#' recognised, and the `design` element of the result reports which case
+#' applied.
+#'
 #' @param formula an object of class formula with one variable on the RHS
 #' @param data A `data.frame`
 #' @param blocks An optional bare (unquoted) name of the block variable
@@ -46,7 +53,13 @@
 #'   and estimating it anyway understates the standard error by roughly the
 #'   block's cluster count.
 #'
-#' @return An object of class `"difference_in_means"`.
+#' @return An object of class `"difference_in_means"`, a list holding
+#'   `coefficients`, `std.error`, `df`, `statistic`, `p.value`, `conf.low`,
+#'   `conf.high`, `term`, `outcome`, `condition1`, `condition2`, `vcov`,
+#'   `nobs`, `alpha`, and `design`, a string naming the case that applied:
+#'   `"Standard"`, `"Blocked"`, `"Small blocks"`, `"Hybrid blocked"`,
+#'   `"Matched-pair"`, `"Clustered"`, `"Block-clustered"`, or
+#'   `"Matched-pair clustered"`.
 #'
 #' @references Gerber, Alan S. and Donald P. Green. 2012. \emph{Field Experiments:
 #'   Design, Analysis, and Interpretation}. New York: W.W. Norton.

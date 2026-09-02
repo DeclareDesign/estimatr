@@ -40,8 +40,8 @@ the full [dummies | X] design splits as \verb{P_[X|D] = P_D + P_\{M_D X\}}, so
 \code{h_ii} is the demeaned-X hat value plus \code{diag(P_D)}, and no dummy hat
 matrix is built. With one factor \code{diag(P_D)} is \verb{w_i / sum(w in group i)};
 with several it costs a factorisation the size of the design's narrowest
-dimension. Results are identical to writing the dummies out, and to
-estimatr, at a fraction of the time and memory.
+dimension. Results are identical to writing the dummies out, at a
+fraction of the time and memory.
 
 \code{"CR2"} is the one exception, and needs the dummies whatever the number of
 factors, since its adjustment is built from cluster-level blocks of the hat
@@ -82,10 +82,23 @@ the default here; it is refused with \code{weights}.
 \item{try_cholesky}{logical. Whether to try Cholesky decomposition.}
 }
 \value{
-An object of class \code{"lm_robust"}.
+An object of class \code{"lm_robust"}, a list holding the estimate table in \code{coefficients}, \code{std.error}, \code{df}, \code{statistic},
+\code{p.value}, \code{conf.low}, \code{conf.high}, \code{term} and \code{outcome}; the fit in
+\code{fitted.values}, \code{residuals}, \code{vcov}, \code{nobs}, \code{k}, \code{rank}, \code{df.residual}
+and \code{res_var}; the summary statistics \code{r.squared}, \code{adj.r.squared},
+\code{tss} and \code{fstatistic}; and \code{se_type}, \code{weighted}, \code{clustered}, \code{fes},
+\code{alpha}, \code{terms}, \code{xlevels} and \code{call}.
+
+Absorbed fits add \code{fixed_effects}, \code{felevels} (the absorbed levels of
+each factor), and the within-projection summaries \code{proj_r.squared},
+\code{proj_adj.r.squared}, \code{proj_tss} and \code{proj_fstatistic}.
 }
 \description{
-Ordinary Least Squares with Robust Standard Errors
+Fits a linear model by ordinary least squares and returns
+heteroskedasticity-robust or cluster-robust standard errors, with the
+small-sample corrections used in design-based work. Fixed effects can be
+absorbed rather than expanded into dummy columns, at no cost in the
+available standard error types.
 }
 \examples{
 set.seed(15)

@@ -42,10 +42,21 @@ difference_in_means(
 \item{alpha}{The significance level, 0.05 by default.}
 }
 \value{
-An object of class \code{"difference_in_means"}.
+An object of class \code{"difference_in_means"}, a list holding
+\code{coefficients}, \code{std.error}, \code{df}, \code{statistic}, \code{p.value}, \code{conf.low},
+\code{conf.high}, \code{term}, \code{outcome}, \code{condition1}, \code{condition2}, \code{vcov},
+\code{nobs}, \code{alpha}, and \code{design}, a string naming the case that applied:
+\code{"Standard"}, \code{"Blocked"}, \code{"Small blocks"}, \code{"Hybrid blocked"},
+\code{"Matched-pair"}, \code{"Clustered"}, \code{"Block-clustered"}, or
+\code{"Matched-pair clustered"}.
 }
 \description{
-Design-Based Difference-in-Means Estimator
+Estimates an average treatment effect as a difference in means, choosing
+the point estimator, the variance and the degrees of freedom that match
+the randomization rather than requiring you to name them. Unit, cluster,
+blocked, block-cluster, matched-pair and matched-pair cluster designs are
+recognised, and the \code{design} element of the result reports which case
+applied.
 }
 \details{
 Selects the appropriate point estimate, standard errors, and degrees

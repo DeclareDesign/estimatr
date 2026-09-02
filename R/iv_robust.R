@@ -1,5 +1,9 @@
 #' Two-Stage Least Squares Instrumental Variables Regression
 #'
+#' Fits a two-stage least squares instrumental variables regression and
+#' returns heteroskedasticity-robust or cluster-robust standard errors, with
+#' optional weak-instrument, Wu-Hausman and Sargan diagnostics.
+#'
 #' @param formula an object of class formula with regressors and instruments,
 #'   e.g. `y ~ x1 + x2 | z1 + z2`.
 #' @param data A `data.frame`
@@ -22,7 +26,18 @@
 #' @param return_vcov logical. Whether to return the vcov matrix.
 #' @param try_cholesky logical. Whether to try Cholesky decomposition.
 #'
-#' @return An object of class `"iv_robust"`.
+#' @return An object of class `"iv_robust"`, a list holding the estimate table in `coefficients`, `std.error`, `df`, `statistic`,
+#'   `p.value`, `conf.low`, `conf.high`, `term` and `outcome`; the fit in
+#'   `fitted.values`, `residuals`, `vcov`, `nobs`, `k`, `rank`, `df.residual`
+#'   and `res_var`; the summary statistics `r.squared`, `adj.r.squared`,
+#'   `tss` and `fstatistic`; and `se_type`, `weighted`, `clustered`, `fes`,
+#'   `alpha`, `terms`, `xlevels` and `call`.
+#'
+#'   `residuals` are the structural residuals, `y - X beta`, rather than the
+#'   second-stage ones. `ei.iv`, `terms_regressors` and `formula` carry the
+#'   two-stage structure. With `diagnostics = TRUE` the object also holds
+#'   `diagnostic_first_stage_fstatistic`, `diagnostic_endogeneity_test` and
+#'   `diagnostic_overid_test`.
 #'
 #' @importFrom stats na.omit
 #' @examples

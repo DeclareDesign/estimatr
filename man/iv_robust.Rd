@@ -54,10 +54,23 @@ FE), \code{"CR0"} (clusters, with FE).}
 \item{try_cholesky}{logical. Whether to try Cholesky decomposition.}
 }
 \value{
-An object of class \code{"iv_robust"}.
+An object of class \code{"iv_robust"}, a list holding the estimate table in \code{coefficients}, \code{std.error}, \code{df}, \code{statistic},
+\code{p.value}, \code{conf.low}, \code{conf.high}, \code{term} and \code{outcome}; the fit in
+\code{fitted.values}, \code{residuals}, \code{vcov}, \code{nobs}, \code{k}, \code{rank}, \code{df.residual}
+and \code{res_var}; the summary statistics \code{r.squared}, \code{adj.r.squared},
+\code{tss} and \code{fstatistic}; and \code{se_type}, \code{weighted}, \code{clustered}, \code{fes},
+\code{alpha}, \code{terms}, \code{xlevels} and \code{call}.
+
+\code{residuals} are the structural residuals, \verb{y - X beta}, rather than the
+second-stage ones. \code{ei.iv}, \code{terms_regressors} and \code{formula} carry the
+two-stage structure. With \code{diagnostics = TRUE} the object also holds
+\code{diagnostic_first_stage_fstatistic}, \code{diagnostic_endogeneity_test} and
+\code{diagnostic_overid_test}.
 }
 \description{
-Two-Stage Least Squares Instrumental Variables Regression
+Fits a two-stage least squares instrumental variables regression and
+returns heteroskedasticity-robust or cluster-robust standard errors, with
+optional weak-instrument, Wu-Hausman and Sargan diagnostics.
 }
 \examples{
 set.seed(25)

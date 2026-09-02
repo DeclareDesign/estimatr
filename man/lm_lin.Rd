@@ -42,10 +42,18 @@ lm_lin(
 \item{try_cholesky}{logical. Whether to try Cholesky decomposition.}
 }
 \value{
-An object of class \code{"lm_robust"}.
+An object of class \code{"lm_robust"}, as returned by \code{\link[=lm_robust]{lm_robust()}},
+with two additions: \code{scaled_center}, the covariate means used for
+centering (taken after any function in the formula is evaluated), and
+\code{treatment_levels}. The treatment row of \code{coefficients} is the estimate
+of the average treatment effect.
 }
 \description{
-Linear Regression with Lin (2013) Covariate Adjustment
+Estimates an average treatment effect with covariate adjustment following
+Lin (2013): every covariate is centered, interacted with treatment, and
+entered alongside it. Centering is what makes the treatment coefficient
+the effect estimate, and the interactions avoid the bias Freedman (2008)
+identified in ordinary covariate-adjusted regression.
 }
 \examples{
 set.seed(20)

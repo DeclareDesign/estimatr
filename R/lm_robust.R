@@ -1,5 +1,11 @@
 #' Ordinary Least Squares with Robust Standard Errors
 #'
+#' Fits a linear model by ordinary least squares and returns
+#' heteroskedasticity-robust or cluster-robust standard errors, with the
+#' small-sample corrections used in design-based work. Fixed effects can be
+#' absorbed rather than expanded into dummy columns, at no cost in the
+#' available standard error types.
+#'
 #' @param formula an object of class formula, as in [lm()]
 #' @param data A `data.frame`
 #' @param weights the bare (unquoted) name of the weights variable
@@ -16,8 +22,8 @@
 #'   `h_ii` is the demeaned-X hat value plus `diag(P_D)`, and no dummy hat
 #'   matrix is built. With one factor `diag(P_D)` is `w_i / sum(w in group i)`;
 #'   with several it costs a factorisation the size of the design's narrowest
-#'   dimension. Results are identical to writing the dummies out, and to
-#'   estimatr, at a fraction of the time and memory.
+#'   dimension. Results are identical to writing the dummies out, at a
+#'   fraction of the time and memory.
 #'
 #'   `"CR2"` is the one exception, and needs the dummies whatever the number of
 #'   factors, since its adjustment is built from cluster-level blocks of the hat
@@ -52,7 +58,16 @@
 #' @param return_vcov logical. Whether to return the vcov matrix.
 #' @param try_cholesky logical. Whether to try Cholesky decomposition.
 #'
-#' @return An object of class `"lm_robust"`.
+#' @return An object of class `"lm_robust"`, a list holding the estimate table in `coefficients`, `std.error`, `df`, `statistic`,
+#'   `p.value`, `conf.low`, `conf.high`, `term` and `outcome`; the fit in
+#'   `fitted.values`, `residuals`, `vcov`, `nobs`, `k`, `rank`, `df.residual`
+#'   and `res_var`; the summary statistics `r.squared`, `adj.r.squared`,
+#'   `tss` and `fstatistic`; and `se_type`, `weighted`, `clustered`, `fes`,
+#'   `alpha`, `terms`, `xlevels` and `call`.
+#'
+#'   Absorbed fits add `fixed_effects`, `felevels` (the absorbed levels of
+#'   each factor), and the within-projection summaries `proj_r.squared`,
+#'   `proj_adj.r.squared`, `proj_tss` and `proj_fstatistic`.
 #'
 #' @examples
 #' set.seed(15)
@@ -122,7 +137,7 @@ lm_robust <- function(formula,
     fe_rank <- sum(model_data[["fe_levels"]]) - length(model_data[["fe_levels"]]) + 1L
 
     # The nominal count above overstates the rank whenever one factor is partly
-    # spanned by the others -- a nested factor, or a disconnected design --
+    # spanned by the others (a nested factor, or a disconnected design),
     # which inflates the rank correction and shrinks the residual degrees of
     # freedom. fe_leverage() returns the exact rank from the same
     # eigendecomposition that gives the leverage, so it is used for every

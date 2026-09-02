@@ -15,11 +15,16 @@ lh_robust(..., data, linear_hypothesis)
 hypothesis, passed to \code{car::linearHypothesis}}
 }
 \value{
-An object of class \code{"lh_robust"} with components \code{lm_robust}, \code{lh},
+An object of class \code{"lh_robust"} with three components:
+\code{lm_robust}, the underlying fit; \code{lh},
 and \code{joint_hypothesis}.
 }
 \description{
-Linear Hypothesis Test for OLS with Robust Standard Errors
+Tests a linear combination of coefficients, or several of them jointly,
+from a model fitted by \code{\link[=lm_robust]{lm_robust()}}. The robust variance and the
+degrees of freedom of the fit are carried through, so a clustered fit is
+tested on its cluster-adjusted degrees of freedom rather than on the
+residual ones.
 }
 \examples{
 set.seed(35)

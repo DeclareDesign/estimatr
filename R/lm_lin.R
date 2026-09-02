@@ -1,5 +1,11 @@
 #' Linear Regression with Lin (2013) Covariate Adjustment
 #'
+#' Estimates an average treatment effect with covariate adjustment following
+#' Lin (2013): every covariate is centered, interacted with treatment, and
+#' entered alongside it. Centering is what makes the treatment coefficient
+#' the effect estimate, and the interactions avoid the bias Freedman (2008)
+#' identified in ordinary covariate-adjusted regression.
+#'
 #' @param formula an object of class formula with only the treatment on the RHS
 #' @param covariates a right-sided formula with pre-treatment covariates
 #' @param data A `data.frame`
@@ -12,7 +18,11 @@
 #' @param return_vcov logical. Whether to return the vcov matrix.
 #' @param try_cholesky logical. Whether to try Cholesky decomposition.
 #'
-#' @return An object of class `"lm_robust"`.
+#' @return An object of class `"lm_robust"`, as returned by [lm_robust()],
+#'   with two additions: `scaled_center`, the covariate means used for
+#'   centering (taken after any function in the formula is evaluated), and
+#'   `treatment_levels`. The treatment row of `coefficients` is the estimate
+#'   of the average treatment effect.
 #'
 #' @references Lin, Winston. 2013. "Agnostic Notes on Regression Adjustments to
 #'   Experimental Data: Reexamining Freedman's Critique." The Annals of Applied

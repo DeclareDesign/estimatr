@@ -1,11 +1,18 @@
 #' Linear Hypothesis Test for OLS with Robust Standard Errors
 #'
+#' Tests a linear combination of coefficients, or several of them jointly,
+#' from a model fitted by [lm_robust()]. The robust variance and the
+#' degrees of freedom of the fit are carried through, so a clustered fit is
+#' tested on its cluster-adjusted degrees of freedom rather than on the
+#' residual ones.
+#'
 #' @param ... Other arguments passed to [lm_robust()]
 #' @param data A `data.frame`
 #' @param linear_hypothesis A character string or matrix specifying the
 #'   hypothesis, passed to `car::linearHypothesis`
 #'
-#' @return An object of class `"lh_robust"` with components `lm_robust`, `lh`,
+#' @return An object of class `"lh_robust"` with three components:
+#'   `lm_robust`, the underlying fit; `lh`,
 #'   and `joint_hypothesis`.
 #'
 #' @importFrom rlang quos eval_tidy
