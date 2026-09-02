@@ -42,16 +42,15 @@ Suggests:
     dplyr,
     emmeans,
     estimability,
-    ggplot2,
     ivreg,
     knitr,
     modelsummary,
-    purrr,
     randomizr,
     rmarkdown,
     sandwich,
     testthat (>= 3.0.0),
-    texreg
+    texreg,
+    tibble
 VignetteBuilder: knitr
 LinkingTo:
     Rcpp,

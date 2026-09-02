@@ -11,9 +11,6 @@ vignette: >
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", message = FALSE)
-has_randomizr <- requireNamespace("randomizr", quietly = TRUE)
-has_texreg <- requireNamespace("texreg", quietly = TRUE)
-library(estimatr)
 options(digits = 4)
 ```
 
@@ -34,50 +31,36 @@ This vignette shows each of them on one running example. `vignette("mathematical
 
 ## The example data
 
-One hundred units and a pre-treatment covariate, with the same experiment run three ways: complete random assignment of half the sample, cluster assignment of ten of twenty clusters, and block assignment of five units within each of ten blocks.
+One hundred units and a pre-treatment covariate, with the same experiment run three ways: complete random assignment of half the sample, cluster assignment of ten of twenty clusters, and block assignment of five units within each of ten blocks. The three assignments come from randomizr, whose declarations `horvitz_thompson()` reads later on.
+
+```{r}
+library(estimatr)
+library(randomizr)
+library(tibble)
+```
 
 ```{r}
 set.seed(42)
 N <- 100
 
-dat <- data.frame(
+dat <- tibble(
   x = runif(N),
-  cl = rep(letters[1:20], each = 5)
+  cl = rep(letters[1:20], each = 5),
+  y0 = rnorm(N, mean = x), # control potential outcome
+  y1 = y0 + 0.35, # treatment potential outcome, a constant effect
+  w = runif(N, 0.5, 1.5), # sampling weights, used further down
+  inst = x + rnorm(N, sd = 0.3), # an instrument that shifts x, used further down
+  block = cut(x, breaks = quantile(x, seq(0, 1, 0.1)),
+              labels = FALSE, include.lowest = TRUE),
+  z = complete_ra(N, m = N / 2),
+  z_cl = cluster_ra(clusters = cl, m = 10),
+  z_bl = block_ra(blocks = block, prob = 0.5),
+  y = ifelse(z == 1, y1, y0),
+  y_cl = ifelse(z_cl == 1, y1, y0),
+  y_bl = ifelse(z_bl == 1, y1, y0)
 )
-dat$y0 <- rnorm(N, mean = dat$x)   # control potential outcome
-dat$y1 <- dat$y0 + 0.35            # treatment potential outcome, a constant effect
 
-# Ten blocks of ten units, defined by decile of the covariate
-dat$block <- cut(dat$x, breaks = quantile(dat$x, seq(0, 1, 0.1)),
-                 labels = FALSE, include.lowest = TRUE)
-```
-
-The three assignments come from randomizr, whose declarations `horvitz_thompson()` reads later on.
-
-```{r, eval = has_randomizr}
-library(randomizr)
-
-dat$z <- complete_ra(N, m = N / 2)
-dat$z_cl <- cluster_ra(clusters = dat$cl, m = 10)
-dat$z_bl <- block_ra(blocks = dat$block, prob = 0.5)
-```
-
-```{r, echo = FALSE, eval = !has_randomizr}
-# Base R equivalents, so the document still builds without randomizr installed.
-dat$z <- 0
-dat$z[sample(N, N / 2)] <- 1
-dat$z_cl <- as.integer(dat$cl %in% sample(unique(dat$cl), 10))
-dat$z_bl <- ave(dat$z, dat$block, FUN = function(g) sample(rep(0:1, each = 5)))
-```
-
-Each assignment reveals one of the two potential outcomes.
-
-```{r}
-dat$y <- ifelse(dat$z == 1, dat$y1, dat$y0)
-dat$y_cl <- ifelse(dat$z_cl == 1, dat$y1, dat$y0)
-dat$y_bl <- ifelse(dat$z_bl == 1, dat$y1, dat$y0)
-
-head(dat)
+dat
 ```
 
 The true average treatment effect is 0.35 by construction, so you can see how each estimator does.
@@ -139,7 +122,6 @@ The absorbed levels are kept in the `felevels` element of the result. One cautio
 ### Weights
 
 ```{r}
-dat$w <- runif(N, 0.5, 1.5)
 tidy(lm_robust(y ~ z + x, data = dat, weights = w))[2, ]
 ```
 
@@ -167,8 +149,6 @@ lin_fit$scaled_center
 Two-stage least squares, with the same `se_type` menu. Instruments go after a vertical bar.
 
 ```{r}
-# Manufacturing an instrument for the example: `inst` shifts `x`
-dat$inst <- dat$x + rnorm(N, sd = 0.3)
 iv_fit <- iv_robust(y ~ x | inst, data = dat)
 summary(iv_fit)
 ```
@@ -217,7 +197,7 @@ horvitz_thompson(y ~ z, data = dat, condition_prs = c("0" = 0.5, "1" = 0.5))
 
 Passing the randomization declaration instead is what buys the design-aware variance, because a declaration already carries the block structure, the cluster structure, the per-unit probabilities and whether assignment was simple or complete. Clustered and blocked designs need no further arguments: describe the design once, in the declaration.
 
-```{r, eval = has_randomizr}
+```{r}
 decl <- declare_ra(N = N, prob = 0.5, simple = FALSE)
 horvitz_thompson(y ~ z, data = dat, condition_prs = decl)
 ```
@@ -251,7 +231,7 @@ confint(fit)
 
 Regression tables work through the usual packages. `texreg` and `modelsummary` both take `lm_robust` objects directly.
 
-```{r, eval = has_texreg, results = "asis"}
+```{r, results = "asis"}
 texreg::htmlreg(list(fit, lin_fit), include.ci = FALSE, caption = "")
 ```
 
@@ -263,9 +243,8 @@ Design-based work means fitting the same model many times over, which is what es
 
 ```{r}
 sim_once <- function() {
-  d <- dat
-  d$z <- sample(d$z)
-  d$y <- ifelse(d$z == 1, d$y1, d$y0)
+  z_sim <- sample(dat$z)
+  d <- tibble(x = dat$x, z = z_sim, y = ifelse(z_sim == 1, dat$y1, dat$y0))
   lm_lin(y ~ z, covariates = ~ x, data = d)$coefficients[["z"]]
 }
 

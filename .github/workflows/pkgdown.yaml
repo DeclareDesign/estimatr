@@ -8,9 +8,11 @@
 # them, but `performance` and `estimatr-in-the-tidyverse` and
 # `regression-tables` are .Rbuildignore'd, so this job is the only thing that
 # builds those three. Their chunks are guarded with requireNamespace(), which
-# means a missing package renders the page without its output and stays green:
-# every package they load is declared in Suggests so that cannot happen
-# quietly.
+# means a missing package renders the page without its output and stays green.
+# ggplot2 and purrr are named in extra-packages below rather than in Suggests
+# so that cannot happen here: they are needed by a vignette that is not in the
+# tarball, so putting them in Suggests would make all five R-CMD-check jobs
+# install the ggplot2 tree on every push for no benefit to the check.
 #
 # It also runs pkgdown's reference-index check, so an exported function that
 # nobody added to _pkgdown.yml fails here rather than in the other repository.
@@ -44,7 +46,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown, local::.
+          extra-packages: any::pkgdown, any::ggplot2, any::purrr, local::.
           needs: website
 
       - name: Build site
