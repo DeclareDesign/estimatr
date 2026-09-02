@@ -13,21 +13,17 @@ has_randomizr <- requireNamespace("randomizr", quietly = TRUE)
 library(estimatr)
 ```
 
-## Written with AI, and checked accordingly
-
-estimatr 2.0.0 was written with AI. `vignette("mathematical-notes")` is where that is set out, alongside the guarantee it buys you: every estimator here is defined in mathematics and then validated to machine precision against that definition, measured when the vignette is built.
-
-New to the package rather than porting a script? `vignette("getting-started")` walks through the six estimators, and `vignette("mathematical-notes")` gives the definition of each with its citation.
-
-This version is checked twice over besides: against a recording of an installed estimatr 1.0.6, which shows the rewrite moved no answer, and against implementations that share no lineage with it (`sandwich`, `clubSandwich`, `ivreg`, Stata, `fixest`, `plm`, `blkvar`), which shows the answers are right. [How this was checked] sets out both layers.
-
 ## The short version
 
 estimatr 2.0 is a ground-up rewrite aimed at the DeclareDesign workflow: fit the same model thousands of times, as fast as possible, and get the same number every time. Almost everything you already wrote against 1.x runs unchanged and returns identical estimates, identical standard errors, identical confidence intervals, and identical objects, only faster. That claim is pinned by 2,236 test assertions, 695 of which compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, and a further 268 of which compare against implementations that share no lineage with estimatr at all. See [How this was checked].
 
 Two things break, and each one is a deliberate trade. `horvitz_thompson()` takes one probability argument instead of five. Two stargazer helpers are gone. Every standard error 1.x could compute, 2.0 can still compute. What changes is which one a *default* reaches for when you absorb fixed effects with clusters, and that default now says so out loud.
 
-The gains concentrate where the algorithms changed. Ordinary `lm_robust()` is about two and a half times as fast. Absorbed fixed effects are about 470x faster at 500 blocks and about 10,000x faster at 2,000, returning bit-identical numbers. Horvitz-Thompson under complete randomization is about 1,000x faster at N = 3,000, because the N-by-N joint inclusion probability matrix is never built.
+No call is slower, and the gains concentrate where the algorithms changed. See [Speed].
+
+estimatr 2.0.0 was written with AI, and `vignette("mathematical-notes")` sets that out alongside the guarantee it buys you: every estimator is defined in mathematics and then validated to machine precision against that definition, measured when the vignette is built. The release is checked twice over besides, against a recording of an installed estimatr 1.0.6, which shows the rewrite moved no answer, and against implementations that share no lineage with it (`sandwich`, `clubSandwich`, `ivreg`, Stata, `fixest`, `plm`, `blkvar`), which shows the answers are right. [How this was checked] sets out both layers.
+
+If you are new to the package rather than porting a script, `vignette("getting-started")` walks through the six estimators and `vignette("mathematical-notes")` gives the definition of each with its citation.
 
 ## Getting it
 
@@ -287,64 +283,9 @@ Standard errors agree to 1e-10 with `blkvar::block_estimator(method = "hybrid_p"
 
 ## Speed
 
-Median times on an Apple M4 Pro under R 4.6.0, comparing estimatr 1.0.6 to 2.0.0. Both versions were run on this one machine, so the comparison is not limited by the platform.
+No call is slower in 2.0, and the gains concentrate where the algorithms changed. Ordinary `lm_robust()` is about 2.5x faster. Absorbed fixed effects are about 470x faster at 500 blocks and about 9,800x faster at 2,000, returning bit-identical numbers, and the two-way fit that cost 1.3 GB in 1.x costs about 27 MB here. Horvitz-Thompson under complete randomization is about 1,100x faster at N = 3,000, because the N-by-N joint inclusion probability matrix is never built.
 
-**Every cell below was measured in its own fresh R process**, 200 replications where a call is cheap and as few as 5 where one call takes 41 seconds. That is not fussiness. The 1.0.6 cells that build a large matrix are bound by garbage collection rather than by arithmetic, so their timings depend on how much the heap had already grown when they ran: measured in sequence after the fixed-effects rows, Horvitz-Thompson at N = 1000 reports 9.6 ms, and measured in a fresh process it reports 53.1 ms. The second number is the one a user meets. A benchmark whose value depends on which benchmark ran before it is not a measurement, so each row gets a process of its own.
-
-The two versions return the same answers, and more exactly than the previous version of this table claimed: **15 of the 18 rows are bit-identical in both coefficients and standard errors**, including every row of the first table, and the largest disagreement anywhere is 1.4e-17, in one Horvitz-Thompson standard error. **No row is slower in 2.0, and the number that bounds the gain is 1.3x**, at weighted CR2, where the two versions do nearly the same work.
-
-The two cells with the largest allocations, 2,000 blocks and Horvitz-Thompson at N = 3,000, move by a few percent from run to run even in fresh processes, so their ratios are given to two significant figures. Everything below comes from `data-raw/benchmark_vignette.R`, which is the source of these tables and reproduces them.
-
-| task | 1.0.6 | 2.0.0 | speedup |
-|---|---:|---:|---:|
-| `lm_robust`, HC2, n = 1000 | 0.90 ms | 0.36 ms | 2.5x |
-| `lm_robust`, classical, n = 1000 | 0.84 ms | 0.34 ms | 2.5x |
-| `lm_robust`, CR2, 100 clusters | 1.21 ms | 0.66 ms | 1.8x |
-| `lm_robust`, CR2, weighted | 1.00 ms | 0.75 ms | 1.3x |
-| `lm_robust`, CR2, n = 5000, 500 clusters | 4.96 ms | 1.78 ms | 2.8x |
-| `lm_robust`, HC2, n = 100 | 0.50 ms | 0.33 ms | 1.5x |
-| `lm_lin` | 1.09 ms | 0.49 ms | 2.2x |
-| `iv_robust` | 1.20 ms | 0.72 ms | 1.7x |
-| `difference_in_means` | 0.70 ms | 0.42 ms | 1.7x |
-
-A simulation that calls `lm_robust()` 10,000 times saves about five seconds at n = 1000. That is the boring, everywhere-at-once gain. The interesting gains show up in the two places where the algorithms actually changed.
-
-**Fixed effects.** 2.0 absorbs fixed effects by alternating projections in C++, the algorithm `fixest::feols` uses, rather than by building the full design matrix of dummies. Both versions default to HC2 here and return bit-identical numbers, so the default column is a like-for-like comparison.
-
-| design | 1.0.6, default (HC2) | 2.0.0, default (HC2) | speedup | 1.0.6, HC1 | 2.0.0, HC1 | speedup |
-|---|---:|---:|---:|---:|---:|---:|
-| 50 blocks, n = 1000 | 2.27 ms | 0.54 ms | 4.2x | 1.68 ms | 0.54 ms | 3.1x |
-| 500 blocks, n = 10,000 | 563 ms | 1.19 ms | 470x | 14.2 ms | 1.16 ms | 12.2x |
-| 2000 blocks, n = 40,000 | 41,002 ms | 4.17 ms | 9,800x | 124 ms | 3.82 ms | 32.4x |
-
-The default column is where the algorithms differ most, because HC2 requires the hat matrix of the full design including every dummy, and 1.x builds it. That is why 40,000 observations with 2,000 blocks takes 1.0.6 41 seconds. The HC1 column shows the same computation with a standard error that never needed the full hat matrix, where 2.0 is still 3x to 32x faster because the demeaning itself is faster.
-
-**Horvitz-Thompson.** 1.x builds the full N-by-N joint inclusion probability matrix. 2.0 derives the same variance from scalar sufficient statistics, so the complete-randomization case is O(1) in N rather than O(N²).
-
-| design | 1.0.6 | 2.0.0 | speedup |
-|---|---:|---:|---:|
-| complete, N = 200 | 1.01 ms | 0.11 ms | 8.9x |
-| complete, N = 1000 | 53.1 ms | 0.17 ms | 308x |
-| complete, N = 3000 | 362 ms | 0.32 ms | 1,100x |
-
-Standard errors are identical to floating-point precision for simple, complete, blocked, clustered, and blocked-and-clustered designs.
-
-### Reproducing these numbers
-
-Because the two versions cannot share a session, each is timed in its own. Install 1.0.6 into a separate library as shown under [Getting it], then run the same script twice with `.libPaths()` pointed at each.
-
-```r
-library(microbenchmark)
-set.seed(42)
-n <- 1000
-dat <- data.frame(
-  y = rnorm(n), x = rnorm(n), z = rbinom(n, 1, 0.5),
-  w = runif(n, 0.5, 1.5), cl = rep(1:100, each = 10),
-  bl = rep(1:50, each = 20)
-)
-
-microbenchmark(lm_robust(y ~ z + x, data = dat, clusters = cl), times = 100)
-```
+Full tables, the measurement method, and a script that reproduces them are on the [Performance](https://declaredesign.org/r/estimatr/articles/performance.html) page.
 
 ## Why rewrite at all
 
@@ -360,7 +301,7 @@ The rest is ordinary: one code path where 1.x has several, and the S3 surface ge
 
 ## How this was checked
 
-The disclosure is at the top of this document. Here is the evidence behind it, which is the part that should actually decide whether you install this.
+The short version states the claim. Here is the evidence behind it, which is the part that should actually decide whether you install this.
 
 **The first layer asks whether the rewrite changed an answer.** 695 assertions compare 2.0 against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, across every supported standard error type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes. A separate file pins the entire returned surface of sixteen fit types, names as well as values, because a package's compatibility surface is what it returns rather than what it exports: during development six fields went missing from fitted objects and a seventh returned a wrong value, and neither a `NAMESPACE` diff nor a search of every reverse dependency's source could see it, since no export changed and no call site changed either.
 
@@ -405,7 +346,7 @@ All 71 issues open on `DeclareDesign/estimatr` at the time of the rewrite were r
 | Superseded by the rewrite | 5 |
 | Still open, real work | 4 |
 
-The fixes worth naming. Blocked designs whose blocks are not all the same shape (#336) now use the Pashley and Miratrix (2021) estimators, where 1.x either errors or applies the matched-pairs estimator to every block; this is the largest single addition. `residuals()` returns something (#345). Rank detection matches `lm()`, so a constant regressor comes back as NA rather than as a coefficient of 1e11 (#351, #395). `predict()` works with fixed effects, with factors, and with no `newdata` (#403, #404). `lh_robust()` uses cluster-adjusted degrees of freedom and returns a joint test (#405, #320, #390). Dropped collinear terms are named rather than silently returned as NA (#411). `augment()` exists, which unlocks the broom-aware packages downstream (#377). Multi-arm Horvitz-Thompson works at all (#183).
+The fixes worth naming. Blocked designs whose blocks are not all the same shape (#336) now use the Pashley and Miratrix (2021) estimators, where 1.x either errors or applies the matched-pairs estimator to every block; this is the largest single addition. `residuals()` returns something (#345). Rank detection matches `lm()`, so a constant regressor comes back as NA rather than as a coefficient of 1e11 (#351, #395). `predict()` works with fixed effects, with factors, and with no `newdata` (#403, #404). `lh_robust()` uses cluster-adjusted degrees of freedom and returns a joint test (#405, #320, #390). Dropped collinear terms are named rather than silently returned as NA (#411). `augment()` exists, which opens the broom-aware packages downstream (#377). Multi-arm Horvitz-Thompson works at all (#183).
 
 The four still open are honest holdouts. Two of them, #412 and #337, asked whether `se_type = "stata"` reproduces Stata's clustered standard errors under fixed effects; the one-way case is settled and pinned in `test_vs_stata.R` against a restored 2019 `areg` fixture, which agrees to Stata's print precision. #289 needs the reporter to say what remains after the clustered case was fixed. #123 is a running catalogue of S3 methods `lm` has: `residuals` and `variable.names` are now present, `anova` and `simulate` are not.
 

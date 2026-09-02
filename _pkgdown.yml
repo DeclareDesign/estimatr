@@ -24,6 +24,8 @@ navbar:
        href: articles/mathematical-notes.html
      - text: estimatr 2.0, what changes and why
        href: articles/estimatr2.0.html
+     - text: Performance
+       href: articles/performance.html
      - text: estimatr in the tidyverse
        href: articles/estimatr-in-the-tidyverse.html
      - text: Regression tables with estimatr
@@ -38,5 +40,6 @@ articles:
   - getting-started
   - mathematical-notes
   - estimatr2.0
+  - performance
   - estimatr-in-the-tidyverse
   - regression-tables

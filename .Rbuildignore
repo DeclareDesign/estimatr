@@ -12,6 +12,7 @@
 ^cran-comments\.md$
 ^revdep$
 ^vignettes/estimatr-in-the-tidyverse\.Rmd$
+^vignettes/performance\.Rmd$
 ^vignettes/regression-tables\.Rmd$
 ^_pkgdown\.yml$
 ^docs$

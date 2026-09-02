@@ -41,27 +41,40 @@ set.seed(42)
 N <- 100
 
 dat <- data.frame(
-  x  = runif(N),
+  x = runif(N),
   cl = rep(letters[1:20], each = 5)
 )
 dat$y0 <- rnorm(N, mean = dat$x)   # control potential outcome
 dat$y1 <- dat$y0 + 0.35            # treatment potential outcome, a constant effect
 
-# Complete random assignment: exactly 50 treated
-dat$z <- 0
-dat$z[sample(N, N / 2)] <- 1
-dat$y <- ifelse(dat$z == 1, dat$y1, dat$y0)
-
-# Cluster random assignment: exactly 10 of the 20 clusters treated
-treated_clusters <- sample(unique(dat$cl), 10)
-dat$z_cl <- as.integer(dat$cl %in% treated_clusters)
-dat$y_cl <- ifelse(dat$z_cl == 1, dat$y1, dat$y0)
-
-# Block random assignment: ten blocks defined by the covariate, five of the
-# ten units in each block treated
+# Ten blocks of ten units, defined by decile of the covariate
 dat$block <- cut(dat$x, breaks = quantile(dat$x, seq(0, 1, 0.1)),
                  labels = FALSE, include.lowest = TRUE)
+```
+
+The three assignments come from randomizr, whose declarations `horvitz_thompson()` reads later on.
+
+```{r, eval = has_randomizr}
+library(randomizr)
+
+dat$z <- complete_ra(N, m = N / 2)
+dat$z_cl <- cluster_ra(clusters = dat$cl, m = 10)
+dat$z_bl <- block_ra(blocks = dat$block, prob = 0.5)
+```
+
+```{r, echo = FALSE, eval = !has_randomizr}
+# Base R equivalents, so the document still builds without randomizr installed.
+dat$z <- 0
+dat$z[sample(N, N / 2)] <- 1
+dat$z_cl <- as.integer(dat$cl %in% sample(unique(dat$cl), 10))
 dat$z_bl <- ave(dat$z, dat$block, FUN = function(g) sample(rep(0:1, each = 5)))
+```
+
+Each assignment reveals one of the two potential outcomes.
+
+```{r}
+dat$y <- ifelse(dat$z == 1, dat$y1, dat$y0)
+dat$y_cl <- ifelse(dat$z_cl == 1, dat$y1, dat$y0)
 dat$y_bl <- ifelse(dat$z_bl == 1, dat$y1, dat$y0)
 
 head(dat)
@@ -112,7 +125,7 @@ c(
 
 ### Fixed effects
 
-`fixed_effects` takes a right-sided formula and absorbs those groups rather than adding them as dummy columns. The estimates and standard errors are identical to writing the dummies out, and on wide fixed effects it is dramatically faster: 40,000 observations across 2,000 blocks takes 1.x 41 seconds and 2.0 18 milliseconds.
+`fixed_effects` takes a right-sided formula and absorbs those groups rather than adding them as dummy columns. The estimates and standard errors are identical to writing the dummies out, and no dummy matrix is ever built, at any number of factors, which is what makes wide fixed effects cheap.
 
 ```{r}
 lm_robust(y_bl ~ z_bl, data = dat, fixed_effects = ~ block)
@@ -121,7 +134,7 @@ lm_robust(y_bl ~ z_bl, data = dat, fixed_effects = ~ block)
 tidy(lm_robust(y_bl ~ z_bl + factor(block), data = dat))[2, 1:4]
 ```
 
-The absorbed levels are kept in `fit$felevels`. One caution, and it is the only default that moved in 2.0: `fixed_effects` combined with `clusters` now defaults to `se_type = "CR0"` where 1.x defaulted to `"CR2"`, because CR2 is the one estimator that still has to expand the dummies. It warns once per session, and asking for `se_type = "CR2"` by name gets the 1.x number back.
+The absorbed levels are kept in the `felevels` element of the result. One caution: `fixed_effects` combined with `clusters` defaults to `se_type = "CR0"`, because CR2 is the one estimator that still has to expand the dummies, and it warns once per session to say so. Asking for `se_type = "CR2"` by name gets it. The full menu by case is in `?lm_robust`.
 
 ### Weights
 
@@ -180,7 +193,7 @@ dim_cl$design
 tidy(dim_cl)
 ```
 
-`blocks` works the same way. estimatr 2.0 accepts blocked designs that 1.x refused, using the estimators of @pashleymiratrix2021: blocks with at least two treated and two control units carry their own variance, blocks with a singleton arm have their variance estimated across such blocks, and a design holding both kinds combines the two. Always check `design` rather than assuming.
+`blocks` works the same way, and blocks need not all be the same shape. Blocks with at least two units in each arm carry their own variance; blocks with a singleton arm have their variance estimated across such blocks, following @pashleymiratrix2021. Check `design` rather than assuming, and see `?difference_in_means` for the full classification and the two designs it refuses.
 
 ```{r}
 # The blocked version of the experiment
@@ -196,36 +209,20 @@ difference_in_means(extra ~ group, data = sleep, blocks = ID)$design
 
 When you know how treatment was assigned, you can estimate the average treatment effect without a model, by weighting each observed outcome by the inverse of the probability of the condition it was observed under. The estimator is unbiased, and it handles designs that regression handles awkwardly: clusters of unequal size, per-unit probabilities that differ, assignment schemes with dependence across units.
 
-`condition_prs` is the one argument that describes the design. In its simplest form it is a named vector of condition probabilities:
+`condition_prs` is the one argument that describes the design, and what you pass decides which variance you get. A named vector of condition probabilities gives the conservative bound, valid for any design and tight only for Bernoulli assignment:
 
 ```{r}
 horvitz_thompson(y ~ z, data = dat, condition_prs = c("0" = 0.5, "1" = 0.5))
 ```
 
-Better, pass the randomization declaration itself. A declaration carries the block structure, the cluster structure, the per-unit probabilities and whether assignment was simple or complete, which is what lets estimatr use the design-aware variance rather than a bound that is valid for any design but tight only for Bernoulli assignment.
+Passing the randomization declaration instead is what buys the design-aware variance, because a declaration already carries the block structure, the cluster structure, the per-unit probabilities and whether assignment was simple or complete. Clustered and blocked designs need no further arguments: describe the design once, in the declaration.
 
 ```{r, eval = has_randomizr}
-library(randomizr)
 decl <- declare_ra(N = N, prob = 0.5, simple = FALSE)
 horvitz_thompson(y ~ z, data = dat, condition_prs = decl)
 ```
 
-Clustered and blocked designs work the same way: describe the design once, in the declaration.
-
-```{r, eval = has_randomizr}
-decl_cl <- declare_ra(clusters = dat$cl, prob = 0.5, simple = FALSE)
-horvitz_thompson(y_cl ~ z_cl, data = dat, condition_prs = decl_cl)
-```
-
-A design you cannot describe parametrically becomes a permutation matrix, which `declare_ra()` also accepts, and which replaces the `condition_pr_mat` machinery of 1.x.
-
-```{r, eval = has_randomizr}
-perms <- replicate(200, sample(rep(0:1, each = N / 2)))
-decl_custom <- declare_ra(permutation_matrix = perms)
-horvitz_thompson(y ~ z, data = dat, condition_prs = decl_custom)$std.error
-```
-
-With more than two arms, `condition1` and `condition2` select the contrast. The estimand stays the average treatment effect over all N units of the design, so `data` must carry one row per unit including the arms outside the contrast.
+`?horvitz_thompson` covers the rest: per-unit probability matrices, designs supplied as a permutation matrix, and contrasting two arms of a multi-arm design.
 
 ## `lh_robust()`
 
@@ -236,7 +233,7 @@ lh_fit <- lh_robust(y ~ z + x, data = dat, linear_hypothesis = "z + 2*x = 0")
 tidy(lh_fit)
 ```
 
-Several restrictions give a joint Wald test as well, which 1.x declined to compute.
+Several restrictions give a joint Wald test as well.
 
 ```{r}
 joint <- lh_robust(y ~ z + x, data = dat, linear_hypothesis = c("z = 0", "x = 0"))
@@ -260,11 +257,30 @@ texreg::htmlreg(list(fit, lin_fit), include.ci = FALSE, caption = "")
 
 `emmeans` also has methods for `lm_robust` fits, for estimated marginal means and contrasts.
 
-Note that `starprep()` and `commarobust()`, the stargazer helpers from 1.x, are gone in 2.0. Both remain as names that error and say so.
+## In a simulation
+
+Design-based work means fitting the same model many times over, which is what estimatr is built to do quickly. A sampling distribution of the Lin estimator under this design is a loop:
+
+```{r}
+sim_once <- function() {
+  d <- dat
+  d$z <- sample(d$z)
+  d$y <- ifelse(d$z == 1, d$y1, d$y0)
+  lm_lin(y ~ z, covariates = ~ x, data = d)$coefficients[["z"]]
+}
+
+set.seed(1)
+sims <- replicate(500, sim_once())
+c(mean = mean(sims), sd = sd(sims), truth = 0.35)
+```
+
+Swapping `lm_robust()` for `lm_lin()` in that loop is how you compare two estimators on one design.
 
 ## Where to go next
 
 - `vignette("mathematical-notes")` for the definition of every estimator and variance above, each with its citation and with a live check that estimatr computes what the definition says.
 - `vignette("estimatr2.0")` if you are porting code from estimatr 1.x.
+- The [Performance](https://declaredesign.org/r/estimatr/articles/performance.html) page for what each estimator costs at scale.
+- The [tidyverse](https://declaredesign.org/r/estimatr/articles/estimatr-in-the-tidyverse.html) and [regression table](https://declaredesign.org/r/estimatr/articles/regression-tables.html) pages for what to do with a fit once you have one.
 
 # References
