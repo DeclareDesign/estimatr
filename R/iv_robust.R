@@ -199,8 +199,15 @@ iv_robust <- function(formula,
     first_stage_fits <- first_stage[["fitted.values"]][, endog, drop = FALSE]
     colnames(first_stage_fits) <- paste0("fit_", colnames(first_stage_fits))
 
-    first_stage_residuals <- model_data$design_matrix - first_stage[["fitted.values"]]
-    colnames(first_stage_residuals) <- paste0("resid_", colnames(first_stage_residuals))
+    # Only the endogenous regressors. An exogenous column appears in the
+    # instrument matrix, so its first-stage residual is zero up to rounding,
+    # and carrying it left the Wu-Hausman auxiliary regression relying on rank
+    # detection to drop a column of noise. Both stats::lm() and a pivoted QR at
+    # tol = 1e-7 keep such a column, which adds a spurious degree of freedom to
+    # the test's numerator.
+    first_stage_residuals <-
+      (model_data$design_matrix - first_stage[["fitted.values"]])[, endog, drop = FALSE]
+    colnames(first_stage_residuals) <- paste0("resid_", endog)
 
     wu_hausman_ftest_val <- wu_hausman_reg_ftest(model_data, first_stage_residuals, se_type)
 

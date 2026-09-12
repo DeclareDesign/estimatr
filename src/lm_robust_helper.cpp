@@ -29,14 +29,53 @@ Eigen::MatrixXd Kr(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B) {
   return AB;
 }
 
+// stats::lm() detects rank with LINPACK dqrdc2, which compares each column's
+// remaining norm against ITS OWN original norm, so rescaling a column cannot
+// change the rank it reports. Eigen's setThreshold() compares every pivot
+// against the LARGEST pivot in the matrix, which is not scale invariant: one
+// column in large units pushes the others below the threshold and they are
+// dropped as collinear on a design that is full rank. Normalizing the columns
+// before the QR makes the criterion per column, which is what dqrdc2 does and
+// what the 1e-7 threshold was meant to reproduce. The caller undoes the
+// scaling on whatever it reads off the factorization.
+Eigen::VectorXd columnScales(const Eigen::Ref<const Eigen::MatrixXd>& X) {
+  Eigen::VectorXd scales(X.cols());
+  for (Eigen::Index j = 0; j < X.cols(); ++j) {
+    const double norm_j = X.col(j).norm();
+    scales(j) = (norm_j > 0.0) ? 1.0 / norm_j : 1.0;
+  }
+  return scales;
+}
+
+// The scales of the kept columns, in ascending original-column order, which is
+// the order R_inv is permuted back into.
+Eigen::VectorXd keptScales(const Eigen::VectorXd& scales,
+                           const Eigen::ArrayXi& Pmat_toss,
+                           const int p,
+                           const int r) {
+  Eigen::ArrayXi is_tossed = Eigen::ArrayXi::Zero(p);
+  for (Eigen::Index i = 0; i < Pmat_toss.size(); ++i) {
+    is_tossed(Pmat_toss(i)) = 1;
+  }
+  Eigen::VectorXd kept(r);
+  Eigen::Index k = 0;
+  for (int j = 0; j < p; ++j) {
+    if (!is_tossed(j)) kept(k++) = scales(j);
+  }
+  return kept;
+}
+
 // Gets padded UtU matrix (where U = cbind(X, FE_dummies))
 Eigen::MatrixXd getMeatXtX(Eigen::Map<Eigen::MatrixXd>& X,
                            const Eigen::MatrixXd& XtX_inv) {
-  Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR(X);
-  // The same 1e-7 threshold lm_solver() uses, and for the same reason: Eigen's
-  // default is tight enough that an exactly collinear column can survive as a
-  // pivot of order 1e-14. The two must agree, or the meat is read off a rank
-  // the coefficients were not fitted at.
+  // Read off X before the compaction below rewrites it.
+  const Eigen::VectorXd scales = columnScales(X);
+  const Eigen::MatrixXd X_scaled = X * scales.asDiagonal();
+  Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR(X_scaled);
+  // The same criterion lm_solver() uses, normalization included, and for the
+  // same reason: Eigen's default is tight enough that an exactly collinear
+  // column can survive as a pivot of order 1e-14. The two must agree, or the
+  // meat is read off a rank the coefficients were not fitted at.
   PQR.setThreshold(1e-7);
   const Eigen::ColPivHouseholderQR<Eigen::MatrixXd>::PermutationType Pmat(PQR.colsPermutation());
 
@@ -58,7 +97,11 @@ Eigen::MatrixXd getMeatXtX(Eigen::Map<Eigen::MatrixXd>& X,
 
   R_inv = P * R_inv * P;
 
-  Eigen::MatrixXd meatXtX_inv = R_inv * R_inv.transpose();
+  // R_inv came off the normalized design, so it inverts D * XtX * D rather
+  // than XtX, where D is diagonal in the column scales.
+  const Eigen::VectorXd kept = keptScales(scales, Pmat_toss, p, r);
+  Eigen::MatrixXd meatXtX_inv =
+    kept.asDiagonal() * (R_inv * R_inv.transpose()) * kept.asDiagonal();
 
   // Compacting X by removing the tossed columns one at a time is only correct
   // in descending index order: each left shift moves every column to the right
@@ -102,13 +145,15 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
   }
 
   if (do_qr) {
-    Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR(X);
+    const Eigen::VectorXd scales = columnScales(X);
+    const Eigen::MatrixXd X_scaled = X * scales.asDiagonal();
+    Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR(X_scaled);
     // Eigen's default rank threshold is about epsilon * ncol relative to the
     // largest pivot, which is tight enough that an exactly collinear column
     // can survive as a pivot of order 1e-14 and produce coefficients of order
     // 1e11 instead of NA (estimatr #351, #395).  stats::lm() uses LINPACK
-    // dqrdc2 with tol = 1e-7; matching that makes rank detection agree with
-    // lm() on degenerate designs.
+    // dqrdc2 with tol = 1e-7; matching that takes the normalization above as
+    // well as the threshold, since dqrdc2's test is per column.
     PQR.setThreshold(1e-7);
     const Eigen::ColPivHouseholderQR<Eigen::MatrixXd>::PermutationType Pmat(PQR.colsPermutation());
 
@@ -128,12 +173,21 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
     Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P = Eigen::PermutationWrapper<Eigen::ArrayXi>(Pmat_keep);
     Eigen::MatrixXd effects(PQR.householderQ().adjoint() * y);
 
-    beta_out.topRows(r) = R_inv * effects.topRows(r);
+    // The fit is of the normalized design, so each coefficient carries its own
+    // column's scale. Applied here, in pivot order, rather than to the whole of
+    // beta_out, which would put the dropped columns' NA through an arithmetic
+    // operation that need not preserve the payload.
+    Eigen::MatrixXd beta_scaled = R_inv * effects.topRows(r);
+    for (Eigen::Index i = 0; i < r; ++i) {
+      beta_scaled.row(i) *= scales(Pmat_indices(i));
+    }
+    beta_out.topRows(r) = beta_scaled;
     beta_out = PQR.colsPermutation() * beta_out;
 
     R_inv = P * R_inv * P;
 
-    XtX_inv = R_inv * R_inv.transpose();
+    const Eigen::VectorXd kept = keptScales(scales, Pmat_toss, p, r);
+    XtX_inv = kept.asDiagonal() * (R_inv * R_inv.transpose()) * kept.asDiagonal();
 
   }
 
