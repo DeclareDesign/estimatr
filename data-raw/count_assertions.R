@@ -53,7 +53,8 @@ components <- list(
     file = "test_vs_clubsandwich.R",
     blocks = list(
       "CR2 matches clubSandwich::vcovCR, balanced and unbalanced clusters" = "all",
-      "weighted CR2 matches clubSandwich::vcovCR" = "all",
+      "weighted CR2 matches clubSandwich::vcovCR at inverse_var = FALSE" = "all",
+      "weighted HC2 matches clubSandwich::vcovCR at inverse_var = TRUE" = "all",
       "CR0 matches clubSandwich::vcovCR type CR0" = "all",
       "CR2 degrees of freedom match clubSandwich Satterthwaite" = "all",
       # Properties of estimatr's own degrees of freedom.
