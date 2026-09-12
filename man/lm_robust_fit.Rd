@@ -44,7 +44,8 @@ lm_robust_fit(
 \item{return_fit}{logical, whether to return fitted values}
 
 \item{try_cholesky}{logical. Solve by Cholesky decomposition of \verb{X'X}
-rather than by the pivoted QR. Does no rank detection; see \code{\link[=lm_robust]{lm_robust()}}.}
+rather than by the pivoted QR, falling back to the QR where the design is
+rank deficient or badly conditioned. See \code{\link[=lm_robust]{lm_robust()}}.}
 
 \item{iv_stage}{list of length one or two for 2SLS stages}
 

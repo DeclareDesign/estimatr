@@ -59,11 +59,10 @@
 #'   default. It is faster on a large well-conditioned design: 0.15s against
 #'   0.25s at n = 200,000 with 60 regressors.
 #'
-#'   **The Cholesky path does no rank detection.** On a rank-deficient design
-#'   it returns a coefficient for every column, where the default returns `NA`
-#'   for the redundant ones as [lm()] does, and the split it reports between
-#'   two collinear columns is arbitrary. Use it only on a design known to be
-#'   full rank. estimatr 1.0.6 behaves the same way.
+#'   The answer does not depend on it. Rank deficiency is detected on either
+#'   path, and a design that is rank deficient or badly conditioned falls back
+#'   to the QR and pays its cost, so redundant columns come back as `NA` as
+#'   they do from [lm()] whichever path ran.
 #'
 #' @return An object of class `"lm_robust"`, a list holding the estimate table in `coefficients`, `std.error`, `df`, `statistic`,
 #'   `p.value`, `conf.low`, `conf.high`, `term` and `outcome`; the fit in

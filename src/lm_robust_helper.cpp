@@ -133,14 +133,29 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
 
   bool do_qr = !try_cholesky;
   if (try_cholesky) {
-    const Eigen::LLT<Eigen::MatrixXd> llt(X.transpose() * X);
+    // Normalized for the reason the QR below is, and with a second payoff
+    // here. With unit-norm columns the Gram matrix has a unit diagonal, so
+    // each L_ii is the norm of that column's residual after the earlier
+    // columns are projected out, measured against its own original norm.
+    // That is exactly dqrdc2's rank test, and it is what info() does not
+    // give: Eigen's LLT reports success on a numerically singular Gram
+    // matrix, so testing info() alone let try_cholesky = TRUE return a
+    // coefficient for every column of a rank-deficient design, splitting
+    // arbitrarily between collinear ones, where the QR path and lm() return
+    // NA. A design that is merely ill conditioned falls back to the QR and
+    // pays its cost, which is the safe direction to be wrong in.
+    const Eigen::VectorXd scales = columnScales(X);
+    const Eigen::MatrixXd X_scaled = X * scales.asDiagonal();
+    const Eigen::LLT<Eigen::MatrixXd> llt(X_scaled.transpose() * X_scaled);
 
-    if (llt.info() == Eigen::NumericalIssue) {
+    if (llt.info() == Eigen::NumericalIssue ||
+        llt.matrixLLT().diagonal().minCoeff() < 1e-7) {
       do_qr = true;
-    } else{
-      beta_out = llt.solve(X.adjoint() * y);
+    } else {
+      beta_out = scales.asDiagonal() * llt.solve(X_scaled.adjoint() * y);
       R_inv = llt.matrixL().solve(Eigen::MatrixXd::Identity(p, p));
-      XtX_inv = R_inv.transpose() * R_inv;
+      XtX_inv =
+        scales.asDiagonal() * (R_inv.transpose() * R_inv) * scales.asDiagonal();
     }
   }
 

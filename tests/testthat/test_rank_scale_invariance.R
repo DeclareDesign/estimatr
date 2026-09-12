@@ -83,6 +83,38 @@ test_that("iv_robust is invariant to column scaling", {
   )
 })
 
+# The Cholesky path is a second rank determination, and Eigen's LLT reports
+# success on a numerically singular Gram matrix, so info() alone never caught
+# a rank-deficient design. Normalizing the columns makes each L_ii the
+# column's own residual norm, which is dqrdc2's test, and the path falls back
+# to the QR below the same 1e-7.
+test_that("try_cholesky reaches the same answer as the QR path", {
+  expect_scale_invariant(
+    function(d) lm_robust(y ~ x1 + x2 + x3, data = d, try_cholesky = TRUE)
+  )
+
+  qr_fit <- lm_robust(y ~ x1 + x2 + x3, data = dat, try_cholesky = FALSE)
+  ch_fit <- lm_robust(y ~ x1 + x2 + x3, data = dat, try_cholesky = TRUE)
+  expect_equal(coef(ch_fit), coef(qr_fit), tolerance = 1e-10)
+  expect_equal(ch_fit$std.error, qr_fit$std.error, tolerance = 1e-10)
+})
+
+test_that("try_cholesky still drops an exactly collinear column", {
+  dup <- dat
+  dup$x2 <- dup$x1
+  fit <- suppressWarnings(
+    lm_robust(y ~ x1 + x2 + x3, data = dup, try_cholesky = TRUE)
+  )
+  expect_equal(sum(is.na(coef(fit))), 1L)
+  expect_equal(unname(coef(fit)),
+               unname(coef(lm(y ~ x1 + x2 + x3, data = dup))),
+               tolerance = 1e-10)
+
+  const <- data.frame(x = rep(1, n), z = rnorm(n), y = rnorm(n))
+  cfit <- suppressWarnings(lm_robust(y ~ x + z, data = const, try_cholesky = TRUE))
+  expect_equal(sum(is.na(coef(cfit))), 1L)
+})
+
 test_that("a full-rank design in large units agrees with lm", {
   d <- dat
   d$x2 <- d$x2 * 1e9

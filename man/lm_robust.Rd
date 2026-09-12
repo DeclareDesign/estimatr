@@ -82,11 +82,10 @@ decomposition of \verb{X'X} rather than by the default pivoted QR. \code{FALSE} 
 default. It is faster on a large well-conditioned design: 0.15s against
 0.25s at n = 200,000 with 60 regressors.
 
-\strong{The Cholesky path does no rank detection.} On a rank-deficient design
-it returns a coefficient for every column, where the default returns \code{NA}
-for the redundant ones as \code{\link[=lm]{lm()}} does, and the split it reports between
-two collinear columns is arbitrary. Use it only on a design known to be
-full rank. estimatr 1.0.6 behaves the same way.}
+The answer does not depend on it. Rank deficiency is detected on either
+path, and a design that is rank deficient or badly conditioned falls back
+to the QR and pays its cost, so redundant columns come back as \code{NA} as
+they do from \code{\link[=lm]{lm()}} whichever path ran.}
 }
 \value{
 An object of class \code{"lm_robust"}, a list holding the estimate table in \code{coefficients}, \code{std.error}, \code{df}, \code{statistic},
