@@ -26,13 +26,33 @@
 #' @param return_vcov (optional) Logical. Whether to return the vcov matrix.
 #' @param try_cholesky (optional) Logical. Whether to solve by Cholesky
 #'   decomposition of `X'X` rather than by the default pivoted QR. `FALSE` by
-#'   default. It is faster on a large well-conditioned design: 0.15s against
-#'   0.25s at n = 200,000 with 60 regressors.
+#'   default, and worth turning on in most applied settings: about 1.4 times
+#'   faster at n = 100,000 with two regressors, and 1.7 times faster at
+#'   n = 200,000 with 60 regressors, where it is 0.15s against 0.25s. The
+#'   saving is per fit, so it is worth most in a simulation that fits the same
+#'   design thousands of times.
 #'
-#'   The answer does not depend on it. Rank deficiency is detected on either
-#'   path, and a design that is rank deficient or badly conditioned falls back
-#'   to the QR and pays its cost, so redundant columns come back as `NA` as
-#'   they do from [lm()] whichever path ran.
+#'   Rank deficiency is caught on either path. Redundant columns come back as
+#'   `NA` exactly as they do from [lm()] whichever path ran, and a design that
+#'   is rank deficient falls back to the QR.
+#'
+#'   Whether it is safe turns on one question, whether two regressors are
+#'   nearly the same variable. Forming `X'X` squares the condition number, so
+#'   the Cholesky path carries about twice the rounding error of the QR, and
+#'   only near-collinearity makes that visible. Differences of scale do not,
+#'   because the columns are normalized before either decomposition, so a
+#'   covariate in dollars beside one in years costs nothing. For a treatment
+#'   indicator, a few covariates, block or cluster dummies, the centered
+#'   interactions [lm_lin()] builds, or a factorial, the two paths agree to at
+#'   least 10 significant digits, which is why [difference_in_means()] sets it
+#'   to `TRUE` internally. Agreement falls to about 3 digits as the scaled
+#'   condition index reaches `1e6`, and the QR fallback takes over above
+#'   roughly `1e8`. Nothing interpretable lives in that range: a design at
+#'   `1e6` returns a coefficient of 4.8e4 with a standard error of 4.6e4 on a
+#'   regressor whose true effect is zero. To check a design directly, scale the
+#'   columns first, since the unscaled condition number of a design in mixed
+#'   units is large for a reason that does not affect the fit:
+#'   `kappa(sweep(X, 2, sqrt(colSums(X^2)), "/"), exact = TRUE)`.
 #'
 #' @return An object of class `"iv_robust"`, a list holding the estimate table in `coefficients`, `std.error`, `df`, `statistic`,
 #'   `p.value`, `conf.low`, `conf.high`, `term` and `outcome`; the fit in

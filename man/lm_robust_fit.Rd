@@ -45,7 +45,7 @@ lm_robust_fit(
 
 \item{try_cholesky}{logical. Solve by Cholesky decomposition of \verb{X'X}
 rather than by the pivoted QR, falling back to the QR where the design is
-rank deficient or badly conditioned. See \code{\link[=lm_robust]{lm_robust()}}.}
+rank deficient. See \code{\link[=lm_robust]{lm_robust()}} for when the fast path is safe.}
 
 \item{iv_stage}{list of length one or two for 2SLS stages}
 
