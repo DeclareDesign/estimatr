@@ -227,6 +227,8 @@ The degrees of freedom are computed per coefficient:
 
 with $\mathbf{z}_k$ the $k$th standard basis vector. Different coefficients in one fit can therefore carry different degrees of freedom.
 
+**Under weights, CR2 and HC2 follow different conventions, and the difference is invisible at the call site.** CR2's small-sample adjustment is built against a working model with identity covariance, $\mathbf{\Phi} = \mathbf{I}$, where the weighted HC2 adjustment is built against precision weights. In `clubSandwich`'s terms the weighted CR2 here is `vcovCR(..., inverse_var = FALSE)` and the weighted HC2 is `inverse_var = TRUE`. Each is internally consistent; they are not the same convention as one another, and the choice is inherited from estimatr 1.0.6 rather than made here. Both halves are pinned explicitly in `tests/testthat/test_vs_clubsandwich.R`, with `inverse_var` named on each side so that a change in `clubSandwich`'s default fails the test rather than quietly asserting the other convention.
+
 **One cluster is refused.** A cluster-robust variance needs variation across clusters. Given a single cluster, estimatr 1.0.6 returned a standard error of about $6 \times 10^{-17}$ and a confidence interval of zero width, in silence. estimatr 2.0 raises an error.
 
 ## Absorbed fixed effects

@@ -7,17 +7,17 @@
 #' recognised, and the `design` element of the result reports which case
 #' applied.
 #'
-#' @param formula an object of class formula with one variable on the RHS
-#' @param data A `data.frame`
-#' @param blocks An optional bare (unquoted) name of the block variable
-#' @param clusters An optional bare (unquoted) name of the cluster variable
-#' @param weights the bare (unquoted) name of the weights variable
-#' @param subset An optional bare (unquoted) expression specifying a subset
-#' @param se_type `"default"` or `"none"`
-#' @param condition1 value in treatment for the control condition
-#' @param condition2 value in treatment for the treatment condition
-#' @param ci logical. Whether to compute p-values and confidence intervals.
-#' @param alpha The significance level, 0.05 by default.
+#' @param formula (required) An object of class formula with one variable on the RHS
+#' @param data (optional) A `data.frame`
+#' @param blocks (optional) A bare (unquoted) name of the block variable
+#' @param clusters (optional) A bare (unquoted) name of the cluster variable
+#' @param weights (optional) The bare (unquoted) name of the weights variable
+#' @param subset (optional) A bare (unquoted) expression specifying a subset
+#' @param se_type (optional) `"default"` or `"none"`
+#' @param condition1 (optional) Value in treatment for the control condition
+#' @param condition2 (optional) Value in treatment for the treatment condition
+#' @param ci (optional) Logical. Whether to compute p-values and confidence intervals.
+#' @param alpha (optional) The significance level, 0.05 by default.
 #'
 #' @details Selects the appropriate point estimate, standard errors, and degrees
 #'   of freedom for unit randomized, cluster randomized, block randomized,

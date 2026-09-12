@@ -10,7 +10,8 @@
 #' @param alpha numeric, test size for confidence intervals
 #' @param return_vcov logical, whether to return the vcov matrix
 #' @param return_fit logical, whether to return fitted values
-#' @param try_cholesky logical, whether to try Cholesky decomposition
+#' @param try_cholesky logical. Solve by Cholesky decomposition of `X'X`
+#'   rather than by the pivoted QR. Does no rank detection; see [lm_robust()].
 #' @param iv_stage list of length one or two for 2SLS stages
 #' @param fe_rank integer, degrees of freedom absorbed by fixed effects
 #' @param femat optional numeric matrix of fixed-effect dummies for the

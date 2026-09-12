@@ -92,7 +92,7 @@ extract.robust_default <- function(model,
 #' @param model An `lm_robust` or `iv_robust` fit.
 #' @param include.ci,include.rsquared,include.adjrs,include.nobs Logical.
 #' @param include.fstatistic,include.rmse,include.nclusts Logical.
-#' @param ... Unused.
+#' @param ... (optional) Ignored.
 #' @return A \pkg{texreg} object.
 #' @examples
 #' set.seed(60)

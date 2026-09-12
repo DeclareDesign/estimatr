@@ -36,7 +36,7 @@ extract.iv_robust(
 
 \item{include.fstatistic, include.rmse, include.nclusts}{Logical.}
 
-\item{...}{Unused.}
+\item{...}{(optional) Ignored.}
 }
 \value{
 A \pkg{texreg} object.

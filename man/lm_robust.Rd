@@ -19,46 +19,40 @@ lm_robust(
 )
 }
 \arguments{
-\item{formula}{an object of class formula, as in \code{\link[=lm]{lm()}}}
+\item{formula}{(required) An object of class formula, as in \code{\link[=lm]{lm()}}}
 
-\item{data}{A \code{data.frame}}
+\item{data}{(optional) A \code{data.frame}}
 
-\item{weights}{the bare (unquoted) name of the weights variable}
+\item{weights}{(optional) The bare (unquoted) name of the weights variable}
 
-\item{subset}{An optional bare (unquoted) expression specifying a subset}
+\item{subset}{(optional) A bare (unquoted) expression specifying a subset}
 
-\item{clusters}{An optional bare (unquoted) name of the cluster variable}
+\item{clusters}{(optional) A bare (unquoted) name of the cluster variable}
 
-\item{fixed_effects}{An optional one-sided formula of fixed effects to absorb,
-such as \code{~ blockID} or \code{~ block + year}. Uses the Frisch-Waugh-Lovell (FWL)
-theorem: each variable is demeaned within FE groups before OLS is run. FWL
-guarantees exact coefficient and residual recovery.
+\item{fixed_effects}{(optional) A one-sided formula of fixed effects to
+absorb rather than expand into dummy columns, such as \code{~ blockID} or
+\code{~ block + year}. Each variable is demeaned within the groups before OLS
+is run, so by the Frisch-Waugh-Lovell theorem the coefficients and
+residuals are the dummy regression's exactly.
 
-There is no SE restriction, at any number of FE factors: \code{"HC2"} and
-\code{"HC3"} are exact and cost no more than the others. The projection onto
-the full [dummies | X] design splits as \verb{P_[X|D] = P_D + P_\{M_D X\}}, so
-\code{h_ii} is the demeaned-X hat value plus \code{diag(P_D)}, and no dummy hat
-matrix is built. With one factor \code{diag(P_D)} is \verb{w_i / sum(w in group i)};
-with several it costs a factorisation the size of the design's narrowest
-dimension. Results are identical to writing the dummies out, at a
-fraction of the time and memory.
+Absorbing costs nothing in available standard error types. \code{"HC2"} and
+\code{"HC3"} are exact at any number of factors, because the leverage of the
+full design splits into the demeaned-X leverage plus a term that is cheap
+to compute, so no dummy hat matrix is built.
 
-\code{"CR2"} is the one exception, and needs the dummies whatever the number of
-factors, since its adjustment is built from cluster-level blocks of the hat
-matrix rather than from \code{h_ii}. It is available with \code{fixed_effects} but
-pays for the expansion, and is refused in combination with \code{weights}, as in
-estimatr 1.0.6.
+\code{"CR2"} is the exception: its adjustment is built from cluster-level
+blocks of the hat matrix rather than from the diagonal, and blocks do not
+split that way, so it expands the dummies and pays for the expansion.
+That is why \code{fixed_effects} with \code{clusters} defaults to \code{"CR0"}. Asking
+for \code{se_type = "CR2"} still works and still gives the 1.0.6 number.
+Refused is the three together: \code{"CR2"} with both \code{weights} and
+\code{fixed_effects}, as in estimatr 1.0.6.
 
-One more thing about \code{"CR2"} under \code{weights}, inherited from 1.0.6 and
-worth stating because it is invisible at the call site: its small-sample
-adjustment is built against a working model with identity covariance,
-\code{Phi = I}, where the weighted \code{"HC2"} adjustment is built against precision
-weights. In \code{clubSandwich}'s terms the weighted CR2 here matches
-\code{vcovCR(..., inverse_var = FALSE)} and the weighted HC2 matches
-\code{inverse_var = TRUE}. The two are each internally consistent; they are not
-the same convention as one another.}
+The projection identity, the several-factor case, the exact-rank
+calculation and the weighted CR2 and HC2 conventions are derived in
+\code{vignette("mathematical-notes")}.}
 
-\item{se_type}{The standard error type. Defaults depend on whether clusters
+\item{se_type}{(optional) The standard error type. Defaults depend on whether clusters
 and/or fixed effects are present:
 \itemize{
 \item No clusters, no FE: \code{"HC2"} (default), \code{"HC0"}, \code{"HC1"},
@@ -71,15 +65,28 @@ same menu as with no FE at all.
 \code{"none"}. \code{"CR2"} expands the fixed effects into dummies, so it is not
 the default here; it is refused with \code{weights}.
 }
-\code{"stata"} is an alias for HC1 (no clusters) or CR0 (with clusters).}
+\code{"stata"} means two different things. With no clusters it is exactly
+\code{"HC1"}, and the fitted object reports \code{se_type = "HC1"}. With clusters it
+is \strong{not} an alias for \code{"CR0"}: it is CR0 scaled by Stata's finite-sample
+factor, \code{(J / (J - 1)) * ((N - 1) / (N - K))} on the variance, and the
+object reports \code{se_type = "stata"} to keep the distinction visible.}
 
-\item{ci}{logical. Whether to compute p-values and confidence intervals.}
+\item{ci}{(optional) Logical. Whether to compute p-values and confidence intervals.}
 
-\item{alpha}{The significance level, 0.05 by default.}
+\item{alpha}{(optional) The significance level, 0.05 by default.}
 
-\item{return_vcov}{logical. Whether to return the vcov matrix.}
+\item{return_vcov}{(optional) Logical. Whether to return the vcov matrix.}
 
-\item{try_cholesky}{logical. Whether to try Cholesky decomposition.}
+\item{try_cholesky}{(optional) Logical. Whether to solve by Cholesky
+decomposition of \verb{X'X} rather than by the default pivoted QR. \code{FALSE} by
+default. It is faster on a large well-conditioned design: 0.15s against
+0.25s at n = 200,000 with 60 regressors.
+
+\strong{The Cholesky path does no rank detection.} On a rank-deficient design
+it returns a coefficient for every column, where the default returns \code{NA}
+for the redundant ones as \code{\link[=lm]{lm()}} does, and the split it reports between
+two collinear columns is arbitrary. Use it only on a design known to be
+full rank. estimatr 1.0.6 behaves the same way.}
 }
 \value{
 An object of class \code{"lm_robust"}, a list holding the estimate table in \code{coefficients}, \code{std.error}, \code{df}, \code{statistic},

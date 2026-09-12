@@ -39,7 +39,7 @@
 #'   prediction intervals.
 #' @param weights variance weights for prediction. This can be a numeric vector
 #'   or a bare (unquoted) name of the weights variable in the supplied newdata.
-#' @param ... other arguments, unused
+#' @param ... (optional) Ignored.
 #'
 #' @return A numeric vector of predictions, or a data frame with the
 #'   predictions and their standard errors and interval bounds when `se.fit` or
@@ -355,7 +355,7 @@ generics::augment
 #' @param x an `lm_robust` or `iv_robust` object
 #' @param data the data to augment, defaulting to the model frame
 #' @param newdata optional new data to predict on instead
-#' @param ... ignored
+#' @param ... (optional) Ignored.
 #'
 #' @return A `data.frame`.
 #'

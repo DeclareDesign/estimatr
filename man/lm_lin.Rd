@@ -19,27 +19,36 @@ lm_lin(
 )
 }
 \arguments{
-\item{formula}{an object of class formula with only the treatment on the RHS}
+\item{formula}{(required) An object of class formula with only the treatment on the RHS}
 
-\item{covariates}{a right-sided formula with pre-treatment covariates}
+\item{covariates}{(required) A right-sided formula with pre-treatment covariates}
 
-\item{data}{A \code{data.frame}}
+\item{data}{(optional) A \code{data.frame}}
 
-\item{weights}{the bare (unquoted) name of the weights variable}
+\item{weights}{(optional) The bare (unquoted) name of the weights variable}
 
-\item{subset}{An optional bare (unquoted) expression specifying a subset}
+\item{subset}{(optional) A bare (unquoted) expression specifying a subset}
 
-\item{clusters}{An optional bare (unquoted) name of the cluster variable}
+\item{clusters}{(optional) A bare (unquoted) name of the cluster variable}
 
-\item{se_type}{The sort of standard error (see \code{\link[=lm_robust]{lm_robust()}})}
+\item{se_type}{(optional) The sort of standard error (see \code{\link[=lm_robust]{lm_robust()}})}
 
-\item{ci}{logical. Whether to compute p-values and confidence intervals.}
+\item{ci}{(optional) Logical. Whether to compute p-values and confidence intervals.}
 
-\item{alpha}{The significance level, 0.05 by default.}
+\item{alpha}{(optional) The significance level, 0.05 by default.}
 
-\item{return_vcov}{logical. Whether to return the vcov matrix.}
+\item{return_vcov}{(optional) Logical. Whether to return the vcov matrix.}
 
-\item{try_cholesky}{logical. Whether to try Cholesky decomposition.}
+\item{try_cholesky}{(optional) Logical. Whether to solve by Cholesky
+decomposition of \verb{X'X} rather than by the default pivoted QR. \code{FALSE} by
+default. It is faster on a large well-conditioned design: 0.15s against
+0.25s at n = 200,000 with 60 regressors.
+
+\strong{The Cholesky path does no rank detection.} On a rank-deficient design
+it returns a coefficient for every column, where the default returns \code{NA}
+for the redundant ones as \code{\link[=lm]{lm()}} does, and the split it reports between
+two collinear columns is arbitrary. Use it only on a design known to be
+full rank. estimatr 1.0.6 behaves the same way.}
 }
 \value{
 An object of class \code{"lm_robust"}, as returned by \code{\link[=lm_robust]{lm_robust()}},

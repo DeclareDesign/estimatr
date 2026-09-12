@@ -29,7 +29,7 @@
 
 \item{conf.level}{The confidence level for intervals.}
 
-\item{...}{extra arguments (not used)}
+\item{...}{(optional) Ignored.}
 }
 \description{
 Tidy an estimatr object

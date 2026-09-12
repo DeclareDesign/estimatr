@@ -33,10 +33,26 @@ test_that("CR2 matches clubSandwich::vcovCR, balanced and unbalanced clusters", 
   }
 })
 
-test_that("weighted CR2 matches clubSandwich::vcovCR", {
+# Under weights the two estimators follow different conventions, which
+# `?lm_robust` states and which is invisible at the call site: weighted CR2 is
+# built against a working model with identity covariance and weighted HC2
+# against precision weights. `inverse_var` is passed explicitly on both sides
+# below rather than left to clubSandwich's default, so that a change in that
+# default fails the test instead of silently asserting the other convention.
+test_that("weighted CR2 matches clubSandwich::vcovCR at inverse_var = FALSE", {
   m <- lm(y ~ x + z, data = d, weights = w)
   fit <- lm_robust(y ~ x + z, data = d, clusters = cl, weights = w, se_type = "CR2")
-  target <- clubSandwich::vcovCR(m, cluster = d$cl, type = "CR2")
+  target <- clubSandwich::vcovCR(m, cluster = d$cl, type = "CR2",
+                                 inverse_var = FALSE)
+  expect_equal(unname(fit$vcov), unname(as.matrix(target)), tolerance = LIVE_TOL)
+})
+
+test_that("weighted HC2 matches clubSandwich::vcovCR at inverse_var = TRUE", {
+  m <- lm(y ~ x + z, data = d, weights = w)
+  fit <- lm_robust(y ~ x + z, data = d, weights = w, se_type = "HC2")
+  # One cluster per observation is the heteroskedasticity-consistent case.
+  target <- clubSandwich::vcovCR(m, cluster = seq_len(nrow(d)), type = "CR2",
+                                 inverse_var = TRUE)
   expect_equal(unname(fit$vcov), unname(as.matrix(target)), tolerance = LIVE_TOL)
 })
 

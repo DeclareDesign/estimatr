@@ -6,40 +6,34 @@
 #' absorbed rather than expanded into dummy columns, at no cost in the
 #' available standard error types.
 #'
-#' @param formula an object of class formula, as in [lm()]
-#' @param data A `data.frame`
-#' @param weights the bare (unquoted) name of the weights variable
-#' @param subset An optional bare (unquoted) expression specifying a subset
-#' @param clusters An optional bare (unquoted) name of the cluster variable
-#' @param fixed_effects An optional one-sided formula of fixed effects to absorb,
-#'   such as `~ blockID` or `~ block + year`. Uses the Frisch-Waugh-Lovell (FWL)
-#'   theorem: each variable is demeaned within FE groups before OLS is run. FWL
-#'   guarantees exact coefficient and residual recovery.
+#' @param formula (required) An object of class formula, as in [lm()]
+#' @param data (optional) A `data.frame`
+#' @param weights (optional) The bare (unquoted) name of the weights variable
+#' @param subset (optional) A bare (unquoted) expression specifying a subset
+#' @param clusters (optional) A bare (unquoted) name of the cluster variable
+#' @param fixed_effects (optional) A one-sided formula of fixed effects to
+#'   absorb rather than expand into dummy columns, such as `~ blockID` or
+#'   `~ block + year`. Each variable is demeaned within the groups before OLS
+#'   is run, so by the Frisch-Waugh-Lovell theorem the coefficients and
+#'   residuals are the dummy regression's exactly.
 #'
-#'   There is no SE restriction, at any number of FE factors: `"HC2"` and
-#'   `"HC3"` are exact and cost no more than the others. The projection onto
-#'   the full \[dummies | X\] design splits as `P_[X|D] = P_D + P_{M_D X}`, so
-#'   `h_ii` is the demeaned-X hat value plus `diag(P_D)`, and no dummy hat
-#'   matrix is built. With one factor `diag(P_D)` is `w_i / sum(w in group i)`;
-#'   with several it costs a factorisation the size of the design's narrowest
-#'   dimension. Results are identical to writing the dummies out, at a
-#'   fraction of the time and memory.
+#'   Absorbing costs nothing in available standard error types. `"HC2"` and
+#'   `"HC3"` are exact at any number of factors, because the leverage of the
+#'   full design splits into the demeaned-X leverage plus a term that is cheap
+#'   to compute, so no dummy hat matrix is built.
 #'
-#'   `"CR2"` is the one exception, and needs the dummies whatever the number of
-#'   factors, since its adjustment is built from cluster-level blocks of the hat
-#'   matrix rather than from `h_ii`. It is available with `fixed_effects` but
-#'   pays for the expansion, and is refused in combination with `weights`, as in
-#'   estimatr 1.0.6.
+#'   `"CR2"` is the exception: its adjustment is built from cluster-level
+#'   blocks of the hat matrix rather than from the diagonal, and blocks do not
+#'   split that way, so it expands the dummies and pays for the expansion.
+#'   That is why `fixed_effects` with `clusters` defaults to `"CR0"`. Asking
+#'   for `se_type = "CR2"` still works and still gives the 1.0.6 number.
+#'   Refused is the three together: `"CR2"` with both `weights` and
+#'   `fixed_effects`, as in estimatr 1.0.6.
 #'
-#'   One more thing about `"CR2"` under `weights`, inherited from 1.0.6 and
-#'   worth stating because it is invisible at the call site: its small-sample
-#'   adjustment is built against a working model with identity covariance,
-#'   `Phi = I`, where the weighted `"HC2"` adjustment is built against precision
-#'   weights. In `clubSandwich`'s terms the weighted CR2 here matches
-#'   `vcovCR(..., inverse_var = FALSE)` and the weighted HC2 matches
-#'   `inverse_var = TRUE`. The two are each internally consistent; they are not
-#'   the same convention as one another.
-#' @param se_type The standard error type. Defaults depend on whether clusters
+#'   The projection identity, the several-factor case, the exact-rank
+#'   calculation and the weighted CR2 and HC2 conventions are derived in
+#'   `vignette("mathematical-notes")`.
+#' @param se_type (optional) The standard error type. Defaults depend on whether clusters
 #'   and/or fixed effects are present:
 #'   \itemize{
 #'     \item No clusters, no FE: `"HC2"` (default), `"HC0"`, `"HC1"`,
@@ -52,11 +46,24 @@
 #'       `"none"`. `"CR2"` expands the fixed effects into dummies, so it is not
 #'       the default here; it is refused with `weights`.
 #'   }
-#'   `"stata"` is an alias for HC1 (no clusters) or CR0 (with clusters).
-#' @param ci logical. Whether to compute p-values and confidence intervals.
-#' @param alpha The significance level, 0.05 by default.
-#' @param return_vcov logical. Whether to return the vcov matrix.
-#' @param try_cholesky logical. Whether to try Cholesky decomposition.
+#'   `"stata"` means two different things. With no clusters it is exactly
+#'   `"HC1"`, and the fitted object reports `se_type = "HC1"`. With clusters it
+#'   is **not** an alias for `"CR0"`: it is CR0 scaled by Stata's finite-sample
+#'   factor, `(J / (J - 1)) * ((N - 1) / (N - K))` on the variance, and the
+#'   object reports `se_type = "stata"` to keep the distinction visible.
+#' @param ci (optional) Logical. Whether to compute p-values and confidence intervals.
+#' @param alpha (optional) The significance level, 0.05 by default.
+#' @param return_vcov (optional) Logical. Whether to return the vcov matrix.
+#' @param try_cholesky (optional) Logical. Whether to solve by Cholesky
+#'   decomposition of `X'X` rather than by the default pivoted QR. `FALSE` by
+#'   default. It is faster on a large well-conditioned design: 0.15s against
+#'   0.25s at n = 200,000 with 60 regressors.
+#'
+#'   **The Cholesky path does no rank detection.** On a rank-deficient design
+#'   it returns a coefficient for every column, where the default returns `NA`
+#'   for the redundant ones as [lm()] does, and the split it reports between
+#'   two collinear columns is arbitrary. Use it only on a design known to be
+#'   full rank. estimatr 1.0.6 behaves the same way.
 #'
 #' @return An object of class `"lm_robust"`, a list holding the estimate table in `coefficients`, `std.error`, `df`, `statistic`,
 #'   `p.value`, `conf.low`, `conf.high`, `term` and `outcome`; the fit in

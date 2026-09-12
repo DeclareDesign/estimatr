@@ -11,7 +11,7 @@ commarobust(...)
 starprep(...)
 }
 \arguments{
-\item{...}{Ignored.}
+\item{...}{(optional) Ignored.}
 }
 \value{
 Never returns; both functions signal an error.

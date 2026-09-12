@@ -38,7 +38,7 @@ prediction intervals.}
 \item{weights}{variance weights for prediction. This can be a numeric vector
 or a bare (unquoted) name of the weights variable in the supplied newdata.}
 
-\item{...}{other arguments, unused}
+\item{...}{(optional) Ignored.}
 }
 \value{
 A numeric vector of predictions, or a data frame with the

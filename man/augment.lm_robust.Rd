@@ -16,7 +16,7 @@
 
 \item{newdata}{optional new data to predict on instead}
 
-\item{...}{ignored}
+\item{...}{(optional) Ignored.}
 }
 \value{
 A \code{data.frame}.

@@ -16,7 +16,7 @@
 #' \pkg{modelsummary}, which reads [tidy()] and [glance()] and therefore
 #' works on every estimator in this package without any adapter.
 #'
-#' @param ... Ignored.
+#' @param ... (optional) Ignored.
 #' @return Never returns; both functions signal an error.
 #' @name estimatr-defunct
 #' @examples

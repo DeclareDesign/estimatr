@@ -6,17 +6,26 @@
 #' the effect estimate, and the interactions avoid the bias Freedman (2008)
 #' identified in ordinary covariate-adjusted regression.
 #'
-#' @param formula an object of class formula with only the treatment on the RHS
-#' @param covariates a right-sided formula with pre-treatment covariates
-#' @param data A `data.frame`
-#' @param weights the bare (unquoted) name of the weights variable
-#' @param subset An optional bare (unquoted) expression specifying a subset
-#' @param clusters An optional bare (unquoted) name of the cluster variable
-#' @param se_type The sort of standard error (see [lm_robust()])
-#' @param ci logical. Whether to compute p-values and confidence intervals.
-#' @param alpha The significance level, 0.05 by default.
-#' @param return_vcov logical. Whether to return the vcov matrix.
-#' @param try_cholesky logical. Whether to try Cholesky decomposition.
+#' @param formula (required) An object of class formula with only the treatment on the RHS
+#' @param covariates (required) A right-sided formula with pre-treatment covariates
+#' @param data (optional) A `data.frame`
+#' @param weights (optional) The bare (unquoted) name of the weights variable
+#' @param subset (optional) A bare (unquoted) expression specifying a subset
+#' @param clusters (optional) A bare (unquoted) name of the cluster variable
+#' @param se_type (optional) The sort of standard error (see [lm_robust()])
+#' @param ci (optional) Logical. Whether to compute p-values and confidence intervals.
+#' @param alpha (optional) The significance level, 0.05 by default.
+#' @param return_vcov (optional) Logical. Whether to return the vcov matrix.
+#' @param try_cholesky (optional) Logical. Whether to solve by Cholesky
+#'   decomposition of `X'X` rather than by the default pivoted QR. `FALSE` by
+#'   default. It is faster on a large well-conditioned design: 0.15s against
+#'   0.25s at n = 200,000 with 60 regressors.
+#'
+#'   **The Cholesky path does no rank detection.** On a rank-deficient design
+#'   it returns a coefficient for every column, where the default returns `NA`
+#'   for the redundant ones as [lm()] does, and the split it reports between
+#'   two collinear columns is arbitrary. Use it only on a design known to be
+#'   full rank. estimatr 1.0.6 behaves the same way.
 #'
 #' @return An object of class `"lm_robust"`, as returned by [lm_robust()],
 #'   with two additions: `scaled_center`, the covariate means used for

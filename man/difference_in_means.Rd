@@ -19,27 +19,27 @@ difference_in_means(
 )
 }
 \arguments{
-\item{formula}{an object of class formula with one variable on the RHS}
+\item{formula}{(required) An object of class formula with one variable on the RHS}
 
-\item{data}{A \code{data.frame}}
+\item{data}{(optional) A \code{data.frame}}
 
-\item{blocks}{An optional bare (unquoted) name of the block variable}
+\item{blocks}{(optional) A bare (unquoted) name of the block variable}
 
-\item{clusters}{An optional bare (unquoted) name of the cluster variable}
+\item{clusters}{(optional) A bare (unquoted) name of the cluster variable}
 
-\item{weights}{the bare (unquoted) name of the weights variable}
+\item{weights}{(optional) The bare (unquoted) name of the weights variable}
 
-\item{subset}{An optional bare (unquoted) expression specifying a subset}
+\item{subset}{(optional) A bare (unquoted) expression specifying a subset}
 
-\item{se_type}{\code{"default"} or \code{"none"}}
+\item{se_type}{(optional) \code{"default"} or \code{"none"}}
 
-\item{condition1}{value in treatment for the control condition}
+\item{condition1}{(optional) Value in treatment for the control condition}
 
-\item{condition2}{value in treatment for the treatment condition}
+\item{condition2}{(optional) Value in treatment for the treatment condition}
 
-\item{ci}{logical. Whether to compute p-values and confidence intervals.}
+\item{ci}{(optional) Logical. Whether to compute p-values and confidence intervals.}
 
-\item{alpha}{The significance level, 0.05 by default.}
+\item{alpha}{(optional) The significance level, 0.05 by default.}
 }
 \value{
 An object of class \code{"difference_in_means"}, a list holding

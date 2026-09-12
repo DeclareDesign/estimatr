@@ -20,22 +20,22 @@ iv_robust(
 )
 }
 \arguments{
-\item{formula}{an object of class formula with regressors and instruments,
+\item{formula}{(required) An object of class formula with regressors and instruments,
 e.g. \code{y ~ x1 + x2 | z1 + z2}.}
 
-\item{data}{A \code{data.frame}}
+\item{data}{(optional) A \code{data.frame}}
 
-\item{weights}{the bare (unquoted) name of the weights variable}
+\item{weights}{(optional) The bare (unquoted) name of the weights variable}
 
-\item{subset}{An optional bare (unquoted) expression specifying a subset}
+\item{subset}{(optional) A bare (unquoted) expression specifying a subset}
 
-\item{clusters}{An optional bare (unquoted) name of the cluster variable}
+\item{clusters}{(optional) A bare (unquoted) name of the cluster variable}
 
-\item{fixed_effects}{An optional one-sided formula of fixed effects to absorb,
+\item{fixed_effects}{(optional) A one-sided formula of fixed effects to absorb,
 such as \code{~ blockID}. Uses FWL demeaning (see \code{\link[=lm_robust]{lm_robust()}} for details and
 SE type restrictions). Diagnostics are not available with \code{fixed_effects}.}
 
-\item{se_type}{The standard error type. \code{"HC2"} and \code{"HC3"} work with
+\item{se_type}{(optional) The standard error type. \code{"HC2"} and \code{"HC3"} work with
 \code{fixed_effects} at any number of factors: the second stage runs on fitted
 regressors, but those are demeaned by the same fixed effects, so the
 leverage decomposition \code{\link[=lm_robust]{lm_robust()}} describes applies unchanged. \code{"CR2"}
@@ -43,15 +43,24 @@ with \code{fixed_effects} expands the dummies, as in estimatr 1.0.6.
 Defaults: \code{"HC2"} (no clusters, with or without FE), \code{"CR2"} (clusters, no
 FE), \code{"CR0"} (clusters, with FE).}
 
-\item{ci}{logical. Whether to compute p-values and confidence intervals.}
+\item{ci}{(optional) Logical. Whether to compute p-values and confidence intervals.}
 
-\item{alpha}{The significance level, 0.05 by default.}
+\item{alpha}{(optional) The significance level, 0.05 by default.}
 
-\item{diagnostics}{logical. Whether to compute IV diagnostic statistics.}
+\item{diagnostics}{(optional) Logical. Whether to compute IV diagnostic statistics.}
 
-\item{return_vcov}{logical. Whether to return the vcov matrix.}
+\item{return_vcov}{(optional) Logical. Whether to return the vcov matrix.}
 
-\item{try_cholesky}{logical. Whether to try Cholesky decomposition.}
+\item{try_cholesky}{(optional) Logical. Whether to solve by Cholesky
+decomposition of \verb{X'X} rather than by the default pivoted QR. \code{FALSE} by
+default. It is faster on a large well-conditioned design: 0.15s against
+0.25s at n = 200,000 with 60 regressors.
+
+\strong{The Cholesky path does no rank detection.} On a rank-deficient design
+it returns a coefficient for every column, where the default returns \code{NA}
+for the redundant ones as \code{\link[=lm]{lm()}} does, and the split it reports between
+two collinear columns is arbitrary. Use it only on a design known to be
+full rank. estimatr 1.0.6 behaves the same way.}
 }
 \value{
 An object of class \code{"iv_robust"}, a list holding the estimate table in \code{coefficients}, \code{std.error}, \code{df}, \code{statistic},

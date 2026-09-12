@@ -16,21 +16,20 @@ horvitz_thompson(
 )
 }
 \arguments{
-\item{formula}{A formula \code{Y ~ Z}.}
+\item{formula}{(required) A formula \code{Y ~ Z}.}
 
-\item{data}{A \code{data.frame} with one row per unit of the design.}
+\item{data}{(optional) A \code{data.frame} with one row per unit of the design.}
 
-\item{condition_prs}{Treatment probability specification. One of:
+\item{condition_prs}{(required) Treatment probability specification. One of:
 \itemize{
-\item An \code{ra_declaration} from \pkg{randomizr}: \strong{strongly
+\item An \code{ra_declaration} from \code{randomizr}: \strong{strongly
 preferred.}  All standard designs (simple/Bernoulli, complete,
 blocked, clustered, blocked-and-clustered, and arbitrary permutation
 matrices) are supported, and the variance estimator uses exact
 design-aware joint inclusion probabilities.  Any design for which
 you know the block structure, cluster structure, marginal treatment
 probabilities, and whether randomization is simple or complete can
-be expressed as \code{declare_ra(blocks = bl, clusters = cl,
-    prob = pi, simple = FALSE)}. There is no parametric design that
+be expressed as \code{declare_ra(blocks = bl, clusters = cl, prob = pi, simple = FALSE)}. There is no parametric design that
 requires the alternatives below.  For fully custom designs, use
 \code{declare_ra(permutation_matrix = perm)}.
 \item A named numeric vector of marginal condition probabilities,
@@ -44,17 +43,17 @@ columns named by condition labels. Same conservative Young's bound
 as the named vector above.
 }}
 
-\item{condition1}{Label of the control condition (first sorted condition
+\item{condition1}{(optional) Label of the control condition (first sorted condition
 by default).}
 
-\item{condition2}{Label of the treatment condition (second sorted
+\item{condition2}{(optional) Label of the treatment condition (second sorted
 condition by default).}
 
-\item{se_type}{\code{"youngs"} (default) or \code{"none"}.}
+\item{se_type}{(optional) \code{"youngs"} (default) or \code{"none"}.}
 
-\item{ci}{Logical; whether to compute p-values and confidence intervals.}
+\item{ci}{(optional) Logical; whether to compute p-values and confidence intervals.}
 
-\item{alpha}{Significance level, 0.05 by default.}
+\item{alpha}{(optional) Significance level, 0.05 by default.}
 }
 \value{
 An object of class \code{"horvitz_thompson"} with fields
@@ -67,7 +66,7 @@ outside the contrast), \code{vcov}, \code{se_type}, \code{condition1},
 \description{
 Estimates treatment effects via inverse probability weighting when
 treatment assignment probabilities are known.  Supports all
-\pkg{randomizr} designs as well as arbitrary designs supplied via a
+\code{randomizr} designs as well as arbitrary designs supplied via a
 permutation matrix.
 }
 \details{

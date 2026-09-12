@@ -6,9 +6,9 @@
 #' tested on its cluster-adjusted degrees of freedom rather than on the
 #' residual ones.
 #'
-#' @param ... Other arguments passed to [lm_robust()]
-#' @param data A `data.frame`
-#' @param linear_hypothesis A character string or matrix specifying the
+#' @param ... (optional) Other arguments passed to [lm_robust()]
+#' @param data (optional) A `data.frame`
+#' @param linear_hypothesis (required) A character string or matrix specifying the
 #'   hypothesis, passed to `car::linearHypothesis`
 #'
 #' @return An object of class `"lh_robust"` with three components:

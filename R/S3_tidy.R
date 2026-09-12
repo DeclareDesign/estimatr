@@ -67,7 +67,7 @@ warn_singularities <- function(x) {
 #' @param x An object returned by one of the estimators
 #' @param conf.int Logical, whether to include confidence intervals.
 #' @param conf.level The confidence level for intervals.
-#' @param ... extra arguments (not used)
+#' @param ... (optional) Ignored.
 #'
 #' @examples
 #' set.seed(50)

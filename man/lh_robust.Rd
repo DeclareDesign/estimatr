@@ -7,11 +7,11 @@
 lh_robust(..., data, linear_hypothesis)
 }
 \arguments{
-\item{...}{Other arguments passed to \code{\link[=lm_robust]{lm_robust()}}}
+\item{...}{(optional) Other arguments passed to \code{\link[=lm_robust]{lm_robust()}}}
 
-\item{data}{A \code{data.frame}}
+\item{data}{(optional) A \code{data.frame}}
 
-\item{linear_hypothesis}{A character string or matrix specifying the
+\item{linear_hypothesis}{(required) A character string or matrix specifying the
 hypothesis, passed to \code{car::linearHypothesis}}
 }
 \value{
