@@ -31,7 +31,7 @@
 #'   `fixed_effects`, as in estimatr 1.0.6.
 #'
 #'   The projection identity, the several-factor case, the exact-rank
-#'   calculation and the weighted CR2 and HC2 conventions are derived in
+#'   calculation, and the weighted CR2 and HC2 conventions are derived in
 #'   `vignette("mathematical-notes")`.
 #' @param se_type (optional) The standard error type. Defaults depend on whether clusters
 #'   and/or fixed effects are present:
@@ -68,7 +68,7 @@
 #'
 #'   Whether it is safe turns on one question, whether two regressors are
 #'   nearly the same variable. Forming `X'X` squares the condition number, so
-#'   the Cholesky path carries about twice the rounding error of the QR, and
+#'   the Cholesky path has about twice the rounding error of the QR, and
 #'   only near-collinearity makes that visible. Differences of scale do not,
 #'   because the columns are normalized before either decomposition, so a
 #'   covariate in dollars beside one in years costs nothing. For a treatment
@@ -85,15 +85,15 @@
 #'   `kappa(sweep(X, 2, sqrt(colSums(X^2)), "/"), exact = TRUE)`.
 #'
 #' @return An object of class `"lm_robust"`, a list holding the estimate table in `coefficients`, `std.error`, `df`, `statistic`,
-#'   `p.value`, `conf.low`, `conf.high`, `term` and `outcome`; the fit in
-#'   `fitted.values`, `residuals`, `vcov`, `nobs`, `k`, `rank`, `df.residual`
+#'   `p.value`, `conf.low`, `conf.high`, `term`, and `outcome`; the fit in
+#'   `fitted.values`, `residuals`, `vcov`, `nobs`, `k`, `rank`, `df.residual`,
 #'   and `res_var`; the summary statistics `r.squared`, `adj.r.squared`,
-#'   `tss` and `fstatistic`; and `se_type`, `weighted`, `clustered`, `fes`,
-#'   `alpha`, `terms`, `xlevels` and `call`.
+#'   `tss`, and `fstatistic`; and `se_type`, `weighted`, `clustered`, `fes`,
+#'   `alpha`, `terms`, `xlevels`, and `call`.
 #'
 #'   Absorbed fits add `fixed_effects`, `felevels` (the absorbed levels of
 #'   each factor), and the within-projection summaries `proj_r.squared`,
-#'   `proj_adj.r.squared`, `proj_tss` and `proj_fstatistic`.
+#'   `proj_adj.r.squared`, `proj_tss`, and `proj_fstatistic`.
 #'
 #' @examples
 #' set.seed(15)

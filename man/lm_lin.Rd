@@ -53,7 +53,7 @@ is rank deficient falls back to the QR.
 
 Whether it is safe turns on one question, whether two regressors are
 nearly the same variable. Forming \verb{X'X} squares the condition number, so
-the Cholesky path carries about twice the rounding error of the QR, and
+the Cholesky path has about twice the rounding error of the QR, and
 only near-collinearity makes that visible. Differences of scale do not,
 because the columns are normalized before either decomposition, so a
 covariate in dollars beside one in years costs nothing. For a treatment

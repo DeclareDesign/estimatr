@@ -12,8 +12,11 @@
 #'   hypothesis, passed to `car::linearHypothesis`
 #'
 #' @return An object of class `"lh_robust"` with three components:
-#'   `lm_robust`, the underlying fit; `lh`,
-#'   and `joint_hypothesis`.
+#'   `lm_robust`, the underlying fit; `lh`, one row per hypothesis holding
+#'   `coefficients`, `std.error`, `statistic`, `p.value`, `alpha`, `conf.low`,
+#'   `conf.high`, `df`, `term`, and `outcome`; and `joint_hypothesis`, the Wald
+#'   F test of all of them at once, as `value`, `numdf`, `dendf`, and
+#'   `p.value`.
 #'
 #' @importFrom rlang quos eval_tidy
 #' @examples

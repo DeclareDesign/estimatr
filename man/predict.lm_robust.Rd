@@ -17,26 +17,26 @@
 )
 }
 \arguments{
-\item{object}{an object of class 'lm_robust'}
+\item{object}{An object of class \code{"lm_robust"}.}
 
-\item{newdata}{a data frame in which to look for variables with which to
-predict. If omitted, the fitted values are returned.}
+\item{newdata}{A data frame in which to look for the variables to predict
+from. If omitted, the fitted values are returned.}
 
-\item{se.fit}{logical. Whether standard errors are required, default = FALSE}
+\item{se.fit}{Logical. Whether to return standard errors. \code{FALSE} by default.}
 
-\item{interval}{type of interval calculation. Can be abbreviated, default =
-none}
+\item{interval}{Type of interval calculation, which can be abbreviated.
+\code{"none"} by default.}
 
-\item{alpha}{numeric denoting the test size for confidence intervals}
+\item{alpha}{Numeric. The test size for confidence intervals.}
 
-\item{na.action}{function determining what should be done with missing
-values in newdata. The default is to predict NA.}
+\item{na.action}{Function determining what to do with missing values in
+\code{newdata}. The default is to predict \code{NA}.}
 
-\item{pred.var}{the variance(s) for future observations to be assumed for
-prediction intervals.}
+\item{pred.var}{The variance(s) to assume for future observations when
+building prediction intervals.}
 
-\item{weights}{variance weights for prediction. This can be a numeric vector
-or a bare (unquoted) name of the weights variable in the supplied newdata.}
+\item{weights}{Variance weights for prediction, either a numeric vector or
+the bare (unquoted) name of the weights variable in \code{newdata}.}
 
 \item{...}{(optional) Ignored.}
 }
@@ -49,13 +49,12 @@ predictions and their standard errors and interval bounds when \code{se.fit} or
 Produces predicted values, obtained by evaluating the regression function in
 the frame \code{newdata} for fits from \code{\link[=lm_robust]{lm_robust()}} and \code{\link[=lm_lin]{lm_lin()}}. If \code{se.fit}
 is \code{TRUE}, standard errors of the predictions are calculated. Setting
-\code{interval} specifies computation of confidence or prediction (tolerance)
-intervals at the specified level, sometimes referred to as narrow vs. wide
-intervals.
+\code{interval} adds confidence or prediction (tolerance) intervals at the level
+set by \code{alpha}, sometimes called narrow and wide intervals respectively.
 }
 \details{
-Called without \code{newdata}, this returns the in-sample fitted values and
-\code{se.fit} and \code{interval} are not available.
+Called without \code{newdata}, the method returns the in-sample fitted values,
+and neither \code{se.fit} nor \code{interval} is available.
 
 The equation used for the standard error of a prediction given a row of data
 \eqn{x} is:
@@ -69,7 +68,7 @@ The prediction intervals are for a single observation at each case in
 \code{newdata} with error variance(s) \code{pred.var}. The default is to assume that
 future observations have the same error variance as those used for fitting,
 which is taken from the fitted \code{\link[=lm_robust]{lm_robust()}} object. If \code{weights} is
-supplied, the inverse of this is used as a scale factor. If the fit was
+supplied, the inverse of those weights scales the variance. If the fit was
 weighted, the default is to assume constant prediction variance, with a
 warning.
 }

@@ -1,9 +1,9 @@
 #' Design-Based Difference-in-Means Estimator
 #'
 #' Estimates an average treatment effect as a difference in means, choosing
-#' the point estimator, the variance and the degrees of freedom that match
+#' the point estimator, the variance, and the degrees of freedom that match
 #' the randomization rather than requiring you to name them. Unit, cluster,
-#' blocked, block-cluster, matched-pair and matched-pair cluster designs are
+#' blocked, block-cluster, matched-pair, and matched-pair cluster designs are
 #' recognised, and the `design` element of the result reports which case
 #' applied.
 #'
@@ -26,8 +26,8 @@
 #'
 #'   **Blocks of different sizes.** For unit randomized blocks, blocks are
 #'   classified by how many units each arm holds rather than by how large the
-#'   block is. A block with at least two treated and two control units carries
-#'   its own Neyman variance. A block with a single treated or single control
+#'   block is. A block with at least two treated and two control units has its
+#'   own Neyman variance. A block with a single treated or single control
 #'   unit has no estimable within-block variance, so the variation across such
 #'   blocks stands in for it. A design containing both kinds combines the two
 #'   parts by squared share of the sample, following Pashley and Miratrix

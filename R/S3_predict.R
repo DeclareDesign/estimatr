@@ -3,12 +3,11 @@
 #' Produces predicted values, obtained by evaluating the regression function in
 #' the frame `newdata` for fits from [lm_robust()] and [lm_lin()]. If `se.fit`
 #' is `TRUE`, standard errors of the predictions are calculated. Setting
-#' `interval` specifies computation of confidence or prediction (tolerance)
-#' intervals at the specified level, sometimes referred to as narrow vs. wide
-#' intervals.
+#' `interval` adds confidence or prediction (tolerance) intervals at the level
+#' set by `alpha`, sometimes called narrow and wide intervals respectively.
 #'
-#' Called without `newdata`, this returns the in-sample fitted values and
-#' `se.fit` and `interval` are not available.
+#' Called without `newdata`, the method returns the in-sample fitted values,
+#' and neither `se.fit` nor `interval` is available.
 #'
 #' The equation used for the standard error of a prediction given a row of data
 #' \eqn{x} is:
@@ -22,23 +21,23 @@
 #' `newdata` with error variance(s) `pred.var`. The default is to assume that
 #' future observations have the same error variance as those used for fitting,
 #' which is taken from the fitted [lm_robust()] object. If `weights` is
-#' supplied, the inverse of this is used as a scale factor. If the fit was
+#' supplied, the inverse of those weights scales the variance. If the fit was
 #' weighted, the default is to assume constant prediction variance, with a
 #' warning.
 #'
-#' @param object an object of class 'lm_robust'
-#' @param newdata a data frame in which to look for variables with which to
-#'   predict. If omitted, the fitted values are returned.
-#' @param se.fit logical. Whether standard errors are required, default = FALSE
-#' @param interval type of interval calculation. Can be abbreviated, default =
-#'   none
-#' @param alpha numeric denoting the test size for confidence intervals
-#' @param na.action function determining what should be done with missing
-#'   values in newdata. The default is to predict NA.
-#' @param pred.var the variance(s) for future observations to be assumed for
-#'   prediction intervals.
-#' @param weights variance weights for prediction. This can be a numeric vector
-#'   or a bare (unquoted) name of the weights variable in the supplied newdata.
+#' @param object An object of class `"lm_robust"`.
+#' @param newdata A data frame in which to look for the variables to predict
+#'   from. If omitted, the fitted values are returned.
+#' @param se.fit Logical. Whether to return standard errors. `FALSE` by default.
+#' @param interval Type of interval calculation, which can be abbreviated.
+#'   `"none"` by default.
+#' @param alpha Numeric. The test size for confidence intervals.
+#' @param na.action Function determining what to do with missing values in
+#'   `newdata`. The default is to predict `NA`.
+#' @param pred.var The variance(s) to assume for future observations when
+#'   building prediction intervals.
+#' @param weights Variance weights for prediction, either a numeric vector or
+#'   the bare (unquoted) name of the weights variable in `newdata`.
 #' @param ... (optional) Ignored.
 #'
 #' @return A numeric vector of predictions, or a data frame with the
@@ -352,9 +351,9 @@ generics::augment
 #' form downstream packages expect from [broom::augment()]. Supplying
 #' `newdata` returns that instead, with `.fitted` only.
 #'
-#' @param x an `lm_robust` or `iv_robust` object
-#' @param data the data to augment, defaulting to the model frame
-#' @param newdata optional new data to predict on instead
+#' @param x An `lm_robust` or `iv_robust` object.
+#' @param data The data to augment, defaulting to the model frame.
+#' @param newdata Optional new data to predict on instead.
 #' @param ... (optional) Ignored.
 #'
 #' @return A `data.frame`.

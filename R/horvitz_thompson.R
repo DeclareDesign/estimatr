@@ -1,16 +1,16 @@
 #' Horvitz-Thompson Estimator with Inverse Probability Weighting
 #'
 #' Estimates treatment effects via inverse probability weighting when
-#' treatment assignment probabilities are known.  Supports all
+#' treatment assignment probabilities are known. Supports all
 #' `randomizr` designs as well as arbitrary designs supplied via a
 #' permutation matrix.
 #'
 #' @details With more than two arms, `condition1` and `condition2`
 #'   select the contrast, and the estimand remains the average treatment
-#'   effect over all N units the design covers.  The estimator therefore
+#'   effect over all N units the design covers. The estimator therefore
 #'   divides by N, not by the number of units landing in the two conditions,
 #'   and the variance uses the joint assignment probabilities implied by the
-#'   arm sizes.  `data` must hold one row per unit of the design, in the
+#'   arm sizes. `data` must hold one row per unit of the design, in the
 #'   design's order, including units assigned to arms outside the contrast.
 #'
 #' @param formula (required) A formula `Y ~ Z`.
@@ -21,15 +21,15 @@
 #'       preferred.}  All standard designs (simple/Bernoulli, complete,
 #'       blocked, clustered, blocked-and-clustered, and arbitrary permutation
 #'       matrices) are supported, and the variance estimator uses exact
-#'       design-aware joint inclusion probabilities.  Any design for which
+#'       design-aware joint inclusion probabilities. Any design for which
 #'       you know the block structure, cluster structure, marginal treatment
 #'       probabilities, and whether randomization is simple or complete can
 #'       be expressed as `declare_ra(blocks = bl, clusters = cl,
 #'       prob = pi, simple = FALSE)`. There is no parametric design that
-#'       requires the alternatives below.  For fully custom designs, use
+#'       requires the alternatives below. For fully custom designs, use
 #'       `declare_ra(permutation_matrix = perm)`.
 #'     \item A named numeric vector of marginal condition probabilities,
-#'       e.g. `c("0" = 0.4, "1" = 0.6)`.  Uses the conservative
+#'       e.g. `c("0" = 0.4, "1" = 0.6)`. Uses the conservative
 #'       Young's simple-randomization variance bound, which is valid for
 #'       any design but exact only for Bernoulli (simple) randomization.
 #'       For complete or blocked designs this overstates uncertainty; use
@@ -527,8 +527,9 @@ ht_var_blocked_clustered <- function(Y2, Y1, N, t2, t1,
 # O(n^2) but feasible since ra_custom requires an explicit permutation matrix.
 #
 # The Young's coefficient for a pair (i,j) is A[i,j] = 1 - pi_i*pi_j / p_ij,
-# not (p_ij - pi_i*pi_j).  This is the correct formula (verified against the
-# C++ ht_var_partial and ht_covar_partial for complete randomization designs).
+# not (p_ij - pi_i*pi_j). The first form is the correct one, verified against
+# the C++ ht_var_partial and ht_covar_partial for complete randomization
+# designs.
 ht_var_custom <- function(Y2, Y1, N, joint_mat, pi2, pi1, t2, t1, n) {
   # joint_mat is 2n×2n over every in-study unit: rows/cols 1:n are condition1,
   # n+1:2n are condition2. The blocks below are the OBSERVED pairs, which are

@@ -2,7 +2,7 @@
 #'
 #' Fits a two-stage least squares instrumental variables regression and
 #' returns heteroskedasticity-robust or cluster-robust standard errors, with
-#' optional weak-instrument, Wu-Hausman and Sargan diagnostics.
+#' optional weak-instrument, Wu-Hausman, and Sargan diagnostics.
 #'
 #' @param formula (required) An object of class formula with regressors and instruments,
 #'   e.g. `y ~ x1 + x2 | z1 + z2`.
@@ -38,7 +38,7 @@
 #'
 #'   Whether it is safe turns on one question, whether two regressors are
 #'   nearly the same variable. Forming `X'X` squares the condition number, so
-#'   the Cholesky path carries about twice the rounding error of the QR, and
+#'   the Cholesky path has about twice the rounding error of the QR, and
 #'   only near-collinearity makes that visible. Differences of scale do not,
 #'   because the columns are normalized before either decomposition, so a
 #'   covariate in dollars beside one in years costs nothing. For a treatment
@@ -55,16 +55,16 @@
 #'   `kappa(sweep(X, 2, sqrt(colSums(X^2)), "/"), exact = TRUE)`.
 #'
 #' @return An object of class `"iv_robust"`, a list holding the estimate table in `coefficients`, `std.error`, `df`, `statistic`,
-#'   `p.value`, `conf.low`, `conf.high`, `term` and `outcome`; the fit in
-#'   `fitted.values`, `residuals`, `vcov`, `nobs`, `k`, `rank`, `df.residual`
+#'   `p.value`, `conf.low`, `conf.high`, `term`, and `outcome`; the fit in
+#'   `fitted.values`, `residuals`, `vcov`, `nobs`, `k`, `rank`, `df.residual`,
 #'   and `res_var`; the summary statistics `r.squared`, `adj.r.squared`,
-#'   `tss` and `fstatistic`; and `se_type`, `weighted`, `clustered`, `fes`,
-#'   `alpha`, `terms`, `xlevels` and `call`.
+#'   `tss`, and `fstatistic`; and `se_type`, `weighted`, `clustered`, `fes`,
+#'   `alpha`, `terms`, `xlevels`, and `call`.
 #'
 #'   `residuals` are the structural residuals, `y - X beta`, rather than the
-#'   second-stage ones. `ei.iv`, `terms_regressors` and `formula` carry the
+#'   second-stage ones. `ei.iv`, `terms_regressors`, and `formula` record the
 #'   two-stage structure. With `diagnostics = TRUE` the object also holds
-#'   `diagnostic_first_stage_fstatistic`, `diagnostic_endogeneity_test` and
+#'   `diagnostic_first_stage_fstatistic`, `diagnostic_endogeneity_test`, and
 #'   `diagnostic_overid_test`.
 #'
 #' @importFrom stats na.omit
@@ -83,7 +83,7 @@
 #' iv_robust(y ~ x | z, data = dat, se_type = "classical")
 #' iv_robust(y ~ x | z, data = dat, clusters = cl)
 #'
-#' # Weak-instrument, endogeneity and overidentification tests
+#' # Weak-instrument, endogeneity, and overidentification tests
 #' summary(iv_robust(y ~ x | z, data = dat, diagnostics = TRUE))
 #'
 #' @export

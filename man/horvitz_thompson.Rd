@@ -26,14 +26,14 @@ horvitz_thompson(
 preferred.}  All standard designs (simple/Bernoulli, complete,
 blocked, clustered, blocked-and-clustered, and arbitrary permutation
 matrices) are supported, and the variance estimator uses exact
-design-aware joint inclusion probabilities.  Any design for which
+design-aware joint inclusion probabilities. Any design for which
 you know the block structure, cluster structure, marginal treatment
 probabilities, and whether randomization is simple or complete can
 be expressed as \code{declare_ra(blocks = bl, clusters = cl, prob = pi, simple = FALSE)}. There is no parametric design that
-requires the alternatives below.  For fully custom designs, use
+requires the alternatives below. For fully custom designs, use
 \code{declare_ra(permutation_matrix = perm)}.
 \item A named numeric vector of marginal condition probabilities,
-e.g. \code{c("0" = 0.4, "1" = 0.6)}.  Uses the conservative
+e.g. \code{c("0" = 0.4, "1" = 0.6)}. Uses the conservative
 Young's simple-randomization variance bound, which is valid for
 any design but exact only for Bernoulli (simple) randomization.
 For complete or blocked designs this overstates uncertainty; use
@@ -65,17 +65,17 @@ outside the contrast), \code{vcov}, \code{se_type}, \code{condition1},
 }
 \description{
 Estimates treatment effects via inverse probability weighting when
-treatment assignment probabilities are known.  Supports all
+treatment assignment probabilities are known. Supports all
 \code{randomizr} designs as well as arbitrary designs supplied via a
 permutation matrix.
 }
 \details{
 With more than two arms, \code{condition1} and \code{condition2}
 select the contrast, and the estimand remains the average treatment
-effect over all N units the design covers.  The estimator therefore
+effect over all N units the design covers. The estimator therefore
 divides by N, not by the number of units landing in the two conditions,
 and the variance uses the joint assignment probabilities implied by the
-arm sizes.  \code{data} must hold one row per unit of the design, in the
+arm sizes. \code{data} must hold one row per unit of the design, in the
 design's order, including units assigned to arms outside the contrast.
 }
 \examples{

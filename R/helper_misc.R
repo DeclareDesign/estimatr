@@ -250,7 +250,7 @@ lin_covar_names <- function(x) {
 #'
 #' @param fitted Full-model fitted values.
 #' @param coefficients The fitted coefficient vector.
-#' @param model_data The object returned by `demean_fes()`, which carries
+#' @param model_data The object returned by `demean_fes()`, which holds
 #'   `Xoriginal` and the undemeaned `fixed_effects` matrix.
 #' @return A named numeric vector, one entry per group, or `NULL`.
 #' @keywords internal

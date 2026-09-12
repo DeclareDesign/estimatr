@@ -16,8 +16,11 @@ hypothesis, passed to \code{car::linearHypothesis}}
 }
 \value{
 An object of class \code{"lh_robust"} with three components:
-\code{lm_robust}, the underlying fit; \code{lh},
-and \code{joint_hypothesis}.
+\code{lm_robust}, the underlying fit; \code{lh}, one row per hypothesis holding
+\code{coefficients}, \code{std.error}, \code{statistic}, \code{p.value}, \code{alpha}, \code{conf.low},
+\code{conf.high}, \code{df}, \code{term}, and \code{outcome}; and \code{joint_hypothesis}, the Wald
+F test of all of them at once, as \code{value}, \code{numdf}, \code{dendf}, and
+\code{p.value}.
 }
 \description{
 Tests a linear combination of coefficients, or several of them jointly,

@@ -65,7 +65,7 @@ is rank deficient falls back to the QR.
 
 Whether it is safe turns on one question, whether two regressors are
 nearly the same variable. Forming \verb{X'X} squares the condition number, so
-the Cholesky path carries about twice the rounding error of the QR, and
+the Cholesky path has about twice the rounding error of the QR, and
 only near-collinearity makes that visible. Differences of scale do not,
 because the columns are normalized before either decomposition, so a
 covariate in dollars beside one in years costs nothing. For a treatment
@@ -83,22 +83,22 @@ units is large for a reason that does not affect the fit:
 }
 \value{
 An object of class \code{"iv_robust"}, a list holding the estimate table in \code{coefficients}, \code{std.error}, \code{df}, \code{statistic},
-\code{p.value}, \code{conf.low}, \code{conf.high}, \code{term} and \code{outcome}; the fit in
-\code{fitted.values}, \code{residuals}, \code{vcov}, \code{nobs}, \code{k}, \code{rank}, \code{df.residual}
+\code{p.value}, \code{conf.low}, \code{conf.high}, \code{term}, and \code{outcome}; the fit in
+\code{fitted.values}, \code{residuals}, \code{vcov}, \code{nobs}, \code{k}, \code{rank}, \code{df.residual},
 and \code{res_var}; the summary statistics \code{r.squared}, \code{adj.r.squared},
-\code{tss} and \code{fstatistic}; and \code{se_type}, \code{weighted}, \code{clustered}, \code{fes},
-\code{alpha}, \code{terms}, \code{xlevels} and \code{call}.
+\code{tss}, and \code{fstatistic}; and \code{se_type}, \code{weighted}, \code{clustered}, \code{fes},
+\code{alpha}, \code{terms}, \code{xlevels}, and \code{call}.
 
 \code{residuals} are the structural residuals, \verb{y - X beta}, rather than the
-second-stage ones. \code{ei.iv}, \code{terms_regressors} and \code{formula} carry the
+second-stage ones. \code{ei.iv}, \code{terms_regressors}, and \code{formula} record the
 two-stage structure. With \code{diagnostics = TRUE} the object also holds
-\code{diagnostic_first_stage_fstatistic}, \code{diagnostic_endogeneity_test} and
+\code{diagnostic_first_stage_fstatistic}, \code{diagnostic_endogeneity_test}, and
 \code{diagnostic_overid_test}.
 }
 \description{
 Fits a two-stage least squares instrumental variables regression and
 returns heteroskedasticity-robust or cluster-robust standard errors, with
-optional weak-instrument, Wu-Hausman and Sargan diagnostics.
+optional weak-instrument, Wu-Hausman, and Sargan diagnostics.
 }
 \examples{
 set.seed(25)
@@ -115,7 +115,7 @@ tidy(fit)
 iv_robust(y ~ x | z, data = dat, se_type = "classical")
 iv_robust(y ~ x | z, data = dat, clusters = cl)
 
-# Weak-instrument, endogeneity and overidentification tests
+# Weak-instrument, endogeneity, and overidentification tests
 summary(iv_robust(y ~ x | z, data = dat, diagnostics = TRUE))
 
 }

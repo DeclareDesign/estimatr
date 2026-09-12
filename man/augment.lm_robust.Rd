@@ -10,11 +10,11 @@
 \method{augment}{iv_robust}(x, data = NULL, newdata = NULL, ...)
 }
 \arguments{
-\item{x}{an \code{lm_robust} or \code{iv_robust} object}
+\item{x}{An \code{lm_robust} or \code{iv_robust} object.}
 
-\item{data}{the data to augment, defaulting to the model frame}
+\item{data}{The data to augment, defaulting to the model frame.}
 
-\item{newdata}{optional new data to predict on instead}
+\item{newdata}{Optional new data to predict on instead.}
 
 \item{...}{(optional) Ignored.}
 }
