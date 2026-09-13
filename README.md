@@ -21,7 +21,7 @@ Three vignettes ship with the package:
 
 `lm_robust`, `lm_lin`, `iv_robust`, `lh_robust`, `difference_in_means` and `horvitz_thompson`, with a Pashley and Miratrix (2021) blocked-variance estimator that 1.x does not have.
 
-The six estimators keep their 1.0.6 signatures, except `horvitz_thompson()`, whose five probability arguments consolidate into `condition_prs`; the removals are below. Run side by side on one machine, the numbers match to 1e-12 across every supported standard error type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes. The suite is 2,747 assertions, of which 695 run against answers recorded from an installed estimatr 1.0.6 (`data-raw/make_estimatr_reference.R` produces the recording) at a tolerance of 1e-9, because a fixture recorded on one platform meets a different BLAS on another and the floor there is the linear algebra rather than this package.
+The six estimators keep their 1.0.6 signatures, except `horvitz_thompson()`, whose five probability arguments consolidate into `condition_prs`; the removals are below. Run side by side on one machine, the numbers match to 1e-12 across every supported standard error type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes. The suite is 2,756 assertions, of which 695 run against answers recorded from an installed estimatr 1.0.6 (`data-raw/make_estimatr_reference.R` produces the recording) at a tolerance of 1e-9, because a fixture recorded on one platform meets a different BLAS on another and the floor there is the linear algebra rather than this package.
 
 ## What breaks
 
@@ -37,7 +37,7 @@ A clustered block holding a single treated or single control cluster is refused 
 
 ## Status
 
-`R CMD check --as-cran`: 0 errors, 0 warnings, 1 NOTE (the maintainer change). Test suite 2,747 assertions under `R CMD check`, 0 failures, one skip (`blkvar`, worth 12 assertions, which CRAN does not serve).
+`R CMD check --as-cran`: 0 errors, 0 warnings, 1 NOTE (the maintainer change). Test suite 2,756 assertions under `R CMD check`, 0 failures, one skip (`blkvar`, worth 12 assertions, which CRAN does not serve).
 
 Every open estimatr issue was read against this implementation: 26 are fixed here, 23 are feature requests, 7 are out of scope, 6 are not reproducible, 5 are superseded by the rewrite, and 4 remain open. `vignette("estimatr2.0")` names the four.
 

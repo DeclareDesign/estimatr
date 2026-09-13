@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstddef>
 #include <functional>
+#include <limits>
 using namespace Rcpp;
 
 // Much of what follows is modified from RcppEigen Vignette by Douglas Bates and Dirk Eddelbuettel
@@ -275,7 +276,7 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
   Eigen::VectorXd res_var = Eigen::VectorXd::Constant(ny, -99.0);
   // Reported back so R can warn on the condition itself rather than on a NaN,
   // which is no longer the symptom once the denominator is guarded.
-  int n_leverage_above_one = 0;
+  int n_leverage_near_one = 0;
 
   if (se_type == "classical") {
     Eigen::MatrixXd s2 = AtA(ei)/((double)n_use - (double)r_fe);
@@ -354,7 +355,22 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
         // HC3 squares the denominator, which cancels the sign, so it returns a
         // finite number carrying a spurious positive term and says nothing.
         // Setting the denominator to 0 sends both through the isfinite trap.
-        n_leverage_above_one = (denom < 0.0).count();
+        //
+        // The clamp and the count are deliberately different tests. The clamp
+        // acts on the observations whose contribution has to be discarded. The
+        // count decides whether R warns, and a strict `denom < 0` there would
+        // put the warning at the mercy of one ulp: on an exactly saturated
+        // design the solver used here returns a hat value of 1 + 2.2e-16 while
+        // `qr()` and `stats::hatvalues()` return exactly 1, and the reported
+        // standard error is identical in both cases. So the count uses a
+        // tolerance, `sandwich::meatHC`'s `h > 1 - sqrt(eps)` on the same
+        // quantity. A hat value is dimensionless and bounded by 1, so the
+        // tolerance carries across packages in a way a tolerance on a column
+        // norm or a condition number would not. It also reaches an observation
+        // sitting just below 1, which is not dropped but whose contribution the
+        // small divisor inflates by about 1e8; the warning covers both.
+        const double lev_tol = 1.0 - std::sqrt(std::numeric_limits<double>::epsilon());
+        n_leverage_near_one = (hii.array() > lev_tol).count();
         denom = (denom <= 0.0).select(0.0, denom);
         if (hc3) denom = denom.square();
 
@@ -579,7 +595,7 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
   return List::create(_["Vcov_hat"]= Vcov_hat,
                       _["dof"]= dof,
                       _["res_var"]= res_var,
-                      _["n_leverage_above_one"]= n_leverage_above_one);
+                      _["n_leverage_near_one"]= n_leverage_near_one);
 }
 
 // ---------------------------------------------------------------------------

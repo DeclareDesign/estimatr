@@ -523,23 +523,41 @@ test_that("a singleton FE group agrees absorbed and expanded, for every se_type"
   # negative number. The leverage guard resolves both to the same zero
   # contribution, so the two routes now agree rather than disagreeing by an
   # accident of which design matrix was formed (estimatr #395).
+  #
+  # The two routes agree in the warning as well, which is the second half of
+  # the same point. The absorbed route puts the singleton at a hat value of
+  # exactly 1 and the expanded route a rounding step above it, so a count that
+  # tested the sign of 1 - h gave the same standard error by two notices; the
+  # tolerant count reaches both.
   set.seed(11)
   k <- 200
   d <- data.frame(y = rnorm(k), x = rnorm(k), g = c(1L, sample(2:20, k - 1, TRUE)))
   expect_same(sum(d$g == 1L), 1L)
 
-  fe <- lm_robust(y ~ x, fixed_effects = ~ g, data = d, se_type = "HC2")
+  expect_warning(
+    fe <- lm_robust(y ~ x, fixed_effects = ~ g, data = d, se_type = "HC2"),
+    "1 observation has a computed leverage at or near 1"
+  )
   expect_true(is.finite(fe$std.error[["x"]]))
   expect_same(fe$df.residual, lm(y ~ x + factor(g), data = d)$df.residual)
 
+  leverage_warned <- function(expr) {
+    ws <- character(0)
+    val <- withCallingHandlers(expr, warning = function(w) {
+      ws <<- c(ws, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    })
+    list(fit = val, warned = any(grepl("leverage at or near 1", ws, fixed = TRUE)))
+  }
+
   for (se in c("HC1", "HC2", "HC3")) {
-    a <- lm_robust(y ~ x, fixed_effects = ~ g, data = d, se_type = se)
-    # the expanded design is where the hat value lands above 1, so it warns
-    b <- suppressWarnings(
-      lm_robust(y ~ x + factor(g), data = d, se_type = se)
-    )
-    expect_true(is.finite(b$std.error[["x"]]), info = se)
-    expect_same(unname(a$std.error), unname(b$std.error["x"]), info = se)
+    a <- leverage_warned(lm_robust(y ~ x, fixed_effects = ~ g, data = d, se_type = se))
+    b <- leverage_warned(lm_robust(y ~ x + factor(g), data = d, se_type = se))
+    expect_true(is.finite(b$fit$std.error[["x"]]), info = se)
+    expect_same(unname(a$fit$std.error), unname(b$fit$std.error["x"]), info = se)
+    # HC1 never reads leverage, so it is the control: neither route warns.
+    expect_same(a$warned, se != "HC1", info = paste(se, "absorbed"))
+    expect_same(b$warned, se != "HC1", info = paste(se, "expanded"))
   }
 })
 

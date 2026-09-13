@@ -295,21 +295,28 @@ lm_robust_fit <- function(y,
       }
 
       # HC2 and HC3 divide by (1 - h_ii). A near-saturated design produces
-      # observations that are fitted exactly, whose computed hat value can land
-      # marginally above 1; lm_variance() drops those from the meat rather than
-      # divide by a negative number, and this is where that gets said. It is
-      # worth saying: those observations contribute nothing, so the standard
-      # error is built from fewer rows than the fit used (estimatr #395).
-      n_lev <- vcov_fit[["n_leverage_above_one"]]
+      # observations that are fitted exactly, whose computed hat value lands at
+      # or marginally either side of 1; lm_variance() drops the ones at or above
+      # it from the meat rather than divide by a negative number, and this is
+      # where that gets said. It is worth saying: those observations contribute
+      # nothing, so the standard error is built from fewer rows than the fit
+      # used (estimatr #395). The count is tolerant rather than a strict test on
+      # the sign of 1 - h, for the reason lm_variance() gives at the clamp: the
+      # standard error on an exactly saturated design is the same whichever side
+      # of 1 the rounding puts the hat value, so a strict test would leave the
+      # warning to an ulp.
+      n_lev <- vcov_fit[["n_leverage_near_one"]]
       if (isTRUE(n_lev > 0)) {
         warning(
           n_lev, if (n_lev == 1) " observation has " else " observations have ",
-          "a computed leverage above 1, which happens when the design is close ",
-          "to saturated and the observation is fitted exactly. `se_type = \"",
-          se_type, "\"` divides by (1 - leverage), so those observations are ",
-          "dropped from the variance rather than divided by a negative number. ",
-          "Use `se_type = \"HC1\"` or `\"classical\"`, or drop covariates, to ",
-          "use every observation."
+          "a computed leverage at or near 1, which happens when the design is ",
+          "close to saturated and the observation is fitted exactly or nearly ",
+          "so. `se_type = \"", se_type, "\"` divides by (1 - leverage). An ",
+          "observation at or above leverage 1 is dropped from the variance ",
+          "rather than divided by a negative number, and one just below it ",
+          "contributes a term the small divisor inflates. Use `se_type = ",
+          "\"HC1\"` or `\"classical\"`, or drop covariates, to use every ",
+          "observation."
         )
       } else if (any(is.nan(return_list$std.error)) &&
                  se_type %in% c("HC2", "HC3", "CR2")) {

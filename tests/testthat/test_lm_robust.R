@@ -366,10 +366,10 @@ test_that("#395: NaN standard errors from leverage-1 points are explained", {
 # for it described a different failure than the one that occurs.
 #
 # A hat value is a projection diagonal and cannot exceed 1. Leverage of exactly
-# 1 is benign: that observation has residual exactly 0, its meat contribution is
-# a 0/0 the code resolves to 0, and HC2 returns a finite standard error without
-# warning (first test). The trouble is leverage computed marginally ABOVE 1,
-# where 1 - h is a small negative number. HC2 then divides by it, half_meat
+# 1 costs nothing in the answer: that observation has residual exactly 0, its
+# meat contribution is a 0/0 the code resolves to 0, and HC2 returns a finite
+# standard error (first test). The trouble is leverage computed marginally ABOVE
+# 1, where 1 - h is a small negative number. HC2 then divides by it, half_meat
 # takes the square root of the negative result, and every standard error in the
 # fit is NaN however small the offending term. HC3 squares the denominator,
 # which cancels the sign, so it returned a finite number carrying a spurious
@@ -378,13 +378,21 @@ test_that("#395: NaN standard errors from leverage-1 points are explained", {
 #
 # lm_variance() now sets the denominator to 0 wherever 1 - h <= 0, which sends
 # both through the same isfinite trap that leverage of exactly 1 already used,
-# and reports how many observations that hit so lm_robust() can warn on the
-# condition rather than on a NaN.
+# and counts how many observations sit at or near leverage 1 so lm_robust() can
+# warn on the condition rather than on a NaN. The count is tolerant, at
+# sandwich's `h > 1 - sqrt(eps)`, while the clamp is the strict `1 - h <= 0`,
+# because the two answer different questions. The clamp decides the number, and
+# on an exactly saturated design the number is the same whichever side of 1 the
+# rounding lands on, so a strict count would leave the warning to an ulp. The
+# first test below pins the design where that is so.
 
-test_that("#395: leverage of exactly 1 is benign -- HC2 stays finite and silent", {
+test_that("#395: leverage of exactly 1 answers finitely, and says that it did", {
   # The single "c" observation is alone in its cell, so it is fitted exactly:
   # leverage is exactly 1 and the residual is exactly 0, and its contribution to
-  # the meat is a 0/0 that is correctly resolved to 0 rather than to NaN.
+  # the meat is a 0/0 that is correctly resolved to 0 rather than to NaN. The
+  # standard error is therefore built from 8 rows where the fit used 9, which is
+  # what the warning reports. sandwich warns on this design too and on the same
+  # grounds, returning NaN where estimatr drops the row and answers.
   d <- data.frame(
     g = factor(c("a", "a", "a", "a", "b", "b", "b", "b", "c")),
     Z = c(0, 1, 0, 1, 0, 1, 0, 1, 1),
@@ -398,9 +406,26 @@ test_that("#395: leverage of exactly 1 is benign -- HC2 stays finite and silent"
   expect_equal(min(1 - h), 0)
   expect_equal(e[9], 0)
 
-  m <- lm_robust(Y ~ Z + g, data = d, se_type = "HC2")   # must not warn
+  # The fit's own solver puts that same hat value at 1 + 2.2e-16 rather than at
+  # the exact 1 qr() returns above, so this design is the one that decides
+  # whether the warning is tolerant or is left to an ulp. Both halves are
+  # pinned: the warning fires and names one observation, and the standard error
+  # does not depend on which side of 1 the rounding landed.
+  expect_warning(
+    m <- lm_robust(Y ~ Z + g, data = d, se_type = "HC2"),
+    "1 observation has a computed leverage at or near 1"
+  )
   expect_false(is.nan(m$std.error[["Z"]]))
   expect_true(is.finite(m$std.error[["Z"]]))
+
+  # Computed here rather than recorded. With observation 9 contributing 0 the
+  # meat is the other 8 rows, and the HC2 standard error follows in closed form
+  # from a bread and a hat vector that never go near estimatr's solver.
+  M <- summary(lm(Y ~ Z + g, data = d))$cov.unscaled
+  denom <- 1 - rowSums((X %*% M) * X)
+  omega <- ifelse(denom <= 0, 0, e^2 / denom)
+  se_hand <- sqrt(diag(M %*% (t(X) %*% (X * omega)) %*% M))
+  expect_equal(m$std.error[["Z"]], se_hand[["Z"]])
 })
 
 test_that("#395: the leverage guard drops exactly the 1 - h < 0 observations", {
@@ -426,8 +451,8 @@ test_that("#395: the leverage guard drops exactly the 1 - h < 0 observations", {
   # The guarded answers are the three well-behaved rows and nothing else.
   hc2 <- z_variance("HC2")
   hc3 <- z_variance("HC3")
-  expect_equal(hc2[["n_leverage_above_one"]], 1L)
-  expect_equal(hc3[["n_leverage_above_one"]], 1L)
+  expect_equal(hc2[["n_leverage_near_one"]], 1L)
+  expect_equal(hc3[["n_leverage_near_one"]], 1L)
   expect_equal(sqrt(hc2[["Vcov_hat"]][1, 1]), sqrt(0.09 * 3 / 0.7))
   expect_equal(sqrt(hc3[["Vcov_hat"]][1, 1]), sqrt(0.09 * 3 / 0.49))
 
@@ -440,7 +465,7 @@ test_that("#395: the leverage guard drops exactly the 1 - h < 0 observations", {
 
   # se_types that never read leverage are untouched and report no count.
   for (ty in c("HC0", "HC1", "classical")) {
-    expect_equal(z_variance(ty)[["n_leverage_above_one"]], 0L,
+    expect_equal(z_variance(ty)[["n_leverage_near_one"]], 0L,
                  label = paste(ty, "leverage count"))
   }
 })
@@ -469,7 +494,7 @@ lev_above_one <- function(fml, data) {
   keep <- !is.na(fit$beta_hat)
   Xk <- X[, keep, drop = FALSE]
   h <- rowSums((Xk %*% fit$XtX_inv) * Xk)
-  list(any = any(1 - h < 0), max = max(h))
+  list(any = any(1 - h < 0), max = max(h), h = h)
 }
 
 test_that("#395: HC2 and HC3 both warn, and neither returns NaN, above leverage 1", {
@@ -504,15 +529,28 @@ test_that("#395: the leverage warning counts the observations it dropped", {
   fml <- Y ~ Z * as.factor(x)
   skip_if_not(lev_above_one(fml, d)$any, "no leverage above 1 on this platform")
 
-  expect_warning(
-    expect_warning(lm_robust(fml, data = d, se_type = "HC2"),
-                   "computed leverage above 1"),
-    "collinear"
+  # Nesting expect_warning() would pin the number of warnings as well as their
+  # content, which is what broke the first #395 test on all five CI platforms
+  # and on none locally. Collect them and read the leverage one out.
+  ws <- character(0)
+  withCallingHandlers(
+    lm_robust(fml, data = d, se_type = "HC2"),
+    warning = function(w) {
+      ws <<- c(ws, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
   )
-  expect_warning(
-    expect_warning(lm_robust(fml, data = d, se_type = "HC2"), "observations have"),
-    "collinear"
-  )
+  expect_true(any(grepl("collinear", ws)))
+  lev <- grep("computed leverage at or near 1", ws, value = TRUE)
+  expect_length(lev, 1)
+
+  # The number in the message is the count the C++ made, and the reference is
+  # the same criterion applied to a hat vector computed outside it. This design
+  # has more than one such observation, so the plural branch of the message is
+  # exercised here and the singular branch in the exactly saturated test above.
+  expect_match(lev, "^[0-9]+ observations have ")
+  expect_equal(as.integer(sub(" .*$", "", lev)),
+               sum(lev_above_one(fml, d)$h > 1 - sqrt(.Machine$double.eps)))
 })
 
 test_that("#395: CR2 has no analogous hole -- degeneracy goes through its clamp", {
