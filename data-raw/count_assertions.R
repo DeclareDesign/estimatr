@@ -46,7 +46,12 @@ components <- list(
       # Algebra on hand-built matrices; estimatr is not involved.
       "the 2SLS hat matrix is idempotent but not symmetric" = 0,
       "second-stage leverage stays in [0, 1] where influence leverage does not" = 0,
-      "the two conventions differ by 8.6% at HC2 and 18.5% at HC3 on mtcars" = 0
+      "the two conventions differ by 8.6% at HC2 and 18.5% at HC3 on mtcars" = 0,
+      # Checks that the fixture keeps the features that make it hostile.
+      "the hostile design is still hostile" = 0,
+      "HC0-HC3 and classical match sandwich on the hostile design, both solver paths" = "all",
+      "cluster-robust matches sandwich::vcovCL on the hostile design, both solver paths" = "all",
+      "iv_robust matches sandwich on the hostile design, both solver paths" = "all"
     )
   ),
   clubSandwich = list(
@@ -60,7 +65,11 @@ components <- list(
       # Properties of estimatr's own degrees of freedom.
       "CR2 degrees of freedom differ across coefficients" = 0,
       "CR2 with absorbed fixed effects matches clubSandwich on the dummy expansion" = "all",
-      "iv_robust CR2 matches clubSandwich on AER::ivreg" = "all"
+      "iv_robust CR2 matches clubSandwich on AER::ivreg" = "all",
+      # Against CR2 written out from its definition in helper-external.R, not
+      # against clubSandwich, so left out for the reason given under blkvar.
+      "CR2 on the hostile design matches CR2 written from its definition" = 0,
+      "CR2 and its degrees of freedom match clubSandwich on the hostile design" = "all"
     )
   ),
   Stata = list(

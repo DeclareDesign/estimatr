@@ -398,3 +398,87 @@ test_that("the two conventions differ by 8.6% at HC2 and 18.5% at HC3 on mtcars"
     expect_true(all(ratio > spec$lo & ratio < spec$hi))
   }
 })
+
+# ---- a hostile design ----
+#
+# Everything above runs on standard normals, where no estimator's arithmetic is
+# under strain. The same comparisons on ext_data_hard() are what would have
+# caught the scale-dependent rank detection fixed in 8b78aef: on the build
+# before that fix every QR-path cell below fails, with the share dropped as
+# collinear. Both solver paths run, since try_cholesky reaches the variance
+# through its own decomposition.
+#
+# The worst gap measured here is 2.2e-13, so LIVE_TOL holds with the same
+# headroom as on the easy data.
+
+dh <- ext_data_hard()
+hard_formula <- y ~ z + income + share + age + age2
+
+test_that("the hostile design is still hostile", {
+  X <- model.matrix(hard_formula, dh)
+  norms <- sqrt(colSums(X^2))
+  expect_gt(max(norms) / min(norms), 1e8)
+  expect_gt(max(hatvalues(lm(hard_formula, data = dh))), 0.999)
+  expect_gt(max(dh$w) / min(dh$w), 1000)
+  expect_equal(sum(table(dh$cl) == 1), 8)
+})
+
+test_that("HC0-HC3 and classical match sandwich on the hostile design, both solver paths", {
+  m <- lm(hard_formula, data = dh)
+  mw <- lm(hard_formula, data = dh, weights = w)
+  for (tc in c(FALSE, TRUE)) {
+    for (ty in c("HC0", "HC1", "HC2", "HC3")) {
+      fit <- lm_robust(hard_formula, data = dh, se_type = ty, try_cholesky = tc)
+      expect_vcov_equal(fit, sandwich::vcovHC(m, type = ty),
+                        paste0(ty, ", try_cholesky = ", tc))
+      fit <- lm_robust(hard_formula, data = dh, weights = w, se_type = ty, try_cholesky = tc)
+      expect_vcov_equal(fit, sandwich::vcovHC(mw, type = ty),
+                        paste0(ty, ", weighted, try_cholesky = ", tc))
+    }
+    fit <- lm_robust(hard_formula, data = dh, se_type = "classical", try_cholesky = tc)
+    expect_vcov_equal(fit, vcov(m), paste0("classical, try_cholesky = ", tc))
+    fit <- lm_robust(hard_formula, data = dh, weights = w, se_type = "classical",
+                     try_cholesky = tc)
+    expect_vcov_equal(fit, vcov(mw), paste0("classical, weighted, try_cholesky = ", tc))
+  }
+})
+
+test_that("cluster-robust matches sandwich::vcovCL on the hostile design, both solver paths", {
+  for (weighted in c(FALSE, TRUE)) {
+    m <- if (weighted) lm(hard_formula, data = dh, weights = w) else lm(hard_formula, data = dh)
+    weights <- if (weighted) dh$w else NULL
+    for (tc in c(FALSE, TRUE)) {
+      label <- paste0(if (weighted) "weighted, ", "try_cholesky = ", tc)
+      fit <- lm_robust(hard_formula, data = dh, clusters = cl, weights = weights,
+                       se_type = "CR0", try_cholesky = tc)
+      expect_vcov_equal(
+        fit, sandwich::vcovCL(m, cluster = dh$cl, type = "HC0", cadjust = FALSE),
+        paste("CR0,", label)
+      )
+      fit <- lm_robust(hard_formula, data = dh, clusters = cl, weights = weights,
+                       se_type = "stata", try_cholesky = tc)
+      expect_vcov_equal(
+        fit, sandwich::vcovCL(m, cluster = dh$cl, type = "HC1", cadjust = TRUE),
+        paste("stata,", label)
+      )
+    }
+  }
+})
+
+test_that("iv_robust matches sandwich on the hostile design, both solver paths", {
+  skip_if_not_installed("ivreg")
+  iv_formula <- y ~ en + z + income + share | inst + z + income + share
+  mi <- ivreg::ivreg(iv_formula, data = dh)
+  for (tc in c(FALSE, TRUE)) {
+    for (ty in c("HC0", "HC1", "HC2", "HC3")) {
+      fit <- iv_robust(iv_formula, data = dh, se_type = ty, try_cholesky = tc)
+      expect_vcov_equal(fit, sandwich::vcovHC(mi, type = ty),
+                        paste0("iv ", ty, ", try_cholesky = ", tc))
+    }
+    fit <- iv_robust(iv_formula, data = dh, clusters = cl, se_type = "CR0", try_cholesky = tc)
+    expect_vcov_equal(
+      fit, sandwich::vcovCL(mi, cluster = dh$cl, type = "HC0", cadjust = FALSE),
+      paste0("iv CR0, try_cholesky = ", tc)
+    )
+  }
+})

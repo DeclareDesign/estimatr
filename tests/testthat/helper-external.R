@@ -162,6 +162,91 @@ ext_ref <- function(key) {
 
 external_reference_versions <- function() .external_fixture()$versions
 
+# A design that is hostile in every way the variance estimators can be while
+# staying full rank, for the external comparisons that otherwise run only on
+# standard normals. Each feature is one a well-conditioned fixture hides:
+#
+# - Column norms about eight orders of magnitude apart: income in dollars
+#   beside a share below 0.02. Rank detection that compared every pivot with
+#   the largest in the matrix, as estimatr did until 8b78aef, dropped the share
+#   from this design as collinear.
+# - A quadratic in age in raw years, so the regressors are correlated the way
+#   they are in applied work.
+# - Cluster sizes from 1 to 74, eight of them singletons, in shuffled order.
+# - Weights spanning more than three orders of magnitude.
+# - One income far in the tail, with leverage 0.9993 in a cluster of three.
+# - Heteroskedastic errors, and an endogenous regressor for the 2SLS cells.
+#
+# The quadratic is in age rather than calendar year on purpose. In raw years the
+# scaled condition number is 5.6e4 against 42 here, and at that conditioning
+# centring the year, which cannot move the true standard errors, moves
+# clubSandwich's weighted CR2 by 2.8e-2, estimatr's by 2.4e-5, and a CR2 written
+# from its definition by 4.5e-8. A fixture that hard tests clubSandwich rather
+# than this package.
+ext_data_hard <- function() {
+  set.seed(20260913)
+  n <- 400
+  sizes <- c(rep(1, 8), rep(2, 6), 3, 3, 4, 5, 6, 8, 10, 13, 17, 22, 28, 36, 45, 58, 74)
+  sizes <- c(sizes, n - sum(sizes))
+  cl <- rep(seq_along(sizes), sizes)
+  cl <- sample(seq_along(sizes))[cl]
+  d <- data.frame(
+    cl = cl,
+    age = runif(n, 18, 90),
+    income = exp(rnorm(n, 10.5, 1)),
+    share = runif(n, 0, 0.02),
+    z = rbinom(n, 1, 0.4),
+    w = exp(rnorm(n, 0, 1.2)),
+    inst = rnorm(n)
+  )
+  d <- d[sample(n), ]
+  d$age2 <- d$age^2
+  d$income[which.max(d$income)] <- 5e7
+  d$en <- 0.4 * d$inst + 50 * d$share + rnorm(n)
+  noise_sd <- 2000 * (1 + d$z + abs(d$age - 50) / 20)
+  d$y <- 5000 + 0.02 * d$income + 800 * d$z + 1e5 * d$share + 30 * (d$age - 50) -
+    0.5 * (d$age - 50)^2 + 900 * d$en + rnorm(n) * noise_sd
+  rownames(d) <- NULL
+  d
+}
+
+# CR2 written out from its definition, with the working model an identity
+# (Pustejovsky and Tipton 2018, equations 4 and 5): for each cluster g,
+# A_g = [(I - H)(I - H)']_gg^(-1/2) with H = X (X'WX)^-1 X'W. The hat matrix
+# comes from a QR of the column-scaled, weighted design, so the reference loses
+# no more precision than that decomposition must. Full-rank designs only: the
+# QR's pivot has to be the identity for R to be read off in column order.
+cr2_by_definition <- function(X, y, cluster, w = rep(1, length(y))) {
+  s <- sqrt(colSums(X^2))
+  Xs <- sweep(X, 2, s, "/")
+  q <- qr(Xs * sqrt(w))
+  stopifnot(identical(q$pivot, seq_len(ncol(X))))
+  R_inv <- backsolve(qr.R(q), diag(ncol(X)))
+  bread <- tcrossprod(R_inv)
+  e <- as.vector(y - Xs %*% (bread %*% crossprod(Xs, w * y)))
+  resid_maker <- diag(length(y)) - Xs %*% bread %*% t(Xs * w)
+  meat <- matrix(0, ncol(X), ncol(X))
+  for (g in unique(cluster)) {
+    i <- which(cluster == g)
+    ev <- eigen(tcrossprod(resid_maker[i, , drop = FALSE]), symmetric = TRUE)
+    adjustment <- ev$vectors %*% (t(ev$vectors) / sqrt(ev$values))
+    u <- crossprod(Xs[i, , drop = FALSE] * w[i], adjustment %*% e[i])
+    meat <- meat + tcrossprod(u)
+  }
+  bread %*% meat %*% bread / tcrossprod(s)
+}
+
+# clubSandwich cannot be held to LIVE_TOL on ext_data_hard(), and the shortfall
+# is on its side: against cr2_by_definition() estimatr agrees to 9e-12 and
+# clubSandwich to 1.4e-6, and unweighted the gap closes to 1e-12 when the one
+# high-leverage observation is removed. The 2SLS gap closes the same way, from
+# 1.4e-6 to 1.6e-13. The worst measured difference between
+# estimatr and clubSandwich is 1.3e-4, on the unweighted Satterthwaite degrees
+# of freedom, and 2e-3 keeps ~15x over it. That is loose, and it is the
+# definition that holds these cells tight; clubSandwich is here to catch an
+# error the definition shares with this package.
+HARD_CLUB_TOL <- 2e-3
+
 # Read one of the frozen Stata tables. Stata wrote coefficients in its own
 # order, which is covariates first and `_cons` last; R puts the intercept
 # first. Every caller below names the columns, so the reordering is done at the

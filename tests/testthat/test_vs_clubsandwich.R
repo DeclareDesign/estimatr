@@ -139,3 +139,58 @@ test_that("iv_robust CR2 matches clubSandwich on AER::ivreg", {
   ct <- clubSandwich::coef_test(mi, vcov = target, test = "Satterthwaite")
   expect_equal(unname(fit$df), ct$df_Satt, tolerance = LIVE_TOL)
 })
+
+# ---- a hostile design ----
+#
+# ext_data_hard() in helper-external.R is built to strain the arithmetic, and
+# on it clubSandwich cannot be held to LIVE_TOL; the reasons, and the tolerance
+# it can be held to, are set out beside HARD_CLUB_TOL. The tight reference on
+# this design is CR2 written from its definition, and clubSandwich is the loose
+# one.
+
+dh <- ext_data_hard()
+hard_formula <- y ~ z + income + share + age + age2
+
+test_that("CR2 on the hostile design matches CR2 written from its definition", {
+  X <- model.matrix(hard_formula, dh)
+  for (tc in c(FALSE, TRUE)) {
+    fit <- lm_robust(hard_formula, data = dh, clusters = cl, se_type = "CR2",
+                     try_cholesky = tc)
+    expect_equal(unname(fit$vcov), cr2_by_definition(X, dh$y, dh$cl),
+                 tolerance = LIVE_TOL, label = paste("try_cholesky =", tc))
+    fit <- lm_robust(hard_formula, data = dh, clusters = cl, weights = w,
+                     se_type = "CR2", try_cholesky = tc)
+    expect_equal(unname(fit$vcov), cr2_by_definition(X, dh$y, dh$cl, dh$w),
+                 tolerance = LIVE_TOL, label = paste("weighted, try_cholesky =", tc))
+  }
+})
+
+test_that("CR2 and its degrees of freedom match clubSandwich on the hostile design", {
+  fits <- list(
+    unweighted = list(m = lm(hard_formula, data = dh), w = NULL),
+    weighted = list(m = lm(hard_formula, data = dh, weights = w), w = dh$w)
+  )
+  for (nm in names(fits)) {
+    m <- fits[[nm]]$m
+    target <- clubSandwich::vcovCR(m, cluster = dh$cl, type = "CR2", inverse_var = FALSE)
+    ct <- clubSandwich::coef_test(m, vcov = target, test = "Satterthwaite")
+    for (tc in c(FALSE, TRUE)) {
+      fit <- lm_robust(hard_formula, data = dh, clusters = cl, weights = fits[[nm]]$w,
+                       se_type = "CR2", try_cholesky = tc)
+      label <- paste0(nm, ", try_cholesky = ", tc)
+      expect_equal(unname(fit$vcov), unname(as.matrix(target)),
+                   tolerance = HARD_CLUB_TOL, label = paste(label, "vcov"))
+      expect_equal(unname(fit$df), ct$df_Satt,
+                   tolerance = HARD_CLUB_TOL, label = paste(label, "df"))
+    }
+  }
+
+  skip_if_not_installed("AER")
+  iv_formula <- y ~ en + z + income + share | inst + z + income + share
+  mi <- AER::ivreg(iv_formula, data = dh)
+  target <- clubSandwich::vcovCR(mi, cluster = dh$cl, type = "CR2")
+  ct <- clubSandwich::coef_test(mi, vcov = target, test = "Satterthwaite")
+  fit <- iv_robust(iv_formula, data = dh, clusters = cl, se_type = "CR2")
+  expect_equal(unname(fit$vcov), unname(as.matrix(target)), tolerance = HARD_CLUB_TOL)
+  expect_equal(unname(fit$df), ct$df_Satt, tolerance = HARD_CLUB_TOL)
+})
