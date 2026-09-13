@@ -641,18 +641,6 @@ test_that("lm_lin: error when covariates formula has no predictors", {
 # iv_robust — extended
 # ---------------------------------------------------------------------------
 
-test_that("iv_robust: more regressors than instruments warns", {
-  # Under-identified, so the second stage is rank deficient and the intercept
-  # drops out: both warnings are correct and both fire.
-  expect_warning(
-    expect_warning(
-      iv_robust(mpg ~ hp + cyl | am, data = mtcars, se_type = "HC0"),
-      "More regressors than instruments"
-    ),
-    "collinear"
-  )
-})
-
 test_that("iv_robust: missing instrument specification errors", {
   expect_error(
     iv_robust(mpg ~ hp + cyl, data = mtcars),

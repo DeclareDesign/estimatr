@@ -39,12 +39,15 @@ tidy_data_frame <- function(x,
 
   rownames(return_frame) <- NULL
 
+  # confint() builds its rows from the same as.vector() of the same fields, so
+  # they line up with these by position. They used to be matched by name
+  # instead, and a multivariate fit's intervals are named "<outcome>:<term>",
+  # so the names never matched and conf.level was ignored without a word,
+  # returning the fit's own 95% intervals under a request for 90% (1.0.6 too).
   if (!is.null(conf.level) && conf.int) {
     ci <- stats::confint(x, level = conf.level, ...)
-    if (all(row.names(ci) == return_frame$term)) {
-      return_frame$conf.low <- ci[, 1]
-      return_frame$conf.high <- ci[, 2]
-    }
+    return_frame$conf.low <- ci[, 1]
+    return_frame$conf.high <- ci[, 2]
   }
   return(return_frame)
 }

@@ -20,7 +20,17 @@ confint.iv_robust <- confint_lm_like
 #' @importFrom stats confint
 #' @export
 confint.lh_robust <- function(object, parm = NULL, level = NULL, ...) {
-  rbind(confint(object$lm_robust, parm = parm, level = level, ...), tidy(object$lh, ...))
+  # Bound a matrix of intervals to tidy()'s data frame, which has a different
+  # number of columns, so every call errored, in 1.0.6 as well. `parm` is
+  # applied after binding so that it can name the hypothesis too.
+  cis <- rbind(
+    confint(object$lm_robust, level = level, ...),
+    confint(object$lh, level = level, ...)
+  )
+  if (!is.null(parm)) {
+    cis <- cis[parm, , drop = FALSE]
+  }
+  cis
 }
 
 #' @export

@@ -109,10 +109,6 @@ iv_robust <- function(formula,
   data <- rlang::enquo(data)
   model_data <- clean_model_data(data = data, datargs, estimator = "iv")
 
-  if (ncol(model_data$instrument_matrix) < ncol(model_data$design_matrix)) {
-    warning("More regressors than instruments")
-  }
-
   has_fe  <- !is.null(model_data[["fixed_effects"]])
   fe_rank <- 0L
   fe_lev <- NULL
@@ -201,6 +197,28 @@ iv_robust <- function(formula,
         else NULL
     )
 
+
+  # An underidentified model has no 2SLS estimate, and fitting one anyway
+  # returned a clean-looking object. The second stage regresses on the
+  # first-stage fitted values, which span no more than the instruments do, so
+  # rank detection dropped whichever regressor the instruments could not
+  # reproduce, often the endogenous one, and reported the rest: on
+  # `mpg ~ hp + cyl | am` the intercept went and hp and cyl came back with
+  # estimates and standard errors that nothing identifies. The old guard
+  # compared column counts and only warned, and it missed a rank-deficient
+  # instrument set with enough columns. Comparing ranks catches both, and does
+  # not fire on regressors that are collinear among themselves, which the
+  # instruments reproduce and the second stage drops as lm() would.
+  regressor_rank <- qr(model_data$design_matrix)$rank
+  if (second_stage[["rank"]] < regressor_rank) {
+    stop(
+      "The instruments do not identify every regressor: the first-stage ",
+      "fitted values have rank ", second_stage[["rank"]], " where the ",
+      "regressors have rank ", regressor_rank, ". Each endogenous regressor ",
+      "needs an excluded instrument that is not a combination of the others.",
+      call. = FALSE
+    )
+  }
 
   return_list <- lm_return(
     second_stage,

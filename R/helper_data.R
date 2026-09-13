@@ -127,6 +127,17 @@ clean_model_data <- function(data, datargs, estimator = "") {
     }
   })
 
+  # With nothing left, the fit went ahead on an empty design and came back
+  # with every coefficient NA under a warning that called them collinear, in
+  # 1.0.6 as well; lm() refuses the same data.
+  if (nrow(mf) == 0L) {
+    stop(
+      "No observations are left to fit once rows with missing values, and ",
+      "any excluded by `subset`, are dropped.",
+      call. = FALSE
+    )
+  }
+
   if (!is.null(attr(terms(mf), "Formula_without_dot"))) {
     formula <- attr(terms(mf), "Formula_without_dot")
   } else {

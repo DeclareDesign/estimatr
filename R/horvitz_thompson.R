@@ -264,6 +264,19 @@ ht_prs <- function(cpr, Z, condition1, condition2, row_idx, data_df) {
     return(list(pi1 = 1 - cpr, pi2 = cpr, design = "simple"))
   }
 
+  # A named vector of the wrong length is a named probability vector whose
+  # names miss a condition. It fell through to "Unrecognised `condition_prs`
+  # format", which sent the user looking for a format problem that was not
+  # there.
+  if (is.numeric(cpr) && !is.null(names(cpr))) {
+    stop(
+      "`condition_prs` is a named probability vector, but its names (",
+      paste(names(cpr), collapse = ", "), ") do not include both conditions (",
+      condition1, ", ", condition2, ").",
+      call. = FALSE
+    )
+  }
+
   # Two-column matrix or data frame
   if ((is.matrix(cpr) || is.data.frame(cpr)) && ncol(cpr) == 2L) {
     cnames <- colnames(cpr)

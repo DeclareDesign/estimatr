@@ -161,16 +161,17 @@ difference_in_means <- function(formula,
 
   rm(model_data)
 
-  if (is.null(condition1) || is.null(condition2)) {
-    condition_names <- parse_conditions(
-      treatment = data$t,
-      condition1 = condition1,
-      condition2 = condition2,
-      estimator = "difference_in_means"
-    )
-    condition2 <- condition_names[[2]]
-    condition1 <- condition_names[[1]]
-  }
+  # Always, not only when a condition is left out: given both, a pair of values
+  # the treatment never takes skipped the check, filtered every row away, and
+  # was refused for want of "both treatment conditions within each block".
+  condition_names <- parse_conditions(
+    treatment = data$t,
+    condition1 = condition1,
+    condition2 = condition2,
+    estimator = "difference_in_means"
+  )
+  condition2 <- condition_names[[2]]
+  condition1 <- condition_names[[1]]
 
   data <- subset.data.frame(data, t %in% c(condition1, condition2))
 
@@ -545,10 +546,14 @@ difference_in_means_internal <- function(condition1 = NULL,
     stop("Must have units with both treatment conditions within each block.")
   }
 
+  # Called on the whole sample for an unblocked design as well as once per
+  # block, so the message cannot talk about blocks. It did, in 1.0.6 too, and
+  # a single treated unit in an unblocked design was told its blocks were short.
   if (!pair_matched & (N2 == 1 | N1 == 1)) {
     stop(
-      "If design is not pair-matched, every block must have at least two ",
-      "treated and control units."
+      "Each treatment condition needs at least two units (or clusters), ",
+      "within each block if the design is blocked, unless the design is ",
+      "pair-matched: with one, that condition's variance cannot be estimated."
     )
   }
 

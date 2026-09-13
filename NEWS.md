@@ -256,6 +256,8 @@ Every item below was reproduced against an installed estimatr 1.0.6, not inferre
 
 **`emmeans::emmeans()` on an `lm_robust` fit fails unless emmeans happens to be attached**, with "Perhaps a 'data' or 'params' argument is needed". An error rather than a wrong number.
 
+**An underidentified `iv_robust()` model returns estimates.** With fewer excluded instruments than endogenous regressors, 1.0.6 fits the second stage anyway, drops whichever regressor the instruments cannot reproduce, and reports the rest with standard errors. On `mpg ~ hp + cyl | am` it drops the intercept and returns coefficients on `hp` and `cyl`, under a warning that there are more regressors than instruments. When the count is sufficient but an instrument is a copy of an exogenous regressor, as in `y ~ en + x1 | x1 + dup` with `dup` equal to `x1`, it drops `en`, the endogenous regressor, and warns about nothing. **The direction is unknown, which is the problem: what comes back is not a 2SLS estimate of anything, and it looks like one.** 2.0 errors, comparing the rank of the first-stage fitted values with the rank of the regressors, which catches both cases and does not fire on regressors that are merely collinear among themselves.
+
 ---
 
 ## Bug fixes
@@ -332,7 +334,7 @@ Neither `lm_robust()` nor `iv_robust()` nor `lm_lin()` returned residuals: `resi
 
 A regressor collinear with the others is dropped and returned as an NA coefficient, silently. The reporting user compared `lm()` and `lm_robust()` output, found coefficients that differed, and had no way to see that a term had been dropped and the rest were therefore conditional on a different set of regressors.
 
-2.0 warns once, naming the dropped terms. Note that an under-identified `iv_robust()` call now raises two warnings, "More regressors than instruments" and the collinearity warning for the intercept it drops; both are accurate.
+2.0 warns once, naming the dropped terms. An under-identified `iv_robust()` call no longer reaches this warning: it is refused, for the reason given under "Errors in 1.0.6".
 
 ### `augment()` for use with broom-aware packages (#377)
 
@@ -418,6 +420,12 @@ The first-stage F test carries one entry per endogenous regressor, named `"<var>
 - **`variable.names()` (#123).** Added for `lm_robust` and `iv_robust`.
 - **`fixed_effects` given a bare column name (#304).** It produced "invalid formula" from deep inside `model.frame`. It now warns, names the argument, shows the expected form, and goes on to fit the model the way 1.x did.
 - **`lh_robust()` with multiple outcomes (#297).** Coefficients of a multivariate fit are named `"<outcome>:<term>"`, which a hypothesis such as `"cyl = 2"` cannot refer to, and `car::linearHypothesis()` reported it as malformed. 2.0 errors with that explanation and tells the user to fit one outcome at a time.
+- **No observations left to fit.** When missing values or `subset` leave no rows, 1.0.6's `lm_robust()`, `iv_robust()` and `lm_lin()` returned every coefficient as `NA`, and an earlier 2.0 added a warning calling them collinear, which was false; `difference_in_means()` said both treatment conditions were needed "within each block". All four now say that no observations are left, as `lm()` does.
+- **`tidy(conf.level =)` on a multivariate fit ignored the level.** Intervals were matched to rows by name, and a multivariate fit's are named `"<outcome>:<term>"`, so nothing matched and the fit's own 95% intervals came back under a request for 90%, silently, in 1.0.6 as well. They are now matched by position, which is how `confint()` builds them.
+- **`confint()` on an `lh_robust` fit always errored**, "numbers of columns of arguments do not match", in 1.0.6 as well, and **`nobs()` on one returned `NULL`**. Both now answer, and `parm` can name the hypothesis.
+- **`predict()` on an `iv_robust()` fit with `fixed_effects` failed** with "non-conformable arguments", where 1.0.6 returned predictions. It now drops the absorbed intercept and adds the group effects back, as `predict()` on `lm_robust()` does, and reproduces the fitted values in sample.
+- **Two refusals named the wrong problem.** `difference_in_means()` given a `condition1` and `condition2` that are not values of the treatment filtered the data down to nothing and then said both conditions were needed "within each block"; it now says the conditions must be values found in the treatment. `horvitz_thompson()` given a named probability vector whose names miss a condition called it an "Unrecognised `condition_prs` format"; it now names the vector's names and the conditions it was looking for.
+- **A single unit in a treatment arm of an unblocked `difference_in_means()`.** The refusal is right, since that arm's variance cannot be estimated, but its message said every block needed two treated and two control units, on a design with no blocks, in 1.0.6 as well. It now says what is needed without assuming blocks.
 
 ### A single fixed-effects factor lost its name when rows were dropped
 

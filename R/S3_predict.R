@@ -256,9 +256,16 @@ predict.iv_robust <- function(object,
 
   coefs <- as.matrix(coef(object))
 
+  # The same two steps predict.lm_robust() takes under fixed effects, which
+  # this method lacked: the rebuilt design still carries the absorbed intercept,
+  # so the product was non-conformable, and the group effects were never added
+  # back. 1.0.6 returned a number there.
+  if (isTRUE(object[["fes"]])) X <- drop_absorbed_intercept(X, rownames(coefs))
+
   beta_na <- is.na(coefs[, 1])
 
   preds <- X[, !beta_na, drop = FALSE] %*% coefs[!beta_na, ]
+  if (isTRUE(object[["fes"]])) preds <- add_fes(preds, object, newdata)
   return(drop(preds))
 }
 
