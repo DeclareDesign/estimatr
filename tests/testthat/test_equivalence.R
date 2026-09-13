@@ -15,8 +15,9 @@ library(estimatr)
 # drifted from its twin, which is how try_cholesky came to skip rank detection
 # while the default path did not.
 #
-# Both sides are computed in one session. The worst gap measured across every
-# pair below is 1.5e-13, and EQ_TOL keeps ~700x over it.
+# Both sides are computed in one session. Every pair below holds at 1e-12; the
+# largest single element measured is 9.9e-13, a fitted value on the Cholesky
+# path, and EQ_TOL keeps 100x over that.
 EQ_TOL <- 1e-10
 
 eq_data <- function() {
@@ -427,6 +428,57 @@ test_that("the Cholesky path is wired correctly at every entry point", {
   expect_equal(fe_ch$std.error, fe_q$std.error, tolerance = 1e-10)
 })
 
+test_that("on a full-rank design try_cholesky gives the default path's answer everywhere", {
+  # The test above holds a rank-deficient design, where the Cholesky path falls
+  # back to the QR. This one holds every variance path at full rank, which is
+  # where the fast path actually runs. Worst measured gap 9.9e-13.
+  paths <- list(
+    HC0 = function(tc) lm_robust(y ~ x1 + x2 + z, data = d, se_type = "HC0", try_cholesky = tc),
+    HC1 = function(tc) lm_robust(y ~ x1 + x2 + z, data = d, se_type = "HC1", try_cholesky = tc),
+    HC2 = function(tc) lm_robust(y ~ x1 + x2 + z, data = d, se_type = "HC2", try_cholesky = tc),
+    HC3 = function(tc) lm_robust(y ~ x1 + x2 + z, data = d, se_type = "HC3", try_cholesky = tc),
+    classical = function(tc) lm_robust(y ~ x1 + x2 + z, data = d, se_type = "classical",
+                                       try_cholesky = tc),
+    CR0 = function(tc) lm_robust(y ~ x1 + x2 + z, data = d, clusters = cl, se_type = "CR0",
+                                 try_cholesky = tc),
+    CR2 = function(tc) lm_robust(y ~ x1 + x2 + z, data = d, clusters = cl, se_type = "CR2",
+                                 try_cholesky = tc),
+    stata = function(tc) lm_robust(y ~ x1 + x2 + z, data = d, clusters = cl, se_type = "stata",
+                                   try_cholesky = tc),
+    weighted_HC2 = function(tc) lm_robust(y ~ x1 + x2 + z, data = d, weights = w,
+                                          try_cholesky = tc),
+    weighted_CR2 = function(tc) lm_robust(y ~ x1 + x2 + z, data = d, weights = w, clusters = cl,
+                                          try_cholesky = tc),
+    fe_two_way_HC3 = function(tc) lm_robust(y ~ x1 + x2 + z, data = d, fixed_effects = ~ g + h,
+                                            se_type = "HC3", try_cholesky = tc),
+    fe_CR2 = function(tc) lm_robust(y ~ x1 + x2 + z, data = d, fixed_effects = ~ g,
+                                    clusters = cl, se_type = "CR2", try_cholesky = tc),
+    multivariate_CR2 = function(tc) lm_robust(cbind(y, y2) ~ x1 + x2 + z, data = d,
+                                              clusters = cl, try_cholesky = tc),
+    iv_CR2 = function(tc) iv_robust(y ~ en + x2 | inst + x2, data = d, clusters = cl,
+                                    try_cholesky = tc),
+    iv_weighted = function(tc) iv_robust(y ~ en + x2 | inst + x2, data = d, weights = w,
+                                         try_cholesky = tc),
+    lin_weighted_clustered = function(tc) lm_lin(y ~ z, covariates = ~ x1 + x2, data = d,
+                                                 weights = w, clusters = cl, try_cholesky = tc)
+  )
+  for (nm in names(paths)) {
+    qr_fit <- paths[[nm]](FALSE)
+    cholesky_fit <- paths[[nm]](TRUE)
+    expect_same_inference(cholesky_fit, qr_fit, nm)
+    expect_equal(unname(cholesky_fit$fitted.values), unname(qr_fit$fitted.values),
+                 tolerance = EQ_TOL, label = paste(nm, "fitted values"))
+  }
+
+  diagnosed <- lapply(c(FALSE, TRUE), function(tc) {
+    iv_robust(y ~ en + x2 | inst + x2, data = d, diagnostics = TRUE, try_cholesky = tc)
+  })
+  for (field in c("diagnostic_first_stage_fstatistic", "diagnostic_endogeneity_test")) {
+    expect_equal(diagnosed[[2]][[field]], diagnosed[[1]][[field]], tolerance = EQ_TOL,
+                 label = field)
+  }
+})
+
 # ---- absorbed fixed effects are the dummy regression ----
 
 dat <- ref_data_fe()
@@ -530,5 +582,39 @@ test_that("absorbed fixed effects with a multivariate outcome are the dummy regr
   expect_equal(unname(absorbed$coefficients), unname(dummies$coefficients[c("Z", "X"), ]),
                tolerance = 1e-10)
   expect_equal(unname(absorbed$fitted.values), unname(dummies$fitted.values), tolerance = 1e-8)
+})
+
+# ---- Horvitz-Thompson's ways of stating one design ----
+#
+# condition_prs takes a named probability vector, a per-unit vector, a
+# two-column matrix, or a randomizr declaration, and each is turned into
+# per-unit probabilities by its own branch. A simple design stated each way is
+# one design and must give one estimate, whatever the conditions are called.
+
+test_that("one simple design stated four ways is one Horvitz-Thompson estimate", {
+  set.seed(9)
+  n_ht <- 60
+  p <- 0.4
+  ht <- data.frame(y = rnorm(n_ht), z = rbinom(n_ht, 1, p))
+  named <- horvitz_thompson(y ~ z, data = ht, condition_prs = c("0" = 1 - p, "1" = p))
+
+  per_unit <- horvitz_thompson(y ~ z, data = ht, condition_prs = rep(p, n_ht))
+  two_column <- horvitz_thompson(y ~ z, data = ht,
+                                 condition_prs = cbind("0" = rep(1 - p, n_ht), "1" = rep(p, n_ht)))
+  ht_labelled <- ht
+  ht_labelled$z <- ifelse(ht$z == 1, "treat", "control")
+  labelled <- horvitz_thompson(y ~ z, data = ht_labelled,
+                               condition_prs = c(control = 1 - p, treat = p),
+                               condition1 = "control", condition2 = "treat")
+  for (form in list(per_unit = per_unit, two_column = two_column, labelled = labelled)) {
+    expect_equal(unname(form$coefficients), unname(named$coefficients), tolerance = EQ_TOL)
+    expect_equal(unname(form$std.error), unname(named$std.error), tolerance = EQ_TOL)
+  }
+
+  skip_if_not_installed("randomizr")
+  declared <- horvitz_thompson(y ~ z, data = ht,
+                               condition_prs = randomizr::declare_ra(N = n_ht, prob = p, simple = TRUE))
+  expect_equal(unname(declared$coefficients), unname(named$coefficients), tolerance = EQ_TOL)
+  expect_equal(unname(declared$std.error), unname(named$std.error), tolerance = EQ_TOL)
 })
 

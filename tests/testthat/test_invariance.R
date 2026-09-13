@@ -80,7 +80,21 @@ fitters <- list(
   dim_blocked = function(d) difference_in_means(y ~ z, data = d, blocks = g),
   dim_clustered = function(d) difference_in_means(y ~ zc, data = d, clusters = cl),
   dim_pairs = function(d) difference_in_means(y ~ zp, data = d, blocks = pair),
-  dim_weighted = function(d) difference_in_means(y ~ z, data = d, weights = w)
+  dim_weighted = function(d) difference_in_means(y ~ z, data = d, weights = w),
+  # The Cholesky path reaches the same answers through a second decomposition,
+  # and it is the argument the rank defect hid behind, so it takes every
+  # transformation the default path does.
+  cholesky_HC2 = function(d) lm_robust(y ~ x1 + x2 + z, data = d, try_cholesky = TRUE),
+  cholesky_CR2 = function(d) lm_robust(y ~ x1 + x2 + z, data = d, clusters = cl,
+                                       try_cholesky = TRUE),
+  cholesky_weighted_CR2 = function(d) lm_robust(y ~ x1 + x2 + z, data = d, weights = w,
+                                                clusters = cl, try_cholesky = TRUE),
+  cholesky_fe_two_way_HC3 = function(d) lm_robust(y ~ x1 + x2 + z, data = d,
+                                                  fixed_effects = ~ g + h, se_type = "HC3",
+                                                  try_cholesky = TRUE),
+  cholesky_iv_CR2 = function(d) iv_robust(y ~ en + x1 | inst + inst2 + x1, data = d,
+                                          clusters = cl, try_cholesky = TRUE),
+  cholesky_lin = function(d) lm_lin(y ~ z, covariates = ~ x1 + x2, data = d, try_cholesky = TRUE)
 )
 
 expect_same_inference <- function(fit, base, label, tolerance = INV_TOL) {
@@ -314,6 +328,8 @@ test_that("multiplying every weight by a constant changes nothing", {
     classical = function(d) lm_robust(y ~ x1 + x2 + z, data = d, weights = w, se_type = "classical"),
     CR0 = function(d) lm_robust(y ~ x1 + x2 + z, data = d, weights = w, clusters = cl, se_type = "CR0"),
     CR2 = function(d) lm_robust(y ~ x1 + x2 + z, data = d, weights = w, clusters = cl),
+    cholesky_CR2 = function(d) lm_robust(y ~ x1 + x2 + z, data = d, weights = w, clusters = cl,
+                                         try_cholesky = TRUE),
     stata = function(d) lm_robust(y ~ x1 + x2 + z, data = d, weights = w, clusters = cl, se_type = "stata"),
     fe_HC2 = function(d) lm_robust(y ~ x1 + x2 + z, data = d, weights = w, fixed_effects = ~ g),
     iv_HC2 = function(d) iv_robust(y ~ en + x1 | inst + inst2 + x1, data = d, weights = w),
@@ -359,6 +375,8 @@ test_that("relabelling the clusters changes nothing", {
   clustered <- list(
     CR0 = function(d) lm_robust(y ~ x1 + x2 + z, data = d, clusters = cl, se_type = "CR0"),
     CR2 = function(d) lm_robust(y ~ x1 + x2 + z, data = d, clusters = cl),
+    cholesky_CR2 = function(d) lm_robust(y ~ x1 + x2 + z, data = d, clusters = cl,
+                                         try_cholesky = TRUE),
     stata = function(d) lm_robust(y ~ x1 + x2 + z, data = d, clusters = cl, se_type = "stata"),
     iv_CR2 = function(d) iv_robust(y ~ en + x1 | inst + inst2 + x1, data = d, clusters = cl),
     lin_CR2 = function(d) lm_lin(y ~ z, covariates = ~ x1, data = d, clusters = cl),
@@ -419,13 +437,13 @@ test_that("mixing the regressors transforms coefficients and variance by A", {
   dr <- reparam(d)
   for (st in c("HC0", "HC1", "HC2", "HC3", "classical", "CR0", "CR2", "stata")) {
     cluster_ids <- if (st %in% c("CR0", "CR2", "stata")) dr$cl else NULL
-    for (weighted in c(FALSE, TRUE)) {
+    for (weighted in c(FALSE, TRUE)) for (tc in c(FALSE, TRUE)) {
       weights <- if (weighted) dr$w else NULL
-      label <- paste0(st, if (weighted) ", weighted")
+      label <- paste0(st, if (weighted) ", weighted", if (tc) ", try_cholesky")
       fx <- lm_robust(y ~ x1 + x2 + z, data = dr, se_type = st,
-                      clusters = cluster_ids, weights = weights)
+                      clusters = cluster_ids, weights = weights, try_cholesky = tc)
       fu <- lm_robust(y ~ u1 + u2 + u3, data = dr, se_type = st,
-                      clusters = cluster_ids, weights = weights)
+                      clusters = cluster_ids, weights = weights, try_cholesky = tc)
       expect_equal(unname(fu$coefficients), drop(A_inv %*% fx$coefficients),
                    tolerance = INV_TOL, label = paste(label, "coefficients"))
       expect_equal(unname(fu$vcov), unname(A_inv %*% fx$vcov %*% t(A_inv)),
@@ -661,5 +679,161 @@ test_that("a full-rank design in large units agrees with lm", {
   expect_equal(unname(coef(fit)), unname(coef(ref)), tolerance = 1e-10)
   expect_equal(unname(fit$std.error),
                unname(summary(ref)$coefficients[, 2]), tolerance = 1e-10)
+})
+
+# ---- a multivariate outcome ----
+#
+# cbind(y, y2) assembles its variance as a Kronecker product across outcomes,
+# and had no row in any transformation above. Each outcome is transformed on
+# its own terms here and has to come back as that outcome would. The shifts are
+# kept within a few multiples of each outcome's spread, for the reason given
+# under the outcome's units.
+
+mv_data <- d
+set.seed(11)
+mv_data$y2 <- -2 + 0.3 * d$x1 + d$z + rnorm(nrow(d))
+
+multivariate_fitters <- list(
+  HC2 = function(d) lm_robust(cbind(y, y2) ~ x1 + x2 + z, data = d),
+  CR2 = function(d) lm_robust(cbind(y, y2) ~ x1 + x2 + z, data = d, clusters = cl),
+  weighted_CR2 = function(d) lm_robust(cbind(y, y2) ~ x1 + x2 + z, data = d, weights = w,
+                                       clusters = cl),
+  fe_two_way_HC3 = function(d) lm_robust(cbind(y, y2) ~ x1 + x2 + z, data = d,
+                                         fixed_effects = ~ g + h, se_type = "HC3"),
+  lin = function(d) lm_lin(cbind(y, y2) ~ z, covariates = ~ x1, data = d),
+  iv_CR2 = function(d) iv_robust(cbind(y, y2) ~ en + x1 | inst + inst2 + x1, data = d,
+                                 clusters = cl),
+  cholesky_CR2 = function(d) lm_robust(cbind(y, y2) ~ x1 + x2 + z, data = d, clusters = cl,
+                                       try_cholesky = TRUE)
+)
+
+test_that("each outcome of a multivariate fit follows its own units", {
+  for (nm in names(multivariate_fitters)) {
+    fit_mv <- multivariate_fitters[[nm]]
+    base <- fit_mv(mv_data)
+    moved <- mv_data
+    moved$y <- -5 + 1e6 * mv_data$y
+    moved$y2 <- 7 + 0.5 * mv_data$y2
+    fit <- fit_mv(moved)
+
+    back <- fit$coefficients
+    back[, 1] <- back[, 1] / 1e6
+    back[, 2] <- back[, 2] / 0.5
+    intercept <- rownames(back) == "(Intercept)"
+    back[intercept, 1] <- (fit$coefficients[intercept, 1] + 5) / 1e6
+    back[intercept, 2] <- (fit$coefficients[intercept, 2] - 7) / 0.5
+    se_back <- fit$std.error
+    se_back[, 1] <- se_back[, 1] / 1e6
+    se_back[, 2] <- se_back[, 2] / 0.5
+
+    expect_equal(back, base$coefficients, tolerance = INV_TOL, label = paste(nm, "coefficients"))
+    expect_equal(se_back, base$std.error, tolerance = INV_TOL, label = paste(nm, "standard errors"))
+    expect_equal(fit$df, base$df, tolerance = INV_TOL, label = paste(nm, "df"))
+  }
+})
+
+test_that("a multivariate fit ignores row order, the weights' units and cluster labels", {
+  set.seed(2)
+  perm <- sample(nrow(mv_data))
+  for (nm in names(multivariate_fitters)) {
+    fit_mv <- multivariate_fitters[[nm]]
+    base <- fit_mv(mv_data)
+
+    shuffled <- fit_mv(mv_data[perm, ])
+    expect_same_inference(shuffled, base, paste(nm, "shuffled"))
+    expect_equal(unname(shuffled$fitted.values), unname(base$fitted.values[perm, ]),
+                 tolerance = INV_TOL, label = paste(nm, "fitted values in row order"))
+
+    reweighted <- mv_data
+    reweighted$w <- 7 * mv_data$w
+    expect_same_inference(fit_mv(reweighted), base, paste(nm, "weights times 7"))
+
+    relabelled <- mv_data
+    relabelled$cl <- paste0("id_", mv_data$cl)
+    expect_same_inference(fit_mv(relabelled), base, paste(nm, "character clusters"))
+  }
+})
+
+# ---- blocked designs with small blocks, and blocks of clusters ----
+#
+# The Pashley and Miratrix hybrid for blocks with a singleton arm, and the two
+# designs with clusters inside blocks, each take their own variance path.
+# test_blocked_variance.R holds them against blkvar and against the formulas;
+# none had a row above.
+
+blocked_designs <- list(
+  hybrid = list(
+    label = "Hybrid blocked",
+    data = local({
+      set.seed(5)
+      sizes <- c(10, 10, 12, 8, 3, 3, 4, 3, 5)
+      treated <- c(5, 5, 6, 4, 1, 1, 2, 2, 1)
+      b <- do.call(rbind, lapply(seq_along(sizes), function(k) {
+        data.frame(blk = k, z = sample(c(rep(1, treated[k]), rep(0, sizes[k] - treated[k]))))
+      }))
+      b$y <- rnorm(nrow(b)) + b$z + b$blk / 3
+      b
+    }),
+    fit = function(dd) difference_in_means(y ~ z, blocks = blk, data = dd)
+  ),
+  block_clustered = list(
+    label = "Block-clustered",
+    data = local({
+      set.seed(6)
+      clusters_per_block <- c(4, 4, 6, 4, 6, 4)
+      do.call(rbind, lapply(seq_along(clusters_per_block), function(k) {
+        m <- clusters_per_block[k]
+        zc <- sample(rep(0:1, m / 2))
+        do.call(rbind, lapply(seq_len(m), function(j) {
+          data.frame(blk = k, clu = k * 100 + j, z = zc[j], y = rnorm(3) + zc[j])
+        }))
+      }))
+    }),
+    fit = function(dd) difference_in_means(y ~ z, blocks = blk, clusters = clu, data = dd)
+  ),
+  pair_clustered = list(
+    label = "Matched-pair clustered",
+    data = local({
+      set.seed(7)
+      do.call(rbind, lapply(1:8, function(k) {
+        zc <- sample(0:1)
+        do.call(rbind, lapply(1:2, function(j) {
+          data.frame(blk = k, clu = k * 10 + j, z = zc[j], y = rnorm(4) + zc[j])
+        }))
+      }))
+    }),
+    fit = function(dd) difference_in_means(y ~ z, blocks = blk, clusters = clu, data = dd)
+  )
+)
+
+test_that("blocked and clustered-block designs follow the outcome and ignore order and labels", {
+  for (nm in names(blocked_designs)) {
+    design <- blocked_designs[[nm]]
+    dd <- design$data
+    base <- design$fit(dd)
+    # The design each case was built to reach, so a change in how designs are
+    # recognised cannot quietly send it down another path.
+    expect_equal(base$design, design$label, label = paste(nm, "design"))
+
+    for (ab in list(c(0, -1), c(-5, 1e6), c(7, 0.5))) {
+      moved <- dd
+      moved$y <- ab[1] + ab[2] * dd$y
+      fit <- design$fit(moved)
+      label <- sprintf("%s, y -> %g + %g y,", nm, ab[1], ab[2])
+      expect_equal(fit$coefficients / ab[2], base$coefficients, tolerance = INV_TOL,
+                   label = paste(label, "estimate"))
+      expect_equal(fit$std.error / abs(ab[2]), base$std.error, tolerance = INV_TOL,
+                   label = paste(label, "standard error"))
+      expect_equal(fit$df, base$df, tolerance = INV_TOL, label = paste(label, "df"))
+    }
+
+    set.seed(8)
+    expect_same_inference(design$fit(dd[sample(nrow(dd)), ]), base, paste(nm, "shuffled"))
+
+    relabelled <- dd
+    relabelled$blk <- paste0("b", dd$blk)
+    if (!is.null(dd$clu)) relabelled$clu <- dd$clu * 1e6 + 0.5
+    expect_same_inference(design$fit(relabelled), base, paste(nm, "relabelled"))
+  }
 })
 
