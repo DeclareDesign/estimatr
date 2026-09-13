@@ -31,23 +31,6 @@ library(estimatr)
 dat <- ref_data_fe()
 n <- nrow(dat)
 
-# ---- FWL equivalence ----
-
-test_that("FE demeaning gives same coefs as dummy regression", {
-  m_fe    <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl)
-  m_dummy <- lm_robust(y ~ z + x + factor(bl), data = dat)
-  expect_equal(unname(coef(m_fe)["z"]), unname(coef(m_dummy)["z"]), tolerance = 1e-9)
-  expect_equal(unname(coef(m_fe)["x"]), unname(coef(m_dummy)["x"]), tolerance = 1e-9)
-})
-
-test_that("FE residuals equal dummy regression residuals", {
-  m_fe    <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl)
-  m_dummy <- lm_robust(y ~ z + x + factor(bl), data = dat)
-  resid_fe    <- dat$y - m_fe$fitted.values
-  resid_dummy <- dat$y - m_dummy$fitted.values
-  expect_equal(resid_fe, resid_dummy, tolerance = 1e-9)
-})
-
 test_that("FE df.residual is n - k - (B-1) - 1", {
   m <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl)
   # 2 covariates, 20 blocks (19 dummies + intercept absorbed) → 200 - 2 - 20 = 178
@@ -69,34 +52,6 @@ test_that("FE default se_type is CR0 (with clusters)", {
   expect_warning(m <- lm_robust(y ~ z, data = dat, fixed_effects = ~bl, clusters = cl),
                  "`se_type` defaults to")
   expect_equal(m$se_type, "CR0")
-})
-
-test_that("HC2 and HC3 now work with one-way FE and match the dummy regression", {
-  # These two used to assert an error. The restriction was wrong for any
-  # number of FE factors; see test_fe_leverage.R for the identity.
-  for (se in c("HC2", "HC3")) {
-    fe  <- lm_robust(y ~ z, data = dat, fixed_effects = ~bl, se_type = se)
-    dum <- lm_robust(y ~ z + factor(bl), data = dat, se_type = se)
-    expect_equal(unname(fe$std.error), unname(dum$std.error["z"]), tolerance = 1e-9)
-  }
-})
-
-test_that("HC2 and HC3 with two-way FE match the dummy regression", {
-  dat2 <- dat
-  dat2$bl2 <- factor(rep(1:4, length.out = nrow(dat2)))
-  for (se in c("HC2", "HC3")) {
-    fe  <- lm_robust(y ~ z, data = dat2, fixed_effects = ~ bl + bl2, se_type = se)
-    dum <- lm_robust(y ~ z + factor(bl) + bl2, data = dat2, se_type = se)
-    expect_equal(unname(fe$std.error), unname(dum$std.error["z"]), tolerance = 1e-9)
-  }
-})
-
-test_that("CR2 with FE matches the dummy regression", {
-  fe  <- lm_robust(y ~ z, data = dat, fixed_effects = ~ bl, clusters = cl,
-                   se_type = "CR2")
-  dum <- lm_robust(y ~ z + factor(bl), data = dat, clusters = cl, se_type = "CR2")
-  expect_equal(unname(fe$std.error), unname(dum$std.error["z"]), tolerance = 1e-9)
-  expect_equal(unname(fe$df), unname(dum$df["z"]), tolerance = 1e-9)
 })
 
 test_that("HC1 with FE does not warn", {
@@ -205,47 +160,6 @@ test_that("FE fes flag is TRUE", {
 test_that("no FE fes flag is FALSE", {
   m <- lm_robust(y ~ z, data = dat)
   expect_false(m$fes)
-})
-
-test_that("tidy works on FE model", {
-  m  <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl)
-  td <- tidy(m)
-  expect_s3_class(td, "data.frame")
-  expect_true("z" %in% td$term)
-})
-
-test_that("summary works on FE model", {
-  m <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl)
-  expect_no_error(summary(m))
-})
-
-# ---- multi-way FE ----
-
-test_that("two-way FE converges and gives sensible results", {
-  # Two-way FE: block + cluster
-  m_2way <- lm_robust(y ~ z, data = dat, fixed_effects = ~bl + cl, se_type = "HC1")
-  m_dum  <- lm_robust(y ~ z + factor(bl) + factor(cl), data = dat, se_type = "HC1")
-  expect_equal(unname(coef(m_2way)["z"]), unname(coef(m_dum)["z"]), tolerance = 1e-7)
-})
-
-# ---- iv_robust with FE ----
-
-test_that("iv_robust with FE returns correct class", {
-  m <- iv_robust(y ~ z | iv, data = dat, fixed_effects = ~bl, se_type = "HC1")
-  expect_s3_class(m, "iv_robust")
-  expect_true(m$fes)
-})
-
-test_that("iv_robust with FE coefs match FWL manually", {
-  # Demean y, z (endogenous), iv manually then run 2SLS
-  y_dm  <- dat$y  - ave(dat$y,  dat$bl, FUN = mean)
-  z_dm  <- dat$z  - ave(dat$z,  dat$bl, FUN = mean)
-  iv_dm <- dat$iv - ave(dat$iv, dat$bl, FUN = mean)
-  dat_dm <- data.frame(y=y_dm, z=z_dm, iv=iv_dm)
-
-  m_fe  <- iv_robust(y ~ z | iv, data = dat, fixed_effects = ~bl, se_type = "HC1")
-  m_man <- iv_robust(y ~ z | iv, data = dat_dm, se_type = "HC1")
-  expect_equal(unname(coef(m_fe)["z"]), unname(coef(m_man)["z"]), tolerance = 1e-9)
 })
 
 test_that("iv_robust FE diagnostics are suppressed with warning", {
@@ -394,45 +308,6 @@ test_that("`fixed_effects` does not put an se_type back on the menu", {
   )
 })
 
-# ---- CR2 with a fixed-effects design short of full rank by two or more ----
-
-test_that("absorbed CR2 matches the dummy expansion when two FE columns drop", {
-  # getMeatXtX() compacted the design by removing tossed columns in QR pivot
-  # order, which is only correct in descending order: the first left shift
-  # renumbers every column after it, so the second removal took the wrong one.
-  # One redundant column is exact either way, which is why the nested and
-  # disconnected two-factor probes all agreed and this stayed hidden. B3 below
-  # is a coarsening of A, so the FE design is short by two.
-  skip_if_not_installed("clubSandwich")
-  set.seed(3); n <- 400
-  d <- data.frame(A = sample(1:12, n, TRUE), C = sample(1:6, n, TRUE))
-  d$B3 <- ((d$A - 1) %/% 3) + 1
-  d$cl <- sample(1:25, n, TRUE)
-  d$x <- rnorm(n)
-  d$y <- 0.5 * d$x + d$A * 0.1 + d$C * 0.2 + rnorm(n)
-
-  absorbed <- lm_robust(y ~ x, fixed_effects = ~ A + B3 + C, data = d,
-                        clusters = cl, se_type = "CR2")
-  dummies <- suppressWarnings(
-    lm_robust(y ~ x + factor(A) + factor(B3) + factor(C), data = d,
-              clusters = cl, se_type = "CR2")
-  )
-  # three columns are dropped, so the bug had something to reorder
-  expect_gte(sum(is.na(dummies$coefficients)), 2L)
-
-  cs <- clubSandwich::vcovCR(
-    lm(y ~ x + factor(A) + factor(B3) + factor(C), data = d),
-    cluster = d$cl, type = "CR2"
-  )
-  # tight, not testthat's default 1.5e-8: these are three routes to one number
-  # computed in one session, and the gap the bug left was 3.1%. 1e-9 rather
-  # than tighter because this is set on macOS and runs on the CI matrix; the
-  # measured gap here is 4.5e-11.
-  expect_equal(absorbed$std.error[["x"]], dummies$std.error[["x"]], tolerance = 1e-9)
-  expect_equal(absorbed$std.error[["x"]], sqrt(cs["x", "x"]), tolerance = 1e-9)
-  expect_equal(absorbed$df[["x"]], dummies$df[["x"]], tolerance = 1e-9)
-})
-
 
 test_that("B3: multi-way demeaning that runs out of sweeps says so", {
   # Alternating projections are exact in one sweep for a single factor and
@@ -459,34 +334,6 @@ test_that("B3: multi-way demeaning that runs out of sweeps says so", {
 
   # a single factor converges in one sweep and must stay silent
   expect_silent(lm_robust(y ~ x, fixed_effects = ~ worker, data = d))
-})
-
-
-test_that("B4: the fixed-effects R-squared is weighted and per outcome", {
-  # The FE branch used mean(yoriginal) and raw residuals, so a weighted fit
-  # reported an unweighted R-squared, and a multivariate outcome was pooled
-  # into one number where the same model with dummies gives one per column.
-  set.seed(2); n <- 300
-  d <- data.frame(x = rnorm(n), bl = sample(8, n, TRUE), w = runif(n, 0.2, 3))
-  d$y <- d$x + d$bl * 0.3 + rnorm(n)
-  d$y2 <- d$y + rnorm(n)
-
-  wf <- lm_robust(y ~ x, fixed_effects = ~ bl, data = d, weights = w)
-  lw <- summary(lm(y ~ x + factor(bl), data = d, weights = w))
-  expect_equal(wf$r.squared, lw$r.squared, tolerance = 1e-12)
-  expect_equal(wf$adj.r.squared, lw$adj.r.squared, tolerance = 1e-12)
-
-  uf <- lm_robust(y ~ x, fixed_effects = ~ bl, data = d)
-  lu <- summary(lm(y ~ x + factor(bl), data = d))
-  expect_equal(uf$r.squared, lu$r.squared, tolerance = 1e-12)
-
-  mv <- lm_robust(cbind(y, y2) ~ x, fixed_effects = ~ bl, data = d)
-  dm <- lm_robust(cbind(y, y2) ~ x + factor(bl), data = d)
-  expect_equal(length(mv$r.squared), 2L)
-  expect_equal(unname(mv$r.squared), unname(dm$r.squared), tolerance = 1e-12)
-
-  ivw <- iv_robust(y ~ x | x, fixed_effects = ~ bl, data = d, weights = w)
-  expect_equal(ivw$r.squared, lw$r.squared, tolerance = 1e-12)
 })
 
 # ---- how the fixed_effects argument is read (estimatr #303, #304, #348) ----
@@ -541,16 +388,4 @@ test_that("#304: a bare grouping vector warns but still works", {
   # Anything that is neither a formula nor a grouping vector is still an error.
   expect_error(lm_robust(y ~ x, data = d, fixed_effects = list(1, 2)),
                "must be a one-sided formula")
-})
-
-test_that("absorbed fixed effects with a multivariate outcome are the dummy regression", {
-  set.seed(43)
-  N <- 40
-  d <- data.frame(Y = rnorm(N), Y2 = rnorm(N), Z = rbinom(N, 1, 0.5), X = rnorm(N),
-                  B = factor(rep(1:4, each = 10)))
-  dummies <- lm_robust(cbind(Y, Y2) ~ Z + X + factor(B), data = d)
-  absorbed <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B, data = d)
-  expect_equal(unname(absorbed$coefficients), unname(dummies$coefficients[c("Z", "X"), ]),
-               tolerance = 1e-10)
-  expect_equal(unname(absorbed$fitted.values), unname(dummies$fitted.values), tolerance = 1e-8)
 })

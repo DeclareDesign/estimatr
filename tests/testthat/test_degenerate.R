@@ -9,11 +9,10 @@ library(estimatr)
 # acceptable is a clean-looking fit, and every refusal below exists because
 # 1.0.6 or an earlier 2.0 returned one.
 #
-# Rank deficiency in lm_robust itself, at multiplicity one and two and across
-# the approach to singularity, is in test_rank_scale_invariance.R; leverage at
-# or near 1 is in test_lm_robust.R under #395; small and singleton blocks are
-# in test_blocked_variance.R; singleton fixed-effect groups are in
-# test_fe_leverage.R.
+# Rank deficiency in lm_robust's own design, at multiplicity one and two and
+# across the approach to singularity, and leverage at or near 1 (#395), are the
+# last sections. Small and singleton blocks are in test_blocked_variance.R;
+# singleton fixed-effect groups are in test_fe_leverage.R.
 #
 # A rank-deficient fit and its reduced model run the same arithmetic on the
 # same columns, so they agree to rounding: every comparison below holds at
@@ -229,3 +228,496 @@ test_that("an outcome the regressors fit exactly has vanishing standard errors",
     expect_lt(max(constant$std.error), 1e-12)
   }
 })
+
+# ---- rank deficiency in lm_robust's own design ----
+
+# Built for this section; each test makes its own deficient copy.
+set.seed(42)
+n <- 200
+dat <- data.frame(
+  x1 = rnorm(n),
+  x2 = rnorm(n),
+  x3 = rnorm(n),
+  z = rnorm(n),
+  cl = rep(1:20, each = 10)
+)
+dat$y <- 1 + dat$x1 + dat$x2 + dat$x3 + rnorm(n)
+
+test_that("try_cholesky still drops an exactly collinear column", {
+  dup <- dat
+  dup$x2 <- dup$x1
+  fit <- suppressWarnings(
+    lm_robust(y ~ x1 + x2 + x3, data = dup, try_cholesky = TRUE)
+  )
+  expect_equal(sum(is.na(coef(fit))), 1L)
+  expect_equal(unname(coef(fit)),
+               unname(coef(lm(y ~ x1 + x2 + x3, data = dup))),
+               tolerance = 1e-10)
+
+  const <- data.frame(x = rep(1, n), z = rnorm(n), y = rnorm(n))
+  cfit <- suppressWarnings(lm_robust(y ~ x + z, data = const, try_cholesky = TRUE))
+  expect_equal(sum(is.na(coef(cfit))), 1L)
+})
+
+# The normalization must not cost the rank deficiency the 1e-7 threshold was
+# added to catch (#351, #395): an exactly collinear column can otherwise
+# survive as a pivot of order 1e-14 and produce a coefficient of order 1e11
+# where lm() gives NA.
+test_that("exactly collinear columns are still dropped", {
+  const <- data.frame(x = rep(1, n), z = rnorm(n), y = rnorm(n))
+  expect_warning(lm_robust(y ~ x + z, data = const), "collinear")
+  fit_const <- suppressWarnings(lm_robust(y ~ x + z, data = const))
+  expect_equal(sum(is.na(coef(fit_const))), 1L)
+  expect_equal(sum(is.na(coef(fit_const))),
+               sum(is.na(coef(lm(y ~ x + z, data = const)))))
+
+  dup <- dat
+  dup$x2 <- dup$x1
+  expect_warning(lm_robust(y ~ x1 + x2 + x3, data = dup), "collinear")
+  fit_dup <- suppressWarnings(lm_robust(y ~ x1 + x2 + x3, data = dup))
+  expect_equal(sum(is.na(coef(fit_dup))), 1L)
+  expect_equal(sum(is.na(coef(fit_dup))),
+               sum(is.na(coef(lm(y ~ x1 + x2 + x3, data = dup)))))
+})
+
+test_that("a rescaled collinear column is still dropped", {
+  dup <- dat
+  dup$x2 <- dup$x1 * 1e9
+  expect_warning(lm_robust(y ~ x1 + x2 + x3, data = dup), "collinear")
+  fit <- suppressWarnings(lm_robust(y ~ x1 + x2 + x3, data = dup))
+  expect_equal(sum(is.na(coef(fit))), 1L)
+  expect_equal(sum(is.na(coef(fit))),
+               sum(is.na(coef(lm(y ~ x1 + x2 + x3, data = dup)))))
+})
+
+test_that("an all-zero column does not divide by its norm", {
+  zeroed <- dat
+  zeroed$x2 <- 0
+  expect_warning(lm_robust(y ~ x1 + x2 + x3, data = zeroed), "collinear")
+  fit <- suppressWarnings(lm_robust(y ~ x1 + x2 + x3, data = zeroed))
+  expect_true(is.na(coef(fit)[["x2"]]))
+  expect_false(anyNA(coef(fit)[c("(Intercept)", "x1", "x3")]))
+  expect_equal(unname(coef(fit)),
+               unname(coef(lm(y ~ x1 + x2 + x3, data = zeroed))),
+               tolerance = 1e-10)
+})
+
+# Multiplicity two. getMeatXtX() removes the QR's tossed columns by in-place
+# left shift in pivot order, which is correct only in descending order, and
+# with one dropped column there is nothing to order. Every probe recorded as
+# verification of that code until now was rank deficient by exactly one, so
+# none of them tested the ordering at all.
+#
+# The reference has to be independent rather than the other path: at exact
+# rank deficiency the Cholesky path falls back to the QR, so the two paths
+# run the same code and their agreement proves nothing. Making x2 and x3
+# exact copies of x1 fixes the comparison instead: whichever column survives
+# the pivot carries x1's column, so the surviving estimate and its standard
+# error must equal the reduced fit's, for every se_type that reads the meat.
+test_that("rank deficiency of two keeps the reduced fit's answers", {
+  dup2 <- dat
+  dup2$x2 <- dup2$x1
+  dup2$x3 <- dup2$x1
+
+  ref_lm <- lm(y ~ x1 + x2 + x3, data = dup2)
+  expect_equal(sum(is.na(coef(ref_lm))), 2L)
+
+  for (this_type in c("classical", "HC0", "HC1", "HC2", "HC3")) {
+    full <- suppressWarnings(
+      lm_robust(y ~ x1 + x2 + x3, data = dup2, se_type = this_type)
+    )
+    reduced <- lm_robust(y ~ x1, data = dup2, se_type = this_type)
+
+    expect_equal(sum(is.na(coef(full))), 2L,
+                 info = paste("dropped count,", this_type))
+    kept <- !is.na(coef(full))
+    expect_equal(unname(coef(full)[kept]), unname(coef(reduced)),
+                 tolerance = 1e-10, info = paste("coefficients,", this_type))
+    expect_equal(unname(full$std.error[kept]), unname(reduced$std.error),
+                 tolerance = 1e-10, info = paste("standard errors,", this_type))
+  }
+
+  for (this_type in c("CR0", "CR2")) {
+    full <- suppressWarnings(
+      lm_robust(y ~ x1 + x2 + x3, data = dup2, clusters = cl,
+                se_type = this_type)
+    )
+    reduced <- lm_robust(y ~ x1, data = dup2, clusters = cl,
+                         se_type = this_type)
+    kept <- !is.na(coef(full))
+    expect_equal(sum(is.na(coef(full))), 2L,
+                 info = paste("dropped count,", this_type))
+    expect_equal(unname(full$std.error[kept]), unname(reduced$std.error),
+                 tolerance = 1e-10, info = paste("standard errors,", this_type))
+  }
+
+  # Fitted values are unique whichever columns the pivot keeps, so they are
+  # the one thing that can be held against lm() without pinning B14.
+  full <- suppressWarnings(lm_robust(y ~ x1 + x2 + x3, data = dup2))
+  expect_equal(unname(fitted(full)), unname(fitted(ref_lm)), tolerance = 1e-10)
+})
+
+# A deficiency of two built from two different causes, so the tossed columns
+# are not adjacent in the original ordering.
+test_that("a constant column beside a duplicate is dropped as two", {
+  mixed <- dat
+  mixed$x2 <- 1
+  mixed$x3 <- mixed$x1
+  fit <- suppressWarnings(lm_robust(y ~ x1 + x2 + x3, data = mixed))
+  expect_equal(sum(is.na(coef(fit))), 2L)
+  expect_equal(sum(is.na(coef(fit))),
+               sum(is.na(coef(lm(y ~ x1 + x2 + x3, data = mixed)))))
+  expect_equal(unname(fitted(fit)),
+               unname(fitted(lm(y ~ x1 + x2 + x3, data = mixed))),
+               tolerance = 1e-10)
+})
+
+# The rank decision across the whole approach to singularity, rather than at
+# one design. Every other rank test here is either exactly deficient or
+# comfortably full rank; the interesting region is between them, and it is
+# where a retuned threshold would first show up. The two paths and lm() must
+# agree about where rank is lost at every step, which is the property that
+# makes try_cholesky safe to expose: the argument selects the arithmetic and
+# never the answer.
+#
+# Condition indices are computed on the column-scaled design, as Belsley, Kuh
+# and Welsch do, because that is the quantity the normalization in front of
+# both decompositions makes relevant. The raw condition number of a design in
+# mixed units is large for a reason that does not affect the fit.
+test_that("both paths track lm's rank decision as collinearity approaches", {
+  set.seed(99)
+  m <- 400
+  for (eps in 10^-(1:12)) {
+    a <- rnorm(m)
+    d <- data.frame(x1 = a, x2 = rnorm(m), x3 = a + eps * rnorm(m))
+    d$y <- rnorm(m)
+
+    ref <- lm(y ~ x1 + x2 + x3, data = d)
+    qr_fit <- suppressWarnings(
+      lm_robust(y ~ x1 + x2 + x3, data = d, try_cholesky = FALSE)
+    )
+    ch_fit <- suppressWarnings(
+      lm_robust(y ~ x1 + x2 + x3, data = d, try_cholesky = TRUE)
+    )
+
+    lab <- paste("eps =", format(eps))
+    expect_equal(sum(is.na(coef(qr_fit))), sum(is.na(coef(ref))),
+                 info = paste("QR path against lm at", lab))
+    expect_equal(sum(is.na(coef(ch_fit))), sum(is.na(coef(ref))),
+                 info = paste("Cholesky path against lm at", lab))
+
+    # Well inside the safe zone the two paths must agree to far more digits
+    # than anything reportable. Measured on this design, the worst relative
+    # gap over eps >= 1e-3 is 4.2e-10, at a scaled condition index of 1,800,
+    # so 1e-8 keeps about 24x of headroom for the platforms where the linear
+    # algebra differs. The band covers every design this package is built
+    # for by a wide margin: a blocked trial with covariates measures about
+    # 38. Do not widen it to eps = 1e-4 without re-measuring, since the gap
+    # there is 6.2e-8 and the assertion would be tighter than the arithmetic.
+    if (eps >= 1e-3) {
+      expect_equal(coef(ch_fit), coef(qr_fit), tolerance = 1e-8,
+                   info = paste("coefficients at", lab))
+      expect_equal(ch_fit$std.error, qr_fit$std.error, tolerance = 1e-8,
+                   info = paste("standard errors at", lab))
+    }
+  }
+})
+test_that("#351: a constant regressor is detected as collinear, as in lm()", {
+  d <- data.frame(y = rnorm(500), x = 1)
+  m <- suppressWarnings(lm_robust(y ~ x, data = d))
+  expect_true(is.na(m$coefficients[["x"]]))
+  expect_equal(unname(is.na(coef(lm(y ~ x, data = d)))), unname(is.na(m$coefficients)))
+})
+
+# ---- CR2 with a fixed-effects design short of full rank by two or more ----
+
+test_that("absorbed CR2 matches the dummy expansion when two FE columns drop", {
+  # getMeatXtX() compacted the design by removing tossed columns in QR pivot
+  # order, which is only correct in descending order: the first left shift
+  # renumbers every column after it, so the second removal took the wrong one.
+  # One redundant column is exact either way, which is why the nested and
+  # disconnected two-factor probes all agreed and this stayed hidden. B3 below
+  # is a coarsening of A, so the FE design is short by two.
+  skip_if_not_installed("clubSandwich")
+  set.seed(3); n <- 400
+  d <- data.frame(A = sample(1:12, n, TRUE), C = sample(1:6, n, TRUE))
+  d$B3 <- ((d$A - 1) %/% 3) + 1
+  d$cl <- sample(1:25, n, TRUE)
+  d$x <- rnorm(n)
+  d$y <- 0.5 * d$x + d$A * 0.1 + d$C * 0.2 + rnorm(n)
+
+  absorbed <- lm_robust(y ~ x, fixed_effects = ~ A + B3 + C, data = d,
+                        clusters = cl, se_type = "CR2")
+  dummies <- suppressWarnings(
+    lm_robust(y ~ x + factor(A) + factor(B3) + factor(C), data = d,
+              clusters = cl, se_type = "CR2")
+  )
+  # three columns are dropped, so the bug had something to reorder
+  expect_gte(sum(is.na(dummies$coefficients)), 2L)
+
+  cs <- clubSandwich::vcovCR(
+    lm(y ~ x + factor(A) + factor(B3) + factor(C), data = d),
+    cluster = d$cl, type = "CR2"
+  )
+  # tight, not testthat's default 1.5e-8: these are three routes to one number
+  # computed in one session, and the gap the bug left was 3.1%. 1e-9 rather
+  # than tighter because this is set on macOS and runs on the CI matrix; the
+  # measured gap here is 4.5e-11.
+  expect_equal(absorbed$std.error[["x"]], dummies$std.error[["x"]], tolerance = 1e-9)
+  expect_equal(absorbed$std.error[["x"]], sqrt(cs["x", "x"]), tolerance = 1e-9)
+  expect_equal(absorbed$df[["x"]], dummies$df[["x"]], tolerance = 1e-9)
+})
+
+# ---- leverage at or near 1 (estimatr #395) ----
+
+test_that("#395: NaN standard errors from leverage-1 points are explained", {
+  set.seed(7)
+  N <- 50
+  d <- data.frame(x = sample(1:40, N, TRUE), Z = sample(0:1, N, TRUE))
+  d$Y <- 0.1 * d$Z + d$x + rnorm(N)
+  # This design is rank deficient AND near-saturated, so several warnings fire
+  # together: collinearity, leverage, and on some platforms a negative variance
+  # diagonal. Collect them instead of nesting expect_warning(), which pins the
+  # count as well as the content and so breaks whenever another one is added --
+  # as it did on all five CI platforms and on none locally.
+  ws <- character(0)
+  withCallingHandlers(
+    lm_lin(Y ~ Z, covariates = ~ as.factor(x), data = d),
+    warning = function(w) {
+      ws <<- c(ws, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_true(any(grepl("leverage", ws)))
+  expect_true(any(grepl("collinear", ws)))
+  expect_false(any(grepl("NaNs produced", ws, fixed = TRUE)))
+  # classical SEs do not use leverage, so they stay finite
+  m <- suppressWarnings(lm_lin(Y ~ Z, covariates = ~ as.factor(x), data = d,
+                               se_type = "classical"))
+  expect_false(is.nan(m$std.error[["Z"]]))
+})
+
+# The tests below pin what actually goes wrong at a high-leverage point,
+# because the #395 test above pins only that a warning fires and the NEWS entry
+# for it described a different failure than the one that occurs.
+#
+# A hat value is a projection diagonal and cannot exceed 1. Leverage of exactly
+# 1 costs nothing in the answer: that observation has residual exactly 0, its
+# meat contribution is a 0/0 the code resolves to 0, and HC2 returns a finite
+# standard error (first test). The trouble is leverage computed marginally ABOVE
+# 1, where 1 - h is a small negative number. HC2 then divides by it, half_meat
+# takes the square root of the negative result, and every standard error in the
+# fit is NaN however small the offending term. HC3 squares the denominator,
+# which cancels the sign, so it returned a finite number carrying a spurious
+# positive term and said nothing -- the worse of the two failures, because it
+# looks like an answer.
+#
+# lm_variance() now sets the denominator to 0 wherever 1 - h <= 0, which sends
+# both through the same isfinite trap that leverage of exactly 1 already used,
+# and counts how many observations sit at or near leverage 1 so lm_robust() can
+# warn on the condition rather than on a NaN. The count is tolerant, at
+# sandwich's `h > 1 - sqrt(eps)`, while the clamp is the strict `1 - h <= 0`,
+# because the two answer different questions. The clamp decides the number, and
+# on an exactly saturated design the number is the same whichever side of 1 the
+# rounding lands on, so a strict count would leave the warning to an ulp. The
+# first test below pins the design where that is so.
+
+test_that("#395: leverage of exactly 1 answers finitely, and says that it did", {
+  # The single "c" observation is alone in its cell, so it is fitted exactly:
+  # leverage is exactly 1 and the residual is exactly 0, and its contribution to
+  # the meat is a 0/0 that is correctly resolved to 0 rather than to NaN. The
+  # standard error is therefore built from 8 rows where the fit used 9, which is
+  # what the warning reports. sandwich warns on this design too and on the same
+  # grounds, returning NaN where estimatr drops the row and answers.
+  d <- data.frame(
+    g = factor(c("a", "a", "a", "a", "b", "b", "b", "b", "c")),
+    Z = c(0, 1, 0, 1, 0, 1, 0, 1, 1),
+    Y = c(1.0, 2.0, 1.5, 2.5, 3.0, 4.0, 3.5, 4.5, 9.0)
+  )
+  X <- model.matrix(Y ~ Z + g, d)
+  qrx <- qr(X)
+  h <- rowSums(qr.Q(qrx)^2)
+  e <- as.vector(d$Y - X %*% qr.coef(qrx, d$Y))
+  expect_equal(max(h), 1)          # exactly, not approximately
+  expect_equal(min(1 - h), 0)
+  expect_equal(e[9], 0)
+
+  # The fit's own solver puts that same hat value at 1 + 2.2e-16 rather than at
+  # the exact 1 qr() returns above, so this design is the one that decides
+  # whether the warning is tolerant or is left to an ulp. Both halves are
+  # pinned: the warning fires and names one observation, and the standard error
+  # does not depend on which side of 1 the rounding landed.
+  expect_warning(
+    m <- lm_robust(Y ~ Z + g, data = d, se_type = "HC2"),
+    "1 observation has a computed leverage at or near 1"
+  )
+  expect_false(is.nan(m$std.error[["Z"]]))
+  expect_true(is.finite(m$std.error[["Z"]]))
+
+  # Computed here rather than recorded. With observation 9 contributing 0 the
+  # meat is the other 8 rows, and the HC2 standard error follows in closed form
+  # from a bread and a hat vector that never go near estimatr's solver.
+  M <- summary(lm(Y ~ Z + g, data = d))$cov.unscaled
+  denom <- 1 - rowSums((X %*% M) * X)
+  omega <- ifelse(denom <= 0, 0, e^2 / denom)
+  se_hand <- sqrt(diag(M %*% (t(X) %*% (X * omega)) %*% M))
+  expect_equal(m$std.error[["Z"]], se_hand[["Z"]])
+})
+
+test_that("#395: the leverage guard drops exactly the 1 - h < 0 observations", {
+  # Whether a real fit puts a hat value above 1 is a rounding accident and
+  # differs by platform, so the guard itself is pinned at the level of the
+  # function that implements it, where the leverage is chosen rather than
+  # observed. XtX_inv = 0.3 makes h = 0.3 * x^2, so the fourth observation sits
+  # at 1.2 and the first three at 0.3.
+  X <- matrix(c(1, 1, 1, 2), ncol = 1)
+  M <- matrix(0.3, 1, 1)
+  ei <- matrix(rep(1, 4), ncol = 1)
+  h <- 0.3 * as.vector(X)^2
+  expect_equal(h, c(0.3, 0.3, 0.3, 1.2))
+
+  z_variance <- function(se_type) {
+    estimatr:::lm_variance(
+      X = X, Xunweighted = NULL, XtX_inv = M, ei = ei, weight_mean = 1,
+      cluster = NULL, J = 0L, ci = TRUE, se_type = se_type,
+      which_covs = TRUE, fe_rank = 0L, fe_leverage = NULL, n_eff = -1L
+    )
+  }
+
+  # The guarded answers are the three well-behaved rows and nothing else.
+  hc2 <- z_variance("HC2")
+  hc3 <- z_variance("HC3")
+  expect_equal(hc2[["n_leverage_near_one"]], 1L)
+  expect_equal(hc3[["n_leverage_near_one"]], 1L)
+  expect_equal(sqrt(hc2[["Vcov_hat"]][1, 1]), sqrt(0.09 * 3 / 0.7))
+  expect_equal(sqrt(hc3[["Vcov_hat"]][1, 1]), sqrt(0.09 * 3 / 0.49))
+
+  # What the same inputs gave before the guard, computed here rather than
+  # recorded: HC2 was NaN throughout, and HC3 was finite, silent, and four times
+  # too large, the offending row supplying 94% of the variance.
+  expect_true(suppressWarnings(is.nan(sqrt(sum(0.09 * as.vector(X)^2 / (1 - h))))))
+  expect_equal(sqrt(sum(0.09 * as.vector(X)^2 / (1 - h)^2)), 3.0904725, tolerance = 1e-7)
+  expect_gt(3.0904725 / sqrt(hc3[["Vcov_hat"]][1, 1]), 4)
+
+  # se_types that never read leverage are untouched and report no count.
+  for (ty in c("HC0", "HC1", "classical")) {
+    expect_equal(z_variance(ty)[["n_leverage_near_one"]], 0L,
+                 label = paste(ty, "leverage count"))
+  }
+})
+
+# These designs are rank deficient, so a collinearity warning fires on every fit
+# regardless of se_type. Only the leverage warning is of interest here, so fits
+# are run through this rather than through expect_silent().
+fit_warnings <- function(expr) {
+  ws <- character(0)
+  val <- withCallingHandlers(
+    expr,
+    warning = function(w) {
+      ws <<- c(ws, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  list(fit = val, leverage_warning = any(grepl("leverage", ws, fixed = TRUE)))
+}
+
+# Leverage above 1 is a floating-point outcome, so it is asserted rather than
+# assumed: if a platform's solver returns max(h) <= 1 for this design, the
+# condition under test is absent and the guard has nothing to do.
+lev_above_one <- function(fml, data) {
+  X <- model.matrix(fml, data)
+  fit <- estimatr:::lm_solver(X, matrix(data[[all.vars(fml)[1]]], ncol = 1), TRUE)
+  keep <- !is.na(fit$beta_hat)
+  Xk <- X[, keep, drop = FALSE]
+  h <- rowSums((Xk %*% fit$XtX_inv) * Xk)
+  list(any = any(1 - h < 0), max = max(h), h = h)
+}
+
+test_that("#395: HC2 and HC3 both warn, and neither returns NaN, above leverage 1", {
+  set.seed(7)
+  N <- 50
+  d <- data.frame(x = sample(1:40, N, TRUE), Z = sample(0:1, N, TRUE))
+  d$Y <- 0.1 * d$Z + d$x + rnorm(N)
+  fml <- Y ~ Z * as.factor(x)
+
+  lev <- lev_above_one(fml, d)
+  skip_if_not(lev$any, "this platform's solver does not put any leverage above 1")
+  expect_gt(lev$max, 1)
+
+  # Before the guard HC2 was NaN here and HC3 was finite and silent. The
+  # asymmetry between them was the defect; both now warn and both answer.
+  for (ty in c("HC2", "HC3")) {
+    m <- fit_warnings(lm_robust(fml, data = d, se_type = ty))
+    expect_true(m$leverage_warning, label = paste(ty, "leverage warning"))
+    expect_false(is.nan(m$fit$std.error[["Z"]]), label = paste(ty, "std.error is NaN"))
+  }
+
+  # The se_types that never touch leverage neither warn nor change.
+  for (ty in c("HC0", "HC1", "classical")) {
+    mm <- fit_warnings(lm_robust(fml, data = d, se_type = ty))
+    expect_false(mm$leverage_warning, label = paste(ty, "leverage warning"))
+  }
+})
+
+test_that("#395: the leverage warning counts the observations it dropped", {
+  set.seed(7)
+  N <- 50
+  d <- data.frame(x = sample(1:40, N, TRUE), Z = sample(0:1, N, TRUE))
+  d$Y <- 0.1 * d$Z + d$x + rnorm(N)
+  fml <- Y ~ Z * as.factor(x)
+  skip_if_not(lev_above_one(fml, d)$any, "no leverage above 1 on this platform")
+
+  # Nesting expect_warning() would pin the number of warnings as well as their
+  # content, which is what broke the first #395 test on all five CI platforms
+  # and on none locally. Collect them and read the leverage one out.
+  ws <- character(0)
+  withCallingHandlers(
+    lm_robust(fml, data = d, se_type = "HC2"),
+    warning = function(w) {
+      ws <<- c(ws, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_true(any(grepl("collinear", ws)))
+  lev <- grep("computed leverage at or near 1", ws, value = TRUE)
+  expect_length(lev, 1)
+
+  # The number in the message is the count the C++ made, and the reference is
+  # the same criterion applied to a hat vector computed outside it. This design
+  # has more than one such observation, so the plural branch of the message is
+  # exercised here and the singular branch in the exactly saturated test above.
+  expect_match(lev, "^[0-9]+ observations have ")
+  expect_equal(as.integer(sub(" .*$", "", lev)),
+               sum(lev_above_one(fml, d)$h > 1 - sqrt(.Machine$double.eps)))
+})
+
+test_that("#395: CR2 has no analogous hole -- degeneracy goes through its clamp", {
+  # CR2 never forms 1 - h_ii. It eigendecomposes
+  # (I - H) - H' + Xo MUWTWUM Xo' per cluster and keeps 1/sqrt(eigenvalue) only
+  # above 1e-12, so a degenerate cluster contributes 0 rather than a negative or
+  # a sign-flipped term. Cluster 11 below is a singleton carrying its own factor
+  # level, which is fitted exactly.
+  set.seed(11)
+  d <- data.frame(g = factor(c(rep("a", 10), rep("b", 10), "c")),
+                  Z = c(rep(0:1, 5), rep(0:1, 5), 1))
+  d$Y <- rnorm(21) + as.numeric(d$g)
+  d$cl <- c(rep(1:5, 2), rep(6:10, 2), 11)
+
+  X <- model.matrix(Y ~ Z + g, d)
+  M <- solve(crossprod(X))
+  MUWTWUM <- M %*% crossprod(X) %*% M
+  block_eigen <- function(cl) {
+    ix <- which(d$cl == cl)
+    Xb <- X[ix, , drop = FALSE]
+    H <- Xb %*% M %*% t(Xb)
+    A <- (diag(length(ix)) - H) - t(H) + Xb %*% MUWTWUM %*% t(Xb)
+    min(eigen(A, symmetric = TRUE)$values)
+  }
+  expect_lte(block_eigen(11), 1e-12)     # the clamp fires
+  expect_gt(min(vapply(1:10, block_eigen, numeric(1))), 1e-12)
+
+  m <- lm_robust(Y ~ Z + g, data = d, clusters = cl, se_type = "CR2")
+  expect_true(is.finite(m$std.error[["Z"]]))
+  expect_gt(m$std.error[["Z"]], 0)
+})
+

@@ -11,8 +11,10 @@ library(estimatr)
 # did not detect rank at all. A transformation with a known effect needs no
 # reference and does not care where the code came from.
 #
-# Column scaling, the property the first of those defects broke, is in
-# test_rank_scale_invariance.R with the rank sweeps. This file holds the rest.
+# Column scaling, the property the first of those defects broke, is the last
+# section. The rank decisions themselves, and the sweep toward singularity, are
+# in test_degenerate.R; the two solver paths' agreement is in
+# test_equivalence.R.
 #
 # Its first run found two more: multi-way demeaning that stopped early on an
 # outcome in small units, and IV diagnostics that decided endogeneity by name.
@@ -548,3 +550,116 @@ test_that("far enough out, both paths drop what lm() drops", {
     }
   }
 })
+
+# ---- a column's units ----
+
+
+# Rank detection must not depend on the units a column is measured in.
+# stats::lm() gets this from LINPACK dqrdc2, which compares each column's
+# remaining norm against its own original norm. Eigen's setThreshold()
+# compares every pivot against the largest pivot in the matrix, so before
+# lm_solver() and getMeatXtX() normalized their columns, one regressor in
+# large units pushed the others under the threshold and they were dropped as
+# collinear on a full-rank design: a wrong answer with a warning, not an
+# error. The property below is stronger than any fixed design.
+
+set.seed(42)
+n <- 200
+dat <- data.frame(
+  x1 = rnorm(n),
+  x2 = rnorm(n),
+  x3 = rnorm(n),
+  z = rnorm(n),
+  cl = rep(1:20, each = 10)
+)
+dat$y <- 1 + dat$x1 + dat$x2 + dat$x3 + rnorm(n)
+
+powers <- 0:12
+
+# Refit with x2 multiplied by 10^k, then undo the scaling on the x2 row. Every
+# coefficient and standard error must come back to what the unscaled fit gave.
+expect_scale_invariant <- function(fitter) {
+  base <- fitter(dat)
+  for (k in powers) {
+    scaled <- dat
+    scaled$x2 <- scaled$x2 * 10^k
+    fit <- fitter(scaled)
+
+    coefs <- coef(fit)
+    ses <- fit$std.error
+    coefs["x2"] <- coefs["x2"] * 10^k
+    ses["x2"] <- ses["x2"] * 10^k
+
+    expect_false(anyNA(coefs), label = paste("no coefficient dropped at k =", k))
+    expect_equal(coefs, coef(base), tolerance = 1e-8,
+                 info = paste("coefficients at k =", k))
+    expect_equal(ses, base$std.error, tolerance = 1e-8,
+                 info = paste("standard errors at k =", k))
+  }
+}
+
+test_that("lm_robust is invariant to column scaling", {
+  expect_scale_invariant(function(d) lm_robust(y ~ x1 + x2 + x3, data = d))
+})
+
+test_that("clustered lm_robust is invariant to column scaling", {
+  expect_scale_invariant(
+    function(d) lm_robust(y ~ x1 + x2 + x3, clusters = cl, data = d)
+  )
+})
+
+# getMeatXtX() is the path HC2, HC3, and CR2 read the hat values off, and it
+# carries the same threshold as lm_solver(). A fix applied to only one of the
+# two leaves the variance read off a rank the coefficients were not fitted at.
+test_that("every hat-value se_type is invariant to column scaling", {
+  for (se_type in c("HC0", "HC1", "HC2", "HC3", "classical")) {
+    local({
+      this_type <- se_type
+      expect_scale_invariant(
+        function(d) lm_robust(y ~ x1 + x2 + x3, se_type = this_type, data = d)
+      )
+    })
+  }
+  expect_scale_invariant(
+    function(d) lm_robust(y ~ x1 + x2 + x3, clusters = cl,
+                          se_type = "CR0", data = d)
+  )
+})
+
+test_that("iv_robust is invariant to column scaling", {
+  expect_scale_invariant(
+    function(d) iv_robust(y ~ x1 + x2 + x3 | x1 + z + x3, data = d)
+  )
+  expect_scale_invariant(
+    function(d) iv_robust(y ~ x1 + x2 + x3 | x1 + z + x3,
+                          clusters = cl, data = d)
+  )
+})
+
+# The Cholesky path is a second rank determination, and Eigen's LLT reports
+# success on a numerically singular Gram matrix, so info() alone never caught
+# a rank-deficient design. Normalizing the columns makes each L_ii the
+# column's own residual norm, which is dqrdc2's test, and the path falls back
+# to the QR below the same 1e-7.
+test_that("try_cholesky reaches the same answer as the QR path", {
+  expect_scale_invariant(
+    function(d) lm_robust(y ~ x1 + x2 + x3, data = d, try_cholesky = TRUE)
+  )
+
+  qr_fit <- lm_robust(y ~ x1 + x2 + x3, data = dat, try_cholesky = FALSE)
+  ch_fit <- lm_robust(y ~ x1 + x2 + x3, data = dat, try_cholesky = TRUE)
+  expect_equal(coef(ch_fit), coef(qr_fit), tolerance = 1e-10)
+  expect_equal(ch_fit$std.error, qr_fit$std.error, tolerance = 1e-10)
+})
+
+test_that("a full-rank design in large units agrees with lm", {
+  d <- dat
+  d$x2 <- d$x2 * 1e9
+  fit <- lm_robust(y ~ x1 + x2 + x3, data = d, se_type = "classical")
+  ref <- lm(y ~ x1 + x2 + x3, data = d)
+  expect_false(anyNA(coef(fit)))
+  expect_equal(unname(coef(fit)), unname(coef(ref)), tolerance = 1e-10)
+  expect_equal(unname(fit$std.error),
+               unname(summary(ref)$coefficients[, 2]), tolerance = 1e-10)
+})
+

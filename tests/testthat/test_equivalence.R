@@ -365,3 +365,170 @@ test_that("a missing value anywhere the fit reads drops exactly that row", {
     expect_equal(with_missing$nobs, filtered$nobs, label = paste(nm, "nobs"))
   }
 })
+
+# ---- the two solver paths ----
+
+# Built for this section; the rank-deficient copies are made inside the test.
+set.seed(42)
+n <- 200
+dat <- data.frame(
+  x1 = rnorm(n),
+  x2 = rnorm(n),
+  x3 = rnorm(n),
+  z = rnorm(n),
+  cl = rep(1:20, each = 10)
+)
+dat$y <- 1 + dat$x1 + dat$x2 + dat$x3 + rnorm(n)
+
+# The fallback is shared code, but each estimator reaches it through its own
+# fit call, and until now only unclustered, unweighted lm_robust() exercised
+# it. A wiring mistake at one entry point would be invisible everywhere else.
+test_that("the Cholesky path is wired correctly at every entry point", {
+  dup <- dat
+  dup$x2 <- dup$x1
+  dup$w <- runif(n, 0.5, 2)
+  dup$Z <- rep(c(0, 1), length.out = n)
+
+  same_both_ways <- function(fitter, label) {
+    q <- suppressWarnings(fitter(FALSE))
+    ch <- suppressWarnings(fitter(TRUE))
+    expect_equal(coef(ch), coef(q), tolerance = 1e-10,
+                 info = paste("coefficients,", label))
+    expect_equal(ch$std.error, q$std.error, tolerance = 1e-10,
+                 info = paste("standard errors,", label))
+    expect_equal(sum(is.na(coef(ch))), 1L,
+                 info = paste("dropped count,", label))
+  }
+
+  same_both_ways(function(tc) lm_robust(y ~ x1 + x2 + x3, data = dup,
+                                        clusters = cl, se_type = "CR2",
+                                        try_cholesky = tc), "clustered CR2")
+  same_both_ways(function(tc) lm_robust(y ~ x1 + x2 + x3, data = dup,
+                                        weights = w, try_cholesky = tc),
+                 "weighted")
+  same_both_ways(function(tc) iv_robust(y ~ x1 + x2 + x3 | x1 + x2 + z,
+                                        data = dup, try_cholesky = tc),
+                 "iv_robust")
+
+  # lm_lin builds its own centered interactions, so the design it hands the
+  # solver is not the one written in the formula.
+  lin_q <- lm_lin(y ~ Z, ~ x1 + x3, data = dup, try_cholesky = FALSE)
+  lin_ch <- lm_lin(y ~ Z, ~ x1 + x3, data = dup, try_cholesky = TRUE)
+  expect_equal(coef(lin_ch), coef(lin_q), tolerance = 1e-10)
+  expect_equal(lin_ch$std.error, lin_q$std.error, tolerance = 1e-10)
+
+  # A full-rank fixed-effects fit never reaches the fallback, so it checks
+  # that the fast path is right where it actually runs.
+  fe_q <- lm_robust(y ~ x1 + x3, data = dat, fixed_effects = ~ cl,
+                    try_cholesky = FALSE)
+  fe_ch <- lm_robust(y ~ x1 + x3, data = dat, fixed_effects = ~ cl,
+                     try_cholesky = TRUE)
+  expect_equal(coef(fe_ch), coef(fe_q), tolerance = 1e-10)
+  expect_equal(fe_ch$std.error, fe_q$std.error, tolerance = 1e-10)
+})
+
+# ---- absorbed fixed effects are the dummy regression ----
+
+dat <- ref_data_fe()
+n <- nrow(dat)
+test_that("FE demeaning gives same coefs as dummy regression", {
+  m_fe    <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl)
+  m_dummy <- lm_robust(y ~ z + x + factor(bl), data = dat)
+  expect_equal(unname(coef(m_fe)["z"]), unname(coef(m_dummy)["z"]), tolerance = 1e-9)
+  expect_equal(unname(coef(m_fe)["x"]), unname(coef(m_dummy)["x"]), tolerance = 1e-9)
+})
+
+test_that("FE residuals equal dummy regression residuals", {
+  m_fe    <- lm_robust(y ~ z + x, data = dat, fixed_effects = ~bl)
+  m_dummy <- lm_robust(y ~ z + x + factor(bl), data = dat)
+  resid_fe    <- dat$y - m_fe$fitted.values
+  resid_dummy <- dat$y - m_dummy$fitted.values
+  expect_equal(resid_fe, resid_dummy, tolerance = 1e-9)
+})
+
+test_that("HC2 and HC3 now work with one-way FE and match the dummy regression", {
+  # These two used to assert an error. The restriction was wrong for any
+  # number of FE factors; see test_fe_leverage.R for the identity.
+  for (se in c("HC2", "HC3")) {
+    fe  <- lm_robust(y ~ z, data = dat, fixed_effects = ~bl, se_type = se)
+    dum <- lm_robust(y ~ z + factor(bl), data = dat, se_type = se)
+    expect_equal(unname(fe$std.error), unname(dum$std.error["z"]), tolerance = 1e-9)
+  }
+})
+
+test_that("HC2 and HC3 with two-way FE match the dummy regression", {
+  dat2 <- dat
+  dat2$bl2 <- factor(rep(1:4, length.out = nrow(dat2)))
+  for (se in c("HC2", "HC3")) {
+    fe  <- lm_robust(y ~ z, data = dat2, fixed_effects = ~ bl + bl2, se_type = se)
+    dum <- lm_robust(y ~ z + factor(bl) + bl2, data = dat2, se_type = se)
+    expect_equal(unname(fe$std.error), unname(dum$std.error["z"]), tolerance = 1e-9)
+  }
+})
+
+test_that("CR2 with FE matches the dummy regression", {
+  fe  <- lm_robust(y ~ z, data = dat, fixed_effects = ~ bl, clusters = cl,
+                   se_type = "CR2")
+  dum <- lm_robust(y ~ z + factor(bl), data = dat, clusters = cl, se_type = "CR2")
+  expect_equal(unname(fe$std.error), unname(dum$std.error["z"]), tolerance = 1e-9)
+  expect_equal(unname(fe$df), unname(dum$df["z"]), tolerance = 1e-9)
+})
+test_that("two-way FE converges and gives sensible results", {
+  # Two-way FE: block + cluster
+  m_2way <- lm_robust(y ~ z, data = dat, fixed_effects = ~bl + cl, se_type = "HC1")
+  m_dum  <- lm_robust(y ~ z + factor(bl) + factor(cl), data = dat, se_type = "HC1")
+  expect_equal(unname(coef(m_2way)["z"]), unname(coef(m_dum)["z"]), tolerance = 1e-7)
+})
+
+test_that("iv_robust with FE coefs match FWL manually", {
+  # Demean y, z (endogenous), iv manually then run 2SLS
+  y_dm  <- dat$y  - ave(dat$y,  dat$bl, FUN = mean)
+  z_dm  <- dat$z  - ave(dat$z,  dat$bl, FUN = mean)
+  iv_dm <- dat$iv - ave(dat$iv, dat$bl, FUN = mean)
+  dat_dm <- data.frame(y=y_dm, z=z_dm, iv=iv_dm)
+
+  m_fe  <- iv_robust(y ~ z | iv, data = dat, fixed_effects = ~bl, se_type = "HC1")
+  m_man <- iv_robust(y ~ z | iv, data = dat_dm, se_type = "HC1")
+  expect_equal(unname(coef(m_fe)["z"]), unname(coef(m_man)["z"]), tolerance = 1e-9)
+})
+
+
+test_that("B4: the fixed-effects R-squared is weighted and per outcome", {
+  # The FE branch used mean(yoriginal) and raw residuals, so a weighted fit
+  # reported an unweighted R-squared, and a multivariate outcome was pooled
+  # into one number where the same model with dummies gives one per column.
+  set.seed(2); n <- 300
+  d <- data.frame(x = rnorm(n), bl = sample(8, n, TRUE), w = runif(n, 0.2, 3))
+  d$y <- d$x + d$bl * 0.3 + rnorm(n)
+  d$y2 <- d$y + rnorm(n)
+
+  wf <- lm_robust(y ~ x, fixed_effects = ~ bl, data = d, weights = w)
+  lw <- summary(lm(y ~ x + factor(bl), data = d, weights = w))
+  expect_equal(wf$r.squared, lw$r.squared, tolerance = 1e-12)
+  expect_equal(wf$adj.r.squared, lw$adj.r.squared, tolerance = 1e-12)
+
+  uf <- lm_robust(y ~ x, fixed_effects = ~ bl, data = d)
+  lu <- summary(lm(y ~ x + factor(bl), data = d))
+  expect_equal(uf$r.squared, lu$r.squared, tolerance = 1e-12)
+
+  mv <- lm_robust(cbind(y, y2) ~ x, fixed_effects = ~ bl, data = d)
+  dm <- lm_robust(cbind(y, y2) ~ x + factor(bl), data = d)
+  expect_equal(length(mv$r.squared), 2L)
+  expect_equal(unname(mv$r.squared), unname(dm$r.squared), tolerance = 1e-12)
+
+  ivw <- iv_robust(y ~ x | x, fixed_effects = ~ bl, data = d, weights = w)
+  expect_equal(ivw$r.squared, lw$r.squared, tolerance = 1e-12)
+})
+
+test_that("absorbed fixed effects with a multivariate outcome are the dummy regression", {
+  set.seed(43)
+  N <- 40
+  d <- data.frame(Y = rnorm(N), Y2 = rnorm(N), Z = rbinom(N, 1, 0.5), X = rnorm(N),
+                  B = factor(rep(1:4, each = 10)))
+  dummies <- lm_robust(cbind(Y, Y2) ~ Z + X + factor(B), data = d)
+  absorbed <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B, data = d)
+  expect_equal(unname(absorbed$coefficients), unname(dummies$coefficients[c("Z", "X"), ]),
+               tolerance = 1e-10)
+  expect_equal(unname(absorbed$fitted.values), unname(dummies$fitted.values), tolerance = 1e-8)
+})
+
