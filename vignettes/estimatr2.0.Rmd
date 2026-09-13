@@ -15,7 +15,7 @@ library(estimatr)
 
 ## The short version
 
-estimatr 2.0 is a ground-up rewrite aimed at the DeclareDesign workflow: fit the same model thousands of times, as fast as possible, and get the same number every time. Almost everything you already wrote against 1.x runs unchanged and returns identical estimates, identical standard errors, identical confidence intervals, and identical objects, only faster. That claim is pinned by 3,865 test assertions, 695 of which compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, and a further 317 of which compare against implementations that share no lineage with estimatr at all. See [How this was checked].
+estimatr 2.0 is a ground-up rewrite aimed at the DeclareDesign workflow: fit the same model thousands of times, as fast as possible, and get the same number every time. Almost everything you already wrote against 1.x runs unchanged and returns identical estimates, identical standard errors, identical confidence intervals, and identical objects, only faster. That claim is pinned by 4,618 test assertions, 695 of which compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, and a further 317 of which compare against implementations that share no lineage with estimatr at all. See [How this was checked].
 
 Two things break, and each one is a deliberate trade. `horvitz_thompson()` takes one probability argument instead of five. Two stargazer helpers are gone. Every standard error 1.x could compute, 2.0 can still compute. What changes is which one a *default* reaches for when you absorb fixed effects with clusters, and that default now says so out loud.
 
@@ -354,7 +354,7 @@ One defect turned up that has no issue behind it, and it is worth knowing if you
 
 ## Current status
 
-The test suite is 3,865 assertions with none failing, `R CMD check --as-cran` gives 0 errors, 0 warnings and 1 NOTE for the maintainer change, and the numerical comparisons against 1.0.6 run across 50 seeds per design type for every Horvitz-Thompson design family.
+The test suite is 4,618 assertions with none failing, `R CMD check --as-cran` gives 0 errors, 0 warnings and 1 NOTE for the maintainer change, and the numerical comparisons against 1.0.6 run across 50 seeds per design type for every Horvitz-Thompson design family.
 
 What follows is the list of places where 2.0 deliberately departs from 1.x: a different number, or a refusal where 1.x answered. In each one the 1.x behaviour is wrong, and every item was reproduced by running an installed 1.0.6 rather than read off this implementation's own code. If you have results from 1.x, these are the calls worth re-running. Nothing else in this release changes an answer.
 

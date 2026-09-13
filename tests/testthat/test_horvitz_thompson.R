@@ -260,11 +260,14 @@ test_that("HT tidy returns a data frame with expected columns", {
   expect_true(all(c("term", "estimate", "std.error", "p.value") %in% names(td)))
 })
 
-test_that("HT print runs without error", {
+test_that("HT print shows the estimator", {
+  # expect_output() rather than a bare print(), which wrote the table into the
+  # middle of every test run's output (review C11).
+  set.seed(5)
   decl <- randomizr::declare_ra(N = N, m = 16)
   dat$Z <- randomizr::conduct_ra(decl)
   m <- horvitz_thompson(y ~ Z, data = dat, condition_prs = decl)
-  expect_no_error(print(m))
+  expect_output(print(m), "Horvitz-Thompson estimator")
 })
 
 # ---- condition1/condition2 defaults ----

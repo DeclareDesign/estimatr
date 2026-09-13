@@ -86,3 +86,34 @@ test_that("horvitz_thompson refuses assignment probabilities it cannot match to 
                                 condition_prs = randomizr::declare_ra(N = n + 2)),
                "declares 42 units but the data has 40 rows")
 })
+
+test_that("a formula that does not say what the estimator needs is refused", {
+  expect_error(iv_robust(mpg ~ hp + cyl, data = mtcars),
+               "Must specify a `formula` with both regressors and instruments")
+  expect_error(lm_lin(y ~ z + x, covariates = ~ x, data = err_data),
+               "must only have the treatment variable on the right-hand side")
+  expect_error(lm_lin(y ~ z, err_data$x, data = err_data),
+               "must be specified as a formula")
+  expect_error(difference_in_means(y ~ z + x, data = err_data),
+               "must have only one variable on the right-hand side")
+})
+
+test_that("blocks that cannot hold the design are refused", {
+  set.seed(42)
+  N <- 100
+  d <- data.frame(Y = rnorm(N), Z = rbinom(N, 1, 0.5),
+                  bl = rep(1:10, each = 10), crossing_cl = rep(1:10, 10))
+  expect_error(difference_in_means(Y ~ Z, blocks = bl, clusters = crossing_cl, data = d),
+               "All `clusters` must be contained within `blocks`")
+  d$one_unit_block <- c(1, rep(2:10, length.out = N - 1))
+  expect_error(difference_in_means(Y ~ Z, blocks = one_unit_block, data = d),
+               "All `blocks` must have multiple units")
+})
+
+test_that("#297: lh_robust refuses a multivariate outcome and says why", {
+  skip_if_not_installed("carData")
+  expect_error(
+    lh_robust(cbind(mpg, am) ~ cyl + gear, data = mtcars, linear_hypothesis = "cyl = 2"),
+    "multiple outcomes"
+  )
+})

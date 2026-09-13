@@ -180,3 +180,159 @@ test_that("variable.names, augment, update and model.frame agree with the fit", 
     expect_true(all(c("y", "z", "iv") %in% names(frame)), label = nm)
   }
 })
+
+test_that("vcov is symmetric, update takes a new formula, and tidy names each outcome", {
+  expect_equal(vcov(fits$lmr), t(vcov(fits$lmr)), tolerance = 1e-14)
+
+  d <- surface
+  grown <- update(fits$lmr, . ~ . + w)
+  expect_equal(grown$coefficients, lm_robust(y ~ x + z + w, data = surface)$coefficients,
+               tolerance = METH_TOL)
+
+  tidied <- tidy(fits$lmr_mv)
+  expect_equal(unique(tidied$outcome), c("y", "y2"))
+  expect_equal(tidied$term, rep(c("(Intercept)", "x", "z"), 2))
+})
+
+# ---- regressions in particular methods ----
+
+test_that("#123: variable.names() returns the model terms", {
+  expect_equal(estimatr:::variable.names.lm_robust(fits$lmr), c("(Intercept)", "x", "z"))
+})
+
+test_that("B10: glance() reports the residual df, not the first coefficient's", {
+  # x[["df"]] is per-coefficient and under CR2 is Satterthwaite, so the column
+  # named df.residual read 8.56 on a 10-cluster fit whose residual df is 98.
+  set.seed(1)
+  N <- 100
+  d <- data.frame(y = rnorm(N), x = rnorm(N), cl = sample(10, N, TRUE))
+  m <- lm_robust(y ~ x, clusters = cl, data = d, se_type = "CR2")
+  expect_equal(glance(m)$df.residual, m$df.residual)
+  expect_false(isTRUE(all.equal(m$df.residual, unname(m$df[[1]]))))
+  # and it agrees with the iv_robust method, which always used df.residual
+  mi <- iv_robust(y ~ x | x, data = d, clusters = cl, se_type = "CR2")
+  expect_equal(glance(mi)$df.residual, mi$df.residual)
+})
+
+# augment() is called by its method name below: clubSandwich, loaded by a later
+# file, registers methods for these classes too, so bare dispatch would depend
+# on file order.
+
+test_that("#377: augment() returns the model frame with .fitted and .resid", {
+  a <- estimatr:::augment.lm_robust(fits$lmr)
+  expect_true(all(c(".fitted", ".resid") %in% names(a)))
+  expect_equal(nrow(a), nrow(surface))
+  expect_equal(a$.fitted + a$.resid, surface$y, tolerance = 1e-12)
+})
+
+test_that("#377: augment() works for lm_lin, iv_robust and fixed effects", {
+  expect_true(".fitted" %in% names(estimatr:::augment.lm_robust(fits$lin)))
+  expect_true(".fitted" %in% names(estimatr:::augment.iv_robust(fits$iv)))
+  a <- estimatr:::augment.lm_robust(fits$lmr_fe1)
+  expect_equal(a$.fitted + a$.resid, surface$y, tolerance = 1e-8)
+})
+
+test_that("#377: augment(newdata =) predicts without residuals", {
+  a <- estimatr:::augment.lm_robust(fits$lmr, newdata = surface[1:5, ])
+  expect_equal(nrow(a), 5L)
+  expect_true(".fitted" %in% names(a))
+  expect_false(".resid" %in% names(a))
+})
+
+# ---- Horvitz-Thompson post-estimation ----
+
+# horvitz_thompson had only print() and tidy(), where its sibling
+# difference_in_means had seven methods. confint(), vcov() and glance() errored
+# outright; summary() and nobs() fell through to the base defaults and returned
+# something that looked like output without being the estimate.
+
+post_dat <- ref_data_post()
+ht <- horvitz_thompson(y ~ z, data = post_dat, condition_prs = c("0" = 0.5, "1" = 0.5))
+
+test_that("Horvitz-Thompson vcov and nobs agree with estimatr", {
+  e0 <- ref("post_ht")
+  expect_equal(as.numeric(vcov(ht)), e0$vcov)
+  expect_equal(nobs(ht), e0$nobs)
+})
+
+test_that("Horvitz-Thompson confint agrees with estimatr, including a non-default level", {
+  e0 <- ref("post_ht")
+  expect_equal(unname(confint(ht)), e0$confint)
+  # The level argument is the case that exposes the t-versus-z choice: a
+  # Horvitz-Thompson fit carries df = NA, so rebuilding the interval off a t
+  # quantile returns NA bounds rather than a wrong number.
+  expect_equal(unname(confint(ht, level = 0.90)), e0$confint_90)
+  expect_false(anyNA(confint(ht, level = 0.90)))
+})
+
+test_that("Horvitz-Thompson glance returns estimatr's four columns", {
+  e0 <- ref("post_ht")
+  g <- generics::glance(ht)
+  expect_equal(names(g), c("nobs", "se_type", "condition2", "condition1"))
+  expect_equal(names(g), e0$glance_names)
+  expect_equal(g$nobs, 40L)
+})
+
+test_that("Horvitz-Thompson summary reports a z statistic rather than a t", {
+  # The estimator has no degrees of freedom to spend, so the headings must not
+  # promise any.
+  cols <- colnames(summary(ht)$coefficients)
+  expect_true("z value" %in% cols)
+  expect_false("t value" %in% cols)
+})
+
+test_that("modelsummary gets goodness-of-fit rows for a Horvitz-Thompson fit", {
+  skip_if_not_installed("modelsummary")
+  # Without glance() this call did not fail. It quietly dropped the GOF rows and
+  # printed a coefficient table that looked complete, which is why the missing
+  # method was worth finding. modelsummary reads tidy() and glance(), never
+  # extract(), so this is the path that matters now.
+  out <- modelsummary::modelsummary(ht, output = "data.frame")
+  gof <- out$term[out$part == "gof"]
+  expect_true("Num.Obs." %in% gof)
+  expect_true(all(c("Std.Errors", "condition2", "condition1") %in% gof))
+})
+
+# ---- other packages' entry points ----
+
+test_that("commarobust and starprep error with a pointer to the replacement", {
+  expect_error(commarobust(lm(y ~ z, data = post_dat)), "removed in estimatr 2\\.0")
+  expect_error(commarobust(lm(y ~ z, data = post_dat)), "lm_robust")
+  expect_error(starprep(lm(y ~ z, data = post_dat)), "removed in estimatr 2\\.0")
+  expect_error(starprep(lm(y ~ z, data = post_dat)), "modelsummary")
+})
+
+test_that("extract returns a texreg object for both fit types", {
+  skip_if_not_installed("texreg")
+  # Exported as plain functions on purpose: texreg looks up extract.<class> by
+  # name rather than dispatching on a generic, so S3method() would hide them.
+  expect_s4_class(extract.lm_robust(lm_robust(y ~ z + x, data = post_dat)), "texreg")
+  expect_s4_class(extract.iv_robust(fits$iv), "texreg")
+})
+
+test_that("C3: emmeans works when its namespace is loaded rather than attached", {
+  # recover_data.lm_robust called getS3method("recover_data", "lm") with no
+  # `envir`, so the lookup searched the caller's path for a generic that lives
+  # in emmeans. `emmeans::emmeans(...)` loads the namespace without attaching
+  # it, which is the ordinary way to call it, and every such call failed with
+  # "no function 'recover_data' could be found" -- surfaced to the user as
+  # "Perhaps a 'data' or 'params' argument is needed".
+  skip_if_not_installed("emmeans")
+  set.seed(1)
+  n <- 100
+  d <- data.frame(y = rnorm(n), g = factor(sample(3, n, TRUE)))
+
+  em <- as.data.frame(emmeans::emmeans(
+    lm_robust(y ~ g, data = d, se_type = "classical"), "g"
+  ))
+  el <- as.data.frame(emmeans::emmeans(lm(y ~ g, data = d), "g"))
+  expect_equal(em$emmean, el$emmean, tolerance = 1e-12)
+  # classical standard errors are lm's, so the whole path is checked and not
+  # only that it returns something
+  expect_equal(em$SE, el$SE, tolerance = 1e-12)
+
+  # and the robust default really does reach emmeans, rather than being
+  # silently replaced by lm's
+  hc2 <- as.data.frame(emmeans::emmeans(lm_robust(y ~ g, data = d), "g"))
+  expect_false(isTRUE(all.equal(hc2$SE, el$SE)))
+})

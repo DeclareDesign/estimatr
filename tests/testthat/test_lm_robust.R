@@ -1,256 +1,237 @@
 library(estimatr)
 
-set.seed(42)
-n <- 200
-dat <- data.frame(
-  y = rnorm(n),
-  x = rnorm(n),
-  z = rbinom(n, 1, 0.5),
-  cl = rep(1:20, 10),
-  block = rep(1:20, each = 10),
-  w = runif(n, 0.5, 2)
-)
-dat$z_block <- rep(rep(c(0L, 1L), 5L), 20L)
+# lm_robust's own behaviour: its defaults, how it reads a formula and missing
+# values, what it returns, and the regressions filed against it by issue
+# number or by the 2026-08-23 review's item.
+#
+# What is true of every estimator lives in the property files
+# (test_invariance.R, test_equivalence.R, test_degenerate.R, test_errors.R,
+# test_methods.R); correctness against other implementations lives in the
+# test_vs_*.R files; absorbed fixed effects live in test_fixed_effects.R and
+# test_fe_leverage.R.
 
-# ---- lm_robust basics ----
+lm_data <- function() {
+  set.seed(42)
+  n <- 200
+  dat <- data.frame(
+    y = rnorm(n),
+    x = rnorm(n),
+    z = rbinom(n, 1, 0.5),
+    cl = rep(1:20, 10),
+    block = rep(1:20, each = 10),
+    w = runif(n, 0.5, 2)
+  )
+  dat
+}
 
-test_that("lm_robust returns lm_robust class", {
-  m <- lm_robust(y ~ x + z, data = dat)
-  expect_s3_class(m, "lm_robust")
+dat <- lm_data()
+n <- nrow(dat)
+
+# Strip what differs between two calls that fit the same model: the call itself,
+# and the formula's environment.
+rmcall <- function(x) {
+  x$call <- NULL
+  if (!is.null(x$terms)) attr(x$terms, ".Environment") <- NULL
+  x
+}
+
+# ---- defaults ----
+
+test_that("the default se_type is HC2, or CR2 with clusters", {
+  expect_equal(lm_robust(y ~ x, data = dat)$se_type, "HC2")
+  clustered <- lm_robust(y ~ x + z, data = dat, clusters = cl)
+  expect_equal(clustered$se_type, "CR2")
+  expect_equal(clustered$nclusters, 20L)
 })
 
-test_that("lm_robust default is HC2", {
-  m <- lm_robust(y ~ x, data = dat)
-  expect_equal(m$se_type, "HC2")
-})
-
-test_that("lm_robust classical matches lm", {
+test_that("classical standard errors are lm()'s", {
   m0 <- lm_robust(y ~ x + z, data = dat, se_type = "classical")
   m1 <- lm(y ~ x + z, data = dat)
-  expect_equal(as.numeric(coef(m0)), as.numeric(coef(m1)), tolerance = 1e-10)
-  expect_equal(as.numeric(m0$std.error), as.numeric(summary(m1)$coef[, 2]), tolerance = 1e-10)
+  expect_equal(unname(coef(m0)), unname(coef(m1)), tolerance = 1e-10)
+  expect_equal(unname(m0$std.error), unname(summary(m1)$coef[, 2]), tolerance = 1e-10)
 })
 
-test_that("lm_robust tidy returns expected columns", {
-  m <- lm_robust(y ~ x + z, data = dat)
-  td <- tidy(m)
-  expect_named(td, c("term", "estimate", "std.error", "statistic", "p.value", "conf.low", "conf.high", "df", "outcome"))
+test_that("stata without clusters is HC1, which is HC0 scaled by n / (n - k)", {
+  set.seed(42)
+  N <- 40
+  d <- data.frame(Y = rnorm(N), Z = rbinom(N, 1, 0.5), X = rnorm(N))
+  hc0 <- lm_robust(Y ~ Z + X, data = d, se_type = "HC0")
+  hc1 <- lm_robust(Y ~ Z + X, data = d, se_type = "HC1")
+  stata <- lm_robust(Y ~ Z + X, data = d, se_type = "stata")
+  expect_equal(rmcall(hc1), rmcall(stata))
+  k <- length(coef(hc0))
+  expect_equal(hc0$std.error^2, hc1$std.error^2 * (N - k) / N, tolerance = 1e-12)
 })
 
-test_that("lm_robust clustered uses CR2 by default", {
-  m <- lm_robust(y ~ x + z, data = dat, clusters = cl)
-  expect_equal(m$se_type, "CR2")
-  expect_true(!is.null(m$nclusters))
-})
+# ---- reading the formula and the data ----
 
-test_that("lm_robust subset works", {
-  m <- lm_robust(y ~ x, data = dat, subset = z == 1)
-  expect_true(m$nobs < n)
-})
-
-test_that("lm_robust weights work", {
-  m <- lm_robust(y ~ x + z, data = dat, weights = w)
-  expect_true(m$weighted)
-})
-
-test_that("lm_robust multivariate returns matrix coefs", {
-  m <- lm_robust(cbind(y, y_extra = y + rnorm(n)) ~ x + z, data = dat)
-  expect_true(is.matrix(m$coefficients))
-  expect_equal(ncol(m$coefficients), 2L)
-})
-
-test_that("lm_robust r.squared is in [0, 1] for non-trivial models", {
-  m <- lm_robust(y ~ x + z, data = dat)
-  expect_gte(m$r.squared, 0)
-  expect_lte(m$r.squared, 1)
-})
-
-test_that("lm_robust se_type none skips SE computation", {
-  m <- lm_robust(y ~ x, data = dat, se_type = "none")
-  expect_equal(m$se_type, "none")
-  expect_true(is.na(m$std.error[1]))
-})
-
-test_that("lm_robust confint returns matrix", {
-  m <- lm_robust(y ~ x + z, data = dat)
-  ci <- confint(m)
-  expect_true(is.matrix(ci))
-  expect_equal(nrow(ci), 3L)
-})
-
-test_that("lm_robust fitted values have correct length", {
-  m <- lm_robust(y ~ x, data = dat)
-  expect_equal(length(fitted(m)), n)
-})
-
-# ---- lm_lin ----
-
-test_that("lm_lin returns lm_robust class", {
-  m <- lm_lin(y ~ z, covariates = ~ x, data = dat)
-  expect_s3_class(m, "lm_robust")
-})
-
-test_that("lm_lin coefs include _c interaction", {
-  m <- lm_lin(y ~ z, covariates = ~ x, data = dat)
-  expect_true(any(grepl("_c$", m$term)))
-})
-
-test_that("lm_lin's treatment coefficient is close to the additive lm_robust one", {
-  # Lin's estimator interacts the treatment with centred covariates, so it does
-  # not equal the additive fit; on data where the interaction is near zero the
-  # two land close, which is the property worth pinning.
-  m  <- lm_lin(y ~ z, covariates = ~ x, data = dat)
-  m0 <- lm_robust(y ~ z + x, data = dat)
-  expect_equal(unname(coef(m)["z"]), unname(coef(m0)["z"]), tolerance = 0.01)
-})
-
-# ---- difference_in_means ----
-
-test_that("DiM standard design returns correct class", {
-  m <- difference_in_means(y ~ z, data = dat)
-  expect_s3_class(m, "difference_in_means")
-  expect_equal(m$design, "Standard")
-})
-
-test_that("DiM blocked design", {
-  m <- difference_in_means(y ~ z_block, blocks = block, data = dat)
-  expect_equal(m$design, "Blocked")
-  expect_equal(unname(m$df), n - 2 * 20)
-})
-
-test_that("DiM clustered design", {
-  # Clustered: treatment assigned at cluster level
-  dat_cl <- dat
-  dat_cl$cl_z <- as.integer(dat_cl$cl %% 2 == 0)
-  m <- difference_in_means(y ~ cl_z, clusters = cl, data = dat_cl)
-  expect_equal(m$design, "Clustered")
-})
-
-test_that("DiM tidy works", {
-  m <- difference_in_means(y ~ z, data = dat)
-  td <- tidy(m)
-  expect_named(td[1:7], c("term","estimate","std.error","statistic","p.value","conf.low","conf.high"))
-})
-
-# ---- iv_robust ----
-
-test_that("iv_robust returns iv_robust class", {
-  dat$iv <- dat$z + rnorm(n, 0, 0.5)
-  m <- iv_robust(y ~ z | iv, data = dat)
-  expect_s3_class(m, "iv_robust")
-})
-
-test_that("iv_robust 2SLS matches ivreg for classical SEs", {
+test_that("an intercept-only model returns the mean", {
   set.seed(1)
-  dat2 <- data.frame(
-    y = rnorm(200),
-    x = rnorm(200),
-    z = rnorm(200)
-  )
-  m0 <- iv_robust(y ~ x | z, data = dat2, se_type = "classical")
-  # Just check structure
-  expect_s3_class(m0, "iv_robust")
-  expect_equal(length(coef(m0)), 2L)
+  d <- data.frame(Y = rnorm(50))
+  expect_equal(coef(lm_robust(Y ~ 1, data = d))[[1]], mean(d$Y))
 })
 
-# ---- lh_robust ----
-
-test_that("lh_robust returns lh_robust class", {
-  m <- lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z = 0")
-  expect_s3_class(m, "lh_robust")
+test_that("a formula held in a variable, or built inside a function, is the same fit", {
+  set.seed(1)
+  d <- data.frame(Y = rnorm(40), Z = rbinom(40, 1, 0.5))
+  form <- Y ~ Z
+  inside <- function(dd) {
+    form2 <- Y ~ Z
+    lm_robust(form2, data = dd)
+  }
+  expect_equal(rmcall(lm_robust(form, data = d)), rmcall(inside(d)))
 })
 
-test_that("lh_robust lh component tidy works", {
-  m <- lh_robust(y ~ x + z, data = dat, linear_hypothesis = "x + z = 0")
-  td <- tidy(m$lh)
-  expect_equal(nrow(td), 1L)
+test_that("a . in the formula expands against the data, clusters included", {
+  set.seed(42)
+  clust <- rep(1:6, 10)
+  d <- data.frame(y = rnorm(60), x = rnorm(60))
+  expect_equal(rmcall(lm_robust(y ~ ., clusters = clust, data = d)),
+               rmcall(lm_robust(y ~ x, clusters = clust, data = d)))
 })
 
-# ---- glance / nobs ----
-
-test_that("glance.lm_robust returns data.frame with expected cols", {
-  m <- lm_robust(y ~ x + z, data = dat)
-  g <- glance(m)
-  expect_s3_class(g, "data.frame")
-  expect_true("r.squared" %in% names(g))
-  expect_true("nobs" %in% names(g))
+test_that("factor levels a subset removes are dropped", {
+  set.seed(42)
+  d <- data.frame(Y = rnorm(40), Z = factor(sample(LETTERS[1:3], 40, replace = TRUE)))
+  expect_equal(rmcall(lm_robust(Y ~ Z, data = d[d$Z %in% c("A", "B"), ])),
+               rmcall(lm_robust(Y ~ Z, data = d, subset = Z %in% c("A", "B"))))
 })
 
-test_that("nobs returns correct count", {
-  m <- lm_robust(y ~ x, data = dat)
-  expect_equal(nobs(m), n)
+test_that("a row with a missing value is the same fit as the row removed, field for field", {
+  # test_equivalence.R holds the estimates of every estimator to this; here
+  # every returned field of lm_robust is.
+  set.seed(42)
+  N <- 40
+  d <- data.frame(Y = rnorm(N), Z = rbinom(N, 1, 0.5), X = rnorm(N), W = runif(N),
+                  cl = rep(1:8, 5))
+  missing_y <- d
+  missing_y$Y[5] <- NA
+  expect_equal(rmcall(lm_robust(Y ~ Z + X, data = missing_y)),
+               rmcall(lm_robust(Y ~ Z + X, data = d[-5, ])))
+  missing_x <- d
+  missing_x$X[23] <- NA
+  expect_equal(rmcall(lm_robust(Y ~ Z + X, data = missing_x)),
+               rmcall(lm_robust(Y ~ Z + X, data = d[-23, ])))
+  weighted <- d
+  weighted$Y[39] <- NA
+  expect_equal(rmcall(lm_robust(Y ~ Z * X, weights = W, data = weighted)),
+               rmcall(lm_robust(Y ~ Z * X, weights = W, data = d[-39, ])))
+  expect_equal(rmcall(lm_robust(Y ~ X, clusters = cl, data = missing_y)),
+               rmcall(lm_robust(Y ~ X, clusters = cl, data = d[-5, ])))
 })
 
-# ---- weighted R2 bug fix ----
-
-test_that("weighted R2 is in [0, 1] for simple model", {
-  # Before fix, weights^2 could make R2 negative or > 1
-  dat_w <- data.frame(y = 1:10 + rnorm(10, 0, 0.01), x = 1:10, w = (1:10) / 10)
-  m <- lm_robust(y ~ x, data = dat_w, weights = w)
-  expect_gte(m$r.squared, 0)
-  expect_lte(m$r.squared, 1.0001)  # small tolerance
-})
-
-# ---- regression: GitHub issue fixes ----
-
-test_that("#421: ordered factor cluster does not crash", {
-  dat_ord <- dat
-  dat_ord$cl_ord <- factor(dat$cl, ordered = TRUE)
-  m <- lm_robust(y ~ x + z, data = dat_ord, clusters = cl_ord)
-  expect_s3_class(m, "lm_robust")
+test_that("#421: an ordered factor cluster does not crash", {
+  d <- dat
+  d$cl_ord <- factor(dat$cl, ordered = TRUE)
+  m <- lm_robust(y ~ x + z, data = d, clusters = cl_ord)
   expect_equal(m$nclusters, length(unique(dat$cl)))
+  expect_equal(m$std.error, lm_robust(y ~ x + z, data = dat, clusters = cl)$std.error)
 })
 
-test_that("#348: formula() object passed to fixed_effects works", {
-  fe_form <- formula(~block)
-  m_var  <- lm_robust(y ~ z, data = dat, fixed_effects = fe_form)
-  m_lit  <- lm_robust(y ~ z, data = dat, fixed_effects = ~block)
-  expect_equal(coef(m_var), coef(m_lit), tolerance = 1e-12)
+test_that("B13: a character cluster is coerced rather than handed to the C++", {
+  set.seed(1)
+  N <- 60
+  d <- data.frame(y = rnorm(N), x = rnorm(N), cl = sample(6, N, TRUE))
+  d$clch <- paste0("g", d$cl)
+  for (se in c("CR0", "CR2", "stata")) {
+    a <- lm_robust(y ~ x, clusters = clch, data = d, se_type = se)
+    b <- lm_robust(y ~ x, clusters = cl, data = d, se_type = se)
+    expect_equal(a$std.error, b$std.error, info = se)
+    expect_equal(a$nclusters, 6L, info = se)
+  }
 })
 
-test_that("#303: intercept-only model with FE returns sensible result", {
-  m <- lm_robust(y ~ 1, data = dat, fixed_effects = ~block)
-  expect_equal(length(m$coefficients), 0L)
-  expect_equal(m$df.residual, n - 20L)       # 20 blocks
-  expect_gte(m$r.squared, 0)
-  expect_lte(m$r.squared, 1)
-  expect_equal(length(m$fitted.values), n)
+test_that("B6: one cluster is refused rather than answered with a zero", {
+  # Every cluster-robust estimator here divides by J - 1 somewhere except CR2,
+  # whose Satterthwaite degrees of freedom never reach that guard, so a single
+  # cluster produced standard errors of order 1e-17 and no warning.
+  set.seed(1)
+  N <- 60
+  d <- data.frame(y = rnorm(N), x = rnorm(N), one = 1L)
+  for (se in c("CR0", "CR2", "stata")) {
+    expect_error(lm_robust(y ~ x, clusters = one, data = d, se_type = se),
+                 "only one level", info = se)
+  }
+  expect_error(iv_robust(y ~ x | x, clusters = one, data = d), "only one level")
 })
 
-test_that("#405: lh_robust CIs match lm_robust CIs with clusters", {
-  m_cl <- lm_robust(y ~ x + z, data = dat, clusters = cl)
-  lh_x <- lh_robust(y ~ x + z, data = dat, clusters = cl, linear_hypothesis = "x=0")
-  expect_equal(lh_x$lh$conf.low,  unname(confint(m_cl)["x", "2.5 %"]),  tolerance = 1e-10)
-  expect_equal(lh_x$lh$conf.high, unname(confint(m_cl)["x", "97.5 %"]), tolerance = 1e-10)
+test_that("B5: zero weights are not observations", {
+  # N was nrow(X), so ten zero weights among 100 rows gave df.residual 98
+  # where lm() gives 88, and every classical, HC1 and stata standard error and
+  # every p-value moved with it. A zero-weight row stays in residuals and
+  # fitted.values, as lm() keeps it; it is only the counting that changes.
+  set.seed(1)
+  N_b5 <- 100
+  d <- data.frame(x = rnorm(N_b5))
+  d$y <- d$x + rnorm(N_b5)
+  w_b5 <- runif(N_b5)
+  w_b5[1:10] <- 0
+
+  m <- lm_robust(y ~ x, data = d, weights = w_b5, se_type = "classical")
+  l <- lm(y ~ x, data = d, weights = w_b5)
+  expect_equal(m$df.residual, l$df.residual)
+  expect_equal(m$nobs, nobs(l))
+  expect_equal(m$std.error[["x"]],
+               summary(l)$coefficients["x", "Std. Error"], tolerance = 1e-12)
+  expect_equal(length(m$residuals), N_b5)
+
+  # and the definition of a zero weight: the same answer as deleting the row
+  keep <- w_b5 > 0
+  for (se in c("classical", "HC0", "HC1", "HC2", "HC3")) {
+    expect_equal(
+      lm_robust(y ~ x, data = d, weights = w_b5, se_type = se)$std.error[["x"]],
+      lm_robust(y ~ x, data = d[keep, ], weights = w_b5[keep],
+                se_type = se)$std.error[["x"]],
+      tolerance = 1e-12, info = se
+    )
+  }
 })
 
-test_that("lh_robust handles an intercept-only model", {
-  # estimatr 1.0.6 errors here with "missing value where TRUE/FALSE needed".
-  # Its df warning guards with `length(fit$df) > 0 && var(fit$df > 0)`, and
-  # var() of a length-one vector is NA, so the `if` has nothing to branch on.
-  # The unreleased origin/lh-fixes branch changes that 0 to a 1; this rewrite
-  # resolves df per hypothesis by name instead and never calls var(), so the
-  # case works rather than being patched. Pinned because a future change to the
-  # df logic could reintroduce it silently.
-  # Live case: the italian_village_continued design in the ResearchDesigns
-  # library, which fits age ~ 1 and cannot run under CRAN estimatr.
-  intercept_only <- data.frame(age = dat$y)
-  m <- lh_robust(age ~ 1, data = intercept_only,
-                 linear_hypothesis = "(Intercept) = 20")
-  expect_s3_class(m, "lh_robust")
-  expect_equal(nrow(m$lh), 1L)
-  expect_equal(m$lh$df, unname(m$lm_robust$df["(Intercept)"]))
-  expect_false(is.na(m$lh$p.value))
+test_that("a weighted R-squared stays in [0, 1]", {
+  # Squaring the internal square-root weights a second time, which an early
+  # version of 2.0 did, lets it leave the interval.
+  set.seed(13)
+  d <- data.frame(y = 1:10 + rnorm(10, 0, 0.01), x = 1:10, w = (1:10) / 10)
+  m <- lm_robust(y ~ x, data = d, weights = w)
+  expect_equal(m$r.squared, summary(lm(y ~ x, data = d, weights = w))$r.squared,
+               tolerance = 1e-12)
 })
 
-test_that("#320: lh_robust returns joint_hypothesis", {
-  lh2 <- lh_robust(y ~ x + z, data = dat, linear_hypothesis = c("x=0", "z=0"))
-  expect_true(!is.null(lh2$joint_hypothesis))
-  expect_true("value" %in% names(lh2$joint_hypothesis))
-  expect_true("p.value" %in% names(lh2$joint_hypothesis))
-  expect_equal(unname(lh2$joint_hypothesis["numdf"]), 2)
-  expect_gte(lh2$joint_hypothesis["p.value"], 0)
-  expect_lte(lh2$joint_hypothesis["p.value"], 1)
+test_that("B9: fitting does not advance the RNG", {
+  # The hidden variable names were built with sample.int(), so every fit moved
+  # the seed. This package lives inside DeclareDesign simulation loops, where
+  # that changes what the next draw is.
+  set.seed(1)
+  N_b9 <- 50
+  d <- data.frame(y = rnorm(N_b9), x = rnorm(N_b9), w = runif(N_b9),
+                  bl = sample(5, N_b9, TRUE), cl = sample(8, N_b9, TRUE))
+
+  # The fits themselves are beside the point here; only whether they move the
+  # seed is.
+  draw_after <- function(expr) {
+    set.seed(99)
+    suppressWarnings(force(expr))
+    rnorm(1)
+  }
+  baseline <- draw_after(NULL)
+  expect_equal(draw_after(lm_robust(y ~ x, data = d)), baseline)
+  expect_equal(draw_after(lm_robust(y ~ x, weights = w, fixed_effects = ~ bl,
+                                    clusters = cl, data = d)), baseline)
+  expect_equal(draw_after(lm_lin(y ~ x, covariates = ~ w, data = d)), baseline)
+})
+
+test_that("B11: an offset() term is refused rather than ignored", {
+  # It was parsed and never read, so the fit came back as though the term were
+  # absent: a silently different model, not a refused one.
+  set.seed(1)
+  N_b11 <- 100
+  d <- data.frame(x = rnorm(N_b11), off = rnorm(N_b11))
+  d$y <- d$x + 2 * d$off + rnorm(N_b11)
+  expect_error(lm_robust(y ~ x + offset(off), data = d), "not supported")
+
+  # the rewrite the message names is exact
+  expect_equal(coef(lm_robust(I(y - off) ~ x, data = d))[["x"]],
+               coef(lm(y ~ x + offset(off), data = d))[["x"]])
 })
 
 # ---- residuals (estimatr #345) ----
@@ -292,20 +273,7 @@ test_that("#345: residuals with fixed effects are the full-model residuals", {
   expect_equal(unname(m$residuals + m$fitted.values), dat$y, tolerance = 1e-10)
 })
 
-test_that("#345: iv_robust returns structural residuals", {
-  m <- iv_robust(mpg ~ wt | am, data = mtcars)
-  X <- cbind(1, mtcars$wt)
-  expect_equal(unname(m$residuals), as.vector(mtcars$mpg - X %*% coef(m)),
-               tolerance = 1e-12)
-})
-
-test_that("#345: lm_lin returns residuals", {
-  m <- lm_lin(y ~ z, covariates = ~ x, data = dat)
-  expect_equal(length(m$residuals), n)
-  expect_equal(unname(m$residuals + m$fitted.values), dat$y, tolerance = 1e-12)
-})
-
-# ---- collinearity warning (estimatr #411) ----
+# ---- collinearity (estimatr #351, #411) ----
 
 test_that("#411: dropped collinear regressors warn and name themselves", {
   d <- dat
@@ -322,12 +290,6 @@ test_that("#411: no warning when the design matrix is full rank", {
   expect_no_warning(lm_lin(y ~ z, covariates = ~ x, data = dat))
 })
 
-z_model_frame <- function(...) estimatr:::model.frame.iv_robust(...)
-z_varnames <- function(...) estimatr:::variable.names.lm_robust(...)
-z_tidy <- function(...) estimatr:::tidy.lm_robust(...)
-
-# ---- rank detection and degenerate designs (estimatr #351, #395) ----
-
 test_that("#351: a constant regressor is detected as collinear, as in lm()", {
   d <- data.frame(y = rnorm(500), x = 1)
   m <- suppressWarnings(lm_robust(y ~ x, data = d))
@@ -335,8 +297,11 @@ test_that("#351: a constant regressor is detected as collinear, as in lm()", {
   expect_equal(unname(is.na(coef(lm(y ~ x, data = d)))), unname(is.na(m$coefficients)))
 })
 
+# ---- leverage at or near 1 (estimatr #395) ----
+
 test_that("#395: NaN standard errors from leverage-1 points are explained", {
-  set.seed(7); N <- 50
+  set.seed(7)
+  N <- 50
   d <- data.frame(x = sample(1:40, N, TRUE), Z = sample(0:1, N, TRUE))
   d$Y <- 0.1 * d$Z + d$x + rnorm(N)
   # This design is rank deficient AND near-saturated, so several warnings fire
@@ -498,7 +463,8 @@ lev_above_one <- function(fml, data) {
 }
 
 test_that("#395: HC2 and HC3 both warn, and neither returns NaN, above leverage 1", {
-  set.seed(7); N <- 50
+  set.seed(7)
+  N <- 50
   d <- data.frame(x = sample(1:40, N, TRUE), Z = sample(0:1, N, TRUE))
   d$Y <- 0.1 * d$Z + d$x + rnorm(N)
   fml <- Y ~ Z * as.factor(x)
@@ -523,7 +489,8 @@ test_that("#395: HC2 and HC3 both warn, and neither returns NaN, above leverage 
 })
 
 test_that("#395: the leverage warning counts the observations it dropped", {
-  set.seed(7); N <- 50
+  set.seed(7)
+  N <- 50
   d <- data.frame(x = sample(1:40, N, TRUE), Z = sample(0:1, N, TRUE))
   d$Y <- 0.1 * d$Z + d$x + rnorm(N)
   fml <- Y ~ Z * as.factor(x)
@@ -606,315 +573,20 @@ test_that("#404: predict() works with fixed effects, with and without factors", 
 
 test_that("#404: predict() rejects new FE levels and multi-way FE", {
   m <- lm_robust(y ~ x, data = dat, fixed_effects = ~ block)
-  nd <- dat[1, ]; nd$block <- 999
+  nd <- dat[1, ]
+  nd$block <- 999
   expect_error(predict(m, nd), "new levels")
   m2 <- lm_robust(y ~ x, data = dat, fixed_effects = ~ block + cl, se_type = "HC1")
   expect_error(predict(m2, dat[1:5, ]), "fitted.values")
 })
 
-# ---- exported lm_robust_fit and S3 coverage (estimatr #269, #123) ----
+# ---- the exported fitting function (estimatr #269) ----
 
 test_that("#269: lm_robust_fit accepts an integer X and an unnamed y", {
   fit <- lm_robust_fit(y = dat$y, X = matrix(as.integer(dat$z)), weights = NULL,
     cluster = NULL, ci = FALSE, se_type = "none", alpha = 0.05,
     return_vcov = FALSE, try_cholesky = FALSE, has_int = TRUE)
-  expect_s3_class(z_tidy(fit), "data.frame")
-  expect_equal(nrow(z_tidy(fit)), 1L)
-})
-
-test_that("#123: variable.names() returns the model terms", {
-  m <- lm_robust(y ~ x + z, data = dat)
-  expect_equal(z_varnames(m), c("(Intercept)", "x", "z"))
-})
-
-# ---- iv_robust S3 (estimatr #389, #397) ----
-
-test_that("#389: glance() works with multiple endogenous regressors", {
-  m <- iv_robust(mpg ~ hp + wt | am + cyl, data = mtcars, diagnostics = TRUE)
-  g <- glance(m)
-  expect_s3_class(g, "data.frame")
-  expect_equal(nrow(g), 1L)
-  # reports the weakest of the per-regressor first stages
-  fs <- m$diagnostic_first_stage_fstatistic
-  expect_equal(g$statistic.weakinst, unname(min(fs[grep("(^|:)value$", names(fs))])))
-})
-
-test_that("over-identified diagnostics work for every se_type, not just classical", {
-  # `first_stage_fits` has its columns renamed `fit_<endog>`, and the rewritten
-  # robust branch then indexed it by the bare endogenous names, so every
-  # over-identified fit with a non-classical se_type died with "subscript out
-  # of bounds". The classical branch took a different function and was fine,
-  # which is why the whole path had no test.
-  set.seed(2); n <- 500
-  d <- data.frame(z1 = rnorm(n), z2 = rnorm(n), z3 = rnorm(n), w = rnorm(n))
-  d$x <- d$z1 + 0.5 * d$z2 + 0.3 * d$z3 + rnorm(n)
-  d$y <- d$x + d$w + rnorm(n)
-  fml <- y ~ x + w | z1 + z2 + z3 + w
-
-  for (ty in c("classical", "HC0", "HC1", "HC2", "HC3")) {
-    m <- iv_robust(fml, data = d, se_type = ty, diagnostics = TRUE)
-    ov <- m$diagnostic_overid_test
-    expect_equal(names(ov), c("value", "df", "p.value"), info = ty)
-    expect_true(is.finite(ov[["value"]]), info = ty)
-    expect_equal(unname(ov[["df"]]), 2, info = ty)   # 3 instruments, 1 endogenous
-  }
-
-  # The classical branch is Sargan's statistic, which AER computes
-  # independently.
-  skip_if_not_installed("AER")
-  sargan <- summary(AER::ivreg(fml, data = d), diagnostics = TRUE)$diagnostics["Sargan", ]
-  cl <- iv_robust(fml, data = d, se_type = "classical", diagnostics = TRUE)
-  expect_equal(cl$diagnostic_overid_test[["value"]], sargan[["statistic"]],
-               tolerance = 1e-10)
-  expect_equal(cl$diagnostic_overid_test[["p.value"]], sargan[["p-value"]],
-               tolerance = 1e-10)
-
-  # The robust branch is Wooldridge's score test, a different statistic, and
-  # every non-classical se_type shares it.
-  rb <- vapply(c("HC0", "HC1", "HC2", "HC3"), function(ty) {
-    iv_robust(fml, data = d, se_type = ty, diagnostics = TRUE)$diagnostic_overid_test[["value"]]
-  }, numeric(1))
-  expect_equal(unname(diff(range(rb))), 0)
-  expect_false(isTRUE(all.equal(rb[["HC0"]], cl$diagnostic_overid_test[["value"]])))
-})
-
-test_that("#397: model.frame() on iv_robust returns the model variables", {
-  m <- iv_robust(mpg ~ wt + hp | am + hp, data = mtcars)
-  mf <- z_model_frame(m)
-  expect_equal(nrow(mf), nrow(mtcars))
-  expect_setequal(names(mf), c("mpg", "wt", "hp", "am"))
-})
-
-# ---- clearer errors (estimatr #297, #304) ----
-
-test_that("#297: lh_robust rejects multiple outcomes with an explanation", {
-  skip_if_not_installed("carData")
-  expect_error(
-    lh_robust(cbind(mpg, am) ~ cyl + gear, data = mtcars, linear_hypothesis = "cyl = 2"),
-    "multiple outcomes"
-  )
-})
-
-test_that("#304: a bare grouping vector warns but still works", {
-  # #304 asked for the formula to be enforced. A warning naming the argument
-  # and the expected form does that without breaking code written against
-  # 1.x, which accepted the bare vector; `RCT` on CRAN passes one.
-  expect_warning(fit <- lm_robust(y ~ x, data = dat, fixed_effects = block),
-                 "deprecated")
-  expect_equal(fit$std.error,
-               lm_robust(y ~ x, data = dat, fixed_effects = ~ block)$std.error)
-  expect_equal(names(fit$felevels), "block")
-  # Anything that is neither a formula nor a grouping vector is still an error.
-  expect_error(lm_robust(y ~ x, data = dat, fixed_effects = list(1, 2)),
-               "must be a one-sided formula")
-})
-
-# ---- augment (estimatr #377) ----
-
-test_that("#377: augment() returns the model frame with .fitted and .resid", {
-  m <- lm_robust(y ~ x + z, data = dat)
-  a <- estimatr:::augment.lm_robust(m)
-  expect_s3_class(a, "data.frame")
-  expect_true(all(c(".fitted", ".resid") %in% names(a)))
-  expect_equal(nrow(a), n)
-  expect_equal(a$.fitted + a$.resid, dat$y, tolerance = 1e-12)
-})
-
-test_that("#377: augment() works for lm_lin, iv_robust and fixed effects", {
-  expect_true(".fitted" %in% names(
-    estimatr:::augment.lm_robust(lm_lin(y ~ z, covariates = ~ x, data = dat))))
-  expect_true(".fitted" %in% names(
-    estimatr:::augment.iv_robust(iv_robust(mpg ~ wt | am, data = mtcars))))
-  a <- estimatr:::augment.lm_robust(
-    lm_robust(y ~ x, data = dat, fixed_effects = ~ block))
-  expect_equal(a$.fitted + a$.resid, dat$y, tolerance = 1e-8)
-})
-
-test_that("#377: augment(newdata =) predicts without residuals", {
-  m <- lm_robust(y ~ x + z, data = dat)
-  a <- estimatr:::augment.lm_robust(m, newdata = dat[1:5, ])
-  expect_equal(nrow(a), 5L)
-  expect_true(".fitted" %in% names(a))
-  expect_false(".resid" %in% names(a))
-})
-
-test_that("#377: augment() refuses multivariate outcomes", {
-  m <- lm_robust(cbind(y, x) ~ z, data = dat)
-  expect_error(estimatr:::augment.lm_robust(m), "multiple outcomes")
-})
-
-
-# ---- regressions from 1.0.6 found in the 2026-08-23 review ----
-
-test_that("A4: lm_lin without an intercept expands a 0/1 treatment", {
-  # Without an intercept there is no baseline to absorb the control group, so
-  # both indicators are needed. 2.0 expanded only when the treatment took
-  # values outside {0, 1}, and returned `z, x1_c, z:x1_c`, losing the
-  # control-group intercept; 1.0.6 returned all four terms.
-  set.seed(1); N <- 100
-  d <- data.frame(z = rbinom(N, 1, 0.5), x1 = rnorm(N))
-  d$y <- d$z + d$x1 + rnorm(N)
-
-  m <- lm_lin(y ~ z - 1, covariates = ~ x1, data = d)
-  expect_equal(names(coef(m)), c("z0", "z1", "z0:x1_c", "z1:x1_c"))
-  # equal to the same model fitted by hand, which is what the terms mean
-  d$x1_c <- d$x1 - mean(d$x1)
-  hand <- lm_robust(y ~ factor(z):x1_c + factor(z) - 1, data = d, se_type = "HC2")
-  expect_equal(unname(coef(m)), unname(coef(hand)), tolerance = 1e-10)
-  expect_equal(length(predict(m, newdata = d)), N)
-
-  # the intercept form is unchanged
-  expect_equal(names(coef(lm_lin(y ~ z, covariates = ~ x1, data = d))),
-               c("(Intercept)", "z", "x1_c", "z:x1_c"))
-})
-
-test_that("A5: a fit with nothing but fixed effects is a fit, not a bare list", {
-  set.seed(1); N <- 100
-  d <- data.frame(y = rnorm(N), bl = sample(5, N, TRUE))
-  m <- lm_robust(y ~ 1, fixed_effects = ~ bl, data = d)
-
-  expect_s3_class(m, "lm_robust")
-  expect_equal(m$df.residual, lm(y ~ factor(bl), data = d)$df.residual)
-  expect_equal(m$r.squared, summary(lm(y ~ factor(bl), data = d))$r.squared,
-               tolerance = 1e-10)
-  # every method reads it without erroring, which is what the class buys
-  expect_output(print(m))
-  expect_s3_class(tidy(m), "data.frame")
-  expect_equal(nrow(glance(m)), 1L)
-  expect_equal(nobs(m), N)
-  expect_equal(length(predict(m, newdata = d)), N)
-
-  # iv_robust cannot answer this and says which function can, rather than
-  # dying on "length of 'dimnames' [2] not equal to array extent" as 1.0.6 did
-  expect_error(iv_robust(y ~ 1 | 1, fixed_effects = ~ bl, data = d),
-               "nothing to instrument")
-})
-
-test_that("B10: glance() reports the residual df, not the first coefficient's", {
-  # x[["df"]] is per-coefficient and under CR2 is Satterthwaite, so the column
-  # named df.residual read 8.56 on a 10-cluster fit whose residual df is 98.
-  set.seed(1); N <- 100
-  d <- data.frame(y = rnorm(N), x = rnorm(N), cl = sample(10, N, TRUE))
-  m <- lm_robust(y ~ x, clusters = cl, data = d, se_type = "CR2")
-  expect_equal(glance(m)$df.residual, m$df.residual)
-  expect_false(isTRUE(all.equal(m$df.residual, unname(m$df[[1]]))))
-  # and it agrees with the iv_robust method, which always used df.residual
-  mi <- iv_robust(y ~ x | x, data = d, clusters = cl, se_type = "CR2")
-  expect_equal(glance(mi)$df.residual, mi$df.residual)
-})
-
-
-test_that("B6: one cluster is refused rather than answered with a zero", {
-  # Every cluster-robust estimator here divides by J - 1 somewhere except CR2,
-  # whose Satterthwaite degrees of freedom never reach that guard, so a single
-  # cluster produced standard errors of order 1e-17 and no warning.
-  set.seed(1); N <- 60
-  d <- data.frame(y = rnorm(N), x = rnorm(N), one = 1L)
-  for (se in c("CR0", "CR2", "stata")) {
-    expect_error(lm_robust(y ~ x, clusters = one, data = d, se_type = se),
-                 "only one level", info = se)
-  }
-  expect_error(iv_robust(y ~ x | x, clusters = one, data = d), "only one level")
-})
-
-test_that("B13: a character cluster is coerced rather than handed to the C++", {
-  set.seed(1); N <- 60
-  d <- data.frame(y = rnorm(N), x = rnorm(N), cl = sample(6, N, TRUE))
-  d$clch <- paste0("g", d$cl)
-  for (se in c("CR0", "CR2", "stata")) {
-    a <- lm_robust(y ~ x, clusters = clch, data = d, se_type = se)
-    b <- lm_robust(y ~ x, clusters = cl, data = d, se_type = se)
-    expect_equal(a$std.error, b$std.error, info = se)
-    expect_equal(a$nclusters, 6L, info = se)
-  }
-})
-
-
-test_that("B5: zero weights are not observations", {
-  # N was nrow(X), so ten zero weights among 100 rows gave df.residual 98
-  # where lm() gives 88, and every classical, HC1 and stata standard error and
-  # every p-value moved with it. A zero-weight row stays in residuals and
-  # fitted.values, as lm() keeps it; it is only the counting that changes.
-  set.seed(1); N_b5 <- 100
-  d <- data.frame(x = rnorm(N_b5))
-  d$y <- d$x + rnorm(N_b5)
-  w_b5 <- runif(N_b5); w_b5[1:10] <- 0
-
-  m <- lm_robust(y ~ x, data = d, weights = w_b5, se_type = "classical")
-  l <- lm(y ~ x, data = d, weights = w_b5)
-  expect_equal(m$df.residual, l$df.residual)
-  expect_equal(m$nobs, nobs(l))
-  expect_equal(m$std.error[["x"]],
-               summary(l)$coefficients["x", "Std. Error"], tolerance = 1e-12)
-  expect_equal(length(m$residuals), N_b5)
-
-  # and the definition of a zero weight: the same answer as deleting the row
-  keep <- w_b5 > 0
-  for (se in c("classical", "HC0", "HC1", "HC2", "HC3")) {
-    expect_equal(
-      lm_robust(y ~ x, data = d, weights = w_b5, se_type = se)$std.error[["x"]],
-      lm_robust(y ~ x, data = d[keep, ], weights = w_b5[keep],
-                se_type = se)$std.error[["x"]],
-      tolerance = 1e-12, info = se
-    )
-  }
-})
-
-test_that("B9: fitting does not advance the RNG", {
-  # The hidden variable names were built with sample.int(), so every fit moved
-  # the seed. This package lives inside DeclareDesign simulation loops, where
-  # that changes what the next draw is.
-  set.seed(1); N_b9 <- 50
-  d <- data.frame(y = rnorm(N_b9), x = rnorm(N_b9), w = runif(N_b9),
-                  bl = sample(5, N_b9, TRUE), cl = sample(8, N_b9, TRUE))
-
-  # The fits themselves are beside the point here; only whether they move the
-  # seed is.
-  draw_after <- function(expr) {
-    set.seed(99)
-    suppressWarnings(force(expr))
-    rnorm(1)
-  }
-  baseline <- draw_after(NULL)
-  expect_equal(draw_after(lm_robust(y ~ x, data = d)), baseline)
-  expect_equal(draw_after(lm_robust(y ~ x, weights = w, fixed_effects = ~ bl,
-                                    clusters = cl, data = d)), baseline)
-  expect_equal(draw_after(lm_lin(y ~ x, covariates = ~ w, data = d)), baseline)
-})
-
-test_that("B11: an offset() term is refused rather than ignored", {
-  # It was parsed and never read, so the fit came back as though the term were
-  # absent: a silently different model, not a refused one.
-  set.seed(1); N_b11 <- 100
-  d <- data.frame(x = rnorm(N_b11), off = rnorm(N_b11))
-  d$y <- d$x + 2 * d$off + rnorm(N_b11)
-  expect_error(lm_robust(y ~ x + offset(off), data = d), "not supported")
-
-  # the rewrite the message names is exact
-  expect_equal(coef(lm_robust(I(y - off) ~ x, data = d))[["x"]],
-               coef(lm(y ~ x + offset(off), data = d))[["x"]])
-})
-
-test_that("lh_robust survives a single-coefficient fit", {
-  # estimatr 1.0.6 errored here. Its degrees-of-freedom check read
-  #   if (length(lm_robust_fit$df) > 0 && var(lm_robust_fit$df > 0))
-  # with the "> 0" inside var() rather than outside, so it took the variance of
-  # a logical vector; and var() of a length-one vector is NA either way, so &&
-  # was handed NA and stopped. Every one-coefficient fit hit it. That is the
-  # shape Declaration 9.2 of Blair, Coppock and Humphreys (2023) uses, and it
-  # kept book.declaredesign.org from rebuilding between 2025-02 and 2026-08.
-  # The rewrite resolves df per hypothesis and has no such check; this pins
-  # that the one-coefficient path stays reachable.
-  set.seed(20260828)
-  d <- data.frame(age = rnorm(3, mean = 30, sd = 10))
-  m <- lh_robust(age ~ 1, data = d, linear_hypothesis = "(Intercept) = 20")
-  expect_s3_class(m, "lh_robust")
-
-  td <- tidy(m$lh)
-  expect_equal(nrow(td), 1L)
-  # the hypothesis value is the estimated intercept minus 20
-  expect_equal(td$estimate, mean(d$age) - 20)
-  # and the df must come from the fit rather than arriving as NA
-  expect_equal(td$df, nrow(d) - 1L)
-  expect_true(all(is.finite(c(td$std.error, td$statistic, td$p.value))))
+  tidied <- estimatr:::tidy.lm_robust(fit)
+  expect_s3_class(tidied, "data.frame")
+  expect_equal(nrow(tidied), 1L)
 })

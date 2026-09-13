@@ -229,7 +229,7 @@ put("ht_named", list(data = d_named,
                      coefficients = fit_named$coefficients,
                      std.error = fit_named$std.error))
 
-# ---- test_postestimation.R ----
+# ---- Horvitz-Thompson methods (test_methods.R) and lm_lin predict (test_lm_lin.R) ----
 
 post <- ref_data_post()
 ht_post <- estimatr::horvitz_thompson(y ~ z, data = post, condition_prs = 0.5)

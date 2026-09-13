@@ -488,3 +488,69 @@ test_that("B4: the fixed-effects R-squared is weighted and per outcome", {
   ivw <- iv_robust(y ~ x | x, fixed_effects = ~ bl, data = d, weights = w)
   expect_equal(ivw$r.squared, lw$r.squared, tolerance = 1e-12)
 })
+
+# ---- how the fixed_effects argument is read (estimatr #303, #304, #348) ----
+
+issue_data <- function() {
+  set.seed(42)
+  n <- 200
+  data.frame(y = rnorm(n), x = rnorm(n), z = rbinom(n, 1, 0.5),
+             block = rep(1:20, each = 10))
+}
+
+test_that("#348: a formula() object passed to fixed_effects works", {
+  d <- issue_data()
+  fe_form <- formula(~ block)
+  expect_equal(coef(lm_robust(y ~ z, data = d, fixed_effects = fe_form)),
+               coef(lm_robust(y ~ z, data = d, fixed_effects = ~ block)),
+               tolerance = 1e-12)
+})
+
+test_that("#303 and A5: a fit with nothing but fixed effects is a fit", {
+  d <- issue_data()
+  m <- lm_robust(y ~ 1, data = d, fixed_effects = ~ block)
+  expect_s3_class(m, "lm_robust")
+  expect_equal(length(m$coefficients), 0L)
+  expect_equal(m$df.residual, nrow(d) - 20L)
+  expect_equal(m$r.squared, summary(lm(y ~ factor(block), data = d))$r.squared,
+               tolerance = 1e-10)
+  expect_equal(length(m$fitted.values), nrow(d))
+  # every method reads it without erroring, which is what the class buys
+  expect_output(print(m))
+  expect_s3_class(tidy(m), "data.frame")
+  expect_equal(nrow(glance(m)), 1L)
+  expect_equal(nobs(m), nrow(d))
+  expect_equal(length(predict(m, newdata = d)), nrow(d))
+
+  # iv_robust cannot answer this and says which function can, rather than
+  # dying on "length of 'dimnames' [2] not equal to array extent" as 1.0.6 did
+  expect_error(iv_robust(y ~ 1 | 1, fixed_effects = ~ block, data = d),
+               "nothing to instrument")
+})
+
+test_that("#304: a bare grouping vector warns but still works", {
+  # #304 asked for the formula to be enforced. A warning naming the argument
+  # and the expected form does that without breaking code written against
+  # 1.x, which accepted the bare vector; `RCT` on CRAN passes one.
+  d <- issue_data()
+  expect_warning(fit <- lm_robust(y ~ x, data = d, fixed_effects = block),
+                 "deprecated")
+  expect_equal(fit$std.error,
+               lm_robust(y ~ x, data = d, fixed_effects = ~ block)$std.error)
+  expect_equal(names(fit$felevels), "block")
+  # Anything that is neither a formula nor a grouping vector is still an error.
+  expect_error(lm_robust(y ~ x, data = d, fixed_effects = list(1, 2)),
+               "must be a one-sided formula")
+})
+
+test_that("absorbed fixed effects with a multivariate outcome are the dummy regression", {
+  set.seed(43)
+  N <- 40
+  d <- data.frame(Y = rnorm(N), Y2 = rnorm(N), Z = rbinom(N, 1, 0.5), X = rnorm(N),
+                  B = factor(rep(1:4, each = 10)))
+  dummies <- lm_robust(cbind(Y, Y2) ~ Z + X + factor(B), data = d)
+  absorbed <- lm_robust(cbind(Y, Y2) ~ Z + X, fixed_effects = ~ B, data = d)
+  expect_equal(unname(absorbed$coefficients), unname(dummies$coefficients[c("Z", "X"), ]),
+               tolerance = 1e-10)
+  expect_equal(unname(absorbed$fitted.values), unname(dummies$fitted.values), tolerance = 1e-8)
+})

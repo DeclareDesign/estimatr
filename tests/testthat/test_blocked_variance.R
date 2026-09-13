@@ -51,7 +51,12 @@ test_that("standard errors match blkvar, the authors' own package", {
   skip_if_not_installed("randomizr")
   skip_if_not_installed("blkvar")
   skip_if_not_installed("dplyr")
-  suppressMessages(library(dplyr))    # blkvar calls dplyr::n() without importing it
+  # blkvar calls dplyr::n() without importing it, so dplyr has to be attached.
+  # Detached again at the end of this test when this test was what attached it:
+  # left on the search path it masked stats::filter and stats::lag for every
+  # file that ran afterwards (review C11).
+  attached_here <- !"package:dplyr" %in% search()
+  suppressMessages(library(dplyr))
 
   designs <- list(
     list(rep(6, 4), rep(3, 4)),
@@ -69,6 +74,7 @@ test_that("standard errors match blkvar, the authors' own package", {
     expect_equal(ours$coefficients[[1]], theirs$ATE_hat, tolerance = 1e-10)
     expect_equal(ours$std.error[[1]], theirs$se_est, tolerance = 1e-10)
   }
+  if (attached_here) detach("package:dplyr", character.only = TRUE)
 })
 
 # ---- the two special cases still reduce to what they always were ----
