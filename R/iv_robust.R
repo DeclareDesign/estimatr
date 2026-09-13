@@ -215,31 +215,24 @@ iv_robust <- function(formula,
   # ------
   if (diagnostics) {
 
-    instruments <- setdiff(
-      colnames(model_data$instrument_matrix),
-      colnames(model_data$design_matrix)
-    )
-    endog <- setdiff(
-      colnames(model_data$design_matrix),
-      colnames(model_data$instrument_matrix)
-    )
+    roles <- instrument_roles(model_data, first_stage)
+    endog <- roles[["endog"]]
 
     first_stage_fits <- first_stage[["fitted.values"]][, endog, drop = FALSE]
     colnames(first_stage_fits) <- paste0("fit_", colnames(first_stage_fits))
 
-    # Only the endogenous regressors. An exogenous column appears in the
-    # instrument matrix, so its first-stage residual is zero up to rounding,
-    # and carrying it left the Wu-Hausman auxiliary regression relying on rank
-    # detection to drop a column of noise. Both stats::lm() and a pivoted QR at
-    # tol = 1e-7 keep such a column, which adds a spurious degree of freedom to
-    # the test's numerator.
+    # Only the endogenous regressors. An exogenous regressor's first-stage
+    # residual is zero up to rounding, and carrying it left the Wu-Hausman
+    # auxiliary regression relying on rank detection to drop a column of noise.
+    # Both stats::lm() and a pivoted QR at tol = 1e-7 keep such a column, which
+    # adds a spurious degree of freedom to the test's numerator.
     first_stage_residuals <-
       (model_data$design_matrix - first_stage[["fitted.values"]])[, endog, drop = FALSE]
     colnames(first_stage_residuals) <- paste0("resid_", endog)
 
     wu_hausman_ftest_val <- wu_hausman_reg_ftest(model_data, first_stage_residuals, se_type)
 
-    extra_instruments <- length(instruments) - length(endog)
+    extra_instruments <- ncol(roles[["excluded"]]) - length(endog)
 
     if (extra_instruments && is.null(model_data$weights)) {
       ss_residuals <- model_data$outcome - second_stage[["fitted.values"]]
@@ -249,11 +242,10 @@ iv_robust <- function(formula,
       } else {
         overid_chisq_val <- wooldridge_score_chisq(
           model_data = model_data,
-          endog = endog,
-          instruments = instruments,
+          exogenous = roles[["exogenous"]],
+          excess = roles[["excluded"]][, seq_len(extra_instruments), drop = FALSE],
           ss_residuals = ss_residuals,
-          first_stage_fits = first_stage_fits,
-          m = extra_instruments
+          first_stage_fits = first_stage_fits
         )
       }
 
@@ -268,7 +260,7 @@ iv_robust <- function(formula,
     }
     names(overid_chisqtest_val) <- c("value", "df", "p.value")
 
-    first_stage_ftest_val <- first_stage_ftest(model_data, endog, instruments, se_type)
+    first_stage_ftest_val <- first_stage_ftest(model_data, roles, se_type)
 
     return_list[["diagnostic_first_stage_fstatistic"]] <- first_stage_ftest_val
     return_list[["diagnostic_endogeneity_test"]] <- wu_hausman_ftest_val
@@ -318,11 +310,55 @@ get_dendf <- function(lm_fit) {
   }
 }
 
-first_stage_ftest <- function(model_data, endog, instruments, se_type) {
+# Which regressors are endogenous, and a basis for the instruments they
+# exclude, decided by the column space rather than by name.
+#
+# A regressor is exogenous when the instruments reproduce it: its first-stage
+# residual has norm at most 1e-7 of its own, the per-column test rank detection
+# uses. Deciding by name made every diagnostic depend on how the instrument
+# formula was spelled. With x1 in the span of the instruments but not listed
+# among them, x1 counted as endogenous, the Wu-Hausman auxiliary regression
+# carried a column of rounding error, and the test returned 0.144 on 2 degrees
+# of freedom where the same model with x1 listed returns 0.109 on 1, as
+# AER::ivreg and estimatr 1.0.6 both do for either spelling.
+#
+# The excluded instruments are the instrument columns not named among the
+# regressors, residualized on the exogenous regressors and reduced to a basis
+# by a pivoted QR at the same tolerance. The weak-instrument F and the
+# overidentification tests are invariant to which basis of that space is used,
+# so where the names already line up no number moves beyond rounding.
+instrument_roles <- function(model_data, first_stage) {
+  X <- model_data$design_matrix
+  Z <- model_data$instrument_matrix
+
+  resid_norm <- sqrt(colSums((X - first_stage[["fitted.values"]])^2))
+  reproduced <- resid_norm <= 1e-7 * sqrt(colSums(X^2))
+  exogenous <- colnames(X)[reproduced]
+
+  candidates <- Z[, !(colnames(Z) %in% colnames(X)), drop = FALSE]
+  if (length(exogenous)) {
+    candidates <- qr.resid(qr(X[, exogenous, drop = FALSE]), candidates)
+  }
+  basis <- qr(candidates, tol = 1e-7)
+
+  list(
+    endog = colnames(X)[!reproduced],
+    exogenous = exogenous,
+    excluded = candidates[, basis$pivot[seq_len(basis$rank)], drop = FALSE]
+  )
+}
+
+first_stage_ftest <- function(model_data, roles, se_type) {
+
+  endog <- roles[["endog"]]
+  n_exogenous <- length(roles[["exogenous"]])
 
   lm_instruments <- lm_robust_fit(
     y = model_data$design_matrix[, endog, drop = FALSE],
-    X = model_data$instrument_matrix,
+    X = cbind(
+      model_data$design_matrix[, roles[["exogenous"]], drop = FALSE],
+      roles[["excluded"]]
+    ),
     weights = model_data$weights,
     cluster = model_data$cluster,
     se_type = se_type,
@@ -333,32 +369,14 @@ first_stage_ftest <- function(model_data, endog, instruments, se_type) {
   )
   coef_inst <- as.matrix(lm_instruments[["coefficients"]])
 
-  if (all(colnames(model_data$instrument_matrix) %in% instruments)) {
+  if (n_exogenous == 0L) {
     firststage_nomdf <- lm_instruments[["rank"]]
     firststage_fstat_value <- lm_instruments[["fstatistic"]][seq_len(length(endog))]
   } else {
-    lm_noinstruments <- lm_robust_fit(
-      y = model_data$design_matrix[, endog, drop = FALSE],
-      X = model_data$instrument_matrix[
-        ,
-        !(colnames(model_data$instrument_matrix) %in% instruments),
-        drop = FALSE
-      ],
-      weights = model_data$weights,
-      cluster = model_data$cluster,
-      se_type = "none",
-      has_int = FALSE,
-      ci = FALSE,
-      return_fit = TRUE,
-      return_vcov = FALSE
-    )
-
-    coef_noinst <- as.matrix(lm_noinstruments[["coefficients"]])
-    inst_indices <- which(!(rownames(coef_inst) %in% rownames(coef_noinst)))
-    firststage_nomdf <- lm_instruments[["rank"]] - lm_noinstruments[["rank"]]
+    firststage_nomdf <- ncol(roles[["excluded"]])
     firststage_fstat_value <- compute_fstat(
       coef_matrix = coef_inst,
-      coef_indices = inst_indices,
+      coef_indices = n_exogenous + seq_len(firststage_nomdf),
       vcov_fit = lm_instruments[["vcov"]],
       rank = lm_instruments[["rank"]],
       nomdf = firststage_nomdf
@@ -462,15 +480,14 @@ sargan_chisq <- function(model_data, ss_residuals) {
 # by the endogenous variable names after renaming its columns `fit_<name>`, so
 # every over-identified fit with a non-classical `se_type` errored with
 # "subscript out of bounds" instead of returning either number.
+#
+# `excess` is any m columns of a basis for the excluded instruments. Wooldridge
+# shows the statistic does not depend on which m are chosen.
 wooldridge_score_chisq <- function(model_data,
-                                    endog,
-                                    instruments,
+                                    exogenous,
+                                    excess,
                                     ss_residuals,
-                                    first_stage_fits,
-                                    m) {
-
-  excess <- model_data$instrument_matrix[, instruments[seq_len(m)], drop = FALSE]
-  exogenous <- setdiff(colnames(model_data$design_matrix), endog)
+                                    first_stage_fits) {
 
   qhat_fit <- lm_robust_fit(
     y = excess,

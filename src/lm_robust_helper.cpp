@@ -604,12 +604,12 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 // mat        - N × P matrix to demean (modified in place, returned)
 // fe_codes   - list of 1-indexed integer group vectors, one per FE variable
 // weights    - length-N weight vector (pass numeric(0) for unweighted)
-// eps        - convergence threshold (relative to 1 + max|mat|)
+// eps        - convergence threshold, relative to max|mat|
 // max_iter   - maximum number of full sweeps over all FE variables
 //
 // For one-way FE the algorithm converges in exactly 1 iteration.
 // For multi-way FE it cycles through the FE variables until the maximum
-// absolute change across all cells falls below eps * (1 + max|mat|).
+// absolute change across all cells is at most eps * max|mat|.
 // ---------------------------------------------------------------------------
 // [[Rcpp::export]]
 Rcpp::NumericMatrix demean_cpp(Eigen::MatrixXd mat,
@@ -665,6 +665,8 @@ Rcpp::NumericMatrix demean_cpp(Eigen::MatrixXd mat,
   // max|mat| after the final sweep, accumulated by the subtraction pass below
   // rather than by a separate full pass over the matrix.
   double max_abs = 0.0;
+  // The magnitude before any sweep, for the convergence floor below.
+  const double orig_max = (n > 0 && p > 0) ? mat.cwiseAbs().maxCoeff() : 0.0;
   // Reported back so the caller can say the sweeps ran out. Alternating
   // projections converge geometrically at a rate set by how well connected the
   // factors are, so a weakly connected design can still be moving when the cap
@@ -732,9 +734,18 @@ Rcpp::NumericMatrix demean_cpp(Eigen::MatrixXd mat,
       }
     }
 
-    // Convergence: change small relative to current scale
-    double scale = 1.0 + max_abs;
-    if (max_delta < eps * scale) { converged = true; break; }
+    // Converged when the last sweep moved nothing by more than eps relative to
+    // the matrix's own magnitude. The test was `eps * (1 + max_abs)`, and the 1
+    // made it absolute whenever the matrix is small. The outcome is demeaned on
+    // its own, so an outcome in units of 1e-6 stopped after half the sweeps a
+    // unit-scale one takes, and on a two-way design whose coefficients were
+    // right its residuals came back wrong by 4.4e-4, its fitted values by
+    // 3.2e-3, and its standard errors by 7.1e-7. The floor, a millionth of the
+    // magnitude before demeaning, is for a column the fixed effects absorb
+    // entirely: it demeans to rounding error and would never satisfy a purely
+    // relative test. `<=` lets an all-zero matrix converge at once.
+    double scale = std::max(max_abs, 1e-6 * orig_max);
+    if (max_delta <= eps * scale) { converged = true; break; }
   }
 
   Rcpp::NumericMatrix out(Rcpp::wrap(mat));
