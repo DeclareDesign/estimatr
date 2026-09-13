@@ -110,6 +110,36 @@ test_that("blocks that cannot hold the design are refused", {
                "All `blocks` must have multiple units")
 })
 
+test_that("weights that are infinite, or all zero, are refused", {
+  # Both returned every coefficient as NA under a warning that called the
+  # regressors collinear, in 1.0.6 as well. lm() refuses an infinite weight.
+  infinite <- err_data
+  infinite$w[3] <- Inf
+  expect_error(lm_robust(y ~ x, data = infinite, weights = w), "`weights` must be finite")
+  expect_error(iv_robust(y ~ x | z, data = infinite, weights = w), "`weights` must be finite")
+  expect_error(difference_in_means(y ~ z, data = infinite, weights = w),
+               "`weights` must be finite")
+
+  zeroed <- err_data
+  zeroed$w <- 0
+  expect_error(lm_robust(y ~ x, data = zeroed, weights = w), "Every weight is zero")
+  expect_error(lm_lin(y ~ z, covariates = ~ x, data = zeroed, weights = w),
+               "Every weight is zero")
+
+  # A missing weight is still a dropped row, not a refusal.
+  missing <- err_data
+  missing$w[3] <- NA
+  expect_warning(lm_robust(y ~ x, data = missing, weights = w), "missingness in the weights")
+})
+
+test_that("horvitz_thompson refuses probabilities outside [0, 1]", {
+  # A pair of probabilities like these came back as an ordinary estimate.
+  expect_error(horvitz_thompson(y ~ z, data = err_data, condition_prs = c("0" = -0.2, "1" = 1.2)),
+               "outside \\[0, 1\\]")
+  expect_error(horvitz_thompson(y ~ z, data = err_data, condition_prs = rep(1.5, n)),
+               "outside \\[0, 1\\]")
+})
+
 test_that("#297: lh_robust refuses a multivariate outcome and says why", {
   skip_if_not_installed("carData")
   expect_error(

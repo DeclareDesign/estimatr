@@ -159,6 +159,27 @@ horvitz_thompson <- function(formula,
 
   prs <- ht_prs(cpr, Z, condition1, condition2, row_idx, data_df)
 
+  # Checked here, after every format has been turned into per-unit
+  # probabilities, so one check covers them all. Probabilities outside [0, 1]
+  # went straight into the weights and came back as an ordinary-looking
+  # estimate; a probability of 0 for a condition a unit was observed in divided
+  # by zero and came back as NaN or Inf without a word.
+  probabilities <- c(prs$pi1, prs$pi2)
+  if (!all(is.finite(probabilities)) || any(probabilities < 0 | probabilities > 1)) {
+    stop("`condition_prs` gives assignment probabilities outside [0, 1].", call. = FALSE)
+  }
+  impossible <- c(sum(prs$pi1[t1] == 0), sum(prs$pi2[t2] == 0))
+  if (any(impossible > 0)) {
+    which_condition <- c(condition1, condition2)[impossible > 0][1L]
+    stop(
+      "`condition_prs` gives probability 0 of condition ", which_condition,
+      " to ", impossible[impossible > 0][1L], " unit(s) observed in it, so ",
+      "their inverse-probability weights are infinite. Check that the ",
+      "probabilities belong to these data and this assignment.",
+      call. = FALSE
+    )
+  }
+
   # ---- IPW outcomes and point estimate ----
 
   Y2 <- Y[t2] / prs$pi2[t2]

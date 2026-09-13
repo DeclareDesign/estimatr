@@ -167,6 +167,24 @@ test_that("a fit with no observations left is refused", {
                "No observations are left")
 })
 
+test_that("Horvitz-Thompson refuses a unit observed where its probability was 0", {
+  # The inverse-probability weight is infinite, and the estimate came back as
+  # NaN or Inf with no message.
+  expect_error(horvitz_thompson(y ~ z, data = d, condition_prs = c("0" = 0, "1" = 1)),
+               "probability 0 of condition 0 to 40 unit\\(s\\) observed in it")
+  expect_error(horvitz_thompson(y ~ z, data = d, condition_prs = c("0" = 1, "1" = 0)),
+               "probability 0 of condition 1 to 40 unit\\(s\\) observed in it")
+  # Per-unit probabilities: one treated unit given no chance of treatment.
+  per_unit <- rep(0.5, n)
+  per_unit[which(d$z == 1)[1]] <- 0
+  expect_error(horvitz_thompson(y ~ z, data = d, condition_prs = per_unit),
+               "probability 0 of condition 1 to 1 unit\\(s\\)")
+  # A probability of 0 for a condition no unit is observed in is not a problem
+  # for the estimator, and a probability strictly inside (0, 1) is the ordinary
+  # case.
+  expect_no_error(horvitz_thompson(y ~ z, data = d, condition_prs = c("0" = 0.5, "1" = 0.5)))
+})
+
 test_that("a difference in means with a single unit in an arm is refused in the right words", {
   d1 <- d
   d1$treated_once <- as.integer(seq_len(n) == 5)

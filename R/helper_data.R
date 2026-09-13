@@ -204,6 +204,19 @@ clean_model_data <- function(data, datargs, estimator = "") {
   if (any(ret[["weights"]] < 0)) {
     stop("`weights` must not be negative")
   }
+  # Missing weights have been dropped by now, so anything non-finite here is
+  # infinite. An infinite weight, and a set of weights that are all zero, both
+  # went on to a fit whose every coefficient was NA under a warning calling the
+  # regressors collinear, in 1.0.6 as well; lm() refuses the first.
+  if (!is.null(ret[["weights"]])) {
+    if (!all(is.finite(ret[["weights"]]))) {
+      stop("`weights` must be finite.", call. = FALSE)
+    }
+    if (length(ret[["weights"]]) && all(ret[["weights"]] == 0)) {
+      stop("Every weight is zero, so no observation contributes to the fit.",
+           call. = FALSE)
+    }
+  }
 
   ret[["cluster"]] <- stats::model.extract(mf, "cluster")
   if (!is.null(ret[["cluster"]]) &&
