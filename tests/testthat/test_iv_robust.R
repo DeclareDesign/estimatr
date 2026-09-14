@@ -190,6 +190,15 @@ test_that("a clustered over-identification test sums the score's variance within
   expect_warning(ov <- overid(clusters = g2, se_type = "CR0"),
                  "no more clusters than overidentifying restrictions")
   expect_true(is.na(ov[["value"]]))
+
+  # A cluster whose weights are all zero is not a cluster. The guard counted
+  # rows of the cluster sums, where such a cluster is a row of zeros, so three
+  # clusters with one weighted out returned exactly 2 on 2 df with no warning.
+  dd$g3 <- rep(1:3, length.out = n)
+  dd$w3 <- as.numeric(dd$g3 != 3)
+  expect_warning(ov <- overid(weights = w3, clusters = g3, se_type = "CR0"),
+                 "no more clusters than overidentifying restrictions")
+  expect_true(is.na(ov[["value"]]))
 })
 
 test_that("with weights, each diagnostic is the test on the weighted model under the fit's variance", {

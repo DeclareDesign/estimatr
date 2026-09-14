@@ -565,8 +565,14 @@ wooldridge_score_chisq <- function(model_data,
   meat_qr <- qr(crossprod(kmat_sums))
 
   # With no more clusters than restrictions S is singular, and s' S^+ s would
-  # equal the number of clusters whatever the data.
-  if (nrow(kmat_sums) <= ncol(kmat) || meat_qr$rank < ncol(kmat)) {
+  # equal the number of clusters whatever the data. A cluster whose weights are
+  # all zero is not a cluster: it contributes a zero row to `kmat_sums`, and
+  # counting rows let three clusters with one weighted out pass this guard and
+  # return exactly 2 on 2 df, with no warning, whatever the data.
+  weights <- model_data[["weights"]]
+  observed <- if (is.null(weights)) rep(TRUE, nrow(kmat)) else weights > 0
+  n_groups <- if (is.null(cluster)) sum(observed) else length(unique(cluster[observed]))
+  if (n_groups <= ncol(kmat) || meat_qr$rank < ncol(kmat)) {
     warning(
       "`diagnostic_overid_test` is NA: the variance of the score for the ",
       "overidentifying restrictions is singular, as it is whenever there are ",
