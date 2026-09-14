@@ -51,7 +51,11 @@ components <- list(
       "the hostile design is still hostile" = 0,
       "HC0-HC3 and classical match sandwich on the hostile design, both solver paths" = "all",
       "cluster-robust matches sandwich::vcovCL on the hostile design, both solver paths" = "all",
-      "iv_robust matches sandwich on the hostile design, both solver paths" = "all"
+      "iv_robust matches sandwich on the hostile design, both solver paths" = "all",
+      "weighted iv_robust matches sandwich on an ivreg::ivreg fit" = "all",
+      "weighted lm_lin matches sandwich on lm with the covariate centred on its weighted mean" = "all",
+      "a multivariate lm_robust matches sandwich on the mlm fit" = "all",
+      "lh_robust is the linear combination of sandwich's variance, alone and jointly" = "all"
     )
   ),
   clubSandwich = list(
@@ -69,7 +73,11 @@ components <- list(
       # Against CR2 written out from its definition in helper-external.R, not
       # against clubSandwich, so left out for the reason given under blkvar.
       "CR2 on the hostile design matches CR2 written from its definition" = 0,
-      "CR2 and its degrees of freedom match clubSandwich on the hostile design" = "all"
+      "CR2 and its degrees of freedom match clubSandwich on the hostile design" = "all",
+      "weighted iv_robust CR2 matches clubSandwich on AER::ivreg" = "all",
+      "weighted lm_lin CR2 matches clubSandwich on lm with the covariate centred on its weighted mean" = "all",
+      "a multivariate lm_robust CR2 matches clubSandwich on the mlm fit" = "all",
+      "lh_robust CR2 matches clubSandwich's contrast, degrees of freedom included" = "all"
     )
   ),
   Stata = list(

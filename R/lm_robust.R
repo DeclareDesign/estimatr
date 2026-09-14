@@ -252,7 +252,9 @@ lm_robust <- function(formula,
       fe_leverage = fe_lev,
       femat = if (has_fe && needs_fe_dummies(se_type))
         fe_dummy_matrix(model_data)
-        else NULL
+        else NULL,
+      # NULL here; the argument exists only in lm_robust_hypotheses() below.
+      linear_hypothesis = get0("linear_hypothesis", envir = environment(), inherits = FALSE)
     )
 
   return_list <- lm_return(
@@ -300,3 +302,11 @@ lm_robust <- function(formula,
 
   return(return_list)
 }
+
+# lm_robust() with one more argument, the hypotheses lh_robust() tests, so that
+# a CR2 fit computes each one's Satterthwaite degrees of freedom in the same
+# pass as the coefficients'. Built from lm_robust()'s own formals and body, so
+# the two cannot drift apart, and kept internal, so lm_robust()'s signature does
+# not change.
+lm_robust_hypotheses <- lm_robust
+formals(lm_robust_hypotheses) <- c(formals(lm_robust), alist(linear_hypothesis = NULL))

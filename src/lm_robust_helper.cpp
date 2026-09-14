@@ -213,6 +213,64 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
   );
 }
 
+// Satterthwaite degrees of freedom for one row of the CR2 components: a single
+// coefficient, or a linear combination of coefficients. Each row of H1s, H2s
+// and H3s is linear in the corresponding row of the per-cluster matrix the
+// components are built from, and each column of P_diags is that row's squared
+// norm, so a combination's components are the combination applied to that
+// matrix before squaring and the formula is the same. Avoids the O(J^2) P array
+// by computing its trace and Frobenius norm from meat_cols-by-J matrices:
+// O(meat_cols^2 * J) against O(J^2).
+static double cr2_satterthwaite(const Eigen::MatrixXd& H1s,
+                                const Eigen::MatrixXd& H2s,
+                                const Eigen::MatrixXd& H3s,
+                                const Eigen::MatrixXd& P_diags,
+                                const int j,
+                                const int meat_cols,
+                                const int J) {
+  Eigen::MatrixXd H1t = H1s.row(j);
+  Eigen::MatrixXd H2t = H2s.row(j);
+  Eigen::MatrixXd H3t = H3s.row(j);
+
+  H1t.resize(meat_cols, J);  // meat_cols × J
+  H2t.resize(meat_cols, J);
+  H3t.resize(meat_cols, J);
+
+  Eigen::RowVectorXd p = P_diags.row(j);  // 1 × J
+
+  // meat_cols × meat_cols products — cheap
+  Eigen::MatrixXd G3  = H3t * H3t.transpose();  // symmetric
+  Eigen::MatrixXd P31 = H3t * H1t.transpose();
+  Eigen::MatrixXd P32 = H3t * H2t.transpose();
+  Eigen::MatrixXd G21 = H2t * H1t.transpose();
+  Eigen::MatrixXd G11 = H1t * H1t.transpose();  // symmetric
+  Eigen::MatrixXd G22 = H2t * H2t.transpose();  // symmetric
+
+  // Column-wise dot products — O(meat_cols * J)
+  Eigen::RowVectorXd col_sq_A3    = H3t.colwise().squaredNorm();
+  Eigen::RowVectorXd col_dot_A1A2 = (H1t.cwiseProduct(H2t)).colwise().sum();
+
+  // trace(P_array) without forming J×J matrix
+  double trace_P = H3t.squaredNorm()
+                 - 2.0 * H1t.cwiseProduct(H2t).sum()
+                 + p.sum();
+
+  // ||P_array||_F^2 without forming J×J matrix
+  // P = S - U - U^T + D  (S=H3t^T H3t, U=H1t^T H2t, D=diag(p))
+  // ||P||^2 = ||S||^2 - 2<S,Q> + 2<S,D> + ||Q||^2 - 2<Q,D> + ||D||^2
+  // where Q = U + U^T (symmetric)
+  double sq_norm_P =
+      G3.squaredNorm()                                     // ||S||^2 (G3 symmetric → ||G3||_F^2 = trace(G3^2) = trace(S^2))
+    - 4.0 * P31.cwiseProduct(P32).sum()                   // -2<S,Q> = -4 trace(S U)
+    + 2.0 * col_sq_A3.cwiseProduct(p).sum()               // 2<S,D>
+    + 2.0 * G21.cwiseProduct(G21.transpose()).sum()        // 2 trace(U^2)  } ||Q||^2
+    + 2.0 * G11.cwiseProduct(G22).sum()                   // 2 ||U||_F^2   }
+    - 4.0 * col_dot_A1A2.cwiseProduct(p).sum()            // -2<Q,D>
+    + p.squaredNorm();                                     // ||D||^2
+
+  return (sq_norm_P > 0.0) ? trace_P * trace_P / sq_norm_P : 0.0;
+}
+
 // `fe_leverage` is the per-observation leverage contributed by absorbed
 // one-way fixed effects. Under a single FE factor the hat value of the full
 // [dummies | X] design splits exactly, as
@@ -233,7 +291,8 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
                  const std::vector<bool> & which_covs,
                  const int& fe_rank,
                  const Rcpp::Nullable<Rcpp::NumericVector> & fe_leverage,
-                 const int& n_eff) {
+                 const int& n_eff,
+                 const Rcpp::Nullable<Rcpp::NumericMatrix> & hypotheses = R_NilValue) {
 
   const int n(X.rows()), r(XtX_inv.cols()), ny(ei.cols());
   // `n` sizes the loops and the matrices; `n_use` counts observations for the
@@ -277,6 +336,18 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
   // Reported back so R can warn on the condition itself rather than on a NaN,
   // which is no longer the symptom once the denominator is guarded.
   int n_leverage_near_one = 0;
+
+  // Linear combinations of coefficients whose CR2 Satterthwaite degrees of
+  // freedom lh_robust() needs. A combination has its own, which is neither any
+  // one coefficient's nor bounded by them.
+  const bool has_hypotheses = hypotheses.isNotNull() && cr2 && ci;
+  int n_hypotheses = 0;
+  Eigen::MatrixXd C_hyp, H1c, H2c, H3c, P_hyp;
+  if (hypotheses.isNotNull()) {
+    n_hypotheses = Rcpp::NumericMatrix(hypotheses).nrow();
+  }
+  Eigen::VectorXd hypothesis_dof = Eigen::VectorXd::Constant(n_hypotheses, -99.0);
+  if (!has_hypotheses) n_hypotheses = 0;
 
   if (se_type == "classical") {
     Eigen::MatrixXd s2 = AtA(ei)/((double)n_use - (double)r_fe);
@@ -407,6 +478,22 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
         M_U_ct = meatXtX_inv.llt().matrixL();
         MUWTWUM = meatXtX_inv * X.leftCols(meat_cols).transpose() * X.leftCols(meat_cols) * meatXtX_inv;
         Omega_ct = MUWTWUM.llt().matrixL();
+
+        // One row per hypothesis over the kept coefficients, which are the
+        // first columns of the design; any fixed-effect dummy columns after
+        // them carry zero weight.
+        if (has_hypotheses) {
+          Rcpp::NumericMatrix hm(hypotheses);
+          n_hypotheses = hm.nrow();
+          C_hyp = Eigen::MatrixXd::Zero(n_hypotheses, meat_cols);
+          for (int h = 0; h < n_hypotheses; ++h) {
+            for (int c = 0; c < hm.ncol(); ++c) C_hyp(h, c) = hm(h, c);
+          }
+          H1c.resize(n_hypotheses, meat_cols*J);
+          H2c.resize(n_hypotheses, meat_cols*J);
+          H3c.resize(n_hypotheses, meat_cols*J);
+          P_hyp.resize(n_hypotheses, J);
+        }
       }
 
       Eigen::Map<Eigen::ArrayXi> clusters = Rcpp::as<Eigen::Map<Eigen::ArrayXi> >(cluster);
@@ -466,6 +553,15 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
               H1s.block(0, p_pos, meat_cols, meat_cols) = MEU * M_U_ct;
               H2s.block(0, p_pos, meat_cols, meat_cols) = ME * X.block(start_pos, 0, len, meat_cols) * M_U_ct;
               H3s.block(0, p_pos, meat_cols, meat_cols) = MEU * Omega_ct;
+
+              if (has_hypotheses) {
+                const Eigen::MatrixXd MEc = C_hyp * ME;
+                P_hyp.col(clust_num) = MEc.array().pow(2).rowwise().sum();
+                const Eigen::MatrixXd MEUc = MEc * Xoriginal.block(start_pos, 0, len, meat_cols);
+                H1c.block(0, p_pos, n_hypotheses, meat_cols) = MEUc * M_U_ct;
+                H2c.block(0, p_pos, n_hypotheses, meat_cols) = MEc * X.block(start_pos, 0, len, meat_cols) * M_U_ct;
+                H3c.block(0, p_pos, n_hypotheses, meat_cols) = MEUc * Omega_ct;
+              }
             }
           }
 
@@ -535,59 +631,16 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
     } else if (!cr2) {
       dof.fill(J - 1);
     } else {
-      // Avoid O(J^2) P_array by computing trace and Frobenius norm from
-      // meat_cols×J matrices directly. Complexity: O(r * meat_cols^2 * J)
-      // vs O(r * J^2). For typical cases (meat_cols=3, J=100): ~11x faster.
       for (int j = 0; j < r; j++) {
         if (which_covs[j]) {
-
-          Eigen::MatrixXd H1t = H1s.row(j);
-          Eigen::MatrixXd H2t = H2s.row(j);
-          Eigen::MatrixXd H3t = H3s.row(j);
-
-          H1t.resize(meat_cols, J);  // meat_cols × J
-          H2t.resize(meat_cols, J);
-          H3t.resize(meat_cols, J);
-
-          Eigen::RowVectorXd p = P_diags.row(j);  // 1 × J
-
-          // meat_cols × meat_cols products — cheap
-          Eigen::MatrixXd G3  = H3t * H3t.transpose();  // symmetric
-          Eigen::MatrixXd P31 = H3t * H1t.transpose();
-          Eigen::MatrixXd P32 = H3t * H2t.transpose();
-          Eigen::MatrixXd G21 = H2t * H1t.transpose();
-          Eigen::MatrixXd G11 = H1t * H1t.transpose();  // symmetric
-          Eigen::MatrixXd G22 = H2t * H2t.transpose();  // symmetric
-
-          // Column-wise dot products — O(meat_cols * J)
-          Eigen::RowVectorXd col_sq_A3    = H3t.colwise().squaredNorm();
-          Eigen::RowVectorXd col_dot_A1A2 = (H1t.cwiseProduct(H2t)).colwise().sum();
-
-          // trace(P_array) without forming J×J matrix
-          double trace_P = H3t.squaredNorm()
-                         - 2.0 * H1t.cwiseProduct(H2t).sum()
-                         + p.sum();
-
-          // ||P_array||_F^2 without forming J×J matrix
-          // P = S - U - U^T + D  (S=H3t^T H3t, U=H1t^T H2t, D=diag(p))
-          // ||P||^2 = ||S||^2 - 2<S,Q> + 2<S,D> + ||Q||^2 - 2<Q,D> + ||D||^2
-          // where Q = U + U^T (symmetric)
-          double sq_norm_P =
-              G3.squaredNorm()                                     // ||S||^2 (G3 symmetric → ||G3||_F^2 = trace(G3^2) = trace(S^2))
-            - 4.0 * P31.cwiseProduct(P32).sum()                   // -2<S,Q> = -4 trace(S U)
-            + 2.0 * col_sq_A3.cwiseProduct(p).sum()               // 2<S,D>
-            + 2.0 * G21.cwiseProduct(G21.transpose()).sum()        // 2 trace(U^2)  } ||Q||^2
-            + 2.0 * G11.cwiseProduct(G22).sum()                   // 2 ||U||_F^2   }
-            - 4.0 * col_dot_A1A2.cwiseProduct(p).sum()            // -2<Q,D>
-            + p.squaredNorm();                                     // ||D||^2
-
-          double dof_j = (sq_norm_P > 0.0)
-                       ? trace_P * trace_P / sq_norm_P
-                       : 0.0;
+          const double dof_j = cr2_satterthwaite(H1s, H2s, H3s, P_diags, j, meat_cols, J);
           for (int outcome_ix = 0; outcome_ix < ny; outcome_ix++) {
             dof(j + outcome_ix * r) = dof_j;
           }
         }
+      }
+      for (int h = 0; h < n_hypotheses; h++) {
+        hypothesis_dof(h) = cr2_satterthwaite(H1c, H2c, H3c, P_hyp, h, meat_cols, J);
       }
     }
   }
@@ -595,7 +648,8 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
   return List::create(_["Vcov_hat"]= Vcov_hat,
                       _["dof"]= dof,
                       _["res_var"]= res_var,
-                      _["n_leverage_near_one"]= n_leverage_near_one);
+                      _["n_leverage_near_one"]= n_leverage_near_one,
+                      _["hypothesis_dof"]= hypothesis_dof);
 }
 
 // ---------------------------------------------------------------------------

@@ -16,7 +16,9 @@
 #'   `coefficients`, `std.error`, `statistic`, `p.value`, `alpha`, `conf.low`,
 #'   `conf.high`, `df`, `term`, and `outcome`; and `joint_hypothesis`, the Wald
 #'   F test of all of them at once, as `value`, `numdf`, `dendf`, and
-#'   `p.value`.
+#'   `p.value`. Under `se_type = "CR2"` each hypothesis's `df` is its own
+#'   Satterthwaite approximation, as `clubSandwich::linear_contrast()` computes
+#'   it, and `dendf` is the smallest of them.
 #'
 #' @importFrom rlang quos eval_tidy
 #' @examples
@@ -44,7 +46,7 @@ lh_robust <- function(..., data, linear_hypothesis) {
 
   requireNamespace("car")
 
-  lmr <- lm_robust(..., data = data)
+  lmr <- lm_robust_hypotheses(..., data = data, linear_hypothesis = linear_hypothesis)
 
   # With several outcomes the coefficients are named "<outcome>:<term>", so
   # car::linearHypothesis cannot match a hypothesis written in terms of the
@@ -69,19 +71,17 @@ lh_robust <- function(..., data, linear_hypothesis) {
   vcov_lh   <- attr(car_lht, "vcov")
   std.error <- sqrt(diag(vcov_lh))
 
-  # Resolve the df for each hypothesis. Hypothesis names look like "x=0" or
-  # "x - z=0". Extract the LHS, check if it's a single coefficient name, and
-  # use that coefficient's (Satterthwaite-adjusted) df. For complex combinations
-  # fall back to the conservative min across all per-coefficient dfs.
-  coef_dfs <- lmr$df
-  df_vec <- vapply(names(estimate), function(nm) {
-    lhs <- trimws(sub("\\s*=.*", "", nm))
-    if (lhs %in% names(coef_dfs)) {
-      unname(coef_dfs[lhs])
-    } else {
-      min(coef_dfs, na.rm = TRUE)
-    }
-  }, numeric(1))
+  # Under CR2 each hypothesis has its own Satterthwaite degrees of freedom,
+  # which the fit computed from the same components as the coefficients'. A
+  # combination used to take the smallest per-coefficient df, described here as
+  # conservative; it is not a bound, and on the data in test_vs_clubsandwich.R
+  # it was 16.10 where the combination's is 15.75. Every other se_type gives
+  # every coefficient the same df, so any combination takes that.
+  df_vec <- if (!is.null(lmr[["hypothesis_df"]])) {
+    setNames(lmr[["hypothesis_df"]], names(estimate))
+  } else {
+    setNames(rep(min(lmr$df, na.rm = TRUE), length(estimate)), names(estimate))
+  }
 
   statistic  <- estimate / std.error
   p.value    <- 2 * pt(abs(statistic), df_vec, lower.tail = FALSE)
@@ -104,7 +104,10 @@ lh_robust <- function(..., data, linear_hypothesis) {
   attr(return_lh_robust, "linear_hypothesis") <- car_lht
   class(return_lh_robust) <- c("lh", "data.frame")
 
-  # Joint Wald F-test: W = t(Lβ) (L Vcov L')^{-1} (Lβ) / m ~ F(m, df_joint)
+  # Joint Wald F-test: W = t(Lβ) (L Vcov L')^{-1} (Lβ) / m ~ F(m, df_joint).
+  # The denominator takes the smallest of the hypotheses' df. That is a
+  # convention: clubSandwich's small-sample joint test (HTZ) is a different
+  # approximation, and nothing here claims to match it.
   m          <- length(estimate)
   wald       <- drop(t(estimate) %*% solve(vcov_lh) %*% estimate)
   joint_F    <- wald / m

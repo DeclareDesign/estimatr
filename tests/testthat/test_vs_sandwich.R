@@ -482,3 +482,79 @@ test_that("iv_robust matches sandwich on the hostile design, both solver paths",
     )
   }
 })
+
+# ---- weighted 2SLS, weighted lm_lin, multivariate outcomes, hypotheses ----
+#
+# Paths none of the comparisons above reached (review C4), each held to what
+# sandwich computes on the equivalent ivreg or base-R fit. Measured gaps are at
+# most 8.3e-12, on an off-diagonal element of weighted lm_lin's HC0 matrix.
+
+test_that("weighted iv_robust matches sandwich on an ivreg::ivreg fit", {
+  skip_if_not_installed("ivreg")
+  di <- iv_test_data()
+  set.seed(3)
+  di$w <- runif(nrow(di), 0.5, 2)
+  mi <- ivreg::ivreg(y ~ en + x | inst + x, data = di, weights = w)
+  for (ty in c("HC0", "HC1", "HC2", "HC3")) {
+    fit <- iv_robust(y ~ en + x | inst + x, data = di, weights = w, se_type = ty)
+    expect_vcov_equal(fit, sandwich::vcovHC(mi, type = ty), paste("weighted iv", ty))
+  }
+  fit <- iv_robust(y ~ en + x | inst + x, data = di, weights = w, clusters = cl, se_type = "CR0")
+  expect_vcov_equal(fit, sandwich::vcovCL(mi, cluster = di$cl, type = "HC0", cadjust = FALSE),
+                    "weighted iv CR0")
+  fit <- iv_robust(y ~ en + x | inst + x, data = di, weights = w, clusters = cl, se_type = "stata")
+  expect_vcov_equal(fit, sandwich::vcovCL(mi, cluster = di$cl, type = "HC1", cadjust = TRUE),
+                    "weighted iv stata")
+})
+
+test_that("weighted lm_lin matches sandwich on lm with the covariate centred on its weighted mean", {
+  # Lin's design with weights centres on the weighted mean, which is the part
+  # test_lm_lin_equivalence.R checks against estimatr's own lm_robust. Here the
+  # reference shares no code with this package.
+  centred <- d
+  centred$x_c <- d$x - weighted.mean(d$x, d$w)
+  reference <- lm(y ~ z * x_c, data = centred, weights = w)
+  for (ty in c("HC0", "HC1", "HC2", "HC3")) {
+    fit <- lm_lin(y ~ z, covariates = ~ x, data = d, weights = w, se_type = ty)
+    expect_vcov_equal(fit, sandwich::vcovHC(reference, type = ty), paste("weighted lm_lin", ty))
+  }
+  fit <- lm_lin(y ~ z, covariates = ~ x, data = d, weights = w, se_type = "classical")
+  expect_vcov_equal(fit, vcov(reference), "weighted lm_lin classical")
+})
+
+test_that("a multivariate lm_robust matches sandwich on the mlm fit", {
+  multi <- d
+  set.seed(4)
+  multi$y2 <- multi$x - multi$z + rnorm(nrow(multi))
+  reference <- lm(cbind(y, y2) ~ x + z, data = multi)
+  for (ty in c("HC0", "HC1", "HC2", "HC3")) {
+    fit <- lm_robust(cbind(y, y2) ~ x + z, data = multi, se_type = ty)
+    expect_vcov_equal(fit, sandwich::vcovHC(reference, type = ty), paste("multivariate", ty))
+  }
+  fit <- lm_robust(cbind(y, y2) ~ x + z, data = multi, clusters = cl, se_type = "CR0")
+  expect_vcov_equal(fit, sandwich::vcovCL(reference, cluster = multi$cl, type = "HC0", cadjust = FALSE),
+                    "multivariate CR0")
+})
+
+test_that("lh_robust is the linear combination of sandwich's variance, alone and jointly", {
+  # lh_robust parses its hypotheses with car::linearHypothesis, so car is not an
+  # independent reference for it. The variance from sandwich and the algebra
+  # written out here are.
+  m <- lm(y ~ x + z, data = d)
+  combination <- c(0, 2, 1)
+  restrictions <- rbind(c(0, 0, 1), c(0, 1, -1))
+  for (ty in c("HC0", "HC1", "HC2", "HC3")) {
+    V <- sandwich::vcovHC(m, type = ty)
+    single <- lh_robust(y ~ x + z, data = d, se_type = ty, linear_hypothesis = "z + 2*x = 0.5")
+    expect_equal(unname(single$lh$coefficients), sum(combination * coef(m)) - 0.5,
+                 tolerance = LIVE_TOL, label = paste(ty, "hypothesis estimate"))
+    expect_equal(unname(single$lh$std.error), sqrt(drop(t(combination) %*% V %*% combination)),
+                 tolerance = LIVE_TOL, label = paste(ty, "hypothesis standard error"))
+
+    joint <- lh_robust(y ~ x + z, data = d, se_type = ty, linear_hypothesis = c("z = 0", "x = z"))
+    Rb <- restrictions %*% coef(m)
+    wald_F <- drop(t(Rb) %*% solve(restrictions %*% V %*% t(restrictions)) %*% Rb) / 2
+    expect_equal(unname(joint$joint_hypothesis[["value"]]), wald_F,
+                 tolerance = LIVE_TOL, label = paste(ty, "joint F"))
+  }
+})

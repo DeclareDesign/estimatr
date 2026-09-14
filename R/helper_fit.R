@@ -25,6 +25,10 @@
 #'   exactly into the demeaned-X leverage plus this term, for any number of FE
 #'   factors, which is what makes HC2 and HC3 available under `fixed_effects`
 #'   without building the dummy matrix.
+#' @param linear_hypothesis optional hypotheses, in the form [lh_robust()]
+#'   takes, whose `CR2` Satterthwaite degrees of freedom are returned as
+#'   `hypothesis_df`. Ignored for every other `se_type`, where a combination of
+#'   coefficients has the same degrees of freedom as each of them.
 #'
 #' @examples
 #' # The fitter behind lm_robust(), exported for packages that have already
@@ -54,7 +58,8 @@ lm_robust_fit <- function(y,
                           iv_stage = list(0),
                           fe_rank = 0L,
                           fe_leverage = NULL,
-                          femat = NULL) {
+                          femat = NULL,
+                          linear_hypothesis = NULL) {
 
   # ----------
   # Check se type
@@ -245,6 +250,20 @@ lm_robust_fit <- function(y,
 
     if (se_type != "none") {
 
+      # One row per hypothesis over the kept coefficients. car appends the
+      # right-hand side as a last column, which has no place in the degrees of
+      # freedom, and returns a single hypothesis as a vector, which rbind()
+      # makes a one-row matrix.
+      hypotheses <- NULL
+      if (!is.null(linear_hypothesis) && se_type == "CR2" && ci && !multivariate) {
+        hypotheses <- if (is.character(linear_hypothesis)) {
+          rbind(car::makeHypothesis(variable_names, linear_hypothesis))[, seq_len(k), drop = FALSE]
+        } else {
+          rbind(linear_hypothesis)[, seq_len(k), drop = FALSE]
+        }
+        hypotheses <- hypotheses[, covs_used, drop = FALSE]
+      }
+
       vcov_fit <- lm_variance(
         # Widening the design here is what makes HC2, HC3 and CR2 available
         # under `fixed_effects`. The C++ detects X.cols() > ncol(XtX_inv) and
@@ -270,7 +289,8 @@ lm_robust_fit <- function(y,
         # Only HC2/HC3 consume this; it is NULL for every other se_type and for
         # multi-way FE, so the C++ falls back to the plain hat value.
         fe_leverage = if (se_type %in% c("HC2", "HC3")) fe_leverage else NULL,
-        n_eff = N
+        n_eff = N,
+        hypotheses = hypotheses
       )
 
       # A variance diagonal can come back negative on a design that is close
@@ -332,6 +352,9 @@ lm_robust_fit <- function(y,
       if (ci) {
         return_list$df[est_exists] <-
           ifelse(vcov_fit$dof == -99, NA, vcov_fit$dof)
+      }
+      if (!is.null(hypotheses)) {
+        return_list[["hypothesis_df"]] <- vcov_fit$hypothesis_dof
       }
     }
   }

@@ -19,7 +19,8 @@ lm_robust_fit(
   iv_stage = list(0),
   fe_rank = 0L,
   fe_leverage = NULL,
-  femat = NULL
+  femat = NULL,
+  linear_hypothesis = NULL
 )
 }
 \arguments{
@@ -62,6 +63,11 @@ estimation sample. Only \code{CR2} needs it: its adjustment is built from
 cluster-level blocks of the hat matrix, which do not decompose the way the
 diagonal does. HC2 and HC3 take \code{fe_leverage} instead. \code{NULL} unless the
 requested \code{se_type} requires it.}
+
+\item{linear_hypothesis}{optional hypotheses, in the form \code{\link[=lh_robust]{lh_robust()}}
+takes, whose \code{CR2} Satterthwaite degrees of freedom are returned as
+\code{hypothesis_df}. Ignored for every other \code{se_type}, where a combination of
+coefficients has the same degrees of freedom as each of them.}
 }
 \description{
 Internal method that creates linear fits

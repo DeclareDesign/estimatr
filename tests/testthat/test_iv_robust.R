@@ -83,6 +83,39 @@ test_that("classical diagnostics match AER: weak instruments, Wu-Hausman, Sargan
   expect_equal(overid[["p.value"]], ref["Sargan", "p-value"], tolerance = IV_TOL)
 })
 
+test_that("robust weak-instrument and Wu-Hausman tests match AER given sandwich's variance", {
+  # AER computes both as Wald tests when handed a variance function, which
+  # makes it a reference for the robust versions too. It computes no robust
+  # over-identification test, so Wooldridge's score test has none.
+  #
+  # This file runs before test_vs_sandwich.R loads the ivreg package, whose
+  # summary method then shadows AER's and cannot read an AER fit's hat values.
+  skip_if_not_installed("AER")
+  skip_if_not_installed("sandwich")
+  fml <- y ~ en + w | inst + inst2 + w
+  ref_fit <- AER::ivreg(fml, data = d)
+  for (ty in c("HC0", "HC1", "HC2", "HC3")) {
+    fit <- iv_robust(fml, data = d, se_type = ty, diagnostics = TRUE)
+    ref <- summary(ref_fit, vcov. = function(obj) sandwich::vcovHC(obj, type = ty),
+                   diagnostics = TRUE)$diagnostics
+
+    weak <- fit$diagnostic_first_stage_fstatistic
+    expect_equal(weak[["value"]], ref["Weak instruments", "statistic"], tolerance = IV_TOL,
+                 label = paste(ty, "weak-instrument F"))
+    expect_equal(weak[["nomdf"]], ref["Weak instruments", "df1"])
+    expect_equal(weak[["p.value"]], ref["Weak instruments", "p-value"], tolerance = IV_TOL,
+                 label = paste(ty, "weak-instrument p"))
+
+    wu <- fit$diagnostic_endogeneity_test
+    expect_equal(wu[["value"]], ref["Wu-Hausman", "statistic"], tolerance = IV_TOL,
+                 label = paste(ty, "Wu-Hausman"))
+    expect_equal(wu[["numdf"]], ref["Wu-Hausman", "df1"])
+    expect_equal(wu[["dendf"]], ref["Wu-Hausman", "df2"])
+    expect_equal(wu[["p.value"]], ref["Wu-Hausman", "p-value"], tolerance = IV_TOL,
+                 label = paste(ty, "Wu-Hausman p"))
+  }
+})
+
 test_that("over-identified diagnostics work for every se_type, not just classical", {
   # `first_stage_fits` has its columns renamed `fit_<endog>`, and the rewritten
   # robust branch then indexed it by the bare endogenous names, so every
