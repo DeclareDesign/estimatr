@@ -76,24 +76,34 @@ print_summary_lm_like <- function(x,
 }
 
 build_ivreg_diagnostics_mat <- function(x) {
-  diag_names <- c(
-    "Weak instruments",
+  first_stage <- x[["diagnostic_first_stage_fstatistic"]]
+  endog <- x[["diagnostic_endogeneity_test"]]
+  overid <- x[["diagnostic_overid_test"]]
+
+  # One first-stage row per endogenous regressor. Once there is more than one,
+  # the entries are named "<var>:value" and "<var>:p.value".
+  is_p <- endsWith(names(first_stage), "p.value")
+  weak_values <- first_stage[endsWith(names(first_stage), "value") & !is_p]
+  n_weak <- length(weak_values)
+  weak_names <- if (n_weak > 1) {
+    paste0("Weak instruments (", sub(":value$", "", names(weak_values)), ")")
+  } else {
+    "Weak instruments"
+  }
+
+  diag_mat <- cbind(
+    value = unname(c(weak_values, endog[["value"]], overid[["value"]])),
+    Df1 = c(rep(first_stage[["nomdf"]], n_weak), endog[["numdf"]], overid[["df"]]),
+    Df2 = c(rep(first_stage[["dendf"]], n_weak), endog[["dendf"]], NA),
+    p.value = unname(c(first_stage[is_p], endog[["p.value"]], overid[["p.value"]]))
+  )
+  # Sargan's statistic after a classical fit, Wooldridge's robust score test
+  # after any other.
+  rownames(diag_mat) <- c(
+    weak_names,
     "Wu-Hausman",
-    "Sargan"
+    if (identical(x[["se_type"]], "classical")) "Sargan" else "Score (robust)"
   )
-  diag_mat <- rbind(
-    x[["diagnostic_first_stage_fstatistic"]][c("value", "numdf", "dendf")],
-    x[["diagnostic_endogeneity_test"]][c("value", "numdf", "dendf")],
-    x[["diagnostic_overid_test"]][c("value", "df", NA)]
-  )
-  p.values <- c(
-    x[["diagnostic_first_stage_fstatistic"]]["p.value"],
-    x[["diagnostic_endogeneity_test"]]["p.value"],
-    x[["diagnostic_overid_test"]]["p.value"]
-  )
-  diag_mat <- cbind(diag_mat, p.values)
-  colnames(diag_mat) <- c("value", "Df1", "Df2", "p.value")
-  rownames(diag_mat) <- diag_names
   diag_mat
 }
 

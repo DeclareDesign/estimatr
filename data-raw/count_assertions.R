@@ -90,7 +90,11 @@ components <- list(
       # One fixture check, and one assertion that areg reports no F statistic.
       "lm_robust with fixed_effects reproduces Stata's areg" = 6,
       "iv_robust reproduces Stata's ivregress 2sls" = 39,
-      "weighted 2SLS root MSE follows AER::ivreg rather than Stata" = "all"
+      "weighted 2SLS root MSE follows AER::ivreg rather than Stata" = "all",
+      # One assertion checks that the fixture holds the 108 rows the file expects.
+      "iv_robust's first-stage and endogeneity tests reproduce Stata's estat" = 432,
+      # One assertion checks that the fixture holds the rows the file expects.
+      "iv_robust's over-identification tests reproduce Stata's estat overid" = 12
     )
   ),
   fixest_plm = list(

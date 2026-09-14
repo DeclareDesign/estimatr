@@ -2,7 +2,7 @@
 #'
 #' Fits a two-stage least squares instrumental variables regression and
 #' returns heteroskedasticity-robust or cluster-robust standard errors, with
-#' optional weak-instrument, Wu-Hausman, and Sargan diagnostics.
+#' optional weak-instrument, Wu-Hausman, and overidentification diagnostics.
 #'
 #' @param formula (required) An object of class formula with regressors and instruments,
 #'   e.g. `y ~ x1 + x2 | z1 + z2`.
@@ -22,7 +22,18 @@
 #'   FE), `"CR0"` (clusters, with FE).
 #' @param ci (optional) Logical. Whether to compute p-values and confidence intervals.
 #' @param alpha (optional) The significance level, 0.05 by default.
-#' @param diagnostics (optional) Logical. Whether to compute IV diagnostic statistics.
+#' @param diagnostics (optional) Logical. Whether to compute IV diagnostic
+#'   statistics: the first-stage F test of the excluded instruments for each
+#'   endogenous regressor, a regression-based Wu-Hausman test of endogeneity,
+#'   and, when the model is overidentified, a test of the overidentifying
+#'   restrictions. That test is Sargan's with `se_type = "classical"` and
+#'   Wooldridge's (1995) robust score test otherwise, with the score's variance
+#'   summed within clusters when `clusters` is given. It is `NA`, with a
+#'   warning, for a weighted fit, where neither statistic is known to keep its
+#'   chi-squared distribution, and for a clustered fit with no more clusters
+#'   than restrictions. All three reproduce Stata's `estat firststage`,
+#'   `estat endogenous`, and `estat overid` on every configuration the test
+#'   suite records where Stata computes them.
 #' @param return_vcov (optional) Logical. Whether to return the vcov matrix.
 #' @param try_cholesky (optional) Logical. Whether to solve by Cholesky
 #'   decomposition of `X'X` rather than by the default pivoted QR. `FALSE` by
@@ -251,6 +262,15 @@ iv_robust <- function(formula,
     wu_hausman_ftest_val <- wu_hausman_reg_ftest(model_data, first_stage_residuals, se_type)
 
     extra_instruments <- ncol(roles[["excluded"]]) - length(endog)
+
+    # Stata's `estat overid` likewise declines after aweights unless forced.
+    if (extra_instruments && !is.null(model_data$weights)) {
+      warning(
+        "`diagnostic_overid_test` is NA with `weights`: under weighting, neither ",
+        "Sargan's statistic nor the robust score test is known to keep its ",
+        "chi-squared distribution."
+      )
+    }
 
     if (extra_instruments && is.null(model_data$weights)) {
       ss_residuals <- model_data$outcome - second_stage[["fitted.values"]]
@@ -491,16 +511,24 @@ sargan_chisq <- function(model_data, ss_residuals) {
   nrow(model_data$instrument_matrix) * ss_resid_lm[["r.squared"]]
 }
 
-# Wooldridge's robust score test for over-identifying restrictions, as 1.0.6
-# computed it. The rewrite had replaced the construction with `n * R^2` of the
-# second-stage residuals on [Z, xhat], which is algebraically the Sargan
-# statistic rather than the robust score test, and indexed `first_stage_fits`
-# by the endogenous variable names after renaming its columns `fit_<name>`, so
-# every over-identified fit with a non-classical `se_type` errored with
-# "subscript out of bounds" instead of returning either number.
+# Wooldridge's robust score test for over-identifying restrictions. The
+# rewrite had once replaced the construction with `n * R^2` of the second-stage
+# residuals on [Z, xhat], which is algebraically the Sargan statistic rather
+# than the robust score test, and indexed `first_stage_fits` by the endogenous
+# variable names after renaming its columns `fit_<name>`, so every
+# over-identified fit with a non-classical `se_type` errored with "subscript out
+# of bounds" instead of returning either number.
 #
 # `excess` is any m columns of a basis for the excluded instruments. Wooldridge
 # shows the statistic does not depend on which m are chosen.
+#
+# The score contributions k are the excess instruments residualized on
+# [exogenous, xhat], times the structural residual. The statistic is s' S^-1 s,
+# with s the sum of k and S its outer product summed within clusters, or over
+# observations when there are none. Unclustered, that is n minus the residual
+# sum of squares from regressing a vector of ones on k, the form Wooldridge
+# (1995) gives and Stata's `estat overid` reports. estimatr 1.0.6 used that form
+# for clustered fits as well, which ignores the clustering.
 wooldridge_score_chisq <- function(model_data,
                                     exogenous,
                                     excess,
@@ -523,13 +551,21 @@ wooldridge_score_chisq <- function(model_data,
   )
 
   kmat <- as.matrix(excess - qhat_fit[["fitted.values"]]) * as.vector(ss_residuals)
-  if (!is.null(model_data[["weights"]])) {
-    kmat <- kmat * model_data[["weights"]]
+  cluster <- model_data[["cluster"]]
+  kmat_sums <- if (is.null(cluster)) kmat else rowsum(kmat, cluster)
+  meat_qr <- qr(crossprod(kmat_sums))
+
+  # With no more clusters than restrictions S is singular, and s' S^+ s would
+  # equal the number of clusters whatever the data.
+  if (nrow(kmat_sums) <= ncol(kmat) || meat_qr$rank < ncol(kmat)) {
+    warning(
+      "`diagnostic_overid_test` is NA: the variance of the score for the ",
+      "overidentifying restrictions is singular, as it is whenever there are ",
+      "no more clusters than overidentifying restrictions."
+    )
+    return(NA_real_)
   }
 
-  # Regress a vector of ones on kmat with no intercept. The statistic is
-  # n - SSR, and SSR is `sum(residuals)` rather than `sum(residuals^2)`
-  # because the residuals are orthogonal to kmat and the outcome is 1.
-  kmat_fit <- stats::lm.fit(kmat, as.matrix(rep(1, length(ss_residuals))))
-  length(ss_residuals) - sum(stats::residuals(kmat_fit))
+  score <- colSums(kmat)
+  drop(crossprod(score, qr.coef(meat_qr, score)))
 }

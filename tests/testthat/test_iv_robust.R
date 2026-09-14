@@ -86,7 +86,8 @@ test_that("classical diagnostics match AER: weak instruments, Wu-Hausman, Sargan
 test_that("robust weak-instrument and Wu-Hausman tests match AER given sandwich's variance", {
   # AER computes both as Wald tests when handed a variance function, which
   # makes it a reference for the robust versions too. It computes no robust
-  # over-identification test, so Wooldridge's score test has none.
+  # over-identification test; Wooldridge's score test is held to Stata's
+  # `estat overid` in test_vs_stata.R.
   #
   # This file runs before test_vs_sandwich.R loads the ivreg package, whose
   # summary method then shadows AER's and cannot read an AER fit's hat values.
@@ -145,6 +146,101 @@ test_that("over-identified diagnostics work for every se_type, not just classica
   }, numeric(1))
   expect_equal(unname(diff(range(rb))), 0)
   expect_false(isTRUE(all.equal(rb[["HC0"]], classical$diagnostic_overid_test[["value"]])))
+})
+
+test_that("a clustered over-identification test sums the score's variance within clusters", {
+  # estimatr 1.0.6, and the rewrite until this test, reported the unclustered
+  # statistic for a clustered fit. Stata's estat overid computes nothing after
+  # vce(cluster), so the reference is the definition: s' S^-1 s, with s the sum
+  # of the score contributions and S their outer product summed within clusters.
+  set.seed(3)
+  n_clusters <- 40
+  n <- 10 * n_clusters
+  dd <- data.frame(g = rep(seq_len(n_clusters), each = 10), id = seq_len(n),
+                   z1 = rnorm(n), z2 = rnorm(n), z3 = rnorm(n), w = rnorm(n))
+  dd$x <- dd$z1 + 0.5 * dd$z2 + 0.3 * dd$z3 + rnorm(n)
+  dd$y <- dd$x + dd$w + rnorm(n) + rep(rnorm(n_clusters), each = 10)
+  fml <- y ~ x + w | z1 + z2 + z3 + w
+  overid <- function(...) {
+    iv_robust(fml, data = dd, diagnostics = TRUE, ...)$diagnostic_overid_test
+  }
+
+  X <- cbind(1, dd$x, dd$w)
+  Z <- cbind(1, dd$z1, dd$z2, dd$z3, dd$w)
+  xhat <- qr.fitted(qr(Z), X)
+  u <- as.vector(dd$y - X %*% qr.coef(qr(xhat), dd$y))
+  k <- qr.resid(qr(xhat), cbind(dd$z2, dd$z3)) * u
+  s <- colSums(k)
+  by_definition <- drop(s %*% solve(crossprod(rowsum(k, dd$g)), s))
+
+  for (ty in c("CR0", "stata", "CR2")) {
+    ov <- overid(clusters = g, se_type = ty)
+    expect_equal(ov[["value"]], by_definition, tolerance = 1e-10, label = ty)
+    expect_equal(unname(ov[["df"]]), 2, label = ty)
+  }
+  expect_false(isTRUE(all.equal(by_definition, overid(se_type = "HC0")[["value"]])))
+
+  # One observation per cluster is the unclustered statistic.
+  expect_equal(overid(clusters = id, se_type = "CR0")[["value"]],
+               overid(se_type = "HC0")[["value"]], tolerance = 1e-12)
+
+  # With no more clusters than restrictions S is singular, and the statistic
+  # would equal the number of clusters whatever the data.
+  dd$g2 <- rep(1:2, each = n / 2)
+  expect_warning(ov <- overid(clusters = g2, se_type = "CR0"),
+                 "no more clusters than overidentifying restrictions")
+  expect_true(is.na(ov[["value"]]))
+})
+
+test_that("a weighted over-identified fit refuses the over-identification test by name", {
+  # estimatr 1.0.6 returned NA here silently, which is indistinguishable from a
+  # just-identified fit. The other two diagnostics are still computed.
+  set.seed(4)
+  n <- 300
+  dd <- data.frame(g = rep(1:30, each = 10), z1 = rnorm(n), z2 = rnorm(n),
+                   w = rnorm(n), wt = runif(n, 0.5, 2))
+  dd$x <- dd$z1 + 0.5 * dd$z2 + rnorm(n)
+  dd$y <- dd$x + dd$w + rnorm(n)
+
+  for (ty in c("classical", "HC1", "CR2")) {
+    cl <- if (ty == "CR2") dd$g else NULL
+    expect_warning(
+      m <- iv_robust(y ~ x + w | z1 + z2 + w, data = dd, weights = wt, clusters = cl,
+                     se_type = ty, diagnostics = TRUE),
+      "NA with `weights`"
+    )
+    expect_true(is.na(m$diagnostic_overid_test[["value"]]), label = ty)
+    expect_true(is.finite(m$diagnostic_endogeneity_test[["value"]]), label = ty)
+    expect_true(is.finite(m$diagnostic_first_stage_fstatistic[["value"]]), label = ty)
+  }
+
+  # A just-identified weighted fit has no restrictions to refuse.
+  expect_silent(iv_robust(y ~ x + w | z1 + w, data = dd, weights = wt, diagnostics = TRUE))
+})
+
+test_that("printed diagnostics carry every first stage and its degrees of freedom", {
+  # The table read the first-stage df as "numdf", a name the vector does not
+  # have, so Df1 printed NA on every fit; with two endogenous regressors the
+  # statistic and p-value printed NA too, since those entries are named
+  # "<var>:value".
+  one <- summary(iv_robust(mpg ~ hp + gear | wt + am + gear, data = mtcars,
+                           diagnostics = TRUE))
+  tab <- build_ivreg_diagnostics_mat(one)
+  fs <- one$diagnostic_first_stage_fstatistic
+  expect_equal(rownames(tab), c("Weak instruments", "Wu-Hausman", "Score (robust)"))
+  expect_equal(unname(tab["Weak instruments", ]),
+               unname(fs[c("value", "nomdf", "dendf", "p.value")]))
+
+  two <- summary(iv_robust(mpg ~ hp + am | wt + gear, data = mtcars,
+                           se_type = "classical", diagnostics = TRUE))
+  tab2 <- build_ivreg_diagnostics_mat(two)
+  fs2 <- two$diagnostic_first_stage_fstatistic
+  expect_equal(rownames(tab2),
+               c("Weak instruments (hp)", "Weak instruments (am)", "Wu-Hausman", "Sargan"))
+  expect_equal(unname(tab2[1:2, "value"]), unname(fs2[c("hp:value", "am:value")]))
+  expect_equal(unname(tab2[1:2, "p.value"]), unname(fs2[c("hp:p.value", "am:p.value")]))
+  expect_false(anyNA(tab2[1:3, ]))
+  expect_output(print(two), "Weak instruments \\(am\\)")
 })
 
 test_that("#389: glance() works with multiple endogenous regressors", {

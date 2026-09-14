@@ -79,6 +79,22 @@ ext_data_stata <- function() {
   d
 }
 
+# The same data as Stata held it after `import delimited`: single precision,
+# with `w` generated from the single-precision `drat`. A statistic computed from
+# a nearly singular cluster-robust variance can amplify that rounding past what
+# Stata printed, so a comparison that needs it says so.
+ext_data_stata_float32 <- function() {
+  to_float32 <- function(x) {
+    readBin(writeBin(as.double(x), raw(), size = 4), "double", n = length(x), size = 4)
+  }
+  d <- mtcars
+  for (v in c("mpg", "hp", "wt", "am", "gear", "drat")) {
+    d[[v]] <- to_float32(d[[v]])
+  }
+  d$w <- to_float32(d$drat / 5)
+  d
+}
+
 # Tolerances.
 #
 # LIVE_TOL applies where both sides are computed in this session. Those agree
@@ -251,10 +267,11 @@ HARD_CLUB_TOL <- 2e-3
 # order, which is covariates first and `_cons` last; R puts the intercept
 # first. Every caller below names the columns, so the reordering is done at the
 # comparison rather than here.
-read_stata_fixture <- function(file, col.names) {
+read_stata_fixture <- function(file, col.names, sep = "") {
   read.table(
     test_path("fixtures", "stata", file),
     col.names = col.names,
+    sep = sep,
     colClasses = "character",
     stringsAsFactors = FALSE
   )

@@ -47,7 +47,18 @@ FE), \code{"CR0"} (clusters, with FE).}
 
 \item{alpha}{(optional) The significance level, 0.05 by default.}
 
-\item{diagnostics}{(optional) Logical. Whether to compute IV diagnostic statistics.}
+\item{diagnostics}{(optional) Logical. Whether to compute IV diagnostic
+statistics: the first-stage F test of the excluded instruments for each
+endogenous regressor, a regression-based Wu-Hausman test of endogeneity,
+and, when the model is overidentified, a test of the overidentifying
+restrictions. That test is Sargan's with \code{se_type = "classical"} and
+Wooldridge's (1995) robust score test otherwise, with the score's variance
+summed within clusters when \code{clusters} is given. It is \code{NA}, with a
+warning, for a weighted fit, where neither statistic is known to keep its
+chi-squared distribution, and for a clustered fit with no more clusters
+than restrictions. All three reproduce Stata's \verb{estat firststage},
+\verb{estat endogenous}, and \verb{estat overid} on every configuration the test
+suite records where Stata computes them.}
 
 \item{return_vcov}{(optional) Logical. Whether to return the vcov matrix.}
 
@@ -98,7 +109,7 @@ two-stage structure. With \code{diagnostics = TRUE} the object also holds
 \description{
 Fits a two-stage least squares instrumental variables regression and
 returns heteroskedasticity-robust or cluster-robust standard errors, with
-optional weak-instrument, Wu-Hausman, and Sargan diagnostics.
+optional weak-instrument, Wu-Hausman, and overidentification diagnostics.
 }
 \examples{
 set.seed(25)

@@ -178,3 +178,108 @@ test_that("weighted 2SLS root MSE follows AER::ivreg rather than Stata", {
   expect_gt(rel, stata_rel_tol(st$rmse[i]))
   expect_lt(rel, 0.25)
 })
+
+# ---- estat firststage and estat endogenous ----
+#
+# stata-iv-diagnostics.txt crosses four models with small, robust and clustered
+# variances, weights and no constant. Its rows are compared on the data as Stata
+# held it: in double precision, five clustered first-stage F statistics (675 to
+# 13,504, on three clusters) miss Stata's printed digits by up to 3.8e-6, and on
+# single-precision data every row agrees to 4e-8.
+
+STATA_DIAG_COLS <- c("formula", "weights", "option", "test", "df1", "df2", "stat", "p")
+
+STATA_IV_MODELS <- list(
+  "(hp = wt)" = c("hp", "wt"),
+  "(hp am = wt gear)" = c("hp + am", "wt + gear"),
+  "gear (hp = wt)" = c("hp + gear", "wt + gear"),
+  "gear (hp = wt am)" = c("hp + gear", "wt + am + gear")
+)
+
+# One Stata configuration as an iv_robust call: `small` is classical, `rob` is
+# HC1, `cluster(cyl)` is se_type = "stata" clustered on cyl, and `noconstant`
+# drops the intercept from both stages.
+fit_stata_iv <- function(dat, model, weights, option) {
+  nc <- if (grepl("noconstant", option)) " - 1" else ""
+  parts <- STATA_IV_MODELS[[model]]
+  args <- list(
+    as.formula(paste0("mpg ~ ", parts[1], nc, " | ", parts[2], nc)),
+    data = dat,
+    se_type = if (grepl("small", option)) "classical" else if (grepl("rob", option)) "HC1" else "stata",
+    diagnostics = TRUE
+  )
+  if (weights != "") args$weights <- quote(w)
+  if (grepl("cluster", option)) args$clusters <- quote(cyl)
+  # A weighted over-identified fit warns that it does not compute the
+  # overidentification test. test_iv_robust.R asserts that warning; the rows
+  # that fit these models here do not read the test.
+  withCallingHandlers(
+    do.call(iv_robust, args),
+    warning = function(w) {
+      if (grepl("NA with `weights`", conditionMessage(w), fixed = TRUE)) {
+        invokeRestart("muffleWarning")
+      }
+    }
+  )
+}
+
+test_that("iv_robust's first-stage and endogeneity tests reproduce Stata's estat", {
+  st <- read_stata_fixture("stata-iv-diagnostics.txt", STATA_DIAG_COLS, sep = ";")
+  rows <- st[st$test != "overid", ]
+  expect_equal(nrow(rows), 108L)
+  d32 <- ext_data_stata_float32()
+
+  for (i in seq_len(nrow(rows))) {
+    r <- rows[i, ]
+    lab <- paste(r$formula, r$weights, r$option, r$test)
+    fit <- fit_stata_iv(d32, r$formula, r$weights, r$option)
+    if (r$test == "endog") {
+      stat <- fit$diagnostic_endogeneity_test
+      value <- stat[["value"]]
+      p <- stat[["p.value"]]
+      df1 <- stat[["numdf"]]
+    } else {
+      # weak<k> is Stata's first stage for the k-th endogenous regressor.
+      stat <- fit$diagnostic_first_stage_fstatistic
+      k <- as.integer(sub("weak", "", r$test))
+      is_p <- endsWith(names(stat), "p.value")
+      value <- stat[endsWith(names(stat), "value") & !is_p][[k]]
+      p <- stat[is_p][[k]]
+      df1 <- stat[["nomdf"]]
+    }
+    expect_equal_stata(value, r$stat, paste0(lab, ": statistic"))
+    expect_equal_stata(p, r$p, paste0(lab, ": p"))
+    expect_equal(unname(df1), as.numeric(r$df1), label = paste0(lab, ": df1"))
+    expect_equal(unname(stat[["dendf"]]), as.numeric(r$df2), label = paste0(lab, ": df2"))
+  }
+})
+
+# ---- estat overid ----
+
+test_that("iv_robust's over-identification tests reproduce Stata's estat overid", {
+  # After a classical fit Stata reports Sargan's statistic; after vce(robust) it
+  # reports Wooldridge's (1995) robust score test, which no R package computes,
+  # so these rows are that statistic's only reference outside this package.
+  # Stata computes nothing after vce(cluster), where this package sums the
+  # score's variance within clusters (held to its definition in
+  # test_iv_robust.R), and declines after aweights unless forced, as this
+  # package does with a warning. That leaves four rows to compare.
+  st <- read_stata_fixture("stata-iv-diagnostics.txt", STATA_DIAG_COLS, sep = ";")
+  d32 <- ext_data_stata_float32()
+  options <- c("small", "rob", "small noconstant", "rob noconstant")
+  overid_fits <- setNames(
+    lapply(options, function(opt) fit_stata_iv(d32, "gear (hp = wt am)", "", opt)),
+    options
+  )
+  rows <- st[st$formula == "gear (hp = wt am)" & st$weights == "" & st$test == "overid" &
+               st$option %in% names(overid_fits), ]
+  expect_identical(rows$option, names(overid_fits))
+
+  for (i in seq_len(nrow(rows))) {
+    nm <- rows$option[i]
+    ov <- overid_fits[[nm]]$diagnostic_overid_test
+    expect_equal_stata(ov[["value"]], rows$stat[i], paste0(nm, ": overid statistic"))
+    expect_equal_stata(ov[["p.value"]], rows$p[i], paste0(nm, ": overid p"))
+    expect_equal(unname(ov[["df"]]), as.numeric(rows$df1[i]), label = paste0(nm, ": overid df"))
+  }
+})
