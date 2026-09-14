@@ -559,6 +559,9 @@ difference_in_means_internal <- function(condition1 = NULL,
 
   df <- NA
   nclusters <- NA
+  # The delegated fits count observations themselves, and a zero-weight row
+  # is not one; the arithmetic paths below count rows.
+  nobs <- N
 
   if (clustered && !pair_matched) {
 
@@ -580,6 +583,7 @@ difference_in_means_internal <- function(condition1 = NULL,
     std.error <- cr2_out[["std.error"]][2]
     df <- cr2_out[["df"]][2]
     nclusters <- cr2_out[["nclusters"]]
+    nobs <- cr2_out[["nobs"]]
   } else {
     if (is.null(data$weights)) {
       diff <- mean(Y2) - mean(Y1)
@@ -628,6 +632,7 @@ difference_in_means_internal <- function(condition1 = NULL,
       diff <- coef(w_hc2_out)[2]
       std.error <- w_hc2_out$std.error[2]
       df <- w_hc2_out$df[2]
+      nobs <- w_hc2_out[["nobs"]]
     }
   }
 
@@ -639,11 +644,7 @@ difference_in_means_internal <- function(condition1 = NULL,
       stringsAsFactors = FALSE
     )
 
-  if (is.numeric(data$weights)) {
-    return_frame$nobs <- sum(data$weights)
-  } else {
-    return_frame$nobs <- N
-  }
+  return_frame$nobs <- nobs
 
   if (is.numeric(nclusters)) {
     return_frame$nclusters <- nclusters

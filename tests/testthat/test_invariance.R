@@ -503,20 +503,31 @@ test_that("mixing the regressors of a 2SLS fit transforms it by A", {
   }
 })
 
+# With weights the diagnostics are the tests on the sqrt(w)-scaled model, and
+# the respelling has to pass through that scaling unchanged: measured at
+# 1.3e-15 under HC1 and 3.2e-15 under CR2 on 2026-09-13.
 test_that("mixing the instruments within their span changes nothing, diagnostics included", {
   di <- d
   di$v1 <- 1 + d$inst + 2 * d$inst2 + 3 * d$x1
   di$v2 <- d$inst2 - d$x1
   di$v3 <- d$x1 + d$inst
-  for (st in c("classical", "HC2", "CR2")) {
-    cluster_ids <- if (st == "CR2") di$cl else NULL
-    fz <- iv_robust(y ~ en + x1 | inst + inst2 + x1, data = di, se_type = st,
-                    clusters = cluster_ids, diagnostics = TRUE)
+  cases <- list(
+    classical = list(se_type = "classical", clusters = NULL, weights = NULL),
+    HC2 = list(se_type = "HC2", clusters = NULL, weights = NULL),
+    CR2 = list(se_type = "CR2", clusters = di$cl, weights = NULL),
+    weighted_HC1 = list(se_type = "HC1", clusters = NULL, weights = di$w),
+    weighted_classical = list(se_type = "classical", clusters = NULL, weights = di$w),
+    weighted_CR2 = list(se_type = "CR2", clusters = di$cl, weights = di$w)
+  )
+  for (st in names(cases)) {
+    cs <- cases[[st]]
+    fz <- iv_robust(y ~ en + x1 | inst + inst2 + x1, data = di, se_type = cs$se_type,
+                    clusters = cs$clusters, weights = cs$weights, diagnostics = TRUE)
     respelled <- list(
-      named = iv_robust(y ~ en + x1 | v1 + v2 + x1, data = di, se_type = st,
-                        clusters = cluster_ids, diagnostics = TRUE),
-      unnamed = iv_robust(y ~ en + x1 | v1 + v2 + v3, data = di, se_type = st,
-                          clusters = cluster_ids, diagnostics = TRUE)
+      named = iv_robust(y ~ en + x1 | v1 + v2 + x1, data = di, se_type = cs$se_type,
+                        clusters = cs$clusters, weights = cs$weights, diagnostics = TRUE),
+      unnamed = iv_robust(y ~ en + x1 | v1 + v2 + v3, data = di, se_type = cs$se_type,
+                          clusters = cs$clusters, weights = cs$weights, diagnostics = TRUE)
     )
     for (nm in names(respelled)) {
       fv <- respelled[[nm]]

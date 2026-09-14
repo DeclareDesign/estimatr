@@ -264,31 +264,45 @@ lm_robust_fit <- function(y,
         hypotheses <- hypotheses[, covs_used, drop = FALSE]
       }
 
+      # A zero-weight row is not in the fit and contributes nothing to any
+      # sandwich: its scaled X row is 0 and its leverage is 0. It is dropped
+      # here rather than left for the C++ to ignore because CR2's per-cluster
+      # adjustment reads every row of a cluster's block, and a zero-weight row
+      # left in the block moved the weighted CR2 standard errors by 1.4e-3
+      # relative, where clubSandwich, which drops such rows, did not move at
+      # all. Dropping them also makes `J` the positive-weight cluster count
+      # that the cluster degrees of freedom and the stata factor need.
+      rows <- if (weighted) which(data[["weights"]] > 0) else seq_len(nrow(data[["X"]]))
+      all_rows <- length(rows) == nrow(data[["X"]])
+      take <- function(m) if (all_rows || is.null(m)) m else m[rows, , drop = FALSE]
+
       vcov_fit <- lm_variance(
         # Widening the design here is what makes HC2, HC3 and CR2 available
         # under `fixed_effects`. The C++ detects X.cols() > ncol(XtX_inv) and
         # rebuilds the meat from the full design, dropping the rank-deficient
         # dummy columns itself.
-        X = if (!is.null(data[["femat"]]))
+        X = take(if (!is.null(data[["femat"]]))
           cbind(data[["X"]], data[["femat"]])
-          else data[["X"]],
-        Xunweighted = if (!is.null(data[["femat"]]) && weighted)
+          else data[["X"]]),
+        Xunweighted = take(if (!is.null(data[["femat"]]) && weighted)
           cbind(data[["Xunweighted"]], data[["fematunweighted"]])
-          else data[["Xunweighted"]],
+          else data[["Xunweighted"]]),
         XtX_inv = fit$XtX_inv,
-        ei = if (se_type == "CR2" && weighted)
+        ei = take(if (se_type == "CR2" && weighted)
           fit_vals[["ei.unweighted"]]
-          else fit_vals[["ei"]],
+          else fit_vals[["ei"]]),
         weight_mean = data[["weight_mean"]],
-        cluster = data[["cluster"]],
-        J = data[["J"]],
+        cluster = if (all_rows) data[["cluster"]] else data[["cluster"]][rows],
+        J = data[["J_eff"]],
         ci = ci,
         se_type = se_type,
         which_covs = which_covs[covs_used],
         fe_rank = fe_rank,
         # Only HC2/HC3 consume this; it is NULL for every other se_type and for
         # multi-way FE, so the C++ falls back to the plain hat value.
-        fe_leverage = if (se_type %in% c("HC2", "HC3")) fe_leverage else NULL,
+        fe_leverage = if (se_type %in% c("HC2", "HC3") && !is.null(fe_leverage))
+          fe_leverage[rows]
+          else NULL,
         n_eff = N,
         hypotheses = hypotheses
       )
@@ -411,7 +425,7 @@ lm_robust_fit <- function(y,
   return_list[["df.residual"]] <- N - tot_rank
   return_list[["nobs"]] <- N
   if (clustered) {
-    return_list[["nclusters"]] <- data[["J"]]
+    return_list[["nclusters"]] <- data[["J_eff"]]
   }
   return_list[["k"]] <- k
   return_list[["rank"]] <- x_rank
@@ -445,7 +459,7 @@ lm_robust_fit <- function(y,
     fstat_int <- if (fe_rank > 0L) 0L else has_int
     nomdf <- x_rank - fstat_int
     if (clustered) {
-      dendf <- data[["J"]] - 1
+      dendf <- data[["J_eff"]] - 1
     } else {
       dendf <- return_list[["df.residual"]]
     }
@@ -651,10 +665,12 @@ get_r2s <- function(y, return_list, has_int, yunweighted, weights, weight_mean) 
         tss
     )
 
+  # `N` above is the row count, which the centring needs; the adjustment
+  # counts observations, and a zero-weight row is not one.
   adj.r.squared <-
     1 - (
       (1 - r.squared) *
-        ((N - has_int) / return_list[["df.residual"]])
+        ((return_list[["nobs"]] - has_int) / return_list[["df.residual"]])
     )
 
   return(list(
@@ -759,12 +775,22 @@ prep_data <- function(data,
     }
 
     data[["J"]] <- length(unique(data[["cluster"]]))
+    # A cluster whose every row has weight 0 is not a cluster: it contributes
+    # nothing to the fit or the meat, so it must not count toward the cluster
+    # degrees of freedom, the stata factor, or `nclusters`, any more than a
+    # zero-weight row counts toward `nobs`. `J` stays the number of distinct
+    # codes because the C++ sizes its per-cluster arrays by it.
+    data[["J_eff"]] <- if (weighted) {
+      length(unique(data[["cluster"]][data[["weights"]] > 0]))
+    } else {
+      data[["J"]]
+    }
 
     # Every cluster-robust estimator here divides by J - 1 somewhere, except
     # CR2, whose degrees of freedom are Satterthwaite and so never hit the
     # J - 1 = 0 guard. With one cluster CR2 returned standard errors of order
     # 1e-17 and said nothing, which reads as a precisely estimated zero.
-    if (data[["J"]] < 2L) {
+    if (data[["J_eff"]] < 2L) {
       stop(
         "`clusters` has only one level, so there is no between-cluster ",
         "variation for a cluster-robust variance to estimate.\nDrop ",
@@ -774,6 +800,7 @@ prep_data <- function(data,
     }
   } else {
     data[["J"]] <- 1
+    data[["J_eff"]] <- 1
   }
 
   if (weighted) {

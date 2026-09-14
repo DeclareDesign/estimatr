@@ -319,7 +319,8 @@ iv_robust <- function(formula,
     fitted_full <- attach_obs_names(fitted_full, model_data)
     return_list[["fitted.values"]] <- fitted_full
 
-    n_obs <- nrow(yoriginal)
+    # The fit's own count, which leaves out zero-weight rows.
+    n_obs <- return_list[["nobs"]]
     ss <- fe_r2(yoriginal, residuals_proj, model_data[["weights"]])
     tss_full <- ss[["tss"]]
     r2_full  <- 1 - ss[["rss"]] / tss_full

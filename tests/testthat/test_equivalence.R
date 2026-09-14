@@ -282,6 +282,70 @@ test_that("weights that are all 1 are no weights", {
   expect_equal(unname(weighted$df), n - 2)
 })
 
+# A zero weight is a row that is not in the fit, and every count the fit
+# reports has to say so: `nobs` and `df.residual` (B5 in test_lm_robust.R pins
+# those, unclustered), and also the cluster count behind the CR0 and stata
+# degrees of freedom and the stata factor, the rank the absorbed fixed effects
+# consume, and the diagnostics. Until 2026-09-14 a cluster weighted entirely to
+# zero was still a cluster (`nclusters` 12 against 11, stata off by 5e-4, df
+# off by one), a fixed-effect group weighted to zero was still a level (HC1 off
+# by 7e-4), and under two absorbed factors the zero group sum reached the
+# eigendecomposition as NaN and the fit errored. 1.0.6 had the first; its
+# weighted fixed-effects fit returned NA.
+test_that("a zero weight is a removed row, for every estimator and every count", {
+  dz <- d
+  dz$w0 <- d$w
+  dz$w0[d$cl == 3] <- 0
+  dz$w0[d$g == "b"] <- 0
+  keep <- dz$w0 > 0
+  dropped <- dz[keep, ]
+
+  fits <- list(
+    HC1 = function(dd) lm_robust(y ~ x1 + x2 + z, data = dd, weights = w0, se_type = "HC1"),
+    HC3 = function(dd) lm_robust(y ~ x1 + x2 + z, data = dd, weights = w0, se_type = "HC3"),
+    classical = function(dd) lm_robust(y ~ x1 + x2 + z, data = dd, weights = w0, se_type = "classical"),
+    CR0 = function(dd) lm_robust(y ~ x1 + x2 + z, data = dd, weights = w0, clusters = cl, se_type = "CR0"),
+    CR2 = function(dd) lm_robust(y ~ x1 + x2 + z, data = dd, weights = w0, clusters = cl, se_type = "CR2"),
+    stata = function(dd) lm_robust(y ~ x1 + x2 + z, data = dd, weights = w0, clusters = cl, se_type = "stata"),
+    fe_HC1 = function(dd) lm_robust(y ~ x1 + x2 + z, data = dd, weights = w0, fixed_effects = ~ g, se_type = "HC1"),
+    fe_HC2 = function(dd) lm_robust(y ~ x1 + x2 + z, data = dd, weights = w0, fixed_effects = ~ g),
+    fe_two_way_HC3 = function(dd) lm_robust(y ~ x1 + x2 + z, data = dd, weights = w0,
+                                            fixed_effects = ~ g + h, se_type = "HC3"),
+    fe_cluster_stata = function(dd) lm_robust(y ~ x1 + x2 + z, data = dd, weights = w0,
+                                              fixed_effects = ~ g, clusters = cl, se_type = "stata"),
+    fe_only = function(dd) lm_robust(y ~ 1, data = dd, weights = w0, fixed_effects = ~ g, se_type = "HC1"),
+    multivariate_CR0 = function(dd) lm_robust(cbind(y, y2) ~ x1 + x2 + z, data = dd, weights = w0,
+                                              clusters = cl, se_type = "CR0"),
+    iv_stata = function(dd) iv_robust(y ~ en + x2 | inst + x2, data = dd, weights = w0,
+                                      clusters = cl, se_type = "stata", diagnostics = TRUE),
+    iv_fe_HC1 = function(dd) iv_robust(y ~ en + x2 | inst + x2, data = dd, weights = w0,
+                                       fixed_effects = ~ g, se_type = "HC1"),
+    lin_CR0 = function(dd) lm_lin(y ~ z, covariates = ~ x1 + x2, data = dd, weights = w0,
+                                  clusters = cl, se_type = "CR0"),
+    dim_clustered = function(dd) difference_in_means(y ~ zc, data = dd, weights = w0, clusters = cl)
+  )
+  counted <- c("coefficients", "std.error", "df", "df.residual", "nobs", "nclusters",
+               "r.squared", "adj.r.squared", "proj_r.squared", "proj_adj.r.squared",
+               "fstatistic", "proj_fstatistic", "res_var", "diagnostic_first_stage_fstatistic",
+               "diagnostic_endogeneity_test", "diagnostic_overid_test")
+  for (nm in names(fits)) {
+    with_zeros <- fits[[nm]](dz)
+    removed <- fits[[nm]](dropped)
+    for (field in intersect(counted, names(removed))) {
+      expect_equal(unname(with_zeros[[field]]), unname(removed[[field]]), tolerance = EQ_TOL,
+                   label = paste(nm, field))
+    }
+    # The zero-weight rows stay in the fit's row-length fields, as lm() keeps
+    # them; the rows that are in the fit agree. difference_in_means returns
+    # no fitted values.
+    if (!is.null(removed$fitted.values)) {
+      fitted_with_zeros <- as.matrix(with_zeros$fitted.values)[keep, , drop = FALSE]
+      expect_equal(unname(fitted_with_zeros), unname(as.matrix(removed$fitted.values)),
+                   tolerance = EQ_TOL, label = paste(nm, "fitted values"))
+    }
+  }
+})
+
 test_that("a cluster per observation is the heteroskedasticity-consistent estimator", {
   for (p in list(c("CR0", "HC0"), c("CR2", "HC2"), c("stata", "HC1"))) {
     clustered <- lm_robust(y ~ x1 + x2 + z, data = d, se_type = p[1], clusters = id)

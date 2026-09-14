@@ -37,7 +37,7 @@ A clustered block holding a single treated or single control cluster is refused 
 
 ## Status
 
-`R CMD check --as-cran`: 0 errors, 0 warnings, 1 NOTE (the maintainer change). Test suite 5,635 assertions under `R CMD check`, 0 failures, one skip (`blkvar`, worth 12 assertions, which CRAN does not serve).
+`R CMD check --as-cran`: 0 errors, 0 warnings, 1 NOTE (the maintainer change). Test suite 5,847 assertions under `R CMD check`, 0 failures, one skip (`blkvar`, worth 12 assertions, which CRAN does not serve).
 
 Every open estimatr issue was read against this implementation: 26 are fixed here, 23 are feature requests, 7 are out of scope, 6 are not reproducible, 5 are superseded by the rewrite, and 4 remain open. `vignette("estimatr2.0")` names the four.
 

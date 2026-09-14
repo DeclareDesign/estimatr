@@ -174,7 +174,10 @@ lm_robust <- function(formula,
     fe_lev <- fe_proj[["leverage"]]
 
     if (ncol(model_data$design_matrix) == 0L) {
-      n_obs <- nrow(yoriginal)
+      # A zero-weight row is not an observation here either; lm_robust_fit()
+      # counts the same way on the path with regressors.
+      w_raw <- model_data[["weights"]]
+      n_obs <- if (is.null(w_raw)) nrow(yoriginal) else sum(w_raw > 0)
       df_r <- n_obs - fe_rank
       residuals_proj <- drop(model_data$outcome)
       fitted_full <- drop(yoriginal) - residuals_proj
@@ -287,7 +290,8 @@ lm_robust <- function(formula,
 
     # Full model R2 using original Y, weighted where the fit is and one value
     # per outcome column, as the same model with explicit dummies reports.
-    n_obs <- nrow(yoriginal)
+    # The fit's own count, which leaves out zero-weight rows.
+    n_obs <- return_list[["nobs"]]
     ss <- fe_r2(yoriginal, residuals_proj, model_data[["weights"]])
     tss_full <- ss[["tss"]]
     rss_full <- ss[["rss"]]

@@ -412,6 +412,15 @@ fe_leverage <- function(fe_codes, w = NULL, leverage = TRUE) {
   } else {
     as.vector(rowsum(w, a, reorder = TRUE))
   }
+  # A group whose every weight is 0 is not in the fit: it contributes a zero
+  # row and column to A, so it adds nothing to the rank, and its leverage is 0.
+  # Dividing by its zero group sum gave NaN, which the multi-way eigen
+  # decomposition below refused ("infinite or missing values in 'x'") and the
+  # one-way rank counted as a level. Every code has at least one row, so
+  # unweighted the sums are all positive.
+  A11_pos <- A11 > 0
+  A11_inv <- ifelse(A11_pos, 1 / A11, 0)
+  g1_rank <- sum(A11_pos)
 
   K <- length(g)
   offs <- if (K > 1L) cumsum(c(0L, g[-1L] - 1L)) else 0L
@@ -423,10 +432,10 @@ fe_leverage <- function(fe_codes, w = NULL, leverage = TRUE) {
   # later factor is like that -- and when there is only one factor at all --
   # the design reduces to the one-way case, where P_D is diagonal.
   if (p == 0L) {
-    return(list(rank = g1,
+    return(list(rank = g1_rank,
                 leverage = if (!leverage) NULL
-                           else if (unweighted) 1 / A11[a]
-                           else w / A11[a]))
+                           else if (unweighted) A11_inv[a]
+                           else w * A11_inv[a]))
   }
   ck <- lapply(2:K, function(k) fe_codes[[k]])
 
@@ -455,17 +464,18 @@ fe_leverage <- function(fe_codes, w = NULL, leverage = TRUE) {
     }
   }
 
-  C <- A12 / A11
+  C <- A12 * A11_inv
   es <- eigen(A22 - crossprod(A12, C), symmetric = TRUE)
   tol <- max(es$values, 0) * 1e-12
-  # rank(D) = g1 + rank(S): the leading block of A is diagonal and positive, so
-  # it contributes g1, and the Schur complement contributes the rest. The
+  # rank(D) = g1 + rank(S): the leading block of A is diagonal, so it
+  # contributes one per positive group sum, and the Schur complement
+  # contributes the rest. The
   # eigenvalues are already here, so the exact rank of a nested or disconnected
   # FE design costs nothing extra. The nominal `sum(levels) - K + 1` overstates
   # it whenever one factor is partly spanned by the others.
   rank_S <- sum(es$values > tol)
   if (!leverage) {
-    return(list(rank = g1 + rank_S, leverage = NULL))
+    return(list(rank = g1_rank + rank_S, leverage = NULL))
   }
   # Only the leverage vector reads these, and every se_type except HC2 and HC3
   # returns above without it. They are two n-length vectors per later factor.
@@ -488,8 +498,8 @@ fe_leverage <- function(fe_codes, w = NULL, leverage = TRUE) {
     }
   }
 
-  lev <- 1 / A11[a] + q[a] - 2 * cross + quad
-  list(rank = g1 + rank_S,
+  lev <- A11_inv[a] + q[a] - 2 * cross + quad
+  list(rank = g1_rank + rank_S,
        leverage = if (unweighted) lev else w * lev)
 }
 
