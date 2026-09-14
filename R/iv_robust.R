@@ -28,12 +28,16 @@
 #'   and, when the model is overidentified, a test of the overidentifying
 #'   restrictions. That test is Sargan's with `se_type = "classical"` and
 #'   Wooldridge's (1995) robust score test otherwise, with the score's variance
-#'   summed within clusters when `clusters` is given. It is `NA`, with a
-#'   warning, for a weighted fit, where neither statistic is known to keep its
-#'   chi-squared distribution, and for a clustered fit with no more clusters
-#'   than restrictions. All three reproduce Stata's `estat firststage`,
-#'   `estat endogenous`, and `estat overid` on every configuration the test
-#'   suite records where Stata computes them.
+#'   summed within clusters when `clusters` is given, and weighted as the
+#'   standard errors are when `weights` is. With `weights` and
+#'   `se_type = "classical"`, the Wu-Hausman and overidentification tests are
+#'   `NA` with a warning, since their classical forms are not known to keep
+#'   their reference distributions under weighting. The overidentification
+#'   test is also `NA`, with a warning, for a clustered fit with no more
+#'   clusters than restrictions. All three reproduce Stata's
+#'   `estat firststage`, `estat endogenous`, and `estat overid` on every
+#'   configuration the test suite records where Stata computes them without
+#'   `forceweights`.
 #' @param return_vcov (optional) Logical. Whether to return the vcov matrix.
 #' @param try_cholesky (optional) Logical. Whether to solve by Cholesky
 #'   decomposition of `X'X` rather than by the default pivoted QR. `FALSE` by
@@ -259,20 +263,33 @@ iv_robust <- function(formula,
       (model_data$design_matrix - first_stage[["fitted.values"]])[, endog, drop = FALSE]
     colnames(first_stage_residuals) <- paste0("resid_", endog)
 
-    wu_hausman_ftest_val <- wu_hausman_reg_ftest(model_data, first_stage_residuals, se_type)
-
     extra_instruments <- ncol(roles[["excluded"]]) - length(endog)
 
-    # Stata's `estat overid` likewise declines after aweights unless forced.
-    if (extra_instruments && !is.null(model_data$weights)) {
+    # With weights, the classical Wu-Hausman and Sargan statistics are not known
+    # to keep their reference distributions, which is also why Stata's `estat
+    # endogenous` and `estat overid` decline after aweights unless forced. The
+    # robust versions are a Wald test and a score test on the weighted fit's
+    # sandwich variance, and are computed as they are without weights.
+    weighted_classical <- !is.null(model_data$weights) && se_type == "classical"
+
+    if (weighted_classical) {
       warning(
-        "`diagnostic_overid_test` is NA with `weights`: under weighting, neither ",
-        "Sargan's statistic nor the robust score test is known to keep its ",
-        "chi-squared distribution."
+        if (extra_instruments) {
+          "`diagnostic_endogeneity_test` and `diagnostic_overid_test` are NA"
+        } else {
+          "`diagnostic_endogeneity_test` is NA"
+        },
+        " with `weights` and `se_type = \"classical\"`; a robust `se_type` computes ",
+        if (extra_instruments) "both." else "it."
       )
+      wu_hausman_ftest_val <- c(
+        value = NA_real_, numdf = NA_real_, dendf = NA_real_, p.value = NA_real_
+      )
+    } else {
+      wu_hausman_ftest_val <- wu_hausman_reg_ftest(model_data, first_stage_residuals, se_type)
     }
 
-    if (extra_instruments && is.null(model_data$weights)) {
+    if (extra_instruments && !weighted_classical) {
       ss_residuals <- model_data$outcome - second_stage[["fitted.values"]]
 
       if (se_type == "classical") {
@@ -294,7 +311,7 @@ iv_robust <- function(formula,
       )
 
     } else {
-      overid_chisqtest_val <- c(NA_real_, 0, NA_real_)
+      overid_chisqtest_val <- c(NA_real_, extra_instruments, NA_real_)
     }
     names(overid_chisqtest_val) <- c("value", "df", "p.value")
 
@@ -551,6 +568,11 @@ wooldridge_score_chisq <- function(model_data,
   )
 
   kmat <- as.matrix(excess - qhat_fit[["fitted.values"]]) * as.vector(ss_residuals)
+  # On the weighted fit's transformed data each contribution is sqrt(w) r times
+  # sqrt(w) u, so s sums w k and S sums w^2 k k', the weighting of the HC meat.
+  if (!is.null(model_data[["weights"]])) {
+    kmat <- kmat * model_data[["weights"]]
+  }
   cluster <- model_data[["cluster"]]
   kmat_sums <- if (is.null(cluster)) kmat else rowsum(kmat, cluster)
   meat_qr <- qr(crossprod(kmat_sums))

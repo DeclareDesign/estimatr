@@ -192,30 +192,63 @@ test_that("a clustered over-identification test sums the score's variance within
   expect_true(is.na(ov[["value"]]))
 })
 
-test_that("a weighted over-identified fit refuses the over-identification test by name", {
-  # estimatr 1.0.6 returned NA here silently, which is indistinguishable from a
-  # just-identified fit. The other two diagnostics are still computed.
+test_that("with weights, robust diagnostics use the weighted sandwich and classical ones refuse", {
+  # estimatr 1.0.6 returned NA for a weighted over-identification test silently
+  # and computed the classical Wu-Hausman test under weights. The classical
+  # forms are not known to keep their reference distributions under weighting.
+  # The robust score test is the unweighted one on the weighted fit's
+  # transformed data, sqrt(w) times each column, so that is its reference.
   set.seed(4)
   n <- 300
   dd <- data.frame(g = rep(1:30, each = 10), z1 = rnorm(n), z2 = rnorm(n),
                    w = rnorm(n), wt = runif(n, 0.5, 2))
   dd$x <- dd$z1 + 0.5 * dd$z2 + rnorm(n)
-  dd$y <- dd$x + dd$w + rnorm(n)
-
-  for (ty in c("classical", "HC1", "CR2")) {
-    cl <- if (ty == "CR2") dd$g else NULL
-    expect_warning(
-      m <- iv_robust(y ~ x + w | z1 + z2 + w, data = dd, weights = wt, clusters = cl,
-                     se_type = ty, diagnostics = TRUE),
-      "NA with `weights`"
-    )
-    expect_true(is.na(m$diagnostic_overid_test[["value"]]), label = ty)
-    expect_true(is.finite(m$diagnostic_endogeneity_test[["value"]]), label = ty)
-    expect_true(is.finite(m$diagnostic_first_stage_fstatistic[["value"]]), label = ty)
+  dd$y <- dd$x + dd$w + rnorm(n) + rep(rnorm(30), each = 10)
+  fml <- y ~ x + w | z1 + z2 + w
+  overid <- function(...) {
+    iv_robust(fml, data = dd, diagnostics = TRUE, ...)$diagnostic_overid_test[["value"]]
   }
 
-  # A just-identified weighted fit has no restrictions to refuse.
-  expect_silent(iv_robust(y ~ x + w | z1 + w, data = dd, weights = wt, diagnostics = TRUE))
+  sw <- sqrt(dd$wt)
+  X <- cbind(1, dd$x, dd$w) * sw
+  Z <- cbind(1, dd$z1, dd$z2, dd$w) * sw
+  xhat <- qr.fitted(qr(Z), X)
+  u <- as.vector(dd$y * sw - X %*% qr.coef(qr(xhat), dd$y * sw))
+  k <- qr.resid(qr(xhat), cbind(dd$z2 * sw)) * u
+  s <- colSums(k)
+  by_definition <- drop(s %*% solve(crossprod(k), s))
+  by_definition_cl <- drop(s %*% solve(crossprod(rowsum(k, dd$g)), s))
+
+  expect_silent(hc <- iv_robust(fml, data = dd, weights = wt, se_type = "HC1",
+                                diagnostics = TRUE))
+  expect_equal(hc$diagnostic_overid_test[["value"]], by_definition, tolerance = 1e-10)
+  expect_true(is.finite(hc$diagnostic_endogeneity_test[["value"]]))
+  expect_equal(overid(weights = wt, clusters = g, se_type = "CR2"), by_definition_cl,
+               tolerance = 1e-10)
+
+  # Rescaling the weights changes nothing, and unit weights give the unweighted test.
+  dd$wt10 <- 10 * dd$wt
+  dd$one <- 1
+  expect_equal(overid(weights = wt10, se_type = "HC1"), by_definition, tolerance = 1e-10)
+  expect_equal(overid(weights = one, se_type = "HC1"), overid(se_type = "HC1"),
+               tolerance = 1e-10)
+
+  expect_warning(
+    cl <- iv_robust(fml, data = dd, weights = wt, se_type = "classical", diagnostics = TRUE),
+    "are NA with `weights` and `se_type = \"classical\"`"
+  )
+  expect_true(is.na(cl$diagnostic_overid_test[["value"]]))
+  expect_true(is.na(cl$diagnostic_endogeneity_test[["value"]]))
+  expect_true(is.finite(cl$diagnostic_first_stage_fstatistic[["value"]]))
+
+  # A just-identified classical weighted fit has only the Wu-Hausman test to refuse.
+  expect_warning(
+    iv_robust(y ~ x + w | z1 + w, data = dd, weights = wt, se_type = "classical",
+              diagnostics = TRUE),
+    "is NA with `weights`"
+  )
+  expect_silent(iv_robust(y ~ x + w | z1 + w, data = dd, weights = wt, se_type = "HC1",
+                          diagnostics = TRUE))
 })
 
 test_that("printed diagnostics carry every first stage and its degrees of freedom", {

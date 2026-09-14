@@ -210,9 +210,9 @@ fit_stata_iv <- function(dat, model, weights, option) {
   )
   if (weights != "") args$weights <- quote(w)
   if (grepl("cluster", option)) args$clusters <- quote(cyl)
-  # A weighted over-identified fit warns that it does not compute the
+  # A weighted classical fit warns that it does not compute the Wu-Hausman or
   # overidentification test. test_iv_robust.R asserts that warning; the rows
-  # that fit these models here do not read the test.
+  # here that meet it assert the refusal instead.
   withCallingHandlers(
     do.call(iv_robust, args),
     warning = function(w) {
@@ -233,6 +233,13 @@ test_that("iv_robust's first-stage and endogeneity tests reproduce Stata's estat
     r <- rows[i, ]
     lab <- paste(r$formula, r$weights, r$option, r$test)
     fit <- fit_stata_iv(d32, r$formula, r$weights, r$option)
+    if (r$test == "endog" && r$weights != "" && grepl("small", r$option)) {
+      # Refused with weights under classical variance. Stata computed these
+      # rows only because the do-file forced it.
+      expect_true(is.na(fit$diagnostic_endogeneity_test[["value"]]),
+                  label = paste0(lab, ": refused"))
+      next
+    }
     if (r$test == "endog") {
       stat <- fit$diagnostic_endogeneity_test
       value <- stat[["value"]]
@@ -262,8 +269,13 @@ test_that("iv_robust's over-identification tests reproduce Stata's estat overid"
   # so these rows are that statistic's only reference outside this package.
   # Stata computes nothing after vce(cluster), where this package sums the
   # score's variance within clusters (held to its definition in
-  # test_iv_robust.R), and declines after aweights unless forced, as this
-  # package does with a warning. That leaves four rows to compare.
+  # test_iv_robust.R), and declines after aweights unless forced. That leaves
+  # four rows to compare. The two forced weighted rows are not compared: under
+  # forceweights Stata's score test is the frequency-weight one, equal to the
+  # unweighted test on rows repeated as often as their weight, where this
+  # package's weighted test uses the weighted sandwich, as its standard errors
+  # do. They are different statistics, and test_iv_robust.R holds this
+  # package's to its definition.
   st <- read_stata_fixture("stata-iv-diagnostics.txt", STATA_DIAG_COLS, sep = ";")
   d32 <- ext_data_stata_float32()
   options <- c("small", "rob", "small noconstant", "rob noconstant")
