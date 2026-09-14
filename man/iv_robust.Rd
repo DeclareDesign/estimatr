@@ -55,9 +55,13 @@ restrictions. That test is Sargan's with \code{se_type = "classical"} and
 Wooldridge's (1995) robust score test otherwise, with the score's variance
 summed within clusters when \code{clusters} is given. With \code{weights}, each
 test is the one on the model with every row multiplied by the square root
-of its weight, under the variance the fit uses for its coefficients, so a
-classical test is valid exactly when the classical weighted standard
-errors are and a robust test exactly when the robust ones are. The
+of its weight. The first-stage F and Wu-Hausman tests are Wald tests
+under the fit's own \code{se_type}, so a classical one is valid exactly when
+the classical weighted standard errors are and a robust one exactly when
+the robust ones are. The robust score test uses the score's HC0 or CR0
+sandwich under every robust \code{se_type}, as Wooldridge (1995) and Stata
+define it; the HC1, HC2, HC3, CR2, and \code{"stata"} refinements correct a
+coefficient covariance and have no counterpart in a score test. The
 overidentification test is \code{NA}, with a warning, for a clustered fit with
 no more clusters than restrictions. All three reproduce Stata's
 \verb{estat firststage}, \verb{estat endogenous}, and \verb{estat overid} on every row of

@@ -30,9 +30,13 @@
 #'   Wooldridge's (1995) robust score test otherwise, with the score's variance
 #'   summed within clusters when `clusters` is given. With `weights`, each
 #'   test is the one on the model with every row multiplied by the square root
-#'   of its weight, under the variance the fit uses for its coefficients, so a
-#'   classical test is valid exactly when the classical weighted standard
-#'   errors are and a robust test exactly when the robust ones are. The
+#'   of its weight. The first-stage F and Wu-Hausman tests are Wald tests
+#'   under the fit's own `se_type`, so a classical one is valid exactly when
+#'   the classical weighted standard errors are and a robust one exactly when
+#'   the robust ones are. The robust score test uses the score's HC0 or CR0
+#'   sandwich under every robust `se_type`, as Wooldridge (1995) and Stata
+#'   define it; the HC1, HC2, HC3, CR2, and `"stata"` refinements correct a
+#'   coefficient covariance and have no counterpart in a score test. The
 #'   overidentification test is `NA`, with a warning, for a clustered fit with
 #'   no more clusters than restrictions. All three reproduce Stata's
 #'   `estat firststage`, `estat endogenous`, and `estat overid` on every row of
@@ -276,10 +280,14 @@ iv_robust <- function(formula,
     extra_instruments <- ncol(roles[["excluded"]]) - length(endog)
 
     # With weights, every diagnostic is the textbook test on the model with each
-    # row multiplied by sqrt(w), under the variance the fit uses for its
-    # coefficients. A classical test is then valid exactly when the classical
-    # weighted standard errors are, which is when the weights are inverse error
-    # variances, and a robust test exactly when the robust standard errors are.
+    # row multiplied by sqrt(w). The first-stage F and Wu-Hausman tests are
+    # Wald tests under the fit's own se_type, so a classical one is valid
+    # exactly when the classical weighted standard errors are, which is when
+    # the weights are inverse error variances, and a robust one exactly when
+    # the robust standard errors are. The robust score test's S is the score's
+    # HC0 or CR0 sandwich under every robust se_type, as Wooldridge and Stata
+    # define it: the leverage and small-sample refinements correct a
+    # coefficient covariance and have no counterpart in a score test.
     wu_hausman_ftest_val <- wu_hausman_reg_ftest(model_data, first_stage_residuals, se_type)
 
     if (extra_instruments) {
