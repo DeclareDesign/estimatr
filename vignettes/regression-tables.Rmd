@@ -28,8 +28,10 @@ estimatr registers `extract` methods for `lm_robust` and `iv_robust`, so `texreg
 
 ```{r, eval = have("texreg")}
 library(texreg)
-texreg(list(fit1, fit2, fit3), include.ci = FALSE)
+texreg(list(fit1, fit2, fit3), include.ci = FALSE, include.nclusts = FALSE)
 ```
+
+`include.nclusts = FALSE` is there because the table mixes clustered and unclustered fits. texreg fills the `N Clusters` row's empty cells with `$$`, which LaTeX will not compile, so when the models mix, drop the row and say which fits are clustered in the model names, as the next call does.
 
 `htmlreg()` produces HTML and `screenreg()` prints to the console, which is the one to use while you are still deciding what goes in the table.
 

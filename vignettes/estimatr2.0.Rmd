@@ -361,54 +361,54 @@ The test suite is 5,852 assertions with none failing, `R CMD check --as-cran` gi
 
 What follows is the list of places where 2.0 deliberately departs from 1.x: a different number, or a refusal where 1.x answered. In each one the 1.x behaviour is wrong, and every item was reproduced by running an installed 1.0.6 rather than read off this implementation's own code. If you have results from 1.x, these are the calls worth re-running. Nothing else in this release changes an answer.
 
-**`lh_robust()` used residual degrees of freedom with clustered models.** With n = 100 and 10 clusters, `lh_robust()` tested hypotheses against 97 degrees of freedom rather than the cluster-adjusted 9, producing confidence intervals far too narrow and inconsistent with the `lm_robust()` fit it was built from. 2.0 looks up the per-coefficient degrees of freedom, and takes the conservative minimum for composite hypotheses. (Issue #405.)
+1. **`lh_robust()` used residual degrees of freedom with clustered models.** With n = 100 and 10 clusters, `lh_robust()` tested hypotheses against 97 degrees of freedom rather than the cluster-adjusted 9, producing confidence intervals far too narrow and inconsistent with the `lm_robust()` fit it was built from. 2.0 looks up the per-coefficient degrees of freedom, and under CR2 gives each hypothesis its own Satterthwaite degrees of freedom, as `clubSandwich::linear_contrast()` does. (Issue #405.)
 
-**`lh_robust()` reported no joint test.** 2.0 returns a `joint_hypothesis` element with a Wald F statistic on the same cluster-adjusted degrees of freedom. (Issue #320.)
+2. **`lh_robust()` reported no joint test.** 2.0 returns a `joint_hypothesis` element with a Wald F statistic on the same cluster-adjusted degrees of freedom. (Issue #320.)
 
-**`iv_robust(diagnostics = TRUE)` returned a first-stage F test with no p-value**, and computed the Wu-Hausman numerator degrees of freedom from the column count of the first-stage residual matrix, which overcounts by one because the intercept residuals are collinear and get dropped. 2.0 uses the actual rank increase.
+3. **`iv_robust(diagnostics = TRUE)` returned a first-stage F test with no p-value**, and computed the Wu-Hausman numerator degrees of freedom from the column count of the first-stage residual matrix, which overcounts by one because the intercept residuals are collinear and get dropped. 2.0 uses the actual rank increase.
 
-**Ordered factors could not be used as clusters.** `class(x) %in% c("factor", "integer")` returns a length-2 logical for an ordered factor, which `if()` rejects. (Issue #421.)
+4. **Ordered factors could not be used as clusters.** `class(x) %in% c("factor", "integer")` returns a length-2 logical for an ordered factor, which `if()` rejects. (Issue #421.)
 
-**A formula stored in a variable could not be passed to `fixed_effects`.** The quosure captured the variable name rather than the formula. (Issue #348.)
+5. **A formula stored in a variable could not be passed to `fixed_effects`.** The quosure captured the variable name rather than the formula. (Issue #348.)
 
-**`lm_robust(y ~ 1, fixed_effects = ~ block)` crashed** after accumulating 50 convergence warnings on a zero-column design matrix. 2.0 returns a well-formed intercept-only result with the correct residual degrees of freedom. (Issue #303.)
+6. **`lm_robust(y ~ 1, fixed_effects = ~ block)` crashed** after accumulating 50 convergence warnings on a zero-column design matrix. 2.0 returns a well-formed intercept-only result with the correct residual degrees of freedom. (Issue #303.)
 
-**Residuals were not returned at all.** `residuals(fit)` was `NULL` for every estimator, though `fitted.values` was present. 2.0 returns residuals on the scale of the data, in the original row order for clustered fits, and structural rather than first-stage residuals for `iv_robust()`. (Issue #345.)
+7. **Residuals were not returned at all.** `residuals(fit)` was `NULL` for every estimator, though `fitted.values` was present. 2.0 returns residuals on the scale of the data, in the original row order for clustered fits, and structural rather than first-stage residuals for `iv_robust()`. (Issue #345.)
 
-```{r}
-fit <- lm_robust(y ~ z + x, data = dat)
-head(round(residuals(fit), 4))
-all.equal(residuals(fit) + fitted(fit), dat$y, check.attributes = FALSE)
-```
+    ```{r}
+    fit <- lm_robust(y ~ z + x, data = dat)
+    head(round(residuals(fit), 4))
+    all.equal(residuals(fit) + fitted(fit), dat$y, check.attributes = FALSE)
+    ```
 
-**A collinear regressor was dropped silently.** The dropped term comes back as an NA coefficient with no warning, which is what made an `lm()` user open the issue after finding coefficients that disagreed between the two functions. 2.0 warns and names the terms it dropped. (Issue #411.)
+8. **A collinear regressor was dropped silently.** The dropped term comes back as an NA coefficient with no warning, which is what made an `lm()` user open the issue after finding coefficients that disagreed between the two functions. 2.0 warns and names the terms it dropped. (Issue #411.)
 
-```{r, warning = TRUE}
-dat$x_copy <- dat$x
-fit <- lm_robust(y ~ x + x_copy, data = dat)
-```
+    ```{r, warning = TRUE}
+    dat$x_copy <- dat$x
+    fit <- lm_robust(y ~ x + x_copy, data = dat)
+    ```
 
-**A joint hypothesis test errored.** `lh_robust(Y ~ X1 + X2 + X3, linear_hypothesis = c("X1", "X2"))` should return one joint test; 1.x replies that it "implements tests for hypotheses involving linear combinations of variables but not joint hypotheses." The `joint_hypothesis` element above covers it. (Issue #390.)
+9. **A joint hypothesis test errored.** `lh_robust(Y ~ X1 + X2 + X3, linear_hypothesis = c("X1", "X2"))` should return one joint test; 1.x replies that it "implements tests for hypotheses involving linear combinations of variables but not joint hypotheses." The `joint_hypothesis` element above covers it. (Issue #390.)
 
-**An all-`NA` outcome errored when `weights` were given**, though the same model without weights returned an NA coefficient. The asymmetry bites when one model is fitted across many subgroups and one subgroup has no observed outcome. (Issue #370.)
+10. **An all-`NA` outcome errored when `weights` were given**, though the same model without weights returned an NA coefficient. The asymmetry bites when one model is fitted across many subgroups and one subgroup has no observed outcome. (Issue #370.)
 
-**HC3 returned a silently inflated standard error, and HC2 returned `NaN`, on a near-saturated design.** A hat value is a projection diagonal and cannot exceed 1, but rounding puts it marginally above on designs close to saturation. On `Y ~ Z * factor(x)` with 25 levels of `x` in 40 rows, 1.x gives `se(Z) = 39.5` against a classical standard error of `1.42`, with no warning, and roughly 39.5 on nearly every other coefficient. HC2 gives `NaN` throughout, because `sqrt()` of the resulting negative term poisons the whole variance matrix however small it is. The direction is upward, so what it costs is a finding rather than a false one, but saturated specifications and treatment-by-stratum interactions reach it easily. 2.0 drops those observations from the variance and warns with a count.
+11. **HC3 returned a silently inflated standard error, and HC2 returned `NaN`, on a near-saturated design.** A hat value is a projection diagonal and cannot exceed 1, but rounding puts it marginally above on designs close to saturation. On `Y ~ Z * factor(x)` with 25 levels of `x` in 40 rows, 1.x gives `se(Z) = 39.5` against a classical standard error of `1.42`, with no warning, and roughly 39.5 on nearly every other coefficient. HC2 gives `NaN` throughout, because `sqrt()` of the resulting negative term poisons the whole variance matrix however small it is. The direction is upward, so what it costs is a finding rather than a false one, but saturated specifications and treatment-by-stratum interactions reach it easily. 2.0 drops those observations from the variance and warns with a count.
 
-**`horvitz_thompson()` left the unidentifiable pairs out of a custom design's variance.** With a `permutation_matrix` declaration, two units that can never appear together contribute a term no design of that shape identifies. 1.x dropped those terms. Enumerating all ten assignments of a 5-cluster, m = 2 design, 1.x's mean estimated variance is 0.838 of the true sampling variance, and it returns `NA` on one of the ten. The direction here is downward: intervals too narrow. 2.0 bounds those terms by Young's inequality instead [@aronowsamii2013], so the standard error is larger on purpose.
+12. **`horvitz_thompson()` left the unidentifiable pairs out of a custom design's variance.** With a `permutation_matrix` declaration, two units that can never appear together contribute a term no design of that shape identifies. 1.x dropped those terms. Enumerating all ten assignments of a 5-cluster, m = 2 design, 1.x's mean estimated variance is 0.838 of the true sampling variance, and it returns `NA` on one of the ten. The direction here is downward: intervals too narrow. 2.0 bounds those terms by Young's inequality instead [@aronowsamii2013], so the standard error is larger on purpose.
 
-**`lm_robust()` counted zero-weight rows as observations.** `nobs` and `df.residual` included rows whose weight is 0, so `classical` standard errors came back too small by an amount that grows with the share zeroed: 2.6% at 5% of rows, 13.5% at 25%, 29.6% at 50%. `HC0`, `HC2` and `HC3` are untouched to within 0.1%, so the default was mostly safe; `classical`, `HC1` and `stata` were not. Trimming an inverse-probability weight to zero is the usual way in. 2.0 counts them the way `lm()` does, and the rows still appear in `residuals` and `fitted.values`.
+13. **`lm_robust()` counted zero-weight rows as observations.** `nobs` and `df.residual` included rows whose weight is 0, so `classical` standard errors came back too small by an amount that grows with the share zeroed: 2.6% at 5% of rows, 13.5% at 25%, 29.6% at 50%. `HC0`, `HC2` and `HC3` are untouched to within 0.1%, so the default was mostly safe; `classical`, `HC1` and `stata` were not. Trimming an inverse-probability weight to zero is the usual way in. 2.0 counts them the way `lm()` does, and the rows still appear in `residuals` and `fitted.values`.
 
-**A `clusters` variable with one level gave CR2 standard errors of about `1.5e-17`**, silently. CR2's degrees of freedom are Satterthwaite, so the `J - 1 = 0` guard that stops the other cluster-robust estimators never fired. One level usually means a cluster variable collapsed upstream, which turns a data-handling mistake into an apparently infinitely precise estimate. 2.0 errors.
+14. **A `clusters` variable with one level gave CR2 standard errors of about `1.5e-17`**, silently. CR2's degrees of freedom are Satterthwaite, so the `J - 1 = 0` guard that stops the other cluster-robust estimators never fired. One level usually means a cluster variable collapsed upstream, which turns a data-handling mistake into an apparently infinitely precise estimate. 2.0 errors.
 
-**`offset()` in a formula was silently ignored**, so the coefficient was the one from the model without the term: `0.904333` where the offset model gives `0.953607`. 2.0 errors and names the rewrite, `y - <offset> ~ x`.
+15. **`offset()` in a formula was silently ignored**, so the coefficient was the one from the model without the term: `0.904333` where the offset model gives `0.953607`. 2.0 errors and names the rewrite, `y - <offset> ~ x`.
 
-**`glance()` reported the first coefficient's degrees of freedom in a column named `df.residual`.** Under CR2 that is Satterthwaite: `4.83` on a fit whose residual degrees of freedom are 98. No estimate moves; a reported table is wrong.
+16. **`glance()` reported the first coefficient's degrees of freedom in a column named `df.residual`.** Under CR2 that is Satterthwaite: `4.83` on a fit whose residual degrees of freedom are 98. No estimate moves; a reported table is wrong.
 
-**A clustered `iv_robust()` fit reported an overidentification test that ignored the clustering.** With `diagnostics = TRUE` and `clusters`, 1.x returned the heteroskedasticity-robust score statistic, the number the same model gives unclustered. Where the instruments and the errors both vary by cluster, that statistic is too large: in 1,000 draws of 50 clusters of 10 with valid instruments, it rejected at the 5% level 36.1% of the time. The direction is toward rejection, so valid instruments were declared invalid. 2.0 sums the score's variance within clusters, which rejects 4.0% of the time on the same draws.
+17. **A clustered `iv_robust()` fit reported an overidentification test that ignored the clustering.** With `diagnostics = TRUE` and `clusters`, 1.x returned the heteroskedasticity-robust score statistic, the number the same model gives unclustered. Where the instruments and the errors both vary by cluster, that statistic is too large: in 1,000 draws of 50 clusters of 10 with valid instruments, it rejected at the 5% level 36.1% of the time. The direction is toward rejection, so valid instruments were declared invalid. 2.0 sums the score's variance within clusters, which rejects 4.0% of the time on the same draws.
 
-**A weighted over-identified `iv_robust()` fit returned `NA` for the overidentification test without saying why.** 2.0 computes it: under `se_type = "classical"` as Sargan's statistic on the weighted model, valid when the classical weighted standard errors are, and under a robust `se_type` as Wooldridge's score test on the weighted score's HC0 or CR0 sandwich, the form Stata computes too, valid when the robust ones are.
+18. **A weighted over-identified `iv_robust()` fit returned `NA` for the overidentification test without saying why.** 2.0 computes it: under `se_type = "classical"` as Sargan's statistic on the weighted model, valid when the classical weighted standard errors are, and under a robust `se_type` as Wooldridge's score test on the weighted score's HC0 or CR0 sandwich, the form Stata computes too, valid when the robust ones are.
 
-**`emmeans::emmeans()` on an `lm_robust` fit failed unless emmeans was attached.** An error rather than a wrong number.
+19. **`emmeans::emmeans()` on an `lm_robust` fit failed unless emmeans was attached.** An error rather than a wrong number.
 
 **Still open.** HAC (Newey-West) and CR3 standard errors are not implemented, and neither is `se_type = "constant"` for Horvitz-Thompson. The multi-arm Horvitz-Thompson contrast is ours to defend rather than a port: 1.x refuses the case outright, so there is no reference implementation to check against. It is conservative in every design simulated so far, with the estimated standard error running 1.08 to 1.32 times the true sampling standard deviation, but nobody has published the bound for a two-of-K contrast.
 

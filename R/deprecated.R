@@ -36,7 +36,7 @@ NULL
 commarobust <- function(...) {
   stop(
     "`commarobust()` was removed in estimatr 2.0.\n",
-    "It recomputed robust standard errors on a fitted `lm`. ",
+    "It recomputed robust standard errors on a fitted `lm`.\n",
     "Fit the model with `lm_robust()` instead:\n",
     "  lm_robust(y ~ x, data = dat, se_type = \"HC2\", clusters = cl)",
     call. = FALSE
@@ -48,7 +48,7 @@ commarobust <- function(...) {
 starprep <- function(...) {
   stop(
     "`starprep()` was removed in estimatr 2.0.\n",
-    "It prepared fits for stargazer, which is no longer maintained. ",
+    "It prepared fits for stargazer, which is no longer maintained.\n",
     "Use modelsummary, which reads `tidy()` and `glance()` and so works on ",
     "every estimator in this package:\n",
     "  modelsummary::modelsummary(list(fit1, fit2))",

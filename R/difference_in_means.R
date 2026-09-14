@@ -463,9 +463,9 @@ blocked_variance_pm <- function(tau_k, n_k, var_k, small, tau_bk) {
     if (k_small == 1L) {
       stop(
         "Only one block has a single treated or control unit (block ",
-        small_names, "). The variance contributed by such blocks is ",
+        small_names, ").\nThe variance contributed by such blocks is ",
         "estimated from the variation across them, so at least two are ",
-        "needed. Merge that block with another, drop it, or use ",
+        "needed.\nMerge that block with another, drop it, or use ",
         "`lm_robust()` with block fixed effects."
       )
     }
@@ -487,7 +487,7 @@ blocked_variance_pm <- function(tau_k, n_k, var_k, small, tau_bk) {
           "here: block ",
           paste(small_names[n_small >= n_sb / 2], collapse = ", "),
           " holds half or more of the units in such blocks, which makes the ",
-          "variance estimator undefined. Merge blocks so that none dominates, ",
+          "variance estimator undefined.\nMerge blocks so that none dominates, ",
           "or use `lm_robust()` with block fixed effects."
         )
       }
