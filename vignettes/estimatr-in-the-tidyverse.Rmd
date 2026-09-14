@@ -12,12 +12,16 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", message = FALSE,
                       warning = FALSE, fig.width = 6, fig.height = 3.5)
 have <- function(...) all(vapply(c(...), requireNamespace, logical(1), quietly = TRUE))
 library(estimatr)
-options(digits = 3)
+options(digits = 3, width = 90)
 ```
 
 Everything estimatr returns is a list, and `tidy()` turns the part you want into a data frame. From there the tidyverse applies unchanged. What follows uses `lm_robust()`, but `tidy()` works the same way on `lm_lin()`, `iv_robust()`, `lh_robust()`, `difference_in_means()` and `horvitz_thompson()` fits.
 
-The examples use the Swiss fertility data that ships with R.
+The examples use the Swiss fertility data that ships with R: 47 French-speaking provinces in 1888, with a standardized fertility measure and, as percentages, the share of men in agriculture, the share of Catholics, and the share educated beyond primary school.
+
+```{r}
+head(swiss[, c("Fertility", "Agriculture", "Catholic", "Education")], 3)
+```
 
 ## Getting tidy
 
@@ -127,11 +131,13 @@ boot <- map(1:200, \(i) {
 }) |>
   list_rbind()
 
+hc2 <- tidy(lm_robust(Fertility ~ Catholic + Agriculture, data = swiss)) |>
+  select(term, hc2_se = std.error)
+
 boot |>
   group_by(term) |>
   summarise(bootstrap_se = sd(estimate)) |>
-  left_join(tidy(lm_robust(Fertility ~ Catholic + Agriculture, data = swiss)) |>
-              select(term, hc2_se = std.error), by = "term")
+  left_join(hc2, by = "term")
 ```
 
 The bootstrap standard errors and the HC2 standard errors are close, which is the expected result: both are estimating the same thing without assuming homoskedasticity.

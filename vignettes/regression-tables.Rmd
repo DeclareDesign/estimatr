@@ -35,7 +35,7 @@ texreg(list(fit1, fit2, fit3), include.ci = FALSE)
 
 ```{r, eval = have("texreg")}
 screenreg(list(fit1, fit2, fit3), include.ci = FALSE,
-          custom.model.names = c("HC2", "HC2", "CR, stata"))
+          custom.model.names = c("hp, HC2", "hp + wt, HC2", "hp + wt, CR stata"))
 ```
 
 ## modelsummary
@@ -44,13 +44,13 @@ screenreg(list(fit1, fit2, fit3), include.ci = FALSE,
 
 ```{r, eval = have("modelsummary")}
 library(modelsummary)
-modelsummary(list("HC2" = fit1, "HC2" = fit2, "CR, stata" = fit3),
+modelsummary(list("hp, HC2" = fit1, "hp + wt, HC2" = fit2, "hp + wt, CR stata" = fit3),
              output = "markdown", gof_map = c("nobs", "r.squared"))
 ```
 
 Because the standard errors already live in the fit, do not pass `vcov =` to `modelsummary` unless you actually want it to recompute them. Passing `vcov = "robust"` there overrides estimatr's HC2 with `sandwich`'s HC3 default and silently changes the table.
 
-## What is not here
+## If you use stargazer
 
 `stargazer` has no method for `lm_robust` objects. estimatr 1.x shipped `starprep()` and `commarobust()` to bridge that gap, and both are removed in 2.0; they remain as names that error and say what happened.
 

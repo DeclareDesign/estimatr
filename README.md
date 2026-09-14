@@ -7,9 +7,9 @@ install.packages("estimatr")
 vignette("estimatr2.0")
 ```
 
-The vignette is the document to read first if you are coming from 1.x. It covers what does not change, what changes and why, how to port a 1.x script, and the benchmarks.
+The second line opens the vignette in the help pane or a browser. It is the document to read first if you are coming from 1.x: what does not change, what changes and why, and how to port a 1.x script.
 
-Three vignettes ship with the package:
+Three vignettes ship with the package, and three more (performance, the tidyverse, and regression tables) live on the [website](https://declaredesign.org/r/estimatr/) alone, because their numbers and their examples drift faster than a release cycle:
 
 | vignette | what it is for |
 |---|---|
@@ -21,11 +21,11 @@ Three vignettes ship with the package:
 
 `lm_robust`, `lm_lin`, `iv_robust`, `lh_robust`, `difference_in_means` and `horvitz_thompson`, with a Pashley and Miratrix (2021) blocked-variance estimator that 1.x does not have.
 
-The six estimators keep their 1.0.6 signatures, except `horvitz_thompson()`, whose five probability arguments consolidate into `condition_prs`; the removals are below. Run side by side on one machine, the numbers match to 1e-12 across every supported standard error type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes. The suite is 5,635 assertions, of which 695 run against answers recorded from an installed estimatr 1.0.6 (`data-raw/make_estimatr_reference.R` produces the recording) at a tolerance of 1e-9, because a fixture recorded on one platform meets a different BLAS on another and the floor there is the linear algebra rather than this package.
+The six estimators keep their 1.0.6 signatures, except `horvitz_thompson()`, whose five probability arguments consolidate into `condition_prs`; the removals are below. Run side by side on one machine, 2.0 and 1.0.6 return the same estimates, standard errors, and degrees of freedom to 1e-12, across every supported standard error type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes. The test suite holds that claim at 695 assertions against answers recorded from an installed 1.0.6, with `data-raw/make_estimatr_reference.R` producing the recording. Those run at 1e-9 rather than 1e-12, because a fixture recorded on one platform meets a different BLAS on another, and the floor there is the linear algebra rather than this package.
 
 ## What breaks
 
-Three removals and one default, all deliberate, all covered in the vignette's porting section.
+Two removals and one default, all deliberate, all covered in the vignette's porting section.
 
 `horvitz_thompson()` takes one probability argument, `condition_prs`, in place of five. `blocks`, `clusters`, `simple`, `ra_declaration`, `condition_pr_mat`, `subset` and `return_condition_pr_mat` are gone, along with `se_type = "constant"` and the three exported matrix builders that served them (`declaration_to_condition_pr_mat`, `gen_pr_matrix_cluster`, `permutations_to_condition_pr_mat`). No design is lost: blocked, clustered and custom designs reach the estimator through an `ra_declaration` passed as `condition_prs`, and that path uses exact design-aware joint probabilities rather than the conservative bound.
 

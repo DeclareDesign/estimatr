@@ -1,6 +1,8 @@
 ---
 title: "estimatr 2.0: what changes, what does not, and why"
 output: rmarkdown::html_vignette
+bibliography: estimatr.bib
+link-citations: yes
 vignette: >
   %\VignetteIndexEntry{estimatr 2.0: what changes, what does not, and why}
   %\VignetteEngine{knitr::rmarkdown}
@@ -41,7 +43,7 @@ remotes::install_version("estimatr", version = "1.0.6", lib = "~/R/estimatr-1.0.
 
 ## What does not change
 
-The five estimators keep their 1.x signatures exactly:
+Five of the six estimators keep their 1.x signatures exactly; `horvitz_thompson()` is the subject of the next section:
 
 | function | signature |
 |---|---|
@@ -75,21 +77,22 @@ The places where the numbers differ on purpose are all listed below, under Curre
 1.x asks you to say what you know about the randomization in five different ways, and the right combination depends on the design:
 
 ```r
-# estimatr 1.x
-horvitz_thompson(Y ~ Z, data = dat, ra_declaration = decl)
-horvitz_thompson(Y ~ Z, data = dat, condition_prs = 0.4, simple = TRUE)
-horvitz_thompson(Y ~ Z, data = dat, blocks = bl, condition_prs = pr)
-horvitz_thompson(Y ~ Z, data = dat, clusters = cl, condition_prs = pr)
-horvitz_thompson(Y ~ Z, data = dat, condition_pr_mat = pr_mat)
+# estimatr 1.x. Not run: decl is a randomizr declaration, pr a vector of
+# per-unit probabilities, and pr_mat a matrix of joint probabilities.
+horvitz_thompson(y ~ z, data = dat, ra_declaration = decl)
+horvitz_thompson(y ~ z, data = dat, condition_prs = 0.4, simple = TRUE)
+horvitz_thompson(y ~ z, data = dat, blocks = bl, condition_prs = pr)
+horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = pr)
+horvitz_thompson(y ~ z, data = dat, condition_pr_mat = pr_mat)
 ```
 
 2.0 has one argument, `condition_prs`, which takes whichever object you actually have:
 
 ```r
-# estimatr 2.0
-horvitz_thompson(Y ~ Z, data = dat, condition_prs = decl)                     # ra_declaration
-horvitz_thompson(Y ~ Z, data = dat, condition_prs = c("0" = 0.6, "1" = 0.4))  # named vector
-horvitz_thompson(Y ~ Z, data = dat, condition_prs = pr_matrix)                # per-unit matrix
+# estimatr 2.0. Not run; the same objects as above.
+horvitz_thompson(y ~ z, data = dat, condition_prs = decl)                     # ra_declaration
+horvitz_thompson(y ~ z, data = dat, condition_prs = c("0" = 0.6, "1" = 0.4))  # named vector
+horvitz_thompson(y ~ z, data = dat, condition_prs = pr_mat)                   # per-unit matrix
 ```
 
 The `blocks`, `clusters`, `simple`, `ra_declaration`, `condition_pr_mat`, `subset` and `return_condition_pr_mat` arguments are gone, and `se_type = "constant"` is gone.
@@ -110,7 +113,7 @@ which replaces `condition_pr_mat` and, in the process, replaces 538 lines of mat
 
 **The upside, part one: multi-arm designs.** 1.x refuses an `ra_declaration` with more than two arms. 2.0 contrasts any two arms of one, with `condition1` and `condition2` picking the contrast. The estimand stays the average treatment effect over all N units of the design, so `data` must carry one row per unit, including the arms outside the contrast; a declaration whose size does not match `nrow(data)` is an error rather than a silent misalignment.
 
-```{r, eval = has_randomizr}
+```{r, eval = has_randomizr, warning = FALSE}
 library(randomizr)
 set.seed(3)
 decl3 <- declare_ra(N = 300, conditions = c("control", "T1", "T2"))
@@ -163,7 +166,7 @@ lm_robust(y ~ z + x, data = dat, fixed_effects = ~ bl,
           clusters = cl, se_type = "CR2")$std.error
 ```
 
-**What the speed buys.** Absorbing a large number of fixed effects and still getting HC2 was impractical before. 40,000 observations across 2,000 blocks takes 1.x 41 seconds and 2.0 about 4 milliseconds, for a bit-identical number. Two-way tells most: 50,000 observations across 1,000 x 30 groups takes 1.x 12.5 seconds and 2.0 7 milliseconds. The memory is the more telling half. Peak resident set size for the whole R process is 1,564 MB in 1.x against 292 MB here, and 265 MB of that 292 is an empty R session with the package loaded, so the fit itself costs about 27 MB where 1.x needed 1.3 GB. The dummy matrix that made wide fixed effects impractical is never allocated, and because it is built in C++ rather than in R, `gc()` never saw it and only the process's resident size does.
+**What the speed buys.** Absorbing a large number of fixed effects and still getting HC2 was impractical before. 40,000 observations across 2,000 blocks takes 41 seconds in 1.x and about 4 milliseconds in 2.0, for a bit-identical number. Two-way tells most: 50,000 observations across 1,000 x 30 groups takes 1.x 12.5 seconds and 2.0 7 milliseconds. The memory is the more telling half. Peak resident set size for the whole R process is 1,564 MB in 1.x against 292 MB here, and 265 MB of that 292 is an empty R session with the package loaded, so the fit itself costs about 27 MB where 1.x needed 1.3 GB. The dummy matrix that made wide fixed effects impractical is never allocated, and because it is built in C++ rather than in R, `gc()` never saw it and only the process's resident size does.
 
 **A rank-deficiency bug goes with it.** If one FE factor is spanned by the others (a nested factor, or a disconnected design), the FE design is rank deficient. 1.x expanded the dummies, let a pivoted QR drop the redundant columns, and read the hat values off the padded design, so its absorbed answer disagreed with its own explicit-dummy fit. Taking `diag(P_D)` through a pseudo-inverse is exact at any rank, so 2.0 returns the dummy-regression answer, and uses the design's true rank for the residual degrees of freedom rather than the nominal level count.
 
@@ -181,7 +184,7 @@ starprep(lm(y ~ z, data = dat))
 
 ## Porting an existing script
 
-Three greps cover every breaking change. Whatever they do not find needs no attention.
+Four greps cover every breaking change. Whatever they do not find needs no attention.
 
 | Grep for | Replace with | Where it bites |
 |---|---|---|
@@ -208,7 +211,7 @@ Five things 1.x cannot do, all of which fall out of the rewrite rather than bein
 
 **A warning when a regressor is dropped.** Collinear terms come back as NA coefficients in both versions; only one of them tells you which terms it dropped.
 
-**Blocked designs whose blocks are not all the same shape.** 1.x either errors on such a design or applies the matched-pairs estimator to every block, big ones included. 2.0 uses the Pashley and Miratrix (2021) estimators. See below, which is worth a section of its own.
+**Blocked designs whose blocks are not all the same shape.** 1.x either errors on such a design or applies the matched-pairs estimator to every block, big ones included. 2.0 uses the estimators of @pashleymiratrix2021. See below, which is worth a section of its own.
 
 ## Blocked designs whose blocks are not all the same shape
 
@@ -216,7 +219,7 @@ Five things 1.x cannot do, all of which fall out of the rewrite rather than bein
 
 Such designs are not exotic. Coarsened exact matching, full matching, and multisite trials with one or two sites per stratum all produce them.
 
-The substantive correction is to classify blocks by how many units each **arm** holds, not by how large the block is. A block of eight units with one of them treated has no more estimable within-block variance than a matched pair does; the singleton arm gives you one number, and one number has no variance. 2.0 implements the three estimators of Pashley and Miratrix (2021) on that classification:
+The substantive correction is to classify blocks by how many units each **arm** holds, not by how large the block is. A block of eight units with one of them treated has no more estimable within-block variance than a matched pair does; the singleton arm gives you one number, and one number has no variance. 2.0 implements the three estimators of @pashleymiratrix2021 on that classification:
 
 - Blocks with at least two units in each arm contribute their own Neyman variance, their equation 4.
 - Blocks with a singleton arm contribute through the variation across such blocks, their equation 8, the "unified" estimator, which requires no two blocks to share a size. With equal sizes it reduces to the usual matched-pairs estimator, their equation 5, which is used directly because equation 8 is undefined at two equal-sized blocks.
@@ -247,7 +250,7 @@ Error: If design is not pair-matched, every block must have at least two
 treated and control units.
 ```
 
-Replace the twelve four-unit blocks with twelve matched pairs and 1.x does fit it, by warning and then treating all thirty-two blocks as pairs. The point estimates agree, because the point estimator was never at issue. The standard error comes out 12% larger and the degrees of freedom are 31 rather than 170.8, because twenty blocks that could have supplied their own within-block variance are thrown into the across-block calculation instead.
+Replace the twelve four-unit blocks with twelve matched pairs and 1.x does fit it, by warning and then treating all thirty-two blocks as pairs. The point estimates agree, because the point estimator was never at issue. The standard error comes out 23% larger and the degrees of freedom are 31 rather than 168.9, because twenty blocks that could have supplied their own within-block variance are thrown into the across-block calculation instead.
 
 ```{r}
 pairs <- data.frame(bl = rep(paste0("pr", 1:12), each = 2), z = rep(c(1, 0), times = 12))
@@ -257,7 +260,7 @@ dat_pr$y <- rnorm(nrow(dat_pr)) + 0.3 * dat_pr$z
 difference_in_means(y ~ z, data = dat_pr, blocks = bl)
 ```
 
-Under estimatr 1.0.6 the same call warns that some blocks hold two units while others hold more, reports `design = "Matched-pair"`, and returns the same estimate of 0.3028 with a standard error of 0.1550 on 31 degrees of freedom, against 0.1384 on 170.8 here.
+Under estimatr 1.0.6 the same call warns that some blocks hold two units while others hold more, reports `design = "Matched-pair"`, and returns the same estimate of 0.3616 with a standard error of 0.1741 on 31 degrees of freedom, against 0.1415 on 168.9 here.
 
 The `design` element reports which case applied, so you never have to infer it from the block sizes: `"Blocked"` when every block has two units per arm, `"Matched-pair"` when every block is a pair, `"Small blocks"` when every block has a singleton arm without all being pairs, and `"Hybrid blocked"` when the design mixes the two.
 
@@ -289,9 +292,9 @@ Full tables, the measurement method, and a script that reproduces them are on th
 
 ## Why rewrite at all
 
-**2.0 is not a smaller package, and an earlier version of this section said it was.** Counted the same way on both branches, `R/` and `src/` together are 6,866 lines in 1.0.6 and 6,334 in 2.0, a reduction of 8 percent. Strip blank lines and comments and the two are within half a percent of each other, 4,072 against 4,050. The claim that 2.0 was half the size came from comparing 1.x's total lines against 2.0's code-only lines, which is two measurements rather than one comparison, and it does not survive counting both sides alike.
+**Not to make the package smaller.** Counted the same way on both branches, `R/` and `src/` together are 6,866 lines in 1.0.6 and 6,334 in 2.0, a reduction of 8 percent, and with blank lines and comments stripped the two are within half a percent of each other, 4,072 against 4,050. The rewrite is the same amount of code doing different work.
 
-What did happen is that the complexity moved, and where it moved is the interesting part. Roxygen went from 1,597 lines to 773, because the S3 surface is generated rather than written out per class. C++ grew, from 509 lines to 692. The savings were real and they were spent: on the Pashley and Miratrix blocked-variance estimator, which 1.x does not have at all, on a wider `predict()`, and on the error messages that this release adds wherever 1.x returned a silent number.
+What changed is where the complexity sits, and that is the interesting part. Roxygen went from 1,597 lines to 773, because the S3 surface is generated rather than written out per class. C++ grew, from 509 lines to 692. The savings were real and they were spent: on the Pashley and Miratrix blocked-variance estimator, which 1.x does not have at all, on a wider `predict()`, and on the error messages that this release adds wherever 1.x returned a silent number.
 
 The Horvitz-Thompson variance was the largest saving and the one that looked least likely. 1.x builds the full N-by-N matrix of joint inclusion probabilities, with 538 lines of helpers to construct it for each design family. Young's inequality bound for any complete-randomization design reduces to six scalar sufficient statistics per block, so the matrix never has to exist. Designs that cannot be described parametrically are a permutation matrix, and `tcrossprod()` handles those in one line. Counting code lines on both sides alike, the estimator and its helper go from 746 lines to 339, and it is faster by a factor that grows with N.
 
@@ -325,7 +328,7 @@ estimatr matches `sandwich`, `clubSandwich` and `ivreg` to machine precision eve
 
 **estimatr agrees with the maintained reference implementation, and the agreement is exact.** 2SLS admits two candidate leverage values, and which one you get from `sandwich` depends on which 2SLS object you hand it, since `sandwich` has no leverage convention of its own: it calls `hatvalues()` on the fit. estimatr uses the leverage of the second-stage regression, `h = xhat'(Xhat'Xhat)^-1 xhat`, the diagonal of an orthogonal projection. So does the `ivreg` package, and `sandwich::vcovHC()` applied to an `ivreg::ivreg()` fit returns estimatr's standard errors to machine precision, HC2 and HC3 alike.
 
-The other candidate is `diag(H*)`, where `H*` is the matrix taking `y` to the fitted values. Belsley, Kuh and Welsch (1980) considered it for 2SLS diagnostics, observed that `H*` is idempotent but asymmetric, and recommended the second-stage hatvalues instead, on the ground that the diagonal of an asymmetric matrix is not a leverage. Fox, Kleiber and Zeileis adopt that recommendation as the default in `ivreg`, whose vignette puts it plainly: the diagonal elements of `H*` "can't be treated as summary measures of leverage, that is, as hatvalues." Achim Zeileis is also the author of `sandwich`.
+The other candidate is `diag(H*)`, where `H*` is the matrix taking `y` to the fitted values. @belsleykuhwelsch1980 considered it for 2SLS diagnostics, observed that `H*` is idempotent but asymmetric, and recommended the second-stage hatvalues instead, on the ground that the diagonal of an asymmetric matrix is not a leverage. @foxkleiberzeileis2026 adopt that recommendation as the default in `ivreg`, whose vignette puts it plainly: the diagonal elements of `H*` "can't be treated as summary measures of leverage, that is, as hatvalues." Achim Zeileis is also the author of `sandwich`.
 
 **Where you will see a difference is against `AER::ivreg()`**, whose `hatvalues()` method predates the `ivreg` package and returns `diag(H*)`. On `mtcars` the two answers differ by 8.6% at HC2 and 18.5% at HC3, which is worth knowing if you are reconciling estimatr against an older script. The practical argument for the projection is the one Belsley, Kuh and Welsch gave: it lies in [0, 1] by construction, so `1 - h` is never negative and HC2 is always defined. `diag(H*)` carries no such bound. It is already negative for one observation of `mtcars`, and with a weak first stage it routinely exceeds 1, at which point the correction has no square root and the standard errors are `NaN`.
 
@@ -391,7 +394,7 @@ fit <- lm_robust(y ~ x + x_copy, data = dat)
 
 **HC3 returned a silently inflated standard error, and HC2 returned `NaN`, on a near-saturated design.** A hat value is a projection diagonal and cannot exceed 1, but rounding puts it marginally above on designs close to saturation. On `Y ~ Z * factor(x)` with 25 levels of `x` in 40 rows, 1.x gives `se(Z) = 39.5` against a classical standard error of `1.42`, with no warning, and roughly 39.5 on nearly every other coefficient. HC2 gives `NaN` throughout, because `sqrt()` of the resulting negative term poisons the whole variance matrix however small it is. The direction is upward, so what it costs is a finding rather than a false one, but saturated specifications and treatment-by-stratum interactions reach it easily. 2.0 drops those observations from the variance and warns with a count.
 
-**`horvitz_thompson()` left the unidentifiable pairs out of a custom design's variance.** With a `permutation_matrix` declaration, two units that can never appear together contribute a term no design of that shape identifies. 1.x dropped those terms. Enumerating all ten assignments of a 5-cluster, m = 2 design, 1.x's mean estimated variance is 0.838 of the true sampling variance, and it returns `NA` on one of the ten. The direction here is downward: intervals too narrow. 2.0 bounds those terms by Young's inequality instead (Aronow and Samii 2013), so the standard error is larger on purpose.
+**`horvitz_thompson()` left the unidentifiable pairs out of a custom design's variance.** With a `permutation_matrix` declaration, two units that can never appear together contribute a term no design of that shape identifies. 1.x dropped those terms. Enumerating all ten assignments of a 5-cluster, m = 2 design, 1.x's mean estimated variance is 0.838 of the true sampling variance, and it returns `NA` on one of the ten. The direction here is downward: intervals too narrow. 2.0 bounds those terms by Young's inequality instead [@aronowsamii2013], so the standard error is larger on purpose.
 
 **`lm_robust()` counted zero-weight rows as observations.** `nobs` and `df.residual` included rows whose weight is 0, so `classical` standard errors came back too small by an amount that grows with the share zeroed: 2.6% at 5% of rows, 13.5% at 25%, 29.6% at 50%. `HC0`, `HC2` and `HC3` are untouched to within 0.1%, so the default was mostly safe; `classical`, `HC1` and `stata` were not. Trimming an inverse-probability weight to zero is the usual way in. 2.0 counts them the way `lm()` does, and the rows still appear in `residuals` and `fitted.values`.
 
@@ -403,8 +406,10 @@ fit <- lm_robust(y ~ x + x_copy, data = dat)
 
 **A clustered `iv_robust()` fit reported an overidentification test that ignored the clustering.** With `diagnostics = TRUE` and `clusters`, 1.x returned the heteroskedasticity-robust score statistic, the number the same model gives unclustered. Where the instruments and the errors both vary by cluster, that statistic is too large: in 1,000 draws of 50 clusters of 10 with valid instruments, it rejected at the 5% level 36.1% of the time. The direction is toward rejection, so valid instruments were declared invalid. 2.0 sums the score's variance within clusters, which rejects 4.0% of the time on the same draws.
 
-**A weighted over-identified `iv_robust()` fit returned `NA` for the overidentification test without saying why.** 2.0 computes it: under `se_type = "classical"` as Sargan's statistic on the weighted model, and under a robust `se_type` as the score test on the weighted fit's sandwich variance, so each is valid under the conditions the matching standard errors are.
+**A weighted over-identified `iv_robust()` fit returned `NA` for the overidentification test without saying why.** 2.0 computes it: under `se_type = "classical"` as Sargan's statistic on the weighted model, valid when the classical weighted standard errors are, and under a robust `se_type` as Wooldridge's score test on the weighted score's HC0 or CR0 sandwich, the form Stata computes too, valid when the robust ones are.
 
 **`emmeans::emmeans()` on an `lm_robust` fit failed unless emmeans was attached.** An error rather than a wrong number.
 
 **Still open.** HAC (Newey-West) and CR3 standard errors are not implemented, and neither is `se_type = "constant"` for Horvitz-Thompson. The multi-arm Horvitz-Thompson contrast is ours to defend rather than a port: 1.x refuses the case outright, so there is no reference implementation to check against. It is conservative in every design simulated so far, with the estimated standard error running 1.08 to 1.32 times the true sampling standard deviation, but nobody has published the bound for a two-of-K contrast.
+
+# References

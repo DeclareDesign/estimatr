@@ -36,6 +36,8 @@ CHECKS <- list()
 
 check <- function(label, ours, theirs, tol = 1e-10) {
   gap <- max(abs(ours - theirs) / pmax(abs(theirs), 1))
+  # Two jobs: record the gap in the running list for the final table, and
+  # return a one-row data frame so the calling chunk prints its own result.
   CHECKS[[label]] <<- gap
   data.frame(gap = sprintf("%.1e", gap), holds = gap < tol)
 }
@@ -107,7 +109,7 @@ check("lm_robust(weights = )",
 
 ## Heteroskedasticity-robust variance
 
-The default is HC2, from @mackinnonwhite1985. It is the choice that lines up with design-based inference: under complete randomization the HC2 variance of a treatment coefficient equals the conservative Neyman estimator [@samiiaronow2012]. It is slightly less efficient than the HC1 variance that Stata defaults to, and better behaved in small samples.
+The default is HC2, from @mackinnonwhite1985. It is the choice that lines up with design-based inference: under complete randomization the HC2 variance of a treatment coefficient equals the conservative Neyman estimator [@samiiaronow2012]. Against the HC1 variance that Stata defaults to it gives up a little efficiency in large samples and is better behaved in small ones, and the second is the reason for the default.
 
 | `se_type` | $\widehat{\mathbb{V}}[\widehat{\beta}]$ | Degrees of freedom |
 |---|---|---|
@@ -188,8 +190,8 @@ cr_vcov <- function(fit, cluster, stata = FALSE) {
   }))
   v <- bread %*% meat %*% bread
   if (!stata) return(v)
-  G <- length(unique(cluster))
-  v * (G / (G - 1)) * ((nrow(X) - 1) / (nrow(X) - ncol(X)))
+  S <- length(unique(cluster))
+  v * (S / (S - 1)) * ((nrow(X) - 1) / (nrow(X) - ncol(X)))
 }
 ```
 
@@ -631,7 +633,7 @@ When the design implies a non-integer $m_1 = \pi_1 n$, the realized count is $\l
 
 with $C_j$ the complete-randomization expression evaluated on block $j$'s units, at that block's $N_j$ and $m_{1j}$.
 
-**Clustered.** Assignment is at the cluster level, so the weighted outcomes are summed within cluster first, and the same expression is applied to the $K$ cluster totals: complete randomization at the cluster level if the clusters were completely randomized, the simple form if they were not. Blocked and clustered designs aggregate within cluster and then sum over blocks.
+**Clustered.** Assignment is at the cluster level, so the weighted outcomes are summed within cluster first, and the same expression is applied to the $S$ cluster totals: complete randomization at the cluster level if the clusters were completely randomized, the simple form if they were not. Blocked and clustered designs aggregate within cluster and then sum over blocks.
 
 **Arbitrary designs.** Given a permutation matrix, the joint probabilities come from one `tcrossprod()` and $A_{ij}$ is evaluated directly, at $O(n^2)$. A pair of units that can never appear together in the observed conditions has $\pi_{ij} = 0$, and its term is not identified at any sample size. Those terms are dropped and replaced by the Young's inequality bound: the unidentified quantity is at most $(y_i^2 + y_j^2)/2$ within a condition and $y_i^2 + y_j^2$ across conditions, and $y_i^2$ is estimated from the single observation of it. Left as $1 - x/0$, as in an earlier implementation, the whole variance became $-\infty$ and then a silent `NA`.
 
@@ -643,7 +645,7 @@ A declaration carries the block structure, the cluster structure, the per-unit m
 
 In 1.x the same distinction existed but was buried in which combination of five arguments happened to be supplied.
 
-```{r, eval = requireNamespace("randomizr", quietly = TRUE)}
+```{r, eval = requireNamespace("randomizr", quietly = TRUE), warning = FALSE}
 library(randomizr)
 set.seed(2)
 decl <- declare_ra(blocks = rep(c("a", "b", "c", "d"), each = 50), prob = 0.4)
