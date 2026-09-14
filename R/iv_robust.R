@@ -28,16 +28,17 @@
 #'   and, when the model is overidentified, a test of the overidentifying
 #'   restrictions. That test is Sargan's with `se_type = "classical"` and
 #'   Wooldridge's (1995) robust score test otherwise, with the score's variance
-#'   summed within clusters when `clusters` is given, and weighted as the
-#'   standard errors are when `weights` is. With `weights` and
-#'   `se_type = "classical"`, the Wu-Hausman and overidentification tests are
-#'   `NA` with a warning, since their classical forms are not known to keep
-#'   their reference distributions under weighting. The overidentification
-#'   test is also `NA`, with a warning, for a clustered fit with no more
-#'   clusters than restrictions. All three reproduce Stata's
-#'   `estat firststage`, `estat endogenous`, and `estat overid` on every
-#'   configuration the test suite records where Stata computes them without
-#'   `forceweights`.
+#'   summed within clusters when `clusters` is given. With `weights`, each
+#'   test is the one on the model with every row multiplied by the square root
+#'   of its weight, under the variance the fit uses for its coefficients, so a
+#'   classical test is valid exactly when the classical weighted standard
+#'   errors are and a robust test exactly when the robust ones are. The
+#'   overidentification test is `NA`, with a warning, for a clustered fit with
+#'   no more clusters than restrictions. All three reproduce Stata's
+#'   `estat firststage`, `estat endogenous`, and `estat overid` on every row of
+#'   the test suite's Stata fixture that Stata answers, except the robust score
+#'   test after aweights under `forceweights`, where Stata computes the
+#'   frequency-weight statistic instead.
 #' @param return_vcov (optional) Logical. Whether to return the vcov matrix.
 #' @param try_cholesky (optional) Logical. Whether to solve by Cholesky
 #'   decomposition of `X'X` rather than by the default pivoted QR. `FALSE` by
@@ -265,31 +266,14 @@ iv_robust <- function(formula,
 
     extra_instruments <- ncol(roles[["excluded"]]) - length(endog)
 
-    # With weights, the classical Wu-Hausman and Sargan statistics are not known
-    # to keep their reference distributions, which is also why Stata's `estat
-    # endogenous` and `estat overid` decline after aweights unless forced. The
-    # robust versions are a Wald test and a score test on the weighted fit's
-    # sandwich variance, and are computed as they are without weights.
-    weighted_classical <- !is.null(model_data$weights) && se_type == "classical"
+    # With weights, every diagnostic is the textbook test on the model with each
+    # row multiplied by sqrt(w), under the variance the fit uses for its
+    # coefficients. A classical test is then valid exactly when the classical
+    # weighted standard errors are, which is when the weights are inverse error
+    # variances, and a robust test exactly when the robust standard errors are.
+    wu_hausman_ftest_val <- wu_hausman_reg_ftest(model_data, first_stage_residuals, se_type)
 
-    if (weighted_classical) {
-      warning(
-        if (extra_instruments) {
-          "`diagnostic_endogeneity_test` and `diagnostic_overid_test` are NA"
-        } else {
-          "`diagnostic_endogeneity_test` is NA"
-        },
-        " with `weights` and `se_type = \"classical\"`; a robust `se_type` computes ",
-        if (extra_instruments) "both." else "it."
-      )
-      wu_hausman_ftest_val <- c(
-        value = NA_real_, numdf = NA_real_, dendf = NA_real_, p.value = NA_real_
-      )
-    } else {
-      wu_hausman_ftest_val <- wu_hausman_reg_ftest(model_data, first_stage_residuals, se_type)
-    }
-
-    if (extra_instruments && !weighted_classical) {
+    if (extra_instruments) {
       ss_residuals <- model_data$outcome - second_stage[["fitted.values"]]
 
       if (se_type == "classical") {
@@ -513,10 +497,11 @@ wu_hausman_reg_ftest <- function(model_data, first_stage_residuals, se_type) {
 }
 
 sargan_chisq <- function(model_data, ss_residuals) {
+  weights <- model_data[["weights"]]
   ss_resid_lm <- lm_robust_fit(
     y = ss_residuals,
     X = model_data$instrument_matrix,
-    weights = NULL,
+    weights = weights,
     cluster = NULL,
     se_type = "classical",
     has_int = attr(model_data$terms, "intercept"),
@@ -525,7 +510,9 @@ sargan_chisq <- function(model_data, ss_residuals) {
     ci = FALSE
   )
 
-  nrow(model_data$instrument_matrix) * ss_resid_lm[["r.squared"]]
+  # A zero-weight row is not an observation, as everywhere else in the package.
+  n_obs <- if (is.null(weights)) nrow(model_data$instrument_matrix) else sum(weights > 0)
+  n_obs * ss_resid_lm[["r.squared"]]
 }
 
 # Wooldridge's robust score test for over-identifying restrictions. The

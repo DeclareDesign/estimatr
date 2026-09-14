@@ -210,17 +210,7 @@ fit_stata_iv <- function(dat, model, weights, option) {
   )
   if (weights != "") args$weights <- quote(w)
   if (grepl("cluster", option)) args$clusters <- quote(cyl)
-  # A weighted classical fit warns that it does not compute the Wu-Hausman or
-  # overidentification test. test_iv_robust.R asserts that warning; the rows
-  # here that meet it assert the refusal instead.
-  withCallingHandlers(
-    do.call(iv_robust, args),
-    warning = function(w) {
-      if (grepl("NA with `weights`", conditionMessage(w), fixed = TRUE)) {
-        invokeRestart("muffleWarning")
-      }
-    }
-  )
+  do.call(iv_robust, args)
 }
 
 test_that("iv_robust's first-stage and endogeneity tests reproduce Stata's estat", {
@@ -233,13 +223,6 @@ test_that("iv_robust's first-stage and endogeneity tests reproduce Stata's estat
     r <- rows[i, ]
     lab <- paste(r$formula, r$weights, r$option, r$test)
     fit <- fit_stata_iv(d32, r$formula, r$weights, r$option)
-    if (r$test == "endog" && r$weights != "" && grepl("small", r$option)) {
-      # Refused with weights under classical variance. Stata computed these
-      # rows only because the do-file forced it.
-      expect_true(is.na(fit$diagnostic_endogeneity_test[["value"]]),
-                  label = paste0(lab, ": refused"))
-      next
-    }
     if (r$test == "endog") {
       stat <- fit$diagnostic_endogeneity_test
       value <- stat[["value"]]
@@ -269,29 +252,24 @@ test_that("iv_robust's over-identification tests reproduce Stata's estat overid"
   # so these rows are that statistic's only reference outside this package.
   # Stata computes nothing after vce(cluster), where this package sums the
   # score's variance within clusters (held to its definition in
-  # test_iv_robust.R), and declines after aweights unless forced. That leaves
-  # four rows to compare. The two forced weighted rows are not compared: under
-  # forceweights Stata's score test is the frequency-weight one, equal to the
-  # unweighted test on rows repeated as often as their weight, where this
-  # package's weighted test uses the weighted sandwich, as its standard errors
-  # do. They are different statistics, and test_iv_robust.R holds this
-  # package's to its definition.
+  # test_iv_robust.R). After aweights the do-file forced the test. The forced
+  # Sargan rows are compared, since both sides compute Sargan's statistic on the
+  # weighted model. The two forced robust rows are not: under forceweights
+  # Stata's score test is the frequency-weight one, equal to the unweighted test
+  # on rows repeated as often as their weight, where this package's uses the
+  # weighted sandwich, as its standard errors do. They are different
+  # statistics, and test_iv_robust.R holds this package's to its definition.
   st <- read_stata_fixture("stata-iv-diagnostics.txt", STATA_DIAG_COLS, sep = ";")
   d32 <- ext_data_stata_float32()
-  options <- c("small", "rob", "small noconstant", "rob noconstant")
-  overid_fits <- setNames(
-    lapply(options, function(opt) fit_stata_iv(d32, "gear (hp = wt am)", "", opt)),
-    options
-  )
-  rows <- st[st$formula == "gear (hp = wt am)" & st$weights == "" & st$test == "overid" &
-               st$option %in% names(overid_fits), ]
-  expect_identical(rows$option, names(overid_fits))
+  rows <- st[st$formula == "gear (hp = wt am)" & st$test == "overid" & st$stat != "." &
+               !(st$weights != "" & grepl("rob", st$option)), ]
+  expect_equal(nrow(rows), 6L)
 
   for (i in seq_len(nrow(rows))) {
-    nm <- rows$option[i]
-    ov <- overid_fits[[nm]]$diagnostic_overid_test
-    expect_equal_stata(ov[["value"]], rows$stat[i], paste0(nm, ": overid statistic"))
-    expect_equal_stata(ov[["p.value"]], rows$p[i], paste0(nm, ": overid p"))
-    expect_equal(unname(ov[["df"]]), as.numeric(rows$df1[i]), label = paste0(nm, ": overid df"))
+    lab <- paste(rows$weights[i], rows$option[i])
+    ov <- fit_stata_iv(d32, "gear (hp = wt am)", rows$weights[i], rows$option[i])$diagnostic_overid_test
+    expect_equal_stata(ov[["value"]], rows$stat[i], paste0(lab, ": overid statistic"))
+    expect_equal_stata(ov[["p.value"]], rows$p[i], paste0(lab, ": overid p"))
+    expect_equal(unname(ov[["df"]]), as.numeric(rows$df1[i]), label = paste0(lab, ": overid df"))
   }
 })

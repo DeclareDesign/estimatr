@@ -91,12 +91,10 @@ components <- list(
       "lm_robust with fixed_effects reproduces Stata's areg" = 6,
       "iv_robust reproduces Stata's ivregress 2sls" = 39,
       "weighted 2SLS root MSE follows AER::ivreg rather than Stata" = "all",
-      # One assertion checks that the fixture holds the 108 rows the file
-      # expects, and eight weighted classical endogeneity rows assert that
-      # estimatr refuses them, which puts no estimatr value against Stata's.
-      "iv_robust's first-stage and endogeneity tests reproduce Stata's estat" = 400,
-      # One assertion checks that the fixture holds the rows the file expects.
-      "iv_robust's over-identification tests reproduce Stata's estat overid" = 12
+      # One assertion checks that the fixture holds the 108 rows the file expects.
+      "iv_robust's first-stage and endogeneity tests reproduce Stata's estat" = 432,
+      # One assertion checks that the fixture holds the six rows the file expects.
+      "iv_robust's over-identification tests reproduce Stata's estat overid" = 18
     )
   ),
   fixest_plm = list(

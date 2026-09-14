@@ -53,16 +53,17 @@ endogenous regressor, a regression-based Wu-Hausman test of endogeneity,
 and, when the model is overidentified, a test of the overidentifying
 restrictions. That test is Sargan's with \code{se_type = "classical"} and
 Wooldridge's (1995) robust score test otherwise, with the score's variance
-summed within clusters when \code{clusters} is given, and weighted as the
-standard errors are when \code{weights} is. With \code{weights} and
-\code{se_type = "classical"}, the Wu-Hausman and overidentification tests are
-\code{NA} with a warning, since their classical forms are not known to keep
-their reference distributions under weighting. The overidentification
-test is also \code{NA}, with a warning, for a clustered fit with no more
-clusters than restrictions. All three reproduce Stata's
-\verb{estat firststage}, \verb{estat endogenous}, and \verb{estat overid} on every
-configuration the test suite records where Stata computes them without
-\code{forceweights}.}
+summed within clusters when \code{clusters} is given. With \code{weights}, each
+test is the one on the model with every row multiplied by the square root
+of its weight, under the variance the fit uses for its coefficients, so a
+classical test is valid exactly when the classical weighted standard
+errors are and a robust test exactly when the robust ones are. The
+overidentification test is \code{NA}, with a warning, for a clustered fit with
+no more clusters than restrictions. All three reproduce Stata's
+\verb{estat firststage}, \verb{estat endogenous}, and \verb{estat overid} on every row of
+the test suite's Stata fixture that Stata answers, except the robust score
+test after aweights under \code{forceweights}, where Stata computes the
+frequency-weight statistic instead.}
 
 \item{return_vcov}{(optional) Logical. Whether to return the vcov matrix.}
 

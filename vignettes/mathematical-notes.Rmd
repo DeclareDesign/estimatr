@@ -23,7 +23,7 @@ While the code base has been reviewed, it was not written by hand. The guarantee
 
 Which is what this document is. Every estimator gets its definition, stated in mathematics with the paper it comes from, and then, immediately underneath, the same quantity computed twice: once by calling estimatr, and once from the definition transcribed into a few lines of base R. The gap between the two is printed where you can see it.
 
-Two further layers are checked outside this document. Every estimator reproduces estimatr 1.0.6's numbers wherever both versions answer, checked in `tests/testthat/test_vs_estimatr.R` against 695 values recorded from an installed 1.0.6. A further 770 assertions compare against implementations that share no lineage with this one: `sandwich`, `clubSandwich`, `ivreg`, Stata, `fixest`, `plm` and `blkvar`, in the five `tests/testthat/test_vs_*.R` files. `vignette("estimatr2.0")` sets out both layers under "How this was checked"; the suite holds 5,604 assertions in total.
+Two further layers are checked outside this document. Every estimator reproduces estimatr 1.0.6's numbers wherever both versions answer, checked in `tests/testthat/test_vs_estimatr.R` against 695 values recorded from an installed 1.0.6. A further 808 assertions compare against implementations that share no lineage with this one: `sandwich`, `clubSandwich`, `ivreg`, Stata, `fixest`, `plm` and `blkvar`, in the five `tests/testthat/test_vs_*.R` files. `vignette("estimatr2.0")` sets out both layers under "How this was checked"; the suite holds 5,633 assertions in total.
 
 ## How the checking works
 
