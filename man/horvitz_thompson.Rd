@@ -16,7 +16,7 @@ horvitz_thompson(
 )
 }
 \arguments{
-\item{formula}{(required) A formula \code{Y ~ Z}.}
+\item{formula}{(required) A formula \code{Y ~ Z}, with one outcome.}
 
 \item{data}{(optional) A \code{data.frame} with one row per unit of the design.}
 

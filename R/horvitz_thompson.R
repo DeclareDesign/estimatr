@@ -13,7 +13,7 @@
 #'   arm sizes. `data` must hold one row per unit of the design, in the
 #'   design's order, including units assigned to arms outside the contrast.
 #'
-#' @param formula (required) A formula `Y ~ Z`.
+#' @param formula (required) A formula `Y ~ Z`, with one outcome.
 #' @param data (optional) A `data.frame` with one row per unit of the design.
 #' @param condition_prs (required) Treatment probability specification. One of:
 #'   \itemize{
@@ -105,7 +105,14 @@ horvitz_thompson <- function(formula,
   m_formula <- rlang::eval_tidy(rlang::enquo(formula))
   stopifnot("`formula` must be a formula" = inherits(m_formula, "formula"))
   mf <- stats::model.frame(m_formula, data = data_df, na.action = stats::na.omit)
-  Y  <- as.numeric(stats::model.response(mf))
+  Y  <- stats::model.response(mf)
+  # `as.numeric()` on a matrix response flattens it, and the estimator then
+  # read the first column and answered as if that were the only outcome.
+  if (is.matrix(Y) && ncol(Y) > 1L) {
+    stop("`horvitz_thompson()` takes one outcome; `", deparse(m_formula[[2L]]),
+         "` has ", ncol(Y), ". Fit one model per outcome.", call. = FALSE)
+  }
+  Y  <- as.numeric(Y)
   Z  <- mf[[all.vars(m_formula[[3L]])[1L]]]
 
   # Track which original-data rows survived na.omit so we can index the

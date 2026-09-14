@@ -130,6 +130,15 @@ iv_robust <- function(formula,
   fe_lev <- NULL
   yoriginal <- NULL
 
+  # The Wu-Hausman and over-identification tests are tests on one outcome's
+  # structural residuals, and the diagnostic fields hold one statistic each.
+  # With several outcomes the score test used to die on a dims mismatch
+  # (1.0.6 too); skip with the same notice fixed effects give.
+  if (diagnostics && ncol(as.matrix(model_data[["outcome"]])) > 1L) {
+    warning("Diagnostics are not available with multiple outcomes. Skipping.")
+    diagnostics <- FALSE
+  }
+
   if (has_fe) {
     if (diagnostics) {
       warning("Diagnostics are not available with `fixed_effects`. Skipping.")

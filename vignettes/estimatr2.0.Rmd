@@ -354,7 +354,7 @@ One defect turned up that has no issue behind it, and it is worth knowing if you
 
 ## Current status
 
-The test suite is 5,847 assertions with none failing, `R CMD check --as-cran` gives 0 errors, 0 warnings and 1 NOTE for the maintainer change, and the numerical comparisons against 1.0.6 run across 50 seeds per design type for every Horvitz-Thompson design family.
+The test suite is 5,852 assertions with none failing, `R CMD check --as-cran` gives 0 errors, 0 warnings and 1 NOTE for the maintainer change, and the numerical comparisons against 1.0.6 run across 50 seeds per design type for every Horvitz-Thompson design family.
 
 What follows is the list of places where 2.0 deliberately departs from 1.x: a different number, or a refusal where 1.x answered. In each one the 1.x behaviour is wrong, and every item was reproduced by running an installed 1.0.6 rather than read off this implementation's own code. If you have results from 1.x, these are the calls worth re-running. Nothing else in this release changes an answer.
 

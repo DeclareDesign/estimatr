@@ -132,6 +132,15 @@ test_that("weights that are infinite, or all zero, are refused", {
   expect_warning(lm_robust(y ~ x, data = missing, weights = w), "missingness in the weights")
 })
 
+test_that("horvitz_thompson refuses a multivariate outcome rather than answering for the first", {
+  # A cbind() outcome was flattened and the first n values taken as the
+  # outcome, so the fit for cbind(y, x) was the fit for y with no notice.
+  expect_error(
+    horvitz_thompson(cbind(y, x) ~ z, data = err_data, condition_prs = c("0" = 0.5, "1" = 0.5)),
+    "takes one outcome; `cbind\\(y, x\\)` has 2"
+  )
+})
+
 test_that("horvitz_thompson refuses probabilities outside [0, 1]", {
   # A pair of probabilities like these came back as an ordinary estimate.
   expect_error(horvitz_thompson(y ~ z, data = err_data, condition_prs = c("0" = -0.2, "1" = 1.2)),

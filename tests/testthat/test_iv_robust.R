@@ -117,6 +117,20 @@ test_that("robust weak-instrument and Wu-Hausman tests match AER given sandwich'
   }
 })
 
+test_that("diagnostics are skipped with a warning under multiple outcomes, and the fit is unchanged", {
+  # The score test died on a dims mismatch here, in 1.0.6 too.
+  d2 <- d
+  d2$y2 <- d$y + d$x
+  expect_warning(
+    both <- iv_robust(cbind(y, y2) ~ en + x | inst + inst2 + x, data = d2, diagnostics = TRUE),
+    "not available with multiple outcomes"
+  )
+  plain <- iv_robust(cbind(y, y2) ~ en + x | inst + inst2 + x, data = d2)
+  expect_null(both$diagnostic_endogeneity_test)
+  expect_equal(both$coefficients, plain$coefficients)
+  expect_equal(both$std.error, plain$std.error)
+})
+
 test_that("over-identified diagnostics work for every se_type, not just classical", {
   # `first_stage_fits` has its columns renamed `fit_<endog>`, and the rewritten
   # robust branch then indexed it by the bare endogenous names, so every
