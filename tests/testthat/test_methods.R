@@ -44,6 +44,22 @@ test_that("summary's coefficient table is the fit's estimates and standard error
   }
 })
 
+test_that("tidy, glance and augment return tibbles, as broom's methods do", {
+  # 1.x returned plain data frames; every downstream reader indexes by name.
+  for (nm in names(fits)) {
+    fit <- fits[[nm]]
+    expect_s3_class(tidy(fit), "tbl_df")
+    if (single_outcome(fit)) expect_s3_class(glance(fit), "tbl_df")
+    if (inherits(fit, c("lm_robust", "iv_robust")) && single_outcome(fit)) {
+      expect_s3_class(estimatr:::augment.lm_robust(fit), "tbl_df")
+      # Two-way absorbed effects refuse predict() with newdata, see below.
+      if (nm != "lmr_fe2") {
+        expect_s3_class(estimatr:::augment.lm_robust(fit, newdata = surface[1:3, ]), "tbl_df")
+      }
+    }
+  }
+})
+
 test_that("tidy reports the fields of the fit", {
   for (nm in names(fits)) {
     fit <- fits[[nm]]

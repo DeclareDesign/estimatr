@@ -53,7 +53,7 @@ Five of the six estimators keep their 1.x signatures exactly; `horvitz_thompson(
 | `difference_in_means()` | `formula, data, blocks, clusters, weights, subset, se_type, condition1, condition2, ci, alpha` |
 | `lh_robust()` | `..., data, linear_hypothesis` |
 
-Every S3 method 1.x provided is present and behaves the same way: `tidy()`, `glance()`, `summary()`, `print()`, `predict()`, `coef()`, `confint()`, `vcov()`, `nobs()`, `update()`, plus the texreg and emmeans hooks.
+Every S3 method 1.x provided is present and behaves the same way: `tidy()`, `glance()`, `summary()`, `print()`, `predict()`, `coef()`, `confint()`, `vcov()`, `nobs()`, `update()`, plus the texreg and emmeans hooks. One return class changes: `tidy()`, `glance()`, and the new `augment()` return tibbles, as broom's methods do, where 1.x returned plain data frames. `$`, `[[`, and row indexing are unaffected; `tidy(fit)[, "estimate"]` now gives a one-column tibble rather than a vector, so write `tidy(fit)$estimate`.
 
 ```{r}
 set.seed(42)
@@ -357,7 +357,7 @@ One defect turned up that has no issue behind it, and it is worth knowing if you
 
 ## Current status
 
-The test suite is 5,852 assertions with none failing, `R CMD check --as-cran` gives 0 errors, 0 warnings and 1 NOTE for the maintainer change, and the numerical comparisons against 1.0.6 run across 50 seeds per design type for every Horvitz-Thompson design family.
+The test suite is 5,906 assertions with none failing, `R CMD check --as-cran` gives 0 errors, 0 warnings and 1 NOTE for the maintainer change, and the numerical comparisons against 1.0.6 run across 50 seeds per design type for every Horvitz-Thompson design family.
 
 What follows is the list of places where 2.0 deliberately departs from 1.x: a different number, or a refusal where 1.x answered. In each one the 1.x behaviour is wrong, and every item was reproduced by running an installed 1.0.6 rather than read off this implementation's own code. If you have results from 1.x, these are the calls worth re-running. Nothing else in this release changes an answer.
 

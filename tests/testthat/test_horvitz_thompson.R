@@ -251,12 +251,12 @@ test_that("HT ci = FALSE gives NA p-value and CIs", {
   expect_true(is.na(m$conf.high[[1]]))
 })
 
-test_that("HT tidy returns a data frame with expected columns", {
+test_that("HT tidy returns a tibble with expected columns", {
   decl <- randomizr::declare_ra(N = N, m = 16)
   dat$Z <- randomizr::conduct_ra(decl)
   m  <- horvitz_thompson(y ~ Z, data = dat, condition_prs = decl)
   td <- tidy(m)
-  expect_s3_class(td, "data.frame")
+  expect_s3_class(td, "tbl_df")
   expect_true(all(c("term", "estimate", "std.error", "p.value") %in% names(td)))
 })
 

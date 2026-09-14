@@ -380,7 +380,7 @@ generics::augment
 augment.lm_robust <- function(x, data = NULL, newdata = NULL, ...) {
   if (!is.null(newdata)) {
     newdata[[".fitted"]] <- predict(x, newdata = newdata)
-    return(newdata)
+    return(as_tibble(newdata))
   }
 
   if (is.null(data)) data <- stats::model.frame(x)
@@ -399,7 +399,7 @@ augment.lm_robust <- function(x, data = NULL, newdata = NULL, ...) {
 
   data[[".fitted"]] <- as.vector(fitted)
   if (!is.null(resid)) data[[".resid"]] <- as.vector(resid)
-  data
+  as_tibble(data)
 }
 
 #' @rdname augment.lm_robust

@@ -12,11 +12,10 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", message = FALSE,
                       warning = FALSE, fig.width = 6, fig.height = 3.5)
 have <- function(...) all(vapply(c(...), requireNamespace, logical(1), quietly = TRUE))
 library(estimatr)
-library(tibble)
 options(digits = 3, width = 90)
 ```
 
-Everything estimatr returns is a list, and `tidy()` turns the part you want into a data frame. From there the tidyverse applies unchanged; `as_tibble()` is added below only so that every printed table is a tibble. What follows uses `lm_robust()`, but `tidy()` works the same way on `lm_lin()`, `iv_robust()`, `lh_robust()`, `difference_in_means()` and `horvitz_thompson()` fits.
+Everything estimatr returns is a list, and `tidy()` turns the part you want into a tibble. From there the tidyverse applies unchanged. What follows uses `lm_robust()`, but `tidy()` works the same way on `lm_lin()`, `iv_robust()`, `lh_robust()`, `difference_in_means()` and `horvitz_thompson()` fits.
 
 The examples use the Swiss fertility data that ships with R: 47 French-speaking provinces in 1888, with a standardized fertility measure and, as percentages, the share of men in agriculture, the share of Catholics, and the share educated beyond primary school.
 
@@ -28,7 +27,7 @@ head(swiss[, c("Fertility", "Agriculture", "Catholic", "Education")], 3)
 
 ```{r}
 fit <- lm_robust(Fertility ~ Agriculture + Catholic, data = swiss)
-tidy(fit) |> as_tibble()
+tidy(fit)
 ```
 
 One row per coefficient, and an `outcome` column, which matters because `lm_robust()` accepts a matrix of outcomes and fits them all at once.
@@ -36,7 +35,7 @@ One row per coefficient, and an `outcome` column, which matters because `lm_robu
 `glance()` gives the one-row model summary instead.
 
 ```{r}
-glance(fit) |> as_tibble()
+glance(fit)
 ```
 
 ## dplyr
@@ -46,7 +45,6 @@ library(dplyr)
 
 fit |>
   tidy() |>
-  as_tibble() |>
   filter(term != "(Intercept)") |>
   mutate(significant = p.value <= 0.05) |>
   select(term, estimate, std.error, significant)
@@ -54,7 +52,7 @@ fit |>
 
 ## ggplot2
 
-A coefficient plot is the tidy data frame with `geom_pointrange()` on it.
+A coefficient plot is the tidy tibble with `geom_pointrange()` on it.
 
 ```{r, eval = have("dplyr", "ggplot2")}
 library(ggplot2)
@@ -101,7 +99,6 @@ swiss |>
   map(\(d) lm_robust(Fertility ~ Catholic, data = d)) |>
   map(tidy) |>
   list_rbind(names_to = "educated") |>
-  as_tibble() |>
   filter(term == "Catholic")
 ```
 
@@ -112,15 +109,13 @@ c("Fertility", "Education", "Agriculture") |>
   map(\(y) lm_robust(reformulate("Catholic", y), data = swiss)) |>
   map(tidy) |>
   list_rbind() |>
-  as_tibble() |>
   filter(term == "Catholic")
 ```
 
 Several outcomes at once is also a single call, and considerably faster, since the design matrix is factorized once:
 
 ```{r}
-tidy(lm_robust(cbind(Fertility, Education, Agriculture) ~ Catholic, data = swiss)) |>
-  as_tibble()
+tidy(lm_robust(cbind(Fertility, Education, Agriculture) ~ Catholic, data = swiss))
 ```
 
 ## Bootstrapping

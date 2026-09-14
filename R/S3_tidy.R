@@ -1,4 +1,5 @@
 #' @importFrom generics tidy
+#' @importFrom tibble as_tibble
 #' @export
 generics::tidy
 
@@ -49,7 +50,7 @@ tidy_data_frame <- function(x,
     return_frame$conf.low <- ci[, 1]
     return_frame$conf.high <- ci[, 2]
   }
-  return(return_frame)
+  as_tibble(return_frame)
 }
 
 warn_singularities <- function(x) {
@@ -71,6 +72,11 @@ warn_singularities <- function(x) {
 #' @param conf.int Logical, whether to include confidence intervals.
 #' @param conf.level The confidence level for intervals.
 #' @param ... (optional) Ignored.
+#'
+#' @return A tibble with one row per term (and per outcome, for a multivariate
+#'   fit): `term`, `estimate`, `std.error`, `statistic`, `p.value`,
+#'   `conf.low`, `conf.high`, `df`, and `outcome`. A tibble rather than a
+#'   plain data frame, as broom's tidiers return; 1.x returned a data frame.
 #'
 #' @examples
 #' set.seed(50)
@@ -116,8 +122,10 @@ tidy.lh_robust <- function(x,
                            conf.int = TRUE,
                            conf.level = NULL,
                            ...) {
-  rbind(tidy(x$lm_robust, conf.int = conf.int, conf.level = conf.level, ...),
-        tidy(x$lh, conf.int = conf.int, conf.level = conf.level, ...))
+  as_tibble(rbind(
+    tidy(x$lm_robust, conf.int = conf.int, conf.level = conf.level, ...),
+    tidy(x$lh, conf.int = conf.int, conf.level = conf.level, ...)
+  ))
 }
 
 #' @rdname estimatr_tidiers

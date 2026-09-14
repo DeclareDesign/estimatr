@@ -45,8 +45,7 @@ glance.lm_robust <- function(x, ...) {
     )
   )
 
-  rownames(ret) <- NULL
-  ret
+  as_tibble(ret)
 }
 
 #' @export
@@ -110,12 +109,12 @@ glance.iv_robust <- function(x, ...) {
     }
   )
 
-  ret
+  as_tibble(ret)
 }
 
 #' @export
 glance.difference_in_means <- function(x, ...) {
-  data.frame(
+  as_tibble(data.frame(
     design = x[["design"]],
     df = x[["df"]],
     nobs = as.integer(x[["nobs"]]),
@@ -124,7 +123,7 @@ glance.difference_in_means <- function(x, ...) {
     condition2 = x[["condition2"]],
     condition1 = x[["condition1"]],
     stringsAsFactors = FALSE
-  )
+  ))
 }
 
 #' @export
@@ -133,11 +132,11 @@ glance.horvitz_thompson <- function(x, ...) {
   # new fits binds rather than erroring. Without this method `modelsummary()`
   # does not fail: it drops the goodness-of-fit rows and prints a coefficient
   # table that looks complete, which is the worse outcome of the two.
-  data.frame(
+  as_tibble(data.frame(
     nobs = as.integer(x[["nobs"]]),
     se_type = x[["se_type"]],
     condition2 = x[["condition2"]],
     condition1 = x[["condition1"]],
     stringsAsFactors = FALSE
-  )
+  ))
 }

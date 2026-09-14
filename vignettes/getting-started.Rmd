@@ -74,7 +74,7 @@ fit <- lm_robust(y ~ z + x, data = dat)
 fit
 ```
 
-`summary()` adds the R-squared and the F statistic; `tidy()` returns the coefficient table as a data frame, which is usually what you want next.
+`summary()` adds the R-squared and the F statistic; `tidy()` returns the coefficient table as a tibble, which is usually what you want next.
 
 ```{r}
 tidy(fit)

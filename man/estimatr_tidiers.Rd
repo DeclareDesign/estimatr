@@ -31,6 +31,12 @@
 
 \item{...}{(optional) Ignored.}
 }
+\value{
+A tibble with one row per term (and per outcome, for a multivariate
+fit): \code{term}, \code{estimate}, \code{std.error}, \code{statistic}, \code{p.value},
+\code{conf.low}, \code{conf.high}, \code{df}, and \code{outcome}. A tibble rather than a
+plain data frame, as broom's tidiers return; 1.x returned a data frame.
+}
 \description{
 Tidy an estimatr object
 }

@@ -34,7 +34,8 @@ Imports:
     methods,
     Rcpp,
     rlang,
-    stats
+    stats,
+    tibble
 Suggests:
     AER,
     car,
@@ -49,8 +50,7 @@ Suggests:
     rmarkdown,
     sandwich,
     testthat (>= 3.0.0),
-    texreg,
-    tibble
+    texreg
 VignetteBuilder: knitr
 LinkingTo:
     Rcpp,
