@@ -1,9 +1,28 @@
-estimatr: Fast Estimators for Design-Based Inference
-================
+---
+output:
+  github_document:
+    html_preview: false
+    md_extensions: -smart
+    pandoc_args: ["--wrap=none"]
+title: "estimatr: Fast Estimators for Design-Based Inference"
+---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-[![CRAN status](https://www.r-pkg.org/badges/version/estimatr)](https://cran.r-project.org/package=estimatr) [![CRAN RStudio mirror downloads](https://cranlogs.r-pkg.org/badges/grand-total/estimatr?color=green)](https://r-pkg.org/pkg/estimatr) [![Build status](https://github.com/DeclareDesign/estimatr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/DeclareDesign/estimatr/actions/workflows/R-CMD-check.yaml) [![Replications](https://softwarecite.com/badge/estimatr)](https://softwarecite.com/package/estimatr)
+```{r, echo = FALSE}
+options(width = 100)
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  message = FALSE,
+  comment = "#>",
+  fig.path = "README-"
+)
+```
+
+[![CRAN status](https://www.r-pkg.org/badges/version/estimatr)](https://cran.r-project.org/package=estimatr)
+[![CRAN RStudio mirror downloads](https://cranlogs.r-pkg.org/badges/grand-total/estimatr?color=green)](https://r-pkg.org/pkg/estimatr)
+[![Build status](https://github.com/DeclareDesign/estimatr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/DeclareDesign/estimatr/actions/workflows/R-CMD-check.yaml)
+[![Replications](https://softwarecite.com/badge/estimatr)](https://softwarecite.com/package/estimatr)
 
 **estimatr** is an `R` package providing a range of commonly used linear estimators, designed for speed and for ease of use. Users can easily recover robust, cluster-robust, and other design-appropriate estimates. We include two functions that implement means estimators, `difference_in_means()` and `horvitz_thompson()`, and four linear regression estimators, `lm_robust()`, `lm_lin()`, `iv_robust()`, and `lh_robust()`. In each case, users can choose an estimator to reflect cluster-randomized, block-randomized, and block-and-cluster-randomized designs. The [Getting Started Guide](https://declaredesign.org/r/estimatr/articles/getting-started.html) describes each estimator provided by **estimatr** and how it can be used in your analysis.
 
@@ -13,7 +32,7 @@ You can also see the ways you can [get regression tables out of estimatr](https:
 
 To install the latest stable release of **estimatr**, please ensure that you are running version 3.6 or later of R and run the following code:
 
-``` r
+```{r, eval = FALSE}
 install.packages("estimatr")
 ```
 
@@ -21,7 +40,7 @@ install.packages("estimatr")
 
 Once the package is installed, getting appropriate estimates and standard errors is both fast and easy.
 
-``` r
+```{r}
 library(estimatr)
 
 # sample data from a cluster-randomized experiment
@@ -38,36 +57,15 @@ dat <- data.frame(
 res_rob <- lm_robust(y ~ z, data = dat)
 # tidy data frames on command
 tidy(res_rob)
-#> # A tibble: 2 × 9
-#>   term        estimate std.error statistic  p.value conf.low conf.high    df outcome
-#>   <chr>          <dbl>     <dbl>     <dbl>    <dbl>    <dbl>     <dbl> <dbl> <chr>  
-#> 1 (Intercept)   -0.440     0.153     -2.88 0.00490    -0.743    -0.137    98 y      
-#> 2 z              0.760     0.194      3.92 0.000166    0.375     1.15     98 y
 
 # cluster-robust standard errors
 res_cl <- lm_robust(y ~ z, data = dat, clusters = clusterID)
 # the standard summary view is also available
 summary(res_cl)
-#> 
-#> Call:
-#> lm_robust(formula = y ~ z, data = dat, clusters = clusterID)
-#> 
-#> Standard error type:  CR2 
-#> 
-#> Coefficients:
-#>             Estimate Std. Error t value Pr(>|t|) CI Lower CI Upper    DF
-#> (Intercept)  -0.4396     0.1256  -3.499 0.025593  -0.7908  -0.0885 3.935
-#> z             0.7603     0.2129   3.571 0.007739   0.2661   1.2545 7.707
-#> 
-#> Multiple R-squared:  0.1388 ,    Adjusted R-squared:   0.13 
-#> F-statistic: 12.75 on 1 and 9 DF,  p-value: 0.006011
 
 # matched-pair design learned from the blocks argument
 res_dim <- difference_in_means(extra ~ group, data = sleep, blocks = ID)
 res_dim
-#> Design:  Matched-pair 
-#>        Estimate Std. Error  t value   Pr(>|t|)  CI Lower CI Upper DF
-#> group2     1.58  0.3889587 4.062128 0.00283289 0.7001142 2.459886  9
 ```
 
 The [Getting Started Guide](https://declaredesign.org/r/estimatr/articles/getting-started.html) has more examples and uses, as do the reference pages. The [Mathematical Notes](https://declaredesign.org/r/estimatr/articles/mathematical-notes.html) provide more information about what each estimator is doing under the hood.
@@ -76,7 +74,7 @@ The [Getting Started Guide](https://declaredesign.org/r/estimatr/articles/gettin
 
 Getting estimates and robust standard errors is also faster than it used to be. Compare our package to using `lm()` and the `sandwich` package to get HC2 standard errors. More speed comparisons, including absorbed fixed effects and a head-to-head against estimatr 1.0.6, are in the [Performance](https://declaredesign.org/r/estimatr/articles/performance.html) article.
 
-``` r
+```{r, eval = FALSE}
 dat <- data.frame(X = matrix(rnorm(2000*50), 2000), y = rnorm(2000))
 
 library(microbenchmark)
@@ -105,7 +103,7 @@ estimatr 2.0 rewrites the package from the ground up for the DeclareDesign workf
 Three vignettes ship with the package, and three more (performance, the tidyverse, and regression tables) live on the [website](https://declaredesign.org/r/estimatr/) alone, because their numbers and their examples drift faster than a release cycle:
 
 | vignette | what it is for |
-|----|----|
+|---|---|
 | `estimatr2.0` | porting from 1.x: what changed, why, and the benchmarks |
 | `getting-started` | the six estimators, on one worked example |
 | `mathematical-notes` | every estimator defined, cited, and then validated against its own definition |
