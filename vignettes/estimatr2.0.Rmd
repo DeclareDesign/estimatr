@@ -17,29 +17,19 @@ library(estimatr)
 
 ## The short version
 
-estimatr 2.0 is a ground-up rewrite aimed at the DeclareDesign workflow: fit the same model thousands of times, as fast as possible, and get the same number every time. Almost everything you already wrote against 1.x runs unchanged and returns identical estimates, identical standard errors, identical confidence intervals, and identical objects, only faster. That claim is pinned by 5,635 test assertions, 695 of which compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, and a further 808 of which compare against implementations that share no lineage with estimatr at all. See [How this was checked].
+estimatr 2.0 is a ground-up rewrite, with the main goals of speed and improved code robustness. Almost everything from 1.x runs unchanged and returns identical estimates, identical standard errors, identical confidence intervals, and identical objects. That claim is underpinned by 5,635 test assertions, 695 of which compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, and a further 808 of which compare against implementations that share no lineage with estimatr at all. See [How this was checked]. No call is slower, with gains concentrated where the algorithms changed. See [Speed].
 
-Two things break, and each one is a deliberate trade. `horvitz_thompson()` takes one probability argument instead of five. Two stargazer helpers are gone. Every standard error 1.x could compute, 2.0 can still compute. What changes is which one a *default* reaches for when you absorb fixed effects with clusters, and that default now says so out loud.
+estimatr 2.0 introduces a handful of breaking changes:
 
-No call is slower, and the gains concentrate where the algorithms changed. See [Speed].
+- `horvitz_thompson()` takes one probability argument instead of five.
+- Two stargazer helpers are gone.
+- the default standard error in a fixed effect model with clusters like `lm_robust(Y ~ Z, fixed_effects = ~blocks, clusters = clusters, data = dat)` changes from `CR2` to `CR0`
 
-estimatr 2.0.0 was written with AI, and `vignette("mathematical-notes")` sets that out alongside the guarantee it buys you: every estimator is defined in mathematics and then validated to machine precision against that definition, measured when the vignette is built. The release is checked twice over besides, against a recording of an installed estimatr 1.0.6, which shows the rewrite moved no answer, and against implementations that share no lineage with it (`sandwich`, `clubSandwich`, `ivreg`, Stata, `fixest`, `plm`, `blkvar`), which shows the answers are right. [How this was checked] sets out both layers.
+estimatr 2.0.0 was rewritten with serious AI assistance (Claude Opus 5.x and Fable 5.x). Agents reworked the algorithms, explored areas of the estimation surface we had neglected, found many speedups, wrote thousands of tests, compared to many other regression implementations. The trade is some residual robotic prose in some of the documentation (though we tried our best to rewrite and enliven).
 
-If you are new to the package rather than porting a script, `vignette("getting-started")` walks through the six estimators and `vignette("mathematical-notes")` gives the definition of each with its citation.
+`vignette("mathematical-notes")` sets out the mathematical basis for the package: every estimator is defined in math and then validated to machine precision against that definition.
 
-## Getting it
-
-```r
-install.packages("estimatr")
-library(estimatr)
-```
-
-Upgrading replaces 1.x. If you need to reproduce an old analysis exactly while porting, install the previous version into a separate library rather than trying to load both at once: two versions of one namespace cannot coexist in a single R session.
-
-```r
-dir.create("~/R/estimatr-1.0.6", recursive = TRUE)
-remotes::install_version("estimatr", version = "1.0.6", lib = "~/R/estimatr-1.0.6")
-```
+The release is checked twice over besides, against a recording of an installed estimatr 1.0.6, which shows the rewrite moved no answer, and against implementations that share no lineage with it (`sandwich`, `clubSandwich`, `ivreg`, Stata, `fixest`, `plm`, `blkvar`), which shows the answers are right. [How this was checked] sets out both layers.
 
 ## What does not change
 
@@ -54,21 +44,6 @@ Five of the six estimators keep their 1.x signatures exactly; `horvitz_thompson(
 | `lh_robust()` | `..., data, linear_hypothesis` |
 
 Every S3 method 1.x provided is present and behaves the same way: `tidy()`, `glance()`, `summary()`, `print()`, `predict()`, `coef()`, `confint()`, `vcov()`, `nobs()`, `update()`, plus the texreg and emmeans hooks. One return class changes: `tidy()`, `glance()`, and the new `augment()` return tibbles, as broom's methods do, where 1.x returned plain data frames. `$`, `[[`, and row indexing are unaffected; `tidy(fit)[, "estimate"]` now gives a one-column tibble rather than a vector, so write `tidy(fit)$estimate`.
-
-```{r}
-set.seed(42)
-dat <- data.frame(
-  y = rnorm(1000), x = rnorm(1000), z = rbinom(1000, 1, 0.5),
-  w = runif(1000, 0.5, 1.5), cl = rep(1:100, each = 10),
-  bl = rep(1:50, each = 20)
-)
-
-lm_robust(y ~ z + x, data = dat, clusters = cl, weights = w)
-```
-
-Under 1.0.6, run on the same machine, that call returns the same coefficients, standard errors and degrees of freedom to 1e-12. The comparison cannot be run inside this vignette, because estimatr 2.0 and estimatr 1.0.6 cannot both be loaded, so it is run in the test suite instead against answers recorded from 1.0.6 (`data-raw/make_estimatr_reference.R` produces the recording, and re-running it under a future 1.x is how you would check that the recording still holds). Those recorded comparisons run at 1e-9 rather than 1e-12: a fixture recorded on one platform meets a different BLAS on another, and the floor there is the linear algebra rather than either version of this package.
-
-The places where the numbers differ on purpose are all listed below, under Current status. Two of them are about `fixed_effects` and are described where the fixed-effects work is; the rest are cases where the 1.x number is wrong, and each says why.
 
 ## What changes, and why
 
@@ -109,7 +84,7 @@ and any design you cannot describe parametrically is a permutation matrix:
 declare_ra(permutation_matrix = perm)
 ```
 
-which replaces `condition_pr_mat` and, in the process, replaces 538 lines of matrix-construction helpers with one `tcrossprod()` call.
+which replaces `condition_pr_mat` and, in the process, replaces 538 lines of matrix-construction helper code.
 
 **The upside, part one: multi-arm designs.** 1.x refuses an `ra_declaration` with more than two arms. 2.0 contrasts any two arms of one, with `condition1` and `condition2` picking the contrast. The estimand stays the average treatment effect over all N units of the design, so `data` must carry one row per unit, including the arms outside the contrast; a declaration whose size does not match `nrow(data)` is an error rather than a silent misalignment.
 
@@ -140,7 +115,11 @@ horvitz_thompson(Y ~ Z, data = dat_ht, condition_prs = decl)
 **One default moves, and it is the only one.** `fixed_effects` used together with `clusters` now defaults to `se_type = "CR0"`, where 1.x defaulted to `"CR2"`. Every other `fixed_effects` call gives you exactly what 1.x gave you, to the last bit, only much faster. Point estimates are unchanged everywhere, including in the clustered case.
 
 ```{r}
-dat$bl2 <- rep(1:20, times = 50)
+set.seed(343)
+dat <- data.frame(
+  y = rnorm(1000), x = rnorm(1000), z = rbinom(1000, 1, 0.5),
+  cl = rep(1:100, each = 10), bl = rep(1:50, each = 20), bl2 = rep(1:20, times = 50)
+)
 
 # unclustered, one factor: HC2, as in 1.x
 lm_robust(y ~ z + x, data = dat, fixed_effects = ~ bl)$se_type
@@ -290,21 +269,7 @@ No call is slower in 2.0, and the gains concentrate where the algorithms changed
 
 Full tables, the measurement method, and a script that reproduces them are on the [Performance](https://declaredesign.org/r/estimatr/articles/performance.html) page.
 
-## Why rewrite at all
-
-**Not to make the package smaller.** Counted the same way on both branches, `R/` and `src/` together are 6,866 lines in 1.0.6 and 6,334 in 2.0, a reduction of 8 percent, and with blank lines and comments stripped the two are within half a percent of each other, 4,072 against 4,050. The rewrite is the same amount of code doing different work.
-
-What changed is where the complexity sits, and that is the interesting part. Roxygen went from 1,597 lines to 773, because the S3 surface is generated rather than written out per class. C++ grew, from 509 lines to 692. The savings were real and they were spent: on the Pashley and Miratrix blocked-variance estimator, which 1.x does not have at all, on a wider `predict()`, and on the error messages that this release adds wherever 1.x returned a silent number.
-
-The Horvitz-Thompson variance was the largest saving and the one that looked least likely. 1.x builds the full N-by-N matrix of joint inclusion probabilities, with 538 lines of helpers to construct it for each design family. Young's inequality bound for any complete-randomization design reduces to six scalar sufficient statistics per block, so the matrix never has to exist. Designs that cannot be described parametrically are a permutation matrix, and `tcrossprod()` handles those in one line. Counting code lines on both sides alike, the estimator and its helper go from 746 lines to 339, and it is faster by a factor that grows with N.
-
-Fixed effects were the second. Absorbing by alternating projections in C++ is the `feols` algorithm, and it makes the number of fixed effects almost free. The leverage identity then buys back HC2 and HC3 at the cost of a single vector, which is why absorption no longer costs a standard error type in the common case.
-
-The rest is ordinary: one code path where 1.x has several, and the S3 surface generated rather than written out per class.
-
 ## How this was checked
-
-The short version states the claim. Here is the evidence behind it, which is the part that should actually decide whether you install this.
 
 **The first layer asks whether the rewrite changed an answer.** 695 assertions compare 2.0 against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, across every supported standard error type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes. A separate file pins the entire returned surface of sixteen fit types, names as well as values, because a package's compatibility surface is what it returns rather than what it exports: during development six fields went missing from fitted objects and a seventh returned a wrong value, and neither a `NAMESPACE` diff nor a search of every reverse dependency's source could see it, since no export changed and no call site changed either.
 
