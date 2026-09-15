@@ -56,25 +56,6 @@ print_summary_lm_like <- function(x,
     ",\tAdjusted R-squared: ", formatC(x$adj.r.squared, digits = digits),
     fstat
   )
-
-  if (is.numeric(x[["proj_fstatistic"]])) {
-    cat(
-      "\nMultiple R-squared (proj. model): ",
-      formatC(x$proj_r.squared, digits = digits),
-      ",\tAdjusted R-squared (proj. model): ",
-      formatC(x$proj_adj.r.squared, digits = digits),
-      "\nF-statistic (proj. model):",
-      formatC(x$proj_fstatistic[1L], digits = digits),
-      "on", x$proj_fstatistic[2L], "and", x$proj_fstatistic[3L],
-      "DF,  p-value:",
-      format.pval(pf(
-        x$proj_fstatistic[1L],
-        x$proj_fstatistic[2L],
-        x$proj_fstatistic[3L],
-        lower.tail = FALSE
-      ), digits = digits)
-    )
-  }
   cat("\n")
 
   if (is.numeric(x[["diagnostic_endogeneity_test"]])) {
@@ -92,6 +73,38 @@ print_summary_lm_like <- function(x,
     )
   }
   invisible(x)
+}
+
+build_ivreg_diagnostics_mat <- function(x) {
+  first_stage <- x[["diagnostic_first_stage_fstatistic"]]
+  endog <- x[["diagnostic_endogeneity_test"]]
+  overid <- x[["diagnostic_overid_test"]]
+
+  # One first-stage row per endogenous regressor. Once there is more than one,
+  # the entries are named "<var>:value" and "<var>:p.value".
+  is_p <- endsWith(names(first_stage), "p.value")
+  weak_values <- first_stage[endsWith(names(first_stage), "value") & !is_p]
+  n_weak <- length(weak_values)
+  weak_names <- if (n_weak > 1) {
+    paste0("Weak instruments (", sub(":value$", "", names(weak_values)), ")")
+  } else {
+    "Weak instruments"
+  }
+
+  diag_mat <- cbind(
+    value = unname(c(weak_values, endog[["value"]], overid[["value"]])),
+    Df1 = c(rep(first_stage[["nomdf"]], n_weak), endog[["numdf"]], overid[["df"]]),
+    Df2 = c(rep(first_stage[["dendf"]], n_weak), endog[["dendf"]], NA),
+    p.value = unname(c(first_stage[is_p], endog[["p.value"]], overid[["p.value"]]))
+  )
+  # Sargan's statistic after a classical fit, Wooldridge's robust score test
+  # after any other.
+  rownames(diag_mat) <- c(
+    weak_names,
+    "Wu-Hausman",
+    if (identical(x[["se_type"]], "classical")) "Sargan" else "Score (robust)"
+  )
+  diag_mat
 }
 
 #' @export
@@ -116,9 +129,9 @@ print.difference_in_means <- function(x, ...) {
   print(summarize_tidy(x))
 }
 
-
 #' @export
 print.horvitz_thompson <- function(x, ...) {
+  cat("Horvitz-Thompson estimator\n")
   print(summarize_tidy(x))
 }
 
@@ -141,7 +154,7 @@ print.lh_robust <- function(x, ...) {
 #' @export
 print.summary.lh_robust <- function(x,
                                     digits = max(3L, getOption("digits") - 3L),
-                                    ...){
+                                    ...) {
   lnames <- names(x)
   for (i in seq_along(x)) {
     cat("$", lnames[i], "\n", sep = "")
@@ -153,7 +166,7 @@ print.summary.lh_robust <- function(x,
 #' @export
 print.summary.lh <- function(x,
                              digits = max(3L, getOption("digits") - 3L),
-                             ...){
+                             ...) {
   class(x) <- NULL
   print(x, digits = digits)
 }

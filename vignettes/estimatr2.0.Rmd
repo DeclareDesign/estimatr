@@ -1,0 +1,380 @@
+---
+title: "estimatr 2.0: what changes, what does not, and why"
+output: rmarkdown::html_vignette
+bibliography: estimatr.bib
+link-citations: yes
+vignette: >
+  %\VignetteIndexEntry{estimatr 2.0: what changes, what does not, and why}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", message = FALSE)
+has_randomizr <- requireNamespace("randomizr", quietly = TRUE)
+library(estimatr)
+```
+
+## The short version
+
+estimatr 2.0 is a ground-up rewrite, with the main goals of speed and improved code robustness. Almost everything from 1.x runs unchanged and returns identical estimates, identical standard errors, identical confidence intervals, and identical objects. That claim is underpinned by 5,635 test assertions, 695 of which compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, and a further 808 of which compare against implementations that share no lineage with estimatr at all. See [How this was checked]. No call is slower, with gains concentrated where the algorithms changed. See [Speed].
+
+estimatr 2.0 introduces a handful of breaking changes:
+
+- `horvitz_thompson()` takes one probability argument instead of five.
+- Two stargazer helpers are gone.
+- the default standard error in a fixed effect model with clusters like `lm_robust(Y ~ Z, fixed_effects = ~blocks, clusters = clusters, data = dat)` changes from `CR2` to `CR0`
+
+estimatr 2.0.0 was rewritten with serious AI assistance (Claude Opus 5.x and Fable 5.x). Agents reworked the algorithms, explored areas of the estimation surface we had neglected, found many speedups, wrote thousands of tests, compared to many other regression implementations. The trade is some residual robotic prose in some of the documentation (though we tried our best to rewrite and enliven).
+
+`vignette("mathematical-notes")` sets out the mathematical basis for the package: every estimator is defined in math and then validated to machine precision against that definition.
+
+The release is checked twice over besides, against a recording of an installed estimatr 1.0.6, which shows the rewrite moved no answer, and against implementations that share no lineage with it (`sandwich`, `clubSandwich`, `ivreg`, Stata, `fixest`, `plm`, `blkvar`), which shows the answers are right. [How this was checked] sets out both layers.
+
+## What does not change
+
+Five of the six estimators keep their 1.x signatures exactly; `horvitz_thompson()` is the subject of the next section:
+
+| function | signature |
+|---|---|
+| `lm_robust()` | `formula, data, weights, subset, clusters, fixed_effects, se_type, ci, alpha, return_vcov, try_cholesky` |
+| `lm_lin()` | `formula, covariates, data, weights, subset, clusters, se_type, ci, alpha, return_vcov, try_cholesky` |
+| `iv_robust()` | `formula, data, weights, subset, clusters, fixed_effects, se_type, ci, alpha, diagnostics, return_vcov, try_cholesky` |
+| `difference_in_means()` | `formula, data, blocks, clusters, weights, subset, se_type, condition1, condition2, ci, alpha` |
+| `lh_robust()` | `..., data, linear_hypothesis` |
+
+Every S3 method 1.x provided is present and behaves the same way: `tidy()`, `glance()`, `summary()`, `print()`, `predict()`, `coef()`, `confint()`, `vcov()`, `nobs()`, `update()`, plus the texreg and emmeans hooks. One return class changes: `tidy()`, `glance()`, and the new `augment()` return tibbles, as broom's methods do, where 1.x returned plain data frames. `$`, `[[`, and row indexing are unaffected; `tidy(fit)[, "estimate"]` now gives a one-column tibble rather than a vector, so write `tidy(fit)$estimate`.
+
+## What changes, and why
+
+### 1. `horvitz_thompson()` takes one probability argument
+
+1.x asks you to say what you know about the randomization in five different ways, and the right combination depends on the design:
+
+```r
+# estimatr 1.x. Not run: decl is a randomizr declaration, pr a vector of
+# per-unit probabilities, and pr_mat a matrix of joint probabilities.
+horvitz_thompson(y ~ z, data = dat, ra_declaration = decl)
+horvitz_thompson(y ~ z, data = dat, condition_prs = 0.4, simple = TRUE)
+horvitz_thompson(y ~ z, data = dat, blocks = bl, condition_prs = pr)
+horvitz_thompson(y ~ z, data = dat, clusters = cl, condition_prs = pr)
+horvitz_thompson(y ~ z, data = dat, condition_pr_mat = pr_mat)
+```
+
+2.0 has one argument, `condition_prs`, which takes whichever object you actually have:
+
+```r
+# estimatr 2.0. Not run; the same objects as above.
+horvitz_thompson(y ~ z, data = dat, condition_prs = decl)                     # ra_declaration
+horvitz_thompson(y ~ z, data = dat, condition_prs = c("0" = 0.6, "1" = 0.4))  # named vector
+horvitz_thompson(y ~ z, data = dat, condition_prs = pr_mat)                   # per-unit matrix
+```
+
+The `blocks`, `clusters`, `simple`, `ra_declaration`, `condition_pr_mat`, `subset` and `return_condition_pr_mat` arguments are gone, and `se_type = "constant"` is gone.
+
+**The rationale.** An `ra_declaration` already carries the block structure, the cluster structure, the per-unit marginal probabilities, and whether the randomization was simple or complete. Passing `blocks` and `clusters` separately restates information the declaration already holds, and gives the estimator two sources of truth that can disagree. Any parametric design you can describe in words is a `declare_ra()` call:
+
+```r
+declare_ra(blocks = bl, clusters = cl, prob = pi, simple = FALSE)
+```
+
+and any design you cannot describe parametrically is a permutation matrix:
+
+```r
+declare_ra(permutation_matrix = perm)
+```
+
+which replaces `condition_pr_mat` and, in the process, replaces 538 lines of matrix-construction helper code.
+
+**The upside, part one: multi-arm designs.** 1.x refuses an `ra_declaration` with more than two arms. 2.0 contrasts any two arms of one, with `condition1` and `condition2` picking the contrast. The estimand stays the average treatment effect over all N units of the design, so `data` must carry one row per unit, including the arms outside the contrast; a declaration whose size does not match `nrow(data)` is an error rather than a silent misalignment.
+
+```{r, eval = has_randomizr, warning = FALSE}
+library(randomizr)
+set.seed(3)
+decl3 <- declare_ra(N = 300, conditions = c("control", "T1", "T2"))
+Z3 <- conduct_ra(decl3)
+dat3 <- data.frame(Y = rnorm(300) + 0.4 * (Z3 == "T1") + 0.8 * (Z3 == "T2"), Z = Z3)
+
+horvitz_thompson(Y ~ Z, data = dat3, condition_prs = decl3,
+                 condition1 = "control", condition2 = "T2")
+```
+
+**The upside, part two: speed.** Passing the declaration is what makes the O(1) variance possible. When 2.0 knows the design is complete randomization within blocks, it computes the Young's inequality bound from six scalar sums per block rather than from an N-by-N matrix of joint probabilities. Passing a bare probability vector instead still works, and gives you the conservative simple-randomization bound, valid for any design but exact only for Bernoulli assignment. The two paths are now visibly different at the call site: an `ra_declaration` buys you the design-aware variance, and a plain vector buys you the conservative one. In 1.x that distinction was buried in which combination of arguments you happened to supply.
+
+```{r, eval = has_randomizr}
+set.seed(2)
+decl <- declare_ra(blocks = rep(c("a", "b", "c", "d"), each = 50), prob = 0.4)
+Z <- conduct_ra(decl)
+dat_ht <- data.frame(Y = rnorm(200) + 0.5 * Z, Z = Z)
+
+horvitz_thompson(Y ~ Z, data = dat_ht, condition_prs = decl)
+```
+
+### 2. Clustered fixed effects get a different default standard error
+
+**One default moves, and it is the only one.** `fixed_effects` used together with `clusters` now defaults to `se_type = "CR0"`, where 1.x defaulted to `"CR2"`. Every other `fixed_effects` call gives you exactly what 1.x gave you, to the last bit, only much faster. Point estimates are unchanged everywhere, including in the clustered case.
+
+```{r}
+set.seed(343)
+dat <- data.frame(
+  y = rnorm(1000), x = rnorm(1000), z = rbinom(1000, 1, 0.5),
+  cl = rep(1:100, each = 10), bl = rep(1:50, each = 20), bl2 = rep(1:20, times = 50)
+)
+
+# unclustered, one factor: HC2, as in 1.x
+lm_robust(y ~ z + x, data = dat, fixed_effects = ~ bl)$se_type
+
+# unclustered, two factors: still HC2, as in 1.x
+lm_robust(y ~ z + x, data = dat, fixed_effects = ~ bl + bl2)$se_type
+```
+
+The change warns once per session rather than once per call, since absorbed fixed effects are usually fitted in a loop. Writing `se_type = "CR0"` accepts the new default and removes the warning; writing `se_type = "CR2"` gets the 1.x number back exactly, also without warning.
+
+**Why everything else got faster.** HC2 and HC3 are built from the leverage values of the full design matrix, the one with every fixed-effect dummy in it. Absorbing fixed effects by demeaning is precisely the decision not to build that matrix, which is why 1.x had to expand the dummies to compute them, and why it took 41 seconds to fit 40,000 observations across 2,000 blocks. The way out is an identity. The projection onto the full design splits exactly into the projection onto the dummies and the projection onto the demeaned covariates:
+
+```
+P_[X | D] = P_D + P_{M_D X}
+```
+
+so each leverage value is the demeaned-X hat value plus `diag(P_D)`, and that second piece is cheap: with one factor it is just each unit's weight share within its own group, and with several it costs a factorisation the size of the design's narrowest dimension. No dummy matrix is ever built, at any number of factors. Same numbers, without the matrix that made them slow.
+
+**Why CR2 is the exception.** Its adjustment comes from cluster-level *blocks* of the hat matrix rather than from the leverage diagonal, and blocks do not decompose the way the diagonal does. So CR2 still has to write the dummies out, which is roughly cubic in the number of levels and gives back the whole reason to absorb fixed effects in the first place. That is why it is the one default that moves. Ask for it by name and you still get it, exact and equal to 1.0.6:
+
+```{r}
+lm_robust(y ~ z + x, data = dat, fixed_effects = ~ bl,
+          clusters = cl, se_type = "CR2")$std.error
+```
+
+**What the speed buys.** Absorbing a large number of fixed effects and still getting HC2 was impractical before. 40,000 observations across 2,000 blocks takes 41 seconds in 1.x and about 4 milliseconds in 2.0, for a bit-identical number. Two-way tells most: 50,000 observations across 1,000 x 30 groups takes 1.x 12.5 seconds and 2.0 7 milliseconds. The memory is the more telling half. Peak resident set size for the whole R process is 1,564 MB in 1.x against 292 MB here, and 265 MB of that 292 is an empty R session with the package loaded, so the fit itself costs about 27 MB where 1.x needed 1.3 GB. The dummy matrix that made wide fixed effects impractical is never allocated, and because it is built in C++ rather than in R, `gc()` never saw it and only the process's resident size does.
+
+**A rank-deficiency bug goes with it.** If one FE factor is spanned by the others (a nested factor, or a disconnected design), the FE design is rank deficient. 1.x expanded the dummies, let a pivoted QR drop the redundant columns, and read the hat values off the padded design, so its absorbed answer disagreed with its own explicit-dummy fit. Taking `diag(P_D)` through a pseudo-inverse is exact at any rank, so 2.0 returns the dummy-regression answer, and uses the design's true rank for the residual degrees of freedom rather than the nominal level count.
+
+The two-way example just above is one of these designs, which is worth knowing because it was not constructed to be. Its 1,029 fixed-effect columns have rank 1,020, so nine levels are spanned by the others. 2.0's absorbed standard error matches its own explicit-dummy fit to 4.3e-17; 1.0.6's disagrees with its own by 1.9e-6, in the fourth significant digit. That is the only row in this vignette where the two versions do not agree to floating point, and the disagreement is 1.x being wrong rather than a change of convention.
+
+### 3. Functions that are gone
+
+`starprep()` and `commarobust()` were stargazer conveniences. Both are removed, and both remain as names that error and name the replacement, so a 1.x script says what happened rather than failing with "could not find function".
+
+```{r, error = TRUE}
+starprep(lm(y ~ z, data = dat))
+```
+
+`declaration_to_condition_pr_mat()`, `gen_pr_matrix_cluster()` and `permutations_to_condition_pr_mat()` are not exported. They built the `condition_pr_mat` that `horvitz_thompson()` no longer accepts, and the new variance does not need one. These three are simply absent rather than deprecated, because unlike the stargazer helpers they have no user-facing replacement to point at.
+
+## Porting an existing script
+
+Four greps cover every breaking change. Whatever they do not find needs no attention.
+
+| Grep for | Replace with | Where it bites |
+|---|---|---|
+| `ra_declaration`, `condition_pr_mat`, `simple =`, or `blocks`/`clusters` inside `horvitz_thompson()` | one `condition_prs =`, holding a declaration, a named vector, or a matrix | Horvitz-Thompson designs |
+| `fixed_effects` with no `se_type` named, *and* `clusters` | nothing, or name the `se_type` you want | absorbed fixed effects with clusters: the default moved, see below |
+| `starprep`, `commarobust`, `declaration_to_condition_pr_mat`, `gen_pr_matrix_cluster`, `permutations_to_condition_pr_mat` | the first two have no replacement here; the last three are unnecessary | table output, HT internals |
+| `fixed_effects =` followed by anything that is not a `~` | wrap the grouping variable in a formula: `fixed_effects = ~ block` | code that passed a bare column name or a vector |
+
+The first row stops with R's own `unused argument` error, which names the argument you passed but not what to use instead, so it is worth grepping for rather than waiting for. The third row is the other way round: `starprep()` and `commarobust()` still exist as functions that error and name their replacement, while the three matrix builders are simply gone and fail with `could not find function`. The fourth still runs, and still gives the 1.x answer, but warns: enforcing the formula is the resolution of issue #304, and a warning enforces it without breaking a working script.
+
+**The second row is the one to read carefully, because it moves a number, and it is the only place in the release where a default does.** With no `se_type` named, `lm_robust(y ~ z, fixed_effects = ~ block, clusters = cl)` gets CR2 from 1.x and CR0 from 2.0. The point estimate is identical; only the standard error moves. It warns once per session, so nothing changes silently and nothing spams a simulation loop. Writing `se_type = "CR0"` accepts the new default and removes the warning; writing `se_type = "CR2"` gets you the 1.x number exactly, at the cost of expanding the dummies.
+
+**Fixed effects without clusters are unaffected, at any number of factors.** The default is HC2 in both versions and the numbers are bit-identical, whether you absorb one factor or five. Earlier drafts of 2.0 did move this default to HC1 for two or more factors, on the belief that the leverage identity held only for one; it holds for any number, so there is nothing to trade away and the default stays where 1.x had it. If a published fixed-effects standard error turns on which adjustment you used, name the `se_type` rather than taking the default.
+
+## What is new
+
+Five things 1.x cannot do, all of which fall out of the rewrite rather than being bolted on.
+
+**Multi-arm Horvitz-Thompson.** 1.x refuses an `ra_declaration` with more than two arms. 2.0 contrasts any two arms of one, with the estimand still defined over all N units of the design. See [What changes, and why] for the call.
+
+**A joint hypothesis test.** `lh_robust()` returns a `joint_hypothesis` element carrying a Wald F statistic on cluster-adjusted degrees of freedom, which 1.x declines to compute.
+
+**Residuals.** `residuals(fit)` returns them, on the scale of the data, in the original row order for clustered fits, and structural rather than first-stage for `iv_robust()`. In 1.x the slot was `NULL` for every estimator.
+
+**A warning when a regressor is dropped.** Collinear terms come back as NA coefficients in both versions; only one of them tells you which terms it dropped.
+
+**Blocked designs whose blocks are not all the same shape.** 1.x either errors on such a design or applies the matched-pairs estimator to every block, big ones included. 2.0 uses the estimators of @pashleymiratrix2021. See below, which is worth a section of its own.
+
+## Blocked designs whose blocks are not all the same shape
+
+1.x handles two kinds of blocked design and refuses everything between them. If every block has at least two treated and two control units, each block carries its own Neyman variance. If every block is a matched pair, the variance comes from the variation across pairs. A design with both, or a block holding one treated unit and three control units, either errors or silently applies the matched-pairs estimator to every block after a warning.
+
+Such designs are not exotic. Coarsened exact matching, full matching, and multisite trials with one or two sites per stratum all produce them.
+
+The substantive correction is to classify blocks by how many units each **arm** holds, not by how large the block is. A block of eight units with one of them treated has no more estimable within-block variance than a matched pair does; the singleton arm gives you one number, and one number has no variance. 2.0 implements the three estimators of @pashleymiratrix2021 on that classification:
+
+- Blocks with at least two units in each arm contribute their own Neyman variance, their equation 4.
+- Blocks with a singleton arm contribute through the variation across such blocks, their equation 8, the "unified" estimator, which requires no two blocks to share a size. With equal sizes it reduces to the usual matched-pairs estimator, their equation 5, which is used directly because equation 8 is undefined at two equal-sized blocks.
+- A design with both kinds combines the parts by squared share of the sample, their section 3.3.
+
+Here is a design with both: twenty blocks of ten units with five treated, and twelve blocks of four units with one treated.
+
+```{r}
+set.seed(7)
+big <- data.frame(
+  bl = rep(paste0("big", 1:20), each = 10),
+  z = rep(rep(0:1, each = 5), times = 20)
+)
+small <- data.frame(
+  bl = rep(paste0("sm", 1:12), each = 4),
+  z = rep(c(1, 0, 0, 0), times = 12)
+)
+dat_bl <- rbind(big, small)
+dat_bl$y <- rnorm(nrow(dat_bl)) + 0.3 * dat_bl$z
+
+difference_in_means(y ~ z, data = dat_bl, blocks = bl)
+```
+
+1.x will not fit that design at all. It stops with
+
+```
+Error: If design is not pair-matched, every block must have at least two
+treated and control units.
+```
+
+Replace the twelve four-unit blocks with twelve matched pairs and 1.x does fit it, by warning and then treating all thirty-two blocks as pairs. The point estimates agree, because the point estimator was never at issue. The standard error comes out 23% larger and the degrees of freedom are 31 rather than 168.9, because twenty blocks that could have supplied their own within-block variance are thrown into the across-block calculation instead.
+
+```{r}
+pairs <- data.frame(bl = rep(paste0("pr", 1:12), each = 2), z = rep(c(1, 0), times = 12))
+dat_pr <- rbind(big, pairs)
+dat_pr$y <- rnorm(nrow(dat_pr)) + 0.3 * dat_pr$z
+
+difference_in_means(y ~ z, data = dat_pr, blocks = bl)
+```
+
+Under estimatr 1.0.6 the same call warns that some blocks hold two units while others hold more, reports `design = "Matched-pair"`, and returns the same estimate of 0.3616 with a standard error of 0.1741 on 31 degrees of freedom, against 0.1415 on 168.9 here.
+
+The `design` element reports which case applied, so you never have to infer it from the block sizes: `"Blocked"` when every block has two units per arm, `"Matched-pair"` when every block is a pair, `"Small blocks"` when every block has a singleton arm without all being pairs, and `"Hybrid blocked"` when the design mixes the two.
+
+```{r}
+difference_in_means(y ~ z, data = dat_bl, blocks = bl)$design
+```
+
+Degrees of freedom are not treated in the paper, which stops at the variance. 2.0 combines the two components by Welch-Satterthwaite, which reduces to `n - 2K` for an all-big design and to `K - 1` for an all-small one, matching what each literature uses on its own.
+
+Two designs are refused, because the variance genuinely cannot be estimated rather than because the software is unwilling. The first is a design with exactly one block holding a singleton arm, which leaves nothing to compare that block against and would contribute a variance of zero:
+
+```{r, error = TRUE}
+dat_one <- rbind(big, data.frame(bl = "sm1", z = c(1, 0, 0, 0)))
+dat_one$y <- rnorm(nrow(dat_one))
+difference_in_means(y ~ z, data = dat_one, blocks = bl)
+```
+
+The second is a set of differently-sized singleton-arm blocks in which one holds half or more of their units, which is the condition equation 8 needs to stay defined and conservative. Both messages name the offending block and suggest merging blocks or using `lm_robust()` with block fixed effects.
+
+Standard errors agree to 1e-10 with `blkvar::block_estimator(method = "hybrid_p")`, the authors' own implementation, across all-big, all-small, matched-pair, and hybrid designs. All-big designs and matched pairs return exactly what they always did.
+
+**Blocks of clusters are a different problem, and are not covered.** Pashley and Miratrix treat treatment assigned within blocks, not blocks of clusters; clusters appear once in their paper, to be set aside. Blocked designs with `clusters` therefore keep the earlier estimators, and a block with a single treated or single control **cluster** is refused outright. See [Current status] for what turned up when that boundary was checked.
+
+## Speed
+
+No call is slower in 2.0, and the gains concentrate where the algorithms changed. Ordinary `lm_robust()` is about 2.5x faster. Absorbed fixed effects are about 470x faster at 500 blocks and about 9,800x faster at 2,000, returning bit-identical numbers, and the two-way fit that cost 1.3 GB in 1.x costs about 27 MB here. Horvitz-Thompson under complete randomization is about 1,100x faster at N = 3,000, because the N-by-N joint inclusion probability matrix is never built.
+
+Full tables, the measurement method, and a script that reproduces them are on the [Performance](https://declaredesign.org/r/estimatr/articles/performance.html) page.
+
+## How this was checked
+
+**The first layer asks whether the rewrite changed an answer.** 695 assertions compare 2.0 against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, across every supported standard error type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes. A separate file pins the entire returned surface of sixteen fit types, names as well as values, because a package's compatibility surface is what it returns rather than what it exports: during development six fields went missing from fitted objects and a seventh returned a wrong value, and neither a `NAMESPACE` diff nor a search of every reverse dependency's source could see it, since no export changed and no call site changed either.
+
+**The second layer asks whether the answer is right, which the first cannot.** Anything estimatr inherited from 1.0.6, error included, passes a comparison against 1.0.6 in silence. So 808 further assertions compare against implementations built independently of this one:
+
+| checked against | what it covers | how |
+|---|---|---|
+| `sandwich` | HC0 through HC3 and both cluster corrections, weighted and not | live, same session, 1e-10 |
+| `clubSandwich` | CR2 and its Satterthwaite degrees of freedom, including under absorption | live, same session, 1e-10 |
+| `ivreg` | 2SLS HC2 and HC3, via `sandwich` on an `ivreg` fit | live, same session, 1e-10 |
+| Stata `regress`, `areg`, `ivregress` | `se_type = "stata"`, with and without absorbed fixed effects; the first-stage, endogeneity, and robust over-identification tests, via `estat` | frozen output, tolerance per value |
+| `fixest`, `plm` | absorption, by two independent routes | recorded fixture, versions recorded |
+| `blkvar` | the blocked-design variance, from the authors of the estimator | live |
+| a hand-built Lin specification | `lm_lin`, including its weighted paths | live, all 36 cells |
+
+estimatr matches `sandwich`, `clubSandwich` and `ivreg` to machine precision everywhere they overlap, weighted included, with the CR2 Satterthwaite degrees of freedom exact.
+
+`sandwich` and `clubSandwich` are compared live, in one session, because both sides then run on one BLAS and can be held far tighter than any recording. `fixest` and `plm` are recorded instead, with their versions, because both change small-sample defaults between releases and a live test would fail on somebody else's release note rather than on anything here. Stata tolerances are derived per value from the digits Stata actually printed, since the printed precision spans four orders of magnitude across those tables and one constant would be either far too loose or far too tight.
+
+**Where the answers genuinely differ, the difference is asserted rather than dropped.** A comparison quietly excluded because it disagrees looks exactly like one that was never written, on any green run. Weighted HC2 against Stata is therefore pinned twice, as equal to the R reference to machine precision and as different from Stata by a bounded amount, and weighted 2SLS root MSE the same way.
+
+**estimatr agrees with the maintained reference implementation, and the agreement is exact.** 2SLS admits two candidate leverage values, and which one you get from `sandwich` depends on which 2SLS object you hand it, since `sandwich` has no leverage convention of its own: it calls `hatvalues()` on the fit. estimatr uses the leverage of the second-stage regression, `h = xhat'(Xhat'Xhat)^-1 xhat`, the diagonal of an orthogonal projection. So does the `ivreg` package, and `sandwich::vcovHC()` applied to an `ivreg::ivreg()` fit returns estimatr's standard errors to machine precision, HC2 and HC3 alike.
+
+The other candidate is `diag(H*)`, where `H*` is the matrix taking `y` to the fitted values. @belsleykuhwelsch1980 considered it for 2SLS diagnostics, observed that `H*` is idempotent but asymmetric, and recommended the second-stage hatvalues instead, on the ground that the diagonal of an asymmetric matrix is not a leverage. @foxkleiberzeileis2026 adopt that recommendation as the default in `ivreg`, whose vignette puts it plainly: the diagonal elements of `H*` "can't be treated as summary measures of leverage, that is, as hatvalues." Achim Zeileis is also the author of `sandwich`.
+
+**Where you will see a difference is against `AER::ivreg()`**, whose `hatvalues()` method predates the `ivreg` package and returns `diag(H*)`. On `mtcars` the two answers differ by 8.6% at HC2 and 18.5% at HC3, which is worth knowing if you are reconciling estimatr against an older script. The practical argument for the projection is the one Belsley, Kuh and Welsch gave: it lies in [0, 1] by construction, so `1 - h` is never negative and HC2 is always defined. `diag(H*)` carries no such bound. It is already negative for one observation of `mtcars`, and with a weak first stage it routinely exceeds 1, at which point the correction has no square root and the standard errors are `NaN`.
+
+Stata declines the question entirely: `ivregress` accepts `unadjusted`, `robust`, `cluster`, `bootstrap`, `jackknife` and `hac`, and refuses `vce(hc2)` and `vce(hc3)` outright. We confirmed that on Stata 17, which returns error 198 for every such request.
+
+**What none of this covers.** Every number quoted here is from one machine, and a local check cannot see the cross-platform floor: the first CI run after the comparison fixture was frozen failed eleven assertions on Ubuntu and Windows and none on macOS, where the fixture had been recorded, and every difference was too small to print. Recorded comparisons therefore run at 1e-9, set from the worst case in the fixture rather than by taste. The multi-arm Horvitz-Thompson contrast has no reference implementation anywhere, since 1.x refuses the case outright, so it is ours to defend rather than something checked against a second opinion; see [Current status].
+
+## The estimatr issue list
+
+All 71 issues open on `DeclareDesign/estimatr` at the time of the rewrite were run against both versions, one reproducer at a time. Where they landed:
+
+| status | n |
+|---|---:|
+| Fixed in 2.0 | 26 |
+| Feature requests and discussions, unchanged | 23 |
+| Out of scope by design, or not actionable | 7 |
+| Not reproducible without the reporter's data | 6 |
+| Superseded by the rewrite | 5 |
+| Still open, real work | 4 |
+
+The fixes worth naming. Blocked designs whose blocks are not all the same shape (#336) now use the Pashley and Miratrix (2021) estimators, where 1.x either errors or applies the matched-pairs estimator to every block; this is the largest single addition. `residuals()` returns something (#345). Rank detection matches `lm()`, so a constant regressor comes back as NA rather than as a coefficient of 1e11 (#351, #395). `predict()` works with fixed effects, with factors, and with no `newdata` (#403, #404). `lh_robust()` uses cluster-adjusted degrees of freedom and returns a joint test (#405, #320, #390). Dropped collinear terms are named rather than silently returned as NA (#411). `augment()` exists, which opens the broom-aware packages downstream (#377). Multi-arm Horvitz-Thompson works at all (#183).
+
+The four still open are honest holdouts. Two of them, #412 and #337, asked whether `se_type = "stata"` reproduces Stata's clustered standard errors under fixed effects; the one-way case is settled and pinned in `test_vs_stata.R` against a restored 2019 `areg` fixture, which agrees to Stata's print precision. #289 needs the reporter to say what remains after the clustered case was fixed. #123 is a running catalogue of S3 methods `lm` has: `residuals` and `variable.names` are now present, `anova` and `simulate` are not.
+
+One defect turned up that has no issue behind it, and it is worth knowing if you run block-clustered designs. A block holding a single treated or single control **cluster** has no estimable within-block variance, and both versions returned one anyway. Exhaustive enumeration puts the estimate at 0.12 to 0.25 of the truth, depending on the block's size, for 88% coverage of a nominal 95% interval. 2.0 refuses those designs and names the offending blocks. Matched-pair clustered designs are unaffected, since their variance comes from across blocks rather than within them.
+
+## Current status
+
+The test suite is 5,906 assertions with none failing, `R CMD check --as-cran` gives 0 errors, 0 warnings and 1 NOTE for the maintainer change, and the numerical comparisons against 1.0.6 run across 50 seeds per design type for every Horvitz-Thompson design family.
+
+What follows is the list of places where 2.0 deliberately departs from 1.x: a different number, or a refusal where 1.x answered. In each one the 1.x behaviour is wrong, and every item was reproduced by running an installed 1.0.6 rather than read off this implementation's own code. If you have results from 1.x, these are the calls worth re-running. Nothing else in this release changes an answer.
+
+1. **`lh_robust()` used residual degrees of freedom with clustered models.** With n = 100 and 10 clusters, `lh_robust()` tested hypotheses against 97 degrees of freedom rather than the cluster-adjusted 9, producing confidence intervals far too narrow and inconsistent with the `lm_robust()` fit it was built from. 2.0 looks up the per-coefficient degrees of freedom, and under CR2 gives each hypothesis its own Satterthwaite degrees of freedom, as `clubSandwich::linear_contrast()` does. (Issue #405.)
+
+2. **`lh_robust()` reported no joint test.** 2.0 returns a `joint_hypothesis` element with a Wald F statistic on the same cluster-adjusted degrees of freedom. (Issue #320.)
+
+3. **`iv_robust(diagnostics = TRUE)` returned a first-stage F test with no p-value**, and computed the Wu-Hausman numerator degrees of freedom from the column count of the first-stage residual matrix, which overcounts by one because the intercept residuals are collinear and get dropped. 2.0 uses the actual rank increase.
+
+4. **Ordered factors could not be used as clusters.** `class(x) %in% c("factor", "integer")` returns a length-2 logical for an ordered factor, which `if()` rejects. (Issue #421.)
+
+5. **A formula stored in a variable could not be passed to `fixed_effects`.** The quosure captured the variable name rather than the formula. (Issue #348.)
+
+6. **`lm_robust(y ~ 1, fixed_effects = ~ block)` crashed** after accumulating 50 convergence warnings on a zero-column design matrix. 2.0 returns a well-formed intercept-only result with the correct residual degrees of freedom. (Issue #303.)
+
+7. **Residuals were not returned at all.** `residuals(fit)` was `NULL` for every estimator, though `fitted.values` was present. 2.0 returns residuals on the scale of the data, in the original row order for clustered fits, and structural rather than first-stage residuals for `iv_robust()`. (Issue #345.)
+
+    ```{r}
+    fit <- lm_robust(y ~ z + x, data = dat)
+    head(round(residuals(fit), 4))
+    all.equal(residuals(fit) + fitted(fit), dat$y, check.attributes = FALSE)
+    ```
+
+8. **A collinear regressor was dropped silently.** The dropped term comes back as an NA coefficient with no warning, which is what made an `lm()` user open the issue after finding coefficients that disagreed between the two functions. 2.0 warns and names the terms it dropped. (Issue #411.)
+
+    ```{r, warning = TRUE}
+    dat$x_copy <- dat$x
+    fit <- lm_robust(y ~ x + x_copy, data = dat)
+    ```
+
+9. **A joint hypothesis test errored.** `lh_robust(Y ~ X1 + X2 + X3, linear_hypothesis = c("X1", "X2"))` should return one joint test; 1.x replies that it "implements tests for hypotheses involving linear combinations of variables but not joint hypotheses." The `joint_hypothesis` element above covers it. (Issue #390.)
+
+10. **An all-`NA` outcome errored when `weights` were given**, though the same model without weights returned an NA coefficient. The asymmetry bites when one model is fitted across many subgroups and one subgroup has no observed outcome. (Issue #370.)
+
+11. **HC3 returned a silently inflated standard error, and HC2 returned `NaN`, on a near-saturated design.** A hat value is a projection diagonal and cannot exceed 1, but rounding puts it marginally above on designs close to saturation. On `Y ~ Z * factor(x)` with 25 levels of `x` in 40 rows, 1.x gives `se(Z) = 39.5` against a classical standard error of `1.42`, with no warning, and roughly 39.5 on nearly every other coefficient. HC2 gives `NaN` throughout, because `sqrt()` of the resulting negative term poisons the whole variance matrix however small it is. The direction is upward, so what it costs is a finding rather than a false one, but saturated specifications and treatment-by-stratum interactions reach it easily. 2.0 drops those observations from the variance and warns with a count.
+
+12. **`horvitz_thompson()` left the unidentifiable pairs out of a custom design's variance.** With a `permutation_matrix` declaration, two units that can never appear together contribute a term no design of that shape identifies. 1.x dropped those terms. Enumerating all ten assignments of a 5-cluster, m = 2 design, 1.x's mean estimated variance is 0.838 of the true sampling variance, and it returns `NA` on one of the ten. The direction here is downward: intervals too narrow. 2.0 bounds those terms by Young's inequality instead [@aronowsamii2013], so the standard error is larger on purpose.
+
+13. **`lm_robust()` counted zero-weight rows as observations.** `nobs` and `df.residual` included rows whose weight is 0, so `classical` standard errors came back too small by an amount that grows with the share zeroed: 2.6% at 5% of rows, 13.5% at 25%, 29.6% at 50%. `HC0`, `HC2` and `HC3` are untouched to within 0.1%, so the default was mostly safe; `classical`, `HC1` and `stata` were not. Trimming an inverse-probability weight to zero is the usual way in. 2.0 counts them the way `lm()` does, and the rows still appear in `residuals` and `fitted.values`.
+
+14. **A `clusters` variable with one level gave CR2 standard errors of about `1.5e-17`**, silently. CR2's degrees of freedom are Satterthwaite, so the `J - 1 = 0` guard that stops the other cluster-robust estimators never fired. One level usually means a cluster variable collapsed upstream, which turns a data-handling mistake into an apparently infinitely precise estimate. 2.0 errors.
+
+15. **`offset()` in a formula was silently ignored**, so the coefficient was the one from the model without the term: `0.904333` where the offset model gives `0.953607`. 2.0 errors and names the rewrite, `y - <offset> ~ x`.
+
+16. **`glance()` reported the first coefficient's degrees of freedom in a column named `df.residual`.** Under CR2 that is Satterthwaite: `4.83` on a fit whose residual degrees of freedom are 98. No estimate moves; a reported table is wrong.
+
+17. **A clustered `iv_robust()` fit reported an overidentification test that ignored the clustering.** With `diagnostics = TRUE` and `clusters`, 1.x returned the heteroskedasticity-robust score statistic, the number the same model gives unclustered. Where the instruments and the errors both vary by cluster, that statistic is too large: in 1,000 draws of 50 clusters of 10 with valid instruments, it rejected at the 5% level 36.1% of the time. The direction is toward rejection, so valid instruments were declared invalid. 2.0 sums the score's variance within clusters, which rejects 4.0% of the time on the same draws.
+
+18. **A weighted over-identified `iv_robust()` fit returned `NA` for the overidentification test without saying why.** 2.0 computes it: under `se_type = "classical"` as Sargan's statistic on the weighted model, valid when the classical weighted standard errors are, and under a robust `se_type` as Wooldridge's score test on the weighted score's HC0 or CR0 sandwich, the form Stata computes too, valid when the robust ones are.
+
+19. **`emmeans::emmeans()` on an `lm_robust` fit failed unless emmeans was attached.** An error rather than a wrong number.
+
+**Still open.** HAC (Newey-West) and CR3 standard errors are not implemented, and neither is `se_type = "constant"` for Horvitz-Thompson. The multi-arm Horvitz-Thompson contrast is ours to defend rather than a port: 1.x refuses the case outright, so there is no reference implementation to check against. It is conservative in every design simulated so far, with the estimated standard error running 1.08 to 1.32 times the true sampling standard deviation, but nobody has published the bound for a two-of-K contrast.
+
+# References

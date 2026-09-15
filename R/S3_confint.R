@@ -20,7 +20,17 @@ confint.iv_robust <- confint_lm_like
 #' @importFrom stats confint
 #' @export
 confint.lh_robust <- function(object, parm = NULL, level = NULL, ...) {
-  rbind(confint(object$lm_robust, parm = parm, level = level, ...), tidy(object$lh, ...))
+  # Bound a matrix of intervals to tidy()'s data frame, which has a different
+  # number of columns, so every call errored, in 1.0.6 as well. `parm` is
+  # applied after binding so that it can name the hypothesis too.
+  cis <- rbind(
+    confint(object$lm_robust, level = level, ...),
+    confint(object$lh, level = level, ...)
+  )
+  if (!is.null(parm)) {
+    cis <- cis[parm, , drop = FALSE]
+  }
+  cis
 }
 
 #' @export
@@ -32,7 +42,6 @@ confint.difference_in_means <- function(object,
                                         level = NULL,
                                         ...) {
   cis <- get_ci_mat(object, level)
-
   return(cis)
 }
 
@@ -41,13 +50,14 @@ confint.horvitz_thompson <- function(object,
                                      parm = NULL,
                                      level = NULL,
                                      ...) {
+  # `ttest = FALSE` because a Horvitz-Thompson fit has no degrees of freedom to
+  # spend: `df` is NA and the interval is normal. Passing the default would
+  # rebuild the interval off a t quantile with df = NA and return NA bounds
+  # whenever `level` is supplied.
   cis <- get_ci_mat(object, level, ttest = FALSE)
-
   return(cis)
 }
 
-
-## internal method that builds confidence intervals and labels the matrix to be returned
 get_ci_mat <- function(object, level, ttest = TRUE) {
   if (!is.null(level)) {
     if (!is.null(object[["alpha"]])) {

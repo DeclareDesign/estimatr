@@ -17,54 +17,60 @@
 )
 }
 \arguments{
-\item{object}{an object of class 'lm_robust'}
+\item{object}{An object of class \code{"lm_robust"}.}
 
-\item{newdata}{a data frame in which to look for variables with which to predict}
+\item{newdata}{A data frame in which to look for the variables to predict
+from. If omitted, the fitted values are returned.}
 
-\item{se.fit}{logical. Whether standard errors are required, default = FALSE}
+\item{se.fit}{Logical. Whether to return standard errors. \code{FALSE} by default.}
 
-\item{interval}{type of interval calculation. Can be abbreviated, default = none}
+\item{interval}{Type of interval calculation, which can be abbreviated.
+\code{"none"} by default.}
 
-\item{alpha}{numeric denoting the test size for confidence intervals}
+\item{alpha}{Numeric. The test size for confidence intervals.}
 
-\item{na.action}{function determining what should be done with missing
-values in newdata. The default is to predict NA.}
+\item{na.action}{Function determining what to do with missing values in
+\code{newdata}. The default is to predict \code{NA}.}
 
-\item{pred.var}{the variance(s) for future observations to be assumed for
-prediction intervals.}
+\item{pred.var}{The variance(s) to assume for future observations when
+building prediction intervals.}
 
-\item{weights}{variance weights for prediction. This can be a numeric
-vector or a bare (unquoted) name of the weights variable in the supplied
-newdata.}
+\item{weights}{Variance weights for prediction, either a numeric vector or
+the bare (unquoted) name of the weights variable in \code{newdata}.}
 
-\item{...}{other arguments, unused}
+\item{...}{(optional) Ignored.}
+}
+\value{
+A numeric vector of predictions, or a data frame with the
+predictions and their standard errors and interval bounds when \code{se.fit} or
+\code{interval} is set.
 }
 \description{
-Predict method for \code{lm_robust} object
+Produces predicted values, obtained by evaluating the regression function in
+the frame \code{newdata} for fits from \code{\link[=lm_robust]{lm_robust()}} and \code{\link[=lm_lin]{lm_lin()}}. If \code{se.fit}
+is \code{TRUE}, standard errors of the predictions are calculated. Setting
+\code{interval} adds confidence or prediction (tolerance) intervals at the level
+set by \code{alpha}, sometimes called narrow and wide intervals respectively.
 }
 \details{
-Produces predicted values, obtained by evaluating the regression
-function in the frame \code{newdata} for fits from \code{lm_robust} and
-\code{lm_lin}. If the logical se.fit is TRUE, standard errors of the
-predictions are calculated. Setting intervals specifies computation of
-confidence or prediction (tolerance) intervals at the specified level,
-sometimes referred to as narrow vs. wide intervals.
+Called without \code{newdata}, the method returns the in-sample fitted values,
+and neither \code{se.fit} nor \code{interval} is available.
 
-The equation used for the standard error of a prediction given a row of
-data \eqn{x} is:
+The equation used for the standard error of a prediction given a row of data
+\eqn{x} is:
 
 \eqn{\sqrt(x \Sigma x')},
 
 where \eqn{\Sigma} is the estimated variance-covariance matrix from
-\code{lm_robust}.
+\code{\link[=lm_robust]{lm_robust()}}.
 
 The prediction intervals are for a single observation at each case in
-\code{newdata} with error variance(s) \code{pred.var}. The the default is to assume
-that future observations have the same error variance as those used for
-fitting, which is gotten from the fit \code{\link{lm_robust}} object. If
-weights is supplied, the inverse of this is used as a scale factor. If the
-fit was weighted, the default is to assume constant prediction variance,
-with a warning.
+\code{newdata} with error variance(s) \code{pred.var}. The default is to assume that
+future observations have the same error variance as those used for fitting,
+which is taken from the fitted \code{\link[=lm_robust]{lm_robust()}} object. If \code{weights} is
+supplied, the inverse of those weights scales the variance. If the fit was
+weighted, the default is to assume constant prediction variance, with a
+warning.
 }
 \examples{
 
@@ -77,6 +83,8 @@ dat <- data.frame(y = rnorm(n), x = rnorm(n))
 
 # Fit lm
 lm_out <- lm_robust(y ~ x, data = dat)
+# In-sample fitted values
+predict(lm_out)
 # Get predicted fits
 fits <- predict(lm_out, newdata = dat)
 # With standard errors and confidence intervals
@@ -95,20 +103,7 @@ dat$z <- sample(1:3, size = nrow(dat), replace = TRUE)
 lmlin_out1 <- lm_lin(y ~ z, covariates = ~ x, data = dat)
 predict(lmlin_out1, newdata = dat, interval = "prediction")
 
-# Predictions from Lin models are equivalent with and without an intercept
-# and for multi-level treatments entered as numeric or factor variables
-lmlin_out2 <- lm_lin(y ~ z - 1, covariates = ~ x, data = dat)
-lmlin_out3 <- lm_lin(y ~ factor(z), covariates = ~ x, data = dat)
-lmlin_out4 <- lm_lin(y ~ factor(z) - 1, covariates = ~ x, data = dat)
-
-predict(lmlin_out2, newdata = dat, interval = "prediction")
-predict(lmlin_out3, newdata = dat, interval = "prediction")
-predict(lmlin_out4, newdata = dat, interval = "prediction")
-
-# In Lin models, predict will stop with an error message if new
-# treatment levels are supplied in the new data
-new_dat$z <- sample(0:3, size = nrow(new_dat), replace = TRUE)
-# predict(lmlin_out, newdata = new_dat)
-
-
+}
+\seealso{
+\code{\link[=lm_robust]{lm_robust()}}, \code{\link[=lm_lin]{lm_lin()}}
 }

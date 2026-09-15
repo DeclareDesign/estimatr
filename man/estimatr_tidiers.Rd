@@ -25,25 +25,33 @@
 \arguments{
 \item{x}{An object returned by one of the estimators}
 
-\item{conf.int}{Logical indicating whether or not to include a
-confidence interval in the tidied output. Defaults to ‘TRUE’.}
+\item{conf.int}{Logical, whether to include confidence intervals.}
 
-\item{conf.level}{The confidence level to use for the confidence
-interval if ‘conf.int = TRUE’. Must be strictly greater than 0 and less
-than 1. Defaults to 0.95, which corresponds to a 95 percent confidence
-interval.}
+\item{conf.level}{The confidence level for intervals.}
 
-\item{...}{extra arguments (not used)}
+\item{...}{(optional) Ignored.}
 }
 \value{
-A data.frame with columns for coefficient names, estimates, standard
-errors, confidence intervals, p-values, degrees of freedom, and the
-name of the outcome variable
+A tibble with one row per term (and per outcome, for a multivariate
+fit): \code{term}, \code{estimate}, \code{std.error}, \code{statistic}, \code{p.value},
+\code{conf.low}, \code{conf.high}, \code{df}, and \code{outcome}. A tibble rather than a
+plain data frame, as broom's tidiers return; 1.x returned a data frame.
 }
 \description{
 Tidy an estimatr object
 }
-\seealso{
-\code{\link[generics:tidy]{generics::tidy()}}, \code{\link[=lm_robust]{lm_robust()}}, \code{\link[=iv_robust]{iv_robust()}},  \code{\link[=difference_in_means]{difference_in_means()}}, \code{\link[=horvitz_thompson]{horvitz_thompson()}}
+\examples{
+set.seed(50)
+dat <- data.frame(x = rnorm(50), z = rep(0:1, 25))
+dat$y <- dat$x + 0.4 * dat$z + rnorm(50)
+fit <- lm_robust(y ~ x + z, data = dat)
+
+# One row per term, with the interval the fit was built with
+tidy(fit)
+tidy(fit, conf.int = FALSE)
+tidy(fit, conf.level = 0.9)
+
+# The same shape for every estimator in the package
+tidy(difference_in_means(y ~ z, data = dat))
+
 }
-\concept{estimatr tidiers}

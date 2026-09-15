@@ -1,171 +1,185 @@
 ---
-title: "estimatr in the Tidyverse"
-author: "Shikhar Singh"
-output:
-  html_document:
-    df_print: paged
+title: "estimatr in the tidyverse"
+output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{estimatr in the tidyverse}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-
-```{r, echo=FALSE}
-library(knitr)
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", message = FALSE,
+                      warning = FALSE, fig.width = 6, fig.height = 3.5)
+have <- function(...) all(vapply(c(...), requireNamespace, logical(1), quietly = TRUE))
+library(estimatr)
+options(digits = 3, width = 90)
 ```
 
-`estimatr` is for (fast) OLS and IV regression with robust standard errors. This document shows how `estimatr` integrates with RStudio's `tidyverse` suite of packages.
+Everything estimatr returns is a list, and `tidy()` turns the part you want into a tibble. From there the tidyverse applies unchanged. What follows uses `lm_robust()`, but `tidy()` works the same way on `lm_lin()`, `iv_robust()`, `lh_robust()`, `difference_in_means()` and `horvitz_thompson()` fits.
 
-We use the Swiss Fertility and Socioeconomic Indicators data (available in <tt>R</tt>, description [here](https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/swiss.html)) to show how `lm_robust` works with `dplyr`, `ggplot2`, and `purrr`. What is shown for `lm_robust` here typically applies to all the other `estimatr` functions (`lm_robust`, `difference_in_mean`, `lm_lin`, `iv_robust`, and `horovitz_thompson`).
+The examples use the Swiss fertility data that ships with R: 47 French-speaking provinces in 1888, with a standardized fertility measure and, as percentages, the share of men in agriculture, the share of Catholics, and the share educated beyond primary school.
 
-# Getting tidy
+```{r}
+head(swiss[, c("Fertility", "Agriculture", "Catholic", "Education")], 3)
+```
 
-The first step to the tidyverse is turning model output into data we can manipulate. The `tidy` function converts an `lm_robust` object into a data.frame.
+## Getting tidy
 
-```{r, tidy = T, message = F, warning=T}
-library(estimatr)
+```{r}
 fit <- lm_robust(Fertility ~ Agriculture + Catholic, data = swiss)
 tidy(fit)
 ```
 
-# Data manipulation with `dplyr` 
+One row per coefficient, and an `outcome` column, which matters because `lm_robust()` accepts a matrix of outcomes and fits them all at once.
 
-Once a regression fit is a data.frame, you can use any of the `dplyr` "verbs" for data manipulation, like `mutate`,`filter`, `select`, `summarise`, `group_by`, and `arrange` (more on this [here](https://dplyr.tidyverse.org)). 
-
-```{r, tidy = TRUE, message = FALSE, warning = FALSE}
-library(tidyverse)
-
-# lm_robust and filter
-fit %>% tidy %>% filter(term == "Agriculture")
-
-# lm_robust and select
-fit %>% tidy %>% select(term, estimate, std.error)
-
-# lm_robust and mutate
-fit %>% tidy %>% mutate(t_stat = estimate/ std.error,
-                        significant = p.value <= 0.05)
-```
-
-# Data visualization with `ggplot2` 
-
-`ggplot2` offers a number of data visualization tools that are compatible with `estimatr`
-
-1. Make a coefficient plot:
-
-```{r, tidy = T, message=F, warning=F}
-fit %>% 
-  tidy %>% 
-  filter(term != "(Intercept)") %>%
-  ggplot(aes(y = term, x = estimate)) + 
-  geom_vline(xintercept = 0, linetype = 2) + 
-  geom_point() + 
-  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high, height = 0.1)) + 
-  theme_bw()
-```
-
-2. Put CIs based on robust variance estimates (rather than the "classical" variance estimates) with the `geom_smooth` and `stat_smooth` functions. 
-
-```{r, tidy = T, message=F, warning=F}
-library(ggplot2)
-ggplot(swiss, aes(x = Agriculture, y = Fertility)) +
-  geom_point() +
-  geom_smooth(method = "lm_robust") +
-  theme_bw()
-```
-
-Note that the functional form can include polynomials. For instance, if the model is $Fertility \sim Agriculture + Agriculture^2 + Agriculture^3$, we can model this in the following way:  
-
-```{r, tidy = T, message=F, warning=F}
-library(ggplot2)
-ggplot(swiss, aes(x = Agriculture, y = Fertility)) +
-  geom_point() +
-  geom_smooth(method = "lm_robust",
-              formula = y ~ poly(x, 3, raw = TRUE)) +
-  theme_bw()
-```
-
-# Bootstrap using `rsample`
-
-The `rsample` pacakage provides tools for bootstrapping:
-
-```{r, tidy =T, message = F, warning=F}
-library(rsample)
-
-boot_out <-
-  bootstraps(data = swiss, 500)$splits %>%
-  map(~ lm_robust(Fertility ~ Catholic + Agriculture, data = analysis(.))) %>% 
-  map(tidy) %>%
-  bind_rows(.id = "bootstrap_replicate")
-kable(head(boot_out))
-```
-
-`boot_out` is a data.frame that contains estimates from each boostrapped sample. We can then use `dplyr` functions to summarize the bootstraps, `tidyr` functions to reshape the estimates, and `GGally::ggpairs` to visualize them.
-
-```{r, tidy =T, message = F, warning=F}
-boot_out %>%
-  group_by(term) %>%
-  summarise(boot_se = sd(estimate))
-
-# To visualize the sampling distribution
-
-library(GGally)
-boot_out %>% 
-  select(bootstrap_replicate, term, estimate) %>%
-  spread(key = term, value = estimate) %>%
-  select(-bootstrap_replicate) %>%
-  ggpairs(lower = list(continuous = wrap("points", alpha = 0.1))) +
-  theme_bw()
-```
-
-# Multiple models using `purrr`
-
-`purrr` provides tools to perform the same operation on every element of a vector. For instance, we may want to estimate a model on different subsets of data. We can use the `map` function to do this.
+`glance()` gives the one-row model summary instead.
 
 ```{r}
+glance(fit)
+```
+
+`augment()` returns the data the model was fit on, one row per observation, with the fitted values and residuals added as `.fitted` and `.resid`. With `newdata`, it predicts on new rows instead.
+
+```{r}
+augment(fit)
+
+augment(fit, newdata = data.frame(Agriculture = c(20, 60), Catholic = c(10, 90)))
+```
+
+## dplyr
+
+```{r, eval = have("dplyr")}
+library(dplyr)
+
+fit |>
+  tidy() |>
+  filter(term != "(Intercept)") |>
+  mutate(significant = p.value <= 0.05) |>
+  select(term, estimate, std.error, significant)
+```
+
+## ggplot2
+
+A coefficient plot is the tidy tibble with `geom_pointrange()` on it.
+
+```{r, eval = have("dplyr", "ggplot2")}
+library(ggplot2)
+
+gg_df <- fit |>
+  tidy() |>
+  filter(term != "(Intercept)")
+
+ggplot(gg_df, aes(x = estimate, y = term)) +
+  geom_vline(xintercept = 0, linetype = 2, colour = "grey50") +
+  geom_pointrange(aes(xmin = conf.low, xmax = conf.high)) +
+  labs(x = "Estimate, with 95% confidence interval", y = NULL) +
+  theme_minimal()
+```
+
+`geom_smooth()` takes `lm_robust` as a method, so the ribbon reflects the robust variance rather than the classical one.
+
+```{r, eval = have("ggplot2")}
+ggplot(swiss, aes(x = Agriculture, y = Fertility)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm_robust", formula = y ~ x) +
+  theme_minimal()
+```
+
+The formula can be anything `lm_robust()` accepts, polynomials included.
+
+```{r, eval = have("ggplot2")}
+ggplot(swiss, aes(x = Agriculture, y = Fertility)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm_robust", formula = y ~ poly(x, 3, raw = TRUE)) +
+  theme_minimal()
+```
+
+A residual plot starts from `augment()`.
+
+```{r, eval = have("ggplot2")}
+gg_df <- augment(fit)
+
+ggplot(gg_df, aes(x = .fitted, y = .resid)) +
+  geom_hline(yintercept = 0, linetype = 2, colour = "grey50") +
+  geom_point(alpha = 0.6) +
+  labs(x = "Fitted values", y = "Residuals") +
+  theme_minimal()
+```
+
+## Many models with purrr
+
+Fitting the same model on subsets, then stacking the results:
+
+```{r, eval = have("dplyr", "purrr")}
 library(purrr)
 
-# Running the same model for highly educated and less educated cantons/districts
-
-two_subsets <- 
-  swiss %>%
-  mutate(HighlyEducated = as.numeric(Education > 8)) %>%
-  split(.$HighlyEducated) %>%
-  map( ~ lm_robust(Fertility ~ Catholic, data = .)) %>%
-  map(tidy) %>%
-  bind_rows(.id = "HighlyEducated")
-
-kable(two_subsets, digits =2)
+swiss |>
+  mutate(educated = Education > 8) |>
+  split(~ educated) |>
+  map(\(d) lm_robust(Fertility ~ Catholic, data = d)) |>
+  map(tidy) |>
+  list_rbind(names_to = "educated") |>
+  filter(term == "Catholic")
 ```
 
-Alternatively, we might want to regress different dependent variables on the same independent variable. `map` can be used alongwith `estimatr` functions for this purpose as well. 
+For grouped fits, dplyr's `reframe()` does the same without leaving the data frame. `pick(everything())` hands each group's rows to `lm_robust()`.
 
-```{r, tidy = T, message=F, warning=F}
-three_outcomes <-
-  c("Fertility", "Education", "Agriculture") %>%
-  map(~ formula(paste0(., " ~ Catholic"))) %>%
-  map(~ lm_robust(., data = swiss)) %>%
-  map_df(tidy)
-
-kable(three_outcomes, digits =2)
+```{r, eval = have("dplyr")}
+swiss |>
+  as_tibble() |>
+  mutate(educated = Education > 8) |>
+  reframe(tidy(lm_robust(Fertility ~ Catholic, data = pick(everything()))), .by = educated) |>
+  filter(term == "Catholic")
 ```
 
-Using `ggplot2`, we can make a coefficient plot:
+Fitting different outcomes on the same regressor is the same move after a reshape: stack the outcomes long, nest by outcome, and fit within each.
 
-```{r, tidy= T}
+```{r, eval = have("dplyr", "purrr", "tidyr")}
+library(tidyr)
 
-three_outcomes %>%
-  filter(term == "Catholic") %>%
-  ggplot(aes(x = estimate, y = outcome)) +
-  geom_vline(xintercept = 0, linetype = 2) +
-  geom_point() + 
-  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high, height = 0.1)) + 
-  ggtitle("Slopes with respect to `Catholic`") + 
-  theme_bw()
+swiss |>
+  pivot_longer(c(Fertility, Education, Agriculture),
+               names_to = "outcome_variable",
+               values_to = "Y") |>
+  nest(.by = outcome_variable) |>
+  mutate(fit = map(data, \(d) tidy(lm_robust(Y ~ Catholic, data = d)))) |>
+  unnest(fit)
 ```
 
-# Concluding thoughts
+`lm_robust()` also accepts several outcomes in one call using `cbind`, which is faster because the design matrix is factorized once. Be careful if missingness differs across outcomes because the `cbind` triggers listwise deletion.
 
-Using `estimatr` functions in the tidyverse is easy once the model outputs have been turned into data.frames. We accomplish this with the `tidy` function.  After that, so many summary and visualization possibilities open up. Happy tidying!
+```{r, eval = have("dplyr")}
+lm_robust(cbind(Fertility, Education, Agriculture) ~ Catholic, data = swiss) |>
+  tidy()
+```
 
 
+## Bootstrapping
+
+[rsample](https://rsample.tidymodels.org), from tidymodels, draws the resamples: `bootstraps()` returns a tibble with one resample per row, and `analysis()` extracts each one's data. Because `tidy()` output stacks, the rest is a `map()` and an `unnest()`.
+
+```{r, eval = have("dplyr", "purrr", "tidyr", "rsample")}
+library(rsample)
+
+set.seed(343)
+
+boot <- bootstraps(swiss, times = 200) |>
+  mutate(coefs = map(splits, \(split) {
+    analysis(split) |>
+      lm_robust(Fertility ~ Catholic + Agriculture, data = _) |>
+      tidy()
+  }))
+
+boot |>
+  unnest(coefs) |>
+  group_by(term) |>
+  summarise(bootstrap_se = sd(estimate))
+
+# for comparison against HC2
+lm_robust(Fertility ~ Catholic + Agriculture, data = swiss) |>
+  tidy() |>
+  select(term, std.error)
+
+```
+
+The bootstrap standard errors and the HC2 standard errors are close, which is the expected result.

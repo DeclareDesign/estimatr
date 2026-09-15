@@ -1,103 +1,74 @@
 ---
-title: "Regression Tables with estimatr"
+title: "Regression tables with estimatr"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Regression Tables with estimatr}
+  %\VignetteIndexEntry{Regression tables with estimatr}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-Preparing regression tables with estimatr is possible with all of the major r-to-LaTeX packages, including `texreg`, `modelsummary`, `stargazer`, `xtable`, and `huxtable`.
-
-## Setup
-
-First we'll load both `estimatr` and `magrittr` (for pipes).
-
-```{r}
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", message = FALSE,
+                      warning = FALSE)
+have <- function(...) all(vapply(c(...), requireNamespace, logical(1), quietly = TRUE))
 library(estimatr)
-library(magrittr)
 ```
 
-## Texreg
+An `lm_robust` fit carries its own robust standard errors, so a table package that reads the fit gets the right numbers with no second step. Two packages have methods for estimatr objects and are what this page covers: `texreg` and `modelsummary`. Both produce LaTeX, HTML and Word output from the same call.
 
-Texreg operates directly on an `lm_robust` object. If you would like standard errors instead of confidence intervals, use `include.ci = FALSE`.
+```{r}
+fit1 <- lm_robust(mpg ~ hp, data = mtcars)
+fit2 <- lm_robust(mpg ~ hp + wt, data = mtcars)
+fit3 <- lm_robust(mpg ~ hp + wt, data = mtcars, clusters = cyl, se_type = "stata")
+```
 
-```{r, message = FALSE}
+## texreg
+
+estimatr registers `extract` methods for `lm_robust` and `iv_robust`, so `texreg()` and its siblings work directly. Confidence intervals are shown by default, because that is what the fit reports; `include.ci = FALSE` switches to standard errors and stars.
+
+```{r, eval = have("texreg")}
 library(texreg)
-fit <- lm_robust(mpg ~ disp, data = mtcars)
-texreg(fit, include.ci = FALSE)
+texreg(list(fit1, fit2, fit3), include.ci = FALSE, include.nclusts = FALSE)
+```
+
+`include.nclusts = FALSE` is there because the table mixes clustered and unclustered fits. texreg fills the `N Clusters` row's empty cells with `$$`, which LaTeX will not compile, so when the models mix, drop the row and say which fits are clustered in the model names, as the next call does.
+
+`htmlreg()` produces HTML and `screenreg()` prints to the console, which is the one to use while you are still deciding what goes in the table.
+
+```{r, eval = have("texreg")}
+screenreg(list(fit1, fit2, fit3), include.ci = FALSE,
+          custom.model.names = c("hp, HC2", "hp + wt, HC2", "hp + wt, CR stata"))
 ```
 
 ## modelsummary
 
-`modelsummary` operates directly on `lm_robust` objects:
+`modelsummary` reads `lm_robust` fits through `broom`-style methods, which estimatr provides.
 
-```{r, message = FALSE, eval = FALSE}
+```{r, eval = have("modelsummary")}
 library(modelsummary)
-fit1 <- lm(mpg ~ disp, data = mtcars)
-fit2 <- lm(mpg ~ hp, data = mtcars)
-modelsummary(list(fit1, fit2))
+modelsummary(list("hp, HC2" = fit1, "hp + wt, HC2" = fit2, "hp + wt, CR stata" = fit3),
+             output = "markdown", gof_map = c("nobs", "r.squared"))
 ```
 
-To learn how to customize the output table and/or statistics, please consult the `modelsummary` README file on Github: https://github.com/vincentarelbundock/modelsummary
+Because the standard errors already live in the fit, do not pass `vcov =` to `modelsummary` unless you actually want it to recompute them. Passing `vcov = "robust"` there overrides estimatr's HC2 with `sandwich`'s HC3 default and silently changes the table.
 
-## Stargazer
+## If you use stargazer
 
-Stargazer has to be *tricked* -- there's unfortunately no way around this unless something in the stargazer package changes. The maintainer has indicated that he has no active plans to update stargazer in the future. First, run the regression using `lm`. Then you can pass the `lm` fits to `starprep` a function which transforms the `lm` fits into `lm_robust` fits and then prepare the appropriate statistic you requested. The `starprep` function defaults to returning standard errors and uses `lm_robust` defaults for standard errors (robust HC2 SEs are the default in both `lm_robust`).  Then you pass the `lm` fit to stargazer and then pass `starprep(fit)` to the `se` argument in `stargazer`. This process works great with multiple fits.
+`stargazer` has no method for `lm_robust` objects. estimatr 1.x shipped `starprep()` and `commarobust()` to bridge that gap, and both are removed in 2.0; they remain as names that error and say what happened.
 
-```{r, message = FALSE, eval = FALSE}
-library(stargazer)
-fit_1 <- lm(mpg ~ disp, data = mtcars)
-fit_2 <- lm(mpg ~ hp, data = mtcars)
-stargazer(fit_1, fit_2, se = starprep(fit_1, fit_2))
-```
-```{r, message = FALSE, echo = FALSE}
-library(stargazer)
-fit_1 <- lm(mpg ~ disp, data = mtcars)
-fit_2 <- lm(mpg ~ hp, data = mtcars)
-stargazer(fit_1, fit_2, se = starprep(fit_1, fit_2), header = FALSE)
+```{r, error = TRUE}
+starprep(fit1)
 ```
 
-Below are some more examples, although we hide the output for brevity.
+The replacement the error names is `modelsummary`, which is the recommendation. If a paper is already formatted around stargazer, extract the pieces and hand them over instead:
 
 ```{r, eval = FALSE}
-# Can also specify clusters and standard error type
-stargazer(
-  fit_1, fit_2,
-  se = starprep(fit_1, fit_2, clusters = mtcars$cyl, se_type = "stata")
+fits <- list(fit1, fit2)
+stargazer::stargazer(
+  lapply(fits, \(f) lm(f$call$formula, data = mtcars)),
+  se = lapply(fits, \(f) f$std.error),
+  p  = lapply(fits, \(f) f$p.value)
 )
-
-# Can also precompute robust objects to save computation time
-# using `commarobust`
-fit_1_r <- commarobust(fit_1)
-fit_2_r <- commarobust(fit_2)
-stargazer(fit_1, fit_2,
-          se = starprep(fit_1_r, fit_2_r),
-          p = starprep(fit_1_r, fit_2_r, stat = "p.value"))
-
-# can also easily get robust confidence intervals
-stargazer(fit_1, fit_2,
-          ci.custom = starprep(fit_1_r, fit_2_r, stat = "ci"))
 ```
 
-## xtable
-
-`xtable` works directly on a data.frame, so we just have to prep the `lm_robust` output with the `tidy` function.
-
-```{r}
-library(xtable)
-fit <- lm_robust(mpg ~ disp, data = mtcars)
-fit %>% tidy %>% xtable()
-```
-
-## huxtable
-
-`huxtable`, too, works on a data.frame, so all we have to do is prep with `tidy`.
-
-```{r, message=FALSE}
-library(huxtable)
-fit <- lm_robust(mpg ~ disp, data = mtcars)
-fit %>% tidy %>% hux() %>% print_latex()
-```
-
-
+The `lm()` refit is only there to give stargazer an object it recognises; every number that appears in the table comes from the estimatr fit.

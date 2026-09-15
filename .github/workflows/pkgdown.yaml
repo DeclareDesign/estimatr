@@ -4,10 +4,15 @@
 # repository nightly and pushes the result to that site's gh-pages. This job
 # exists to catch, on the commit that causes it, what only ever surfaced there.
 #
-# It is the only thing in this repository that runs the vignettes at all.
-# .Rbuildignore excludes `vignettes`, so they are not in the tarball and
-# R-CMD-check never touches them. A vignette that stops working is invisible
-# to every other check here.
+# On this branch three vignettes are in the tarball and R-CMD-check rebuilds
+# them, but `performance` and `estimatr-in-the-tidyverse` and
+# `regression-tables` are .Rbuildignore'd, so this job is the only thing that
+# builds those three. Their chunks are guarded with requireNamespace(), which
+# means a missing package renders the page without its output and stays green.
+# ggplot2 and purrr are named in extra-packages below rather than in Suggests
+# so that cannot happen here: they are needed by a vignette that is not in the
+# tarball, so putting them in Suggests would make all five R-CMD-check jobs
+# install the ggplot2 tree on every push for no benefit to the check.
 #
 # It also runs pkgdown's reference-index check, so an exported function that
 # nobody added to _pkgdown.yml fails here rather than in the other repository.
@@ -15,7 +20,7 @@ on:
   schedule:
     - cron: "23 4 * * 1"
   push:
-    branches: [main, master]
+    branches: [rewrite]
   pull_request:
   workflow_dispatch:
 
@@ -41,7 +46,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown, local::.
+          extra-packages: any::pkgdown, any::ggplot2, any::purrr, local::.
           needs: website
 
       - name: Build site

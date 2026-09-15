@@ -1,5 +1,9 @@
-# Helpers to retrieve values
-retrieve_value <- function(x, what) if(exists(what, x)) x[[what]] else NA_real_
+#' @importFrom generics glance
+#' @export
+generics::glance
+
+retrieve_value <- function(x, what) if (exists(what, x)) x[[what]] else NA_real_
+
 retrieve_fstatistic <- function(x) {
   if (exists("fstatistic", x)) {
     data.frame(
@@ -16,32 +20,7 @@ retrieve_fstatistic <- function(x) {
   }
 }
 
-#' @importFrom generics glance
 #' @export
-generics::glance
-
-#' Glance at an estimatr object
-#' @name estimatr_glancers
-#' @templateVar class lm_robust
-#' @return For \code{glance.lm_robust}, a data.frame with columns:
-#'   \item{r.squared}{the \eqn{R^2},
-#'   \deqn{R^2 = 1 - Sum(e[i]^2) / Sum((y[i] - y^*)^2),} where \eqn{y^*}
-#'   is the mean of \eqn{y[i]} if there is an intercept and zero otherwise,
-#'   and \eqn{e[i]} is the ith residual.}
-#'   \item{adj.r.squared}{the \eqn{R^2} but penalized for having more parameters, \code{rank}}
-#'   \item{se_type}{the standard error type specified by the user}
-#'   \item{statistic}{the value of the F-statistic}
-#'   \item{p.value}{p-value from the F test}
-#'   \item{df.residual}{residual degrees of freedom}
-#'   \item{nobs}{the number of observations used}
-#'
-#' @param x An object returned by one of the estimators
-#' @param ... extra arguments (not used)
-#'
-#' @export
-#' @family estimatr glancers
-#' @seealso [generics::glance()], [estimatr::lm_robust()], [estimatr::lm_lin()], [estimatr::iv_robust()], [estimatr::difference_in_means()], [estimatr::horvitz_thompson()]
-#' @md
 glance.lm_robust <- function(x, ...) {
 
   if (length(x[["outcome"]]) > 1) {
@@ -55,47 +34,46 @@ glance.lm_robust <- function(x, ...) {
     ),
     retrieve_fstatistic(x),
     data.frame(
-      df.residual = x[["df"]][1],
+      # x[["df"]] is the per-coefficient degrees of freedom, which under CR2
+      # is Satterthwaite and is not the residual df at all: on a 10-cluster
+      # fit it read 8.56 where the residual df is 98. glance.iv_robust() has
+      # always used df.residual; both do now.
+      df.residual = x[["df.residual"]],
       nobs = as.integer(x[["nobs"]]),
       se_type = x[["se_type"]],
       stringsAsFactors = FALSE
     )
   )
 
-  rownames(ret) <- NULL
-
-  ret
+  as_tibble(ret)
 }
 
-#' @rdname estimatr_glancers
-#' @templateVar class lh_robust
-#' @return For \code{glance.lh_robust}, we glance the \code{lm_robust} component only. You can access the linear hypotheses as a data.frame directy from the \code{lh} component of the \code{lh_robust} object
-#'
 #' @export
-#' @family estimatr glancers
 glance.lh_robust <- function(x, ...) {
   glance(x[["lm_robust"]])
 }
 
-#' @rdname estimatr_glancers
-#' @templateVar class iv_robust
-#' @return For \code{glance.iv_robust}, a data.frame with columns:
-#'   \item{r.squared}{The \eqn{R^2} of the second stage regression}
-#'   \item{adj.r.squared}{The \eqn{R^2} but penalized for having more parameters, \code{rank}}
-#'   \item{df.residual}{residual degrees of freedom}
-#'   \item{N}{the number of observations used}
-#'   \item{se_type}{the standard error type specified by the user}
-#'   \item{statistic}{the value of the F-statistic}
-#'   \item{p.value}{p-value from the F test}
-#'   \item{statistic.weakinst}{the value of the first stage F-statistic, useful for the weak instruments test; only reported if there is only one endogenous variable}
-#'   \item{p.value.weakinst}{p-value from the first-stage F test, a test of weak instruments; only reported if there is only one endogenous variable}
-#'   \item{statistic.endogeneity}{the value of the F-statistic for the test of endogeneity; often called the Wu-Hausman statistic, with robust standard errors, we employ the regression based test}
-#'   \item{p.value.endogeneity}{p-value from the F-test for endogeneity}
-#'   \item{statistic.overid}{the value of the chi-squared statistic for the test of instrument correlation with the error term; only reported with overidentification}
-#'   \item{p.value.overid}{p-value from the chi-squared test; only reported with overidentification}
-#'
+# The first-stage F test has one entry per endogenous regressor, named
+# "<var>:value" once there is more than one, so indexing by "value" returns an
+# NA with an NA name and the data.frame call fails on the row name (estimatr
+# #389). glance() must be one row, so with several endogenous regressors we
+# report the weakest first stage, which is the quantity a weak-instrument
+# diagnostic is asking about. Read the per-regressor tests in
+# `diagnostic_first_stage_fstatistic` directly.
+weakinst_row <- function(fstat) {
+  if (is.null(fstat)) {
+    return(data.frame(statistic.weakinst = NA_real_, p.value.weakinst = NA_real_))
+  }
+  stat_i <- grep("(^|:)value$", names(fstat))
+  p_i <- grep("(^|:)p\\.value$", names(fstat))
+  weakest <- which.min(fstat[stat_i])
+  data.frame(
+    statistic.weakinst = unname(fstat[stat_i][weakest]),
+    p.value.weakinst = unname(fstat[p_i][weakest])
+  )
+}
+
 #' @export
-#' @family estimatr glancers
 glance.iv_robust <- function(x, ...) {
 
   if (length(x[["outcome"]]) > 1) {
@@ -112,14 +90,7 @@ glance.iv_robust <- function(x, ...) {
       stringsAsFactors = FALSE
     ),
     retrieve_fstatistic(x),
-    if (exists("diagnostic_first_stage_fstatistic", x) && length(x[["diagnostic_first_stage_fstatistic"]] == 4)) {
-      data.frame(
-        statistic.weakinst = x[["diagnostic_first_stage_fstatistic"]]["value"],
-        p.value.weakinst = x[["diagnostic_first_stage_fstatistic"]]["p.value"]
-      )
-    } else {
-      data.frame(statistic.weakinst = NA_real_, p.value.weakinst = NA_real_)
-    },
+    weakinst_row(x[["diagnostic_first_stage_fstatistic"]]),
     if (exists("diagnostic_endogeneity_test", x)) {
       data.frame(
         statistic.endogeneity = x[["diagnostic_endogeneity_test"]]["value"],
@@ -138,24 +109,12 @@ glance.iv_robust <- function(x, ...) {
     }
   )
 
-  ret
+  as_tibble(ret)
 }
 
-#' @rdname estimatr_glancers
-#' @templateVar class difference_in_means
-#' @return For \code{glance.difference_in_means}, a data.frame with columns:
-#'   \item{design}{the design used, and therefore the estimator used}
-#'   \item{df}{the degrees of freedom}
-#'   \item{nobs}{the number of observations used}
-#'   \item{nblocks}{the number of blocks, if used}
-#'   \item{nclusters}{the number of clusters, if used}
-#'   \item{condition2}{the second, "treatment", condition}
-#'   \item{condition1}{the first, "control", condition}
-#'
 #' @export
-#' @family estimatr glancers
 glance.difference_in_means <- function(x, ...) {
-  data.frame(
+  as_tibble(data.frame(
     design = x[["design"]],
     df = x[["df"]],
     nobs = as.integer(x[["nobs"]]),
@@ -164,25 +123,20 @@ glance.difference_in_means <- function(x, ...) {
     condition2 = x[["condition2"]],
     condition1 = x[["condition1"]],
     stringsAsFactors = FALSE
-  )
+  ))
 }
 
-#' @rdname estimatr_glancers
-#' @templateVar class horvitz_thompson
-#' @return For \code{glance.horvitz_thompson}, a data.frame with columns:
-#'   \item{nobs}{the number of observations used}
-#'   \item{se_type}{the type of standard error estimator used}
-#'   \item{condition2}{the second, "treatment", condition}
-#'   \item{condition1}{the first, "control", condition}
-#'
 #' @export
-#' @family estimatr glancers
 glance.horvitz_thompson <- function(x, ...) {
-  data.frame(
+  # Same four columns estimatr returns, so a table built over a mix of old and
+  # new fits binds rather than erroring. Without this method `modelsummary()`
+  # does not fail: it drops the goodness-of-fit rows and prints a coefficient
+  # table that looks complete, which is the worse outcome of the two.
+  as_tibble(data.frame(
     nobs = as.integer(x[["nobs"]]),
     se_type = x[["se_type"]],
     condition2 = x[["condition2"]],
     condition1 = x[["condition1"]],
     stringsAsFactors = FALSE
-  )
+  ))
 }

@@ -1,41 +1,50 @@
-#' Predict method for \code{lm_robust} object
+#' Predict method for `lm_robust` object
 #'
-#' @param object an object of class 'lm_robust'
-#' @param newdata a data frame in which to look for variables with which to predict
-#' @param se.fit logical. Whether standard errors are required, default = FALSE
-#' @param interval type of interval calculation. Can be abbreviated, default = none
-#' @param alpha numeric denoting the test size for confidence intervals
-#' @param na.action function determining what should be done with missing
-#' values in newdata. The default is to predict NA.
-#' @param pred.var the variance(s) for future observations to be assumed for
-#' prediction intervals.
-#' @param weights variance weights for prediction. This can be a numeric
-#' vector or a bare (unquoted) name of the weights variable in the supplied
-#' newdata.
-#' @param ... other arguments, unused
+#' Produces predicted values, obtained by evaluating the regression function in
+#' the frame `newdata` for fits from [lm_robust()] and [lm_lin()]. If `se.fit`
+#' is `TRUE`, standard errors of the predictions are calculated. Setting
+#' `interval` adds confidence or prediction (tolerance) intervals at the level
+#' set by `alpha`, sometimes called narrow and wide intervals respectively.
 #'
-#' @details Produces predicted values, obtained by evaluating the regression
-#' function in the frame \code{newdata} for fits from \code{lm_robust} and
-#' \code{lm_lin}. If the logical se.fit is TRUE, standard errors of the
-#' predictions are calculated. Setting intervals specifies computation of
-#' confidence or prediction (tolerance) intervals at the specified level,
-#' sometimes referred to as narrow vs. wide intervals.
+#' Called without `newdata`, the method returns the in-sample fitted values,
+#' and neither `se.fit` nor `interval` is available.
 #'
-#' The equation used for the standard error of a prediction given a row of
-#' data \eqn{x} is:
+#' The equation used for the standard error of a prediction given a row of data
+#' \eqn{x} is:
 #'
 #' \eqn{\sqrt(x \Sigma x')},
 #'
 #' where \eqn{\Sigma} is the estimated variance-covariance matrix from
-#' \code{lm_robust}.
+#' [lm_robust()].
 #'
 #' The prediction intervals are for a single observation at each case in
-#' \code{newdata} with error variance(s) \code{pred.var}. The the default is to assume
-#' that future observations have the same error variance as those used for
-#' fitting, which is gotten from the fit \code{\link{lm_robust}} object. If
-#' weights is supplied, the inverse of this is used as a scale factor. If the
-#' fit was weighted, the default is to assume constant prediction variance,
-#' with a warning.
+#' `newdata` with error variance(s) `pred.var`. The default is to assume that
+#' future observations have the same error variance as those used for fitting,
+#' which is taken from the fitted [lm_robust()] object. If `weights` is
+#' supplied, the inverse of those weights scales the variance. If the fit was
+#' weighted, the default is to assume constant prediction variance, with a
+#' warning.
+#'
+#' @param object An object of class `"lm_robust"`.
+#' @param newdata A data frame in which to look for the variables to predict
+#'   from. If omitted, the fitted values are returned.
+#' @param se.fit Logical. Whether to return standard errors. `FALSE` by default.
+#' @param interval Type of interval calculation, which can be abbreviated.
+#'   `"none"` by default.
+#' @param alpha Numeric. The test size for confidence intervals.
+#' @param na.action Function determining what to do with missing values in
+#'   `newdata`. The default is to predict `NA`.
+#' @param pred.var The variance(s) to assume for future observations when
+#'   building prediction intervals.
+#' @param weights Variance weights for prediction, either a numeric vector or
+#'   the bare (unquoted) name of the weights variable in `newdata`.
+#' @param ... (optional) Ignored.
+#'
+#' @return A numeric vector of predictions, or a data frame with the
+#'   predictions and their standard errors and interval bounds when `se.fit` or
+#'   `interval` is set.
+#'
+#' @seealso [lm_robust()], [lm_lin()]
 #'
 #' @examples
 #'
@@ -48,6 +57,8 @@
 #'
 #' # Fit lm
 #' lm_out <- lm_robust(y ~ x, data = dat)
+#' # In-sample fitted values
+#' predict(lm_out)
 #' # Get predicted fits
 #' fits <- predict(lm_out, newdata = dat)
 #' # With standard errors and confidence intervals
@@ -66,22 +77,8 @@
 #' lmlin_out1 <- lm_lin(y ~ z, covariates = ~ x, data = dat)
 #' predict(lmlin_out1, newdata = dat, interval = "prediction")
 #'
-#' # Predictions from Lin models are equivalent with and without an intercept
-#' # and for multi-level treatments entered as numeric or factor variables
-#' lmlin_out2 <- lm_lin(y ~ z - 1, covariates = ~ x, data = dat)
-#' lmlin_out3 <- lm_lin(y ~ factor(z), covariates = ~ x, data = dat)
-#' lmlin_out4 <- lm_lin(y ~ factor(z) - 1, covariates = ~ x, data = dat)
-#'
-#' predict(lmlin_out2, newdata = dat, interval = "prediction")
-#' predict(lmlin_out3, newdata = dat, interval = "prediction")
-#' predict(lmlin_out4, newdata = dat, interval = "prediction")
-#'
-#' # In Lin models, predict will stop with an error message if new
-#' # treatment levels are supplied in the new data
-#' new_dat$z <- sample(0:3, size = nrow(new_dat), replace = TRUE)
-#' # predict(lmlin_out, newdata = new_dat)
-#'
-#'
+#' @importFrom rlang eval_tidy
+#' @importFrom stats predict
 #' @export
 predict.lm_robust <- function(object,
                               newdata,
@@ -93,19 +90,92 @@ predict.lm_robust <- function(object,
                               weights,
                               ...) {
 
+  # predict() with no newdata is the in-sample fit (estimatr #403)
+  if (missing(newdata)) {
+    if (se.fit || match.arg(interval) != "none") {
+      stop("`newdata` is required for `se.fit` or `interval`.")
+    }
+    return(object[["fitted.values"]])
+  }
+
   X <- get_X(object, newdata, na.action)
 
-  # Get coefs
   coefs <- as.matrix(coef(object))
 
-  # Get prediction
+  # An lm_lin fit is the only one carrying scaled_center, and its design has to
+  # be rebuilt here exactly as lm_lin() built it: centred covariates, then every
+  # treatment column crossed with every covariate, covariate-major.
+  if (!is.null(object$scaled_center)) {
+    demeaned_covars <-
+      scale(
+        X[
+          ,
+          names(object$scaled_center),
+          drop = FALSE
+        ],
+        center = object$scaled_center,
+        scale = FALSE
+      )
+    colnames(demeaned_covars) <- lin_covar_names(names(object$scaled_center))
+
+    # `assign == 1` is the treatment, which is one column for a binary treatment
+    # and one per level for a factor. The previous code looked the treatment up
+    # by term label, so a factor `z` sent it to X[, "z"] when the design matrix
+    # holds `zb` and `zc` and there is no such column: subscript out of bounds
+    # for every multi-valued treatment.
+    treatment <- X[, attr(X, "assign") == 1, drop = FALSE]
+
+    # A numeric treatment taking values other than 0/1 is expanded into
+    # indicators against the levels seen at fit time. They have to come from the
+    # fit, not from `newdata`, or predicting on a subset silently builds a
+    # different design.
+    if (!is.null(object$treatment_vals)) {
+      treatment <- outer(
+        drop(treatment),
+        object$treatment_vals,
+        function(x, y) as.numeric(x == y)
+      )
+    }
+
+    n_covars <- ncol(demeaned_covars)
+    n_treat_cols <- ncol(treatment)
+    interacted_covars <- matrix(0, nrow = nrow(X), ncol = n_covars * n_treat_cols)
+    interacted_names <- character(n_covars * n_treat_cols)
+    for (i in seq_len(n_covars)) {
+      cols <- (i - 1) * n_treat_cols + seq_len(n_treat_cols)
+      interacted_covars[, cols] <- treatment * demeaned_covars[, i]
+      interacted_names[cols] <-
+        paste0(colnames(treatment), ":", colnames(demeaned_covars)[i])
+    }
+    colnames(interacted_covars) <- interacted_names
+
+    X <- cbind(
+      X[, attr(X, "assign") == 0, drop = FALSE],
+      treatment,
+      demeaned_covars,
+      interacted_covars
+    )
+
+    # Line the design up with the coefficients by name rather than by position.
+    # If the two ever disagree this errors here instead of returning a number
+    # built from the wrong columns.
+    missing_cols <- setdiff(rownames(coefs), colnames(X))
+    if (length(missing_cols)) {
+      stop(
+        "Cannot rebuild the lm_lin design from `newdata`. Missing: ",
+        paste(missing_cols, collapse = ", "),
+        call. = FALSE
+      )
+    }
+    X <- X[, rownames(coefs), drop = FALSE]
+  }
+
+  if (isTRUE(object[["fes"]])) X <- drop_absorbed_intercept(X, rownames(coefs))
+
   beta_na <- is.na(coefs[, 1])
 
-  # Get predicted values
   preds <- X[, !beta_na, drop = FALSE] %*% coefs[!beta_na, ]
-  if (object[["fes"]]) {
-    preds <- add_fes(preds, object, newdata)
-  }
+  if (isTRUE(object[["fes"]])) preds <- add_fes(preds, object, newdata)
   predictor <- drop(preds)
 
   df_resid <- object$df.residual
@@ -115,9 +185,9 @@ predict.lm_robust <- function(object,
     if (ncol(coefs) > 1) {
       stop("Can't set `se.fit` == TRUE with multivariate outcome")
     }
-
-    if (object[["fes"]]) {
-      stop("Can't set `se.fit` == TRUE with `fixed_effects`")
+    if (isTRUE(object[["fes"]])) {
+      stop("Can't set `se.fit` or `interval` with `fixed_effects`: the ",
+           "absorbed group effects have no variance estimate.")
     }
 
     ret <- list()
@@ -133,17 +203,15 @@ predict.lm_robust <- function(object,
 
       if (interval == "prediction") {
 
-        # Get weights
         if (missing(weights)) {
           if (object$weighted && is.null(pred.var)) {
-            warning("Assuming constant prediction variance even though model fit is weighted\\n")
+            warning("Assuming constant prediction variance even though model fit is weighted")
           }
 
           weights <- 1
         } else {
           weights <- eval(substitute(weights), newdata)
         }
-
 
         if (is.null(pred.var)) {
           pred.var <- object$res_var / weights
@@ -188,18 +256,55 @@ predict.iv_robust <- function(object,
 
   coefs <- as.matrix(coef(object))
 
+  # The same two steps predict.lm_robust() takes under fixed effects, which
+  # this method lacked: the rebuilt design still carries the absorbed intercept,
+  # so the product was non-conformable, and the group effects were never added
+  # back. 1.0.6 returned a number there.
+  if (isTRUE(object[["fes"]])) X <- drop_absorbed_intercept(X, rownames(coefs))
+
   beta_na <- is.na(coefs[, 1])
 
-  # Get predicted values
   preds <- X[, !beta_na, drop = FALSE] %*% coefs[!beta_na, ]
-  if (object[["fes"]]) {
-    preds <- add_fes(preds, object, newdata)
-  }
+  if (isTRUE(object[["fes"]])) preds <- add_fes(preds, object, newdata)
   return(drop(preds))
 }
 
+# With fixed_effects the intercept is absorbed and dropped from the
+# coefficients, but the terms object still carries it, so the design matrix
+# rebuilt from newdata has a column the coefficients do not (estimatr #404).
+drop_absorbed_intercept <- function(X, coef_names) {
+  keep <- colnames(X) %in% coef_names
+  X[, keep, drop = FALSE]
+}
+
+# Put the absorbed group effects back. Stored by lm_robust() for one-way FE.
+add_fes <- function(preds, object, newdata) {
+  fe_effects <- object[["fixed_effects"]]
+  if (is.null(fe_effects)) {
+    stop(
+      "Can't use `predict` on this model: the absorbed group effects are ",
+      "stored only for a single outcome with one set of `fixed_effects`. ",
+      "With several `fixed_effects` the effects are identified in sum but ",
+      "not separately, so a new observation cannot be assigned its share. ",
+      "In-sample fits are in `fitted.values`."
+    )
+  }
+
+  fe_formula <- eval_tidy(as.list(object[["call"]])[["fixed_effects"]])
+  fe_frame <- stats::model.frame.default(fe_formula, data = newdata, na.action = NULL)
+  fe_names <- paste0(names(fe_frame)[1L], as.factor(fe_frame[[1L]]))
+
+  unknown <- setdiff(unique(fe_names), names(fe_effects))
+  if (length(unknown)) {
+    stop("Can't have new levels in the `fixed_effects` variable of `newdata`: ",
+         paste0(unknown, collapse = ", "), ".")
+  }
+
+  # tapply returns a 1d array; as.vector keeps the matrix arithmetic conformable
+  preds + as.vector(fe_effects[fe_names])
+}
+
 get_X <- function(object, newdata, na.action) {
-  # Get model matrix
   if (is.null(object[["terms_regressors"]])) {
     rhs_terms <- delete.response(object[["terms"]])
   } else {
@@ -212,112 +317,91 @@ get_X <- function(object, newdata, na.action) {
     xlev = object[["xlevels"]]
   )
 
-  # Check class of columns in newdata match those in model fit
   if (!is.null(cl <- attr(rhs_terms, "dataClasses"))) .checkMFClasses(cl, mf)
 
-  if (object[["fes"]]) {
-    attr(rhs_terms, "intercept") <- 0
-  }
-
   X <- model.matrix(rhs_terms, mf, contrasts.arg = object$contrasts)
-
-  # lm_lin scaling (moved down from predict.lm_robust)
-  if (!is.null(object$scaled_center)) {
-    # Covariates
-    demeaned_covars <-
-      scale(
-        X[
-          ,
-          names(object$scaled_center),
-          drop = FALSE
-        ],
-        center = object$scaled_center,
-        scale = FALSE
-      )
-
-    # Handle treatment variable reconstruction
-    treat_name <- attr(object$terms, "term.labels")[1]
-    treatment <- mf[, treat_name]
-    vals <- sort(unique(treatment))
-    old_vals <- object$treatment_levels
-
-    # Ensure treatment levels in newdata are subset of those for model fit
-    if (!all(as.character(vals) %in% as.character(old_vals))) {
-      stop(
-        "Levels of treatment variable in `newdata` must be a subset of those ",
-        "in the model fit."
-      )
-    }
-    treatment <- model.matrix(~ factor(treatment, levels = old_vals) - 1)
-
-    colnames(treatment) <- paste0(treat_name, "_", old_vals)
-    # Drop out first group if there is an intercept
-    if (attr(rhs_terms, "intercept") == 1) treatment <- treatment[, -1, drop = FALSE]
-
-    # Interactions matching original fitting logic
-    n_treat_cols <- ncol(treatment)
-    n_covars <- ncol(demeaned_covars)
-
-    interaction_matrix <- matrix(0, nrow = nrow(X), ncol = n_covars * n_treat_cols)
-
-    for (i in 1:n_covars) {
-      cols <- (i - 1) * n_treat_cols + (1:n_treat_cols)
-      interaction_matrix[, cols] <- treatment * demeaned_covars[, i]
-    }
-
-    X <- cbind(
-      if (attr(rhs_terms, "intercept") == 1) {
-        matrix(1, nrow = nrow(X), ncol = 1, dimnames = list(NULL, "(Intercept)"))
-      },
-      treatment,
-      if (attr(rhs_terms, "intercept") == 1 || ncol(treatment) == 1) demeaned_covars,
-      interaction_matrix
-    )
-  }
 
   return(X)
 }
 
-
-add_fes <- function(preds, object, newdata) {
-
-  # Add factors!
-  args <- as.list(object[["call"]])
-
-  if (length(all.vars(rlang::f_rhs(args[["fixed_effects"]]))) > 1) {
-    stop(
-      "Can't use `predict.lm_robust` with more than one set of ",
-      "`fixed_effects`. Can recover fits in `fitted.values` in the model ",
-      "object."
-    )
-  }
-
-  # cast as factor
-  femat <- model.matrix(
-    ~ 0 + .,
-    data = as.data.frame(
-      lapply(
-        stats::model.frame.default(
-          args[["fixed_effects"]],
-          data = newdata,
-          na.action = NULL
-        ),
-        FUN = as.factor
-      )
-    )
-  )
-
-  keep_facs <- intersect(names(object[["fixed_effects"]]), colnames(femat))
-  extra_facs <- setdiff(colnames(femat), names(object[["fixed_effects"]]))
-  if (length(extra_facs)) {
-    stop(
-      "Can't have new levels in `newdata` `fixed_effects` variable, such as: ",
-      paste0(extra_facs, collapse = ", ")
-    )
-  }
-  preds <- preds +
-    femat[, keep_facs] %*%
-    object[["fixed_effects"]][keep_facs]
-
-  return(preds)
+#' @export
+model.frame.iv_robust <- function(formula, ...) {
+  # The stored terms hold the two-part `y ~ x | z` formula, which
+  # model.frame.default cannot parse: it reads `|` as a logical operator and
+  # returns one garbage column (estimatr #397). Rebuild a one-part formula
+  # naming every variable and defer to the default method.
+  object <- formula
+  vars <- all.vars(object[["terms"]])
+  flat <- stats::reformulate(unique(vars[-1L]), response = vars[1L])
+  environment(flat) <- environment(object[["terms"]])
+  object[["terms"]] <- stats::terms(flat)
+  call <- object[["call"]]
+  call[["formula"]] <- flat
+  object[["call"]] <- call
+  stats::model.frame.default(object, ...)
 }
+
+#' @importFrom stats variable.names
+#' @export
+variable.names.lm_robust <- function(object, ...) object[["term"]]
+
+#' @export
+variable.names.iv_robust <- function(object, ...) object[["term"]]
+
+#' @importFrom generics augment
+#' @export
+generics::augment
+
+#' Augment a Model Object with Fitted Values and Residuals
+#'
+#' Returns the model frame with `.fitted` and `.resid` columns appended, the
+#' form downstream packages expect from [broom::augment()]. Supplying
+#' `newdata` returns that instead, with `.fitted` only.
+#'
+#' @param x An `lm_robust` or `iv_robust` object.
+#' @param data The data to augment, defaulting to the model frame.
+#' @param newdata Optional new data to predict on instead.
+#' @param ... (optional) Ignored.
+#'
+#' @return A `data.frame`.
+#'
+#' @examples
+#' set.seed(55)
+#' dat <- data.frame(x = rnorm(50), z = rep(0:1, 25))
+#' dat$y <- dat$x + 0.4 * dat$z + rnorm(50)
+#' fit <- lm_robust(y ~ x + z, data = dat)
+#'
+#' head(augment(fit))
+#'
+#' # Supplying newdata returns predictions on it, with .fitted only
+#' head(augment(fit, newdata = dat[1:5, ]))
+#'
+#' @export
+augment.lm_robust <- function(x, data = NULL, newdata = NULL, ...) {
+  if (!is.null(newdata)) {
+    newdata[[".fitted"]] <- predict(x, newdata = newdata)
+    return(as_tibble(newdata))
+  }
+
+  if (is.null(data)) data <- stats::model.frame(x)
+
+  fitted <- x[["fitted.values"]]
+  resid <- x[["residuals"]]
+  if (is.null(fitted) || NROW(fitted) != nrow(data)) {
+    stop(
+      "Cannot augment this model: fitted values are not available for every ",
+      "row of the data. Multivariate outcomes are not supported."
+    )
+  }
+  if (NCOL(fitted) > 1L) {
+    stop("Cannot augment a model with multiple outcomes.")
+  }
+
+  data[[".fitted"]] <- as.vector(fitted)
+  if (!is.null(resid)) data[[".resid"]] <- as.vector(resid)
+  as_tibble(data)
+}
+
+#' @rdname augment.lm_robust
+#' @export
+augment.iv_robust <- augment.lm_robust

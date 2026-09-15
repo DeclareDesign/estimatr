@@ -1,23 +1,34 @@
-# History files
-.Rhistory
-.Rapp.history
-# Example code in package build process
-*-Ex.R
-# RStudio files
-.Rproj.user/
-# produced vignettes
-vignettes/*.html
-vignettes/*.pdf
-vignettes/.*
-docs/
-.Rproj.user
-tests/testthat/*.pdf
-.DS_Store
-
-# compiled files
+# Compiled objects. Stale ones link against an older toolchain and segfault on
+# the first lm_robust() call, so they must never be committed or reused.
 src/*.o
 src/*.so
-src/*.dll
-inst/doc
-*_cache/
-docs
+src/*.dylib
+src/symbols.rds
+
+# R build and check artifacts
+*.Rcheck/
+*.tar.gz
+*.zip
+*.Rout
+tests/testthat/_problems/
+
+# R session / RStudio
+.Rhistory
+.RData
+.Rdata
+.Ruserdata
+.Rproj.user/
+
+# Vignette build output
+vignettes/*.html
+inst/doc/
+
+# Private dev notes and logfile (mirrored to claude_control)
+notes/
+
+# Claude Code session state
+.claude/
+
+# Misc
+.DS_Store
+docs/

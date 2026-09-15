@@ -11,48 +11,6 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// ht_covar_partial
-double ht_covar_partial(const Eigen::VectorXd& y1, const Eigen::VectorXd& y0, const Eigen::MatrixXd& p10, const Eigen::VectorXd& p1, const Eigen::VectorXd& p0);
-RcppExport SEXP _estimatr_ht_covar_partial(SEXP y1SEXP, SEXP y0SEXP, SEXP p10SEXP, SEXP p1SEXP, SEXP p0SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type y1(y1SEXP);
-    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type y0(y0SEXP);
-    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type p10(p10SEXP);
-    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type p1(p1SEXP);
-    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type p0(p0SEXP);
-    rcpp_result_gen = Rcpp::wrap(ht_covar_partial(y1, y0, p10, p1, p0));
-    return rcpp_result_gen;
-END_RCPP
-}
-// ht_var_partial
-double ht_var_partial(const Eigen::VectorXd& y, const Eigen::MatrixXd& p);
-RcppExport SEXP _estimatr_ht_var_partial(SEXP ySEXP, SEXP pSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type y(ySEXP);
-    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(ht_var_partial(y, p));
-    return rcpp_result_gen;
-END_RCPP
-}
-// demeanMat2
-Eigen::ArrayXXd demeanMat2(const Eigen::MatrixXd& what, const Rcpp::IntegerMatrix& fes, const Rcpp::NumericVector& weights, const int& start_col, const double& eps);
-RcppExport SEXP _estimatr_demeanMat2(SEXP whatSEXP, SEXP fesSEXP, SEXP weightsSEXP, SEXP start_colSEXP, SEXP epsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type what(whatSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::IntegerMatrix& >::type fes(fesSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type weights(weightsSEXP);
-    Rcpp::traits::input_parameter< const int& >::type start_col(start_colSEXP);
-    Rcpp::traits::input_parameter< const double& >::type eps(epsSEXP);
-    rcpp_result_gen = Rcpp::wrap(demeanMat2(what, fes, weights, start_col, eps));
-    return rcpp_result_gen;
-END_RCPP
-}
 // AtA
 Eigen::MatrixXd AtA(const Eigen::MatrixXd& A);
 RcppExport SEXP _estimatr_AtA(SEXP ASEXP) {
@@ -90,8 +48,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // lm_variance
-List lm_variance(Eigen::Map<Eigen::MatrixXd>& X, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Eigen::Map<Eigen::MatrixXd>& XtX_inv, const Eigen::Map<Eigen::MatrixXd>& ei, const double weight_mean, const Rcpp::Nullable<Rcpp::IntegerVector>& cluster, const int& J, const bool& ci, const String se_type, const std::vector<bool>& which_covs, const int& fe_rank);
-RcppExport SEXP _estimatr_lm_variance(SEXP XSEXP, SEXP XunweightedSEXP, SEXP XtX_invSEXP, SEXP eiSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP se_typeSEXP, SEXP which_covsSEXP, SEXP fe_rankSEXP) {
+List lm_variance(Eigen::Map<Eigen::MatrixXd>& X, const Rcpp::Nullable<Rcpp::NumericMatrix>& Xunweighted, const Eigen::Map<Eigen::MatrixXd>& XtX_inv, const Eigen::Map<Eigen::MatrixXd>& ei, const double weight_mean, const Rcpp::Nullable<Rcpp::IntegerVector>& cluster, const int& J, const bool& ci, const String se_type, const std::vector<bool>& which_covs, const int& fe_rank, const Rcpp::Nullable<Rcpp::NumericVector>& fe_leverage, const int& n_eff, const Rcpp::Nullable<Rcpp::NumericMatrix>& hypotheses);
+RcppExport SEXP _estimatr_lm_variance(SEXP XSEXP, SEXP XunweightedSEXP, SEXP XtX_invSEXP, SEXP eiSEXP, SEXP weight_meanSEXP, SEXP clusterSEXP, SEXP JSEXP, SEXP ciSEXP, SEXP se_typeSEXP, SEXP which_covsSEXP, SEXP fe_rankSEXP, SEXP fe_leverageSEXP, SEXP n_effSEXP, SEXP hypothesesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -106,7 +64,40 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const String >::type se_type(se_typeSEXP);
     Rcpp::traits::input_parameter< const std::vector<bool>& >::type which_covs(which_covsSEXP);
     Rcpp::traits::input_parameter< const int& >::type fe_rank(fe_rankSEXP);
-    rcpp_result_gen = Rcpp::wrap(lm_variance(X, Xunweighted, XtX_inv, ei, weight_mean, cluster, J, ci, se_type, which_covs, fe_rank));
+    Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericVector>& >::type fe_leverage(fe_leverageSEXP);
+    Rcpp::traits::input_parameter< const int& >::type n_eff(n_effSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericMatrix>& >::type hypotheses(hypothesesSEXP);
+    rcpp_result_gen = Rcpp::wrap(lm_variance(X, Xunweighted, XtX_inv, ei, weight_mean, cluster, J, ci, se_type, which_covs, fe_rank, fe_leverage, n_eff, hypotheses));
+    return rcpp_result_gen;
+END_RCPP
+}
+// demean_cpp
+Rcpp::NumericMatrix demean_cpp(Eigen::MatrixXd mat, Rcpp::List fe_codes_list, Rcpp::NumericVector weights, double eps, int max_iter);
+RcppExport SEXP _estimatr_demean_cpp(SEXP matSEXP, SEXP fe_codes_listSEXP, SEXP weightsSEXP, SEXP epsSEXP, SEXP max_iterSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Eigen::MatrixXd >::type mat(matSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type fe_codes_list(fe_codes_listSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type weights(weightsSEXP);
+    Rcpp::traits::input_parameter< double >::type eps(epsSEXP);
+    Rcpp::traits::input_parameter< int >::type max_iter(max_iterSEXP);
+    rcpp_result_gen = Rcpp::wrap(demean_cpp(mat, fe_codes_list, weights, eps, max_iter));
+    return rcpp_result_gen;
+END_RCPP
+}
+// xtab_cpp
+Rcpp::NumericMatrix xtab_cpp(const Rcpp::IntegerVector& i1, const Rcpp::IntegerVector& i2, const int n1, const int n2, const Rcpp::NumericVector& w);
+RcppExport SEXP _estimatr_xtab_cpp(SEXP i1SEXP, SEXP i2SEXP, SEXP n1SEXP, SEXP n2SEXP, SEXP wSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type i1(i1SEXP);
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type i2(i2SEXP);
+    Rcpp::traits::input_parameter< const int >::type n1(n1SEXP);
+    Rcpp::traits::input_parameter< const int >::type n2(n2SEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type w(wSEXP);
+    rcpp_result_gen = Rcpp::wrap(xtab_cpp(i1, i2, n1, n2, w));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -124,13 +115,12 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_estimatr_ht_covar_partial", (DL_FUNC) &_estimatr_ht_covar_partial, 5},
-    {"_estimatr_ht_var_partial", (DL_FUNC) &_estimatr_ht_var_partial, 2},
-    {"_estimatr_demeanMat2", (DL_FUNC) &_estimatr_demeanMat2, 5},
     {"_estimatr_AtA", (DL_FUNC) &_estimatr_AtA, 1},
     {"_estimatr_Kr", (DL_FUNC) &_estimatr_Kr, 2},
     {"_estimatr_lm_solver", (DL_FUNC) &_estimatr_lm_solver, 3},
-    {"_estimatr_lm_variance", (DL_FUNC) &_estimatr_lm_variance, 11},
+    {"_estimatr_lm_variance", (DL_FUNC) &_estimatr_lm_variance, 14},
+    {"_estimatr_demean_cpp", (DL_FUNC) &_estimatr_demean_cpp, 5},
+    {"_estimatr_xtab_cpp", (DL_FUNC) &_estimatr_xtab_cpp, 5},
     {"_estimatr_naomitwhy", (DL_FUNC) &_estimatr_naomitwhy, 2},
     {NULL, NULL, 0}
 };

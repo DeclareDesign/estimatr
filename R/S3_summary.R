@@ -56,18 +56,17 @@ summary.iv_robust <- function(object, ...) {
 }
 
 #' @export
-summary.lh_robust <- function(object,...){
+summary.lh_robust <- function(object, ...) {
   class(object) <- "summary.lh_robust"
   object
 }
 
 #' @export
-summary.lh <- function(object,...){
+summary.lh <- function(object, ...) {
   summary_lh_object <- summarize_tidy(simplify_lh_outcome(object))
   class(summary_lh_object) <- "summary.lh"
   summary_lh_object
 }
-
 
 summary_lm_model <- function(object) {
 
@@ -84,17 +83,7 @@ summary_lm_model <- function(object) {
     "adj.r.squared",
     "fstatistic"
   )
-  # Different returns if fixed effects in the output
-  if (object[["fes"]]) {
-    out_values <- c(
-      out_values,
-      "proj_r.squared",
-      "proj_adj.r.squared",
-      "proj_fstatistic"
-    )
-  }
 
-  # Different returns if fixed effects in the output
   if (is.numeric(object[["diagnostic_endogeneity_test"]])) {
     out_values <- c(
       out_values,
@@ -106,15 +95,12 @@ summary_lm_model <- function(object) {
 
   return_list <- object[out_values]
 
-  # Split into two lists if multivariate linear model
-
   return_list[["coefficients"]] <- summarize_tidy(object)
   return_list[["nobs"]] <- nobs(object)
 
   class(return_list) <- "summary.lm_robust"
   return(return_list)
 }
-
 
 #' @export
 summary.difference_in_means <- function(object, ...) {
@@ -124,16 +110,18 @@ summary.difference_in_means <- function(object, ...) {
   ))
 }
 
-
 #' @export
 summary.horvitz_thompson <- function(object, ...) {
+  # "z" rather than the default "t": the test statistic is normal, so the
+  # column headings must not promise degrees of freedom the estimator does not
+  # have. Without this method the call reached summary.default and returned a
+  # generic object summary, which looked like output but was not the estimate.
   return(list(coefficients = summarize_tidy(object, "z")))
 }
 
 summarize_tidy <- function(object, test = "t", ...) {
   remove_cols <- c("term", "outcome")
 
-  # Ugly so that summary(fit)$coefficients matches lm()
   tidy_out <- tidy(object, ...)
   colnames(tidy_out)[2:8] <-
     c(

@@ -1,46 +1,60 @@
 Package: estimatr
 Type: Package
 Title: Fast Estimators for Design-Based Inference
-Version: 1.0.6
-Authors@R: c(person("Graeme", "Blair", email = "graeme.blair@gmail.com", role = c("aut", "cre")),
+Version: 2.0.0
+Authors@R: c(person("Alexander", "Coppock", email = "acoppock@gmail.com", role = c("aut", "cre")),
+             person("Graeme", "Blair", email = "graeme.blair@gmail.com", role = c("aut")),
              person("Jasper", "Cooper", email = "jjc2247@columbia.edu", role = c("aut")),
-             person("Alexander", "Coppock", email = "alex.coppock@yale.edu", role = c("aut")),
-             person("Macartan", "Humphreys", email = "macartan@gmail.com", role = c("aut")),
              person("Luke", "Sonnet", email = "luke.sonnet@gmail.com", role = c("aut")),
+             person("Macartan", "Humphreys", email = "macartan@gmail.com", role = c("ctb")),
              person("Neal", "Fultz", email = "nfultz@gmail.com", role = c("ctb")),
              person("Lily", "Medina", email = "lilymiru@gmail.com", role = c("ctb")),
              person("Russell", "Lenth", email = "russell-lenth@uiowa.edu", role = c("ctb")),
              person("Molly", "Offer-Westort", email = "mollyow@uchicago.edu", role = c("ctb")))
-Description: Fast procedures for small set of commonly-used, design-appropriate estimators with robust standard errors and confidence intervals. Includes estimators for linear regression, instrumental variables regression, difference-in-means, Horvitz-Thompson estimation, and regression improving precision of experimental estimates by interacting treatment with centered pre-treatment covariates introduced by Lin (2013) <doi:10.1214/12-AOAS583>.
+Description: Fast procedures for a small set of commonly-used,
+    design-appropriate estimators with robust standard errors and confidence
+    intervals. Includes estimators for linear regression, instrumental
+    variables regression, difference-in-means, Horvitz-Thompson estimation,
+    and regression improving precision of experimental estimates by
+    interacting treatment with centered pre-treatment covariates introduced by
+    Lin (2013) <doi:10.1214/12-AOAS583>. Fixed effects are absorbed by
+    alternating projections rather than by dummy expansion, and
+    Horvitz-Thompson variance is computed from the randomization declaration.
 URL: https://declaredesign.org/r/estimatr/,
-        https://github.com/DeclareDesign/estimatr
+    https://github.com/DeclareDesign/estimatr
 BugReports: https://github.com/DeclareDesign/estimatr/issues
 License: MIT + file LICENSE
-Depends: R (>= 3.6.0)
-Imports: Formula, generics, methods, Rcpp (>= 0.12.16), rlang (>=
-        0.2.0)
-LinkingTo: Rcpp, RcppEigen
 Encoding: UTF-8
-RoxygenNote: 7.3.2
-LazyData: true
-Suggests: fabricatr (>= 0.10.0), randomizr (>= 0.20.0), AER,
-        clubSandwich, emmeans (>= 1.4), estimability, margins,
-        modelsummary, prediction, RcppEigen, sandwich, stargazer,
-        testthat, car, DeclareDesign, GGally, ggplot2, huxtable, knitr,
-        lmtest, magrittr, microbenchmark, purrr, rsample, tidyverse,
-        xtable
-Enhances: texreg
-NeedsCompilation: yes
-Packaged: 2025-02-28 18:37:05 UTC; gblair
-Author: Graeme Blair [aut, cre],
-  Jasper Cooper [aut],
-  Alexander Coppock [aut],
-  Macartan Humphreys [aut],
-  Luke Sonnet [aut],
-  Neal Fultz [ctb],
-  Lily Medina [ctb],
-  Russell Lenth [ctb],
-  Molly Offer-Westort [ctb]
-Maintainer: Graeme Blair <graeme.blair@gmail.com>
-Repository: CRAN
-Date/Publication: 2025-02-28 19:30:02 UTC
+Roxygen: list(markdown = TRUE)
+Depends:
+    R (>= 3.6.0)
+Imports:
+    Formula,
+    generics,
+    methods,
+    Rcpp,
+    rlang,
+    stats,
+    tibble
+Suggests:
+    AER,
+    car,
+    clubSandwich,
+    DeclareDesign,
+    dplyr,
+    emmeans,
+    estimability,
+    ivreg,
+    knitr,
+    modelsummary,
+    randomizr,
+    rmarkdown,
+    sandwich,
+    testthat (>= 3.0.0),
+    texreg
+VignetteBuilder: knitr
+LinkingTo:
+    Rcpp,
+    RcppEigen
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0
