@@ -290,7 +290,7 @@ emmeans::emmeans(fit, "Z", at = list(Z = 0:1))
 
 Design-based work means fitting the same model many times over, which is what estimatr is built to do quickly. [DeclareDesign](https://declaredesign.org) handles the repetition: declare the model, the inquiry, the assignment, and the estimator once, and `diagnose_design()` re-runs the whole experiment and reports how the estimator does against the truth.
 
-```{r, eval = requireNamespace("DeclareDesign", quietly = TRUE)}
+```{r, eval = requireNamespace("DeclareDesign", quietly = TRUE) && requireNamespace("future.apply", quietly = TRUE)}
 library(DeclareDesign)
 
 declaration_lin <-
