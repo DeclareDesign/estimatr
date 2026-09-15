@@ -21,7 +21,7 @@ estimatr 2.0.0 was written by Alexander Coppock working with Claude (Anthropic),
 
 While the code base has been reviewed, it was not written by hand. The guarantee offered here is therefore not that every line has been vouched for. It is narrower and it is checkable: **estimatr implements these estimators correctly**, and the way that is shown is validation to machine precision against the definitions themselves.
 
-Which is what this document is. Every estimator gets its definition, stated in mathematics with the paper it comes from, and then, immediately underneath, the same quantity computed twice: once by calling estimatr, and once from the definition transcribed into a few lines of base R. The gap between the two is printed where you can see it.
+Which is what this document is. Every estimator gets its definition, stated in mathematics with the paper it comes from, and then, immediately underneath, the same quantity computed twice: once by calling estimatr, and once from the definition transcribed into a few lines of base R. 
 
 Two further layers are checked outside this document. Every estimator reproduces estimatr 1.0.6's numbers wherever both versions answer, checked in `tests/testthat/test_vs_estimatr.R` against 695 values recorded from an installed 1.0.6. A further 808 assertions compare against implementations that share no lineage with this one: `sandwich`, `clubSandwich`, `ivreg`, Stata, `fixest`, `plm` and `blkvar`, in the five `tests/testthat/test_vs_*.R` files. `vignette("estimatr2.0")` sets out both layers under "How this was checked"; the suite holds 5,635 assertions in total.
 
@@ -109,7 +109,7 @@ check("lm_robust(weights = )",
 
 ## Heteroskedasticity-robust variance
 
-The default is HC2, from @mackinnonwhite1985. It is the choice that lines up with design-based inference: under complete randomization the HC2 variance of a treatment coefficient equals the conservative Neyman estimator [@samiiaronow2012]. Against the HC1 variance that Stata defaults to it gives up a little efficiency in large samples and is better behaved in small ones, and the second is the reason for the default.
+The default is HC2, from @mackinnonwhite1985. It is the choice that lines up with design-based inference: under complete randomization the HC2 variance of a treatment coefficient equals the conservative Neyman estimator [@samiiaronow2012]. Against the HC1 variance that Stata defaults to it gives up a little efficiency in large samples and is better behaved in small ones, which is the reason for the default.
 
 | `se_type` | $\widehat{\mathbb{V}}[\widehat{\beta}]$ | Degrees of freedom |
 |---|---|---|
@@ -311,7 +311,7 @@ and two-sided p-values come from the same $t$ distribution. Under CR2 the degree
 
 # `lm_lin`
 
-`lm_lin()` is a pre-processor for `lm_robust()` implementing the covariate adjustment of @lin2013, which answers @freedman2008's demonstration that regression adjustment can bias a treatment-effect estimate. Rather than
+`lm_lin()` is a pre-processor for `lm_robust()` implementing the covariate adjustment of @lin2013, which answers @freedman2008's demonstration that regression adjustment reduce precision. Rather than
 
 \[
 y_i = \tau z_i + \mathbf{\beta}^\top\mathbf{x}_i + \epsilon_i,
@@ -703,6 +703,6 @@ The checks above are a demonstration, not a proof, and they are deliberately a s
 
 **Agreement with a formula written here is not agreement with the literature.** Transcribing HC2 into this document and matching it shows estimatr computes what it says. It cannot show that the definition is the one the field settled on, which is why every definition above carries its citation, and why the suite compares against `sandwich`, `clubSandwich`, `ivreg`, Stata's `regress`, `areg` and `ivregress`, `fixest`, `plm` and `blkvar`, none of which shares any lineage with this package. Two known divergences are pinned from both sides there rather than dropped: weighted HC2 and HC3 differ from Stata by a bounded amount, and `iv_robust()` uses second-stage leverage, which agrees with `ivreg` exactly and departs from `AER::ivreg()`'s deprecated `hatvalues()` method by up to 18.5 percent.
 
-**The data here are well conditioned, and that is where the interesting failures are not.** Every fit above is full rank with far more observations than parameters. Leverage exactly equal to one is benign; leverage marginally above one is not, and HC2 and HC3 are guarded there rather than answered, warning and contributing zero for the offending rows. A cluster-robust variance on a single cluster is refused outright, where 1.0.6 returned a standard error of 5.9e-17 and a zero-width interval in silence. Those are documented in `NEWS.md`, and none of them is visible in a table built on `rnorm()`.
+**The data here are well conditioned** Every fit above is full rank with far more observations than parameters. Leverage exactly equal to one is benign; leverage marginally above one is not, and HC2 and HC3 are guarded there rather than answered, warning and contributing zero for the offending rows. A cluster-robust variance on a single cluster is refused outright, where 1.0.6 returned a standard error of 5.9e-17 and a zero-width interval in silence. Those are documented in `NEWS.md`, and none of them is visible in a table built on `rnorm()`.
 
 # References
