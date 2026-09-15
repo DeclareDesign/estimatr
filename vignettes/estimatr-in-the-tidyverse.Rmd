@@ -38,6 +38,14 @@ One row per coefficient, and an `outcome` column, which matters because `lm_robu
 glance(fit)
 ```
 
+`augment()` returns the data the model was fit on, one row per observation, with the fitted values and residuals added as `.fitted` and `.resid`. With `newdata`, it predicts on new rows instead.
+
+```{r}
+augment(fit)
+
+augment(fit, newdata = data.frame(Agriculture = c(20, 60), Catholic = c(10, 90)))
+```
+
 ## dplyr
 
 ```{r, eval = have("dplyr")}
@@ -86,6 +94,18 @@ ggplot(swiss, aes(x = Agriculture, y = Fertility)) +
   theme_minimal()
 ```
 
+A residual plot starts from `augment()`.
+
+```{r, eval = have("ggplot2")}
+gg_df <- augment(fit)
+
+ggplot(gg_df, aes(x = .fitted, y = .resid)) +
+  geom_hline(yintercept = 0, linetype = 2, colour = "grey50") +
+  geom_point(alpha = 0.6) +
+  labs(x = "Fitted values", y = "Residuals") +
+  theme_minimal()
+```
+
 ## Many models with purrr
 
 Fitting the same model on subsets, then stacking the results:
@@ -102,42 +122,64 @@ swiss |>
   filter(term == "Catholic")
 ```
 
-Fitting different outcomes on the same regressor:
+For grouped fits, dplyr's `reframe()` does the same without leaving the data frame. `pick(everything())` hands each group's rows to `lm_robust()`.
 
-```{r, eval = have("dplyr", "purrr")}
-c("Fertility", "Education", "Agriculture") |>
-  map(\(y) lm_robust(reformulate("Catholic", y), data = swiss)) |>
-  map(tidy) |>
-  list_rbind() |>
+```{r, eval = have("dplyr")}
+swiss |>
+  as_tibble() |>
+  mutate(educated = Education > 8) |>
+  reframe(tidy(lm_robust(Fertility ~ Catholic, data = pick(everything()))), .by = educated) |>
   filter(term == "Catholic")
 ```
 
-Several outcomes at once is also a single call, and considerably faster, since the design matrix is factorized once:
+Fitting different outcomes on the same regressor is the same move after a reshape: stack the outcomes long, nest by outcome, and fit within each.
 
-```{r}
-tidy(lm_robust(cbind(Fertility, Education, Agriculture) ~ Catholic, data = swiss))
+```{r, eval = have("dplyr", "purrr", "tidyr")}
+library(tidyr)
+
+swiss |>
+  pivot_longer(c(Fertility, Education, Agriculture),
+               names_to = "outcome_variable",
+               values_to = "Y") |>
+  nest(.by = outcome_variable) |>
+  mutate(fit = map(data, \(d) tidy(lm_robust(Y ~ Catholic, data = d)))) |>
+  unnest(fit)
 ```
+
+`lm_robust()` also accepts several outcomes in one call using `cbind`, which is faster because the design matrix is factorized once. Be careful if missingness differs across outcomes because the `cbind` triggers listwise deletion.
+
+```{r, eval = have("dplyr")}
+lm_robust(cbind(Fertility, Education, Agriculture) ~ Catholic, data = swiss) |>
+  tidy()
+```
+
 
 ## Bootstrapping
 
-`tidy()` output stacks, so a bootstrap is a loop over resamples.
+[rsample](https://rsample.tidymodels.org), from tidymodels, draws the resamples: `bootstraps()` returns a tibble with one resample per row, and `analysis()` extracts each one's data. Because `tidy()` output stacks, the rest is a `map()` and an `unnest()`.
 
-```{r, eval = have("dplyr", "purrr")}
-set.seed(1)
+```{r, eval = have("dplyr", "purrr", "tidyr", "rsample")}
+library(rsample)
 
-boot <- map(1:200, \(i) {
-  d <- swiss[sample(nrow(swiss), replace = TRUE), ]
-  tidy(lm_robust(Fertility ~ Catholic + Agriculture, data = d))
-}) |>
-  list_rbind()
+set.seed(343)
 
-hc2 <- tidy(lm_robust(Fertility ~ Catholic + Agriculture, data = swiss)) |>
-  select(term, hc2_se = std.error)
+boot <- bootstraps(swiss, times = 200) |>
+  mutate(coefs = map(splits, \(split) {
+    analysis(split) |>
+      lm_robust(Fertility ~ Catholic + Agriculture, data = _) |>
+      tidy()
+  }))
 
 boot |>
+  unnest(coefs) |>
   group_by(term) |>
-  summarise(bootstrap_se = sd(estimate)) |>
-  left_join(hc2, by = "term")
+  summarise(bootstrap_se = sd(estimate))
+
+# for comparison against HC2
+lm_robust(Fertility ~ Catholic + Agriculture, data = swiss) |>
+  tidy() |>
+  select(term, std.error)
+
 ```
 
-The bootstrap standard errors and the HC2 standard errors are close, which is the expected result: both are estimating the same thing without assuming homoskedasticity.
+The bootstrap standard errors and the HC2 standard errors are close, which is the expected result.
