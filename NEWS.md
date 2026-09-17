@@ -316,7 +316,7 @@ The fix has two parts. First, `demean_fes()` skips the demeaning loop entirely w
 
 The individual hypothesis CIs and p-values from `lh_robust()` did not match those from `lm_robust()` when clusters were specified. The root cause: `lh_robust()` used `lmr$df.residual` (= n − k, e.g., 97 for n = 100, k = 3) as the degrees of freedom for t-tests and confidence intervals. For clustered models, the correct df is the cluster-adjusted value stored per-coefficient in `lmr$df` (e.g., 9 for a CR2 model with 10 clusters, or 8–9 via Satterthwaite approximation).
 
-Using the residual df of 97 instead of the cluster df of ~9 produces confidence intervals that are far too narrow. The fix parses the hypothesis expression (e.g., `"x=0"`) to extract the coefficient name (`"x"`), looks up `lmr$df["x"]`, and uses that as the df. For composite hypotheses involving multiple coefficients (e.g., `"x - z=0"`), the conservative minimum over all per-coefficient dfs is used.
+Using the residual df of 97 instead of the cluster df of ~9 produces confidence intervals that are far too narrow. The fix parses the hypothesis expression (e.g., `"x=0"`) to extract the coefficient name (`"x"`), looks up `lmr$df["x"]`, and uses that as the df. For a hypothesis involving several coefficients (e.g., `"x - z=0"`), CR2 gives the combination its own Satterthwaite degrees of freedom (see the CR2 entry below), and every other `se_type` gives all coefficients the same degrees of freedom, which the combination takes. An earlier draft of this release used the smallest per-coefficient degrees of freedom instead; that is not a conservative bound, and it was replaced before 2.0.0 shipped.
 
 ### `lh_robust` joint hypothesis test absent (#320)
 
@@ -452,7 +452,7 @@ Both fields took whatever dimnames survived `data[["y"]] - fitted.values`, and R
 
 ### All-missing outcome with weights (#370)
 
-`lm_robust(X ~ 1, weights = w, data = df)` where `X` is entirely `NA` errors in estimatr 1.x with "'x' must be an array of at least two dimensions", while the same model without weights returns an NA coefficient. The asymmetry matters when one model is fitted across many subgroups and some subgroup has no observed outcome. 2.0 returns the NA coefficient in both cases.
+`lm_robust(X ~ 1, weights = w, data = df)` where `X` is entirely `NA` errors in estimatr 1.x with "'x' must be an array of at least two dimensions", while the same model without weights returns an NA coefficient. The asymmetry matters when one model is fitted across many subgroups and some subgroup has no observed outcome. 2.0 refuses both calls with the same error, "No observations are left to fit once rows with missing values, and any excluded by `subset`, are dropped.", which is also what `lm()` does with no complete rows. An earlier draft of this entry said 2.0 returns the NA coefficient in both cases; 2.0.0 as released errors instead.
 
 ---
 
