@@ -50,7 +50,14 @@ jobs:
         with:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
-          use-public-rspm: true
+          # "always" sends macOS to Posit Package Manager as well as Linux.
+          # CRAN served part of its macOS arm64 R 4.6 binaries as zstd archives
+          # under the .tgz name from 2026-09-17, estimatr 2.0.0 among them, and
+          # the pak that setup-r-dependencies installs cannot extract zstd
+          # (r-lib/pkgdepends#485). Posit Package Manager still serves gzip
+          # builds of the same versions.
+          # Back to "true" once a released pak reads zstd.
+          use-public-rspm: always
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
