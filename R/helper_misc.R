@@ -290,8 +290,14 @@ absorbed_group_effects <- function(fitted, coefficients, model_data) {
   # carries a declared level the data never uses.
   rep_row[rep_row == 0L] <- NA_integer_
   idx <- rep_row[ord]
+  # `coefficients` carries an NA wherever a column was dropped for collinearity,
+  # and NA times anything is NA, so multiplying the full `Xoriginal` by the full
+  # vector made every group effect NA on any rank-deficient fit: the same defect
+  # b96ab8b fixed in the F statistic, in a different field. A dropped column
+  # contributes nothing to the fitted values, so both sides drop it.
+  keep <- !is.na(coefficients)
   effects <- fitted[idx] -
-    drop(model_data[["Xoriginal"]][idx, , drop = FALSE] %*% coefficients)
+    drop(model_data[["Xoriginal"]][idx, keep, drop = FALSE] %*% coefficients[keep])
   lv <- lv[ord]
   # tapply() returned a one-dimensional array, and that shape is part of the
   # return surface: `predict()` and the 1.0.6 comparison both see it.

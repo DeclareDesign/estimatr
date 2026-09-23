@@ -45,7 +45,23 @@ deg_data <- function() {
 d <- deg_data()
 n <- nrow(d)
 
-# The rank-deficient fit's surviving coefficients against the reduced fit.
+# The rank-deficient fit against the reduced fit, over the whole return surface.
+#
+# This compared coefficients, standard errors and degrees of freedom, and
+# nothing else, which is how b96ab8b shipped in 2.0.0: summary()$fstatistic
+# came back NA whenever the dropped column was not the last one, under every
+# robust se_type and in lm_robust(), lm_lin() and iv_robust() alike, and no
+# call site here was looking at a model-level field. test_return_surface.R
+# reads every field but its data is full rank, so the defect sat in the cell
+# where the two suites cross. The walk below closes it for every existing call
+# site at once, and for any estimator added later.
+#
+# `k` counts the columns asked for where `rank` counts the ones kept, so it
+# differs from the reduced fit by construction; the rest are inputs, or carry
+# environments.
+REDUCES_SKIP <- c("call", "terms", "formula", "terms_regressors", "outcome",
+                  "weights", "model", "k")
+
 expect_reduces_to <- function(full, reduced, label) {
   kept <- names(reduced$coefficients)
   expect_true(all(is.na(full$coefficients[setdiff(names(full$coefficients), kept)])),
@@ -55,6 +71,38 @@ expect_reduces_to <- function(full, reduced, label) {
   expect_equal(full$std.error[kept], reduced$std.error, tolerance = DEG_TOL,
                label = paste(label, "standard errors"))
   expect_equal(full$df[kept], reduced$df, tolerance = DEG_TOL, label = paste(label, "df"))
+
+  # Everything else the fit returns. A field is coefficient-indexed if it is as
+  # long as the full coefficient vector, in which case it is subset to the kept
+  # terms; otherwise it has to match outright.
+  at <- match(kept, full$term)
+  n_checked <- 0L
+  for (f in setdiff(names(reduced), REDUCES_SKIP)) {
+    a <- full[[f]]
+    b <- reduced[[f]]
+    if (is.null(a) || is.null(b)) next
+    if (!is.numeric(a) && !is.character(a) && !is.logical(a)) next
+    lab <- paste(label, f)
+    if (is.matrix(a) || is.matrix(b)) {
+      if (!identical(dim(a), dim(b))) next
+      expect_equal(unname(a), unname(b), tolerance = DEG_TOL, label = lab)
+    } else if (length(a) == length(full$coefficients) && length(b) == length(kept)) {
+      expect_equal(unname(a[at]), unname(b), tolerance = DEG_TOL, label = lab)
+    } else if (length(a) == length(b)) {
+      expect_equal(unname(a), unname(b), tolerance = DEG_TOL, label = lab)
+    } else {
+      next
+    }
+    n_checked <- n_checked + 1L
+  }
+  # A walk that silently compared nothing would be a green empty test.
+  expect_gt(n_checked, 0)
+
+  sf <- summary(full)
+  sr <- summary(reduced)
+  expect_false(anyNA(sf$fstatistic), label = paste(label, "F statistic is not NA"))
+  expect_equal(unname(sf$fstatistic), unname(sr$fstatistic), tolerance = DEG_TOL,
+               label = paste(label, "F statistic"))
 }
 
 # ---- collinearity outside lm_robust's own design ----
@@ -823,3 +871,20 @@ test_that("#395: CR2 has no analogous hole -- degeneracy goes through its clamp"
   expect_gt(m$std.error[["Z"]], 0)
 })
 
+test_that("absorbed group effects survive a dropped regressor", {
+  # Named on its own rather than left to the surface walk, so a failure says
+  # which field. `absorbed_group_effects()` formed each group effect as the
+  # fitted value minus the row's regressors times the coefficient vector, and
+  # that vector carries an NA wherever a column went, so every group came back
+  # NA on any rank-deficient fit while the coefficients themselves were right.
+  # Present in the released 2.0.0, and unlike the F statistic it does not
+  # depend on where the dropped column sits.
+  reduced <- lm_robust(y ~ x1 + x2, data = d, fixed_effects = ~ g, se_type = "HC1")
+  for (pos in list(y ~ x1 + g_level + x2, y ~ x1 + x2 + g_level)) {
+    expect_warning(full <- lm_robust(pos, data = d, fixed_effects = ~ g,
+                                     se_type = "HC1"),
+                   "returned as NA: g_level")
+    expect_false(anyNA(full$fixed_effects))
+    expect_equal(full$fixed_effects, reduced$fixed_effects, tolerance = DEG_TOL)
+  }
+})

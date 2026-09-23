@@ -14,6 +14,12 @@ The warning is the one `lm_robust()` already gives for a dropped collinear regre
 
 Under every robust `se_type`, `summary()` on a fit with a column dropped for collinearity reported the F statistic as `NA` whenever that column was not the last one. On `y ~ x1 + mid + en` with `mid` collinear, `lm()` and estimatr's own classical branch both returned the statistic and every robust type returned `NA`. The coefficient vector carries an `NA` where the column went, while the statistic's indices and its variance matrix both count positions in the kept set, so the two agreed only when the gap fell at the end. The statistic is now the reduced model's under every `se_type`, which is what it already was when the dropped column happened to be last. `lm_robust()`, `lm_lin()`, and `iv_robust()` are all affected, and `iv_robust()` reaches the case more often now that an underidentified regressor returns `NA` in place.
 
+## Absorbed fixed-effect estimates were all `NA` on a rank-deficient fit
+
+`lm_robust(..., fixed_effects = ~ g)` returned every entry of `fixed_effects` as `NA` whenever any regressor was dropped for collinearity, although the coefficients, standard errors, and degrees of freedom were all correct. Each group effect is formed as the fitted value at a representative row minus that row's regressors times the coefficient vector, and the coefficient vector carries an `NA` wherever a column went, so the product was `NA` for every group. A dropped column contributes nothing to the fitted values, so both sides now drop it. Unlike the F statistic above, this did not depend on where in the formula the dropped column sat.
+
+The case is reachable whenever an absorbed factor also appears among the regressors, for example a group-level covariate alongside `fixed_effects = ~ g`.
+
 ---
 
 # estimatr 2.0.0
