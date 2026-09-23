@@ -135,24 +135,88 @@ test_that("weighted, clustered designs short of full rank by two are the reduced
 
 # ---- no estimate exists ----
 
-test_that("an underidentified instrumental-variables model is refused", {
-  # Too few instruments by count: 1.0.6, and 2.0 until now, warned, dropped
-  # the intercept, and reported hp and cyl.
-  expect_error(
-    iv_robust(mpg ~ hp + cyl | am, data = mtcars),
-    "do not identify every regressor"
+# An exactly flat first stage: `X` is balanced on `Z` within every level of
+# `W`, so the instrument adds nothing and `X`'s fitted values lie in the span
+# of the intercept and `W`. This is the DesignLibrary `binary_iv` draw, where a
+# binary instrument and a binary regressor give an exactly balanced 2x2 table
+# on about 1% of draws at N = 100.
+flat_iv_data <- function(n = 80) {
+  set.seed(343)
+  b <- data.frame(
+    W = rep(c(0, 1), each = n / 2),
+    Z = rep(rep(c(0, 1), each = n / 4), 2),
+    X = rep(rep(c(0, 1), each = n / 8), 4)
   )
+  b$Y <- rnorm(n) + 0.5 * b$W
+  b
+}
+
+test_that("an underidentified regressor is NA and the rest of the fit stands", {
+  # Until 2.0.1 each of these was an error. 1.0.6 was worse than either: it
+  # warned, let lm_solver's pivot choose, and the pivot took the intercept, so
+  # the endogenous regressor came back carrying the intercept's value under its
+  # own name. That is the number a reader takes for the LATE, so which column
+  # is dropped is an answer here and not a naming question.
+  #
+  # Too few instruments by count. `hp` keeps a just-identified estimate and
+  # `cyl` goes, as stats::lm() drops the later column.
+  expect_warning(
+    full <- iv_robust(mpg ~ hp + cyl | am, data = mtcars),
+    "collinear with other regressors"
+  )
+  expect_reduces_to(full, iv_robust(mpg ~ hp | am, data = mtcars), "too few instruments")
+
   # Enough instruments by count, but one is a copy of the exogenous regressor,
-  # so the endogenous regressor has none. Both versions dropped `en` and
-  # returned the rest.
-  expect_error(
-    iv_robust(y ~ en + x1 | x1 + dup, data = d),
-    "do not identify every regressor"
-  )
-  expect_error(
-    iv_robust(y ~ en + x1 | x1 + dup, data = d, clusters = cl, se_type = "CR2"),
-    "do not identify every regressor"
-  )
+  # so the endogenous regressor has none. The endogenous `en` sits ahead of the
+  # exogenous `x1` in the formula, so column order alone would drop the wrong
+  # one; the exogenous columns are moved to the front before the drop set is
+  # chosen.
+  for (cs in list(list(se_type = "HC2", clusters = NULL),
+                  list(se_type = "CR2", clusters = d$cl))) {
+    expect_warning(
+      full <- iv_robust(y ~ en + x1 | x1 + dup, data = d,
+                        clusters = cs$clusters, se_type = cs$se_type),
+      "returned as NA: en"
+    )
+    reduced <- lm_robust(y ~ x1, data = d, clusters = cs$clusters,
+                         se_type = cs$se_type)
+    expect_reduces_to(full, reduced, paste("copied instrument", cs$se_type))
+  }
+
+  # A first stage that is flat rather than short of instruments by count.
+  b <- flat_iv_data()
+  expect_warning(full <- iv_robust(Y ~ X | Z, data = b), "returned as NA: X")
+  expect_reduces_to(full, lm_robust(Y ~ 1, data = b), "flat first stage")
+
+  expect_warning(full <- iv_robust(Y ~ X + W | Z + W, data = b), "returned as NA: X")
+  expect_reduces_to(full, lm_robust(Y ~ W, data = b), "flat first stage, exogenous W")
+})
+
+test_that("AER::ivreg agrees where it drops the unidentified regressor", {
+  skip_if_not_installed("AER")
+  expect_warning(full <- iv_robust(mpg ~ hp + cyl | am, data = mtcars),
+                 "collinear with other regressors")
+  aer <- suppressWarnings(AER::ivreg(mpg ~ hp + cyl | am, data = mtcars))
+  expect_equal(coef(full), coef(aer), tolerance = DEG_TOL)
+
+  b <- flat_iv_data()
+  expect_warning(full <- iv_robust(Y ~ X + W | Z + W, data = b), "returned as NA: X")
+  expect_equal(coef(full), coef(AER::ivreg(Y ~ X + W | Z + W, data = b)),
+               tolerance = DEG_TOL)
+
+  # Where AER drops by column position it keeps the unidentified regressor
+  # instead, and this is the one case the two deliberately disagree. `en`'s
+  # fitted values lie in the span of the intercept and `x1` to 6e-16, so AER's
+  # `en` coefficient is that combination wearing `en`'s name, and its residuals
+  # are formed from `en` rather than from what was fitted.
+  aer <- AER::ivreg(y ~ en + x1 | x1 + dup, data = d)
+  expect_true(is.na(coef(aer)[["x1"]]))
+  expect_false(is.na(coef(aer)[["en"]]))
+  expect_warning(full <- iv_robust(y ~ en + x1 | x1 + dup, data = d),
+                 "returned as NA: en")
+  expect_true(is.na(coef(full)[["en"]]))
+  expect_equal(coef(full)[["x1"]], coef(lm_robust(y ~ x1, data = d))[["x1"]],
+               tolerance = DEG_TOL)
 })
 
 test_that("a fit with no observations left is refused", {

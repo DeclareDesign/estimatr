@@ -206,10 +206,12 @@ iv_robust <- function(formula,
   # ------
   colnames(first_stage$fitted.values) <- colnames(model_data$design_matrix)
 
+  fitted_values <- zero_underidentified(model_data, first_stage)
+
   second_stage <-
     lm_robust_fit(
       y = model_data$outcome,
-      X = first_stage$fitted.values,
+      X = fitted_values,
       weights = model_data$weights,
       cluster = model_data$cluster,
       ci = ci,
@@ -225,29 +227,6 @@ iv_robust <- function(formula,
         fe_dummy_matrix(model_data)
         else NULL
     )
-
-
-  # An underidentified model has no 2SLS estimate, and fitting one anyway
-  # returned a clean-looking object. The second stage regresses on the
-  # first-stage fitted values, which span no more than the instruments do, so
-  # rank detection dropped whichever regressor the instruments could not
-  # reproduce, often the endogenous one, and reported the rest: on
-  # `mpg ~ hp + cyl | am` the intercept went and hp and cyl came back with
-  # estimates and standard errors that nothing identifies. The old guard
-  # compared column counts and only warned, and it missed a rank-deficient
-  # instrument set with enough columns. Comparing ranks catches both, and does
-  # not fire on regressors that are collinear among themselves, which the
-  # instruments reproduce and the second stage drops as lm() would.
-  regressor_rank <- qr(model_data$design_matrix)$rank
-  if (second_stage[["rank"]] < regressor_rank) {
-    stop(
-      "The instruments do not identify every regressor: the first-stage ",
-      "fitted values have rank ", second_stage[["rank"]], " where the ",
-      "regressors have rank ", regressor_rank, ". Each endogenous regressor ",
-      "needs an excluded instrument that is not a combination of the others.",
-      call. = FALSE
-    )
-  }
 
   return_list <- lm_return(
     second_stage,
@@ -403,6 +382,51 @@ instrument_roles <- function(model_data, first_stage) {
     exogenous = exogenous,
     excluded = candidates[, basis$pivot[seq_len(basis$rank)], drop = FALSE]
   )
+}
+
+
+# An underidentified model has no 2SLS estimate for the regressors the
+# instruments cannot reproduce, and fitting one anyway returned a
+# clean-looking object. The second stage regresses on the first-stage fitted
+# values, which span no more than the instruments do, so rank detection
+# dropped whichever column lm_solver()'s pivot ranked last. On
+# `mpg ~ hp + cyl | am` that was the intercept, and hp and cyl came back with
+# standard errors that nothing identifies; on `y ~ x | z` with a flat first
+# stage the intercept went too, and `x` came back carrying the intercept's
+# value under the endogenous regressor's name, which is the number a reader
+# takes for the LATE.
+#
+# Which column goes is therefore an answer here rather than a naming question,
+# and it is not left to the pivot. The exogenous regressors and the intercept
+# are kept, since the first stage reproduces them exactly, and the rest of the
+# drop set comes from a dqrdc2 QR of the fitted values with those columns
+# moved to the front. dqrdc2 keeps the earliest columns it can, so the
+# endogenous regressors go in reverse formula order, as stats::lm() and
+# AER::ivreg() drop them. The reordering is what does the work: `y ~ x + w |
+# z + w` puts the endogenous regressor ahead of the exogenous one, and
+# lm_solver()'s Eigen QR pivots on column norm rather than on position, so it
+# cannot be steered by order alone.
+#
+# The dropped columns are zeroed rather than removed. A zero column has a zero
+# pivot, so lm_solver() ranks it last and returns its coefficient as NA in
+# place: the fit on the rest is unchanged, drop_collinear() takes the same
+# columns off the design matrix, and lm_return() reports the NAs in the words
+# it already uses for a collinear regressor. Only endogenous columns are ever
+# zeroed, so collinearity among the regressors themselves is still resolved by
+# the pivot, as it is in lm_robust().
+zero_underidentified <- function(model_data, first_stage) {
+  fitted_values <- first_stage[["fitted.values"]]
+  if (qr(fitted_values)$rank >= qr(model_data$design_matrix)$rank) {
+    return(fitted_values)
+  }
+
+  roles <- instrument_roles(model_data, first_stage)
+  ordered <- c(roles[["exogenous"]], roles[["endog"]])
+  ordered_qr <- qr(fitted_values[, ordered, drop = FALSE])
+  kept <- ordered[ordered_qr$pivot[seq_len(ordered_qr$rank)]]
+  fitted_values[, setdiff(roles[["endog"]], kept)] <- 0
+
+  fitted_values
 }
 
 first_stage_ftest <- function(model_data, roles, se_type) {
