@@ -219,6 +219,26 @@ test_that("AER::ivreg agrees where it drops the unidentified regressor", {
                tolerance = DEG_TOL)
 })
 
+test_that("the F statistic survives a dropped column that is not the last one", {
+  # `coefficients` carries an NA where a column went, while the F statistic's
+  # indices and its variance matrix both count positions in the kept set. Where
+  # the dropped column was not last the two disagreed, the statistic read the
+  # NA, and every robust se_type reported F as NA where lm() and the classical
+  # branch returned it. Which of `x1` and `dup2` the pivot takes does not
+  # matter: either way the fit spans the reduced model's columns, so it is the
+  # reduced model's F statistic.
+  for (st in c("HC2", "HC1", "HC3", "stata", "classical")) {
+    reduced <- lm_robust(y ~ x1 + x2, data = d, se_type = st)
+    for (form in list(y ~ x1 + dup2 + x2, y ~ x1 + x2 + dup2)) {
+      expect_warning(full <- lm_robust(form, data = d, se_type = st),
+                     "collinear with other regressors")
+      expect_equal(summary(full)$fstatistic, summary(reduced)$fstatistic,
+                   tolerance = DEG_TOL,
+                   label = paste(st, deparse(form), "F statistic"))
+    }
+  }
+})
+
 test_that("a fit with no observations left is refused", {
   no_outcome <- d
   no_outcome$y <- NA

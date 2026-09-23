@@ -706,6 +706,14 @@ get_fstat <- function(tss_r2s,
     ivrss <- colSums(iv_ei^2)
     fstat <- ((tss_r2s$tss - ivrss) / nomdf) / return_list[["res_var"]]
   } else {
+    # `coefs` is the full-length vector, carrying an NA wherever a column was
+    # dropped, while `indices` and the variance matrix both count positions in
+    # the kept set. Where the dropped column is the last one the two agree, and
+    # where it is not they do not: `y ~ x1 + mid + en` with `mid` collinear
+    # read the NA and every robust se_type reported the F statistic as NA,
+    # where lm() and this function's classical branch both return it. Dropping
+    # the NA rows first puts `coefs` on the same footing as the variance.
+    coefs <- coefs[!is.na(coefs[, 1]), , drop = FALSE]
     indices <-
       seq.int(has_int + 1, return_list[["rank"]], by = 1)
 

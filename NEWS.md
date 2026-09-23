@@ -10,6 +10,12 @@ Formula order alone would not choose the drop set. In `y ~ x + w | z + w` the en
 
 The warning is the one `lm_robust()` already gives for a dropped collinear regressor, naming the coefficients returned as `NA`.
 
+## A rank-deficient fit reported its F statistic as `NA` unless the dropped column was last
+
+Under every robust `se_type`, `summary()` on a fit with a column dropped for collinearity reported the F statistic as `NA` whenever that column was not the last one. On `y ~ x1 + mid + en` with `mid` collinear, `lm()` and estimatr's own classical branch both returned the statistic and every robust type returned `NA`. The coefficient vector carries an `NA` where the column went, while the statistic's indices and its variance matrix both count positions in the kept set, so the two agreed only when the gap fell at the end. The statistic is now the reduced model's under every `se_type`, which is what it already was when the dropped column happened to be last. `lm_robust()`, `lm_lin()`, and `iv_robust()` are all affected, and `iv_robust()` reaches the case more often now that an underidentified regressor returns `NA` in place.
+
+---
+
 # estimatr 2.0.0
 
 estimatr 2.0.0 is a ground-up rewrite aimed at the DeclareDesign use case: OLS, Lin-adjusted OLS, 2SLS IV, difference-in-means, Horvitz-Thompson, and linear hypothesis tests with heteroskedasticity- and cluster-robust standard errors. It fixes several long-standing correctness bugs, improves performance on the critical path, adds feols-style fixed effects absorption, and replaces the O(N²) Horvitz-Thompson variance with a design-aware O(1) computation. The six estimators keep their signatures, with one exception: `horvitz_thompson()`, whose five probability arguments consolidate into `condition_prs`. Removals are listed under What is dropped. Run side by side on one machine, the numbers agree to 1e-12 wherever both versions answer.
