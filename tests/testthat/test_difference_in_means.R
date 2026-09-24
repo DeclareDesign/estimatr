@@ -84,3 +84,34 @@ test_that("ci = FALSE withholds the p-value and the interval", {
   expect_true(is.na(m$conf.low[[1]]))
   expect_true(is.na(m$conf.high[[1]]))
 })
+
+test_that("a cbind() outcome is refused in the right words", {
+  # The multivariate formula otherwise reached the blocked path and was refused
+  # for want of "both treatment conditions within each block", which describes
+  # a different design problem and sends the reader to look at their blocks.
+  set.seed(343)
+  d <- data.frame(y = rnorm(60), y2 = rnorm(60), z = rbinom(60, 1, 0.5))
+
+  expect_error(
+    difference_in_means(cbind(y, y2) ~ z, data = d),
+    "does not support multiple outcomes"
+  )
+})
+
+test_that("update() refits a difference_in_means", {
+  # The fit stored no call, so update() stopped with "need an object with call
+  # component" where horvitz_thompson and the regression fits all refit.
+  set.seed(343)
+  d <- data.frame(y = rnorm(60), y2 = rnorm(60), z = rbinom(60, 1, 0.5))
+
+  m <- difference_in_means(y ~ z, data = d)
+  expect_false(is.null(m$call))
+
+  same <- update(m, . ~ .)
+  expect_equal(same$coefficients, m$coefficients)
+  expect_equal(same$std.error, m$std.error)
+
+  other <- update(m, y2 ~ .)
+  expect_equal(other$coefficients,
+               difference_in_means(y2 ~ z, data = d)$coefficients)
+})

@@ -44,6 +44,19 @@ No estimate changes. What changes is every random number a script draws after it
 
 The 2026-09-23 maintained-corpus sweep gives the size of it. Offer-Westort, Coppock and Green (2021) builds its randomization-inference p-values from simulations that fit a weighted or clustered model on every draw, and its footnote 15 from twenty clustered fits taken before ten million draws. Six of those p-values moved: 0.429 to 0.417, 0.199 to 0.189, 0.027 to 0.021, 0.011 to 0.015, 0.008 to 0.012, and, from a simulated null at ten million draws, 0.017851 to 0.017795. An appendix figure of simulated comparisons moved by as much as a factor of 3.6 on a coefficient. Emulating the 1.0.6 draws under 2.0.0 returns all of them to the values the reproduction repository records, which are the published ones. The repository's other 27 output files are identical or differ in their last two digits, and across five seeds under 2.0 the first of those p-values runs from 0.417 to 0.437, so what moved is which draws the null distribution contains rather than any estimate.
 
+## `lh_robust()` honours `ci = FALSE`, and refuses `se_type = "none"` in its own terms
+
+`lh_robust(ci = FALSE)` returned a p-value and a confidence interval anyway, and raised "no non-missing arguments to min; returning Inf" on the way. The fit with no intervals carries no degrees of freedom, and the combination took the smallest of them, so the minimum was over an empty set and the hypothesis got an infinite df. The flag is now honoured as every other estimator honours it: the estimate, its standard error, and the test statistic are returned, and the p-value, the interval, and the df are `NA`. 1.0.6 errored on the same call, so neither version did what was asked.
+
+`lh_robust(se_type = "none")` stopped with "Object must have vcov matrix. Try setting `return_vcov = TRUE` in the estimator function", which names an argument no estimator here takes and not the one the caller set. A fit with no variance gives a linear combination no standard error, and the refusal now says that.
+
+## `difference_in_means()` refuses a multivariate outcome, and `update()` refits one
+
+`difference_in_means(cbind(y1, y2) ~ z)` was refused with "Must have units with both treatment conditions within each block", which describes a different problem and sends the reader to look at a blocking variable they may not have. It now says that the estimator takes one outcome at a time.
+
+`update()` on a `difference_in_means` fit stopped with "need an object with call component". The fit stored no `call`, where `horvitz_thompson()` and the regression fits all store one. It does now, so `update()` refits as it does elsewhere.
+
+
 ---
 
 # estimatr 2.0.0
