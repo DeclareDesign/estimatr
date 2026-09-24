@@ -1,5 +1,21 @@
 # estimatr 2.0.1
 
+## `HC2` and `HC3` return `NA` for a coefficient that a full-leverage observation alone identifies
+
+An observation the fit reproduces exactly has leverage 1 and residual 0, so HC2's contribution for it is a 0/0. 2.0 resolved that by setting the denominator to 0 wherever `1 - h <= 0`, dropping those observations from the variance. Dropping them is free for every coefficient the observation carries no information about, and by Frisch-Waugh-Lovell a singleton dummy's neighbours are exactly that: they keep the standard error of the design with the singleton's row and column removed. It is not free for the coefficient those observations alone identify. On a 50-row design with a one-member factor level, 2.0 returns `0.2303` for the singleton's coefficient against a classical `0.8501`, which is 0.271 of it, and that number is assembled entirely from rows that say nothing about the coefficient it describes. Its standard error is now `NA`, and the other four on that design are unchanged to machine precision.
+
+Which coefficients those are is computed rather than assumed. Observation `i` contributes `a_ij^2 * sigma_i^2` to `Var(beta_j)`, where `a_i = (X'X)^-1 x_i`, so discarding it is right exactly when `a_ij` is 0 and wrong otherwise. The criterion coincides with the partial leverage of Kranz (2024), `h_ki = xtilde_ki^2 / sum_j xtilde_kj^2` with `xtilde_k` the residual from regressing `x_k` on the other regressors, which is positive on the same set of coefficients. The set depends on the parametrisation, as it should, since it is a claim about coefficients as written: under treatment coding one singleton level makes one coefficient non-estimable, and under sum coding the same data makes five, the intercept among them.
+
+The result is narrower than `sandwich::vcovHC()`, not wider. A single `NaN` in the meat propagates through `bread %*% meat %*% bread`, so `sandwich` returns `NaN` for every coefficient on the design above, where estimatr returns four finite standard errors and one `NA`. Only `HC2` and `HC3` are affected. `HC0`, `HC1`, `stata`, `CR0` and `CR2` never form `1 - h`, return a finite number here, and are left alone: what they report at full leverage is a property of those estimators rather than a computational artefact.
+
+## A dropped collinear regressor is a message, not a warning
+
+2.0 added a warning naming the coefficients a rank-deficient fit returns as `NA` (#411), because a user comparing `lm()` and `lm_robust()` output had no way to see that a term had been dropped. `stats::lm()` signals nothing at all in that situation, at the fit, at `summary()`, at `predict()`, or through `broom::tidy()`: it prints `Coefficients: (1 not defined because of singularities)` in the summary and raises no condition. The notice is now a message, which keeps the information and matches `lm()` on the one axis a caller can intercept.
+
+A caller who wrapped a rank-deficient fit in `suppressWarnings()` to silence the 2.0 notice will now see it printed; `suppressMessages()` silences it instead.
+
+The warning also reached code no one was looking at. A warning raised inside a grouped dplyr verb that is itself nested inside another grouped verb crashes dplyr 1.2.1: `cur_group_label()` formats the group key with `map_chr(keys, pillar::format_glimpse)`, one key formats to length zero, and `vapply` rejects it. The shape is ordinary, `group_by() |> nest() |> mutate(map(data, f))` where `f` fits a model inside its own `group_by() |> reframe()`, and it is how the 2026-09-23 corpus sweep found a published archive script that ran clean under 1.0.6 and died under 2.0. A message never enters that machinery.
+
 ## An underidentified `iv_robust()` model returns `NA` rather than an error
 
 A first stage that does not reproduce every regressor stopped `iv_robust()`. The two neighbours it should match do not stop: `lm_robust()` on a rank-deficient design and `AER::ivreg()` on the same model each drop a column, return its coefficient as `NA`, and report the rest. `iv_robust()` now does the same. Of the two parts of the change, which column is dropped is the substantive one.
@@ -8,7 +24,7 @@ The second stage regresses the outcome on the first-stage fitted values, and `lm
 
 Formula order alone would not choose the drop set. In `y ~ x + w | z + w` the endogenous regressor precedes the exogenous one, and in `y ~ en + x1 | x1 + dup` with `dup` equal to `x1` it is `en` that has no instrument. `AER::ivreg()` drops by position and so keeps `en` there, reporting a coefficient of -11.9 whose fitted values lie in the span of the intercept and `x1` to 6e-16, and forming its residuals from `en` rather than from what was fitted. estimatr returns `NA` for `en` and the ordinary least squares fit on the intercept and `x1`, which is the only fit the instruments support. On `mpg ~ hp + cyl | am` and on `y ~ x + w | z + w` the two packages agree.
 
-The warning is the one `lm_robust()` already gives for a dropped collinear regressor, naming the coefficients returned as `NA`.
+The message is the one `lm_robust()` already gives for a dropped collinear regressor, naming the coefficients returned as `NA`.
 
 ## A rank-deficient fit reported its F statistic as `NA` unless the dropped column was last
 
@@ -19,6 +35,14 @@ Under every robust `se_type`, `summary()` on a fit with a column dropped for col
 `lm_robust(..., fixed_effects = ~ g)` returned every entry of `fixed_effects` as `NA` whenever any regressor was dropped for collinearity, although the coefficients, standard errors, and degrees of freedom were all correct. Each group effect is formed as the fitted value at a representative row minus that row's regressors times the coefficient vector, and the coefficient vector carries an `NA` wherever a column went, so the product was `NA` for every group. A dropped column contributes nothing to the fitted values, so both sides now drop it. Unlike the F statistic above, this did not depend on where in the formula the dropped column sat.
 
 The case is reachable whenever an absorbed factor also appears among the regressors, for example a group-level covariate alongside `fixed_effects = ~ g`.
+
+## A fit no longer draws from the random number stream
+
+`clean_model_data()` in 1.0.6 named the hidden variables it writes into the model frame with `sprintf(".__%s%%%d__", da, sample.int(.Machine$integer.max, 1))`: one draw for every argument evaluated there, `weights`, `clusters` and `condition_prs` among them, and one more for `fixed_effects`. Every such call advanced the caller's random number stream, while a fit carrying only a formula and data drew nothing. 2.0.0 numbers those names with a counter, which is as unlikely to collide with a user's own variables and draws nothing at all.
+
+No estimate changes. What changes is every random number a script draws after its first such fit, so a seeded simulation whose loop contains one gets a different sequence of draws under 2.0 and will not reproduce a result recorded under 1.x. Drawing one `sample.int(.Machine$integer.max, 1)` per such argument in a wrapper around the fit restores the old stream exactly, which is worth doing once to identify what moved a number rather than keeping in a maintained script.
+
+The 2026-09-23 maintained-corpus sweep gives the size of it. Offer-Westort, Coppock and Green (2021) builds its randomization-inference p-values from simulations that fit a weighted or clustered model on every draw, and its footnote 15 from twenty clustered fits taken before ten million draws. Six of those p-values moved: 0.429 to 0.417, 0.199 to 0.189, 0.027 to 0.021, 0.011 to 0.015, 0.008 to 0.012, and, from a simulated null at ten million draws, 0.017851 to 0.017795. An appendix figure of simulated comparisons moved by as much as a factor of 3.6 on a coefficient. Emulating the 1.0.6 draws under 2.0.0 returns all of them to the values the reproduction repository records, which are the published ones. The repository's other 27 output files are identical or differ in their last two digits, and across five seeds under 2.0 the first of those p-values runs from 0.417 to 0.437, so what moved is which draws the null distribution contains rather than any estimate.
 
 ---
 

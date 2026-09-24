@@ -188,7 +188,7 @@ Five things 1.x cannot do, all of which fall out of the rewrite rather than bein
 
 **Residuals.** `residuals(fit)` returns them, on the scale of the data, in the original row order for clustered fits, and structural rather than first-stage for `iv_robust()`. In 1.x the slot was `NULL` for every estimator.
 
-**A warning when a regressor is dropped.** Collinear terms come back as NA coefficients in both versions; only one of them tells you which terms it dropped.
+**A message when a regressor is dropped.** Collinear terms come back as NA coefficients in both versions; only one of them tells you which terms it dropped.
 
 **Blocked designs whose blocks are not all the same shape.** 1.x either errors on such a design or applies the matched-pairs estimator to every block, big ones included. 2.0 uses the estimators of @pashleymiratrix2021. See below, which is worth a section of its own.
 
@@ -346,9 +346,9 @@ What follows is the list of places where 2.0 deliberately departs from 1.x: a di
     all.equal(residuals(fit) + fitted(fit), dat$y, check.attributes = FALSE)
     ```
 
-8. **A collinear regressor was dropped silently.** The dropped term comes back as an NA coefficient with no warning, which is what made an `lm()` user open the issue after finding coefficients that disagreed between the two functions. 2.0 warns and names the terms it dropped. (Issue #411.)
+8. **A collinear regressor was dropped silently.** The dropped term comes back as an NA coefficient with no notice at all, which is what made an `lm()` user open the issue after finding coefficients that disagreed between the two functions. 2.0 names the terms it dropped, in a message. (Issue #411.)
 
-    ```{r, warning = TRUE}
+    ```{r, message = TRUE}
     dat$x_copy <- dat$x
     fit <- lm_robust(y ~ x + x_copy, data = dat)
     ```

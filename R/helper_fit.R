@@ -318,6 +318,28 @@ lm_robust_fit <- function(y,
       neg_var <- !is.na(var_hat) & var_hat < 0
       var_hat[neg_var] <- NaN
       return_list$std.error[est_exists] <- sqrt(var_hat)
+
+      # Which standard errors the leverage clamp leaves with nothing to
+      # estimate from. Zeroing a discarded observation's meat term is free for
+      # every coefficient that observation carries no information about, and by
+      # Frisch-Waugh-Lovell a singleton dummy's neighbours are exactly that:
+      # they keep the standard error of the design with the singleton row and
+      # column removed, to machine precision. The singleton's own coefficient
+      # is the exception. Its entire row and column of the meat is zeroed, so
+      # what `bread %*% meat %*% bread` returns for it is assembled from rows
+      # that say nothing about it, and it came back at a third of the classical
+      # standard error on the fit that found this. `NA` is the honest answer,
+      # and it is the same answer a collinear column already gets.
+      not_estimable <- logical(length(var_hat))
+      frac_dropped <- vcov_fit[["var_not_estimable"]]
+      if (length(frac_dropped) == length(var_hat)) {
+        not_estimable <- frac_dropped > sqrt(.Machine$double.eps)
+        if (any(not_estimable)) {
+          se_vec <- return_list$std.error[est_exists]
+          se_vec[not_estimable] <- NA_real_
+          return_list$std.error[est_exists] <- se_vec
+        }
+      }
       if (any(neg_var)) {
         warning(
           sum(neg_var), " of ", length(var_hat), " variance estimates came out ",
@@ -350,7 +372,20 @@ lm_robust_fit <- function(y,
           "rather than divided by a negative number, and one just below it ",
           "contributes a term the small divisor inflates. Use `se_type = ",
           "\"HC1\"` or `\"classical\"`, or drop covariates, to use every ",
-          "observation."
+          "observation.",
+          if (any(not_estimable)) paste0(
+            " The standard error is NA for ",
+            # The design is shared across outcomes, so a multivariate fit
+            # carries the same non-estimable coefficient once per outcome and
+            # would otherwise name it that many times. One name per
+            # coefficient is what the collinear-drop message already gives.
+            paste(unique(rep(variable_names, ncol(est_exists))[est_exists][not_estimable]),
+                  collapse = ", "),
+            ", whose coefficient those observations alone identify: dropping ",
+            "them leaves nothing to estimate that variance from. Every other ",
+            "standard error in this fit is the one the design without them ",
+            "gives."
+          )
         )
       } else if (any(is.nan(return_list$std.error)) &&
                  se_type %in% c("HC2", "HC3", "CR2")) {

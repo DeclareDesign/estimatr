@@ -110,7 +110,7 @@ expect_reduces_to <- function(full, reduced, label) {
 test_that("iv_robust with a collinear exogenous regressor is the fit without it", {
   for (st in c("HC2", "classical", "CR2")) {
     cluster_ids <- if (st == "CR2") d$cl else NULL
-    expect_warning(
+    expect_message(
       full <- iv_robust(y ~ en + x1 + dup | inst + x1 + dup, data = d, se_type = st,
                         clusters = cluster_ids),
       "collinear"
@@ -135,12 +135,12 @@ test_that("a redundant instrument changes nothing, diagnostics included", {
 
 test_that("lm_lin with a duplicated or constant covariate is lm_lin without it", {
   reduced <- lm_lin(y ~ z, covariates = ~ x1, data = d)
-  expect_warning(
+  expect_message(
     duplicated <- lm_lin(y ~ z, covariates = ~ x1 + dup, data = d),
     "dup_c, z:dup_c"
   )
   expect_reduces_to(duplicated, reduced, "duplicated covariate")
-  expect_warning(
+  expect_message(
     constant <- lm_lin(y ~ z, covariates = ~ x1 + const, data = d),
     "const_c, z:const_c"
   )
@@ -154,7 +154,7 @@ test_that("a regressor the fixed effects absorb is NA, and the rest are unchange
   )
   for (nm in names(cases)) {
     cs <- cases[[nm]]
-    expect_warning(
+    expect_message(
       full <- lm_robust(y ~ x1 + g_level, data = d, fixed_effects = ~ g,
                         se_type = cs$se_type, clusters = cs$clusters),
       "g_level"
@@ -171,7 +171,7 @@ test_that("a regressor the fixed effects absorb is NA, and the rest are unchange
 
 test_that("weighted, clustered designs short of full rank by two are the reduced fit", {
   for (st in c("CR2", "stata", "CR0")) {
-    expect_warning(
+    expect_message(
       full <- lm_robust(y ~ x1 + x2 + dup2 + dup3, data = d, weights = w,
                         clusters = cl, se_type = st),
       "dup2, dup3"
@@ -208,7 +208,7 @@ test_that("an underidentified regressor is NA and the rest of the fit stands", {
   #
   # Too few instruments by count. `hp` keeps a just-identified estimate and
   # `cyl` goes, as stats::lm() drops the later column.
-  expect_warning(
+  expect_message(
     full <- iv_robust(mpg ~ hp + cyl | am, data = mtcars),
     "collinear with other regressors"
   )
@@ -221,7 +221,7 @@ test_that("an underidentified regressor is NA and the rest of the fit stands", {
   # chosen.
   for (cs in list(list(se_type = "HC2", clusters = NULL),
                   list(se_type = "CR2", clusters = d$cl))) {
-    expect_warning(
+    expect_message(
       full <- iv_robust(y ~ en + x1 | x1 + dup, data = d,
                         clusters = cs$clusters, se_type = cs$se_type),
       "returned as NA: en"
@@ -233,22 +233,22 @@ test_that("an underidentified regressor is NA and the rest of the fit stands", {
 
   # A first stage that is flat rather than short of instruments by count.
   b <- flat_iv_data()
-  expect_warning(full <- iv_robust(Y ~ X | Z, data = b), "returned as NA: X")
+  expect_message(full <- iv_robust(Y ~ X | Z, data = b), "returned as NA: X")
   expect_reduces_to(full, lm_robust(Y ~ 1, data = b), "flat first stage")
 
-  expect_warning(full <- iv_robust(Y ~ X + W | Z + W, data = b), "returned as NA: X")
+  expect_message(full <- iv_robust(Y ~ X + W | Z + W, data = b), "returned as NA: X")
   expect_reduces_to(full, lm_robust(Y ~ W, data = b), "flat first stage, exogenous W")
 })
 
 test_that("AER::ivreg agrees where it drops the unidentified regressor", {
   skip_if_not_installed("AER")
-  expect_warning(full <- iv_robust(mpg ~ hp + cyl | am, data = mtcars),
+  expect_message(full <- iv_robust(mpg ~ hp + cyl | am, data = mtcars),
                  "collinear with other regressors")
   aer <- suppressWarnings(AER::ivreg(mpg ~ hp + cyl | am, data = mtcars))
   expect_equal(coef(full), coef(aer), tolerance = DEG_TOL)
 
   b <- flat_iv_data()
-  expect_warning(full <- iv_robust(Y ~ X + W | Z + W, data = b), "returned as NA: X")
+  expect_message(full <- iv_robust(Y ~ X + W | Z + W, data = b), "returned as NA: X")
   expect_equal(coef(full), coef(AER::ivreg(Y ~ X + W | Z + W, data = b)),
                tolerance = DEG_TOL)
 
@@ -260,7 +260,7 @@ test_that("AER::ivreg agrees where it drops the unidentified regressor", {
   aer <- AER::ivreg(y ~ en + x1 | x1 + dup, data = d)
   expect_true(is.na(coef(aer)[["x1"]]))
   expect_false(is.na(coef(aer)[["en"]]))
-  expect_warning(full <- iv_robust(y ~ en + x1 | x1 + dup, data = d),
+  expect_message(full <- iv_robust(y ~ en + x1 | x1 + dup, data = d),
                  "returned as NA: en")
   expect_true(is.na(coef(full)[["en"]]))
   expect_equal(coef(full)[["x1"]], coef(lm_robust(y ~ x1, data = d))[["x1"]],
@@ -278,7 +278,7 @@ test_that("the F statistic survives a dropped column that is not the last one", 
   for (st in c("HC2", "HC1", "HC3", "stata", "classical")) {
     reduced <- lm_robust(y ~ x1 + x2, data = d, se_type = st)
     for (form in list(y ~ x1 + dup2 + x2, y ~ x1 + x2 + dup2)) {
-      expect_warning(full <- lm_robust(form, data = d, se_type = st),
+      expect_message(full <- lm_robust(form, data = d, se_type = st),
                      "collinear with other regressors")
       expect_equal(summary(full)$fstatistic, summary(reduced)$fstatistic,
                    tolerance = DEG_TOL,
@@ -351,15 +351,20 @@ test_that("a saturated design returns lm()'s coefficients and says inference fai
 test_that("more coefficients than observations drops as many as lm() does", {
   tiny <- d[1:2, ]
   warnings <- character()
+  messages <- character()
   fit <- withCallingHandlers(
     lm_robust(y ~ x1 + x2, data = tiny, se_type = "classical"),
     warning = function(w) {
       warnings <<- c(warnings, conditionMessage(w))
       invokeRestart("muffleWarning")
+    },
+    message = function(m) {
+      messages <<- c(messages, conditionMessage(m))
+      invokeRestart("muffleMessage")
     }
   )
   expect_equal(sum(is.na(fit$coefficients)), sum(is.na(coef(lm(y ~ x1 + x2, data = tiny)))))
-  expect_true(any(grepl("collinear", warnings)))
+  expect_true(any(grepl("collinear", messages)))
   expect_true(any(grepl("degrees of freedom have been estimated as negative or zero", warnings)))
 })
 
@@ -415,7 +420,7 @@ test_that("try_cholesky still drops an exactly collinear column", {
 # where lm() gives NA.
 test_that("exactly collinear columns are still dropped", {
   const <- data.frame(x = rep(1, n), z = rnorm(n), y = rnorm(n))
-  expect_warning(lm_robust(y ~ x + z, data = const), "collinear")
+  expect_message(lm_robust(y ~ x + z, data = const), "collinear")
   fit_const <- suppressWarnings(lm_robust(y ~ x + z, data = const))
   expect_equal(sum(is.na(coef(fit_const))), 1L)
   expect_equal(sum(is.na(coef(fit_const))),
@@ -423,7 +428,7 @@ test_that("exactly collinear columns are still dropped", {
 
   dup <- dat
   dup$x2 <- dup$x1
-  expect_warning(lm_robust(y ~ x1 + x2 + x3, data = dup), "collinear")
+  expect_message(lm_robust(y ~ x1 + x2 + x3, data = dup), "collinear")
   fit_dup <- suppressWarnings(lm_robust(y ~ x1 + x2 + x3, data = dup))
   expect_equal(sum(is.na(coef(fit_dup))), 1L)
   expect_equal(sum(is.na(coef(fit_dup))),
@@ -433,7 +438,7 @@ test_that("exactly collinear columns are still dropped", {
 test_that("a rescaled collinear column is still dropped", {
   dup <- dat
   dup$x2 <- dup$x1 * 1e9
-  expect_warning(lm_robust(y ~ x1 + x2 + x3, data = dup), "collinear")
+  expect_message(lm_robust(y ~ x1 + x2 + x3, data = dup), "collinear")
   fit <- suppressWarnings(lm_robust(y ~ x1 + x2 + x3, data = dup))
   expect_equal(sum(is.na(coef(fit))), 1L)
   expect_equal(sum(is.na(coef(fit))),
@@ -443,7 +448,7 @@ test_that("a rescaled collinear column is still dropped", {
 test_that("an all-zero column does not divide by its norm", {
   zeroed <- dat
   zeroed$x2 <- 0
-  expect_warning(lm_robust(y ~ x1 + x2 + x3, data = zeroed), "collinear")
+  expect_message(lm_robust(y ~ x1 + x2 + x3, data = zeroed), "collinear")
   fit <- suppressWarnings(lm_robust(y ~ x1 + x2 + x3, data = zeroed))
   expect_true(is.na(coef(fit)[["x2"]]))
   expect_false(anyNA(coef(fit)[c("(Intercept)", "x1", "x3")]))
@@ -627,19 +632,24 @@ test_that("#395: NaN standard errors from leverage-1 points are explained", {
   d$Y <- 0.1 * d$Z + d$x + rnorm(N)
   # This design is rank deficient AND near-saturated, so several warnings fire
   # together: collinearity, leverage, and on some platforms a negative variance
-  # diagonal. Collect them instead of nesting expect_warning(), which pins the
+  # diagonal. Collect them instead of nesting expect_message(), which pins the
   # count as well as the content and so breaks whenever another one is added --
   # as it did on all five CI platforms and on none locally.
   ws <- character(0)
+  ms <- character(0)
   withCallingHandlers(
     lm_lin(Y ~ Z, covariates = ~ as.factor(x), data = d),
     warning = function(w) {
       ws <<- c(ws, conditionMessage(w))
       invokeRestart("muffleWarning")
+    },
+    message = function(m) {
+      ms <<- c(ms, conditionMessage(m))
+      invokeRestart("muffleMessage")
     }
   )
   expect_true(any(grepl("leverage", ws)))
-  expect_true(any(grepl("collinear", ws)))
+  expect_true(any(grepl("collinear", ms)))
   expect_false(any(grepl("NaNs produced", ws, fixed = TRUE)))
   # classical SEs do not use leverage, so they stay finite
   m <- suppressWarnings(lm_lin(Y ~ Z, covariates = ~ as.factor(x), data = d,
@@ -756,16 +766,21 @@ test_that("#395: the leverage guard drops exactly the 1 - h < 0 observations", {
   }
 })
 
-# These designs are rank deficient, so a collinearity warning fires on every fit
+# These designs are rank deficient, so a collinearity message fires on every fit
 # regardless of se_type. Only the leverage warning is of interest here, so fits
 # are run through this rather than through expect_silent().
 fit_warnings <- function(expr) {
   ws <- character(0)
+  ms <- character(0)
   val <- withCallingHandlers(
     expr,
     warning = function(w) {
       ws <<- c(ws, conditionMessage(w))
       invokeRestart("muffleWarning")
+    },
+    message = function(m) {
+      ms <<- c(ms, conditionMessage(m))
+      invokeRestart("muffleMessage")
     }
   )
   list(fit = val, leverage_warning = any(grepl("leverage", ws, fixed = TRUE)))
@@ -817,18 +832,23 @@ test_that("#395: the leverage warning counts the observations it dropped", {
   fml <- Y ~ Z * as.factor(x)
   skip_if_not(lev_above_one(fml, d)$any, "no leverage above 1 on this platform")
 
-  # Nesting expect_warning() would pin the number of warnings as well as their
+  # Nesting expect_message() would pin the number of warnings as well as their
   # content, which is what broke the first #395 test on all five CI platforms
   # and on none locally. Collect them and read the leverage one out.
   ws <- character(0)
+  ms <- character(0)
   withCallingHandlers(
     lm_robust(fml, data = d, se_type = "HC2"),
     warning = function(w) {
       ws <<- c(ws, conditionMessage(w))
       invokeRestart("muffleWarning")
+    },
+    message = function(m) {
+      ms <<- c(ms, conditionMessage(m))
+      invokeRestart("muffleMessage")
     }
   )
-  expect_true(any(grepl("collinear", ws)))
+  expect_true(any(grepl("collinear", ms)))
   lev <- grep("computed leverage at or near 1", ws, value = TRUE)
   expect_length(lev, 1)
 
@@ -881,10 +901,167 @@ test_that("absorbed group effects survive a dropped regressor", {
   # depend on where the dropped column sits.
   reduced <- lm_robust(y ~ x1 + x2, data = d, fixed_effects = ~ g, se_type = "HC1")
   for (pos in list(y ~ x1 + g_level + x2, y ~ x1 + x2 + g_level)) {
-    expect_warning(full <- lm_robust(pos, data = d, fixed_effects = ~ g,
+    expect_message(full <- lm_robust(pos, data = d, fixed_effects = ~ g,
                                      se_type = "HC1"),
                    "returned as NA: g_level")
     expect_false(anyNA(full$fixed_effects))
     expect_equal(full$fixed_effects, reduced$fixed_effects, tolerance = DEG_TOL)
   }
+})
+
+test_that("#395: a singleton dummy's own standard error is NA, and only its own", {
+  # The other half of the #395 clamp. Zeroing a leverage-1 observation's meat
+  # term is free for every coefficient that observation carries no information
+  # about, and Frisch-Waugh-Lovell says a singleton dummy's neighbours are
+  # exactly that. Its own coefficient is the exception: its whole row and
+  # column of the meat is zeroed, so 2.0.0 assembled that variance out of rows
+  # that say nothing about it and returned a third of the classical standard
+  # error, with a p-value and an interval, on a real fit in the reproduction
+  # corpus. `sandwich` returns NaN for the entire fit here and 1.0.6 did too,
+  # so the number was new in 2.0.0 and wrong; the eighteen it made estimable
+  # alongside it were right.
+  set.seed(343)
+  n <- 60
+  d <- data.frame(
+    y = rnorm(n),
+    x = rnorm(n),
+    g = c("solo", sample(c("a", "b", "c"), n - 1, replace = TRUE))
+  )
+
+  expect_warning(fit <- lm_robust(y ~ x + g, data = d), "NA for gsolo")
+
+  # The singleton alone loses its standard error, and keeps its estimate.
+  expect_true(is.na(fit$std.error[["gsolo"]]))
+  expect_true(is.na(fit$p.value[["gsolo"]]))
+  expect_true(is.na(fit$conf.low[["gsolo"]]))
+  expect_false(is.na(fit$coefficients[["gsolo"]]))
+  expect_equal(sum(is.na(fit$std.error)), 1)
+
+  # Every other standard error is the one the design without the singleton
+  # gives, which is the property that makes dropping the observation correct.
+  reduced <- lm_robust(y ~ x + g, data = d[-1, ])
+  shared <- c("(Intercept)", "x", "gb", "gc")
+  expect_equal(fit$std.error[shared], reduced$std.error[shared], tolerance = DEG_TOL)
+  expect_equal(fit$coefficients[shared], reduced$coefficients[shared], tolerance = DEG_TOL)
+
+  # HC3 reaches the clamp by the same route and must answer the same way.
+  expect_warning(fit3 <- lm_robust(y ~ x + g, data = d, se_type = "HC3"),
+                 "NA for gsolo")
+  expect_true(is.na(fit3$std.error[["gsolo"]]))
+  expect_equal(sum(is.na(fit3$std.error)), 1)
+
+  # A design with no singleton is untouched: the guard must not fire on the
+  # ordinary case it sits in front of.
+  expect_silent(clean <- lm_robust(y ~ x + g, data = d[-1, ]))
+  expect_false(anyNA(clean$std.error))
+})
+
+test_that("#395: the singleton rule holds under weights", {
+  # Weights change both the leverage and the meat, and the clamp is applied to
+  # the weighted design, so the rule that the singleton alone loses its
+  # standard error has to be shown here rather than inferred from the
+  # unweighted fit above.
+  set.seed(343)
+  n <- 60
+  d <- data.frame(
+    y = rnorm(n),
+    x = rnorm(n),
+    w = runif(n, 0.5, 2),
+    g = c("solo", sample(c("a", "b", "c"), n - 1, replace = TRUE))
+  )
+  d_reduced <- d[-1, ]
+
+  expect_warning(fit <- lm_robust(y ~ x + g, data = d, weights = w),
+                 "NA for gsolo")
+  expect_true(is.na(fit$std.error[["gsolo"]]))
+  expect_false(is.na(fit$coefficients[["gsolo"]]))
+  expect_equal(sum(is.na(fit$std.error)), 1)
+
+  # The neighbours keep the weighted design's standard errors without the
+  # singleton row, which is the property that makes discarding it correct.
+  reduced <- lm_robust(y ~ x + g, data = d_reduced, weights = w)
+  shared <- c("(Intercept)", "x", "gb", "gc")
+  expect_equal(fit$std.error[shared], reduced$std.error[shared], tolerance = DEG_TOL)
+  expect_equal(fit$coefficients[shared], reduced$coefficients[shared], tolerance = DEG_TOL)
+
+  expect_warning(
+    fit3 <- lm_robust(y ~ x + g, data = d, weights = w, se_type = "HC3"),
+    "NA for gsolo"
+  )
+  expect_true(is.na(fit3$std.error[["gsolo"]]))
+  expect_equal(sum(is.na(fit3$std.error)), 1)
+})
+
+test_that("#395: a multivariate fit carries the rule into every outcome block", {
+  # The design is shared across outcomes, so lm_variance computes the
+  # non-estimable set once and copies it into each of the ny coefficient
+  # blocks. The copy is a loop over m * r + j in the C++ that nothing read
+  # until this test, and a fit with two outcomes is the only thing that does.
+  set.seed(343)
+  n <- 60
+  d <- data.frame(
+    y = rnorm(n),
+    y2 = rnorm(n),
+    x = rnorm(n),
+    g = c("solo", sample(c("a", "b", "c"), n - 1, replace = TRUE))
+  )
+
+  expect_warning(fit <- lm_robust(cbind(y, y2) ~ x + g, data = d),
+                 "NA for gsolo")
+  expect_equal(dim(fit$std.error), c(5L, 2L))
+  expect_true(all(is.na(fit$std.error["gsolo", ])))
+  expect_equal(sum(is.na(fit$std.error)), 2)
+  expect_false(anyNA(fit$coefficients))
+
+  # Each outcome's column is the univariate fit, NA included.
+  expect_warning(fy <- lm_robust(y ~ x + g, data = d), "NA for gsolo")
+  expect_warning(fy2 <- lm_robust(y2 ~ x + g, data = d), "NA for gsolo")
+  expect_equal(unname(fit$std.error[, "y"]), unname(fy$std.error),
+               tolerance = DEG_TOL)
+  expect_equal(unname(fit$std.error[, "y2"]), unname(fy2$std.error),
+               tolerance = DEG_TOL)
+
+  # The warning names the coefficient once rather than once per outcome, which
+  # is what the collinear-drop message already does.
+  msg <- tryCatch(lm_robust(cbind(y, y2) ~ x + g, data = d),
+                  warning = conditionMessage)
+  expect_false(grepl("gsolo, gsolo", msg, fixed = TRUE))
+})
+
+test_that("#395: lm_lin's centring makes the intercept non-estimable too", {
+  # Which coefficients a full-leverage observation alone identifies is a claim
+  # about coefficients as written, so it moves with the parametrisation.
+  # lm_lin centres its covariates at the grand mean, and the singleton moves
+  # that mean, so the intercept joins the singleton's own centred dummy. The
+  # treatment effect, which is what the estimator is for, is untouched.
+  set.seed(343)
+  n <- 60
+  d <- data.frame(
+    y = rnorm(n),
+    x = rnorm(n),
+    z = rbinom(n, 1, 0.5),
+    g = c("solo", sample(c("a", "b", "c"), n - 1, replace = TRUE))
+  )
+
+  expect_warning(
+    expect_message(fit <- lm_lin(y ~ z, covariates = ~ x + g, data = d),
+                   "collinear"),
+    "NA for \\(Intercept\\), gsolo_c"
+  )
+  expect_true(is.na(fit$std.error[["(Intercept)"]]))
+  expect_true(is.na(fit$std.error[["gsolo_c"]]))
+  expect_false(is.na(fit$std.error[["z"]]))
+
+  # The singleton sits in one treatment arm, so its interaction is collinear
+  # and the column is dropped. That third NA is the collinear rule's, not this
+  # one's, and it is the only NA coefficient.
+  expect_true(is.na(fit$coefficients[["z:gsolo_c"]]))
+  expect_equal(sum(is.na(fit$coefficients)), 1)
+  expect_equal(sum(is.na(fit$std.error)), 3)
+
+  # Every coefficient the singleton carries no information about keeps its
+  # standard error. The criterion is a share of the classical variance, and on
+  # this design it separates 8e-3 and 9e-1 from 1e-31 and below.
+  finite <- c("z", "x_c", "gb_c", "gc_c", "z:x_c", "z:gb_c", "z:gc_c")
+  expect_false(anyNA(fit$std.error[finite]))
 })

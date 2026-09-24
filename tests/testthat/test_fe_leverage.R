@@ -428,7 +428,7 @@ test_that("a nested fixed-effect factor matches the explicit-dummy fit", {
                      se_type = se)
     # The explicit fit drops the redundant columns and says so; the absorbed
     # fit has no columns to drop, and handles the deficiency in the projection.
-    expect_warning(
+    expect_message(
       dum <- lm_robust(y ~ z + x + factor(bl) + factor(cl) + factor(c3),
                        data = d, se_type = se),
       "collinear"

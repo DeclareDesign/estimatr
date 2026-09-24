@@ -273,21 +273,26 @@ test_that("#345: residuals with fixed effects are the full-model residuals", {
   expect_equal(unname(m$residuals + m$fitted.values), dat$y, tolerance = 1e-10)
 })
 
-# ---- collinearity warnings (estimatr #411) ----
+# ---- collinearity messages (estimatr #411) ----
 
-test_that("#411: dropped collinear regressors warn and name themselves", {
+test_that("#411: dropped collinear regressors are named, and in a message", {
   d <- dat
   d$x_copy <- d$x
-  expect_warning(lm_robust(y ~ x + x_copy, data = d), "collinear")
-  expect_warning(lm_robust(y ~ x + x_copy, data = d), "x_copy")
-  m <- suppressWarnings(lm_robust(y ~ x + x_copy, data = d))
+  expect_message(lm_robust(y ~ x + x_copy, data = d), "collinear")
+  expect_message(lm_robust(y ~ x + x_copy, data = d), "x_copy")
+  # stats::lm() signals nothing here, so neither does this.
+  expect_no_warning(suppressMessages(lm_robust(y ~ x + x_copy, data = d)))
+  m <- suppressMessages(lm_robust(y ~ x + x_copy, data = d))
   expect_true(is.na(m$coefficients[["x_copy"]]))
 })
 
-test_that("#411: no warning when the design matrix is full rank", {
+test_that("#411: nothing is signalled when the design matrix is full rank", {
   expect_no_warning(lm_robust(y ~ x + z, data = dat))
+  expect_no_message(lm_robust(y ~ x + z, data = dat))
   expect_no_warning(lm_robust(y ~ x + z, data = dat, clusters = cl))
+  expect_no_message(lm_robust(y ~ x + z, data = dat, clusters = cl))
   expect_no_warning(lm_lin(y ~ z, covariates = ~ x, data = dat))
+  expect_no_message(lm_lin(y ~ z, covariates = ~ x, data = dat))
 })
 
 # ---- predict (estimatr #403, #404) ----

@@ -77,7 +77,7 @@ d$y <- 1 + 0.5 * d$z + 2 * d$x + d$en + rnorm(N)
 \widehat{\beta} = (\mathbf{X}^{\top}\mathbf{X})^{-1}\mathbf{X}^{\top}\mathbf{y}
 \]
 
-The solver is a rank-revealing column-pivoting QR factorization from the Eigen C++ library, reached through `RcppEigen`, so $(\mathbf{X}^{\top}\mathbf{X})^{-1}$ is never formed explicitly. On a rank-deficient design the pivoting can drop a different column than `lm()` drops; the fitted values and the variance are the same either way, but which coefficient comes back `NA` may differ. Unlike 1.x, estimatr names the dropped terms in a warning rather than leaving them to be noticed in the output. Setting `try_cholesky = TRUE` substitutes a Cholesky factorization, which is faster and is guaranteed only when $\mathbf{X}$ has full rank.
+The solver is a rank-revealing column-pivoting QR factorization from the Eigen C++ library, reached through `RcppEigen`, so $(\mathbf{X}^{\top}\mathbf{X})^{-1}$ is never formed explicitly. On a rank-deficient design the pivoting can drop a different column than `lm()` drops; the fitted values and the variance are the same either way, but which coefficient comes back `NA` may differ. Unlike 1.x, estimatr names the dropped terms in a message rather than leaving them to be noticed in the output. Setting `try_cholesky = TRUE` substitutes a Cholesky factorization, which is faster and is guaranteed only when $\mathbf{X}$ has full rank.
 
 **The promise: the point estimates are least squares.** `lm()` is the reference, since it solves the same problem by a different factorization.
 

@@ -52,14 +52,17 @@ lm_return <- function(return_list, model_data, formula) {
   # A collinear column is dropped and comes back as an NA coefficient. Saying
   # so is the difference between a user reading the NA correctly and reading
   # it as a bug, since the remaining coefficients are then conditional on a
-  # different set of regressors than they asked for (estimatr #411).
+  # different set of regressors than they asked for (estimatr #411). It is a
+  # message and not a warning because stats::lm() signals neither, and because
+  # a warning raised inside a grouped dplyr verb nested in another one crashes
+  # dplyr 1.2.1 while it builds the warning's group label.
   coefs <- return_list[["coefficients"]]
   na_coefs <- is.na(coefs)
   if (any(na_coefs)) {
     dropped <- if (is.matrix(coefs))
       rownames(coefs)[apply(na_coefs, 1, any)]
       else names(coefs)[na_coefs]
-    warning(
+    message(
       "Some coefficients are collinear with other regressors and were ",
       "dropped, and are returned as NA: ",
       paste(dropped, collapse = ", "), "."

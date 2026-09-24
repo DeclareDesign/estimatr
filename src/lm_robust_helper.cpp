@@ -336,6 +336,14 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
   // Reported back so R can warn on the condition itself rather than on a NaN,
   // which is no longer the symptom once the denominator is guarded.
   int n_leverage_near_one = 0;
+  // Per coefficient, the share of its classical sampling variance contributed
+  // by the observations the clamp below discards. Zeroing an observation's
+  // meat term is only free for coefficients that observation carries no
+  // information about; for one it alone identifies, the robust variance is not
+  // estimable and the clamp would otherwise return a confident number built
+  // entirely from other rows. R reads this to decide which standard errors are
+  // NA rather than merely dropped-from.
+  Eigen::VectorXd var_not_estimable;
 
   // Linear combinations of coefficients whose CR2 Satterthwaite degrees of
   // freedom lh_robust() needs. A combination has its own, which is neither any
@@ -442,6 +450,39 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
         // small divisor inflates by about 1e8; the warning covers both.
         const double lev_tol = 1.0 - std::sqrt(std::numeric_limits<double>::epsilon());
         n_leverage_near_one = (hii.array() > lev_tol).count();
+
+        // Which coefficients the clamp costs. beta_j = sum_i a_ij y_i with
+        // a_i = meatXtX_inv X_i, so observation i contributes a_ij^2 sigma_i^2
+        // to Var(beta_j). Discarding i sets that term to 0, which is right
+        // exactly when a_ij is 0: a singleton dummy has a_ij = 1 for its own
+        // row and, by Frisch-Waugh-Lovell, 0 for every other coefficient, so
+        // its neighbours keep the standard error of the reduced design while
+        // the dummy's own variance loses everything that identified it. The
+        // share is taken against the classical factor XtX_inv(j,j), which
+        // makes it dimensionless and so comparable across columns of unlike
+        // scale. On a 233-row fit with a one-member race category it is 1e-31
+        // for the other eighteen coefficients and 0.86 for the singleton.
+        if (n_leverage_near_one > 0) {
+          var_not_estimable = Eigen::VectorXd::Zero(npars);
+          for (int i = 0; i < n; i++) {
+            if (hii(i) <= lev_tol) continue;
+            const Eigen::VectorXd a =
+              meatXtX_inv * X.row(i).head(meat_cols).transpose();
+            for (int j = 0; j < r; j++) var_not_estimable(j) += a(j) * a(j);
+          }
+          for (int j = 0; j < r; j++) {
+            const double d = meatXtX_inv(j, j);
+            var_not_estimable(j) = (d > 0.0) ? var_not_estimable(j) / d : 0.0;
+          }
+          // The design is shared across outcomes, so a multivariate fit repeats
+          // the pattern in each of its ny coefficient blocks.
+          for (int m = 1; m < ny; m++) {
+            for (int j = 0; j < r; j++) {
+              var_not_estimable(m * r + j) = var_not_estimable(j);
+            }
+          }
+        }
+
         denom = (denom <= 0.0).select(0.0, denom);
         if (hc3) denom = denom.square();
 
@@ -649,6 +690,7 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
                       _["dof"]= dof,
                       _["res_var"]= res_var,
                       _["n_leverage_near_one"]= n_leverage_near_one,
+                      _["var_not_estimable"]= var_not_estimable,
                       _["hypothesis_dof"]= hypothesis_dof);
 }
 
