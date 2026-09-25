@@ -1,5 +1,13 @@
 # estimatr 2.0.1
 
+## `lm_lin()` says what a dropped treatment interaction costs
+
+A rank-deficient fit already names the columns it returned as `NA`. In `lm_lin()` that is not enough, because the treatment coefficient is the effect at the covariate means only while every covariate is interacted with the treatment, and the name of a dropped column does not say that the number the reader takes for the effect has changed meaning.
+
+The two ways a Lin design goes rank deficient are not the same event. A duplicated or constant covariate takes its own main effect down with its interaction, and the fit that remains is `lm_lin()` on the covariates that are left. A covariate that is constant within one treatment arm keeps its main effect and loses only its interaction: centering happens before interacting, so `x_c - Z * x_c` equals `-mean(x) * (1 - Z)`, and the intercept, the treatment indicator, the centered covariate, and its interaction are an exact four-column dependency. Which of the four is dropped is then an answer rather than a naming question. On the subgroup cells of one published replication the fitted values and `r.squared` agree to twelve printed digits under either drop while the treatment coefficient moves from -1.56 to -2.00, so nothing in the fit's own goodness of fit reveals it. The effect at the covariate means is not identified in that cell under any version of this package or any other.
+
+The message now adds a sentence in the second case only, naming the treatment coefficient the drop affects and saying that it is no longer the effect at the covariate means. It stays a message rather than a warning for the reasons in the entry below: `stats::lm()` signals nothing here, and a warning raised inside nested grouped `dplyr` verbs, which is how a subgroup analysis reaches this code, crashes `dplyr` 1.2.1.
+
 ## Which collinear column is dropped now follows `stats::lm()`
 
 A rank-deficient design has no unique fit, so an estimator must choose which columns to drop. `stats::lm()` makes that choice with LINPACK's `dqrdc2`, which is order preserving: it walks the columns left to right and compares each column's residual norm, after the columns already kept are projected out, against that column's own original norm, moving a failing column to the end. The later column of a collinear set is therefore the one dropped, and the ordering the modeller wrote is respected. 2.0 detected rank with Eigen's `ColPivHouseholderQR`, which pivots by largest remaining norm and reads nothing but the numbers, so it could drop a column written first and keep one written last. 2.0 had reproduced `dqrdc2`'s threshold criterion without its ordering.

@@ -28,6 +28,25 @@
 #'   `NA` exactly as they do from [lm()] whichever path ran, and a design that
 #'   is rank deficient falls back to the QR.
 #'
+#'   A rank-deficient Lin design is worth reading carefully, because the
+#'   treatment coefficient is the effect at the covariate means only while
+#'   every covariate is interacted with the treatment. A duplicated or
+#'   constant covariate loses its main effect and its interaction together,
+#'   and what is left is [lm_lin()] on the covariates that remain. A covariate
+#'   that is constant within one treatment arm is different: the intercept,
+#'   the treatment indicator, the centered covariate, and its interaction are
+#'   then an exact four-column dependency, one of the four is dropped, and the
+#'   fit is the same under any of those choices while the treatment
+#'   coefficient is not. The effect at the covariate means is not identified
+#'   there under any software, and no goodness-of-fit channel shows it: fitted
+#'   values and `r.squared` agree to twelve digits across drop choices that
+#'   move the treatment coefficient by a quarter of its size. The message
+#'   raised at such a fit names the consequence as well as the dropped column.
+#'   An empty covariate-by-arm cell is usually a subgroup analysis run in a
+#'   cell too thin to carry the covariate; collapsing that covariate's
+#'   categories, or dropping it in that subgroup, is what restores the
+#'   estimand.
+#'
 #'   Whether it is safe turns on one question, whether two regressors are
 #'   nearly the same variable. Forming `X'X` squares the condition number, so
 #'   the Cholesky path has about twice the rounding error of the QR, and
@@ -261,10 +280,20 @@ lm_lin <- function(formula,
       iv_stage = list(0)
     )
 
+  # Which treatment column each interaction was built from, taken from the
+  # loop above rather than parsed back out of the name, since a factor level
+  # may itself contain a colon. lm_return() uses it to say what a dropped
+  # interaction costs the treatment coefficient.
   return_list <- lm_return(
     return_list,
     model_data = model_data,
-    formula = formula
+    formula = formula,
+    lin_interactions = data.frame(
+      interaction = interacted_covars_names,
+      treatment = rep(colnames(treatment), times = n_covars),
+      covariate = rep(colnames(demeaned_covars), each = n_treat_cols),
+      stringsAsFactors = FALSE
+    )
   )
 
   # `center` already carries the covariates' original names, which is what

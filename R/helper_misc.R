@@ -47,7 +47,8 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
   }
 }
 
-lm_return <- function(return_list, model_data, formula) {
+lm_return <- function(return_list, model_data, formula,
+                      lin_interactions = NULL) {
 
   # A collinear column is dropped and comes back as an NA coefficient. Saying
   # so is the difference between a user reading the NA correctly and reading
@@ -62,11 +63,65 @@ lm_return <- function(return_list, model_data, formula) {
     dropped <- if (is.matrix(coefs))
       rownames(coefs)[apply(na_coefs, 1, any)]
       else names(coefs)[na_coefs]
-    message(
+    msg <- paste0(
       "Some coefficients are collinear with other regressors and were ",
       "dropped, and are returned as NA: ",
       paste(dropped, collapse = ", "), "."
     )
+
+    # A dropped treatment interaction is not the same event as a dropped
+    # covariate, and naming the column alone does not say so. lm_lin()'s
+    # treatment coefficient is the effect at the covariate means only while
+    # every covariate is interacted; once an interaction goes, that covariate's
+    # slope is constrained equal across arms, and where the dependency runs
+    # through the treatment column itself the reported value is the one the
+    # drop rule happened to leave behind. On one published replication the
+    # intercept, the treatment indicator, a covariate and its interaction are
+    # an exact four-column dependency in every subgroup cell where a category
+    # is empty in one arm; the fitted values and r.squared agree to twelve
+    # digits under either drop while the treatment coefficient moves from
+    # -1.56 to -2.00, so no goodness-of-fit channel can see it. `lin_interactions` names each
+    # interaction column, the treatment column it was built from, and the
+    # covariate it centres, and is NULL everywhere but lm_lin().
+    if (!is.null(lin_interactions)) {
+      # Only where the covariate's own main effect SURVIVES. When a covariate
+      # is a duplicate or is constant, its main effect and its interaction drop
+      # together, the remaining fit is lm_lin() on the covariates that are
+      # left, and the treatment coefficient is still the effect at their means.
+      lost <- lin_interactions$interaction %in% dropped &
+        !(lin_interactions$covariate %in% dropped)
+      affected <- setdiff(unique(lin_interactions$treatment[lost]), dropped)
+      if (length(affected) > 0) {
+        lost_covs <- unique(lin_interactions$covariate[lost])
+        # Named while the list is short enough to read. A saturated factor can
+        # lose twenty interactions at once, and the first sentence has already
+        # printed every one of them.
+        covs_txt <- if (length(lost_covs) > 3) {
+          paste(length(lost_covs), "covariates")
+        } else {
+          paste(lost_covs, collapse = ", ")
+        }
+        msg <- paste0(
+          msg,
+          " A dropped treatment interaction is not a dropped covariate: with ",
+          covs_txt,
+          " no longer interacted with the treatment, ",
+          paste(affected, collapse = ", "),
+          if (length(affected) > 1) {
+            " are no longer effects at the covariate means, since "
+          } else {
+            " is no longer the effect at the covariate means, since "
+          },
+          if (length(lost_covs) > 1) "their slopes are " else "its slope is ",
+          "now constrained equal across treatment arms. Where the dependency ",
+          "runs through the treatment column itself, the reported value also ",
+          "depends on which column was dropped, and the effect at the ",
+          "covariate means is not identified."
+        )
+      }
+    }
+
+    message(msg)
   }
 
   if (!is.null(model_data)) {

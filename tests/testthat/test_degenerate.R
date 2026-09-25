@@ -680,6 +680,62 @@ test_that("lm_lin drops the later column in both halves of its expansion", {
                unname(b_lm[!is.na(b_lm)]), tolerance = 1e-8)
 })
 
+# A treatment interaction that goes is a different event from a covariate that
+# goes, and the coefficient the reader takes for the effect is the one it
+# changes. Where the covariate is constant within one arm, the intercept, the
+# treatment indicator, the centred covariate and its interaction are an exact
+# four-column dependency: the fit is the same under either drop and the
+# treatment coefficient is not, so nothing in the fit's own numbers reveals it.
+test_that("lm_lin says what a dropped treatment interaction costs", {
+  set.seed(343)
+  n <- 200
+  e <- data.frame(z = rep(0:1, each = n / 2), w = rnorm(n))
+  e$x <- ifelse(e$z == 1, rbinom(n, 1, 0.4), 0)
+  e$y <- rnorm(n) + 0.3 * e$z + 0.5 * e$x + 0.2 * e$w
+
+  ms <- character(0)
+  withCallingHandlers(
+    fit <- lm_lin(y ~ z, covariates = ~ x + w, data = e),
+    message = function(m) {
+      ms <<- c(ms, conditionMessage(m))
+      invokeRestart("muffleMessage")
+    }
+  )
+  expect_equal(fit$term[is.na(fit$coefficients)], "z:x_c")
+  expect_true(any(grepl("returned as NA: z:x_c", ms, fixed = TRUE)))
+  expect_true(any(grepl("z is no longer the effect at the covariate means",
+                        ms, fixed = TRUE)))
+
+  # The four-column dependency is exact, and the drop is not free: refitting
+  # with the treatment interaction forced out by hand gives the same fitted
+  # values and a treatment coefficient that moves when the intercept is
+  # dropped in its place instead.
+  centred <- transform(e, x_c = x - mean(x), w_c = w - mean(w))
+  by_hand <- lm(y ~ z * (x_c + w_c), data = centred)
+  expect_equal(na_names(coef(by_hand)), "z:x_c")
+  expect_equal(unname(fitted(by_hand)), unname(fit$fitted.values),
+               tolerance = DEG_TOL)
+  other_drop <- lm(y ~ 0 + z + x_c + w_c + z:x_c + z:w_c, data = centred)
+  expect_equal(unname(fitted(other_drop)), unname(fit$fitted.values),
+               tolerance = DEG_TOL)
+  expect_false(isTRUE(all.equal(coef(other_drop)[["z"]], coef(fit)[["z"]],
+                                tolerance = 1e-6)))
+
+  # A duplicated or constant covariate takes its own main effect with it, the
+  # remaining fit IS lm_lin() on the covariates that are left, and the extra
+  # sentence must not fire there.
+  ms <- character(0)
+  withCallingHandlers(
+    lm_lin(y ~ z, covariates = ~ x1 + dup, data = d),
+    message = function(m) {
+      ms <<- c(ms, conditionMessage(m))
+      invokeRestart("muffleMessage")
+    }
+  )
+  expect_true(any(grepl("collinear with other regressors", ms)))
+  expect_false(any(grepl("no longer the effect at the covariate means", ms)))
+})
+
 # In an instrumental variables fit which column carries the NA is not a
 # naming question: 1.0.6 let the pivot take the intercept and returned its
 # value under the endogenous regressor's name, which is the number a reader
