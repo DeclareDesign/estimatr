@@ -496,6 +496,237 @@ test_that("drop sets match lm() across random rank-deficient designs", {
 })
 
 
+# ---- which column is dropped, across the estimators ----
+
+# The two tests above measure the ordering rule in lm_robust's own design and
+# nowhere else, which is the whole surface 9bd227a3 changed but not the whole
+# surface that reads the answer. Every estimator here reaches the same solver,
+# so each of these would have passed before the fix only by accident.
+#
+# THE CONSTRUCTION MATTERS, and an exact duplicate will not do it. Where x2 is
+# a copy of x1 the two columns have equal norms, the norm-ranked pivot breaks
+# the tie by position, and it drops the same column lm() drops: the test is
+# green under both rules and measures nothing. What separates them is a
+# dependency whose residual norm disagrees with its column position, so every
+# design below is built the one way that has it. `a2` is `a1` with 5% noise
+# and `a3 = a1 - a2` is exactly dependent and small, so dqrdc2 drops `a3`, the
+# LATER column, where the norm-ranked pivot keeps `a3` and drops `a1` or `a2`.
+# Each assertion was run against the pre-fix build and fails there.
+order_data <- function() {
+  set.seed(343)
+  n <- 200
+  d <- data.frame(
+    a1 = rnorm(n),
+    b1 = rnorm(n),
+    q = rnorm(n),
+    z = rbinom(n, 1, 0.5),
+    cl = rep(1:20, each = 10),
+    w = runif(n, 0.5, 2),
+    inst = rnorm(n),
+    g = factor(rep(1:8, each = 25))
+  )
+  d$a2 <- d$a1 + 0.05 * rnorm(n)
+  d$a3 <- d$a1 - d$a2
+  d$b2 <- d$b1 + 0.05 * rnorm(n)
+  d$b3 <- d$b1 - d$b2
+  d$c1 <- rnorm(n)
+  d$c2 <- d$c1 + 0.05 * rnorm(n)
+  d$c3 <- d$c1 - d$c2
+  d$y <- 1 + d$a1 + d$b1 + rnorm(n)
+  d$y2 <- d$q + rnorm(n)
+  d$en <- d$inst + rnorm(n)
+  d
+}
+
+od <- order_data()
+
+na_names <- function(b) names(which(is.na(b)))
+
+# Two dependencies, so two columns go and they are NOT adjacent: `a3` at
+# position 4 and `b3` at position 7, with `b1` and `b2` between them. That is
+# what getMeatXtX()'s in-place left shift needs in order to be wrong in the
+# way its comment describes, and every earlier probe of that code was short of
+# full rank by exactly one, where there is nothing to order. The reduced fit
+# names the columns dqrdc2 keeps, so its standard errors are a reference only
+# if the drop set is right.
+test_that("two dependencies drop the later column of each, as lm() does", {
+  form <- y ~ a1 + a2 + a3 + b1 + b2 + b3
+  b_lm <- coef(lm(form, data = od))
+  expect_equal(na_names(b_lm), c("a3", "b3"))
+
+  full <- suppressMessages(lm_robust(form, data = od))
+  expect_equal(na_names(coef(full)), c("a3", "b3"))
+  expect_equal(coef(full)[!is.na(coef(full))], b_lm[!is.na(b_lm)],
+               tolerance = 1e-8)
+
+  for (this_type in c("classical", "HC0", "HC1", "HC2", "HC3")) {
+    full <- suppressMessages(
+      lm_robust(form, data = od, se_type = this_type)
+    )
+    reduced <- lm_robust(y ~ a1 + a2 + b1 + b2, data = od, se_type = this_type)
+    expect_reduces_to(full, reduced, paste("two dependencies,", this_type))
+  }
+
+  for (this_type in c("CR0", "CR2")) {
+    full <- suppressMessages(
+      lm_robust(form, data = od, clusters = cl, se_type = this_type)
+    )
+    reduced <- lm_robust(y ~ a1 + a2 + b1 + b2, data = od, clusters = cl,
+                         se_type = this_type)
+    expect_reduces_to(full, reduced, paste("two dependencies,", this_type))
+  }
+})
+
+# Order preservation says the modeller's ordering decides the answer, so the
+# NA has to MOVE when the columns are permuted, and move to where lm() puts
+# it. A rule that always dropped `a3` would pass the test above and fail here.
+test_that("permuting the columns moves the NA, as it does in lm()", {
+  for (form in list(y ~ a1 + a2 + a3,
+                    y ~ a3 + a1 + a2,
+                    y ~ a2 + a3 + a1,
+                    y ~ a3 + a2 + a1)) {
+    lab <- deparse(form)
+    b_lm <- coef(lm(form, data = od))
+    b_er <- coef(suppressMessages(lm_robust(form, data = od)))
+
+    expect_equal(length(na_names(b_lm)), 1L, info = lab)
+    expect_equal(na_names(b_er), na_names(b_lm), info = lab)
+    expect_equal(b_er[!is.na(b_er)], b_lm[!is.na(b_lm)], tolerance = 1e-8,
+                 info = lab)
+
+    # The span does not depend on which column is dropped, so the fitted
+    # values are the one quantity that is the same under both rules. They are
+    # here to show that the permutation changed the parameterization and not
+    # the fit.
+    expect_equal(unname(fitted(suppressMessages(lm_robust(form, data = od)))),
+                 unname(fitted(lm(form, data = od))),
+                 tolerance = 1e-8, info = lab)
+  }
+})
+
+# Weights, fixed effects and a second outcome each rebuild the design before
+# it reaches the solver: weights scale the rows, absorption sweeps the fixed
+# effects out, and a second outcome makes the right-hand side a matrix. None
+# of the three may change which column is dropped. The pre-fix build dropped a
+# DIFFERENT pair under weights (a2, b1) and under absorption (a1, b2) than it
+# did without them, so these are three separate statements.
+test_that("weights do not move the drop set", {
+  form <- y ~ a1 + a2 + a3 + b1 + b2 + b3
+  b_lm <- coef(lm(form, data = od, weights = w))
+  full <- suppressMessages(lm_robust(form, data = od, weights = w))
+
+  expect_equal(na_names(b_lm), c("a3", "b3"))
+  expect_equal(na_names(coef(full)), na_names(b_lm))
+  expect_equal(coef(full)[!is.na(coef(full))], b_lm[!is.na(b_lm)],
+               tolerance = 1e-8)
+})
+
+test_that("absorbed fixed effects do not move the drop set", {
+  full <- suppressMessages(
+    lm_robust(y ~ a1 + a2 + a3 + b1 + b2 + b3, data = od, fixed_effects = ~ g)
+  )
+  b_lm <- coef(lm(y ~ a1 + a2 + a3 + b1 + b2 + b3 + g, data = od))
+
+  expect_equal(na_names(b_lm), c("a3", "b3"))
+  expect_equal(na_names(coef(full)), c("a3", "b3"))
+  expect_equal(coef(full)[!is.na(coef(full))],
+               b_lm[c("a1", "a2", "b1", "b2")], tolerance = 1e-8)
+
+  reduced <- lm_robust(y ~ a1 + a2 + b1 + b2, data = od, fixed_effects = ~ g)
+  expect_reduces_to(full, reduced, "absorbed fixed effects")
+})
+
+test_that("every outcome of a multivariate fit drops the same columns", {
+  mv <- suppressMessages(
+    lm_robust(cbind(y, y2) ~ a1 + a2 + a3 + b1 + b2 + b3, data = od)
+  )
+  dropped <- apply(mv$coefficients, 2, function(b) mv$term[is.na(b)])
+  expect_equal(dropped[, "y"], c("a3", "b3"))
+  expect_equal(dropped[, "y2"], c("a3", "b3"))
+
+  # The C++ loop fills one column per outcome, so the drop set has to be the
+  # one the univariate fit of the same outcome gets, not merely consistent
+  # across the two columns.
+  for (this_y in c("y", "y2")) {
+    uni <- suppressMessages(
+      lm_robust(reformulate(c("a1", "a2", "a3", "b1", "b2", "b3"), this_y),
+                data = od)
+    )
+    expect_equal(mv$term[is.na(mv$coefficients[, this_y])],
+                 na_names(coef(uni)), info = this_y)
+    expect_equal(unname(mv$coefficients[, this_y]), unname(coef(uni)),
+                 tolerance = 1e-8, info = this_y)
+  }
+})
+
+# lm_lin() centres the covariates and interacts them with the treatment, so a
+# dependency among the covariates appears TWICE in the design it builds, once
+# among the main effects and once among the interactions. Both copies must
+# drop their later column, and the comparison is against lm() on the same
+# expansion built by hand rather than against another estimatr fit.
+test_that("lm_lin drops the later column in both halves of its expansion", {
+  lin <- suppressMessages(
+    lm_lin(y ~ z, covariates = ~ c1 + c2 + c3, data = od)
+  )
+  centred <- transform(od,
+                       c1_c = c1 - mean(c1),
+                       c2_c = c2 - mean(c2),
+                       c3_c = c3 - mean(c3))
+  b_lm <- coef(lm(y ~ z * (c1_c + c2_c + c3_c), data = centred))
+
+  expect_equal(na_names(b_lm), c("c3_c", "z:c3_c"))
+  expect_equal(lin$term[is.na(lin$coefficients)], c("c3_c", "z:c3_c"))
+  expect_equal(unname(coef(lin)[!is.na(coef(lin))]),
+               unname(b_lm[!is.na(b_lm)]), tolerance = 1e-8)
+})
+
+# In an instrumental variables fit which column carries the NA is not a
+# naming question: 1.0.6 let the pivot take the intercept and returned its
+# value under the endogenous regressor's name, which is the number a reader
+# takes for the LATE. Here the dependency is among the exogenous regressors,
+# which appear in both stages, and `en` is identified throughout, so the
+# answer is the fit without `a3`.
+test_that("iv_robust drops the later exogenous column, as ivreg does", {
+  full <- suppressMessages(
+    iv_robust(y ~ en + a1 + a2 + a3 | inst + a1 + a2 + a3, data = od)
+  )
+  expect_equal(full$term[is.na(full$coefficients)], "a3")
+  expect_false(is.na(coef(full)[["en"]]))
+
+  reduced <- iv_robust(y ~ en + a1 + a2 | inst + a1 + a2, data = od)
+  expect_equal(coef(full)[!is.na(coef(full))], coef(reduced), tolerance = 1e-8)
+
+  skip_if_not_installed("AER")
+  aer <- suppressWarnings(
+    AER::ivreg(y ~ en + a1 + a2 + a3 | inst + a1 + a2 + a3, data = od)
+  )
+  expect_equal(na_names(coef(aer)), "a3")
+  expect_equal(coef(full), coef(aer), tolerance = DEG_TOL)
+})
+
+# try_cholesky selects the arithmetic and never the answer, which means the
+# same drop set and not merely the same number of drops.
+#
+# The Cholesky guard read L_ii off the GRAM matrix and compared it against
+# dqrdc2's 1e-7, and a Gram matrix carries about half the digits of the
+# residual L_ii stands for. On this design the exactly dependent columns come
+# back at 2.4e-7, above the threshold, so no fallback fired and the fit
+# returned seven finite coefficients at a design of rank five. The other
+# near-dependencies in this file are built as a + eps * noise, which does not
+# cancel and so lands below 1e-7; this is the shape that exposes it. The
+# threshold is now the Cholesky's own resolution.
+test_that("try_cholesky changes the arithmetic and not the drop set", {
+  form <- y ~ a1 + a2 + a3 + b1 + b2 + b3
+  qr_fit <- suppressMessages(lm_robust(form, data = od, try_cholesky = FALSE))
+  ch_fit <- suppressMessages(lm_robust(form, data = od, try_cholesky = TRUE))
+
+  expect_equal(na_names(coef(ch_fit)), c("a3", "b3"))
+  expect_equal(na_names(coef(ch_fit)), na_names(coef(qr_fit)))
+  expect_equal(ch_fit$rank, qr_fit$rank)
+  expect_equal(coef(ch_fit), coef(qr_fit), tolerance = 1e-8)
+  expect_equal(ch_fit$std.error, qr_fit$std.error, tolerance = 1e-8)
+})
+
 test_that("a rescaled collinear column is still dropped", {
   dup <- dat
   dup$x2 <- dup$x1 * 1e9
