@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <vector>
 #include <functional>
 #include <limits>
 using namespace Rcpp;
@@ -48,22 +49,78 @@ Eigen::VectorXd columnScales(const Eigen::Ref<const Eigen::MatrixXd>& X) {
   return scales;
 }
 
-// The scales of the kept columns, in ascending original-column order, which is
-// the order R_inv is permuted back into.
-Eigen::VectorXd keptScales(const Eigen::VectorXd& scales,
-                           const Eigen::ArrayXi& Pmat_toss,
-                           const int p,
-                           const int r) {
-  Eigen::ArrayXi is_tossed = Eigen::ArrayXi::Zero(p);
-  for (Eigen::Index i = 0; i < Pmat_toss.size(); ++i) {
-    is_tossed(Pmat_toss(i)) = 1;
+// Order-preserving rank detection, following the LINPACK dqrdc2 that
+// stats::lm() uses. dqrdc2 walks the columns left to right, compares each
+// column's residual norm after the already-kept columns are projected out
+// against its OWN original norm, and moves a failing column to the end, so the
+// LATER column of a collinear pair is the one dropped and the ordering the
+// modeller wrote is respected. Eigen's ColPivHouseholderQR instead pivots by
+// largest remaining norm and respects nothing but numerics: over the 30
+// rank-deficient subgroup fits of one replication it dropped the treatment
+// column 6 times where both lm() and estimatr 1.0.6 dropped it none, so 2.0.0
+// silently moved which coefficient comes back NA on every rank-deficient fit.
+// The columns arrive normalized by columnScales(), so every original norm is 1
+// and the test is against tol alone, which is the per-column criterion the
+// 1e-7 threshold was always meant to reproduce.
+//
+// The kept columns come out in ascending original order, which is the order the
+// callers read R_inv in, so this also retires the permutation arithmetic that
+// used to map pivot order back to column order.
+struct OrderedQR {
+  Eigen::ArrayXi keep;  // kept original column indices, ascending
+  Eigen::ArrayXi toss;  // dropped original column indices, ascending
+  Eigen::MatrixXd R;    // r-by-r upper triangular, kept columns in that order
+  Eigen::MatrixXd QtY;  // the same reflections applied to Y, in the same order
+};
+
+OrderedQR orderedQR(const Eigen::MatrixXd& X_scaled,
+                    const Eigen::MatrixXd& Y,
+                    const double tol) {
+  const Eigen::Index n = X_scaled.rows(), p = X_scaled.cols();
+  Eigen::MatrixXd QR = X_scaled;
+  OrderedQR out;
+  out.QtY = Y;
+
+  std::vector<int> keep, toss;
+  Eigen::VectorXd workspace(std::max<Eigen::Index>(p, Y.cols()) + 1);
+  for (Eigen::Index j = 0; j < p; ++j) {
+    const Eigen::Index k = static_cast<Eigen::Index>(keep.size());
+    const Eigen::Index m = n - k;
+    // The column as it stands already carries the earlier reflections, so the
+    // norm read here IS its residual after the kept columns are projected out.
+    if (m < 1 || QR.col(j).tail(m).norm() < tol) {
+      toss.push_back(static_cast<int>(j));
+      continue;
+    }
+    double tau, beta;
+    Eigen::VectorXd essential(m - 1);
+    QR.col(j).tail(m).makeHouseholder(essential, tau, beta);
+    QR(k, j) = beta;
+    if (j + 1 < p) {
+      QR.block(k, j + 1, m, p - j - 1)
+        .applyHouseholderOnTheLeft(essential, tau, workspace.data());
+    }
+    if (Y.cols() > 0) {
+      out.QtY.bottomRows(m)
+        .applyHouseholderOnTheLeft(essential, tau, workspace.data());
+    }
+    keep.push_back(static_cast<int>(j));
   }
-  Eigen::VectorXd kept(r);
-  Eigen::Index k = 0;
-  for (int j = 0; j < p; ++j) {
-    if (!is_tossed(j)) kept(k++) = scales(j);
+
+  const Eigen::Index r = static_cast<Eigen::Index>(keep.size());
+  out.keep = Eigen::ArrayXi(r);
+  for (Eigen::Index i = 0; i < r; ++i) out.keep(i) = keep[i];
+  out.toss = Eigen::ArrayXi(p - r);
+  for (Eigen::Index i = 0; i < p - r; ++i) out.toss(i) = toss[i];
+
+  // Rows below the diagonal of a kept column hold that column's residual, which
+  // no later reflection touches, because every later column sits to its right.
+  // Zero them here rather than leaning on a triangular view at each read.
+  out.R = Eigen::MatrixXd::Zero(r, r);
+  for (Eigen::Index i = 0; i < r; ++i) {
+    out.R.col(i).head(i + 1) = QR.col(out.keep(i)).head(i + 1);
   }
-  return kept;
+  return out;
 }
 
 // Gets padded UtU matrix (where U = cbind(X, FE_dummies))
@@ -71,52 +128,33 @@ Eigen::MatrixXd getMeatXtX(Eigen::Map<Eigen::MatrixXd>& X,
                            const Eigen::MatrixXd& XtX_inv) {
   // Read off X before the compaction below rewrites it.
   const Eigen::VectorXd scales = columnScales(X);
-  const Eigen::MatrixXd X_scaled = X * scales.asDiagonal();
-  Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR(X_scaled);
-  // The same criterion lm_solver() uses, normalization included, and for the
-  // same reason: Eigen's default is tight enough that an exactly collinear
-  // column can survive as a pivot of order 1e-14. The two must agree, or the
-  // meat is read off a rank the coefficients were not fitted at.
-  PQR.setThreshold(1e-7);
-  const Eigen::ColPivHouseholderQR<Eigen::MatrixXd>::PermutationType Pmat(PQR.colsPermutation());
+  // The same rank criterion lm_solver() uses, order preservation and
+  // normalization included, and for the same reason: the two must agree, or the
+  // meat is read off a rank, and a set of columns, the coefficients were not
+  // fitted at.
+  const OrderedQR qr =
+    orderedQR(X * scales.asDiagonal(), Eigen::MatrixXd(X.rows(), 0), 1e-7);
+  const Eigen::Index r = qr.keep.size();
 
-  int r = PQR.rank();
-  int p = X.cols();
-
-  Eigen::MatrixXd R_inv = PQR.matrixQR().topLeftCorner(r, r).triangularView<Eigen::Upper>().solve(Eigen::MatrixXd::Identity(r, r));
-
-  Eigen::ArrayXi Pmat_indices = Pmat.indices();
-  Eigen::ArrayXi Pmat_keep = Pmat_indices.head(r);
-  Eigen::ArrayXi Pmat_toss = Pmat_indices.tail(p - r);
-
-  for(Eigen::Index i=0; i<r; ++i)
-  {
-    Pmat_keep(i) = Pmat_keep(i) - (Pmat_toss < Pmat_keep(i)).count();
-  }
-
-  Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P = Eigen::PermutationWrapper<Eigen::ArrayXi>(Pmat_keep);
-
-  R_inv = P * R_inv * P;
+  const Eigen::MatrixXd R_inv = qr.R.triangularView<Eigen::Upper>()
+    .solve(Eigen::MatrixXd::Identity(r, r));
 
   // R_inv came off the normalized design, so it inverts D * XtX * D rather
-  // than XtX, where D is diagonal in the column scales.
-  const Eigen::VectorXd kept = keptScales(scales, Pmat_toss, p, r);
+  // than XtX, where D is diagonal in the column scales. The kept columns are
+  // already in ascending order, so the scales line up without a permutation.
+  Eigen::VectorXd kept(r);
+  for (Eigen::Index i = 0; i < r; ++i) kept(i) = scales(qr.keep(i));
   Eigen::MatrixXd meatXtX_inv =
     kept.asDiagonal() * (R_inv * R_inv.transpose()) * kept.asDiagonal();
 
   // Compacting X by removing the tossed columns one at a time is only correct
-  // in descending index order: each left shift moves every column to the right
+  // in DESCENDING index order: each left shift moves every column to the right
   // of the removed one, so a later removal at a HIGHER index would then name
-  // the wrong column. The QR hands back its permutation in pivot order, which
-  // is descending only by accident. With one redundant column there is nothing
-  // to order, which is why every rank-deficient-by-one probe agreed and CR2
-  // with fixed effects was wrong only when two or more columns went.
-  std::sort(Pmat_toss.data(), Pmat_toss.data() + Pmat_toss.size(),
-            std::greater<int>());
-
-  for (Eigen::Index i=0; i<Pmat_toss.size(); i++) {
-    if (Pmat_toss(i) < X.cols())
-      X.block(0, Pmat_toss(i), X.rows(), X.cols() - Pmat_toss(i) - 1) = X.rightCols(X.cols() - Pmat_toss(i) - 1);
+  // the wrong column. `toss` arrives ascending, so walk it backwards.
+  for (Eigen::Index i = qr.toss.size() - 1; i >= 0; --i) {
+    const Eigen::Index c = qr.toss(i);
+    if (c < X.cols())
+      X.block(0, c, X.rows(), X.cols() - c - 1) = X.rightCols(X.cols() - c - 1);
   }
 
   return meatXtX_inv;
@@ -162,47 +200,30 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
 
   if (do_qr) {
     const Eigen::VectorXd scales = columnScales(X);
-    const Eigen::MatrixXd X_scaled = X * scales.asDiagonal();
-    Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR(X_scaled);
-    // Eigen's default rank threshold is about epsilon * ncol relative to the
-    // largest pivot, which is tight enough that an exactly collinear column
-    // can survive as a pivot of order 1e-14 and produce coefficients of order
-    // 1e11 instead of NA (estimatr #351, #395).  stats::lm() uses LINPACK
-    // dqrdc2 with tol = 1e-7; matching that takes the normalization above as
-    // well as the threshold, since dqrdc2's test is per column.
-    PQR.setThreshold(1e-7);
-    const Eigen::ColPivHouseholderQR<Eigen::MatrixXd>::PermutationType Pmat(PQR.colsPermutation());
+    // Order-preserving rank detection rather than Eigen's norm-ranked pivot, so
+    // that a collinear pair drops its LATER column, as stats::lm() does; see
+    // orderedQR(). Eigen's default threshold was also tight enough that an
+    // exactly collinear column could survive as a pivot of order 1e-14 and
+    // produce coefficients of order 1e11 instead of NA (estimatr #351, #395),
+    // and matching dqrdc2's tol = 1e-7 takes the normalization above as well as
+    // the threshold, since dqrdc2's test is per column.
+    const OrderedQR qr = orderedQR(X * scales.asDiagonal(), y, 1e-7);
+    r = static_cast<int>(qr.keep.size());
 
-    r = PQR.rank();
-
-    Eigen::MatrixXd R_inv = PQR.matrixQR().topLeftCorner(r, r).triangularView<Eigen::Upper>().solve(Eigen::MatrixXd::Identity(r, r));
-
-    Eigen::ArrayXi Pmat_indices = Pmat.indices();
-    Eigen::ArrayXi Pmat_keep = Pmat_indices.head(r);
-    Eigen::ArrayXi Pmat_toss = Pmat_indices.tail(p - r);
-
-    for(Eigen::Index i=0; i<r; ++i)
-    {
-      Pmat_keep(i) = Pmat_keep(i) - (Pmat_toss < Pmat_keep(i)).count();
-    }
-
-    Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P = Eigen::PermutationWrapper<Eigen::ArrayXi>(Pmat_keep);
-    Eigen::MatrixXd effects(PQR.householderQ().adjoint() * y);
+    R_inv = qr.R.triangularView<Eigen::Upper>()
+      .solve(Eigen::MatrixXd::Identity(r, r));
 
     // The fit is of the normalized design, so each coefficient carries its own
-    // column's scale. Applied here, in pivot order, rather than to the whole of
-    // beta_out, which would put the dropped columns' NA through an arithmetic
-    // operation that need not preserve the payload.
-    Eigen::MatrixXd beta_scaled = R_inv * effects.topRows(r);
+    // column's scale. Written in by kept index, one row at a time, rather than
+    // permuting the whole of beta_out, which would put the dropped columns' NA
+    // through an arithmetic operation that need not preserve the payload.
+    const Eigen::MatrixXd beta_scaled = R_inv * qr.QtY.topRows(r);
     for (Eigen::Index i = 0; i < r; ++i) {
-      beta_scaled.row(i) *= scales(Pmat_indices(i));
+      beta_out.row(qr.keep(i)) = beta_scaled.row(i) * scales(qr.keep(i));
     }
-    beta_out.topRows(r) = beta_scaled;
-    beta_out = PQR.colsPermutation() * beta_out;
 
-    R_inv = P * R_inv * P;
-
-    const Eigen::VectorXd kept = keptScales(scales, Pmat_toss, p, r);
+    Eigen::VectorXd kept(r);
+    for (Eigen::Index i = 0; i < r; ++i) kept(i) = scales(qr.keep(i));
     XtX_inv = kept.asDiagonal() * (R_inv * R_inv.transpose()) * kept.asDiagonal();
 
   }

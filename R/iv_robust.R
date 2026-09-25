@@ -403,17 +403,20 @@ instrument_roles <- function(model_data, first_stage) {
 # moved to the front. dqrdc2 keeps the earliest columns it can, so the
 # endogenous regressors go in reverse formula order, as stats::lm() and
 # AER::ivreg() drop them. The reordering is what does the work: `y ~ x + w |
-# z + w` puts the endogenous regressor ahead of the exogenous one, and
-# lm_solver()'s Eigen QR pivots on column norm rather than on position, so it
-# cannot be steered by order alone.
+# z + w` puts the endogenous regressor ahead of the exogenous one, which is
+# what a drop rule reading position will honour.
 #
-# The dropped columns are zeroed rather than removed. A zero column has a zero
-# pivot, so lm_solver() ranks it last and returns its coefficient as NA in
-# place: the fit on the rest is unchanged, drop_collinear() takes the same
-# columns off the design matrix, and lm_return() reports the NAs in the words
-# it already uses for a collinear regressor. Only endogenous columns are ever
+# The dropped columns are zeroed rather than removed. A zero column has zero
+# residual norm, so lm_solver() drops it wherever it sits and returns its
+# coefficient as NA in place: the fit on the rest is unchanged,
+# drop_collinear() takes the same columns off the design matrix, and
+# lm_return() reports the NAs in the words it already uses for a collinear
+# regressor. lm_solver() is itself order preserving since the dqrdc2 ordering
+# fix, so the reordering above would now steer it directly; the zeroing stays
+# because it states the drop set outright instead of re-deriving it from the
+# rank rule, and it is what the tests pin. Only endogenous columns are ever
 # zeroed, so collinearity among the regressors themselves is still resolved by
-# the pivot, as it is in lm_robust().
+# lm_robust()'s own rule.
 zero_underidentified <- function(model_data, first_stage) {
   fitted_values <- first_stage[["fitted.values"]]
   if (qr(fitted_values)$rank >= qr(model_data$design_matrix)$rank) {

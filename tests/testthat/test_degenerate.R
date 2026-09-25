@@ -435,6 +435,67 @@ test_that("exactly collinear columns are still dropped", {
                sum(is.na(coef(lm(y ~ x1 + x2 + x3, data = dup)))))
 })
 
+# stats::lm() detects rank with LINPACK dqrdc2, which is ORDER PRESERVING: it
+# walks the columns left to right and drops the LATER column of a collinear
+# set, so the ordering the modeller wrote decides which coefficient is NA.
+# 2.0.0 used Eigen's ColPivHouseholderQR, which pivots by largest remaining
+# norm and drops whichever column is smallest at the end. Here that is x1, the
+# FIRST regressor: x2 is nearly parallel to x1 and x4 = x1 - x2 is exactly
+# dependent, so the norm-ranked pivot keeps x2 and x4 and discards x1, where
+# lm() keeps x1 and drops x4. On one replication's 30 rank-deficient subgroup
+# fits the same rule dropped the treatment column 6 times and lm() none.
+test_that("a collinear set drops its later column, as lm() does", {
+  set.seed(343)
+  n <- 200
+  d <- data.frame(x1 = rnorm(n), x3 = rnorm(n))
+  d$x2 <- d$x1 + 0.05 * rnorm(n)
+  d$x4 <- d$x1 - d$x2
+  d$y <- rnorm(n)
+
+  b_lm <- coef(lm(y ~ x1 + x2 + x3 + x4, data = d))
+  fit <- suppressMessages(lm_robust(y ~ x1 + x2 + x3 + x4, data = d))
+  expect_true(is.na(coef(fit)[["x4"]]))
+  expect_false(is.na(coef(fit)[["x1"]]))
+  expect_equal(names(which(is.na(coef(fit)))), names(which(is.na(b_lm))))
+  expect_equal(coef(fit)[!is.na(coef(fit))], b_lm[!is.na(b_lm)],
+               tolerance = 1e-9)
+
+  # The meat is read off its own factorization, so it has to make the same
+  # choice: a deficient HC2 fit equals the reduced fit that drops x4 by hand.
+  full <- suppressMessages(
+    lm_robust(y ~ x1 + x2 + x3 + x4, data = d, se_type = "HC2")
+  )
+  red <- lm_robust(y ~ x1 + x2 + x3, data = d, se_type = "HC2")
+  expect_equal(unname(full$std.error[!is.na(coef(full))]),
+               unname(red$std.error), tolerance = 1e-10)
+})
+
+# The rule has to hold generally, not only on the case that exposed it. Under
+# the norm-ranked pivot, 57 of 300 designs built this way agreed with lm().
+test_that("drop sets match lm() across random rank-deficient designs", {
+  set.seed(343)
+  n_match <- 0L
+  for (i in 1:40) {
+    n <- 60
+    p <- 8
+    X <- matrix(rnorm(n * p), n, p)
+    X[, 1] <- 1
+    dep <- sample(3:p, 2)
+    for (j in dep) {
+      src <- sample(setdiff(2:p, dep), 2)
+      X[, j] <- X[, src, drop = FALSE] %*% rnorm(2)
+    }
+    colnames(X) <- paste0("x", seq_len(p))
+    y <- rnorm(n)
+    b_lm <- coef(lm(y ~ X - 1))
+    b_er <- coef(suppressMessages(lm_robust(y ~ X - 1)))
+    n_match <- n_match + identical(unname(which(is.na(b_lm))),
+                                   unname(which(is.na(b_er))))
+  }
+  expect_equal(n_match, 40L)
+})
+
+
 test_that("a rescaled collinear column is still dropped", {
   dup <- dat
   dup$x2 <- dup$x1 * 1e9
