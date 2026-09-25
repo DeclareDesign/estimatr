@@ -183,12 +183,25 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
     // arbitrarily between collinear ones, where the QR path and lm() return
     // NA. A design that is merely ill conditioned falls back to the QR and
     // pays its cost, which is the safe direction to be wrong in.
+    //
+    // The threshold is the Cholesky's own resolution rather than dqrdc2's
+    // 1e-7, because L_ii is read off the GRAM matrix and so carries about half
+    // the digits of the residual it stands for. An exactly dependent column,
+    // whose residual share is 1e-16, comes back with an L_ii of order 1e-8 to
+    // 1e-6 depending on how the cancellation falls, and against 1e-7 that is a
+    // coin toss: `y ~ a1 + a2 + a3` with a3 = a1 - a2 at n = 200 lands at
+    // 2.4e-7 and returned seven finite coefficients at a design of rank five,
+    // where lm() and the QR path both return two NA. The near-dependencies
+    // that reach this line elsewhere are built as a + eps * noise, which does
+    // not cancel, so they fall below 1e-7 and the gap stayed hidden. Nothing
+    // above the threshold moves: the fallback selects the arithmetic, and the
+    // QR still makes the rank decision at 1e-7 in full precision.
     const Eigen::VectorXd scales = columnScales(X);
     const Eigen::MatrixXd X_scaled = X * scales.asDiagonal();
     const Eigen::LLT<Eigen::MatrixXd> llt(X_scaled.transpose() * X_scaled);
 
     if (llt.info() == Eigen::NumericalIssue ||
-        llt.matrixLLT().diagonal().minCoeff() < 1e-7) {
+        llt.matrixLLT().diagonal().minCoeff() < 1e-4) {
       do_qr = true;
     } else {
       beta_out = scales.asDiagonal() * llt.solve(X_scaled.adjoint() * y);
