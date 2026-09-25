@@ -1357,3 +1357,22 @@ test_that("#395: lm_lin's centring makes the intercept non-estimable too", {
   finite <- c("z", "x_c", "gb_c", "gc_c", "z:x_c", "z:gb_c", "z:gc_c")
   expect_false(anyNA(fit$std.error[finite]))
 })
+
+test_that("the singularity count tidy() reports is a well formed sentence", {
+  # This read "1 coefficient  not defined" until 2.0.1: the count fragment ended
+  # with a space and the clause after it began with one. One repository in the
+  # maintenance corpus printed it 242 times before anyone read it, which is what
+  # a message no assertion covers is worth. The trailing "\n" went with it, since
+  # message() appends one and the pair printed a blank line after every notice.
+  one <- suppressMessages(lm_robust(mpg ~ hp + I(hp * 2), data = mtcars))
+  expect_message(
+    tidy(one),
+    "1 coefficient not defined because the design matrix is rank deficient"
+  )
+
+  two <- suppressMessages(lm_robust(mpg ~ hp + I(hp * 2) + cyl + I(cyl * 3), data = mtcars))
+  expect_message(
+    tidy(two),
+    "2 coefficients not defined because the design matrix is rank deficient"
+  )
+})

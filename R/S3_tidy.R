@@ -56,10 +56,10 @@ tidy_data_frame <- function(x,
 warn_singularities <- function(x) {
   if (x$rank < x$k) {
     singularities <- x$k - x$rank
-    what <- ifelse(singularities > 1, " coefficients ", " coefficient ")
+    what <- if (singularities > 1) "coefficients" else "coefficient"
     message(
-      singularities, what,
-      " not defined because the design matrix is rank deficient\n"
+      singularities, " ", what,
+      " not defined because the design matrix is rank deficient"
     )
   }
 }
