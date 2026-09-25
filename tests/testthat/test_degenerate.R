@@ -721,6 +721,27 @@ test_that("lm_lin says what a dropped treatment interaction costs", {
   expect_false(isTRUE(all.equal(coef(other_drop)[["z"]], coef(fit)[["z"]],
                                 tolerance = 1e-6)))
 
+  # A dropped treatment indicator is the louder case and gets a warning. It
+  # takes a constant treatment column to reach it under the order-preserving
+  # drop rule, since the only column ahead of the treatment is the intercept,
+  # which is a subgroup cell with one arm empty. CRAN 2.0.0's norm-ranked
+  # pivot reached it on 6 of 30 fits of one published replication.
+  one_arm <- data.frame(z = rep(1, 120), w = rnorm(120))
+  one_arm$y <- rnorm(120) + one_arm$w
+  expect_warning(
+    expect_message(
+      fit1 <- lm_lin(y ~ z, covariates = ~ w, data = one_arm),
+      "returned as NA: z, z:w_c"
+    ),
+    "dropped the treatment indicator z"
+  )
+  expect_true(is.na(coef(fit1)[["z"]]))
+
+  # It does not fire where the treatment survives, which is every fit above.
+  expect_no_warning(suppressMessages(
+    lm_lin(y ~ z, covariates = ~ x + w, data = e)
+  ))
+
   # A duplicated or constant covariate takes its own main effect with it, the
   # remaining fit IS lm_lin() on the covariates that are left, and the extra
   # sentence must not fire there.

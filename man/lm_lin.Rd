@@ -64,7 +64,9 @@ coefficient is not. The effect at the covariate means is not identified
 there under any software, and no goodness-of-fit channel shows it: fitted
 values and \code{r.squared} agree to twelve digits across drop choices that
 move the treatment coefficient by a quarter of its size. The message
-raised at such a fit names the consequence as well as the dropped column.
+raised at such a fit names the consequence as well as the dropped column,
+and a dropped treatment indicator, which leaves no treatment coefficient
+at all, is a warning rather than a message.
 An empty covariate-by-arm cell is usually a subgroup analysis run in a
 cell too thin to carry the covariate; collapsing that covariate's
 categories, or dropping it in that subgroup, is what restores the

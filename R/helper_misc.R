@@ -48,7 +48,7 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
 }
 
 lm_return <- function(return_list, model_data, formula,
-                      lin_interactions = NULL) {
+                      lin_interactions = NULL, lin_treatment = NULL) {
 
   # A collinear column is dropped and comes back as an NA coefficient. Saying
   # so is the difference between a user reading the NA correctly and reading
@@ -122,6 +122,25 @@ lm_return <- function(return_list, model_data, formula,
     }
 
     message(msg)
+
+    # A dropped treatment indicator is the one case here that is worth the
+    # louder channel. The other drops leave a fit whose treatment coefficient
+    # means something narrower than it did; this one leaves no treatment
+    # coefficient at all, under a name that is still printed with an NA beside
+    # it, and there is nothing a caller can read off the fit instead.
+    dropped_treat <- intersect(dropped, lin_treatment)
+    if (length(dropped_treat) > 0) {
+      warning(
+        "lm_lin() dropped the treatment indicator ",
+        paste(dropped_treat, collapse = ", "),
+        ", so the fit carries no treatment effect for ",
+        if (length(dropped_treat) > 1) "those arms" else "that arm",
+        ". A treatment indicator is collinear with the rest of the design ",
+        "only where its arm is empty or where the covariates reproduce it ",
+        "exactly, and neither is a fit to read an effect from.",
+        call. = FALSE
+      )
+    }
   }
 
   if (!is.null(model_data)) {
