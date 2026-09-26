@@ -121,6 +121,53 @@ test_that("iv_robust with a collinear exogenous regressor is the fit without it"
   }
 })
 
+test_that("a weighted IV drops the column in every one of its design matrices", {
+  # drop_collinear() keeps four matrices in step on a weighted second stage:
+  # the weighted and unweighted second-stage regressors, and the weighted and
+  # unweighted copies of the original regressors the fitted values are built
+  # from. The unweighted original is the only one no test had ever made it
+  # subset, because every collinear IV case here was unweighted and every
+  # weighted IV case was full rank. The combination is ordinary input.
+  for (st in c("HC2", "classical", "CR2")) {
+    cluster_ids <- if (st == "CR2") d$cl else NULL
+    expect_message(
+      full <- iv_robust(y ~ en + x1 + dup | inst + x1 + dup, data = d, se_type = st,
+                        clusters = cluster_ids, weights = w),
+      "collinear"
+    )
+    reduced <- iv_robust(y ~ en + x1 | inst + x1, data = d, se_type = st,
+                         clusters = cluster_ids, weights = w)
+    expect_reduces_to(full, reduced, paste("weighted", st))
+  }
+})
+
+test_that("a rank-deficient IV builds its fitted values from the original regressors", {
+  # Second-stage fitted values use the ORIGINAL regressor matrix, not the
+  # projected one, which is why the residuals are the IV residuals rather than
+  # the second-stage OLS residuals. That matrix is passed as iv_stage[[2]] and
+  # is the same width as X, so drop_collinear() subsets both to the same
+  # columns and the later `x_rank < ncol(X_fit)` subset in lm_robust_fit() can
+  # never fire. What keeps it dead is the width agreement, and the width
+  # agreement is only visible here: if the matrix ever became the instruments,
+  # as its name `X_first_stage` suggests, the two would diverge and these
+  # fitted values would silently become the wrong ones.
+  for (weighted in c(FALSE, TRUE)) {
+    wts <- if (weighted) d$w else NULL
+    full <- suppressMessages(
+      iv_robust(y ~ en + x1 + dup | inst + x1 + dup, data = d, weights = wts)
+    )
+    kept <- !is.na(full$coefficients)
+    X_orig <- cbind(`(Intercept)` = 1, en = d$en, x1 = d$x1, dup = d$dup)[, kept, drop = FALSE]
+    expect_equal(unname(full$fitted.values),
+                 unname(drop(X_orig %*% full$coefficients[kept])),
+                 tolerance = DEG_TOL,
+                 label = paste("fitted values, weighted =", weighted))
+    expect_equal(unname(full$residuals), unname(d$y - full$fitted.values),
+                 tolerance = DEG_TOL,
+                 label = paste("residuals, weighted =", weighted))
+  }
+})
+
 test_that("a redundant instrument changes nothing, diagnostics included", {
   copied <- iv_robust(y ~ en + x1 | inst + inst_copy + x1, data = d, diagnostics = TRUE)
   single <- iv_robust(y ~ en + x1 | inst + x1, data = d, diagnostics = TRUE)
@@ -1258,6 +1305,42 @@ test_that("#395: CR2 has no analogous hole -- degeneracy goes through its clamp"
   m <- lm_robust(Y ~ Z + g, data = d, clusters = cl, se_type = "CR2")
   expect_true(is.finite(m$std.error[["Z"]]))
   expect_gt(m$std.error[["Z"]], 0)
+})
+
+test_that("a NaN standard error never arrives without a reason attached", {
+  # lm_robust_fit() has a second warning behind the leverage one, for a NaN
+  # standard error with no observation near leverage 1. Nothing reaches it, and
+  # the two tests above are why: under HC2/HC3 a variance diagonal only goes
+  # negative on a design degenerate enough to put an observation at or near
+  # leverage 1, which the leverage arm reports first, and under CR2 the
+  # eigenvalue clamp contributes 0 rather than a negative term. A search over
+  # roughly 1,600 designs -- ill-conditioned to 1e-14, columns spanning 1e12 in
+  # scale, weights spanning 1e16, 3 to 10 clusters, weighted and not -- produced
+  # no NaN outside the leverage case. The guard stays, because the property that
+  # matters is not which arm fires but that one of them does: a NaN standard
+  # error must never come back as R's bare "NaNs produced", which names neither
+  # the fit nor the reason. That is what is asserted, on the design that gets
+  # closest.
+  set.seed(7)
+  N <- 50
+  dn <- data.frame(x = sample(1:40, N, TRUE), Z = sample(0:1, N, TRUE))
+  dn$Y <- 0.1 * dn$Z + dn$x + rnorm(N)
+  for (st in c("HC2", "HC3")) {
+    ws <- character(0)
+    fit <- withCallingHandlers(
+      suppressMessages(lm_lin(Y ~ Z, covariates = ~ as.factor(x), data = dn, se_type = st)),
+      warning = function(w) {
+        ws <<- c(ws, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      }
+    )
+    expect_false(any(grepl("NaNs produced", ws, fixed = TRUE)),
+                 label = paste(st, "bare NaN warning"))
+    if (any(is.nan(fit$std.error))) {
+      expect_true(any(grepl("leverage|came out negative", ws)),
+                  label = paste(st, "NaN is explained"))
+    }
+  }
 })
 
 test_that("absorbed group effects survive a dropped regressor", {

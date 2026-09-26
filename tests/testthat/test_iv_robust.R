@@ -317,3 +317,43 @@ test_that("#397: model.frame() on iv_robust returns the model variables", {
   expect_equal(nrow(mf), nrow(mtcars))
   expect_setequal(names(mf), c("mpg", "wt", "hp", "am"))
 })
+
+test_that("a `.` on either side of the IV formula expands against the data", {
+  # `lm_robust(y ~ ., ...)` has been tested since 1.0; the IV case never was,
+  # and it takes a different route. A dot in a two-part formula is expanded by
+  # the Formula package, which records the result in a `Formula_without_dot`
+  # attribute that clean_model_data() reads instead of the call's own formula.
+  # The regressor and instrument sides expand separately, and the exclusion
+  # arithmetic (`. - en`) has to survive on both.
+  d <- iv_data()
+  explicit <- iv_robust(y ~ en + x + w | inst + inst2 + x + w, data = d)
+  kept <- names(explicit$coefficients)
+
+  cases <- list(
+    instruments = iv_robust(y ~ en + x + w | . - en - wt, data = d),
+    regressors  = iv_robust(y ~ . - inst - inst2 - wt | inst + inst2 + x + w, data = d),
+    both        = iv_robust(y ~ . - inst - inst2 - wt | . - en - wt, data = d)
+  )
+  for (nm in names(cases)) {
+    # Compared by name, because a dot expands in the data frame's column order
+    # and so reaches the same model with the terms in a different order. That
+    # is `lm()`'s behaviour too, and it is pinned below rather than worked
+    # around here.
+    expect_setequal(names(cases[[nm]]$coefficients), kept)
+    expect_equal(cases[[nm]]$coefficients[kept], explicit$coefficients,
+                 label = paste(nm, "coefficients"))
+    expect_equal(cases[[nm]]$std.error[kept], explicit$std.error,
+                 label = paste(nm, "standard errors"))
+  }
+
+  # The dot's expansion order is the data frame's, not the explicit formula's.
+  expect_equal(cases$instruments$term, c("(Intercept)", "en", "x", "w"))
+  expect_equal(cases$regressors$term, c("(Intercept)", "x", "w", "en"))
+  expect_equal(cases$both$term, c("(Intercept)", "x", "w", "en"))
+
+  # Second channel: the expansion is a formula question rather than an estimatr
+  # one, so it is pinned against the package that owns the convention.
+  skip_if_not_installed("AER")
+  a <- AER::ivreg(y ~ en + x + w | inst + inst2 + x + w, data = d)
+  expect_equal(cases$both$coefficients[kept], coef(a)[kept])
+})
