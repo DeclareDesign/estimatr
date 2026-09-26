@@ -495,3 +495,115 @@ test_that("B12: a per-unit probability vector is not read as condition labels", 
   ms <- horvitz_thompson(Y_b12 ~ Z_b12, condition_prs = c(`0` = 0.5, `1` = 0.5))
   expect_true(is.finite(ms$std.error))
 })
+
+test_that("a factor `clusters` gets the same variance as any other coding", {
+  # A 2.0.0 regression, and a silent one. The cluster-level aggregation is
+  # tapply(), which groups by a factor's LEVELS rather than by the values
+  # present, so every cluster absent from an arm (that is, every control
+  # cluster) summed to NA and the whole variance came back NA. The estimate was
+  # right, the standard error was NA, and the warning told the user the fault
+  # was in their design. A factor `clusters` column is ordinary input.
+  set.seed(343)
+  N <- 40
+  cl_chr <- rep(letters[1:10], each = 4)
+  decl_fct <- randomizr::declare_ra(clusters = factor(cl_chr))
+  decl_chr <- randomizr::declare_ra(clusters = cl_chr)
+
+  set.seed(11)
+  z <- randomizr::conduct_ra(decl_fct)
+  d <- data.frame(y = rnorm(N), z = z)
+
+  fct <- horvitz_thompson(y ~ z, data = d, condition_prs = decl_fct)
+  chr <- horvitz_thompson(y ~ z, data = d, condition_prs = decl_chr)
+
+  expect_false(is.na(fct$std.error))
+  expect_equal(fct$std.error, chr$std.error)
+  expect_equal(fct$coefficients, chr$coefficients)
+
+  # Second channel: estimatr 1.0.6 answers this design and never had the bug,
+  # so the fix is pinned against it rather than only against the other coding.
+  # Both are 1.0.6's answer to fifteen digits.
+  expect_equal(unname(fct$coefficients), -0.412037374921812)
+  expect_equal(unname(fct$std.error), 0.203241475460181)
+
+  # The same for a blocked-and-clustered declaration, which aggregates to
+  # cluster level inside each block and had the same key.
+  bl <- rep(1:2, each = 20)
+  bdecl_fct <- randomizr::declare_ra(blocks = bl, clusters = factor(cl_chr))
+  bdecl_chr <- randomizr::declare_ra(blocks = bl, clusters = cl_chr)
+  set.seed(12)
+  db <- data.frame(y = rnorm(N), z = randomizr::conduct_ra(bdecl_fct))
+
+  bfct <- horvitz_thompson(y ~ z, data = db, condition_prs = bdecl_fct)
+  bchr <- horvitz_thompson(y ~ z, data = db, condition_prs = bdecl_chr)
+  expect_false(is.na(bfct$std.error))
+  expect_equal(bfct$std.error, bchr$std.error)
+})
+
+test_that("C13: a block with no observed units is skipped rather than summed", {
+  # block_info is built from the whole declaration and the outcomes come from
+  # the rows that survived, so a block whose every unit is missing its outcome
+  # reaches the variance loop with nothing in either arm. Both the blocked and
+  # the blocked-and-clustered loops have their own skip, and neither had run.
+  set.seed(343)
+  N <- 60
+  bl <- rep(1:6, each = 10)
+  decl <- randomizr::declare_ra(blocks = bl)
+  set.seed(5)
+  d <- data.frame(y = rnorm(N), z = randomizr::conduct_ra(decl), bl = bl)
+  d$y[d$bl == 3] <- NA
+
+  m <- horvitz_thompson(y ~ z, data = d, condition_prs = decl)
+  expect_equal(m$nobs, 50)
+  expect_true(is.finite(m$std.error))
+
+  # The empty block contributes nothing, so the answer is the one the five
+  # surviving blocks give on their own. N is still the full 60, since the
+  # estimator divides by the design's size rather than the observed count, so
+  # the comparison is against the same declaration with the block's rows
+  # carried through as missing rather than against a five-block design.
+  cl <- rep(1:30, each = 2)
+  bdecl <- randomizr::declare_ra(blocks = bl, clusters = cl)
+  set.seed(6)
+  dc <- data.frame(y = rnorm(N), z = randomizr::conduct_ra(bdecl), bl = bl, cl = cl)
+  dc$y[dc$bl == 3] <- NA
+
+  mc <- horvitz_thompson(y ~ z, data = dc, condition_prs = bdecl)
+  expect_equal(mc$nobs, 50)
+  expect_true(is.finite(mc$std.error))
+})
+
+test_that("C13: a permutation-matrix declaration with no condition names uses the probability columns", {
+  # randomizr leaves `conditions` empty on an ra_custom built from a bare
+  # permutation matrix, so the condition lookup falls back to the names of the
+  # probability columns. Without the fallback there is nothing to match against
+  # and every such declaration was refused.
+  set.seed(343)
+  n <- 30
+  perm <- replicate(50, sample(rep(0:1, n / 2)))
+  decl <- randomizr::declare_ra(permutation_matrix = perm)
+  expect_length(decl$conditions, 0L)
+
+  d <- data.frame(y = rnorm(n), z = perm[, 1])
+  m <- horvitz_thompson(y ~ z, data = d, condition_prs = decl)
+
+  expect_true(is.finite(m$std.error))
+  expect_equal(m$nobs, n)
+})
+
+test_that("C13: conditions the declaration does not name are refused by name", {
+  # The data codes its treatment 0/1 and the declaration's conditions are "a"
+  # and "b". The row counts agree, so the check that catches a declaration of
+  # the wrong length passes, and this is the one that reports the mismatch.
+  set.seed(343)
+  n <- 30
+  perm <- replicate(40, sample(rep(c("a", "b"), n / 2)))
+  decl <- randomizr::declare_ra(permutation_matrix = perm)
+
+  d <- data.frame(y = rnorm(n), z = as.integer(perm[, 1] == "b"))
+
+  expect_error(
+    horvitz_thompson(y ~ z, data = d, condition_prs = decl),
+    "not found in ra_declaration conditions: a, b"
+  )
+})

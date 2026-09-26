@@ -1,5 +1,13 @@
 # estimatr 2.0.1
 
+## A factor `clusters` no longer loses the Horvitz-Thompson standard error
+
+`horvitz_thompson()` with a clustered or blocked-and-clustered declaration returned `NA` for the standard error, on every draw, whenever the declaration's `clusters` was a factor. The estimate was right; only the variance was lost. The cluster-level aggregation is `tapply()`, which groups by a factor's levels rather than by the values present, so every cluster absent from an arm summed to `NA`. Under two-arm randomization every control cluster is absent from the treated arm, so the failure needed nothing unusual: an ordinary factor cluster column was enough.
+
+It was also reported in the wrong direction. The `NA` reached the guard that reports an unestimable variance bound, whose message tells the user their declaration is the problem and suggests replacing it with one carrying the design's block and cluster structure, which is what they had already supplied.
+
+1.0.6 answers these designs and never had this bug, so it is a 2.0.0 regression. The fix restores 1.0.6's answer to fifteen digits, and a factor, character, and integer coding of the same clusters now give the same standard error.
+
 ## `lm_lin()` says what a dropped treatment interaction costs
 
 A rank-deficient fit already names the columns it returned as `NA`. In `lm_lin()` that is not enough, because the treatment coefficient is the effect at the covariate means only while every covariate is interacted with the treatment, and the name of a dropped column does not say that the number the reader takes for the effect has changed meaning.

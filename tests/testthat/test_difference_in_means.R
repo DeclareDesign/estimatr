@@ -115,3 +115,141 @@ test_that("update() refits a difference_in_means", {
   expect_equal(other$coefficients,
                difference_in_means(y2 ~ z, data = d)$coefficients)
 })
+
+test_that("C13: se_type = \"none\" on a blocked design withholds the variance only", {
+  # The Pashley-Miratrix branch has its own `se_type == "none"` arm, separate
+  # from the one every other design takes, and it had never been run: the
+  # estimate must be the one the default fit gives, with the variance and the
+  # df withheld rather than a different point estimate.
+  set.seed(343)
+  d <- data.frame(y = rnorm(200),
+                  z = rep(rep(0:1, 5), 20),
+                  bl = rep(1:20, each = 10))
+
+  none <- difference_in_means(y ~ z, blocks = bl, data = d, se_type = "none")
+  full <- difference_in_means(y ~ z, blocks = bl, data = d)
+
+  expect_equal(none$design, "Blocked")
+  expect_equal(none$coefficients, full$coefficients)
+  expect_true(is.na(none$std.error))
+  expect_true(is.na(none$df))
+  expect_true(is.na(none$p.value))
+  expect_false(is.na(full$std.error))
+})
+
+test_that("C13: blocks of mixed cluster count say so and use the matched-pair estimator", {
+  # Two clusters in one block and four in another: the design is neither
+  # matched pairs nor a block design with estimable within-block variance, and
+  # the matched-pair estimator is used across blocks with a warning that says
+  # which assumption was made.
+  set.seed(343)
+  cl <- rep(1:6, each = 3)
+  bl <- c(rep(1, 6), rep(2, 12))
+  d <- data.frame(y = rnorm(18), cl = cl, bl = bl,
+                  z = as.integer(cl %in% c(2, 4, 6)))
+
+  expect_warning(
+    m <- difference_in_means(y ~ z, blocks = bl, clusters = cl, data = d),
+    "two units/`clusters` while other blocks have more"
+  )
+  expect_equal(m$design, "Matched-pair clustered")
+
+  # Two blocks, so the across-block estimator has one degree of freedom.
+  expect_equal(unname(m$df), 1)
+})
+
+test_that("C13: a block with a single cluster is refused on the clustered path", {
+  # check_clusters_blocks() counts clusters rather than units here, so a block
+  # of six units in one cluster is a block of one.
+  set.seed(343)
+  cl <- c(rep(1L, 6), rep(3:6, each = 3))
+  bl <- c(rep(1, 6), rep(2, 12))
+  d <- data.frame(y = rnorm(18), cl = cl, bl = bl,
+                  z = as.integer(cl %in% c(1, 4, 6)))
+
+  expect_error(
+    difference_in_means(y ~ z, blocks = bl, clusters = cl, data = d),
+    "All `blocks` must have multiple units"
+  )
+})
+
+test_that("C13: a block with only one treatment condition is refused in its own words", {
+  # difference_in_means_internal() is called once per block as well as on the
+  # whole sample, and this is the per-block refusal: the block has clusters in
+  # both arms by count but every unit in it is treated.
+  set.seed(343)
+  cl <- rep(1:6, each = 3)
+  bl <- c(rep(1, 6), rep(2, 12))
+  d <- data.frame(y = rnorm(18), cl = cl, bl = bl,
+                  z = as.integer(cl %in% c(2, 4, 6)))
+  d$z[d$bl == 1] <- 1L
+
+  expect_error(
+    suppressWarnings(
+      difference_in_means(y ~ z, blocks = bl, clusters = cl, data = d)
+    ),
+    "Must have units with both treatment conditions"
+  )
+})
+
+test_that("C13: a factor treatment takes its conditions from the levels", {
+  # parse_conditions() reads levels(droplevels()) rather than sort(unique()) for
+  # a factor, so an unused level cannot become a condition and the contrast
+  # follows the level order rather than the alphabet.
+  set.seed(343)
+  d <- data.frame(y = rnorm(60),
+                  z = factor(rep(c("trt", "ctl"), 30), levels = c("trt", "ctl")))
+  d$y <- d$y + (d$z == "trt")
+
+  m <- difference_in_means(y ~ z, data = d)
+
+  # levels() puts trt first, so trt is condition1 and the contrast is ctl - trt.
+  expect_equal(m$term, "zctl")
+  expect_lt(m$coefficients[[1]], 0)
+
+  # An unused level is dropped rather than demanded as a third condition.
+  d$z <- factor(as.character(d$z), levels = c("trt", "ctl", "never"))
+  expect_equal(difference_in_means(y ~ z, data = d)$coefficients, m$coefficients)
+})
+
+test_that("C13: naming one condition infers the other from the two present", {
+  # Two separate branches in parse_conditions, neither run: given condition2
+  # alone the other value becomes condition1, and given condition1 alone the
+  # other becomes condition2. Naming either one alone is the same contrast as
+  # naming neither, up to the sign the choice implies.
+  set.seed(343)
+  d <- data.frame(y = rnorm(60), z = factor(rep(c("ctl", "trt"), 30)))
+
+  both <- difference_in_means(y ~ z, data = d)
+  c2_only <- difference_in_means(y ~ z, data = d, condition2 = "ctl")
+  c1_only <- difference_in_means(y ~ z, data = d, condition1 = "trt")
+
+  # condition2 = "ctl" leaves "trt" as condition1, so the contrast reverses,
+  # and the coefficient is named for the condition2 it now carries.
+  expect_equal(c2_only$term, "zctl")
+  expect_equal(unname(c2_only$coefficients), unname(-both$coefficients))
+  # condition1 = "trt" leaves "ctl" as condition2, the same reversal.
+  expect_equal(c1_only$term, "zctl")
+  expect_equal(unname(c1_only$coefficients), unname(-both$coefficients))
+  expect_equal(unname(c1_only$std.error), unname(both$std.error))
+  expect_equal(unname(c2_only$std.error), unname(both$std.error))
+})
+
+test_that("C13: weights with matched pairs are refused, which is what makes one branch unreachable", {
+  # `difference_in_means()` has a "Matched-pair" arm at the pair-matched
+  # blocked path (the unit-randomized across-pair variance, Gerber & Green
+  # 2012 p. 77 eq. 3.16). Reaching it needs blocks, no clusters and weights,
+  # because the unweighted unclustered case is taken by the Pashley-Miratrix
+  # branch above it; and weights with matched pairs are refused here, one
+  # call earlier. The arm is therefore dead while this refusal stands, and
+  # this test is what will report it if the refusal is ever lifted.
+  set.seed(343)
+  np <- 40
+  d <- data.frame(y = rnorm(np * 2), z = rep(0:1, np),
+                  pr = rep(seq_len(np), each = 2), w = runif(np * 2, 0.5, 2))
+
+  expect_error(
+    difference_in_means(y ~ z, blocks = pr, weights = w, data = d),
+    "Cannot use `weights` with matched pairs design"
+  )
+})

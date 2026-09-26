@@ -346,7 +346,14 @@ ht_prs_declaration <- function(decl, pi1, pi2, row_idx,
 
   if (inherits(decl, "ra_blocked_and_clustered")) {
     blocks   <- decl$blocks[row_idx]
-    clusters <- decl$clusters[row_idx]
+    # The variance aggregates to cluster level with tapply(), which groups by a
+    # factor's LEVELS rather than by the values present. A factor `clusters`
+    # therefore returned a sum of NA for every cluster absent from the arm,
+    # which is every control cluster, and the whole variance came back NA under
+    # a warning telling the user their design was the problem. Character keys
+    # group by what is there. The estimate never used them, so only the
+    # standard error was affected, and only for a factor.
+    clusters <- ht_cluster_key(decl$clusters[row_idx])
     block_info <- ht_block_info(decl, TRUE, c1_col, c2_col)
     return(list(pi1 = pi1, pi2 = pi2, design = "blocked_clustered",
                 blocks = blocks, clusters = clusters,
@@ -361,7 +368,7 @@ ht_prs_declaration <- function(decl, pi1, pi2, row_idx,
   }
 
   if (inherits(decl, "ra_clustered")) {
-    clusters  <- decl$clusters[row_idx]
+    clusters  <- ht_cluster_key(decl$clusters[row_idx])
     is_simple <- isTRUE(decl$simple)
     uniq_cl   <- !duplicated(decl$clusters)
     K         <- sum(uniq_cl)
@@ -398,6 +405,10 @@ ht_prs_declaration <- function(decl, pi1, pi2, row_idx,
   list(pi1 = pi1, pi2 = pi2, design = "complete",
        N_total = N_total, pi2_b = pi2[1L], pi1_b = pi1[1L])
 }
+
+# Grouping key for the cluster-level aggregations in the variance. See the
+# ra_blocked_and_clustered branch above for what a factor did.
+ht_cluster_key <- function(x) if (is.factor(x)) as.character(x) else x
 
 # Build per-block design info from an ra_declaration (full design, not subset).
 # Both condition columns are read from the probability matrix rather than

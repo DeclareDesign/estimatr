@@ -389,3 +389,34 @@ test_that("#304: a bare grouping vector warns but still works", {
   expect_error(lm_robust(y ~ x, data = d, fixed_effects = list(1, 2)),
                "must be a one-sided formula")
 })
+
+test_that("C13: a fixed effect with one level contributes an intercept, not contrasts", {
+  # fe_dummy_matrix() is built only for CR2, which is the one estimator that
+  # has to materialise the dummies, and it has a branch for a factor with a
+  # single level: model.matrix() would return a zero-column matrix for it.
+  # Neither the all-single-level case nor the mixed one had been run.
+  set.seed(343)
+  n <- 200
+  d <- data.frame(x = rnorm(n), cl = rep(1:20, 10), fe = rep(1:10, 20))
+  d$one <- 1L
+  d$y <- d$x + rnorm(n)
+
+  # On its own the single-level factor is the intercept, so the fit is the
+  # plain clustered one.
+  solo <- lm_robust(y ~ x, fixed_effects = ~ one, clusters = cl, data = d,
+                    se_type = "CR2")
+  plain <- lm_robust(y ~ x, clusters = cl, data = d, se_type = "CR2")
+  # `plain` reports the intercept the absorbed fit does not, so the comparison
+  # is on the slope the two share.
+  expect_equal(coef(solo)[["x"]], coef(plain)[["x"]])
+  expect_equal(solo$std.error[["x"]], plain$std.error[["x"]])
+
+  # Alongside a real factor its span is already inside that factor's, so it is
+  # dropped and the answer is the one the real factor gives alone.
+  both <- lm_robust(y ~ x, fixed_effects = ~ one + fe, clusters = cl, data = d,
+                    se_type = "CR2")
+  just_fe <- lm_robust(y ~ x, fixed_effects = ~ fe, clusters = cl, data = d,
+                       se_type = "CR2")
+  expect_equal(coef(both)[["x"]], coef(just_fe)[["x"]])
+  expect_equal(unname(both$std.error), unname(just_fe$std.error))
+})
