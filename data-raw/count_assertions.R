@@ -102,10 +102,12 @@ components <- list(
     blocks = list(
       "one-way absorption matches fixest" = "all",
       "two-way absorption matches fixest" = "all",
+      "2SLS with absorbed fixed effects matches fixest" = "all",
+      "two-way absorption on the 2SLS path matches fixest" = "all",
       "absorbed parameters are counted in the cluster correction" = "all",
       "the within estimator matches plm with Arellano's variance" = "all",
       # Metadata on the recorded fixture, not a comparison.
-      "the recorded reference names the versions it came from" = 0
+      "the recorded reference is the one these versions produced" = 0
     )
   ),
   blkvar = list(
@@ -114,7 +116,10 @@ components <- list(
       "a block with a singleton arm is estimable" = 0,
       "mixed block sizes no longer collapse to matched pairs" = 0,
       "small blocks of varying size are estimable" = 0,
-      "standard errors match blkvar, the authors' own package" = "all",
+      "standard errors match blkvar's recorded values" = "all",
+      # blkvar against its own recording, with no estimatr result on either
+      # side: the test that can see the recording go stale, not a comparison.
+      "the blkvar recording is still what blkvar and randomizr produce" = 0,
       # These two check Pashley and Miratrix's equations 4 and 5 written out by
       # hand. They are comparisons, but not against blkvar, so they are left
       # out rather than folded into a component named after that package.
