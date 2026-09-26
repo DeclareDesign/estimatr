@@ -352,3 +352,118 @@ test_that("C3: emmeans works when its namespace is loaded rather than attached",
   hc2 <- as.data.frame(emmeans::emmeans(lm_robust(y ~ g, data = d), "g"))
   expect_false(isTRUE(all.equal(hc2$SE, el$SE)))
 })
+
+# ---- the rank-deficient surface ----
+#
+# C3 gave recover_data.lm_robust the `envir` it needed, and the test above
+# covers the full-rank path. The branch that made the fix necessary, the
+# `pass.it.on` attribute a fit with a dropped column carries, was exercised by
+# nothing, and neither was any other method's rank-deficient branch: the NA
+# padding in `vcov(complete = TRUE)`, the count `print()` reports, or the
+# non-estimable basis emmeans builds from the passed-on design (review C6, C13).
+#
+# The design has two factors and an empty cell, so `fb:qq` is dropped and the
+# a:q cell is not estimable from what was fitted. A collinear column on its own
+# would exercise the padding but never the non-estimable basis, because every
+# marginal mean would still be estimable.
+rank_deficient_data <- function() {
+  set.seed(343)
+  d <- expand.grid(f = factor(c("a", "b")), q = factor(c("p", "q")), rep = 1:12)
+  d <- d[!(d$f == "a" & d$q == "q"), ]
+  d$y <- rnorm(nrow(d))
+  d$y2 <- rnorm(nrow(d))
+  d
+}
+
+test_that("vcov pads the dropped coefficient with NA when asked for the whole matrix", {
+  d <- rank_deficient_data()
+  fit <- suppressMessages(suppressWarnings(lm_robust(y ~ f * q, data = d)))
+  expect_lt(fit$rank, fit$k)
+
+  full <- vcov(fit, complete = TRUE)
+  expect_equal(dim(full), c(fit$k, fit$k))
+  expect_equal(rownames(full), fit$term)
+  j <- which(is.na(coef(fit, complete = TRUE)))
+  expect_true(all(is.na(full[j, ])))
+  expect_true(all(is.na(full[, j])))
+  # Every other entry is the matrix the fit holds, in the same order.
+  expect_equal(unname(full[-j, -j]), unname(fit$vcov), tolerance = 1e-12)
+
+  # And the incomplete matrix is the estimated coefficients alone.
+  expect_equal(dim(vcov(fit, complete = FALSE)), c(fit$rank, fit$rank))
+})
+
+test_that("vcov refuses a fit that was asked not to keep its variance", {
+  d <- rank_deficient_data()
+  fit <- lm_robust(y ~ f, data = d, return_vcov = FALSE)
+  expect_error(vcov(fit), "return_vcov = TRUE")
+})
+
+test_that("print says how many coefficients are not defined", {
+  d <- rank_deficient_data()
+  fit <- suppressMessages(suppressWarnings(lm_robust(y ~ f * q, data = d)))
+  out <- capture.output(print(summary(fit)))
+  expect_true(
+    any(grepl("Coefficients: (1 not defined because the design matrix is rank deficient)",
+              out, fixed = TRUE))
+  )
+  # The dropped term keeps its row, all NA, rather than vanishing from the table.
+  dropped <- names(which(is.na(coef(fit, complete = TRUE))))
+  expect_true(any(grepl(paste0("^", dropped, " +NA"), out)))
+})
+
+test_that("an iv fit's summary prints its call and its coefficients", {
+  set.seed(343)
+  n <- 60
+  d <- data.frame(inst = rnorm(n))
+  d$en <- d$inst + rnorm(n)
+  d$y <- d$en + rnorm(n)
+  out <- capture.output(print(summary(iv_robust(y ~ en | inst, data = d))))
+  expect_true(any(grepl("iv_robust(formula = y ~ en | inst", out, fixed = TRUE)))
+  expect_true(any(grepl("^en ", out)))
+})
+
+test_that("emmeans reports a cell the design cannot estimate as non-estimable", {
+  skip_if_not_installed("emmeans")
+  # The non-estimable basis is built from the design emmeans was handed through
+  # `pass.it.on`. Without it the a:q cell would come back as a number built
+  # from the dropped column's absence rather than as nonEst.
+  d <- rank_deficient_data()
+  fit <- suppressMessages(suppressWarnings(lm_robust(y ~ f * q, data = d)))
+  em <- as.data.frame(summary(emmeans::emmeans(fit, ~ f * q)))
+
+  missing_cell <- em$f == "a" & em$q == "q"
+  expect_equal(sum(missing_cell), 1L)
+  expect_true(is.na(em$SE[missing_cell]))
+  expect_true(all(!is.na(em$SE[!missing_cell])))
+
+  # The three cells that were observed are the cell means of the data.
+  observed <- aggregate(y ~ f + q, data = d, FUN = mean)
+  for (i in which(!missing_cell)) {
+    target <- observed$y[observed$f == em$f[i] & observed$q == em$q[i]]
+    expect_equal(em$emmean[i], target, tolerance = 1e-12,
+                 label = paste0("cell ", em$f[i], ":", em$q[i]))
+  }
+})
+
+test_that("emmeans on a multivariate fit is the per-outcome fits", {
+  skip_if_not_installed("emmeans")
+  # The n.mult branch builds the basis for every outcome at once with a
+  # Kronecker product, and nothing exercised it.
+  d <- rank_deficient_data()
+  mfit <- lm_robust(cbind(y, y2) ~ f, data = d)
+  em <- as.data.frame(summary(emmeans::emmeans(mfit, ~ f | rep.meas)))
+  expect_equal(sort(unique(as.character(em$rep.meas))), c("y", "y2"))
+
+  for (outcome in c("y", "y2")) {
+    single <- as.data.frame(summary(emmeans::emmeans(
+      lm_robust(stats::reformulate("f", response = outcome), data = d), ~ f
+    )))
+    rows <- em[em$rep.meas == outcome, ]
+    rows <- rows[order(rows$f), ]
+    single <- single[order(single$f), ]
+    expect_equal(rows$emmean, single$emmean, tolerance = 1e-12, label = outcome)
+    expect_equal(rows$SE, single$SE, tolerance = 1e-12,
+                 label = paste(outcome, "SE"))
+  }
+})
