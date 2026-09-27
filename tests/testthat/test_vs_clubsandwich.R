@@ -291,3 +291,30 @@ test_that("lh_robust CR2 matches clubSandwich's contrast, degrees of freedom inc
   expect_equal(unname(lh_fe$lh$std.error), expected_fe$SE, tolerance = LIVE_TOL)
   expect_equal(unname(lh_fe$lh$df), expected_fe$df, tolerance = LIVE_TOL)
 })
+
+# ---- a singleton cluster's own dummy ----
+#
+# A dummy for a one-member cluster is the CR2 analogue of the full-leverage
+# observation that HC2 and HC3 return NA for. That cluster's (I - H) block is
+# singular, the pseudo-inverse zeroes the direction, and the dummy's standard
+# error is assembled from clusters that carry no information about it.
+# clubSandwich takes the same pseudo-inverse and returns the same number, so
+# this is the estimator as published rather than an artefact here, and it is
+# pinned as such: a change that made CR2 return NA on this design, or a
+# different finite number, fails this test and reopens the question on purpose.
+
+test_that("CR2 on a singleton cluster's own dummy matches clubSandwich, and is finite", {
+  set.seed(343)
+  n_cl <- 30
+  ds <- data.frame(cl = c(rep(seq_len(n_cl), each = 3), n_cl + 1))
+  ds$x <- rnorm(nrow(ds))
+  ds$d <- as.numeric(ds$cl == n_cl + 1)
+  ds$y <- 0.5 * ds$x + rnorm(nrow(ds))
+  fit <- lm_robust(y ~ x + d, data = ds, clusters = cl, se_type = "CR2")
+  m <- lm(y ~ x + d, data = ds)
+  target <- clubSandwich::vcovCR(m, cluster = ds$cl, type = "CR2")
+  expect_false(anyNA(fit$std.error))
+  expect_equal(unname(fit$vcov), unname(as.matrix(target)), tolerance = LIVE_TOL)
+  ct <- clubSandwich::coef_test(m, vcov = target, test = "Satterthwaite")
+  expect_equal(unname(fit$df), ct$df_Satt, tolerance = LIVE_TOL)
+})
