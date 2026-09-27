@@ -10,7 +10,7 @@
 |collate  |en_US.UTF-8                                         |
 |ctype    |en_US.UTF-8                                         |
 |tz       |America/Chicago                                     |
-|date     |2026-09-23                                          |
+|date     |2026-09-26                                          |
 |pandoc   |3.9.0.2 @ /opt/homebrew/bin/pandoc                  |
 |quarto   |1.10.18 @ /Users/alexandercoppock/.local/bin/quarto |
 
@@ -25,4 +25,10 @@
 |rlang     |NA        |1.3.0      |*  |
 
 # Revdeps
+
+## New problems (1)
+
+|package       |version |error  |warning |note |
+|:-------------|:-------|:------|:-------|:----|
+|[DesignLibrary](problems.md#designlibrary)|0.1.10  |__+1__ |1       |     |
 
