@@ -1552,21 +1552,19 @@ test_that("#395: lm_lin's centring makes the intercept non-estimable too", {
   expect_false(anyNA(fit$std.error[finite]))
 })
 
-test_that("the singularity count tidy() reports is a well formed sentence", {
-  # This read "1 coefficient  not defined" until 2.0.1: the count fragment ended
-  # with a space and the clause after it began with one. One repository in the
-  # maintenance corpus printed it 242 times before anyone read it, which is what
-  # a message no assertion covers is worth. The trailing "\n" went with it, since
-  # message() appends one and the pair printed a blank line after every notice.
-  one <- suppressMessages(lm_robust(mpg ~ hp + I(hp * 2), data = mtcars))
+test_that("a rank-deficient fit is reported once, at the fit, by name", {
+  # The fit names the dropped column. tidy() and summary() used to message the
+  # count again, so a fit inside a tidy() pipeline announced one event twice;
+  # stats::lm() says it once, in the printed summary, and so does this package
+  # now. The printed count is pinned in test_methods.R.
   expect_message(
-    tidy(one),
-    "1 coefficient not defined because the design matrix is rank deficient"
+    one <- lm_robust(mpg ~ hp + I(hp * 2), data = mtcars),
+    "collinear with other regressors and were dropped, and are returned as NA: I\\(hp \\* 2\\)"
   )
-
-  two <- suppressMessages(lm_robust(mpg ~ hp + I(hp * 2) + cyl + I(cyl * 3), data = mtcars))
-  expect_message(
-    tidy(two),
-    "2 coefficients not defined because the design matrix is rank deficient"
-  )
+  expect_true(is.na(coef(one)[["I(hp * 2)"]]))
+  expect_no_message(tidy(one))
+  expect_no_message(summary(one))
+  expect_no_message(tidy(suppressMessages(
+    lm_robust(mpg ~ hp + I(hp * 2) + cyl + I(cyl * 3), data = mtcars)
+  )))
 })

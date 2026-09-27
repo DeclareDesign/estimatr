@@ -406,17 +406,21 @@ instrument_roles <- function(model_data, first_stage) {
 # z + w` puts the endogenous regressor ahead of the exogenous one, which is
 # what a drop rule reading position will honour.
 #
+# The reordering is not optional, even though lm_solver() is itself order
+# preserving. lm_solver() reads the design in formula order, and on
+# `y ~ x + w | w` the fitted values of x and w are collinear with w written
+# second, so a position rule on the unordered design keeps x and drops w, the
+# exogenous regressor the first stage reproduces exactly. Moving the exogenous
+# columns to the front is what makes x, the regressor the instruments cannot
+# reproduce, the column that goes.
+#
 # The dropped columns are zeroed rather than removed. A zero column has zero
 # residual norm, so lm_solver() drops it wherever it sits and returns its
 # coefficient as NA in place: the fit on the rest is unchanged,
 # drop_collinear() takes the same columns off the design matrix, and
 # lm_return() reports the NAs in the words it already uses for a collinear
-# regressor. lm_solver() is itself order preserving since the dqrdc2 ordering
-# fix, so the reordering above would now steer it directly; the zeroing stays
-# because it states the drop set outright instead of re-deriving it from the
-# rank rule, and it is what the tests pin. Only endogenous columns are ever
-# zeroed, so collinearity among the regressors themselves is still resolved by
-# lm_robust()'s own rule.
+# regressor. Only endogenous columns are ever zeroed, so collinearity among
+# the regressors themselves is still resolved by lm_robust()'s own rule.
 zero_underidentified <- function(model_data, first_stage) {
   fitted_values <- first_stage[["fitted.values"]]
   if (qr(fitted_values)$rank >= qr(model_data$design_matrix)$rank) {

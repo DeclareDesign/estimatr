@@ -1,5 +1,9 @@
 # estimatr 2.0.1
 
+## A rank-deficient fit is reported once
+
+The fit messages that a column was dropped, naming it; `tidy()` and `summary()` then messaged again with the count, so a rank-deficient fit inside a `tidy()` pipeline announced itself twice for one event. `stats::lm()` says it once, in the printed summary. The `tidy()` and `summary()` message is gone; the named message at the fit and the count in the printed summary stay.
+
 ## One rule for a full-leverage observation under `HC2` and `HC3`
 
 2.0.0 and 2.0.1 handled an observation at or near leverage 1 with three sets that had each been right when written and had come to disagree. The variance discarded an observation at `1 - h <= 0`; the count that decided whether the fit warned, and the rule that returned `NA` for a coefficient such observations alone identify, both used `sandwich`'s tolerant `h > 1 - sqrt(eps)`. An observation at `h = 1 - 5e-9` was therefore counted and made its coefficient `NA`, under a message saying it had been dropped, while its term stayed in the meat inflated by about 2e8. The discard now uses the same tolerance as the count and the `NA` rule, so the three are one set and the message is true of it.
