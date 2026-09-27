@@ -307,29 +307,30 @@ lm_robust_fit <- function(y,
         hypotheses = hypotheses
       )
 
-      # A variance diagonal can come back negative on a design that is close
-      # enough to singular for the sandwich, a difference of large and nearly
-      # equal quantities, to lose the difference to rounding. `sqrt()` would
-      # then emit R's bare "NaNs produced", which names neither the fit nor the
-      # reason, and which the leverage guard made visible by no longer sending
-      # the whole matrix to NaN first. The NaN is the honest answer and is
-      # kept; only the anonymous warning goes.
+      # One rule for what HC2 and HC3 report at a full-leverage observation.
+      # lm_variance() discards an observation from the variance at
+      # h > 1 - sqrt(eps), returns the size of that set as
+      # `n_leverage_near_one`, and returns for each coefficient the share of
+      # its classical variance those rows carry (`var_not_estimable`). A
+      # coefficient whose share exceeds sqrt(eps) is identified by the
+      # discarded rows alone, so its standard error is NA; by
+      # Frisch-Waugh-Lovell every other coefficient keeps the standard error of
+      # the design without those rows, to machine precision. The fit warns if
+      # and only if some standard error is NA for that reason. Where none is,
+      # the count is a message rather than a warning: a singleton fixed-effect
+      # group is the ordinary case, its demeaned row is zero, and every
+      # reported standard error is the one the design without it gives.
+      #
+      # Separately, a variance diagonal can come back negative on a design
+      # close enough to singular for the sandwich, a difference of large and
+      # nearly equal quantities, to lose the difference to rounding. `sqrt()`
+      # would then emit R's bare "NaNs produced", which names neither the fit
+      # nor the reason. The NaN is kept and the reason is attached.
       var_hat <- diag(vcov_fit$Vcov_hat)
       neg_var <- !is.na(var_hat) & var_hat < 0
       var_hat[neg_var] <- NaN
       return_list$std.error[est_exists] <- sqrt(var_hat)
 
-      # Which standard errors the leverage clamp leaves with nothing to
-      # estimate from. Zeroing a discarded observation's meat term is free for
-      # every coefficient that observation carries no information about, and by
-      # Frisch-Waugh-Lovell a singleton dummy's neighbours are exactly that:
-      # they keep the standard error of the design with the singleton row and
-      # column removed, to machine precision. The singleton's own coefficient
-      # is the exception. Its entire row and column of the meat is zeroed, so
-      # what `bread %*% meat %*% bread` returns for it is assembled from rows
-      # that say nothing about it, and it came back at a third of the classical
-      # standard error on the fit that found this. `NA` is the honest answer,
-      # and it is the same answer a collinear column already gets.
       not_estimable <- logical(length(var_hat))
       frac_dropped <- vcov_fit[["var_not_estimable"]]
       if (length(frac_dropped) == length(var_hat)) {
@@ -340,6 +341,10 @@ lm_robust_fit <- function(y,
           return_list$std.error[est_exists] <- se_vec
         }
       }
+      n_lev <- vcov_fit[["n_leverage_near_one"]]
+      if (!isTRUE(n_lev > 0)) n_lev <- 0L
+      return_list[["n_leverage_near_one"]] <- as.integer(n_lev)
+
       if (any(neg_var)) {
         warning(
           sum(neg_var), " of ", length(var_hat), " variance estimates came out ",
@@ -350,52 +355,39 @@ lm_robust_fit <- function(y,
         )
       }
 
-      # HC2 and HC3 divide by (1 - h_ii). A near-saturated design produces
-      # observations that are fitted exactly, whose computed hat value lands at
-      # or marginally either side of 1; lm_variance() drops the ones at or above
-      # it from the meat rather than divide by a negative number, and this is
-      # where that gets said. It is worth saying: those observations contribute
-      # nothing, so the standard error is built from fewer rows than the fit
-      # used (estimatr #395). The count is tolerant rather than a strict test on
-      # the sign of 1 - h, for the reason lm_variance() gives at the clamp: the
-      # standard error on an exactly saturated design is the same whichever side
-      # of 1 the rounding puts the hat value, so a strict test would leave the
-      # warning to an ulp.
-      n_lev <- vcov_fit[["n_leverage_near_one"]]
-      if (isTRUE(n_lev > 0)) {
-        warning(
+      if (n_lev > 0) {
+        lev_count <- paste0(
           n_lev, if (n_lev == 1) " observation has " else " observations have ",
           "a computed leverage at or near 1, which happens when the design is ",
           "close to saturated and the observation is fitted exactly or nearly ",
-          "so. `se_type = \"", se_type, "\"` divides by (1 - leverage). An ",
-          "observation at or above leverage 1 is dropped from the variance ",
-          "rather than divided by a negative number, and one just below it ",
-          "contributes a term the small divisor inflates. Use `se_type = ",
-          "\"HC1\"` or `\"classical\"`, or drop covariates, to use every ",
-          "observation.",
-          if (any(not_estimable)) paste0(
-            " The standard error is NA for ",
+          "so. `se_type = \"", se_type, "\"` divides by (1 - leverage), so ",
+          if (n_lev == 1) "it is " else "they are ",
+          "dropped from the variance."
+        )
+        if (any(not_estimable)) {
+          warning(
+            lev_count, " The standard error is NA for ",
             # The design is shared across outcomes, so a multivariate fit
             # carries the same non-estimable coefficient once per outcome and
             # would otherwise name it that many times. One name per
             # coefficient is what the collinear-drop message already gives.
             paste(unique(rep(variable_names, ncol(est_exists))[est_exists][not_estimable]),
                   collapse = ", "),
-            ", whose coefficient those observations alone identify: dropping ",
-            "them leaves nothing to estimate that variance from. Every other ",
-            "standard error in this fit is the one the design without them ",
-            "gives."
+            ", whose coefficient ",
+            if (n_lev == 1) "that observation alone identifies" else "those observations alone identify",
+            ": dropping ", if (n_lev == 1) "it " else "them ",
+            "leaves nothing to estimate that variance from. Every other ",
+            "standard error in this fit is the one the design without ",
+            if (n_lev == 1) "it " else "them ",
+            "gives. Use `se_type = \"HC1\"` or `\"classical\"`, or drop ",
+            "covariates, to use every observation."
           )
-        )
-      } else if (any(is.nan(return_list$std.error)) &&
-                 se_type %in% c("HC2", "HC3", "CR2")) {
-        warning(
-          "Some standard errors are NaN. `se_type = \"", se_type, "\"` divides ",
-          "by the observation's leverage, which is at or near 1 for some ",
-          "observations here, as happens when the design is close to ",
-          "saturated. Use `se_type = \"HC1\"` or `\"classical\"`, or drop ",
-          "covariates, to get finite standard errors."
-        )
+        } else {
+          message(
+            lev_count, " No standard error is affected: each is the one the ",
+            "design without ", if (n_lev == 1) "it " else "them ", "gives."
+          )
+        }
       }
 
       if (ci) {

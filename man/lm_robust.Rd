@@ -113,7 +113,9 @@ An object of class \code{"lm_robust"}, a list holding the estimate table in \cod
 \code{fitted.values}, \code{residuals}, \code{vcov}, \code{nobs}, \code{k}, \code{rank}, \code{df.residual},
 and \code{res_var}; the summary statistics \code{r.squared}, \code{adj.r.squared},
 \code{tss}, and \code{fstatistic}; and \code{se_type}, \code{weighted}, \code{clustered}, \code{fes},
-\code{alpha}, \code{terms}, \code{xlevels}, and \code{call}.
+\code{alpha}, \code{terms}, \code{xlevels}, and \code{call}. Under \code{se_type = "HC2"} or
+\code{"HC3"}, \code{n_leverage_near_one} counts the observations at or near
+leverage 1 that the variance discards; it is 0 for every other \code{se_type}.
 
 Absorbed fits add \code{fixed_effects}, \code{felevels} (the absorbed levels of
 each factor), and the within-projection summaries \code{proj_r.squared},

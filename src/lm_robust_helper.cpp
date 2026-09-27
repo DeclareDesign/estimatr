@@ -458,34 +458,23 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
         Eigen::ArrayXd denom = 1.0 - hii.array();
 
-        // A hat value is a projection diagonal and cannot exceed 1. Where the
-        // computed one does, the observation is fitted exactly up to rounding
-        // and its contribution is the same 0/0 that leverage of exactly 1
-        // resolves to 0 below. Left alone the two estimators fail differently
-        // and neither failure is informative: HC2 divides by a small negative
-        // number, half_meat then takes the square root of it, and every
-        // standard error in the fit is NaN however small the offending term;
-        // HC3 squares the denominator, which cancels the sign, so it returns a
-        // finite number carrying a spurious positive term and says nothing.
-        // Setting the denominator to 0 sends both through the isfinite trap.
-        //
-        // The clamp and the count are deliberately different tests. The clamp
-        // acts on the observations whose contribution has to be discarded. The
-        // count decides whether R warns, and a strict `denom < 0` there would
-        // put the warning at the mercy of one ulp: on an exactly saturated
-        // design the solver used here returns a hat value of 1 + 2.2e-16 while
-        // `qr()` and `stats::hatvalues()` return exactly 1, and the reported
-        // standard error is identical in both cases. So the count uses a
-        // tolerance, `sandwich::meatHC`'s `h > 1 - sqrt(eps)` on the same
-        // quantity. A hat value is dimensionless and bounded by 1, so the
-        // tolerance carries across packages in a way a tolerance on a column
-        // norm or a condition number would not. It also reaches an observation
-        // sitting just below 1, which is not dropped but whose contribution the
-        // small divisor inflates by about 1e8; the warning covers both.
+        // One rule for the observations HC2 and HC3 discard. A hat value is a
+        // projection diagonal and cannot exceed 1. An observation the fit
+        // reproduces exactly has h = 1 and residual 0, so its term is a 0/0;
+        // rounding puts the computed h on either side of 1, and one just below
+        // it carries a term the small divisor inflates by about 1e8. The set is
+        // therefore taken with a tolerance, `sandwich::meatHC`'s
+        // `h > 1 - sqrt(eps)` on the same quantity; a hat value is
+        // dimensionless and bounded by 1, so the tolerance means the same thing
+        // in every design. Every observation in the set has its denominator
+        // set to 0, which sends it through the isfinite trap below and out of
+        // the meat. The same set is what R receives as the count and the set
+        // var_not_estimable is computed over, so the three cannot disagree.
         const double lev_tol = 1.0 - std::sqrt(std::numeric_limits<double>::epsilon());
-        n_leverage_near_one = (hii.array() > lev_tol).count();
+        const Eigen::Array<bool, Eigen::Dynamic, 1> discarded = hii.array() > lev_tol;
+        n_leverage_near_one = discarded.count();
 
-        // Which coefficients the clamp costs. beta_j = sum_i a_ij y_i with
+        // Which coefficients the discard costs. beta_j = sum_i a_ij y_i with
         // a_i = meatXtX_inv X_i, so observation i contributes a_ij^2 sigma_i^2
         // to Var(beta_j). Discarding i sets that term to 0, which is right
         // exactly when a_ij is 0: a singleton dummy has a_ij = 1 for its own
@@ -499,7 +488,7 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
         if (n_leverage_near_one > 0) {
           var_not_estimable = Eigen::VectorXd::Zero(npars);
           for (int i = 0; i < n; i++) {
-            if (hii(i) <= lev_tol) continue;
+            if (!discarded(i)) continue;
             const Eigen::VectorXd a =
               meatXtX_inv * X.row(i).head(meat_cols).transpose();
             for (int j = 0; j < r; j++) var_not_estimable(j) += a(j) * a(j);
@@ -517,7 +506,7 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
           }
         }
 
-        denom = (denom <= 0.0).select(0.0, denom);
+        denom = discarded.select(0.0, denom);
         if (hc3) denom = denom.square();
 
         for (int m = 0; m < ny; m++) {

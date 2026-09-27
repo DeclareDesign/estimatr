@@ -524,40 +524,69 @@ test_that("a singleton FE group agrees absorbed and expanded, for every se_type"
   # contribution, so the two routes now agree rather than disagreeing by an
   # accident of which design matrix was formed (estimatr #395).
   #
-  # The two routes agree in the warning as well, which is the second half of
-  # the same point. The absorbed route puts the singleton at a hat value of
-  # exactly 1 and the expanded route a rounding step above it, so a count that
-  # tested the sign of 1 - h gave the same standard error by two notices; the
-  # tolerant count reaches both.
+  # The two routes differ in what they say, and the difference is the rule.
+  # An absorbed singleton is not a coefficient: its demeaned row is zero, its
+  # share of every reported coefficient's variance is zero, and every standard
+  # error is the one the design without it gives, so the absorbed route reports
+  # the discarded row as a message and nothing is NA. The expanded route writes
+  # the singleton as the reference level, so the intercept and every dummy are
+  # identified through that one observation's mean; their standard errors are
+  # NA and the fit warns. The `x` standard error is the same number on both
+  # routes.
   set.seed(11)
   k <- 200
   d <- data.frame(y = rnorm(k), x = rnorm(k), g = c(1L, sample(2:20, k - 1, TRUE)))
   expect_same(sum(d$g == 1L), 1L)
 
-  expect_warning(
+  expect_message(
     fe <- lm_robust(y ~ x, fixed_effects = ~ g, data = d, se_type = "HC2"),
     "1 observation has a computed leverage at or near 1"
   )
   expect_true(is.finite(fe$std.error[["x"]]))
+  expect_same(fe$n_leverage_near_one, 1L)
   expect_same(fe$df.residual, lm(y ~ x + factor(g), data = d)$df.residual)
 
-  leverage_warned <- function(expr) {
+  leverage_notice <- function(expr) {
     ws <- character(0)
-    val <- withCallingHandlers(expr, warning = function(w) {
-      ws <<- c(ws, conditionMessage(w))
-      invokeRestart("muffleWarning")
-    })
-    list(fit = val, warned = any(grepl("leverage at or near 1", ws, fixed = TRUE)))
+    ms <- character(0)
+    val <- withCallingHandlers(
+      expr,
+      warning = function(w) {
+        ws <<- c(ws, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      },
+      message = function(m) {
+        ms <<- c(ms, conditionMessage(m))
+        invokeRestart("muffleMessage")
+      }
+    )
+    list(fit = val,
+         warned = any(grepl("leverage at or near 1", ws, fixed = TRUE)),
+         messaged = any(grepl("leverage at or near 1", ms, fixed = TRUE)))
   }
 
   for (se in c("HC1", "HC2", "HC3")) {
-    a <- leverage_warned(lm_robust(y ~ x, fixed_effects = ~ g, data = d, se_type = se))
-    b <- leverage_warned(lm_robust(y ~ x + factor(g), data = d, se_type = se))
+    a <- leverage_notice(lm_robust(y ~ x, fixed_effects = ~ g, data = d, se_type = se))
+    b <- leverage_notice(lm_robust(y ~ x + factor(g), data = d, se_type = se))
     expect_true(is.finite(b$fit$std.error[["x"]]), info = se)
     expect_same(unname(a$fit$std.error), unname(b$fit$std.error["x"]), info = se)
-    # HC1 never reads leverage, so it is the control: neither route warns.
-    expect_same(a$warned, se != "HC1", info = paste(se, "absorbed"))
-    expect_same(b$warned, se != "HC1", info = paste(se, "expanded"))
+    reads_leverage <- se != "HC1"
+    # HC1 never reads leverage, so it is the control: neither route says
+    # anything and the count is 0 on both.
+    expect_same(a$fit$n_leverage_near_one, as.integer(reads_leverage), info = paste(se, "absorbed count"))
+    expect_same(b$fit$n_leverage_near_one, as.integer(reads_leverage), info = paste(se, "expanded count"))
+    # Absorbed: no coefficient is affected, so a message and no NA.
+    expect_same(a$warned, FALSE, info = paste(se, "absorbed"))
+    expect_same(a$messaged, reads_leverage, info = paste(se, "absorbed"))
+    expect_false(anyNA(a$fit$std.error), info = paste(se, "absorbed"))
+    # Expanded: the singleton is the reference level, so the intercept is its
+    # mean and every dummy is a difference from that mean. All twenty depend on
+    # observation 1 alone and are NA; `x` is the one coefficient that does not.
+    expect_same(b$warned, reads_leverage, info = paste(se, "expanded"))
+    expect_same(b$messaged, FALSE, info = paste(se, "expanded"))
+    expect_same(unname(is.na(b$fit$std.error)),
+                reads_leverage & names(b$fit$std.error) != "x",
+                info = paste(se, "expanded"))
   }
 })
 

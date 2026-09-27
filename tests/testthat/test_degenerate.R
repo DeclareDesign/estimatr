@@ -1088,15 +1088,19 @@ test_that("#395: NaN standard errors from leverage-1 points are explained", {
 # positive term and said nothing -- the worse of the two failures, because it
 # looks like an answer.
 #
-# lm_variance() now sets the denominator to 0 wherever 1 - h <= 0, which sends
-# both through the same isfinite trap that leverage of exactly 1 already used,
-# and counts how many observations sit at or near leverage 1 so lm_robust() can
-# warn on the condition rather than on a NaN. The count is tolerant, at
-# sandwich's `h > 1 - sqrt(eps)`, while the clamp is the strict `1 - h <= 0`,
-# because the two answer different questions. The clamp decides the number, and
-# on an exactly saturated design the number is the same whichever side of 1 the
-# rounding lands on, so a strict count would leave the warning to an ulp. The
-# first test below pins the design where that is so.
+# lm_variance() discards an observation from the variance at
+# h > 1 - sqrt(eps), sandwich's criterion on the same quantity: its denominator
+# is set to 0, which sends it through the isfinite trap that leverage of exactly
+# 1 already used. The same set is counted as `n_leverage_near_one`, stored on
+# the fit, and is the set over which each coefficient's share of its classical
+# variance is taken. A coefficient whose share exceeds sqrt(eps) is identified
+# by the discarded rows alone and its standard error is NA; the fit warns if and
+# only if some standard error is NA for that reason, and otherwise reports the
+# count as a message. The tolerance rather than the sign of 1 - h is what keeps
+# the rule off a single ulp: on an exactly saturated design the solver used
+# here returns 1 + 2.2e-16 where qr() returns exactly 1, and an observation
+# just below 1 would otherwise stay in the meat with its term inflated by about
+# 1e8. The first test below pins the exactly saturated design.
 
 test_that("#395: leverage of exactly 1 answers finitely, and says that it did", {
   # The single "c" observation is alone in its cell, so it is fitted exactly:
@@ -1129,6 +1133,11 @@ test_that("#395: leverage of exactly 1 answers finitely, and says that it did", 
   )
   expect_false(is.nan(m$std.error[["Z"]]))
   expect_true(is.finite(m$std.error[["Z"]]))
+  # The singleton's own coefficient is what observation 9 alone identifies, so
+  # it is the one standard error that is NA, and the count is on the fit.
+  expect_true(is.na(m$std.error[["gc"]]))
+  expect_equal(sum(is.na(m$std.error)), 1L)
+  expect_equal(m$n_leverage_near_one, 1L)
 
   # Computed here rather than recorded. With observation 9 contributing 0 the
   # meat is the other 8 rows, and the HC2 standard error follows in closed form
@@ -1140,7 +1149,7 @@ test_that("#395: leverage of exactly 1 answers finitely, and says that it did", 
   expect_equal(m$std.error[["Z"]], se_hand[["Z"]])
 })
 
-test_that("#395: the leverage guard drops exactly the 1 - h < 0 observations", {
+test_that("#395: the leverage guard discards exactly the h > 1 - sqrt(eps) observations", {
   # Whether a real fit puts a hat value above 1 is a rounding accident and
   # differs by platform, so the guard itself is pinned at the level of the
   # function that implements it, where the leverage is chosen rather than
@@ -1179,6 +1188,29 @@ test_that("#395: the leverage guard drops exactly the 1 - h < 0 observations", {
   for (ty in c("HC0", "HC1", "classical")) {
     expect_equal(z_variance(ty)[["n_leverage_near_one"]], 0L,
                  label = paste(ty, "leverage count"))
+  }
+
+  # An observation just below 1 is in the same set. At h = 1 - 5e-9 a clamp on
+  # the sign of 1 - h would keep the row and its term, inflated by 2e8, would
+  # dominate the meat while the count and the NA rule, both tolerant, said the
+  # row was gone. One set: the row is discarded, counted, and the variance is
+  # the three-row answer to the digit.
+  x4 <- sqrt((1 - 5e-9) / 0.3)
+  X_near <- matrix(c(1, 1, 1, x4), ncol = 1)
+  h_near <- 0.3 * as.vector(X_near)^2
+  expect_lt(h_near[4], 1)
+  expect_gt(h_near[4], 1 - sqrt(.Machine$double.eps))
+  for (ty in c("HC2", "HC3")) {
+    v <- estimatr:::lm_variance(
+      X = X_near, Xunweighted = NULL, XtX_inv = M, ei = ei, weight_mean = 1,
+      cluster = NULL, J = 0L, ci = TRUE, se_type = ty,
+      which_covs = TRUE, fe_rank = 0L, fe_leverage = NULL, n_eff = -1L
+    )
+    expect_equal(v[["n_leverage_near_one"]], 1L, label = paste(ty, "near-1 count"))
+    expect_equal(sqrt(v[["Vcov_hat"]][1, 1]),
+                 sqrt(0.09 * 3 / if (ty == "HC2") 0.7 else 0.49),
+                 label = paste(ty, "near-1 variance"))
+    expect_gt(v[["var_not_estimable"]][1], sqrt(.Machine$double.eps))
   }
 })
 
@@ -1253,7 +1285,7 @@ test_that("#395: the leverage warning counts the observations it dropped", {
   # and on none locally. Collect them and read the leverage one out.
   ws <- character(0)
   ms <- character(0)
-  withCallingHandlers(
+  fit <- withCallingHandlers(
     lm_robust(fml, data = d, se_type = "HC2"),
     warning = function(w) {
       ws <<- c(ws, conditionMessage(w))
@@ -1273,8 +1305,11 @@ test_that("#395: the leverage warning counts the observations it dropped", {
   # has more than one such observation, so the plural branch of the message is
   # exercised here and the singular branch in the exactly saturated test above.
   expect_match(lev, "^[0-9]+ observations have ")
-  expect_equal(as.integer(sub(" .*$", "", lev)),
-               sum(lev_above_one(fml, d)$h > 1 - sqrt(.Machine$double.eps)))
+  n_ref <- sum(lev_above_one(fml, d)$h > 1 - sqrt(.Machine$double.eps))
+  expect_equal(as.integer(sub(" .*$", "", lev)), n_ref)
+  expect_equal(fit$n_leverage_near_one, n_ref)
+  # It is a warning, not a message, because some coefficient is NA for it.
+  expect_true(any(is.na(fit$std.error) & !is.na(fit$coefficients)))
 })
 
 test_that("#395: CR2 has no analogous hole -- degeneracy goes through its clamp", {
@@ -1308,19 +1343,18 @@ test_that("#395: CR2 has no analogous hole -- degeneracy goes through its clamp"
 })
 
 test_that("a NaN standard error never arrives without a reason attached", {
-  # lm_robust_fit() has a second warning behind the leverage one, for a NaN
-  # standard error with no observation near leverage 1. Nothing reaches it, and
-  # the two tests above are why: under HC2/HC3 a variance diagonal only goes
-  # negative on a design degenerate enough to put an observation at or near
-  # leverage 1, which the leverage arm reports first, and under CR2 the
-  # eigenvalue clamp contributes 0 rather than a negative term. A search over
-  # roughly 1,600 designs -- ill-conditioned to 1e-14, columns spanning 1e12 in
-  # scale, weights spanning 1e16, 3 to 10 clusters, weighted and not -- produced
-  # no NaN outside the leverage case. The guard stays, because the property that
-  # matters is not which arm fires but that one of them does: a NaN standard
-  # error must never come back as R's bare "NaNs produced", which names neither
-  # the fit nor the reason. That is what is asserted, on the design that gets
-  # closest.
+  # Every NaN source in the variance code is trapped: the leverage set goes
+  # through the isfinite trap, and CR2's eigenvalue clamp contributes 0 rather
+  # than a negative term. The one way a NaN standard error still arrives is a
+  # negative variance diagonal on a design close enough to singular for the
+  # sandwich to lose a difference to rounding, and lm_robust_fit() warns for
+  # that with its own diagnosis. A search over roughly 1,600 designs --
+  # ill-conditioned to 1e-14, columns spanning 1e12 in scale, weights spanning
+  # 1e16, 3 to 10 clusters, weighted and not -- produced no NaN by any other
+  # route. What is asserted, on the design that gets closest, is that a NaN
+  # never comes back as R's bare "NaNs produced", which names neither the fit
+  # nor the reason, and that when one does come back the negative-variance
+  # warning is the one attached to it.
   set.seed(7)
   N <- 50
   dn <- data.frame(x = sample(1:40, N, TRUE), Z = sample(0:1, N, TRUE))
@@ -1337,7 +1371,7 @@ test_that("a NaN standard error never arrives without a reason attached", {
     expect_false(any(grepl("NaNs produced", ws, fixed = TRUE)),
                  label = paste(st, "bare NaN warning"))
     if (any(is.nan(fit$std.error))) {
-      expect_true(any(grepl("leverage|came out negative", ws)),
+      expect_true(any(grepl("came out negative", ws)),
                   label = paste(st, "NaN is explained"))
     }
   }

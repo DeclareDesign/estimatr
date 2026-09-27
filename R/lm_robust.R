@@ -89,7 +89,9 @@
 #'   `fitted.values`, `residuals`, `vcov`, `nobs`, `k`, `rank`, `df.residual`,
 #'   and `res_var`; the summary statistics `r.squared`, `adj.r.squared`,
 #'   `tss`, and `fstatistic`; and `se_type`, `weighted`, `clustered`, `fes`,
-#'   `alpha`, `terms`, `xlevels`, and `call`.
+#'   `alpha`, `terms`, `xlevels`, and `call`. Under `se_type = "HC2"` or
+#'   `"HC3"`, `n_leverage_near_one` counts the observations at or near
+#'   leverage 1 that the variance discards; it is 0 for every other `se_type`.
 #'
 #'   Absorbed fits add `fixed_effects`, `felevels` (the absorbed levels of
 #'   each factor), and the within-projection summaries `proj_r.squared`,
