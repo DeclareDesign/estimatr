@@ -1165,7 +1165,7 @@ test_that("#395: the leverage guard discards exactly the h > 1 - sqrt(eps) obser
     estimatr:::lm_variance(
       X = X, Xunweighted = NULL, XtX_inv = M, ei = ei, weight_mean = 1,
       cluster = NULL, J = 0L, ci = TRUE, se_type = se_type,
-      which_covs = TRUE, fe_rank = 0L, fe_leverage = NULL, n_eff = -1L
+      fe_rank = 0L, fe_leverage = NULL, n_eff = -1L
     )
   }
 
@@ -1204,7 +1204,7 @@ test_that("#395: the leverage guard discards exactly the h > 1 - sqrt(eps) obser
     v <- estimatr:::lm_variance(
       X = X_near, Xunweighted = NULL, XtX_inv = M, ei = ei, weight_mean = 1,
       cluster = NULL, J = 0L, ci = TRUE, se_type = ty,
-      which_covs = TRUE, fe_rank = 0L, fe_leverage = NULL, n_eff = -1L
+      fe_rank = 0L, fe_leverage = NULL, n_eff = -1L
     )
     expect_equal(v[["n_leverage_near_one"]], 1L, label = paste(ty, "near-1 count"))
     expect_equal(sqrt(v[["Vcov_hat"]][1, 1]),

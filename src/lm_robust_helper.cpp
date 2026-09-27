@@ -170,6 +170,7 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
   Eigen::MatrixXd XtX_inv, R_inv;
   Eigen::MatrixXd beta_out(Eigen::MatrixXd::Constant(p, ny, ::NA_REAL));
 
+  const Eigen::VectorXd scales = columnScales(X);
   bool do_qr = !try_cholesky;
   if (try_cholesky) {
     // Normalized for the reason the QR below is, and with a second payoff
@@ -196,7 +197,6 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
     // not cancel, so they fall below 1e-7 and the gap stayed hidden. Nothing
     // above the threshold moves: the fallback selects the arithmetic, and the
     // QR still makes the rank decision at 1e-7 in full precision.
-    const Eigen::VectorXd scales = columnScales(X);
     const Eigen::MatrixXd X_scaled = X * scales.asDiagonal();
     const Eigen::LLT<Eigen::MatrixXd> llt(X_scaled.transpose() * X_scaled);
 
@@ -212,7 +212,6 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
   }
 
   if (do_qr) {
-    const Eigen::VectorXd scales = columnScales(X);
     // Order-preserving rank detection rather than Eigen's norm-ranked pivot, so
     // that a collinear pair drops its LATER column, as stats::lm() does; see
     // orderedQR(). Eigen's default threshold was also tight enough that an
@@ -322,7 +321,6 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
                  const int& J,
                  const bool& ci,
                  const String se_type,
-                 const std::vector<bool> & which_covs,
                  const int& fe_rank,
                  const Rcpp::Nullable<Rcpp::NumericVector> & fe_leverage,
                  const int& n_eff,
@@ -366,7 +364,6 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
   Eigen::MatrixXd Vcov_hat;
   Eigen::VectorXd dof = Eigen::VectorXd::Constant(npars, -99.0);
-  Eigen::VectorXd res_var = Eigen::VectorXd::Constant(ny, -99.0);
   // Reported back so R can warn on the condition itself rather than on a NaN,
   // which is no longer the symptom once the denominator is guarded.
   int n_leverage_near_one = 0;
@@ -394,12 +391,9 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
   if (se_type == "classical") {
     Eigen::MatrixXd s2 = AtA(ei)/((double)n_use - (double)r_fe);
     Vcov_hat = Kr(s2, XtX_inv);
-    res_var = s2.diagonal();
 
   } else {
     Eigen::MatrixXd temp_omega = ei.array().pow(2);
-
-    res_var = temp_omega.colwise().sum()/((double)n_use - (double)r_fe);
 
     Eigen::MatrixXd bread(npars, npars);
     Eigen::MatrixXd half_meat(sandwich_size, npars);
@@ -416,13 +410,9 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
         // and the meat is read off the full design.
         meatXtX_inv = getMeatXtX(X, XtX_inv);
         meat_cols = meatXtX_inv.cols();
-        r_fe = meat_cols;
       } else {
         // The meat is the plain r-by-r XtX_inv and X carries only its r
-        // demeaned columns, so the hat values are read off those. `r_fe` keeps
-        // the absorbed rank: setting it to r here dropped the fixed effects
-        // from the residual degrees of freedom, which moved every p-value and
-        // confidence interval on a one-way FE fit at the HC2 default.
+        // demeaned columns, so the hat values are read off those.
         meatXtX_inv = XtX_inv;
         meat_cols = r;
       }
@@ -696,11 +686,9 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
       dof.fill(J - 1);
     } else {
       for (int j = 0; j < r; j++) {
-        if (which_covs[j]) {
-          const double dof_j = cr2_satterthwaite(H1s, H2s, H3s, P_diags, j, meat_cols, J);
-          for (int outcome_ix = 0; outcome_ix < ny; outcome_ix++) {
-            dof(j + outcome_ix * r) = dof_j;
-          }
+        const double dof_j = cr2_satterthwaite(H1s, H2s, H3s, P_diags, j, meat_cols, J);
+        for (int outcome_ix = 0; outcome_ix < ny; outcome_ix++) {
+          dof(j + outcome_ix * r) = dof_j;
         }
       }
       for (int h = 0; h < n_hypotheses; h++) {
@@ -711,7 +699,6 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
   return List::create(_["Vcov_hat"]= Vcov_hat,
                       _["dof"]= dof,
-                      _["res_var"]= res_var,
                       _["n_leverage_near_one"]= n_leverage_near_one,
                       _["var_not_estimable"]= var_not_estimable,
                       _["hypothesis_dof"]= hypothesis_dof);

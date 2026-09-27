@@ -129,8 +129,6 @@ lm_robust_fit <- function(y,
   }
   variable_names <- colnames(data[["X"]])
 
-  which_covs <- setNames(rep(TRUE, k), variable_names)
-
   data <- prep_data(
     data = data,
     se_type = se_type,
@@ -296,7 +294,6 @@ lm_robust_fit <- function(y,
         J = data[["J_eff"]],
         ci = ci,
         se_type = se_type,
-        which_covs = which_covs[covs_used],
         fe_rank = fe_rank,
         # Only HC2/HC3 consume this; it is NULL for every other se_type and for
         # multi-way FE, so the C++ falls back to the plain hat value.
@@ -459,13 +456,12 @@ lm_robust_fit <- function(y,
 
   if (se_type != "none") {
 
-    return_list[["res_var"]] <- get_resvar(
-      data = data,
-      ei = fit_vals[["ei"]],
-      df.residual = return_list[["df.residual"]],
-      vcov_fit = vcov_fit,
-      weighted = weighted
-    )
+    # `ei` is the weighted residual sqrt(w / mean(w)) * e, so this is the
+    # weighted residual variance; `weight_mean` is 1 for an unweighted fit.
+    # Unnamed, as it always was for one outcome: a multivariate `ei` carries
+    # the outcome names, and `r.squared` is built from this.
+    return_list[["res_var"]] <-
+      unname(colSums(fit_vals[["ei"]]^2 * data[["weight_mean"]])) / return_list[["df.residual"]]
 
     tss_r2s <- get_r2s(
       y = data[["y"]],
@@ -648,14 +644,6 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE,
   return(se_type)
 }
 
-get_resvar <- function(data, ei, df.residual, vcov_fit, weighted) {
-  res_var <-
-    if (weighted)
-      colSums(ei^2 * data[["weight_mean"]]) / df.residual
-    else
-      as.vector(ifelse(vcov_fit[["res_var"]] < 0, NA, vcov_fit[["res_var"]]))
-  return(res_var)
-}
 
 get_r2s <- function(y, return_list, has_int, yunweighted, weights, weight_mean) {
 
