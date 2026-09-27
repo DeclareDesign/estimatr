@@ -1,43 +1,30 @@
 ## Submission
 
-estimatr 2.0.0 is a rewrite of the package. The six estimators keep their signatures, with one exception: `horvitz_thompson()`, whose five probability arguments consolidate into `condition_prs`. Numerical results agree to 1e-12 wherever both versions answer. `tidy()`, `glance()`, and `augment()` now return tibbles, as broom's methods do. The removals and the breaking changes are listed in NEWS.md and in `vignette("estimatr2.0")`.
+estimatr 2.0.1 is a patch release. It fixes wrong answers and regressions found in 2.0.0 after it was released, nearly all of them on rank-deficient or otherwise degenerate designs. The ones that moved a number: `horvitz_thompson()` returned `NA` for the standard error on every draw whenever a clustered or blocked-and-clustered declaration's `clusters` was a factor, which 1.0.6 answered correctly and which this release restores to fifteen digits; `try_cholesky = TRUE` returned a full set of coefficients at a design of deficient rank, because the rank guard compared a Gram-factor diagonal against a tolerance set for `dqrdc2`; absorbed fixed-effect estimates came back all `NA` on a rank-deficient fit; a rank-deficient fit reported its F statistic as `NA` unless the dropped column happened to be last; and which collinear column is dropped now follows `stats::lm()` rather than a pivoted QR's norm ordering, so a rank-deficient fit returns `NA` for the same coefficient `lm()` does. Separately, a fit no longer draws from the random number stream, so a seeded simulation that contains one reproduces across versions. `NEWS.md` lists all fourteen changes.
 
-**This submission changes the maintainer** from Graeme Blair <graeme.blair@gmail.com> to Alexander Coppock <acoppock@gmail.com>. Graeme Blair has written to CRAN separately to confirm the transfer. He remains an author. One other change to `Authors@R`: Macartan Humphreys has asked to be listed as a contributor rather than an author, and his role moves from `aut` to `ctb`.
-
-This version was written by the maintainers working with AI assistance (Claude, from Anthropic). `vignette("estimatr2.0")` says so, and `vignette("mathematical-notes")` pairs each estimator's definition with a measurement of estimatr against that definition, to machine precision, computed when the vignette is built; the vignette ends in `stopifnot()`, so a broken identity fails the check rather than printing FALSE in a table. The evidence for this release: a suite of 7,177 assertions, 695 of them against answers recorded from an installed estimatr 1.0.6 and 820 against independent implementations (`sandwich`, `clubSandwich`, `ivreg`, Stata, `fixest`, `plm`, and `blkvar`), with the full returned surface of sixteen fit types pinned by test. Every reverse dependency was checked.
+This version was written by the maintainers working with AI assistance (Claude, from Anthropic), as 2.0.0 was. `vignette("estimatr2.0")` says so, and `vignette("mathematical-notes")` pairs each estimator's definition with a measurement of estimatr against that definition, to machine precision, computed when the vignette is built; the vignette ends in `stopifnot()`, so a broken identity fails the check rather than printing FALSE in a table. The evidence for this release: a suite of 7,177 assertions, 695 of them against answers recorded from an installed estimatr 1.0.6 and 820 against independent implementations (`sandwich`, `clubSandwich`, `ivreg`, Stata, `fixest`, `plm`, and `blkvar`), with the full returned surface of sixteen fit types pinned by test.
 
 ## Test environments
 
-* local macOS 26.6 (aarch64, Apple M4), R 4.6.0
-* GitHub Actions: ubuntu-latest (devel, release, oldrel-1), macOS-latest (release), windows-latest (release). All five green at `FAIL 0 | SKIP 1 | PASS 7177` (run 36289745781). R-devel alone reports two test warnings, both raised inside `clubSandwich::vcovCR()` on an `mlm` fit that a test uses as its reference value ("Replacing special names '.Dimnames' is deprecated"); they come from clubSandwich, not from estimatr. One test block skips by design, worth 18 assertions: the check that `blkvar`'s recorded values are still what `blkvar` and randomizr produce, that package being available only from GitHub. The 12 assertions comparing estimatr against the recording read the fixture and do not skip.
-* win-builder: R-devel (2026-09-14 r90539 ucrt) and R 4.6.1 (ucrt), Windows x86_64, `Status: 1 NOTE` on each, the maintainer change and nothing else. Tests OK and all three vignettes rebuilt on both.
+* local macOS 26.6 (aarch64, Apple M4), R 4.6.0: `Status: OK`, and `FAIL 0 | WARN 0 | SKIP 1 | PASS 7177`.
+* GitHub Actions: ubuntu-latest (devel, release, oldrel-1), macOS-latest (release), windows-latest (release). All five green at `FAIL 0 | SKIP 1 | PASS 7177` (run 36290783813), read per job. R-devel alone reports two test warnings, both raised inside `clubSandwich::vcovCR()` on an `mlm` fit that a test uses as its reference value ("Replacing special names '.Dimnames' is deprecated"); they come from clubSandwich, not from estimatr.
+* One test block skips by design, worth 18 assertions: the check that `blkvar`'s recorded values are still what `blkvar` and randomizr produce, that package being available only from GitHub. The 12 assertions comparing estimatr against the recording read the fixture and do not skip, on CRAN or anywhere else.
+* win-builder: **NOT YET RUN. Do not submit until this line names the R-devel and release results.**
 
 ## R CMD check results
 
-0 errors | 0 warnings | 1 note
+0 errors | 0 warnings | 0 notes
 
-```
-* checking CRAN incoming feasibility ... NOTE
-Maintainer: 'Alexander Coppock <acoppock@gmail.com>'
-
-New maintainer:
-  Alexander Coppock <acoppock@gmail.com>
-Old maintainer(s):
-  Graeme Blair <graeme.blair@gmail.com>
-```
-
-The maintainer change is intentional and is covered by Graeme Blair's separate message to CRAN.
+CRAN incoming feasibility passes with no note. The `2.0.0.9000` version-component note the 2.0.0 submission carried is gone with the version bump, and the maintainer change that release announced is already in place.
 
 ## Reverse dependencies
 
-`revdepcheck` was run against the submitted code on 2026-09-14: 37 checked, 35 clean, 2 broken, none failed to check. Both breaks were expected, and each maintainer has been notified with the fix.
+**NOT YET RE-RUN AGAINST THE SUBMITTED CODE. Do not submit until it has been.** The figures below are from a run of 2026-09-26 against an earlier commit on the development branch, with the baseline at CRAN 2.0.0: 38 checked, 37 OK, 1 new problem, 0 failed to check. It does not cover the last few commits in this release.
 
-`eventstudyr` fails four test assertions, and no estimate changes. Three read a fitted object's `felevels` list by the element name `V1`. estimatr 1.0.6 named those elements after their terms except with a single fixed-effect factor on a model fitted with missing data, where it fell back to `V1`; this release names them consistently. Keeping 1.0.6's behaviour would mean keeping a bug that loses the term name, which also broke CR2 and `predict()` on those fits. The fourth assertion checks the `dim` of a column assigned into `tidy()` output: a data frame stores a one-column matrix as a matrix column, and a tibble stores it as a vector, with identical values. Its maintainers were emailed on 2026-08-26 about the first and on 2026-09-15 about the second.
+`DesignLibrary` 0.1.10 is the one new problem, and it is ours. `difference_in_means()` now returns a `call` field, which every other estimator in this package already had and which was added because `difference_in_means()` was the only one missing it. `DesignLibrary`'s `multi_arm_designer()` combines the fitted objects themselves with `rbind.data.frame()`, which requires every field of a fit to be of length 1, so it now fails with "invalid list argument: all variables should have the same length". Three of its test assertions fail and no estimate it reports changes.
 
-`hbal`'s examples raise a warning. `att()` sets row names on `tidy()` output, which tibble deprecates. The one-line fix on their side is to coerce with `as.data.frame()` before setting row names, and every value in its table is unchanged. Its maintainer was emailed on 2026-09-15 and replied the same day that they will make the change.
+We maintain `DesignLibrary`, and the fix is already written rather than planned: its 2.0.0 delegates that designer to an internal library call and contains no `rbind.data.frame()` anywhere. That release depends on the `fabricatr` and `DeclareDesign` 2.0 releases and is third in that sequence, so it will reach CRAN after this one. We are reporting the break rather than patching the 0.1.10 line because the successor removes the pattern entirely, and we did not want to ship a fix to a file that is about to be replaced.
 
-`projoint`, which an earlier run of this release broke on a single-cluster fit, checks clean at version 1.1.4. An earlier run also broke `clubSandwich`, `RCT`, and `statuser`; those were regressions in the rewrite, they are fixed, and all three check clean.
+`eventstudyr` reports an error under both the old and the new version, so it is not a new problem in this release. Its situation is the one described in the 2.0.0 submission: three assertions read a fitted object's `felevels` list by the element name `V1`, which 1.0.6 produced only in the case where it lost the term name, and a fourth checks the `dim` of a column assigned into `tidy()` output, which a tibble stores as a vector where a data frame stored a one-column matrix. Its maintainers were emailed on 2026-08-26 and on 2026-09-15.
 
-One default changes, away from an estimator that would require expanding the fixed effects into dummies. Absorbed fixed effects with clusters default to CR0 where 1.0.6 defaulted to CR2, and emit a warning, once per session, that names the 1.0.6 default and names the `se_type` that accepts the new one. Naming `se_type = "CR2"` returns the 1.0.6 number exactly. Unclustered absorbed fixed effects keep 1.0.6's HC2 default at any number of factors.
-
-One further difference is deliberate and affects only fixed-effect designs that are rank deficient, where one absorbed factor is spanned by the others (a nested factor, or a disconnected design). 1.0.6 sized the rank correction from the nominal level count, so its absorbed fit disagreed with its own explicit-dummy fit on those designs. This release takes the exact rank and the two now agree, which is also what `lm()` and `plm` report for the same data. Designs of full rank are unaffected.
+`hbal`, whose examples raised a tibble row-names warning at 2.0.0, checks clean; its maintainer made the change they said they would.
