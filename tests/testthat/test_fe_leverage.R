@@ -317,6 +317,61 @@ test_that("fe_leverage handles a disconnected design", {
   expect_same(cheap$rank, estimatr:::fe_leverage(codes)$rank)
 })
 
+# The corpus check behind this: 424 published fits carrying a singleton level
+# of an ordinary factor covariate reproduced the treatment estimate and its
+# HC2 standard error, under the 2.0.1 discard rule, within 7e-16 of a refit on
+# the rows the singleton levels do not occupy. The file's other singleton
+# tests are about an ABSORBED group; this one is about a factor covariate
+# carried in the design, which is the shape a subgroup analysis reaches.
+test_that("a singleton factor level leaves the other coefficients at the reduced fit", {
+  set.seed(343)
+  n <- 122
+  sing <- data.frame(
+    z = rep(0:1, each = n / 2),
+    # Cycled rather than blocked, so the common levels cross `z` and the only
+    # degeneracy in the design is the two singletons.
+    g = factor(c(rep_len(letters[1:4], n - 2), "rare1", "rare2")),
+    x = rnorm(n)
+  )
+  sing$y <- 1 + 0.5 * sing$z + sing$x + rnorm(n)
+
+  # The two singleton levels are identified by their own row alone, so the fit
+  # warns and their standard errors are NA. The reduced-fit comparison below is
+  # what the rule promises about every other coefficient.
+  warnings <- character()
+  full <- withCallingHandlers(
+    suppressMessages(lm_robust(y ~ z + x + g, data = sing, se_type = "HC2")),
+    warning = function(w) {
+      warnings <<- c(warnings, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_gt(full$n_leverage_near_one, 0)
+  expect_true(any(grepl("alone identif", warnings)))
+
+  # Frisch-Waugh-Lovell: the singleton rows identify their own level and
+  # nothing else, so every other coefficient keeps the reduced design's
+  # standard error.
+  reduced <- lm_robust(
+    y ~ z + x + g,
+    data = droplevels(sing[!sing$g %in% c("rare1", "rare2"), ]),
+    se_type = "HC2"
+  )
+  shared <- intersect(reduced$term, full$term)
+  expect_true(all(c("z", "x") %in% shared))
+  expect_equal(
+    full$coefficients[shared], reduced$coefficients[shared], tolerance = 1e-12
+  )
+  expect_equal(
+    full$std.error[match(shared, full$term)],
+    reduced$std.error[match(shared, reduced$term)],
+    tolerance = 1e-12
+  )
+
+  # The singleton levels are what the discard costs, so those are the NAs.
+  expect_true(all(is.na(full$std.error[full$term %in% c("grare1", "grare2")])))
+})
+
 test_that("a singleton fixed-effect group has leverage exactly one", {
   codes <- list(as.integer(c(1L, sample(2:20, 499, TRUE))),
                 as.integer(sample(1:5, 500, TRUE)))

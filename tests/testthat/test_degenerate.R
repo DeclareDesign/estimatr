@@ -415,20 +415,129 @@ test_that("more coefficients than observations drops as many as lm() does", {
   expect_true(any(grepl("degrees of freedom have been estimated as negative or zero", warnings)))
 })
 
-test_that("an outcome the regressors fit exactly has vanishing standard errors", {
+# Collecting messages rather than using expect_message, because each fit below
+# emits several and the assertion is about one of them.
+collect_messages <- function(expr) {
+  msgs <- character()
+  value <- withCallingHandlers(
+    expr,
+    message = function(m) {
+      msgs <<- c(msgs, conditionMessage(m))
+      invokeRestart("muffleMessage")
+    }
+  )
+  list(value = value, messages = msgs)
+}
+
+test_that("an outcome the regressors fit exactly returns NA standard errors", {
   d1 <- d
   d1$y_exact <- 1 + 2 * d$x1 - d$x2
   d1$y_const <- 3
   for (st in c("classical", "HC2", "CR2")) {
     cluster_ids <- if (st == "CR2") d1$cl else NULL
-    exact <- lm_robust(y_exact ~ x1 + x2, data = d1, se_type = st, clusters = cluster_ids)
-    expect_equal(unname(exact$coefficients), c(1, 2, -1), tolerance = DEG_TOL, label = st)
-    expect_lt(max(exact$std.error), 1e-12)
 
-    constant <- lm_robust(y_const ~ x1 + x2, data = d1, se_type = st, clusters = cluster_ids)
+    got <- collect_messages(
+      lm_robust(y_exact ~ x1 + x2, data = d1, se_type = st, clusters = cluster_ids)
+    )
+    exact <- got$value
+    expect_equal(unname(exact$coefficients), c(1, 2, -1), tolerance = DEG_TOL, label = st)
+    expect_true(all(is.na(exact$std.error)), label = paste(st, "exact std.error"))
+    expect_true(all(is.na(exact$p.value)), label = paste(st, "exact p.value"))
+    expect_true(is.na(exact$fstatistic[[1]]), label = paste(st, "exact F"))
+    expect_true(any(grepl("reproduces the outcome exactly", got$messages)),
+                label = paste(st, "exact message"))
+
+    got <- collect_messages(
+      lm_robust(y_const ~ x1 + x2, data = d1, se_type = st, clusters = cluster_ids)
+    )
+    constant <- got$value
     expect_equal(unname(constant$coefficients), c(3, 0, 0), tolerance = DEG_TOL, label = st)
-    expect_lt(max(constant$std.error), 1e-12)
+    expect_true(all(is.na(constant$std.error)), label = paste(st, "constant std.error"))
+    expect_true(is.na(constant$fstatistic[[1]]), label = paste(st, "constant F"))
+    expect_true(any(grepl("reproduces the outcome exactly", got$messages)),
+                label = paste(st, "constant message"))
   }
+})
+
+# A coefficient whose variance is zero while the rest of the fit is ordinary.
+# No observation here is at leverage 1, so the full-leverage rule cannot see
+# it: arms a and b are fitted exactly and arm c is not.
+sparse_arm <- data.frame(
+  arm = factor(rep(c("a", "b", "c"), each = 20)),
+  y = as.numeric(rep(c(0, 0, 0, 1), times = c(20, 20, 18, 2)))
+)
+
+test_that("a coefficient identified only by exactly-fitted rows is NA", {
+  got <- collect_messages(lm_robust(y ~ arm, data = sparse_arm, se_type = "HC2"))
+  fit <- got$value
+
+  expect_equal(fit$n_leverage_near_one, 0L)
+  expect_true(all(is.na(fit$std.error[1:2])))
+  expect_true(all(is.na(fit$p.value[1:2])))
+  expect_false(is.na(fit$std.error[[3]]))
+  expect_true(any(grepl("fitted exactly", got$messages)))
+
+  # The coefficient that is estimable keeps the standard error sandwich gives
+  # it, which is the whole point of naming the set rather than refusing the
+  # fit. sandwich returns NaN for every coefficient on this design.
+  hc2 <- sandwich::vcovHC(lm(y ~ arm, data = sparse_arm), type = "HC2")
+  expect_equal(fit$std.error[[3]], sqrt(hc2[3, 3]), tolerance = DEG_TOL)
+})
+
+test_that("the F statistic is NA where its variance block cannot be inverted", {
+  got <- collect_messages(lm_robust(y ~ arm, data = sparse_arm, se_type = "HC2"))
+  fit <- got$value
+  expect_true(is.na(fit$fstatistic[[1]]))
+  expect_equal(unname(fit$fstatistic[2:3]), c(2, 57))
+
+  # Before this rule chol() succeeded on the block and chol2inv() returned an
+  # inverse built out of cancellation, so the statistic came back finite.
+  expect_lt(rcond(fit$vcov[2:3, 2:3]), .Machine$double.eps)
+})
+
+test_that("a fit that is merely very precise is left alone", {
+  set.seed(343)
+  precise <- data.frame(x = rnorm(60))
+  precise$y <- 3 * precise$x + rnorm(60) * 1e-5
+  fit <- lm_robust(y ~ x, data = precise, se_type = "HC2")
+
+  expect_gt(fit$r.squared, 1 - 1e-8)
+  expect_true(all(is.finite(fit$std.error)))
+  expect_true(is.finite(fit$fstatistic[[1]]))
+  expect_equal(
+    unname(fit$std.error),
+    unname(sqrt(diag(sandwich::vcovHC(lm(y ~ x, data = precise), type = "HC2")))),
+    tolerance = DEG_TOL
+  )
+})
+
+test_that("an ordinary fit is untouched by the degeneracy rule", {
+  fit <- lm_robust(y ~ x1 + x2, data = d, se_type = "HC2")
+  expect_true(all(is.finite(fit$std.error)))
+  expect_equal(
+    unname(fit$std.error),
+    unname(sqrt(diag(sandwich::vcovHC(lm(y ~ x1 + x2, data = d), type = "HC2")))),
+    tolerance = DEG_TOL
+  )
+})
+
+test_that("the collinearity message says what the dropped column is spanned by", {
+  set.seed(343)
+  span <- data.frame(Z = rep(0:1, each = 20), X_income = rnorm(40), y = rnorm(40))
+
+  span$X_woman <- 1
+  got <- collect_messages(lm_robust(y ~ Z + X_woman + X_income, data = span))
+  expect_true(any(grepl("X_woman is constant", got$messages)))
+
+  span$X_woman <- span$Z
+  got <- collect_messages(lm_robust(y ~ Z + X_woman + X_income, data = span))
+  expect_true(any(grepl("X_woman is identical to Z", got$messages)))
+
+  span$X_sum <- span$Z + span$X_income
+  got <- collect_messages(lm_robust(y ~ Z + X_income + X_sum, data = span))
+  expect_true(any(grepl(
+    "X_sum is a linear combination of Z and X_income", got$messages, fixed = TRUE
+  )))
 })
 
 # ---- rank deficiency in lm_robust's own design ----

@@ -69,6 +69,61 @@ lm_return <- function(return_list, model_data, formula,
       paste(dropped, collapse = ", "), "."
     )
 
+    # Naming the dropped column does not say what made it redundant, and the
+    # two ordinary cases mean different things about the coefficients that
+    # survive. In four-person cells of `Y ~ Z + X_woman + X_income`, `X_woman`
+    # was sometimes constant, aliased with the intercept, leaving the
+    # treatment coefficient meaning what it did, and sometimes equal to the
+    # treatment indicator, which makes the two inseparable and the treatment
+    # coefficient something else. Both printed the same sentence. The spanning
+    # set is a regression of the dropped column on the kept ones, which is
+    # affordable because this runs only on a fit that has already dropped
+    # something. The design matrix is the unweighted one: weighting scales
+    # each row by a positive number and cannot create or destroy an exact
+    # dependency among the columns.
+    span_txt <- character(0)
+    dm <- model_data[["design_matrix"]]
+    if (!is.null(dm) && all(dropped %in% colnames(dm))) {
+      kept <- setdiff(colnames(dm), dropped)
+      if (length(kept) > 0) {
+        qr_kept <- qr(dm[, kept, drop = FALSE])
+        for (d in dropped) {
+          col <- dm[, d]
+          scale_d <- max(abs(col), 1)
+          b_hat <- qr.coef(qr_kept, col)
+          b_hat[is.na(b_hat)] <- 0
+          resid_d <- col - drop(dm[, kept, drop = FALSE] %*% b_hat)
+          # Only where the dependency is exact. A column dropped at the rank
+          # tolerance but not reproduced by the kept set has no spanning set
+          # to name, and a wrong name is worse than none.
+          if (max(abs(resid_d)) > 1e-7 * scale_d) next
+          on <- kept[abs(b_hat) > 1e-7 * max(abs(b_hat), 1)]
+          span_txt <- c(span_txt, paste0(
+            d,
+            if (length(on) == 0) {
+              " is zero"
+            } else if (identical(on, "(Intercept)")) {
+              " is constant"
+            } else if (length(on) == 1 && abs(b_hat[[on]] - 1) < 1e-7) {
+              paste0(" is identical to ", on)
+            } else if (length(on) == 2) {
+              paste0(" is a linear combination of ", on[1], " and ", on[2])
+            } else {
+              paste0(" is a linear combination of ",
+                     paste(on[-length(on)], collapse = ", "),
+                     ", and ", on[length(on)])
+            }
+          ))
+        }
+      }
+    }
+    # Capped at the length the first sentence already prints in full; a
+    # saturated factor can drop twenty columns at once and each would get a
+    # clause of its own.
+    if (length(span_txt) > 0 && length(span_txt) <= 3) {
+      msg <- paste0(msg, " ", paste(span_txt, collapse = "; "), ".")
+    }
+
     # A dropped treatment interaction is not the same event as a dropped
     # covariate, and naming the column alone does not say so. lm_lin()'s
     # treatment coefficient is the effect at the covariate means only while

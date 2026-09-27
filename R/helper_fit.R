@@ -182,6 +182,11 @@ lm_robust_fit <- function(y,
   # Estimate variance
   # ----------
 
+  # Set by the degenerate-variance rule below and read again by the F
+  # statistic, which is computed after this block closes. Length 0 wherever
+  # the rule does not run, which is what both readers test.
+  no_variation <- logical(0)
+
   if (se_type != "none" || return_fit) {
 
     if (x_rank < ncol(data[["X"]])) {
@@ -338,6 +343,84 @@ lm_robust_fit <- function(y,
           return_list$std.error[est_exists] <- se_vec
         }
       }
+      # A variance of numerically zero is rounding error, not precision, and
+      # nothing above catches it. The leverage rule reaches an observation the
+      # fit reproduces exactly; this reaches a COEFFICIENT whose variance is
+      # assembled only from such observations, which needs no observation at
+      # leverage 1 and so is invisible to it. Both shapes occur: an outcome the
+      # regressors fit exactly returns standard errors of 6e-17, a t of 1e16
+      # and p = 0 for everything, and a sparse factor level confined to one arm
+      # returns 8e-18 for that arm's contrast alone, with three stars on an
+      # estimate of 2e-17, while the rest of the fit is ordinary.
+      #
+      # The test is one ratio, against the classical variance the coefficient
+      # would carry if the regressors explained nothing: tss/df times
+      # XtX_inv(j,j), which is dimensionless and so comparable across columns
+      # of unlike scale, as `var_not_estimable` above is. The ratio is about
+      # 1 - R^2 for a classical fit, so a fit has to reproduce its outcome to
+      # the last bit to be caught; the tolerance is `.Machine$double.eps`
+      # rather than its square root for that reason. It applies to every
+      # se_type, since a classical fit returns the same 6e-17 here.
+      dfres <- N - tot_rank
+      if (dfres > 0 && length(var_hat) == x_rank * ny) {
+        y_fit <- data[["y"]]
+        rss <- colSums(fit_vals[["ei"]]^2 * data[["weight_mean"]])
+        # `ei` and `y` are both on the weighted scale, so the ratio they form
+        # is scale free; the centring uses the mean of the weighted outcome
+        # rather than the weighted mean, which moves a tolerance reference and
+        # nothing that is reported.
+        tss_scale <- if (has_int) {
+          ym <- y_fit - rep(colMeans(y_fit), each = nrow(y_fit))
+          colSums(ym * ym * data[["weight_mean"]])
+        } else {
+          colSums(y_fit * y_fit * data[["weight_mean"]])
+        }
+        reference <- rep(tss_scale / dfres, each = x_rank) *
+          rep(diag(fit$XtX_inv), times = ny)
+        no_variation <- !is.na(var_hat) &
+          var_hat <= .Machine$double.eps * reference
+        # An outcome that is constant has no variation to estimate anything
+        # from and a reference of 0, which no ratio can flag. Its variances
+        # come back as exactly 0 rather than as rounding error.
+        flat <- !(tss_scale > 0)
+        if (any(flat)) no_variation[rep(flat, each = x_rank)] <- TRUE
+
+        if (any(no_variation)) {
+          se_vec <- return_list$std.error[est_exists]
+          se_vec[no_variation] <- NA_real_
+          return_list$std.error[est_exists] <- se_vec
+
+          # Two readings, and the difference is what the user should do next.
+          # An outcome reproduced exactly is a statement about the fit; a
+          # handful of coefficients is a statement about those columns.
+          exact <- flat | rss <= .Machine$double.eps * tss_scale
+          if (any(exact)) {
+            message(
+              "The model reproduces ",
+              if (ny > 1) paste0(paste(ynames[exact], collapse = ", "), " ") else "the outcome ",
+              "exactly, so there is no residual variation left to estimate a ",
+              "variance from and every standard error for ",
+              if (ny > 1 && sum(exact) == 1) "it" else if (ny > 1) "them" else "it",
+              " is NA. `se_type = \"", se_type, "\"` returns a number of order ",
+              "1e-17 here, which is rounding error rather than precision."
+            )
+          }
+          named <- no_variation & !rep(exact, each = x_rank)
+          if (any(named)) {
+            message(
+              "The standard error is NA for ",
+              paste(unique(rep(variable_names[covs_used], ny)[named]),
+                    collapse = ", "),
+              ": every observation that identifies ",
+              if (sum(named) == 1) "that coefficient is " else "those coefficients is ",
+              "fitted exactly, so the variance is built from residuals that ",
+              "are all numerically zero. It comes back as a number of order ",
+              "1e-17, which would carry a t statistic of 1e16 and p = 0."
+            )
+          }
+        }
+      }
+
       n_lev <- vcov_fit[["n_leverage_near_one"]]
       if (!isTRUE(n_lev > 0)) n_lev <- 0L
       return_list[["n_leverage_near_one"]] <- as.integer(n_lev)
@@ -496,7 +579,8 @@ lm_robust_fit <- function(y,
         dendf = dendf,
         vcov_fit = vcov_fit,
         has_int = fstat_int,
-        iv_stage = iv_stage
+        iv_stage = iv_stage,
+        no_variation = no_variation
       )
     } else {
       f <- NULL
@@ -702,7 +786,8 @@ get_fstat <- function(tss_r2s,
                       dendf,
                       vcov_fit,
                       has_int,
-                      iv_stage) {
+                      iv_stage,
+                      no_variation = logical(0)) {
 
   coefs <- as.matrix(return_list$coefficients)
 
@@ -742,6 +827,19 @@ get_fstat <- function(tss_r2s,
 
   }
 
+  # A coefficient whose variance is numerically zero makes the joint test over
+  # any set containing it as meaningless as its own standard error, and the
+  # classical branch reaches the same place through an R-squared of exactly 1.
+  # Reporting NA for one and a number for the other is the inconsistency this
+  # rule exists to remove.
+  rank <- return_list[["rank"]]
+  if (length(no_variation) == rank * length(fstat)) {
+    tested <- seq.int(has_int + 1, rank, by = 1)
+    for (i in seq_along(fstat)) {
+      if (any(no_variation[tested + (i - 1) * rank])) fstat[i] <- NA_real_
+    }
+  }
+
   f <- c(
     setNames(fstat, fstat_names),
     numdf = nomdf,
@@ -759,11 +857,22 @@ compute_fstat <- function(coef_matrix, coef_indices, vcov_fit, rank, nomdf) {
     vcov_indices <- coef_indices + (i - 1) * rank
     fstat[i] <- tryCatch(
       {
-        crossprod(
-          coef_matrix[coef_indices, i],
-          chol2inv(chol(vcov_fit[vcov_indices, vcov_indices])) %*%
-            coef_matrix[coef_indices, i]
-        ) / nomdf
+        V <- vcov_fit[vcov_indices, vcov_indices, drop = FALSE]
+        # `chol()` errors only on a matrix it can see is not positive
+        # definite, and a variance block at rcond 1e-32 is not one: the
+        # factorization succeeds and `chol2inv()` returns an inverse built
+        # from cancellation, which has given an F of 389 on a covariate
+        # balance test where the contrast has no variance at all. A matrix
+        # whose reciprocal condition number is below the double precision
+        # floor has no numerical inverse, so there is no statistic to report.
+        if (rcond(V) < .Machine$double.eps) {
+          NA_real_
+        } else {
+          crossprod(
+            coef_matrix[coef_indices, i],
+            chol2inv(chol(V)) %*% coef_matrix[coef_indices, i]
+          ) / nomdf
+        }
       },
       error = function(e) {
         NA_real_
