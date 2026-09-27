@@ -66,6 +66,15 @@
 #'   `NA` exactly as they do from [lm()] whichever path ran, and a design that
 #'   is rank deficient falls back to the QR.
 #'
+#'   Which member of a collinear set is dropped follows [lm()] as well. Rank
+#'   is detected with the order-preserving criterion of the LINPACK `dqrdc2`
+#'   routine that [lm()] uses: the columns are walked left to right and the
+#'   later column of a dependent pair is the one dropped, so the ordering the
+#'   model was written in is respected. A caller who needs the dropped set
+#'   before fitting can therefore reproduce it with `qr(X)$pivot` on the same
+#'   design matrix; the coefficients that survive, and the variance read off
+#'   them, agree with [lm()] on every rank-deficient design.
+#'
 #'   Whether it is safe turns on one question, whether two regressors are
 #'   nearly the same variable. Forming `X'X` squares the condition number, so
 #'   the Cholesky path has about twice the rounding error of the QR, and
