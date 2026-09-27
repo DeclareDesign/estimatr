@@ -77,7 +77,10 @@ components <- list(
       "weighted iv_robust CR2 matches clubSandwich on AER::ivreg" = "all",
       "weighted lm_lin CR2 matches clubSandwich on lm with the covariate centred on its weighted mean" = "all",
       "a multivariate lm_robust CR2 matches clubSandwich on the mlm fit" = "all",
-      "lh_robust CR2 matches clubSandwich's contrast, degrees of freedom included" = "all"
+      "lh_robust CR2 matches clubSandwich's contrast, degrees of freedom included" = "all",
+      # The third assertion is that no standard error is NA, a property of
+      # estimatr's own clamp rather than a comparison.
+      "CR2 on a singleton cluster's own dummy matches clubSandwich, and is finite" = 2
     )
   ),
   Stata = list(
