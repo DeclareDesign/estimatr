@@ -40,3 +40,35 @@ Run `revdepcheck::revdep_details(, "DesignLibrary")` for more info
      See ‘/Users/alexandercoppock/git_projects/estimatr/revdep/checks.noindex/DesignLibrary/new/DesignLibrary.Rcheck/00install.out’ for details.
      ```
 
+# statuser (0.3.1)
+
+* Email: <mailto:urisohn@gmail.com>
+* GitHub mirror: <https://github.com/cran/statuser>
+
+Run `revdepcheck::revdep_details(, "statuser")` for more info
+
+## Newly broken
+
+*   checking tests ...
+     ```
+       Running ‘testthat.R’
+      ERROR
+     Running the tests in ‘tests/testthat.R’ failed.
+     Last 13 lines of output:
+       Backtrace:
+           ▆
+        1. ├─utils::capture.output(print(result)) at test-lm2.R:1031:3
+        2. │ └─base::withVisible(...elt(i))
+        3. ├─base::print(result)
+        4. └─statuser:::print.lm2(result)
+        5.   ├─base::data.frame(...)
+        6.   └─statuser (local) right_align(t_vals, 1)
+        7.     ├─base::format(x, width = max_width, justify = "right")
+        8.     └─base::format.default(x, width = max_width, justify = "right")
+       
+       [ FAIL 2 | WARN 0 | SKIP 15 | PASS 1019 ]
+       Error:
+       ! Test failures.
+       Execution halted
+     ```
+

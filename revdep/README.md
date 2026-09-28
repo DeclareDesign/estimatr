@@ -26,9 +26,10 @@
 
 # Revdeps
 
-## New problems (1)
+## New problems (2)
 
 |package       |version |error  |warning |note |
 |:-------------|:-------|:------|:-------|:----|
 |[DesignLibrary](problems.md#designlibrary)|0.1.10  |__+1__ |1       |     |
+|[statuser](problems.md#statuser)|0.3.1   |__+1__ |        |     |
 

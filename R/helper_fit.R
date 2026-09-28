@@ -401,7 +401,7 @@ lm_robust_fit <- function(y,
               "exactly, so there is no residual variation left to estimate a ",
               "variance from and every standard error for ",
               if (ny > 1 && sum(exact) == 1) "it" else if (ny > 1) "them" else "it",
-              " is NA. `se_type = \"", se_type, "\"` returns a number of order ",
+              " is NA. The variance calculation returns a number of order ",
               "1e-17 here, which is rounding error rather than precision."
             )
           }

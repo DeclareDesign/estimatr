@@ -128,7 +128,7 @@ A clustered block holding a single treated or single control cluster is refused 
 
 ### Status
 
-`R CMD check --as-cran`: 0 errors, 0 warnings, 1 NOTE (the maintainer change). Test suite 7,177 assertions under `R CMD check`, 0 failures, one skip worth 18 assertions: the check that `blkvar`'s recorded values are still what `blkvar` produces, that package being available only from GitHub. The 12 assertions comparing estimatr against the recording read the fixture and run everywhere.
+`R CMD check --as-cran`: 0 errors, 0 warnings, 0 notes. Test suite 7,216 assertions under `R CMD check`, 0 failures, one skip worth 18 assertions: the check that `blkvar`'s recorded values are still what `blkvar` produces, that package being available only from GitHub. The 12 assertions comparing estimatr against the recording read the fixture and run everywhere.
 
 Every open estimatr issue was read against this implementation: 26 are fixed here, 23 are feature requests, 7 are out of scope, 6 are not reproducible, 5 are superseded by the rewrite, and 4 remain open. `vignette("estimatr2.0")` names the four.
 
