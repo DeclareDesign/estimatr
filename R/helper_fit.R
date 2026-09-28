@@ -407,15 +407,40 @@ lm_robust_fit <- function(y,
           }
           named <- no_variation & !rep(exact, each = x_rank)
           if (any(named)) {
+            # Two mechanisms reach a coefficient whose variance is numerically
+            # zero while the fit around it is ordinary, and a sentence that
+            # named only the first was false on a paired conjoint. Without
+            # clusters, the rows that identify the coefficient are each fitted
+            # exactly. With clusters, the variance is built from within-cluster
+            # sums of scores, and those can cancel to zero while every residual
+            # in the cluster is far from it. The clustered wording also covers
+            # a clustered fit whose identifying rows are exact, since residuals
+            # that are all zero sum to zero.
+            one <- sum(named) == 1
             message(
               "The standard error is NA for ",
               paste(unique(rep(variable_names[covs_used], ny)[named]),
                     collapse = ", "),
-              ": every observation that identifies ",
-              if (sum(named) == 1) "that coefficient is " else "those coefficients is ",
-              "fitted exactly, so the variance is built from residuals that ",
-              "are all numerically zero. It comes back as a number of order ",
-              "1e-17, which would carry a t statistic of 1e16 and p = 0."
+              ": ",
+              if (clustered) {
+                paste0(
+                  "the cluster-level scores for ",
+                  if (one) "that coefficient sum " else "those coefficients sum ",
+                  "to numerically zero, so the cluster-robust variance is ",
+                  "assembled from nothing, although the residuals themselves ",
+                  "are not zero. That happens when a regressor is constant ",
+                  "within cluster and the residuals cancel over the cluster."
+                )
+              } else {
+                paste0(
+                  "every observation that identifies ",
+                  if (one) "that coefficient is " else "those coefficients is ",
+                  "fitted exactly, so the variance is built from residuals ",
+                  "that are all numerically zero."
+                )
+              },
+              " It comes back as a number of order 1e-17, which would carry a ",
+              "t statistic of 1e16 and p = 0."
             )
           }
         }

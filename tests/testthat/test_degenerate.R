@@ -475,13 +475,82 @@ test_that("a coefficient identified only by exactly-fitted rows is NA", {
   expect_true(all(is.na(fit$std.error[1:2])))
   expect_true(all(is.na(fit$p.value[1:2])))
   expect_false(is.na(fit$std.error[[3]]))
-  expect_true(any(grepl("fitted exactly", got$messages)))
+  # The clause that names the mechanism, not the first clause: the message has
+  # twice been rewritten wrongly because a test grepped only the opening words.
+  expect_true(any(grepl(
+    "every observation that identifies those coefficients is fitted exactly",
+    got$messages, fixed = TRUE
+  )))
+  expect_false(any(grepl("cluster-level scores", got$messages, fixed = TRUE)))
 
   # The coefficient that is estimable keeps the standard error sandwich gives
   # it, which is the whole point of naming the set rather than refusing the
   # fit. sandwich returns NaN for every coefficient on this design.
   hc2 <- sandwich::vcovHC(lm(y ~ arm, data = sparse_arm), type = "HC2")
   expect_equal(fit$std.error[[3]], sqrt(hc2[3, 3]), tolerance = DEG_TOL)
+})
+
+# A cluster-robust variance is built from within-cluster sums of scores, and
+# those can be numerically zero while no observation is fitted exactly. One
+# pair of tasks per respondent with exactly one profile chosen makes the
+# outcome sum to 1 within respondent, so a regressor that is constant within
+# respondent has a cluster score of exactly zero. Reported by meta_ir
+# 2026-09-27; the wording that named the exact-fit mechanism was false here.
+paired_conjoint <- local({
+  set.seed(343)
+  n_resp <- 300
+  chosen <- rbinom(n_resp, 1, 0.5)
+  data.frame(
+    resp_id = rep(seq_len(n_resp), each = 2),
+    z_age = rep(rnorm(n_resp), each = 2),
+    z_college = rep(rbinom(n_resp, 1, 0.5), each = 2),
+    x_attr = rbinom(2 * n_resp, 1, 0.5),
+    y = as.numeric(rbind(chosen, 1 - chosen))
+  )
+})
+
+test_that("a cluster-constant coefficient with zero cluster scores is NA", {
+  for (st in c("CR0", "CR2")) {
+    got <- collect_messages(
+      lm_robust(y ~ z_age + z_college, data = paired_conjoint,
+                clusters = resp_id, se_type = st)
+    )
+    fit <- got$value
+
+    expect_true(all(is.na(fit$std.error)), label = st)
+    expect_equal(fit$n_leverage_near_one, 0L, label = st)
+    # Nothing here is fitted exactly: the residuals are plus and minus 0.5 and
+    # it is their within-cluster sums that vanish.
+    expect_equal(max(abs(fit$residuals)), 0.5, tolerance = DEG_TOL, label = st)
+    expect_lt(max(abs(tapply(fit$residuals, paired_conjoint$resp_id, sum))), 1e-12)
+    expect_true(any(grepl(
+      "the cluster-level scores for those coefficients sum to numerically zero",
+      got$messages, fixed = TRUE
+    )), label = st)
+    expect_false(any(grepl("fitted exactly", got$messages, fixed = TRUE)),
+                 label = st)
+  }
+
+  # The same design without clusters has ordinary standard errors, so the NA is
+  # the clustering and not the fit.
+  hc2 <- collect_messages(
+    lm_robust(y ~ z_age + z_college, data = paired_conjoint, se_type = "HC2")
+  )
+  expect_false(any(is.na(hc2$value$std.error)))
+  expect_length(hc2$messages, 0)
+})
+
+test_that("a regressor that varies within cluster restores the variance", {
+  # The discriminator, checked rather than assumed: the property belongs to
+  # regressors that are constant within cluster on a design whose residuals
+  # cancel over the cluster, and one within-respondent attribute breaks it.
+  got <- collect_messages(
+    lm_robust(y ~ z_age + z_college + x_attr, data = paired_conjoint,
+              clusters = resp_id, se_type = "CR2")
+  )
+  expect_false(any(is.na(got$value$std.error)))
+  expect_equal(got$value$std.error[["z_age"]], 0.00111, tolerance = 1e-2)
+  expect_length(got$messages, 0)
 })
 
 test_that("the F statistic is NA where its variance block cannot be inverted", {
