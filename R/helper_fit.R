@@ -401,8 +401,8 @@ lm_robust_fit <- function(y,
               "exactly, so there is no residual variation left to estimate a ",
               "variance from and every standard error for ",
               if (ny > 1 && sum(exact) == 1) "it" else if (ny > 1) "them" else "it",
-              " is NA. The variance calculation returns a number of order ",
-              "1e-17 here, which is rounding error rather than precision."
+              " is NA. What the variance calculation returns here is zero or ",
+              "rounding error, not precision."
             )
           }
           named <- no_variation & !rep(exact, each = x_rank)
@@ -439,8 +439,8 @@ lm_robust_fit <- function(y,
                   "that are all numerically zero."
                 )
               },
-              " It comes back as a number of order 1e-17, which would carry a ",
-              "t statistic of 1e16 and p = 0."
+              " Reported as a number it would be zero or rounding error, and ",
+              "its t statistic would put p at 0."
             )
           }
         }

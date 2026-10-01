@@ -456,6 +456,10 @@ test_that("an outcome the regressors fit exactly returns NA standard errors", {
     expect_true(is.na(constant$fstatistic[[1]]), label = paste(st, "constant F"))
     expect_true(any(grepl("reproduces the outcome exactly", got$messages)),
                 label = paste(st, "constant message"))
+    # A constant outcome has a variance of exactly 0, so the message must not
+    # name a magnitude; it said "of order 1e-17" until 2026-09-30.
+    expect_false(any(grepl("1e-17", got$messages, fixed = TRUE)),
+                 label = paste(st, "constant magnitude"))
   }
 })
 
@@ -482,6 +486,7 @@ test_that("a coefficient identified only by exactly-fitted rows is NA", {
     got$messages, fixed = TRUE
   )))
   expect_false(any(grepl("cluster-level scores", got$messages, fixed = TRUE)))
+  expect_false(any(grepl("1e-17", got$messages, fixed = TRUE)))
 
   # The coefficient that is estimable keeps the standard error sandwich gives
   # it, which is the whole point of naming the set rather than refusing the
