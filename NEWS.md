@@ -119,6 +119,10 @@ The 2026-09-23 maintained-corpus sweep gives the size of it. Offer-Westort, Copp
 
 ---
 
+## `emmeans()` on a fit no longer depends on emmeans' handling of a missing model frame
+
+The emmeans method borrowed emmeans' own method for `lm`, which reads the fit's stored model frame. An `lm_robust` fit stores none, and the development emmeans 2.0.5 builds a formula from that frame's names, so every `emmeans()` call on a fit errored with "Perhaps a 'data' or 'params' argument is needed". The method now recovers the data from the call and the terms directly, as emmeans' `lm` method does once the frame is set aside, and gives the same answers under emmeans 2.0.4 and both versions of 2.0.5.
+
 # estimatr 2.0.0
 
 estimatr 2.0.0 is a ground-up rewrite aimed at the DeclareDesign use case: OLS, Lin-adjusted OLS, 2SLS IV, difference-in-means, Horvitz-Thompson, and linear hypothesis tests with heteroskedasticity- and cluster-robust standard errors. It fixes several long-standing correctness bugs, improves performance on the critical path, adds feols-style fixed effects absorption, and replaces the O(N²) Horvitz-Thompson variance with a design-aware O(1) computation. The six estimators keep their signatures, with one exception: `horvitz_thompson()`, whose five probability arguments consolidate into `condition_prs`. Removals are listed under What is dropped. Run side by side on one machine, the numbers agree to 1e-12 wherever both versions answer.
