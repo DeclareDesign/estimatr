@@ -1,6 +1,7 @@
 ### Support for emmeans package
 # Note: recover_data and emm_basis methods are registered dynamically in zzz.R
 
+#' @importFrom stats weights
 recover_data.lm_robust <- function(object, ...) {
   # This is emmeans' recover_data.lm without its `frame = object$model`. A fit
   # stores no model frame, and emmeans 2.0.5 builds a formula from the frame's
