@@ -17,7 +17,7 @@ library(estimatr)
 
 ## The short version
 
-estimatr 2.0 is a ground-up rewrite, with the main goals of speed and improved code robustness. Almost everything from 1.x runs unchanged and returns identical estimates, identical standard errors, identical confidence intervals, and identical objects. That claim is underpinned by 7,216 test assertions, 695 of which compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, and a further 820 of which compare against implementations that share no lineage with estimatr at all. See [How this was checked]. No call is slower, with gains concentrated where the algorithms changed. See [Speed].
+estimatr 2.0 is a ground-up rewrite, with the main goals of speed and improved code robustness. Almost everything from 1.x runs unchanged and returns identical estimates, identical standard errors, identical confidence intervals, and identical objects. That claim is underpinned by 7,238 test assertions, 695 of which compare against answers recorded from an installed estimatr 1.0.6, coefficient by coefficient and standard error by standard error, and a further 820 of which compare against implementations that share no lineage with estimatr at all. See [How this was checked]. No call is slower, with gains concentrated where the algorithms changed. See [Speed].
 
 estimatr 2.0 introduces a handful of breaking changes:
 
@@ -322,7 +322,7 @@ One defect turned up that has no issue behind it, and it is worth knowing if you
 
 ## Current status
 
-The test suite is 7,216 assertions under `R CMD check` with none failing, `R CMD check --as-cran` gives 0 errors, 0 warnings and 0 notes, and the numerical comparisons against 1.0.6 run across 50 seeds per design type for every Horvitz-Thompson design family.
+The test suite is 7,238 assertions under `R CMD check` with none failing, `R CMD check --as-cran` gives 0 errors, 0 warnings and 0 notes, and the numerical comparisons against 1.0.6 run across 50 seeds per design type for every Horvitz-Thompson design family.
 
 What follows is the list of places where 2.0 deliberately departs from 1.x: a different number, or a refusal where 1.x answered. In each one the 1.x behaviour is wrong, and every item was reproduced by running an installed 1.0.6 rather than read off this implementation's own code. If you have results from 1.x, these are the calls worth re-running. Nothing else in this release changes an answer.
 
