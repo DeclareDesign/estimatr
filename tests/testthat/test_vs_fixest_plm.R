@@ -83,6 +83,48 @@ test_that("absorbed parameters are counted in the cluster correction", {
                                 unname(other$std.error), tolerance = 1e-6)))
 })
 
+# ---- the 2SLS path ----
+#
+# Both stages have the fixed effects absorbed out of them. The other external
+# references reach weighted 2SLS (AER and sandwich) and clustered 2SLS
+# (clubSandwich), but none of them absorbs, so until these cells existed the
+# 2SLS-with-absorption path had no outside implementation to answer to at all
+# (review C4). fixest names the fitted endogenous coefficient `fit_en` and
+# estimatr names it `en`, so both vectors are read by position.
+
+test_that("2SLS with absorbed fixed effects matches fixest", {
+  d_iv <- ext_data_fe_iv()
+  expect_ext_equal(
+    iv_robust(y ~ en + x | inst + x, data = d_iv, fixed_effects = ~ g,
+              se_type = "classical"),
+    "fixest_iv_fe1_iid"
+  )
+  expect_ext_equal(
+    iv_robust(y ~ en + x | inst + x, data = d_iv, fixed_effects = ~ g,
+              se_type = "HC1"),
+    "fixest_iv_fe1_hetero"
+  )
+  expect_ext_equal(
+    iv_robust(y ~ en + x | inst + x, data = d_iv, fixed_effects = ~ g,
+              clusters = cl, se_type = "stata"),
+    "fixest_iv_fe1_cluster"
+  )
+  expect_ext_equal(
+    iv_robust(y ~ en + x | inst + x, data = d_iv, fixed_effects = ~ g,
+              weights = w, se_type = "HC1"),
+    "fixest_iv_fe1_w_hetero"
+  )
+})
+
+test_that("two-way absorption on the 2SLS path matches fixest", {
+  d_iv <- ext_data_fe_iv()
+  expect_ext_equal(
+    iv_robust(y ~ en + x | inst + x, data = d_iv, fixed_effects = ~ g + cl,
+              se_type = "HC1"),
+    "fixest_iv_fe2_hetero", tol = EXT_TOL_ITER
+  )
+})
+
 test_that("the within estimator matches plm with Arellano's variance", {
   # plm's `method = "arellano"` with `type = "HC0"` and no cluster adjustment is
   # CR0 on the absorbed design, reached through panel machinery rather than
@@ -94,8 +136,22 @@ test_that("the within estimator matches plm with Arellano's variance", {
   )
 })
 
-test_that("the recorded reference names the versions it came from", {
+test_that("the recorded reference is the one these versions produced", {
   v <- external_reference_versions()
-  expect_true(all(c("fixest", "plm", "R") %in% names(v)))
-  expect_true(all(nzchar(v)))
+  # Pinned rather than checked for existence. Every value in the fixture is
+  # frozen, so a regeneration under another release of any of these packages
+  # has to arrive as a diff in this file rather than as a reference that has
+  # quietly become a different one (review C10).
+  expect_equal(v[["fixest"]], "0.14.2")
+  expect_equal(v[["plm"]], "2.6.7")
+  expect_equal(v[["blkvar"]], "0.0.1.6")
+  expect_equal(v[["randomizr"]], "2.0.1")
+  # R's version is provenance rather than a convention any of these answers
+  # depends on, so it is recorded and not pinned.
+  expect_true(nzchar(v[["R"]]))
+
+  # The 1.0.6 recording's own accessor, which was defined and called by
+  # nothing. The whole of test_vs_estimatr.R is a comparison against this
+  # version, and nothing said which version that was.
+  expect_equal(reference_estimatr_version(), "1.0.6")
 })

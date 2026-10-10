@@ -389,3 +389,73 @@ test_that("#304: a bare grouping vector warns but still works", {
   expect_error(lm_robust(y ~ x, data = d, fixed_effects = list(1, 2)),
                "must be a one-sided formula")
 })
+
+test_that("C13: a fixed effect with one level contributes an intercept, not contrasts", {
+  # fe_dummy_matrix() is built only for CR2, which is the one estimator that
+  # has to materialise the dummies, and it has a branch for a factor with a
+  # single level: model.matrix() would return a zero-column matrix for it.
+  # Neither the all-single-level case nor the mixed one had been run.
+  set.seed(343)
+  n <- 200
+  d <- data.frame(x = rnorm(n), cl = rep(1:20, 10), fe = rep(1:10, 20))
+  d$one <- 1L
+  d$y <- d$x + rnorm(n)
+
+  # On its own the single-level factor is the intercept, so the fit is the
+  # plain clustered one.
+  solo <- lm_robust(y ~ x, fixed_effects = ~ one, clusters = cl, data = d,
+                    se_type = "CR2")
+  plain <- lm_robust(y ~ x, clusters = cl, data = d, se_type = "CR2")
+  # `plain` reports the intercept the absorbed fit does not, so the comparison
+  # is on the slope the two share.
+  expect_equal(coef(solo)[["x"]], coef(plain)[["x"]])
+  expect_equal(solo$std.error[["x"]], plain$std.error[["x"]])
+
+  # Alongside a real factor its span is already inside that factor's, so it is
+  # dropped and the answer is the one the real factor gives alone.
+  both <- lm_robust(y ~ x, fixed_effects = ~ one + fe, clusters = cl, data = d,
+                    se_type = "CR2")
+  just_fe <- lm_robust(y ~ x, fixed_effects = ~ fe, clusters = cl, data = d,
+                       se_type = "CR2")
+  expect_equal(coef(both)[["x"]], coef(just_fe)[["x"]])
+  expect_equal(unname(both$std.error), unname(just_fe$std.error))
+})
+
+# ---- the row names the fixed-effects paths re-attach ----
+
+test_that("every input shape gives the fixed-effects fits row names to re-attach", {
+  # The model frame's row names are carried once, in model_data[["obs_names"]],
+  # and the fixed-effects paths rebuild fitted.values after lm_return() has
+  # already attached them, so they re-attach through attach_obs_names(). It
+  # guards against a NULL obs_names and the guard has never been taken:
+  # obs_names is rownames(model.matrix(...)), which the model frame supplies on
+  # every route into the package. Assert the property rather than leave it to
+  # the guard, because if it ever stopped holding the fitted values would lose
+  # their names silently and no error would be raised.
+  set.seed(343)
+  n <- 40
+  make <- function() data.frame(y = rnorm(n), x = rnorm(n), g = rep(1:8, each = 5))
+
+  shapes <- list(
+    default_row_names = make(),
+    character_row_names = { z <- make(); rownames(z) <- paste0("obs", seq_len(n)); z },
+    subset_row_names = { z <- make(); z[z$x > -Inf, ][-(1:3), ] }
+  )
+  for (nm in names(shapes)) {
+    z <- shapes[[nm]]
+    fit <- lm_robust(y ~ x, data = z, fixed_effects = ~ g)
+    expect_equal(names(fit$fitted.values), rownames(z), label = paste(nm, "fitted names"))
+    iv <- iv_robust(y ~ x | x, data = z, fixed_effects = ~ g)
+    expect_equal(names(iv$fitted.values), rownames(z), label = paste(nm, "IV fitted names"))
+  }
+
+  # Variables taken from the calling environment rather than a data frame, and
+  # a matrix column as the outcome: the two shapes with no row names of their
+  # own. The model frame still numbers the rows, so the names are still there.
+  y <- rnorm(n); x <- rnorm(n); g <- rep(1:8, each = 5)
+  expect_equal(names(lm_robust(y ~ x, fixed_effects = ~ g)$fitted.values),
+               as.character(seq_len(n)))
+  m <- cbind(y = y, x = x)
+  expect_equal(names(lm_robust(m[, "y"] ~ m[, "x"], fixed_effects = ~ g)$fitted.values),
+               as.character(seq_len(n)))
+})

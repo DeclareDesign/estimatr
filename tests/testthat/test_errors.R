@@ -156,3 +156,35 @@ test_that("#297: lh_robust refuses a multivariate outcome and says why", {
     "multiple outcomes"
   )
 })
+
+test_that("C13: negative weights are refused", {
+  # Zero and infinite weights each have their own refusal and their own test;
+  # the negative one had neither.
+  set.seed(343)
+  n <- 100
+  d <- data.frame(x = rnorm(n), w = runif(n, 0.5, 2))
+  d$y <- d$x + rnorm(n)
+  d$w[1] <- -1
+
+  expect_error(lm_robust(y ~ x, data = d, weights = w),
+               "`weights` must not be negative")
+})
+
+test_that("C13: lm_robust_fit() asked for CR2 under fixed effects without the dummies says which argument is missing", {
+  # lm_robust() and iv_robust() build `femat` themselves, so this refusal is
+  # only reachable by calling the exported fitter directly, which is what the
+  # message tells the caller to stop doing.
+  set.seed(343)
+  n <- 200
+  d <- data.frame(x = rnorm(n), cl = rep(1:20, 10))
+  d$y <- d$x + rnorm(n)
+  X <- cbind("(Intercept)" = 1, x = d$x)
+
+  expect_error(
+    lm_robust_fit(y = as.matrix(d$y), X = X, weights = NULL, cluster = d$cl,
+                  ci = TRUE, se_type = "CR2", has_int = TRUE, alpha = 0.05,
+                  return_vcov = TRUE, try_cholesky = FALSE, iv_stage = list(0),
+                  fe_rank = 9L),
+    "requires hat values from the full \\[X \\| FE dummies\\] design matrix"
+  )
+})

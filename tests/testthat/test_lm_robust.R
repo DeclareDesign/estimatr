@@ -273,21 +273,26 @@ test_that("#345: residuals with fixed effects are the full-model residuals", {
   expect_equal(unname(m$residuals + m$fitted.values), dat$y, tolerance = 1e-10)
 })
 
-# ---- collinearity warnings (estimatr #411) ----
+# ---- collinearity messages (estimatr #411) ----
 
-test_that("#411: dropped collinear regressors warn and name themselves", {
+test_that("#411: dropped collinear regressors are named, and in a message", {
   d <- dat
   d$x_copy <- d$x
-  expect_warning(lm_robust(y ~ x + x_copy, data = d), "collinear")
-  expect_warning(lm_robust(y ~ x + x_copy, data = d), "x_copy")
-  m <- suppressWarnings(lm_robust(y ~ x + x_copy, data = d))
+  expect_message(lm_robust(y ~ x + x_copy, data = d), "collinear")
+  expect_message(lm_robust(y ~ x + x_copy, data = d), "x_copy")
+  # stats::lm() signals nothing here, so neither does this.
+  expect_no_warning(suppressMessages(lm_robust(y ~ x + x_copy, data = d)))
+  m <- suppressMessages(lm_robust(y ~ x + x_copy, data = d))
   expect_true(is.na(m$coefficients[["x_copy"]]))
 })
 
-test_that("#411: no warning when the design matrix is full rank", {
+test_that("#411: nothing is signalled when the design matrix is full rank", {
   expect_no_warning(lm_robust(y ~ x + z, data = dat))
+  expect_no_message(lm_robust(y ~ x + z, data = dat))
   expect_no_warning(lm_robust(y ~ x + z, data = dat, clusters = cl))
+  expect_no_message(lm_robust(y ~ x + z, data = dat, clusters = cl))
   expect_no_warning(lm_lin(y ~ z, covariates = ~ x, data = dat))
+  expect_no_message(lm_lin(y ~ z, covariates = ~ x, data = dat))
 })
 
 # ---- predict (estimatr #403, #404) ----
@@ -329,4 +334,51 @@ test_that("#269: lm_robust_fit accepts an integer X and an unnamed y", {
   tidied <- estimatr:::tidy.lm_robust(fit)
   expect_s3_class(tidied, "data.frame")
   expect_equal(nrow(tidied), 1L)
+})
+
+test_that("C13: lm_robust_fit() coerces an integer outcome and an integer dummy matrix", {
+  # lm_solver maps these straight into Eigen, which requires doubles. The
+  # formula interface never produces an integer matrix, so both coercions are
+  # reachable only through the exported fitter, which is the interface that
+  # takes matrices from the caller (estimatr #269).
+  set.seed(343)
+  n <- 200
+  d <- data.frame(x = rnorm(n), cl = rep(1:20, 10), fe = rep(1:10, 20))
+  d$y <- d$x + rnorm(n)
+  X <- cbind("(Intercept)" = 1, x = d$x)
+
+  # An integer outcome fits, and gives what the same outcome stored as a double
+  # gives.
+  yi <- matrix(as.integer(round(d$y * 10)), ncol = 1)
+  int_y <- lm_robust_fit(y = yi, X = X, weights = NULL, cluster = NULL,
+                         ci = TRUE, se_type = "HC2", has_int = TRUE,
+                         alpha = 0.05, return_vcov = TRUE, try_cholesky = FALSE,
+                         iv_stage = list(0))
+  dbl_y <- lm_robust_fit(y = matrix(as.double(yi), ncol = 1), X = X,
+                         weights = NULL, cluster = NULL, ci = TRUE,
+                         se_type = "HC2", has_int = TRUE, alpha = 0.05,
+                         return_vcov = TRUE, try_cholesky = FALSE,
+                         iv_stage = list(0))
+  expect_true(is.integer(yi))
+  expect_equal(int_y$coefficients, dbl_y$coefficients)
+  expect_equal(int_y$std.error, dbl_y$std.error)
+
+  # The same for an integer `femat`, which is what model.matrix() on a set of
+  # dummies gives if the caller coerces it.
+  fem <- model.matrix(~ 0 + factor(fe), d)
+  fem_int <- matrix(as.integer(fem), nrow = n, dimnames = dimnames(fem))
+  expect_true(is.integer(fem_int))
+
+  int_fe <- lm_robust_fit(y = as.matrix(d$y), X = X, weights = NULL,
+                          cluster = d$cl, ci = TRUE, se_type = "CR2",
+                          has_int = TRUE, alpha = 0.05, return_vcov = TRUE,
+                          try_cholesky = FALSE, iv_stage = list(0),
+                          fe_rank = 9L, femat = fem_int)
+  dbl_fe <- lm_robust_fit(y = as.matrix(d$y), X = X, weights = NULL,
+                          cluster = d$cl, ci = TRUE, se_type = "CR2",
+                          has_int = TRUE, alpha = 0.05, return_vcov = TRUE,
+                          try_cholesky = FALSE, iv_stage = list(0),
+                          fe_rank = 9L, femat = fem)
+  expect_equal(int_fe$coefficients, dbl_fe$coefficients)
+  expect_equal(int_fe$std.error, dbl_fe$std.error)
 })

@@ -89,6 +89,15 @@ Rank deficiency is caught on either path. Redundant columns come back as
 \code{NA} exactly as they do from \code{\link[=lm]{lm()}} whichever path ran, and a design that
 is rank deficient falls back to the QR.
 
+Which member of a collinear set is dropped follows \code{\link[=lm]{lm()}} as well. Rank
+is detected with the order-preserving criterion of the LINPACK \code{dqrdc2}
+routine that \code{\link[=lm]{lm()}} uses: the columns are walked left to right and the
+later column of a dependent pair is the one dropped, so the ordering the
+model was written in is respected. A caller who needs the dropped set
+before fitting can therefore reproduce it with \code{qr(X)$pivot} on the same
+design matrix; the coefficients that survive, and the variance read off
+them, agree with \code{\link[=lm]{lm()}} on every rank-deficient design.
+
 Whether it is safe turns on one question, whether two regressors are
 nearly the same variable. Forming \verb{X'X} squares the condition number, so
 the Cholesky path has about twice the rounding error of the QR, and
@@ -113,7 +122,9 @@ An object of class \code{"lm_robust"}, a list holding the estimate table in \cod
 \code{fitted.values}, \code{residuals}, \code{vcov}, \code{nobs}, \code{k}, \code{rank}, \code{df.residual},
 and \code{res_var}; the summary statistics \code{r.squared}, \code{adj.r.squared},
 \code{tss}, and \code{fstatistic}; and \code{se_type}, \code{weighted}, \code{clustered}, \code{fes},
-\code{alpha}, \code{terms}, \code{xlevels}, and \code{call}.
+\code{alpha}, \code{terms}, \code{xlevels}, and \code{call}. Under \code{se_type = "HC2"} or
+\code{"HC3"}, \code{n_leverage_near_one} counts the observations at or near
+leverage 1 that the variance discards; it is 0 for every other \code{se_type}.
 
 Absorbed fits add \code{fixed_effects}, \code{felevels} (the absorbed levels of
 each factor), and the within-projection summaries \code{proj_r.squared},

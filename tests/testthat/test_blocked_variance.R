@@ -5,15 +5,9 @@ library(estimatr)
 # control unit. estimatr errors on those designs or falls back to the
 # matched-pairs estimator for every block.
 
-make_blocked <- function(block_sizes, m_each, seed = 1, tau = 0.5) {
-  set.seed(seed)
-  K <- length(block_sizes)
-  bl <- rep(seq_len(K), block_sizes)
-  n <- sum(block_sizes)
-  y0 <- rnorm(n) + rep(rnorm(K, 0, 2), block_sizes)
-  z <- randomizr::block_ra(blocks = bl, block_m = m_each)
-  data.frame(y = y0 + tau * z, z = z, bl = bl)
-}
+# The design builder is `ext_data_blocked()` in helper-external.R, beside the
+# six designs the blkvar recording was made on, so the recording and these
+# tests cannot come to be about different data.
 
 # ---- the designs that used to be unusable ----
 
@@ -21,7 +15,7 @@ test_that("a block with a singleton arm is estimable", {
   skip_if_not_installed("randomizr")
   # 3-unit blocks with 1 treated and 2 control: estimatr errors with
   # "every block must have at least two treated and control units"
-  d <- make_blocked(c(8, 8, 3, 3, 3, 3), c(4, 4, 1, 1, 1, 1))
+  d <- ext_data_blocked(c(8, 8, 3, 3, 3, 3), c(4, 4, 1, 1, 1, 1))
   m <- difference_in_means(y ~ z, data = d, blocks = bl)
   expect_equal(m$design, "Hybrid blocked")
   expect_true(is.finite(m$std.error[[1]]))
@@ -32,14 +26,14 @@ test_that("mixed block sizes no longer collapse to matched pairs", {
   skip_if_not_installed("randomizr")
   # estimatr warns "Using matched pairs variance estimator" and applies it to
   # every block, including the big ones
-  d <- make_blocked(c(10, 10, 2, 2, 2, 2), c(5, 5, 1, 1, 1, 1))
+  d <- ext_data_blocked(c(10, 10, 2, 2, 2, 2), c(5, 5, 1, 1, 1, 1))
   expect_no_warning(m <- difference_in_means(y ~ z, data = d, blocks = bl))
   expect_equal(m$design, "Hybrid blocked")
 })
 
 test_that("small blocks of varying size are estimable", {
   skip_if_not_installed("randomizr")
-  d <- make_blocked(c(3, 4, 5, 6, 7, 8), rep(1, 6))
+  d <- ext_data_blocked(c(3, 4, 5, 6, 7, 8), rep(1, 6))
   m <- difference_in_means(y ~ z, data = d, blocks = bl)
   expect_equal(m$design, "Small blocks")
   expect_true(is.finite(m$std.error[[1]]))
@@ -47,7 +41,26 @@ test_that("small blocks of varying size are estimable", {
 
 # ---- the reference implementation ----
 
-test_that("standard errors match blkvar, the authors' own package", {
+# blkvar is on GitHub only, so it is absent from every CI platform and a test
+# that calls it there skips. That left the only check of this variance against
+# its authors' own implementation running on one machine (review C1). The
+# recorded values run everywhere, and they carry the data with them: the
+# assignments come from randomizr, so a record keyed by the seed alone would
+# come to describe a different design on a randomizr release while still
+# looking current.
+
+test_that("standard errors match blkvar's recorded values", {
+  for (i in seq_along(ext_blocked_designs())) {
+    rec <- ext_ref(paste0("blkvar_hybrid_p_", i))
+    ours <- difference_in_means(y ~ z, data = rec$data, blocks = bl)
+    expect_equal(ours$coefficients[[1]], rec$coefficients, tolerance = 1e-10,
+                 label = paste("design", i, "estimate"))
+    expect_equal(ours$std.error[[1]], rec$std.error, tolerance = 1e-10,
+                 label = paste("design", i, "standard error"))
+  }
+})
+
+test_that("the blkvar recording is still what blkvar and randomizr produce", {
   skip_if_not_installed("randomizr")
   skip_if_not_installed("blkvar")
   skip_if_not_installed("dplyr")
@@ -58,21 +71,20 @@ test_that("standard errors match blkvar, the authors' own package", {
   attached_here <- !"package:dplyr" %in% search()
   suppressMessages(library(dplyr))
 
-  designs <- list(
-    list(rep(6, 4), rep(3, 4)),
-    list(c(4, 6, 8, 10), c(2, 3, 4, 5)),
-    list(c(3, 4, 5, 6, 7, 8), rep(1, 6)),
-    list(c(8, 8, 3, 3, 3, 3), c(4, 4, 1, 1, 1, 1)),
-    list(c(9, 9, 4, 5, 6), c(4, 4, 3, 4, 5)),
-    list(rep(2, 10), rep(1, 10))
-  )
-  for (i in seq_along(designs)) {
-    d <- make_blocked(designs[[i]][[1]], designs[[i]][[2]], seed = i)
-    ours <- difference_in_means(y ~ z, data = d, blocks = bl)
+  # This is the test that can see the recording go stale, which the recorded
+  # comparison above cannot: it rebuilds the designs and re-runs blkvar. A
+  # failure here says to regenerate the fixture, not that estimatr is wrong.
+  for (i in seq_along(ext_blocked_designs())) {
+    des <- ext_blocked_designs()[[i]]
+    rec <- ext_ref(paste0("blkvar_hybrid_p_", i))
+    d <- ext_data_blocked(des$block_sizes, des$m_each, seed = i)
+    expect_equal(d, rec$data, label = paste("design", i, "data"))
     theirs <- blkvar::block_estimator(Yobs = d$y, Z = d$z, B = factor(d$bl),
                                       method = "hybrid_p", throw.warnings = FALSE)
-    expect_equal(ours$coefficients[[1]], theirs$ATE_hat, tolerance = 1e-10)
-    expect_equal(ours$std.error[[1]], theirs$se_est, tolerance = 1e-10)
+    expect_equal(theirs$ATE_hat, rec$coefficients, tolerance = 1e-10,
+                 label = paste("design", i, "blkvar estimate"))
+    expect_equal(theirs$se_est, rec$std.error, tolerance = 1e-10,
+                 label = paste("design", i, "blkvar standard error"))
   }
   if (attached_here) detach("package:dplyr", character.only = TRUE)
 })
@@ -81,7 +93,7 @@ test_that("standard errors match blkvar, the authors' own package", {
 
 test_that("all-big designs keep the plain blocked estimator", {
   skip_if_not_installed("randomizr")
-  d <- make_blocked(rep(6, 5), rep(3, 5))
+  d <- ext_data_blocked(rep(6, 5), rep(3, 5))
   m <- difference_in_means(y ~ z, data = d, blocks = bl)
   expect_equal(m$design, "Blocked")
 
@@ -99,7 +111,7 @@ test_that("all-big designs keep the plain blocked estimator", {
 
 test_that("matched pairs keep the matched-pairs estimator and df", {
   skip_if_not_installed("randomizr")
-  d <- make_blocked(rep(2, 12), rep(1, 12))
+  d <- ext_data_blocked(rep(2, 12), rep(1, 12))
   m <- difference_in_means(y ~ z, data = d, blocks = bl)
   expect_equal(m$design, "Matched-pair")
 
@@ -116,7 +128,7 @@ test_that("a single small block is refused rather than given zero variance", {
   skip_if_not_installed("randomizr")
   # one small block leaves nothing to compare it against, and the estimator
   # would silently return a zero contribution
-  d <- make_blocked(c(8, 8, 8, 3), c(4, 4, 4, 1))
+  d <- ext_data_blocked(c(8, 8, 8, 3), c(4, 4, 4, 1))
   expect_error(difference_in_means(y ~ z, data = d, blocks = bl),
                "Only one block")
 })
@@ -126,7 +138,7 @@ test_that("a small block holding half the small-block sample is refused", {
   # equation 8 needs every small block under half of n_sb, or the weights go
   # negative. Equal-size small blocks avoid it by taking the matched-pairs
   # branch, so the boundary only bites when the sizes vary.
-  d <- make_blocked(c(10, 3, 5), c(5, 1, 1))
+  d <- ext_data_blocked(c(10, 3, 5), c(5, 1, 1))
   expect_error(difference_in_means(y ~ z, data = d, blocks = bl),
                "half or more")
 })

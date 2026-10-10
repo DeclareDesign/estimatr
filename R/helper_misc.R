@@ -47,23 +47,155 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
   }
 }
 
-lm_return <- function(return_list, model_data, formula) {
+lm_return <- function(return_list, model_data, formula,
+                      lin_interactions = NULL, lin_treatment = NULL) {
 
   # A collinear column is dropped and comes back as an NA coefficient. Saying
   # so is the difference between a user reading the NA correctly and reading
   # it as a bug, since the remaining coefficients are then conditional on a
-  # different set of regressors than they asked for (estimatr #411).
+  # different set of regressors than they asked for (estimatr #411). It is a
+  # message and not a warning because stats::lm() signals neither, and because
+  # a warning raised inside a grouped dplyr verb nested in another one crashes
+  # dplyr 1.2.1 while it builds the warning's group label.
   coefs <- return_list[["coefficients"]]
   na_coefs <- is.na(coefs)
   if (any(na_coefs)) {
     dropped <- if (is.matrix(coefs))
       rownames(coefs)[apply(na_coefs, 1, any)]
       else names(coefs)[na_coefs]
-    warning(
+    msg <- paste0(
       "Some coefficients are collinear with other regressors and were ",
       "dropped, and are returned as NA: ",
       paste(dropped, collapse = ", "), "."
     )
+
+    # Naming the dropped column does not say what made it redundant, and the
+    # two ordinary cases mean different things about the coefficients that
+    # survive. In four-person cells of `Y ~ Z + X_woman + X_income`, `X_woman`
+    # was sometimes constant, aliased with the intercept, leaving the
+    # treatment coefficient meaning what it did, and sometimes equal to the
+    # treatment indicator, which makes the two inseparable and the treatment
+    # coefficient something else. Both printed the same sentence. The spanning
+    # set is a regression of the dropped column on the kept ones, which is
+    # affordable because this runs only on a fit that has already dropped
+    # something. The design matrix is the unweighted one: weighting scales
+    # each row by a positive number and cannot create or destroy an exact
+    # dependency among the columns.
+    span_txt <- character(0)
+    dm <- model_data[["design_matrix"]]
+    if (!is.null(dm) && all(dropped %in% colnames(dm))) {
+      kept <- setdiff(colnames(dm), dropped)
+      if (length(kept) > 0) {
+        qr_kept <- qr(dm[, kept, drop = FALSE])
+        for (d in dropped) {
+          col <- dm[, d]
+          scale_d <- max(abs(col), 1)
+          b_hat <- qr.coef(qr_kept, col)
+          b_hat[is.na(b_hat)] <- 0
+          resid_d <- col - drop(dm[, kept, drop = FALSE] %*% b_hat)
+          # Only where the dependency is exact. A column dropped at the rank
+          # tolerance but not reproduced by the kept set has no spanning set
+          # to name, and a wrong name is worse than none.
+          if (max(abs(resid_d)) > 1e-7 * scale_d) next
+          on <- kept[abs(b_hat) > 1e-7 * max(abs(b_hat), 1)]
+          span_txt <- c(span_txt, paste0(
+            d,
+            if (length(on) == 0) {
+              " is zero"
+            } else if (identical(on, "(Intercept)")) {
+              " is constant"
+            } else if (length(on) == 1 && abs(b_hat[[on]] - 1) < 1e-7) {
+              paste0(" is identical to ", on)
+            } else if (length(on) == 2) {
+              paste0(" is a linear combination of ", on[1], " and ", on[2])
+            } else {
+              paste0(" is a linear combination of ",
+                     paste(on[-length(on)], collapse = ", "),
+                     ", and ", on[length(on)])
+            }
+          ))
+        }
+      }
+    }
+    # Capped at the length the first sentence already prints in full; a
+    # saturated factor can drop twenty columns at once and each would get a
+    # clause of its own.
+    if (length(span_txt) > 0 && length(span_txt) <= 3) {
+      msg <- paste0(msg, " ", paste(span_txt, collapse = "; "), ".")
+    }
+
+    # A dropped treatment interaction is not the same event as a dropped
+    # covariate, and naming the column alone does not say so. lm_lin()'s
+    # treatment coefficient is the effect at the covariate means only while
+    # every covariate is interacted; once an interaction goes, that covariate's
+    # slope is constrained equal across arms, and where the dependency runs
+    # through the treatment column itself the reported value is the one the
+    # drop rule happened to leave behind. On one published replication the
+    # intercept, the treatment indicator, a covariate and its interaction are
+    # an exact four-column dependency in every subgroup cell where a category
+    # is empty in one arm; the fitted values and r.squared agree to twelve
+    # digits under either drop while the treatment coefficient moves from
+    # -1.56 to -2.00, so no goodness-of-fit channel can see it. `lin_interactions` names each
+    # interaction column, the treatment column it was built from, and the
+    # covariate it centres, and is NULL everywhere but lm_lin().
+    if (!is.null(lin_interactions)) {
+      # Only where the covariate's own main effect SURVIVES. When a covariate
+      # is a duplicate or is constant, its main effect and its interaction drop
+      # together, the remaining fit is lm_lin() on the covariates that are
+      # left, and the treatment coefficient is still the effect at their means.
+      lost <- lin_interactions$interaction %in% dropped &
+        !(lin_interactions$covariate %in% dropped)
+      affected <- setdiff(unique(lin_interactions$treatment[lost]), dropped)
+      if (length(affected) > 0) {
+        lost_covs <- unique(lin_interactions$covariate[lost])
+        # Named while the list is short enough to read. A saturated factor can
+        # lose twenty interactions at once, and the first sentence has already
+        # printed every one of them.
+        covs_txt <- if (length(lost_covs) > 3) {
+          paste(length(lost_covs), "covariates")
+        } else {
+          paste(lost_covs, collapse = ", ")
+        }
+        msg <- paste0(
+          msg,
+          " A dropped treatment interaction is not a dropped covariate: with ",
+          covs_txt,
+          " no longer interacted with the treatment, ",
+          paste(affected, collapse = ", "),
+          if (length(affected) > 1) {
+            " are no longer effects at the covariate means, since "
+          } else {
+            " is no longer the effect at the covariate means, since "
+          },
+          if (length(lost_covs) > 1) "their slopes are " else "its slope is ",
+          "now constrained equal across treatment arms. Where the dependency ",
+          "runs through the treatment column itself, the reported value also ",
+          "depends on which column was dropped, and the effect at the ",
+          "covariate means is not identified."
+        )
+      }
+    }
+
+    message(msg)
+
+    # A dropped treatment indicator is the one case here that is worth the
+    # louder channel. The other drops leave a fit whose treatment coefficient
+    # means something narrower than it did; this one leaves no treatment
+    # coefficient at all, under a name that is still printed with an NA beside
+    # it, and there is nothing a caller can read off the fit instead.
+    dropped_treat <- intersect(dropped, lin_treatment)
+    if (length(dropped_treat) > 0) {
+      warning(
+        "lm_lin() dropped the treatment indicator ",
+        paste(dropped_treat, collapse = ", "),
+        ", so the fit carries no treatment effect for ",
+        if (length(dropped_treat) > 1) "those arms" else "that arm",
+        ". A treatment indicator is collinear with the rest of the design ",
+        "only where its arm is empty or where the covariates reproduce it ",
+        "exactly, and neither is a fit to read an effect from.",
+        call. = FALSE
+      )
+    }
   }
 
   if (!is.null(model_data)) {
@@ -290,8 +422,14 @@ absorbed_group_effects <- function(fitted, coefficients, model_data) {
   # carries a declared level the data never uses.
   rep_row[rep_row == 0L] <- NA_integer_
   idx <- rep_row[ord]
+  # `coefficients` carries an NA wherever a column was dropped for collinearity,
+  # and NA times anything is NA, so multiplying the full `Xoriginal` by the full
+  # vector made every group effect NA on any rank-deficient fit: the same defect
+  # b96ab8b fixed in the F statistic, in a different field. A dropped column
+  # contributes nothing to the fitted values, so both sides drop it.
+  keep <- !is.na(coefficients)
   effects <- fitted[idx] -
-    drop(model_data[["Xoriginal"]][idx, , drop = FALSE] %*% coefficients)
+    drop(model_data[["Xoriginal"]][idx, keep, drop = FALSE] %*% coefficients[keep])
   lv <- lv[ord]
   # tapply() returned a one-dimensional array, and that shape is part of the
   # return surface: `predict()` and the 1.0.6 comparison both see it.

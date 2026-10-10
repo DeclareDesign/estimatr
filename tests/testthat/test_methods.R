@@ -352,3 +352,329 @@ test_that("C3: emmeans works when its namespace is loaded rather than attached",
   hc2 <- as.data.frame(emmeans::emmeans(lm_robust(y ~ g, data = d), "g"))
   expect_false(isTRUE(all.equal(hc2$SE, el$SE)))
 })
+
+# ---- the rank-deficient surface ----
+#
+# C3 gave recover_data.lm_robust the `envir` it needed, and the test above
+# covers the full-rank path. The branch that made the fix necessary, the
+# `pass.it.on` attribute a fit with a dropped column carries, was exercised by
+# nothing, and neither was any other method's rank-deficient branch: the NA
+# padding in `vcov(complete = TRUE)`, the count `print()` reports, or the
+# non-estimable basis emmeans builds from the passed-on design (review C6, C13).
+#
+# The design has two factors and an empty cell, so `fb:qq` is dropped and the
+# a:q cell is not estimable from what was fitted. A collinear column on its own
+# would exercise the padding but never the non-estimable basis, because every
+# marginal mean would still be estimable.
+rank_deficient_data <- function() {
+  set.seed(343)
+  d <- expand.grid(f = factor(c("a", "b")), q = factor(c("p", "q")), rep = 1:12)
+  d <- d[!(d$f == "a" & d$q == "q"), ]
+  d$y <- rnorm(nrow(d))
+  d$y2 <- rnorm(nrow(d))
+  d
+}
+
+test_that("vcov pads the dropped coefficient with NA when asked for the whole matrix", {
+  d <- rank_deficient_data()
+  fit <- suppressMessages(suppressWarnings(lm_robust(y ~ f * q, data = d)))
+  expect_lt(fit$rank, fit$k)
+
+  full <- vcov(fit, complete = TRUE)
+  expect_equal(dim(full), c(fit$k, fit$k))
+  expect_equal(rownames(full), fit$term)
+  j <- which(is.na(coef(fit, complete = TRUE)))
+  expect_true(all(is.na(full[j, ])))
+  expect_true(all(is.na(full[, j])))
+  # Every other entry is the matrix the fit holds, in the same order.
+  expect_equal(unname(full[-j, -j]), unname(fit$vcov), tolerance = 1e-12)
+
+  # And the incomplete matrix is the estimated coefficients alone.
+  expect_equal(dim(vcov(fit, complete = FALSE)), c(fit$rank, fit$rank))
+})
+
+test_that("vcov refuses a fit that was asked not to keep its variance", {
+  d <- rank_deficient_data()
+  fit <- lm_robust(y ~ f, data = d, return_vcov = FALSE)
+  expect_error(vcov(fit), "return_vcov = TRUE")
+})
+
+test_that("print says how many coefficients are not defined", {
+  d <- rank_deficient_data()
+  fit <- suppressMessages(suppressWarnings(lm_robust(y ~ f * q, data = d)))
+  out <- capture.output(print(summary(fit)))
+  expect_true(
+    any(grepl("Coefficients: (1 not defined because the design matrix is rank deficient)",
+              out, fixed = TRUE))
+  )
+  # The dropped term keeps its row, all NA, rather than vanishing from the table.
+  dropped <- names(which(is.na(coef(fit, complete = TRUE))))
+  expect_true(any(grepl(paste0("^", dropped, " +NA"), out)))
+})
+
+test_that("an iv fit's summary prints its call and its coefficients", {
+  set.seed(343)
+  n <- 60
+  d <- data.frame(inst = rnorm(n))
+  d$en <- d$inst + rnorm(n)
+  d$y <- d$en + rnorm(n)
+  out <- capture.output(print(summary(iv_robust(y ~ en | inst, data = d))))
+  expect_true(any(grepl("iv_robust(formula = y ~ en | inst", out, fixed = TRUE)))
+  expect_true(any(grepl("^en ", out)))
+})
+
+test_that("emmeans reports a cell the design cannot estimate as non-estimable", {
+  skip_if_not_installed("emmeans")
+  # The non-estimable basis is built from the design emmeans was handed through
+  # `pass.it.on`. Without it the a:q cell would come back as a number built
+  # from the dropped column's absence rather than as nonEst.
+  d <- rank_deficient_data()
+  fit <- suppressMessages(suppressWarnings(lm_robust(y ~ f * q, data = d)))
+  em <- as.data.frame(summary(emmeans::emmeans(fit, ~ f * q)))
+
+  missing_cell <- em$f == "a" & em$q == "q"
+  expect_equal(sum(missing_cell), 1L)
+  expect_true(is.na(em$SE[missing_cell]))
+  expect_true(all(!is.na(em$SE[!missing_cell])))
+
+  # The three cells that were observed are the cell means of the data.
+  observed <- aggregate(y ~ f + q, data = d, FUN = mean)
+  for (i in which(!missing_cell)) {
+    target <- observed$y[observed$f == em$f[i] & observed$q == em$q[i]]
+    expect_equal(em$emmean[i], target, tolerance = 1e-12,
+                 label = paste0("cell ", em$f[i], ":", em$q[i]))
+  }
+})
+
+test_that("emmeans on a multivariate fit is the per-outcome fits", {
+  skip_if_not_installed("emmeans")
+  # The n.mult branch builds the basis for every outcome at once with a
+  # Kronecker product, and nothing exercised it.
+  d <- rank_deficient_data()
+  mfit <- lm_robust(cbind(y, y2) ~ f, data = d)
+  em <- as.data.frame(summary(emmeans::emmeans(mfit, ~ f | rep.meas)))
+  expect_equal(sort(unique(as.character(em$rep.meas))), c("y", "y2"))
+
+  for (outcome in c("y", "y2")) {
+    single <- as.data.frame(summary(emmeans::emmeans(
+      lm_robust(stats::reformulate("f", response = outcome), data = d), ~ f
+    )))
+    rows <- em[em$rep.meas == outcome, ]
+    rows <- rows[order(rows$f), ]
+    single <- single[order(single$f), ]
+    expect_equal(rows$emmean, single$emmean, tolerance = 1e-12, label = outcome)
+    expect_equal(rows$SE, single$SE, tolerance = 1e-12,
+                 label = paste(outcome, "SE"))
+  }
+})
+
+test_that("C13: update.iv_robust carries extra arguments, both new and already in the call", {
+  # Two branches, neither run: an argument already named in the call is
+  # replaced in place, and one that is not is appended. The existing tests only
+  # gave it a new formula.
+  set.seed(343)
+  n <- 200
+  d <- data.frame(z = rnorm(n), cl = rep(1:20, 10))
+  d$en <- d$z + rnorm(n)
+  d$y <- d$en + rnorm(n)
+
+  iv <- iv_robust(y ~ en | z, data = d)
+
+  # `data` is already in the call, so it is replaced rather than appended.
+  half <- update(iv, data = d[1:100, ])
+  expect_equal(half$nobs, 100)
+  expect_equal(half$coefficients,
+               iv_robust(y ~ en | z, data = d[1:100, ])$coefficients)
+
+  # `se_type` is not in the call, so it is appended to it.
+  hc1 <- update(iv, se_type = "HC1")
+  expect_equal(hc1$se_type, "HC1")
+  expect_equal(hc1$std.error,
+               iv_robust(y ~ en | z, data = d, se_type = "HC1")$std.error)
+
+  # Both at once, one of each kind.
+  both <- update(iv, data = d[1:100, ], se_type = "HC1")
+  expect_equal(both$nobs, 100)
+  expect_equal(both$se_type, "HC1")
+})
+
+test_that("C13: update.iv_robust(evaluate = FALSE) returns the call rather than the fit", {
+  set.seed(343)
+  n <- 200
+  d <- data.frame(z = rnorm(n))
+  d$en <- d$z + rnorm(n)
+  d$y <- d$en + rnorm(n)
+
+  iv <- iv_robust(y ~ en | z, data = d)
+
+  cl <- update(iv, se_type = "HC1", evaluate = FALSE)
+  expect_true(is.call(cl))
+  expect_equal(cl[["se_type"]], "HC1")
+  expect_equal(eval(cl)$coefficients, update(iv, se_type = "HC1")$coefficients)
+})
+
+test_that("C13: update.iv_robust says what is missing when the fit has no call", {
+  set.seed(343)
+  n <- 100
+  d <- data.frame(z = rnorm(n))
+  d$en <- d$z + rnorm(n)
+  d$y <- d$en + rnorm(n)
+
+  iv <- iv_robust(y ~ en | z, data = d)
+  iv$call <- NULL
+
+  expect_error(update(iv, . ~ .), "need an object with call component")
+})
+
+test_that("C13: glance refuses a multivariate iv_robust fit", {
+  # glance() is one row, and the branch that says so for iv_robust had never
+  # been run: the lm_robust one had.
+  set.seed(343)
+  n <- 200
+  d <- data.frame(z = rnorm(n))
+  d$en <- d$z + rnorm(n)
+  d$y <- d$en + rnorm(n)
+  d$y2 <- d$en + rnorm(n)
+
+  ivm <- iv_robust(cbind(y, y2) ~ en | z, data = d)
+
+  expect_error(glance(ivm), "multiple responses")
+  # The single-outcome fit it is built from still glances to one row.
+  expect_equal(nrow(glance(iv_robust(y ~ en | z, data = d))), 1L)
+})
+
+test_that("C13: extract() reports the F statistic and the cluster count when asked", {
+  # Two optional goodness-of-fit rows, neither exercised: `include.fstatistic`
+  # is off by default, and `include.nclusts` only fires on a clustered fit.
+  set.seed(343)
+  n <- 200
+  d <- data.frame(x = rnorm(n), z = rnorm(n), cl = rep(1:20, 10))
+  d$y <- d$x + d$z + rnorm(n)
+
+  m <- lm_robust(y ~ x + z, data = d, clusters = cl)
+  tr <- extract(m, include.fstatistic = TRUE)
+
+  expect_true("F statistic" %in% tr@gof.names)
+  expect_true("N Clusters" %in% tr@gof.names)
+  expect_equal(tr@gof[tr@gof.names == "F statistic"],
+               unname(m$fstatistic[[1]]))
+  expect_equal(tr@gof[tr@gof.names == "N Clusters"], m$nclusters)
+  # The cluster count is a count, so it prints without decimals.
+  expect_false(tr@gof.decimal[tr@gof.names == "N Clusters"])
+  expect_true(tr@gof.decimal[tr@gof.names == "F statistic"])
+
+  # An unclustered fit has no cluster row to report.
+  expect_false("N Clusters" %in%
+                 extract(lm_robust(y ~ x + z, data = d))@gof.names)
+})
+
+test_that("C13: augment() refuses data it cannot line the fitted values up against", {
+  # `data` is taken at the caller's word rather than checked against the model
+  # frame, so the rows have to agree. The case this guards is the ordinary one
+  # of handing back the original data after the fit dropped rows for
+  # missingness.
+  set.seed(343)
+  n <- 100
+  d <- data.frame(x = rnorm(n))
+  d$y <- d$x + rnorm(n)
+  d$x[1:10] <- NA
+
+  fit <- lm_robust(y ~ x, data = d)
+  expect_equal(fit$nobs, 90)
+
+  expect_error(augment(fit, data = d),
+               "fitted values are not available for every row")
+
+  # The model frame it did fit augments without complaint.
+  expect_equal(nrow(augment(fit)), 90)
+})
+
+test_that("C13: predict() takes supplied weights for the prediction interval", {
+  # Two branches: supplying `weights` scales the residual variance by their
+  # inverse, and omitting them on a weighted fit warns that the prediction
+  # variance is being held constant.
+  set.seed(343)
+  n <- 200
+  d <- data.frame(x = rnorm(n), w = runif(n, 0.5, 2))
+  d$y <- d$x + rnorm(n)
+
+  fit <- lm_robust(y ~ x, data = d)
+  p <- predict(fit, newdata = d, interval = "prediction", weights = w)
+  flat <- predict(fit, newdata = d, interval = "prediction")
+
+  # The point predictions are the same; only the interval width moves.
+  expect_equal(p[["fit"]][, "fit"], flat[["fit"]][, "fit"])
+
+  # A unit weighted above 1 gets a narrower interval than the unweighted one,
+  # and a unit weighted below 1 a wider one, since pred.var = res_var / w.
+  wide <- which.min(d$w)
+  narrow <- which.max(d$w)
+  width <- function(m, i) m[["fit"]][i, "upr"] - m[["fit"]][i, "lwr"]
+  expect_gt(width(p, wide), width(flat, wide))
+  expect_lt(width(p, narrow), width(flat, narrow))
+
+  # Written out: the half width is t * sqrt(var_fit + res_var / w).
+  tval <- qt(0.025, fit$df.residual, lower.tail = FALSE)
+  se_fit <- predict(fit, newdata = d, se.fit = TRUE)[["se.fit"]]
+  expect_equal(
+    unname(width(p, 1) / 2),
+    unname(tval * sqrt(se_fit[1]^2 + fit$res_var / d$w[1]))
+  )
+
+  # A weighted fit asked for a prediction interval without weights says so.
+  wfit <- lm_robust(y ~ x, data = d, weights = w)
+  expect_warning(
+    predict(wfit, newdata = d, interval = "prediction"),
+    "Assuming constant prediction variance"
+  )
+})
+
+test_that("C13: predict() refuses an lm_lin design it cannot rebuild by name", {
+  # A defensive guard rather than a reachable path: every `newdata` this
+  # package can be given rebuilds the design, including a factor treatment, a
+  # multi-valued numeric treatment, and a `newdata` missing a level of either.
+  # What it protects against is the coefficients and the rebuilt design drifting
+  # apart, so the way to fire it is to make them disagree.
+  set.seed(343)
+  n <- 120
+  d <- data.frame(x = rnorm(n), z = rbinom(n, 1, 0.5))
+  d$y <- d$x + d$z + rnorm(n)
+
+  fit <- lm_lin(y ~ z, covariates = ~ x, data = d)
+  expect_silent(predict(fit, newdata = d))
+
+  # Rename one coefficient, which is what a drift between the two would look
+  # like. Without the guard the prediction would be built from the wrong
+  # columns and returned as a number.
+  drifted <- fit
+  names(drifted$coefficients)[names(drifted$coefficients) == "z:x_c"] <- "z:x_centered"
+
+  expect_error(predict(drifted, newdata = d),
+               "Cannot rebuild the lm_lin design from `newdata`. Missing: z:x_centered")
+})
+
+test_that("C13: emmeans names the outcomes of a multivariate fit that carries no names", {
+  # The multivariate basis is built with a Kronecker product and labelled by
+  # the coefficient matrix's column names. lm_robust always names them, so the
+  # fallback is defensive; what it guarantees is that a fit reaching emmeans
+  # without them is labelled by position rather than losing the grouping.
+  set.seed(343)
+  n <- 200
+  d <- data.frame(g = factor(rep(c("p", "q"), n / 2)), x = rnorm(n))
+  d$y1 <- rnorm(n)
+  d$y2 <- rnorm(n)
+
+  named <- lm_robust(cbind(y1, y2) ~ g, data = d)
+  expect_equal(colnames(coef(named)), c("y1", "y2"))
+
+  unnamed <- named
+  colnames(unnamed$coefficients) <- NULL
+
+  em_named <- summary(emmeans::emmeans(named, ~ g | rep.meas))
+  em_unnamed <- summary(emmeans::emmeans(unnamed, ~ g | rep.meas))
+
+  # The outcomes fall back to 1 and 2, and every estimate is unchanged.
+  expect_equal(as.character(unique(em_unnamed$rep.meas)), c("1", "2"))
+  expect_equal(em_unnamed$emmean, em_named$emmean)
+  expect_equal(em_unnamed$SE, em_named$SE)
+})

@@ -317,6 +317,61 @@ test_that("fe_leverage handles a disconnected design", {
   expect_same(cheap$rank, estimatr:::fe_leverage(codes)$rank)
 })
 
+# The corpus check behind this: 424 published fits carrying a singleton level
+# of an ordinary factor covariate reproduced the treatment estimate and its
+# HC2 standard error, under the 2.0.1 discard rule, within 7e-16 of a refit on
+# the rows the singleton levels do not occupy. The file's other singleton
+# tests are about an ABSORBED group; this one is about a factor covariate
+# carried in the design, which is the shape a subgroup analysis reaches.
+test_that("a singleton factor level leaves the other coefficients at the reduced fit", {
+  set.seed(343)
+  n <- 122
+  sing <- data.frame(
+    z = rep(0:1, each = n / 2),
+    # Cycled rather than blocked, so the common levels cross `z` and the only
+    # degeneracy in the design is the two singletons.
+    g = factor(c(rep_len(letters[1:4], n - 2), "rare1", "rare2")),
+    x = rnorm(n)
+  )
+  sing$y <- 1 + 0.5 * sing$z + sing$x + rnorm(n)
+
+  # The two singleton levels are identified by their own row alone, so the fit
+  # warns and their standard errors are NA. The reduced-fit comparison below is
+  # what the rule promises about every other coefficient.
+  warnings <- character()
+  full <- withCallingHandlers(
+    suppressMessages(lm_robust(y ~ z + x + g, data = sing, se_type = "HC2")),
+    warning = function(w) {
+      warnings <<- c(warnings, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_gt(full$n_leverage_near_one, 0)
+  expect_true(any(grepl("alone identif", warnings)))
+
+  # Frisch-Waugh-Lovell: the singleton rows identify their own level and
+  # nothing else, so every other coefficient keeps the reduced design's
+  # standard error.
+  reduced <- lm_robust(
+    y ~ z + x + g,
+    data = droplevels(sing[!sing$g %in% c("rare1", "rare2"), ]),
+    se_type = "HC2"
+  )
+  shared <- intersect(reduced$term, full$term)
+  expect_true(all(c("z", "x") %in% shared))
+  expect_equal(
+    full$coefficients[shared], reduced$coefficients[shared], tolerance = 1e-12
+  )
+  expect_equal(
+    full$std.error[match(shared, full$term)],
+    reduced$std.error[match(shared, reduced$term)],
+    tolerance = 1e-12
+  )
+
+  # The singleton levels are what the discard costs, so those are the NAs.
+  expect_true(all(is.na(full$std.error[full$term %in% c("grare1", "grare2")])))
+})
+
 test_that("a singleton fixed-effect group has leverage exactly one", {
   codes <- list(as.integer(c(1L, sample(2:20, 499, TRUE))),
                 as.integer(sample(1:5, 500, TRUE)))
@@ -428,7 +483,7 @@ test_that("a nested fixed-effect factor matches the explicit-dummy fit", {
                      se_type = se)
     # The explicit fit drops the redundant columns and says so; the absorbed
     # fit has no columns to drop, and handles the deficiency in the projection.
-    expect_warning(
+    expect_message(
       dum <- lm_robust(y ~ z + x + factor(bl) + factor(cl) + factor(c3),
                        data = d, se_type = se),
       "collinear"
@@ -524,40 +579,69 @@ test_that("a singleton FE group agrees absorbed and expanded, for every se_type"
   # contribution, so the two routes now agree rather than disagreeing by an
   # accident of which design matrix was formed (estimatr #395).
   #
-  # The two routes agree in the warning as well, which is the second half of
-  # the same point. The absorbed route puts the singleton at a hat value of
-  # exactly 1 and the expanded route a rounding step above it, so a count that
-  # tested the sign of 1 - h gave the same standard error by two notices; the
-  # tolerant count reaches both.
+  # The two routes differ in what they say, and the difference is the rule.
+  # An absorbed singleton is not a coefficient: its demeaned row is zero, its
+  # share of every reported coefficient's variance is zero, and every standard
+  # error is the one the design without it gives, so the absorbed route reports
+  # the discarded row as a message and nothing is NA. The expanded route writes
+  # the singleton as the reference level, so the intercept and every dummy are
+  # identified through that one observation's mean; their standard errors are
+  # NA and the fit warns. The `x` standard error is the same number on both
+  # routes.
   set.seed(11)
   k <- 200
   d <- data.frame(y = rnorm(k), x = rnorm(k), g = c(1L, sample(2:20, k - 1, TRUE)))
   expect_same(sum(d$g == 1L), 1L)
 
-  expect_warning(
+  expect_message(
     fe <- lm_robust(y ~ x, fixed_effects = ~ g, data = d, se_type = "HC2"),
     "1 observation has a computed leverage at or near 1"
   )
   expect_true(is.finite(fe$std.error[["x"]]))
+  expect_same(fe$n_leverage_near_one, 1L)
   expect_same(fe$df.residual, lm(y ~ x + factor(g), data = d)$df.residual)
 
-  leverage_warned <- function(expr) {
+  leverage_notice <- function(expr) {
     ws <- character(0)
-    val <- withCallingHandlers(expr, warning = function(w) {
-      ws <<- c(ws, conditionMessage(w))
-      invokeRestart("muffleWarning")
-    })
-    list(fit = val, warned = any(grepl("leverage at or near 1", ws, fixed = TRUE)))
+    ms <- character(0)
+    val <- withCallingHandlers(
+      expr,
+      warning = function(w) {
+        ws <<- c(ws, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      },
+      message = function(m) {
+        ms <<- c(ms, conditionMessage(m))
+        invokeRestart("muffleMessage")
+      }
+    )
+    list(fit = val,
+         warned = any(grepl("leverage at or near 1", ws, fixed = TRUE)),
+         messaged = any(grepl("leverage at or near 1", ms, fixed = TRUE)))
   }
 
   for (se in c("HC1", "HC2", "HC3")) {
-    a <- leverage_warned(lm_robust(y ~ x, fixed_effects = ~ g, data = d, se_type = se))
-    b <- leverage_warned(lm_robust(y ~ x + factor(g), data = d, se_type = se))
+    a <- leverage_notice(lm_robust(y ~ x, fixed_effects = ~ g, data = d, se_type = se))
+    b <- leverage_notice(lm_robust(y ~ x + factor(g), data = d, se_type = se))
     expect_true(is.finite(b$fit$std.error[["x"]]), info = se)
     expect_same(unname(a$fit$std.error), unname(b$fit$std.error["x"]), info = se)
-    # HC1 never reads leverage, so it is the control: neither route warns.
-    expect_same(a$warned, se != "HC1", info = paste(se, "absorbed"))
-    expect_same(b$warned, se != "HC1", info = paste(se, "expanded"))
+    reads_leverage <- se != "HC1"
+    # HC1 never reads leverage, so it is the control: neither route says
+    # anything and the count is 0 on both.
+    expect_same(a$fit$n_leverage_near_one, as.integer(reads_leverage), info = paste(se, "absorbed count"))
+    expect_same(b$fit$n_leverage_near_one, as.integer(reads_leverage), info = paste(se, "expanded count"))
+    # Absorbed: no coefficient is affected, so a message and no NA.
+    expect_same(a$warned, FALSE, info = paste(se, "absorbed"))
+    expect_same(a$messaged, reads_leverage, info = paste(se, "absorbed"))
+    expect_false(anyNA(a$fit$std.error), info = paste(se, "absorbed"))
+    # Expanded: the singleton is the reference level, so the intercept is its
+    # mean and every dummy is a difference from that mean. All twenty depend on
+    # observation 1 alone and are NA; `x` is the one coefficient that does not.
+    expect_same(b$warned, reads_leverage, info = paste(se, "expanded"))
+    expect_same(b$messaged, FALSE, info = paste(se, "expanded"))
+    expect_same(unname(is.na(b$fit$std.error)),
+                reads_leverage & names(b$fit$std.error) != "x",
+                info = paste(se, "expanded"))
   }
 })
 

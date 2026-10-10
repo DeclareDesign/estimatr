@@ -53,17 +53,6 @@ tidy_data_frame <- function(x,
   as_tibble(return_frame)
 }
 
-warn_singularities <- function(x) {
-  if (x$rank < x$k) {
-    singularities <- x$k - x$rank
-    what <- ifelse(singularities > 1, " coefficients ", " coefficient ")
-    message(
-      singularities, what,
-      " not defined because the design matrix is rank deficient\n"
-    )
-  }
-}
-
 #' Tidy an estimatr object
 #' @name estimatr_tidiers
 #' @templateVar class lm_robust
@@ -97,14 +86,12 @@ tidy.lm_robust <- function(x,
                            conf.int = TRUE,
                            conf.level = NULL,
                            ...) {
-  warn_singularities(x)
   tidy_data_frame(x, conf.int = conf.int, conf.level = conf.level, ...)
 }
 
 #' @rdname estimatr_tidiers
 #' @export
 tidy.iv_robust <- function(x, conf.int = TRUE, conf.level = NULL, ...) {
-  warn_singularities(x)
   tidy_data_frame(x, conf.int = conf.int, conf.level = conf.level, ...)
 }
 

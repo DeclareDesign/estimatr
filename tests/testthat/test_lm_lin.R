@@ -135,3 +135,58 @@ test_that("newdata carrying only one treatment level still predicts", {
   fit_z <- lm_lin(y ~ zf, covariates = ~ x, data = lin_dat)
   expect_equal(unname(predict(fit_z, newdata = nd)), ref("post_predict_one_level"))
 })
+
+test_that("C13: several treatment arms losing an interaction are all named", {
+  # The dropped-interaction notice has a singular and a plural form, and only
+  # the singular had been run. A covariate that is zero in every arm but the
+  # first loses its interaction with each of the others at once, so both arms
+  # stop being effects at the covariate means and the sentence has to say so
+  # about both of them.
+  set.seed(343)
+  n <- 300
+  d <- data.frame(z = factor(rep(c("a", "b", "c"), each = 100)), x = rnorm(n))
+  d$cst <- ifelse(d$z == "a", d$x, 0)
+  d$y <- rnorm(n)
+
+  ms <- character()
+  withCallingHandlers(
+    m <- lm_lin(y ~ z, covariates = ~ cst, data = d),
+    message = function(msg) {
+      ms <<- c(ms, conditionMessage(msg))
+      invokeRestart("muffleMessage")
+    }
+  )
+  expect_true(any(grepl("zb, zc are no longer effects at the covariate means",
+                        ms, fixed = TRUE)))
+
+  # The plural is about the arms, not the covariates: one covariate lost its
+  # slope, so that half of the sentence stays singular.
+  expect_true(any(grepl("since its slope is now constrained equal",
+                        ms, fixed = TRUE)))
+
+  # Both interactions are the ones dropped, and the main effect survives.
+  expect_true(all(is.na(coef(m)[c("zb:cst_c", "zc:cst_c")])))
+  expect_false(is.na(coef(m)[["cst_c"]]))
+})
+
+test_that("C13: without an intercept a treatment always expands to one column per level", {
+  # lm_lin has a branch for a single treatment column with no intercept, and
+  # nothing reaches it: the expansion above it fires on exactly that condition,
+  # so a no-intercept fit leaves the loop with one column per level and never
+  # one column. This is the test that will notice if the expansion's condition
+  # is ever narrowed.
+  set.seed(343)
+  n <- 200
+  d <- data.frame(x = rnorm(n), z = rbinom(n, 1, 0.5))
+  d$zf <- factor(ifelse(d$z == 1, "b", "a"))
+  d$y <- d$x + d$z + rnorm(n)
+
+  # A 0/1 treatment: both indicators, since there is no baseline to absorb the
+  # control group.
+  expect_equal(names(coef(lm_lin(y ~ z + 0, covariates = ~ x, data = d))),
+               c("z0", "z1", "z0:x_c", "z1:x_c"))
+
+  # A factor treatment: one column per level, by the same argument.
+  expect_equal(names(coef(lm_lin(y ~ zf + 0, covariates = ~ x, data = d))),
+               c("zfa", "zfb", "zfa:x_c", "zfb:x_c"))
+})

@@ -71,6 +71,60 @@ ext_data_fe_nested <- function() {
   )
 }
 
+# An endogenous regressor inside a fixed-effect design, for the 2SLS cells of
+# the fixest comparison. `en` is driven by the instrument and by the structural
+# error, so 2SLS and OLS give different answers and a first stage that was
+# quietly dropped could not pass. fixest names the fitted endogenous
+# coefficient `fit_en`, which is why the recording reads both vectors by
+# position rather than by name.
+ext_data_fe_iv <- function() {
+  set.seed(343)
+  n <- 300
+  g <- factor(rep(1:20, length.out = n))
+  inst <- rnorm(n)
+  u <- rnorm(n)
+  x <- rnorm(n)
+  en <- 0.8 * inst + 0.5 * u + rnorm(n)
+  data.frame(
+    y = 1 + 0.5 * en + 0.3 * x + as.numeric(g) / 10 + u,
+    en = en,
+    x = x,
+    inst = inst,
+    g = g,
+    cl = rep(1:15, each = 20),
+    w = runif(n, 0.5, 2)
+  )
+}
+
+# Blocked designs for the Pashley-Miratrix variance, used by
+# test_blocked_variance.R and by the blkvar recording. The builder lives here
+# rather than in the test file because the recording has to build the same data
+# the test does: two copies of it would let the record be of a design the test
+# no longer runs.
+ext_data_blocked <- function(block_sizes, m_each, seed = 1, tau = 0.5) {
+  set.seed(seed)
+  K <- length(block_sizes)
+  bl <- rep(seq_len(K), block_sizes)
+  n <- sum(block_sizes)
+  y0 <- rnorm(n) + rep(rnorm(K, 0, 2), block_sizes)
+  z <- randomizr::block_ra(blocks = bl, block_m = m_each)
+  data.frame(y = y0 + tau * z, z = z, bl = bl)
+}
+
+# The six designs blkvar is compared on: all-big, mixed big, all-small,
+# big-with-singleton-arms, mixed with a singleton arm, and matched pairs. The
+# seed is the design's position, which is what the recording was made with.
+ext_blocked_designs <- function() {
+  list(
+    list(block_sizes = rep(6, 4), m_each = rep(3, 4)),
+    list(block_sizes = c(4, 6, 8, 10), m_each = c(2, 3, 4, 5)),
+    list(block_sizes = c(3, 4, 5, 6, 7, 8), m_each = rep(1, 6)),
+    list(block_sizes = c(8, 8, 3, 3, 3, 3), m_each = c(4, 4, 1, 1, 1, 1)),
+    list(block_sizes = c(9, 9, 4, 5, 6), m_each = c(4, 4, 3, 4, 5)),
+    list(block_sizes = rep(2, 10), m_each = rep(1, 10))
+  )
+}
+
 # mtcars, with the weight column the Stata do-files construct. Base R data, so
 # the frozen Stata output can never go stale against a changing dataset.
 ext_data_stata <- function() {

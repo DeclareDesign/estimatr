@@ -56,7 +56,7 @@
 #' @return An object of class `"difference_in_means"`, a list holding
 #'   `coefficients`, `std.error`, `df`, `statistic`, `p.value`, `conf.low`,
 #'   `conf.high`, `term`, `outcome`, `condition1`, `condition2`, `vcov`,
-#'   `nobs`, `alpha`, and `design`, a string naming the case that applied:
+#'   `nobs`, `alpha`, `call`, and `design`, a string naming the case that applied:
 #'   `"Standard"`, `"Blocked"`, `"Small blocks"`, `"Hybrid blocked"`,
 #'   `"Matched-pair"`, `"Clustered"`, `"Block-clustered"`, or
 #'   `"Matched-pair clustered"`.
@@ -124,6 +124,17 @@ difference_in_means <- function(formula,
     stop(
       "'formula' must have only one variable on the right-hand side: the ",
       "treatment variable."
+    )
+  }
+
+  # A cbind() outcome otherwise reached the blocked path and was refused for
+  # want of "both treatment conditions within each block", which describes a
+  # different design problem entirely.
+  if (length(all.vars(rlang::f_lhs(rlang::eval_tidy(formula)))) > 1) {
+    stop(
+      "'formula' must have only one variable on the left-hand side: ",
+      "`difference_in_means` does not support multiple outcomes. Fit one ",
+      "outcome at a time."
     )
   }
 
@@ -386,6 +397,10 @@ difference_in_means <- function(formula,
   if (is.numeric(nclusters)) {
     return_list[["nclusters"]] <- nclusters
   }
+
+  # Without this `update()` cannot refit, which every other estimator here
+  # supports; `horvitz_thompson` and the regression fits all store one.
+  return_list[["call"]] <- match.call()
 
   attr(return_list, "class") <- "difference_in_means"
 

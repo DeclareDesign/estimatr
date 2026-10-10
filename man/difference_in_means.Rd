@@ -45,7 +45,7 @@ difference_in_means(
 An object of class \code{"difference_in_means"}, a list holding
 \code{coefficients}, \code{std.error}, \code{df}, \code{statistic}, \code{p.value}, \code{conf.low},
 \code{conf.high}, \code{term}, \code{outcome}, \code{condition1}, \code{condition2}, \code{vcov},
-\code{nobs}, \code{alpha}, and \code{design}, a string naming the case that applied:
+\code{nobs}, \code{alpha}, \code{call}, and \code{design}, a string naming the case that applied:
 \code{"Standard"}, \code{"Blocked"}, \code{"Small blocks"}, \code{"Hybrid blocked"},
 \code{"Matched-pair"}, \code{"Clustered"}, \code{"Block-clustered"}, or
 \code{"Matched-pair clustered"}.

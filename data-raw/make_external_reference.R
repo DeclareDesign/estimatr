@@ -11,6 +11,9 @@
 
 library(fixest)
 library(plm)
+library(blkvar)
+# blkvar calls dplyr::n() without importing it.
+suppressMessages(library(dplyr))
 
 source("tests/testthat/helper-external.R")
 
@@ -52,6 +55,35 @@ for (nm in names(fe_fits)) {
   )
 }
 
+# ---- fixest, the 2SLS path -------------------------------------------------
+#
+# The fixed effects are absorbed out of both stages. fixest does that by
+# alternating projections and estimatr by its own solver, so what the
+# comparison corroborates is the absorption on the 2SLS path, which no other
+# external reference in the suite reaches (review C4).
+d_iv <- ext_data_fe_iv()
+
+iv_fits <- list(
+  iv_fe1_iid = feols(y ~ x | g | en ~ inst, data = d_iv, vcov = "iid",
+                          ssc = ssc_full),
+  iv_fe1_hetero = feols(y ~ x | g | en ~ inst, data = d_iv, vcov = "hetero",
+                          ssc = ssc_full),
+  iv_fe1_cluster = feols(y ~ x | g | en ~ inst, data = d_iv, cluster = ~cl,
+                          ssc = ssc_full),
+  iv_fe2_hetero = feols(y ~ x | g + cl | en ~ inst, data = d_iv,
+                          vcov = "hetero", ssc = ssc_full),
+  iv_fe1_w_hetero = feols(y ~ x | g | en ~ inst, data = d_iv, weights = ~w,
+                          vcov = "hetero", ssc = ssc_full)
+)
+
+for (nm in names(iv_fits)) {
+  f <- iv_fits[[nm]]
+  values[[paste0("fixest_", nm)]] <- list(
+    coefficients = coef(f)[c("fit_en", "x")],
+    std.error = se(f)[c("fit_en", "x")]
+  )
+}
+
 # ---- plm -------------------------------------------------------------------
 #
 # The within estimator with Arellano's cluster-robust variance and no
@@ -66,12 +98,40 @@ values$plm_within_arellano_hc0 <- list(
                                        type = "HC0", cluster = "group")))[c("x", "z")]
 )
 
+# ---- blkvar ----------------------------------------------------------------
+#
+# blkvar is Pashley and Miratrix's own implementation of the hybrid variance,
+# and it is on GitHub only. A live comparison therefore skips wherever blkvar
+# is absent, which is every CI platform, so the one check of that variance
+# against its authors never ran there (review C1).
+#
+# The record carries the data as well as the answer. The designs are assigned
+# by randomizr::block_ra(), so a record keyed by the seed alone would come to
+# describe a different assignment on a randomizr release while still looking
+# current, and the comparison would then be against blkvar's answer to another
+# question.
+for (i in seq_along(ext_blocked_designs())) {
+  des <- ext_blocked_designs()[[i]]
+  d_bl <- ext_data_blocked(des$block_sizes, des$m_each, seed = i)
+  theirs <- blkvar::block_estimator(Yobs = d_bl$y, Z = d_bl$z,
+                                    B = factor(d_bl$bl), method = "hybrid_p",
+                                    throw.warnings = FALSE)
+  values[[paste0("blkvar_hybrid_p_", i)]] <- list(
+    data = d_bl,
+    coefficients = theirs$ATE_hat,
+    std.error = theirs$se_est
+  )
+}
+
 out <- list(
   values = values,
   versions = c(
     fixest = as.character(packageVersion("fixest")),
-    plm    = as.character(packageVersion("plm")),
-    R      = paste0(R.version$major, ".", R.version$minor)
+    plm = as.character(packageVersion("plm")),
+    blkvar = as.character(packageVersion("blkvar")),
+    # The assignments the blkvar designs were drawn with are randomizr's.
+    randomizr = as.character(packageVersion("randomizr")),
+    R = paste0(R.version$major, ".", R.version$minor)
   )
 )
 

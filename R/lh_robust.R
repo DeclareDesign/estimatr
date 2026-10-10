@@ -64,6 +64,24 @@ lh_robust <- function(..., data, linear_hypothesis) {
     alpha <- 0.05
   }
 
+  ci <- eval_tidy(quos(...)$ci)
+  if (is.null(ci)) {
+    ci <- TRUE
+  }
+
+  # car::linearHypothesis reaches for the fit's vcov and refuses without one,
+  # naming `return_vcov`, which is not the argument the caller set. A linear
+  # combination of coefficients has no standard error when the fit has no
+  # variance, so say that instead.
+  if (identical(eval_tidy(quos(...)$se_type), "none")) {
+    stop(
+      "`lh_robust` needs a variance: `se_type = \"none\"` fits without one, ",
+      "so a linear combination of the coefficients has no standard error. ",
+      "Choose a variance estimator, or call `lm_robust(se_type = \"none\")` ",
+      "for the coefficients alone."
+    )
+  }
+
   car_lht <- car::linearHypothesis(
     lmr, hypothesis.matrix = linear_hypothesis, level = 1 - alpha)
 
@@ -79,15 +97,26 @@ lh_robust <- function(..., data, linear_hypothesis) {
   # every coefficient the same df, so any combination takes that.
   df_vec <- if (!is.null(lmr[["hypothesis_df"]])) {
     setNames(lmr[["hypothesis_df"]], names(estimate))
-  } else {
+  } else if (any(!is.na(lmr$df))) {
     setNames(rep(min(lmr$df, na.rm = TRUE), length(estimate)), names(estimate))
+  } else {
+    # `ci = FALSE` leaves the fit with no degrees of freedom, and min() of
+    # nothing is Inf with a warning about missing arguments that says nothing
+    # to the caller.
+    setNames(rep(NA_real_, length(estimate)), names(estimate))
   }
 
-  statistic  <- estimate / std.error
-  p.value    <- 2 * pt(abs(statistic), df_vec, lower.tail = FALSE)
-  half_width <- std.error * qt(1 - alpha / 2, df_vec)
-  ci_low     <- estimate - half_width
-  ci_high    <- estimate + half_width
+  statistic <- estimate / std.error
+  if (isTRUE(ci)) {
+    p.value    <- 2 * pt(abs(statistic), df_vec, lower.tail = FALSE)
+    half_width <- std.error * qt(1 - alpha / 2, df_vec)
+    ci_low     <- estimate - half_width
+    ci_high    <- estimate + half_width
+  } else {
+    p.value <- rep(NA_real_, length(estimate))
+    ci_low  <- rep(NA_real_, length(estimate))
+    ci_high <- rep(NA_real_, length(estimate))
+  }
 
   return_lh_robust <- data.frame(
     coefficients = estimate,

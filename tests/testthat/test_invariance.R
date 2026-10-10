@@ -411,6 +411,70 @@ test_that("relabelling fixed effects and blocks changes nothing", {
   }
 })
 
+# Horvitz-Thompson takes its grouping through a randomizr declaration passed as
+# `condition_prs`, and never as a column of `data`. The two tests above move a
+# column, so neither could reach this estimator however many fitters were added
+# to their lists: a declaration built before the relabelling cannot see it. That
+# is the shape of the hole a factor `clusters` fell through in 2.0.0, where the
+# cluster-level aggregation grouped by the factor's LEVELS rather than its
+# values and every control cluster summed to NA. The respelling has to be
+# applied to the declaration, so it is, and the assignment is held fixed across
+# the respellings because a label cannot change who was treated.
+
+test_that("relabelling a declaration's clusters changes no Horvitz-Thompson answer", {
+  skip_if_not_installed("randomizr")
+  N <- 60
+  cl <- rep(seq_len(15), each = 4)
+  base_decl <- randomizr::declare_ra(clusters = cl)
+  set.seed(9)
+  dat <- data.frame(y = rnorm(N), z = randomizr::conduct_ra(base_decl))
+  base <- horvitz_thompson(y ~ z, data = dat, condition_prs = base_decl)
+  expect_false(is.na(base$std.error))
+
+  for (rl in names(relabellings)) {
+    moved <- horvitz_thompson(
+      y ~ z, data = dat,
+      condition_prs = randomizr::declare_ra(clusters = relabellings[[rl]](cl))
+    )
+    expect_false(is.na(moved$std.error), label = paste("clustered", rl))
+    expect_equal(moved$coefficients, base$coefficients, tolerance = INV_TOL,
+                 label = paste("clustered", rl, "estimate"))
+    expect_equal(moved$std.error, base$std.error, tolerance = INV_TOL,
+                 label = paste("clustered", rl, "standard error"))
+  }
+})
+
+test_that("relabelling a blocked-and-clustered declaration changes nothing either", {
+  skip_if_not_installed("randomizr")
+  N <- 60
+  cl <- rep(seq_len(15), each = 4)
+  bl <- rep(1:3, each = 20)
+  base_decl <- randomizr::declare_ra(blocks = bl, clusters = cl)
+  set.seed(10)
+  dat <- data.frame(y = rnorm(N), z = randomizr::conduct_ra(base_decl))
+  base <- horvitz_thompson(y ~ z, data = dat, condition_prs = base_decl)
+  expect_false(is.na(base$std.error))
+
+  for (rl in names(relabellings)) {
+    # Blocks and clusters are respelled together and separately: the two reach
+    # the variance by different routes, and only the cluster one was broken.
+    for (what in c("clusters", "blocks", "both")) {
+      cl_m <- if (what %in% c("clusters", "both")) relabellings[[rl]](cl) else cl
+      bl_m <- if (what %in% c("blocks", "both")) relabellings[[rl]](bl) else bl
+      moved <- horvitz_thompson(
+        y ~ z, data = dat,
+        condition_prs = randomizr::declare_ra(blocks = bl_m, clusters = cl_m)
+      )
+      lab <- paste("blocked-clustered", rl, what)
+      expect_false(is.na(moved$std.error), label = lab)
+      expect_equal(moved$coefficients, base$coefficients, tolerance = INV_TOL,
+                   label = paste(lab, "estimate"))
+      expect_equal(moved$std.error, base$std.error, tolerance = INV_TOL,
+                   label = paste(lab, "standard error"))
+    }
+  }
+})
+
 # ---- reparameterising the design ----
 #
 # Replacing the regressors X by X A for an invertible A spans the same column

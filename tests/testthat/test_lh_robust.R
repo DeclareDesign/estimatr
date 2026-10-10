@@ -69,3 +69,66 @@ test_that("lh_robust survives a single-coefficient fit", {
   expect_equal(td$df, nrow(d) - 1L)
   expect_true(all(is.finite(c(td$std.error, td$statistic, td$p.value))))
 })
+
+test_that("ci = FALSE withholds the p-value and the interval, and says nothing", {
+  # `ci = FALSE` leaves the fit with no degrees of freedom, and the
+  # combination's df was min() of nothing: a base warning about missing
+  # arguments that means nothing to the caller, an infinite df, and then a
+  # p-value and an interval the caller had asked not to have. 1.0.6 errored
+  # here instead, so neither version honoured the flag.
+  set.seed(343)
+  d <- data.frame(y = rnorm(60), x = rnorm(60), z = rbinom(60, 1, 0.5))
+
+  expect_no_warning(
+    m <- lh_robust(y ~ x + z, data = d, linear_hypothesis = "x = 0", ci = FALSE)
+  )
+  expect_true(is.na(m$lh$p.value[[1]]))
+  expect_true(is.na(m$lh$conf.low[[1]]))
+  expect_true(is.na(m$lh$conf.high[[1]]))
+  expect_true(is.na(m$lh$df[[1]]))
+
+  # What the flag does not withhold is the estimate and its standard error,
+  # which are the ones the fit with intervals gives.
+  full <- lh_robust(y ~ x + z, data = d, linear_hypothesis = "x = 0")
+  expect_equal(m$lh$coefficients, full$lh$coefficients)
+  expect_equal(m$lh$std.error, full$lh$std.error)
+  expect_true(is.finite(m$lh$statistic[[1]]))
+})
+
+test_that("se_type = 'none' is refused in terms of the argument the caller set", {
+  # car::linearHypothesis reaches for the fit's vcov, finds none, and refuses
+  # by naming `return_vcov`, which is not an argument of any estimator here and
+  # not the one the caller set.
+  set.seed(343)
+  d <- data.frame(y = rnorm(60), x = rnorm(60), z = rbinom(60, 1, 0.5))
+
+  expect_error(
+    lh_robust(y ~ x + z, data = d, linear_hypothesis = "x = 0",
+              se_type = "none"),
+    'se_type = "none"',
+    fixed = TRUE
+  )
+})
+
+test_that("C13: a hypothesis given as a matrix takes the same CR2 path as one given as text", {
+  # Under CR2 the hypothesis is passed into the fit so the Satterthwaite df can
+  # be computed for the linear combination itself. That path parses a character
+  # hypothesis with car::makeHypothesis and takes a matrix as it stands, and
+  # only the character branch had been run.
+  set.seed(343)
+  n <- 200
+  d <- data.frame(x = rnorm(n), x3 = rnorm(n), cl = rep(1:20, 10))
+  d$y <- d$x + d$x3 + rnorm(n)
+
+  # "x - x3 = 0" over (Intercept), x, x3.
+  H <- matrix(c(0, 1, -1), nrow = 1)
+
+  from_matrix <- lh_robust(y ~ x + x3, data = d, clusters = cl,
+                           se_type = "CR2", linear_hypothesis = H)
+  from_text <- lh_robust(y ~ x + x3, data = d, clusters = cl,
+                         se_type = "CR2", linear_hypothesis = "x - x3 = 0")
+
+  expect_equal(from_matrix$lh$coefficients, from_text$lh$coefficients)
+  expect_equal(from_matrix$lh$std.error, from_text$lh$std.error)
+  expect_equal(from_matrix$lh$df, from_text$lh$df)
+})

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <vector>
 #include <functional>
 #include <limits>
 using namespace Rcpp;
@@ -48,22 +49,78 @@ Eigen::VectorXd columnScales(const Eigen::Ref<const Eigen::MatrixXd>& X) {
   return scales;
 }
 
-// The scales of the kept columns, in ascending original-column order, which is
-// the order R_inv is permuted back into.
-Eigen::VectorXd keptScales(const Eigen::VectorXd& scales,
-                           const Eigen::ArrayXi& Pmat_toss,
-                           const int p,
-                           const int r) {
-  Eigen::ArrayXi is_tossed = Eigen::ArrayXi::Zero(p);
-  for (Eigen::Index i = 0; i < Pmat_toss.size(); ++i) {
-    is_tossed(Pmat_toss(i)) = 1;
+// Order-preserving rank detection, following the LINPACK dqrdc2 that
+// stats::lm() uses. dqrdc2 walks the columns left to right, compares each
+// column's residual norm after the already-kept columns are projected out
+// against its OWN original norm, and moves a failing column to the end, so the
+// LATER column of a collinear pair is the one dropped and the ordering the
+// modeller wrote is respected. Eigen's ColPivHouseholderQR instead pivots by
+// largest remaining norm and respects nothing but numerics: over the 30
+// rank-deficient subgroup fits of one replication it dropped the treatment
+// column 6 times where both lm() and estimatr 1.0.6 dropped it none, so 2.0.0
+// silently moved which coefficient comes back NA on every rank-deficient fit.
+// The columns arrive normalized by columnScales(), so every original norm is 1
+// and the test is against tol alone, which is the per-column criterion the
+// 1e-7 threshold was always meant to reproduce.
+//
+// The kept columns come out in ascending original order, which is the order the
+// callers read R_inv in, so this also retires the permutation arithmetic that
+// used to map pivot order back to column order.
+struct OrderedQR {
+  Eigen::ArrayXi keep;  // kept original column indices, ascending
+  Eigen::ArrayXi toss;  // dropped original column indices, ascending
+  Eigen::MatrixXd R;    // r-by-r upper triangular, kept columns in that order
+  Eigen::MatrixXd QtY;  // the same reflections applied to Y, in the same order
+};
+
+OrderedQR orderedQR(const Eigen::MatrixXd& X_scaled,
+                    const Eigen::MatrixXd& Y,
+                    const double tol) {
+  const Eigen::Index n = X_scaled.rows(), p = X_scaled.cols();
+  Eigen::MatrixXd QR = X_scaled;
+  OrderedQR out;
+  out.QtY = Y;
+
+  std::vector<int> keep, toss;
+  Eigen::VectorXd workspace(std::max<Eigen::Index>(p, Y.cols()) + 1);
+  for (Eigen::Index j = 0; j < p; ++j) {
+    const Eigen::Index k = static_cast<Eigen::Index>(keep.size());
+    const Eigen::Index m = n - k;
+    // The column as it stands already carries the earlier reflections, so the
+    // norm read here IS its residual after the kept columns are projected out.
+    if (m < 1 || QR.col(j).tail(m).norm() < tol) {
+      toss.push_back(static_cast<int>(j));
+      continue;
+    }
+    double tau, beta;
+    Eigen::VectorXd essential(m - 1);
+    QR.col(j).tail(m).makeHouseholder(essential, tau, beta);
+    QR(k, j) = beta;
+    if (j + 1 < p) {
+      QR.block(k, j + 1, m, p - j - 1)
+        .applyHouseholderOnTheLeft(essential, tau, workspace.data());
+    }
+    if (Y.cols() > 0) {
+      out.QtY.bottomRows(m)
+        .applyHouseholderOnTheLeft(essential, tau, workspace.data());
+    }
+    keep.push_back(static_cast<int>(j));
   }
-  Eigen::VectorXd kept(r);
-  Eigen::Index k = 0;
-  for (int j = 0; j < p; ++j) {
-    if (!is_tossed(j)) kept(k++) = scales(j);
+
+  const Eigen::Index r = static_cast<Eigen::Index>(keep.size());
+  out.keep = Eigen::ArrayXi(r);
+  for (Eigen::Index i = 0; i < r; ++i) out.keep(i) = keep[i];
+  out.toss = Eigen::ArrayXi(p - r);
+  for (Eigen::Index i = 0; i < p - r; ++i) out.toss(i) = toss[i];
+
+  // Rows below the diagonal of a kept column hold that column's residual, which
+  // no later reflection touches, because every later column sits to its right.
+  // Zero them here rather than leaning on a triangular view at each read.
+  out.R = Eigen::MatrixXd::Zero(r, r);
+  for (Eigen::Index i = 0; i < r; ++i) {
+    out.R.col(i).head(i + 1) = QR.col(out.keep(i)).head(i + 1);
   }
-  return kept;
+  return out;
 }
 
 // Gets padded UtU matrix (where U = cbind(X, FE_dummies))
@@ -71,52 +128,33 @@ Eigen::MatrixXd getMeatXtX(Eigen::Map<Eigen::MatrixXd>& X,
                            const Eigen::MatrixXd& XtX_inv) {
   // Read off X before the compaction below rewrites it.
   const Eigen::VectorXd scales = columnScales(X);
-  const Eigen::MatrixXd X_scaled = X * scales.asDiagonal();
-  Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR(X_scaled);
-  // The same criterion lm_solver() uses, normalization included, and for the
-  // same reason: Eigen's default is tight enough that an exactly collinear
-  // column can survive as a pivot of order 1e-14. The two must agree, or the
-  // meat is read off a rank the coefficients were not fitted at.
-  PQR.setThreshold(1e-7);
-  const Eigen::ColPivHouseholderQR<Eigen::MatrixXd>::PermutationType Pmat(PQR.colsPermutation());
+  // The same rank criterion lm_solver() uses, order preservation and
+  // normalization included, and for the same reason: the two must agree, or the
+  // meat is read off a rank, and a set of columns, the coefficients were not
+  // fitted at.
+  const OrderedQR qr =
+    orderedQR(X * scales.asDiagonal(), Eigen::MatrixXd(X.rows(), 0), 1e-7);
+  const Eigen::Index r = qr.keep.size();
 
-  int r = PQR.rank();
-  int p = X.cols();
-
-  Eigen::MatrixXd R_inv = PQR.matrixQR().topLeftCorner(r, r).triangularView<Eigen::Upper>().solve(Eigen::MatrixXd::Identity(r, r));
-
-  Eigen::ArrayXi Pmat_indices = Pmat.indices();
-  Eigen::ArrayXi Pmat_keep = Pmat_indices.head(r);
-  Eigen::ArrayXi Pmat_toss = Pmat_indices.tail(p - r);
-
-  for(Eigen::Index i=0; i<r; ++i)
-  {
-    Pmat_keep(i) = Pmat_keep(i) - (Pmat_toss < Pmat_keep(i)).count();
-  }
-
-  Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P = Eigen::PermutationWrapper<Eigen::ArrayXi>(Pmat_keep);
-
-  R_inv = P * R_inv * P;
+  const Eigen::MatrixXd R_inv = qr.R.triangularView<Eigen::Upper>()
+    .solve(Eigen::MatrixXd::Identity(r, r));
 
   // R_inv came off the normalized design, so it inverts D * XtX * D rather
-  // than XtX, where D is diagonal in the column scales.
-  const Eigen::VectorXd kept = keptScales(scales, Pmat_toss, p, r);
+  // than XtX, where D is diagonal in the column scales. The kept columns are
+  // already in ascending order, so the scales line up without a permutation.
+  Eigen::VectorXd kept(r);
+  for (Eigen::Index i = 0; i < r; ++i) kept(i) = scales(qr.keep(i));
   Eigen::MatrixXd meatXtX_inv =
     kept.asDiagonal() * (R_inv * R_inv.transpose()) * kept.asDiagonal();
 
   // Compacting X by removing the tossed columns one at a time is only correct
-  // in descending index order: each left shift moves every column to the right
+  // in DESCENDING index order: each left shift moves every column to the right
   // of the removed one, so a later removal at a HIGHER index would then name
-  // the wrong column. The QR hands back its permutation in pivot order, which
-  // is descending only by accident. With one redundant column there is nothing
-  // to order, which is why every rank-deficient-by-one probe agreed and CR2
-  // with fixed effects was wrong only when two or more columns went.
-  std::sort(Pmat_toss.data(), Pmat_toss.data() + Pmat_toss.size(),
-            std::greater<int>());
-
-  for (Eigen::Index i=0; i<Pmat_toss.size(); i++) {
-    if (Pmat_toss(i) < X.cols())
-      X.block(0, Pmat_toss(i), X.rows(), X.cols() - Pmat_toss(i) - 1) = X.rightCols(X.cols() - Pmat_toss(i) - 1);
+  // the wrong column. `toss` arrives ascending, so walk it backwards.
+  for (Eigen::Index i = qr.toss.size() - 1; i >= 0; --i) {
+    const Eigen::Index c = qr.toss(i);
+    if (c < X.cols())
+      X.block(0, c, X.rows(), X.cols() - c - 1) = X.rightCols(X.cols() - c - 1);
   }
 
   return meatXtX_inv;
@@ -132,6 +170,7 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
   Eigen::MatrixXd XtX_inv, R_inv;
   Eigen::MatrixXd beta_out(Eigen::MatrixXd::Constant(p, ny, ::NA_REAL));
 
+  const Eigen::VectorXd scales = columnScales(X);
   bool do_qr = !try_cholesky;
   if (try_cholesky) {
     // Normalized for the reason the QR below is, and with a second payoff
@@ -145,12 +184,24 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
     // arbitrarily between collinear ones, where the QR path and lm() return
     // NA. A design that is merely ill conditioned falls back to the QR and
     // pays its cost, which is the safe direction to be wrong in.
-    const Eigen::VectorXd scales = columnScales(X);
+    //
+    // The threshold is the Cholesky's own resolution rather than dqrdc2's
+    // 1e-7, because L_ii is read off the GRAM matrix and so carries about half
+    // the digits of the residual it stands for. An exactly dependent column,
+    // whose residual share is 1e-16, comes back with an L_ii of order 1e-8 to
+    // 1e-6 depending on how the cancellation falls, and against 1e-7 that is a
+    // coin toss: `y ~ a1 + a2 + a3` with a3 = a1 - a2 at n = 200 lands at
+    // 2.4e-7 and returned seven finite coefficients at a design of rank five,
+    // where lm() and the QR path both return two NA. The near-dependencies
+    // that reach this line elsewhere are built as a + eps * noise, which does
+    // not cancel, so they fall below 1e-7 and the gap stayed hidden. Nothing
+    // above the threshold moves: the fallback selects the arithmetic, and the
+    // QR still makes the rank decision at 1e-7 in full precision.
     const Eigen::MatrixXd X_scaled = X * scales.asDiagonal();
     const Eigen::LLT<Eigen::MatrixXd> llt(X_scaled.transpose() * X_scaled);
 
     if (llt.info() == Eigen::NumericalIssue ||
-        llt.matrixLLT().diagonal().minCoeff() < 1e-7) {
+        llt.matrixLLT().diagonal().minCoeff() < 1e-4) {
       do_qr = true;
     } else {
       beta_out = scales.asDiagonal() * llt.solve(X_scaled.adjoint() * y);
@@ -161,48 +212,30 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
   }
 
   if (do_qr) {
-    const Eigen::VectorXd scales = columnScales(X);
-    const Eigen::MatrixXd X_scaled = X * scales.asDiagonal();
-    Eigen::ColPivHouseholderQR<Eigen::MatrixXd> PQR(X_scaled);
-    // Eigen's default rank threshold is about epsilon * ncol relative to the
-    // largest pivot, which is tight enough that an exactly collinear column
-    // can survive as a pivot of order 1e-14 and produce coefficients of order
-    // 1e11 instead of NA (estimatr #351, #395).  stats::lm() uses LINPACK
-    // dqrdc2 with tol = 1e-7; matching that takes the normalization above as
-    // well as the threshold, since dqrdc2's test is per column.
-    PQR.setThreshold(1e-7);
-    const Eigen::ColPivHouseholderQR<Eigen::MatrixXd>::PermutationType Pmat(PQR.colsPermutation());
+    // Order-preserving rank detection rather than Eigen's norm-ranked pivot, so
+    // that a collinear pair drops its LATER column, as stats::lm() does; see
+    // orderedQR(). Eigen's default threshold was also tight enough that an
+    // exactly collinear column could survive as a pivot of order 1e-14 and
+    // produce coefficients of order 1e11 instead of NA (estimatr #351, #395),
+    // and matching dqrdc2's tol = 1e-7 takes the normalization above as well as
+    // the threshold, since dqrdc2's test is per column.
+    const OrderedQR qr = orderedQR(X * scales.asDiagonal(), y, 1e-7);
+    r = static_cast<int>(qr.keep.size());
 
-    r = PQR.rank();
-
-    Eigen::MatrixXd R_inv = PQR.matrixQR().topLeftCorner(r, r).triangularView<Eigen::Upper>().solve(Eigen::MatrixXd::Identity(r, r));
-
-    Eigen::ArrayXi Pmat_indices = Pmat.indices();
-    Eigen::ArrayXi Pmat_keep = Pmat_indices.head(r);
-    Eigen::ArrayXi Pmat_toss = Pmat_indices.tail(p - r);
-
-    for(Eigen::Index i=0; i<r; ++i)
-    {
-      Pmat_keep(i) = Pmat_keep(i) - (Pmat_toss < Pmat_keep(i)).count();
-    }
-
-    Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P = Eigen::PermutationWrapper<Eigen::ArrayXi>(Pmat_keep);
-    Eigen::MatrixXd effects(PQR.householderQ().adjoint() * y);
+    R_inv = qr.R.triangularView<Eigen::Upper>()
+      .solve(Eigen::MatrixXd::Identity(r, r));
 
     // The fit is of the normalized design, so each coefficient carries its own
-    // column's scale. Applied here, in pivot order, rather than to the whole of
-    // beta_out, which would put the dropped columns' NA through an arithmetic
-    // operation that need not preserve the payload.
-    Eigen::MatrixXd beta_scaled = R_inv * effects.topRows(r);
+    // column's scale. Written in by kept index, one row at a time, rather than
+    // permuting the whole of beta_out, which would put the dropped columns' NA
+    // through an arithmetic operation that need not preserve the payload.
+    const Eigen::MatrixXd beta_scaled = R_inv * qr.QtY.topRows(r);
     for (Eigen::Index i = 0; i < r; ++i) {
-      beta_scaled.row(i) *= scales(Pmat_indices(i));
+      beta_out.row(qr.keep(i)) = beta_scaled.row(i) * scales(qr.keep(i));
     }
-    beta_out.topRows(r) = beta_scaled;
-    beta_out = PQR.colsPermutation() * beta_out;
 
-    R_inv = P * R_inv * P;
-
-    const Eigen::VectorXd kept = keptScales(scales, Pmat_toss, p, r);
+    Eigen::VectorXd kept(r);
+    for (Eigen::Index i = 0; i < r; ++i) kept(i) = scales(qr.keep(i));
     XtX_inv = kept.asDiagonal() * (R_inv * R_inv.transpose()) * kept.asDiagonal();
 
   }
@@ -288,7 +321,6 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
                  const int& J,
                  const bool& ci,
                  const String se_type,
-                 const std::vector<bool> & which_covs,
                  const int& fe_rank,
                  const Rcpp::Nullable<Rcpp::NumericVector> & fe_leverage,
                  const int& n_eff,
@@ -332,10 +364,17 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
   Eigen::MatrixXd Vcov_hat;
   Eigen::VectorXd dof = Eigen::VectorXd::Constant(npars, -99.0);
-  Eigen::VectorXd res_var = Eigen::VectorXd::Constant(ny, -99.0);
   // Reported back so R can warn on the condition itself rather than on a NaN,
   // which is no longer the symptom once the denominator is guarded.
   int n_leverage_near_one = 0;
+  // Per coefficient, the share of its classical sampling variance contributed
+  // by the observations the clamp below discards. Zeroing an observation's
+  // meat term is only free for coefficients that observation carries no
+  // information about; for one it alone identifies, the robust variance is not
+  // estimable and the clamp would otherwise return a confident number built
+  // entirely from other rows. R reads this to decide which standard errors are
+  // NA rather than merely dropped-from.
+  Eigen::VectorXd var_not_estimable;
 
   // Linear combinations of coefficients whose CR2 Satterthwaite degrees of
   // freedom lh_robust() needs. A combination has its own, which is neither any
@@ -352,12 +391,9 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
   if (se_type == "classical") {
     Eigen::MatrixXd s2 = AtA(ei)/((double)n_use - (double)r_fe);
     Vcov_hat = Kr(s2, XtX_inv);
-    res_var = s2.diagonal();
 
   } else {
     Eigen::MatrixXd temp_omega = ei.array().pow(2);
-
-    res_var = temp_omega.colwise().sum()/((double)n_use - (double)r_fe);
 
     Eigen::MatrixXd bread(npars, npars);
     Eigen::MatrixXd half_meat(sandwich_size, npars);
@@ -374,13 +410,9 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
         // and the meat is read off the full design.
         meatXtX_inv = getMeatXtX(X, XtX_inv);
         meat_cols = meatXtX_inv.cols();
-        r_fe = meat_cols;
       } else {
         // The meat is the plain r-by-r XtX_inv and X carries only its r
-        // demeaned columns, so the hat values are read off those. `r_fe` keeps
-        // the absorbed rank: setting it to r here dropped the fixed effects
-        // from the residual degrees of freedom, which moved every p-value and
-        // confidence interval on a one-way FE fit at the HC2 default.
+        // demeaned columns, so the hat values are read off those.
         meatXtX_inv = XtX_inv;
         meat_cols = r;
       }
@@ -416,33 +448,55 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
         Eigen::ArrayXd denom = 1.0 - hii.array();
 
-        // A hat value is a projection diagonal and cannot exceed 1. Where the
-        // computed one does, the observation is fitted exactly up to rounding
-        // and its contribution is the same 0/0 that leverage of exactly 1
-        // resolves to 0 below. Left alone the two estimators fail differently
-        // and neither failure is informative: HC2 divides by a small negative
-        // number, half_meat then takes the square root of it, and every
-        // standard error in the fit is NaN however small the offending term;
-        // HC3 squares the denominator, which cancels the sign, so it returns a
-        // finite number carrying a spurious positive term and says nothing.
-        // Setting the denominator to 0 sends both through the isfinite trap.
-        //
-        // The clamp and the count are deliberately different tests. The clamp
-        // acts on the observations whose contribution has to be discarded. The
-        // count decides whether R warns, and a strict `denom < 0` there would
-        // put the warning at the mercy of one ulp: on an exactly saturated
-        // design the solver used here returns a hat value of 1 + 2.2e-16 while
-        // `qr()` and `stats::hatvalues()` return exactly 1, and the reported
-        // standard error is identical in both cases. So the count uses a
-        // tolerance, `sandwich::meatHC`'s `h > 1 - sqrt(eps)` on the same
-        // quantity. A hat value is dimensionless and bounded by 1, so the
-        // tolerance carries across packages in a way a tolerance on a column
-        // norm or a condition number would not. It also reaches an observation
-        // sitting just below 1, which is not dropped but whose contribution the
-        // small divisor inflates by about 1e8; the warning covers both.
+        // One rule for the observations HC2 and HC3 discard. A hat value is a
+        // projection diagonal and cannot exceed 1. An observation the fit
+        // reproduces exactly has h = 1 and residual 0, so its term is a 0/0;
+        // rounding puts the computed h on either side of 1, and one just below
+        // it carries a term the small divisor inflates by about 1e8. The set is
+        // therefore taken with a tolerance, `sandwich::meatHC`'s
+        // `h > 1 - sqrt(eps)` on the same quantity; a hat value is
+        // dimensionless and bounded by 1, so the tolerance means the same thing
+        // in every design. Every observation in the set has its denominator
+        // set to 0, which sends it through the isfinite trap below and out of
+        // the meat. The same set is what R receives as the count and the set
+        // var_not_estimable is computed over, so the three cannot disagree.
         const double lev_tol = 1.0 - std::sqrt(std::numeric_limits<double>::epsilon());
-        n_leverage_near_one = (hii.array() > lev_tol).count();
-        denom = (denom <= 0.0).select(0.0, denom);
+        const Eigen::Array<bool, Eigen::Dynamic, 1> discarded = hii.array() > lev_tol;
+        n_leverage_near_one = discarded.count();
+
+        // Which coefficients the discard costs. beta_j = sum_i a_ij y_i with
+        // a_i = meatXtX_inv X_i, so observation i contributes a_ij^2 sigma_i^2
+        // to Var(beta_j). Discarding i sets that term to 0, which is right
+        // exactly when a_ij is 0: a singleton dummy has a_ij = 1 for its own
+        // row and, by Frisch-Waugh-Lovell, 0 for every other coefficient, so
+        // its neighbours keep the standard error of the reduced design while
+        // the dummy's own variance loses everything that identified it. The
+        // share is taken against the classical factor XtX_inv(j,j), which
+        // makes it dimensionless and so comparable across columns of unlike
+        // scale. On a 233-row fit with a one-member race category it is 1e-31
+        // for the other eighteen coefficients and 0.86 for the singleton.
+        if (n_leverage_near_one > 0) {
+          var_not_estimable = Eigen::VectorXd::Zero(npars);
+          for (int i = 0; i < n; i++) {
+            if (!discarded(i)) continue;
+            const Eigen::VectorXd a =
+              meatXtX_inv * X.row(i).head(meat_cols).transpose();
+            for (int j = 0; j < r; j++) var_not_estimable(j) += a(j) * a(j);
+          }
+          for (int j = 0; j < r; j++) {
+            const double d = meatXtX_inv(j, j);
+            var_not_estimable(j) = (d > 0.0) ? var_not_estimable(j) / d : 0.0;
+          }
+          // The design is shared across outcomes, so a multivariate fit repeats
+          // the pattern in each of its ny coefficient blocks.
+          for (int m = 1; m < ny; m++) {
+            for (int j = 0; j < r; j++) {
+              var_not_estimable(m * r + j) = var_not_estimable(j);
+            }
+          }
+        }
+
+        denom = discarded.select(0.0, denom);
         if (hc3) denom = denom.square();
 
         for (int m = 0; m < ny; m++) {
@@ -632,11 +686,9 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
       dof.fill(J - 1);
     } else {
       for (int j = 0; j < r; j++) {
-        if (which_covs[j]) {
-          const double dof_j = cr2_satterthwaite(H1s, H2s, H3s, P_diags, j, meat_cols, J);
-          for (int outcome_ix = 0; outcome_ix < ny; outcome_ix++) {
-            dof(j + outcome_ix * r) = dof_j;
-          }
+        const double dof_j = cr2_satterthwaite(H1s, H2s, H3s, P_diags, j, meat_cols, J);
+        for (int outcome_ix = 0; outcome_ix < ny; outcome_ix++) {
+          dof(j + outcome_ix * r) = dof_j;
         }
       }
       for (int h = 0; h < n_hypotheses; h++) {
@@ -647,8 +699,8 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
   return List::create(_["Vcov_hat"]= Vcov_hat,
                       _["dof"]= dof,
-                      _["res_var"]= res_var,
                       _["n_leverage_near_one"]= n_leverage_near_one,
+                      _["var_not_estimable"]= var_not_estimable,
                       _["hypothesis_dof"]= hypothesis_dof);
 }
 

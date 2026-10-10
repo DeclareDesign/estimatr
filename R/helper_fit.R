@@ -129,8 +129,6 @@ lm_robust_fit <- function(y,
   }
   variable_names <- colnames(data[["X"]])
 
-  which_covs <- setNames(rep(TRUE, k), variable_names)
-
   data <- prep_data(
     data = data,
     se_type = se_type,
@@ -183,6 +181,11 @@ lm_robust_fit <- function(y,
   # ----------
   # Estimate variance
   # ----------
+
+  # Set by the degenerate-variance rule below and read again by the F
+  # statistic, which is computed after this block closes. Length 0 wherever
+  # the rule does not run, which is what both readers test.
+  no_variation <- logical(0)
 
   if (se_type != "none" || return_fit) {
 
@@ -296,7 +299,6 @@ lm_robust_fit <- function(y,
         J = data[["J_eff"]],
         ci = ci,
         se_type = se_type,
-        which_covs = which_covs[covs_used],
         fe_rank = fe_rank,
         # Only HC2/HC3 consume this; it is NULL for every other se_type and for
         # multi-way FE, so the C++ falls back to the plain hat value.
@@ -307,17 +309,147 @@ lm_robust_fit <- function(y,
         hypotheses = hypotheses
       )
 
-      # A variance diagonal can come back negative on a design that is close
-      # enough to singular for the sandwich, a difference of large and nearly
-      # equal quantities, to lose the difference to rounding. `sqrt()` would
-      # then emit R's bare "NaNs produced", which names neither the fit nor the
-      # reason, and which the leverage guard made visible by no longer sending
-      # the whole matrix to NaN first. The NaN is the honest answer and is
-      # kept; only the anonymous warning goes.
+      # One rule for what HC2 and HC3 report at a full-leverage observation.
+      # lm_variance() discards an observation from the variance at
+      # h > 1 - sqrt(eps), returns the size of that set as
+      # `n_leverage_near_one`, and returns for each coefficient the share of
+      # its classical variance those rows carry (`var_not_estimable`). A
+      # coefficient whose share exceeds sqrt(eps) is identified by the
+      # discarded rows alone, so its standard error is NA; by
+      # Frisch-Waugh-Lovell every other coefficient keeps the standard error of
+      # the design without those rows, to machine precision. The fit warns if
+      # and only if some standard error is NA for that reason. Where none is,
+      # the count is a message rather than a warning: a singleton fixed-effect
+      # group is the ordinary case, its demeaned row is zero, and every
+      # reported standard error is the one the design without it gives.
+      #
+      # Separately, a variance diagonal can come back negative on a design
+      # close enough to singular for the sandwich, a difference of large and
+      # nearly equal quantities, to lose the difference to rounding. `sqrt()`
+      # would then emit R's bare "NaNs produced", which names neither the fit
+      # nor the reason. The NaN is kept and the reason is attached.
       var_hat <- diag(vcov_fit$Vcov_hat)
       neg_var <- !is.na(var_hat) & var_hat < 0
       var_hat[neg_var] <- NaN
       return_list$std.error[est_exists] <- sqrt(var_hat)
+
+      not_estimable <- logical(length(var_hat))
+      frac_dropped <- vcov_fit[["var_not_estimable"]]
+      if (length(frac_dropped) == length(var_hat)) {
+        not_estimable <- frac_dropped > sqrt(.Machine$double.eps)
+        if (any(not_estimable)) {
+          se_vec <- return_list$std.error[est_exists]
+          se_vec[not_estimable] <- NA_real_
+          return_list$std.error[est_exists] <- se_vec
+        }
+      }
+      # A variance of numerically zero is rounding error, not precision, and
+      # nothing above catches it. The leverage rule reaches an observation the
+      # fit reproduces exactly; this reaches a COEFFICIENT whose variance is
+      # assembled only from such observations, which needs no observation at
+      # leverage 1 and so is invisible to it. Both shapes occur: an outcome the
+      # regressors fit exactly returns standard errors of 6e-17, a t of 1e16
+      # and p = 0 for everything, and a sparse factor level confined to one arm
+      # returns 8e-18 for that arm's contrast alone, with three stars on an
+      # estimate of 2e-17, while the rest of the fit is ordinary.
+      #
+      # The test is one ratio, against the classical variance the coefficient
+      # would carry if the regressors explained nothing: tss/df times
+      # XtX_inv(j,j), which is dimensionless and so comparable across columns
+      # of unlike scale, as `var_not_estimable` above is. The ratio is about
+      # 1 - R^2 for a classical fit, so a fit has to reproduce its outcome to
+      # the last bit to be caught; the tolerance is `.Machine$double.eps`
+      # rather than its square root for that reason. It applies to every
+      # se_type, since a classical fit returns the same 6e-17 here.
+      dfres <- N - tot_rank
+      if (dfres > 0 && length(var_hat) == x_rank * ny) {
+        y_fit <- data[["y"]]
+        rss <- colSums(fit_vals[["ei"]]^2 * data[["weight_mean"]])
+        # `ei` and `y` are both on the weighted scale, so the ratio they form
+        # is scale free; the centring uses the mean of the weighted outcome
+        # rather than the weighted mean, which moves a tolerance reference and
+        # nothing that is reported.
+        tss_scale <- if (has_int) {
+          ym <- y_fit - rep(colMeans(y_fit), each = nrow(y_fit))
+          colSums(ym * ym * data[["weight_mean"]])
+        } else {
+          colSums(y_fit * y_fit * data[["weight_mean"]])
+        }
+        reference <- rep(tss_scale / dfres, each = x_rank) *
+          rep(diag(fit$XtX_inv), times = ny)
+        no_variation <- !is.na(var_hat) &
+          var_hat <= .Machine$double.eps * reference
+        # An outcome that is constant has no variation to estimate anything
+        # from and a reference of 0, which no ratio can flag. Its variances
+        # come back as exactly 0 rather than as rounding error.
+        flat <- !(tss_scale > 0)
+        if (any(flat)) no_variation[rep(flat, each = x_rank)] <- TRUE
+
+        if (any(no_variation)) {
+          se_vec <- return_list$std.error[est_exists]
+          se_vec[no_variation] <- NA_real_
+          return_list$std.error[est_exists] <- se_vec
+
+          # Two readings, and the difference is what the user should do next.
+          # An outcome reproduced exactly is a statement about the fit; a
+          # handful of coefficients is a statement about those columns.
+          exact <- flat | rss <= .Machine$double.eps * tss_scale
+          if (any(exact)) {
+            message(
+              "The model reproduces ",
+              if (ny > 1) paste0(paste(ynames[exact], collapse = ", "), " ") else "the outcome ",
+              "exactly, so there is no residual variation left to estimate a ",
+              "variance from and every standard error for ",
+              if (ny > 1 && sum(exact) == 1) "it" else if (ny > 1) "them" else "it",
+              " is NA. What the variance calculation returns here is zero or ",
+              "rounding error, not precision."
+            )
+          }
+          named <- no_variation & !rep(exact, each = x_rank)
+          if (any(named)) {
+            # Two mechanisms reach a coefficient whose variance is numerically
+            # zero while the fit around it is ordinary, and a sentence that
+            # named only the first was false on a paired conjoint. Without
+            # clusters, the rows that identify the coefficient are each fitted
+            # exactly. With clusters, the variance is built from within-cluster
+            # sums of scores, and those can cancel to zero while every residual
+            # in the cluster is far from it. The clustered wording also covers
+            # a clustered fit whose identifying rows are exact, since residuals
+            # that are all zero sum to zero.
+            one <- sum(named) == 1
+            message(
+              "The standard error is NA for ",
+              paste(unique(rep(variable_names[covs_used], ny)[named]),
+                    collapse = ", "),
+              ": ",
+              if (clustered) {
+                paste0(
+                  "the cluster-level scores for ",
+                  if (one) "that coefficient sum " else "those coefficients sum ",
+                  "to numerically zero, so the cluster-robust variance is ",
+                  "assembled from nothing, although the residuals themselves ",
+                  "are not zero. That happens when a regressor is constant ",
+                  "within cluster and the residuals cancel over the cluster."
+                )
+              } else {
+                paste0(
+                  "every observation that identifies ",
+                  if (one) "that coefficient is " else "those coefficients is ",
+                  "fitted exactly, so the variance is built from residuals ",
+                  "that are all numerically zero."
+                )
+              },
+              " Reported as a number it would be zero or rounding error, and ",
+              "its t statistic would put p at 0."
+            )
+          }
+        }
+      }
+
+      n_lev <- vcov_fit[["n_leverage_near_one"]]
+      if (!isTRUE(n_lev > 0)) n_lev <- 0L
+      return_list[["n_leverage_near_one"]] <- as.integer(n_lev)
+
       if (any(neg_var)) {
         warning(
           sum(neg_var), " of ", length(var_hat), " variance estimates came out ",
@@ -328,39 +460,39 @@ lm_robust_fit <- function(y,
         )
       }
 
-      # HC2 and HC3 divide by (1 - h_ii). A near-saturated design produces
-      # observations that are fitted exactly, whose computed hat value lands at
-      # or marginally either side of 1; lm_variance() drops the ones at or above
-      # it from the meat rather than divide by a negative number, and this is
-      # where that gets said. It is worth saying: those observations contribute
-      # nothing, so the standard error is built from fewer rows than the fit
-      # used (estimatr #395). The count is tolerant rather than a strict test on
-      # the sign of 1 - h, for the reason lm_variance() gives at the clamp: the
-      # standard error on an exactly saturated design is the same whichever side
-      # of 1 the rounding puts the hat value, so a strict test would leave the
-      # warning to an ulp.
-      n_lev <- vcov_fit[["n_leverage_near_one"]]
-      if (isTRUE(n_lev > 0)) {
-        warning(
+      if (n_lev > 0) {
+        lev_count <- paste0(
           n_lev, if (n_lev == 1) " observation has " else " observations have ",
           "a computed leverage at or near 1, which happens when the design is ",
           "close to saturated and the observation is fitted exactly or nearly ",
-          "so. `se_type = \"", se_type, "\"` divides by (1 - leverage). An ",
-          "observation at or above leverage 1 is dropped from the variance ",
-          "rather than divided by a negative number, and one just below it ",
-          "contributes a term the small divisor inflates. Use `se_type = ",
-          "\"HC1\"` or `\"classical\"`, or drop covariates, to use every ",
-          "observation."
+          "so. `se_type = \"", se_type, "\"` divides by (1 - leverage), so ",
+          if (n_lev == 1) "it is " else "they are ",
+          "dropped from the variance."
         )
-      } else if (any(is.nan(return_list$std.error)) &&
-                 se_type %in% c("HC2", "HC3", "CR2")) {
-        warning(
-          "Some standard errors are NaN. `se_type = \"", se_type, "\"` divides ",
-          "by the observation's leverage, which is at or near 1 for some ",
-          "observations here, as happens when the design is close to ",
-          "saturated. Use `se_type = \"HC1\"` or `\"classical\"`, or drop ",
-          "covariates, to get finite standard errors."
-        )
+        if (any(not_estimable)) {
+          warning(
+            lev_count, " The standard error is NA for ",
+            # The design is shared across outcomes, so a multivariate fit
+            # carries the same non-estimable coefficient once per outcome and
+            # would otherwise name it that many times. One name per
+            # coefficient is what the collinear-drop message already gives.
+            paste(unique(rep(variable_names, ncol(est_exists))[est_exists][not_estimable]),
+                  collapse = ", "),
+            ", whose coefficient ",
+            if (n_lev == 1) "that observation alone identifies" else "those observations alone identify",
+            ": dropping ", if (n_lev == 1) "it " else "them ",
+            "leaves nothing to estimate that variance from. Every other ",
+            "standard error in this fit is the one the design without ",
+            if (n_lev == 1) "it " else "them ",
+            "gives. Use `se_type = \"HC1\"` or `\"classical\"`, or drop ",
+            "covariates, to use every observation."
+          )
+        } else {
+          message(
+            lev_count, " No standard error is affected: each is the one the ",
+            "design without ", if (n_lev == 1) "it " else "them ", "gives."
+          )
+        }
       }
 
       if (ci) {
@@ -432,13 +564,12 @@ lm_robust_fit <- function(y,
 
   if (se_type != "none") {
 
-    return_list[["res_var"]] <- get_resvar(
-      data = data,
-      ei = fit_vals[["ei"]],
-      df.residual = return_list[["df.residual"]],
-      vcov_fit = vcov_fit,
-      weighted = weighted
-    )
+    # `ei` is the weighted residual sqrt(w / mean(w)) * e, so this is the
+    # weighted residual variance; `weight_mean` is 1 for an unweighted fit.
+    # Unnamed, as it always was for one outcome: a multivariate `ei` carries
+    # the outcome names, and `r.squared` is built from this.
+    return_list[["res_var"]] <-
+      unname(colSums(fit_vals[["ei"]]^2 * data[["weight_mean"]])) / return_list[["df.residual"]]
 
     tss_r2s <- get_r2s(
       y = data[["y"]],
@@ -473,7 +604,8 @@ lm_robust_fit <- function(y,
         dendf = dendf,
         vcov_fit = vcov_fit,
         has_int = fstat_int,
-        iv_stage = iv_stage
+        iv_stage = iv_stage,
+        no_variation = no_variation
       )
     } else {
       f <- NULL
@@ -621,14 +753,6 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE,
   return(se_type)
 }
 
-get_resvar <- function(data, ei, df.residual, vcov_fit, weighted) {
-  res_var <-
-    if (weighted)
-      colSums(ei^2 * data[["weight_mean"]]) / df.residual
-    else
-      as.vector(ifelse(vcov_fit[["res_var"]] < 0, NA, vcov_fit[["res_var"]]))
-  return(res_var)
-}
 
 get_r2s <- function(y, return_list, has_int, yunweighted, weights, weight_mean) {
 
@@ -687,7 +811,8 @@ get_fstat <- function(tss_r2s,
                       dendf,
                       vcov_fit,
                       has_int,
-                      iv_stage) {
+                      iv_stage,
+                      no_variation = logical(0)) {
 
   coefs <- as.matrix(return_list$coefficients)
 
@@ -706,6 +831,14 @@ get_fstat <- function(tss_r2s,
     ivrss <- colSums(iv_ei^2)
     fstat <- ((tss_r2s$tss - ivrss) / nomdf) / return_list[["res_var"]]
   } else {
+    # `coefs` is the full-length vector, carrying an NA wherever a column was
+    # dropped, while `indices` and the variance matrix both count positions in
+    # the kept set. Where the dropped column is the last one the two agree, and
+    # where it is not they do not: `y ~ x1 + mid + en` with `mid` collinear
+    # read the NA and every robust se_type reported the F statistic as NA,
+    # where lm() and this function's classical branch both return it. Dropping
+    # the NA rows first puts `coefs` on the same footing as the variance.
+    coefs <- coefs[!is.na(coefs[, 1]), , drop = FALSE]
     indices <-
       seq.int(has_int + 1, return_list[["rank"]], by = 1)
 
@@ -717,6 +850,19 @@ get_fstat <- function(tss_r2s,
       nomdf = nomdf
     )
 
+  }
+
+  # A coefficient whose variance is numerically zero makes the joint test over
+  # any set containing it as meaningless as its own standard error, and the
+  # classical branch reaches the same place through an R-squared of exactly 1.
+  # Reporting NA for one and a number for the other is the inconsistency this
+  # rule exists to remove.
+  rank <- return_list[["rank"]]
+  if (length(no_variation) == rank * length(fstat)) {
+    tested <- seq.int(has_int + 1, rank, by = 1)
+    for (i in seq_along(fstat)) {
+      if (any(no_variation[tested + (i - 1) * rank])) fstat[i] <- NA_real_
+    }
   }
 
   f <- c(
@@ -736,11 +882,22 @@ compute_fstat <- function(coef_matrix, coef_indices, vcov_fit, rank, nomdf) {
     vcov_indices <- coef_indices + (i - 1) * rank
     fstat[i] <- tryCatch(
       {
-        crossprod(
-          coef_matrix[coef_indices, i],
-          chol2inv(chol(vcov_fit[vcov_indices, vcov_indices])) %*%
-            coef_matrix[coef_indices, i]
-        ) / nomdf
+        V <- vcov_fit[vcov_indices, vcov_indices, drop = FALSE]
+        # `chol()` errors only on a matrix it can see is not positive
+        # definite, and a variance block at rcond 1e-32 is not one: the
+        # factorization succeeds and `chol2inv()` returns an inverse built
+        # from cancellation, which has given an F of 389 on a covariate
+        # balance test where the contrast has no variance at all. A matrix
+        # whose reciprocal condition number is below the double precision
+        # floor has no numerical inverse, so there is no statistic to report.
+        if (rcond(V) < .Machine$double.eps) {
+          NA_real_
+        } else {
+          crossprod(
+            coef_matrix[coef_indices, i],
+            chol2inv(chol(V)) %*% coef_matrix[coef_indices, i]
+          ) / nomdf
+        }
       },
       error = function(e) {
         NA_real_

@@ -1,14 +1,13 @@
 ### Support for emmeans package
 # Note: recover_data and emm_basis methods are registered dynamically in zzz.R
 
-#' @importFrom utils getS3method
-
+#' @importFrom stats weights
 recover_data.lm_robust <- function(object, ...) {
-  # `envir` is not optional. `recover_data` is emmeans' generic, so without it
-  # getS3method() searches the caller's path and fails outright whenever
-  # emmeans has been loaded rather than attached, which is what
-  # `emmeans::emmeans(...)` does.
-  data <- getS3method("recover_data", "lm", envir = asNamespace("emmeans"))(object, ...)
+  # This is emmeans' recover_data.lm without its `frame = object$model`. A fit
+  # stores no model frame, and emmeans 2.0.5 builds a formula from the frame's
+  # names, which errors when they are NULL.
+  data <- emmeans::recover_data(object$call, delete.response(terms(object)),
+                                object$na.action, pwts = weights(object), ...)
   if (object$rank < object$k)
     attr(data, "pass.it.on") <- TRUE
   data
