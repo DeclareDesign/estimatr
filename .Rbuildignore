@@ -19,3 +19,4 @@
 ^pkgdown$
 ^README\.Rmd$
 ^\.integration_lib$
+^CRAN-SUBMISSION$
