@@ -253,3 +253,13 @@ test_that("C13: weights with matched pairs are refused, which is what makes one 
     "Cannot use `weights` with matched pairs design"
   )
 })
+
+test_that("#413: a `!!` in the formula is applied at the call site", {
+  set.seed(343)
+  b <- data.frame(y = rnorm(40), z = rep(0:1, 20))
+  outcome <- "y"
+  injected <- difference_in_means(!!rlang::sym(outcome) ~ z, data = b)
+  by_hand <- difference_in_means(y ~ z, data = b)
+  expect_equal(injected$coefficients, by_hand$coefficients)
+  expect_equal(injected$std.error, by_hand$std.error)
+})

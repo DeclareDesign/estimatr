@@ -132,3 +132,14 @@ test_that("C13: a hypothesis given as a matrix takes the same CR2 path as one gi
   expect_equal(from_matrix$lh$std.error, from_text$lh$std.error)
   expect_equal(from_matrix$lh$df, from_text$lh$df)
 })
+
+test_that("#413: a `!!` in the formula is applied at the call site", {
+  set.seed(343)
+  b <- data.frame(y = rnorm(40), x = rnorm(40), z = rep(0:1, 20))
+  outcome <- "y"
+  injected <- lh_robust(!!rlang::sym(outcome) ~ x + z, linear_hypothesis = "x + z = 0", data = b)
+  by_hand <- lh_robust(y ~ x + z, linear_hypothesis = "x + z = 0", data = b)
+  expect_equal(injected$lh$coefficients, by_hand$lh$coefficients)
+  expect_equal(injected$lh$std.error, by_hand$lh$std.error)
+  expect_equal(injected$coefficients, by_hand$coefficients)
+})

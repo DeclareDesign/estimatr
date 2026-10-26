@@ -1,3 +1,13 @@
+# estimatr (development version)
+
+## `!!` in a formula now works in `lm_lin()`, `difference_in_means()`, and `lh_robust()`
+
+`lm_robust()` and `iv_robust()` apply `!!` and `{{ }}` in the formula at the call site, so `lm_robust(!!sym(outcome) ~ z, data = d)` works inside `purrr::map()`. The other three estimators forced the formula before capturing it, and failed with `could not find function "sym"`. They now capture it first. The `covariates` formula of `lm_lin()` gets the same treatment. See #413.
+
+## The `iv_robust()` first-stage F is no longer `NA` when the first stage drops an instrument
+
+When the first-stage regression returned an excluded instrument as `NA` (for example a dummy made collinear by zero weights), the coefficients were NA-padded while the variance matrix was not, so the tested rows were misaligned and `diagnostic_first_stage_fstatistic` came back `NA`. The F is now computed over the instruments that survived, with the degrees of freedom to match. The `lm_robust()` half of this report was fixed in 2.0.0. See #305.
+
 # estimatr 2.0.1
 
 ## A rank-deficient fit is reported once

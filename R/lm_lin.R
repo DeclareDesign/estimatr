@@ -122,6 +122,13 @@ lm_lin <- function(formula,
                    return_vcov = TRUE,
                    try_cholesky = FALSE) {
 
+  # Evaluating through enquo() applies `!!` and `{{ }}` at the call site, as
+  # lm_robust() does, before update() deparses the formula into the full one.
+  formula <- rlang::eval_tidy(rlang::enquo(formula))
+  if (!missing(covariates)) {
+    covariates <- rlang::eval_tidy(rlang::enquo(covariates))
+  }
+
   if (length(all.vars(rlang::f_rhs(formula))) > 1) {
     stop(
       "The `formula` argument must only have the treatment variable on the ",
