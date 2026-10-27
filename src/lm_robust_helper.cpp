@@ -593,6 +593,13 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
             // decided. Eigendecomposing the len-by-len A costs O(len^3) time
             // and O(len^2) memory, which is a bad_alloc for a cluster of
             // 20,000 rows (#276, #318); B is at most 2 meat_cols square.
+            // Niccodemi, Alessie, Angelini, Mierau and Wansbeek (2020,
+            // "Refining clustered standard errors with few clusters", SOM
+            // Research Report 2020002-EEF, section 4) make the same reduction
+            // for unweighted OLS with a full-rank cluster, through
+            // R'(I - RR')^a = (I - R'R)^a R'. Under weights H is not symmetric
+            // and the span needs both U and X, and the cutoff above is what a
+            // rank-deficient cluster needs, so neither of those is in theirs.
             const int k = Xunweighted.isNotNull() ? 2 * meat_cols : meat_cols;
 
             if (len <= k) {

@@ -2,7 +2,11 @@
 
 ## CR2 no longer runs out of memory on large clusters
 
-The CR2 adjustment took the inverse square root of an n_c-by-n_c matrix for every cluster, which is O(n_c^3) time and O(n_c^2) memory: a cluster of 20,000 rows needed a 3.2 GB matrix and failed with `std::bad_alloc`. That matrix is the identity plus a term spanned by the cluster's design columns, so the adjustment is now computed in that span, on a matrix at most twice the number of coefficients square, with the same eigenvalue cutoff. Standard errors and degrees of freedom are unchanged to rounding (at most 6e-12 relative across 18 fit types, inside the 2e-11 the old computation moved by when rows were reordered within cluster). Four weighted clusters of 1,500 rows went from 2.6 seconds to 0.005; four of 20,000 take 0.02 seconds. See #276 and #318.
+The CR2 adjustment took the inverse square root of an n_c-by-n_c matrix for every cluster, which is O(n_c^3) time and O(n_c^2) memory: a cluster of 20,000 rows needed a 3.2 GB matrix and failed with `std::bad_alloc`. That matrix is the identity plus a term spanned by the cluster's design columns, so the adjustment is now computed in that span, on a matrix at most twice the number of coefficients square, with the same eigenvalue cutoff. Standard errors and degrees of freedom are unchanged to rounding (at most 6e-12 relative across 18 fit types, inside the 2e-11 the old computation moved by when rows were reordered within cluster). Four weighted clusters of 1,500 rows went from 2.6 seconds to 0.005; four of 20,000 take 0.02 seconds. Niccodemi, Alessie, Angelini, Mierau, and Wansbeek (2020, "Refining clustered standard errors with few clusters", University of Groningen SOM Research Report 2020002-EEF) give this reduction for unweighted OLS with full-rank clusters; the version here also covers weights and rank-deficient clusters. See #276 and #318.
+
+## The collinearity message no longer prints an empty name
+
+A dropped column that is a multiple of one kept column, such as `x2 = 2 * x1`, was reported as "x2 is a linear combination of , and x1". It is now "x2 is a multiple of x1".
 
 ## `!!` in a formula now works in `lm_lin()`, `difference_in_means()`, and `lh_robust()`
 

@@ -217,7 +217,7 @@ $$
 \end{aligned}
 $$
 
-where $(\mathbf{I}_N - \mathbf{H})_s$ are the $N_s$ columns belonging to cluster $s$ and $\mathbf{B}_s^{+1/2}$ is the symmetric square root of the Moore-Penrose inverse. estimatr reaches that inverse through an eigendecomposition with eigenvalues clamped below $10^{-12}$, which is what lets a rank-deficient cluster (fixed effects that coincide with the clusters, for instance) return an answer where the @bellmccaffrey2002 form could not be computed at all. The two forms agree whenever $\mathbf{B}_s$ has full rank.
+where $(\mathbf{I}_N - \mathbf{H})_s$ are the $N_s$ columns belonging to cluster $s$ and $\mathbf{B}_s^{+1/2}$ is the symmetric square root of the Moore-Penrose inverse. estimatr reaches that inverse through an eigendecomposition with eigenvalues clamped below $10^{-12}$, which is what lets a rank-deficient cluster (fixed effects that coincide with the clusters, for instance) return an answer where the @bellmccaffrey2002 form could not be computed at all. The two forms agree whenever $\mathbf{B}_s$ has full rank. The eigendecomposition is not taken of the $N_s \times N_s$ matrix itself, which would cost $O(N_s^3)$ time and $O(N_s^2)$ memory: $\mathbf{B}_s$ differs from the identity only on the span of the cluster's design columns, so with $\mathbf{Q}_s$ an orthonormal basis of that span, $\mathbf{B}_s^{+1/2}\mathbf{X}_s = \mathbf{X}_s + \mathbf{Q}_s\left((\mathbf{Q}_s^\top \mathbf{B}_s \mathbf{Q}_s)^{+1/2} - \mathbf{I}\right)\mathbf{Q}_s^\top \mathbf{X}_s$, and only a matrix of order at most twice the number of coefficients is decomposed. @niccodemietal2020 give the same reduction for unweighted OLS with full-rank clusters.
 
 The degrees of freedom are computed per coefficient:
 
