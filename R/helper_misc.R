@@ -106,6 +106,8 @@ lm_return <- function(return_list, model_data, formula,
               " is constant"
             } else if (length(on) == 1 && abs(b_hat[[on]] - 1) < 1e-7) {
               paste0(" is identical to ", on)
+            } else if (length(on) == 1) {
+              paste0(" is a multiple of ", on)
             } else if (length(on) == 2) {
               paste0(" is a linear combination of ", on[1], " and ", on[2])
             } else {
