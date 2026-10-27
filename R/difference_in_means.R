@@ -120,7 +120,11 @@ difference_in_means <- function(formula,
                                 condition2 = NULL,
                                 ci = TRUE,
                                 alpha = .05) {
-  if (length(all.vars(rlang::f_rhs(rlang::eval_tidy(formula)))) > 1) {
+  # Evaluating through enquo() applies `!!` and `{{ }}` at the call site, as
+  # lm_robust() does, before the formula is inspected below.
+  formula <- rlang::eval_tidy(rlang::enquo(formula))
+
+  if (length(all.vars(rlang::f_rhs(formula))) > 1) {
     stop(
       "'formula' must have only one variable on the right-hand side: the ",
       "treatment variable."
@@ -130,7 +134,7 @@ difference_in_means <- function(formula,
   # A cbind() outcome otherwise reached the blocked path and was refused for
   # want of "both treatment conditions within each block", which describes a
   # different design problem entirely.
-  if (length(all.vars(rlang::f_lhs(rlang::eval_tidy(formula)))) > 1) {
+  if (length(all.vars(rlang::f_lhs(formula))) > 1) {
     stop(
       "'formula' must have only one variable on the left-hand side: ",
       "`difference_in_means` does not support multiple outcomes. Fit one ",

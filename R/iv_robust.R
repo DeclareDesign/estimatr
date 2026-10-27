@@ -461,14 +461,26 @@ first_stage_ftest <- function(model_data, roles, se_type) {
     firststage_nomdf <- lm_instruments[["rank"]]
     firststage_fstat_value <- lm_instruments[["fstatistic"]][seq_len(length(endog))]
   } else {
-    firststage_nomdf <- ncol(roles[["excluded"]])
-    firststage_fstat_value <- compute_fstat(
-      coef_matrix = coef_inst,
-      coef_indices = n_exogenous + seq_len(firststage_nomdf),
-      vcov_fit = lm_instruments[["vcov"]],
-      rank = lm_instruments[["rank"]],
-      nomdf = firststage_nomdf
-    )
+    # The coefficients are padded with NA for any column the first stage
+    # dropped (a dummy that weights have made collinear, say), but the
+    # variance matrix is built on the columns kept. Positions in the one are
+    # not positions in the other, so test only the excluded instruments that
+    # survived and index the variance by their place among the survivors.
+    excluded_idx <- n_exogenous + seq_len(ncol(roles[["excluded"]]))
+    kept <- which(!is.na(coef_inst[, 1L]))
+    tested <- intersect(excluded_idx, kept)
+    firststage_nomdf <- length(tested)
+    firststage_fstat_value <- if (firststage_nomdf == 0L) {
+      rep(NA_real_, ncol(coef_inst))
+    } else {
+      compute_fstat(
+        coef_matrix = coef_inst[kept, , drop = FALSE],
+        coef_indices = match(tested, kept),
+        vcov_fit = lm_instruments[["vcov"]],
+        rank = lm_instruments[["rank"]],
+        nomdf = firststage_nomdf
+      )
+    }
   }
 
   fstat_names <- if (ncol(coef_inst) > 1) {

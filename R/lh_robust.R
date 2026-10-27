@@ -46,6 +46,11 @@ lh_robust <- function(..., data, linear_hypothesis) {
 
   requireNamespace("car")
 
+  # Captured before the dots are forwarded: capturing them again afterward
+  # cannot apply a `!!` in the formula, which fails with "could not find
+  # function" for whatever the user injected (estimatr #413).
+  dots <- quos(...)
+
   lmr <- lm_robust_hypotheses(..., data = data, linear_hypothesis = linear_hypothesis)
 
   # With several outcomes the coefficients are named "<outcome>:<term>", so
@@ -59,12 +64,12 @@ lh_robust <- function(..., data, linear_hypothesis) {
     )
   }
 
-  alpha <- eval_tidy(quos(...)$alpha)
+  alpha <- eval_tidy(dots$alpha)
   if (is.null(alpha)) {
     alpha <- 0.05
   }
 
-  ci <- eval_tidy(quos(...)$ci)
+  ci <- eval_tidy(dots$ci)
   if (is.null(ci)) {
     ci <- TRUE
   }
@@ -73,7 +78,7 @@ lh_robust <- function(..., data, linear_hypothesis) {
   # naming `return_vcov`, which is not the argument the caller set. A linear
   # combination of coefficients has no standard error when the fit has no
   # variance, so say that instead.
-  if (identical(eval_tidy(quos(...)$se_type), "none")) {
+  if (identical(eval_tidy(dots$se_type), "none")) {
     stop(
       "`lh_robust` needs a variance: `se_type = \"none\"` fits without one, ",
       "so a linear combination of the coefficients has no standard error. ",

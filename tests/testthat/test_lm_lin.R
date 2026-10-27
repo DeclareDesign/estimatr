@@ -190,3 +190,27 @@ test_that("C13: without an intercept a treatment always expands to one column pe
   expect_equal(names(coef(lm_lin(y ~ zf + 0, covariates = ~ x, data = d))),
                c("zfa", "zfb", "zfa:x_c", "zfb:x_c"))
 })
+
+test_that("#413: a `!!` in the formula or the covariates is applied at the call site", {
+  set.seed(343)
+  b <- data.frame(
+    outcome_a = rnorm(100),
+    treatment = rbinom(100, 1, 0.5),
+    cov = rnorm(100)
+  )
+  outcome <- "outcome_a"
+  cov_name <- "cov"
+  by_hand <- lm_lin(outcome_a ~ treatment, covariates = ~ cov, data = b)
+
+  injected <- lm_lin(!!rlang::sym(outcome) ~ treatment, covariates = ~ cov, data = b)
+  expect_equal(injected$coefficients, by_hand$coefficients)
+  expect_equal(injected$std.error, by_hand$std.error)
+
+  cov_injected <- lm_lin(outcome_a ~ treatment, covariates = ~ !!rlang::sym(cov_name), data = b)
+  expect_equal(cov_injected$coefficients, by_hand$coefficients)
+
+  mapped <- lapply(c("outcome_a", "outcome_a"), function(o) {
+    lm_lin(!!rlang::sym(o) ~ treatment, covariates = ~ cov, data = b)
+  })
+  expect_equal(mapped[[2]]$coefficients, by_hand$coefficients)
+})

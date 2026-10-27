@@ -357,3 +357,34 @@ test_that("a `.` on either side of the IV formula expands against the data", {
   a <- AER::ivreg(y ~ en + x + w | inst + inst2 + x + w, data = d)
   expect_equal(cases$both$coefficients[kept], coef(a)[kept])
 })
+
+test_that("#305: the first-stage F skips an excluded instrument the weights made collinear", {
+  # The zero weights on group A leave the B and C dummies summing to the
+  # intercept, so the weighted first stage drops C and returns it as NA. The
+  # coefficients were NA-padded while the variance matrix was not, so the
+  # tested positions pointed at the wrong rows and the F came back NA.
+  set.seed(343)
+  n <- 300
+  b <- data.frame(
+    group = factor(rep(c("A", "B", "C"), n / 3)),
+    weights = rep(c(0, 1, 2), n / 3),
+    z = rnorm(n)
+  )
+  b$x <- 2 * b$z + rnorm(n)
+  b$y <- 3 * b$x + rnorm(n)
+
+  fit <- suppressMessages(suppressWarnings(
+    iv_robust(y ~ x | z + group, data = b, weights = weights, se_type = "classical",
+              diagnostics = TRUE)
+  ))
+  fs <- fit$diagnostic_first_stage_fstatistic
+
+  pos <- b[b$weights > 0, ]
+  reference <- anova(
+    lm(x ~ 1, data = pos, weights = weights),
+    lm(x ~ z + group, data = pos, weights = weights)
+  )
+  expect_false(is.na(fs[["value"]]))
+  expect_equal(fs[["nomdf"]], 2)
+  expect_equal(fs[["value"]], reference$F[2], tolerance = 1e-8)
+})

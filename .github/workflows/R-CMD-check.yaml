@@ -7,9 +7,9 @@
 # installing the older version, so nothing here depends on estimatr itself.
 on:
   push:
-    branches: [main, dev]
+    branches: [main]
   pull_request:
-    branches: [main, dev]
+    branches: [main]
 
 name: R-CMD-check.yaml
 
