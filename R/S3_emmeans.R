@@ -6,7 +6,7 @@ recover_data.lm_robust <- function(object, ...) {
   # This is emmeans' recover_data.lm without its `frame = object$model`. A fit
   # stores no model frame, and emmeans 2.0.5 builds a formula from the frame's
   # names, which errors when they are NULL.
-  data <- emmeans::recover_data(object$call, delete.response(terms(object)),
+  data <- emmeans::recover_data(object$call, delete.response(object$terms),
                                 object$na.action, pwts = weights(object), ...)
   if (object$rank < object$k)
     attr(data, "pass.it.on") <- TRUE

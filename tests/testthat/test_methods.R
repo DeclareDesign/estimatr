@@ -942,4 +942,90 @@ test_that("estfun(), hatvalues() and deviance() refuse what they cannot build", 
   expect_error(deviance(fit_mv), "several outcomes")
 })
 
+# What lmtest::bptest() and similar consumers do: rebuild the regressors from
+# terms() and model.frame() and pair them with the fit.
+terms_design <- function(fit) {
+  X <- model.matrix(terms(fit), model.frame(fit))
+  matrix(X, nrow(X))
+}
+
+test_that("lm_lin's terms() write out its design, column for column", {
+  d <- methods_422_data()
+  d$g <- sample(c("p", "q", "r"), 60, TRUE)
+  d$lg <- d$x > 0
+  d$x2 <- rexp(60) + 0.1
+  expect_warning(
+    fit_wc <- lm_lin(y ~ z, ~ x + g, data = d, weights = w, clusters = cl),
+    "missingness in the cluster"
+  )
+  fits <- list(
+    binary = lm_lin(y ~ z, ~ x + log(x2) + g, data = d),
+    factor_treatment = lm_lin(y ~ f, ~ x + g, data = d),
+    multi_valued = lm_lin(y ~ z3, ~ x + x2, data = d),
+    no_intercept = suppressMessages(lm_lin(y ~ z - 1, ~ x + g, data = d)),
+    no_intercept_factor = lm_lin(y ~ f - 1, ~ x, data = d),
+    logical = lm_lin(y ~ z, ~ lg + x2, data = d),
+    product = lm_lin(y ~ z, ~ x + x2 + x:x2, data = d),
+    weighted_clustered = fit_wc,
+    subset = lm_lin(y ~ z, ~ x + g, data = d, subset = x2 > 0.5),
+    multi_outcome = lm_lin(cbind(y, x2) ~ z, ~ x, data = d)
+  )
+  for (nm in names(fits)) {
+    fit <- fits[[nm]]
+    X <- terms_design(fit)
+    expect_equal(X, unname(model.matrix(fit)), tolerance = METH_TOL, info = nm)
+    b <- as.matrix(coef(fit))
+    b[is.na(b)] <- 0
+    expect_equal(unname(X %*% b), unname(as.matrix(fit$fitted.values)),
+                 tolerance = METH_TOL, info = nm)
+    expect_length(labels(fit), length(attr(terms(fit), "term.labels")))
+  }
+  # lm() on the written-out formula is the same regression.
+  fit <- fits$binary
+  expect_equal(unname(coef(lm(formula(terms(fit)), data = d))), unname(coef(fit)),
+               tolerance = METH_TOL)
+  # formula() stays the call's, so update() still works.
+  expect_equal(attr(terms(formula(fit)), "term.labels"), c("z", "x", "log(x2)", "g"))
+})
+
+test_that("lm_lin's terms() refuse covariates they cannot write out exactly", {
+  d <- methods_422_data()
+  d$g <- sample(c("p", "q"), 60, TRUE)
+  expect_error(terms(lm_lin(y ~ z, ~ poly(w, 2), data = d)), "poly\\(w, 2\\)")
+  expect_error(terms(lm_lin(y ~ z, ~ x:g, data = d)), "`x:g`")
+  # The design itself is still available.
+  expect_silent(model.matrix(lm_lin(y ~ z, ~ x:g, data = d)))
+})
+
+test_that("terms() of a fixed_effects fit include the absorbed factors", {
+  d <- methods_422_data()
+  fit <- lm_robust(y ~ x, data = d, fixed_effects = ~ f)
+  expect_equal(labels(fit), c("x", "f"))
+  ref <- lm(y ~ x + f, data = d)
+  expect_equal(terms_design(fit), matrix(model.matrix(ref), nrow(model.matrix(ref))), tolerance = METH_TOL)
+  # More columns than coefficients, so it cannot be paired with coef(fit).
+  expect_gt(ncol(terms_design(fit)), length(coef(fit)))
+  # Without fixed_effects terms() is the stored terms.
+  fit <- lm_robust(y ~ x + f, data = d)
+  expect_identical(terms(fit), fit$terms)
+  expect_equal(labels(fit), c("x", "f"))
+})
+
+test_that("augment() keeps the call's variables on an lm_lin fit", {
+  d <- methods_422_data()
+  out <- augment(lm_lin(y ~ z, ~ x, data = d))
+  expect_equal(names(out), c("y", "z", "x", ".fitted", ".resid"))
+})
+
+test_that("likelihood and case-deletion methods refuse with a reason", {
+  d <- methods_422_data()
+  fit <- lm_robust(y ~ x, data = d)
+  for (f in list(logLik, AIC, BIC, extractAIC)) expect_error(f(fit), "no likelihood")
+  for (fit in list(fit, iv_robust(y ~ x | z, data = d))) {
+    for (f in list(influence, cooks.distance, rstandard, rstudent, dfbeta, dfbetas)) {
+      expect_error(f(fit), "case-deletion")
+    }
+  }
+})
+
 restore_methods()

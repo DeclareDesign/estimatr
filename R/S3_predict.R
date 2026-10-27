@@ -347,10 +347,11 @@ variable.names.lm_robust <- function(object, ...) object[["term"]]
 
 #' @export
 model.frame.lm_robust <- function(formula, ...) {
-  # Through the stored terms so that lm_lin()'s covariates, absent from its
-  # call's formula, are in it.
+  # The variables of terms(), so that model.frame() and terms() describe the
+  # same design: the absorbed factors of a fixed_effects fit, and the centred
+  # covariate expressions of an lm_lin() fit.
   object <- formula
-  rebuild_model_data(object, stats::formula(object[["terms"]]))[["model_frame"]]
+  rebuild_model_data(object, stats::formula(terms(object)))[["model_frame"]]
 }
 
 # A fit stores no model frame, so it is rebuilt from the call as lm() does with
@@ -384,7 +385,7 @@ rebuild_model_data <- function(object, formula, estimator = "") {
 model.matrix.lm_robust <- function(object, ...) {
   X <- model.matrix(
     delete.response(object[["terms"]]),
-    model.frame(object),
+    rebuild_model_data(object, stats::formula(object[["terms"]]))[["model_frame"]],
     contrasts.arg = object[["contrasts"]]
   )
   if (!is.null(object$scaled_center)) X <- lin_design(object, X)
@@ -542,7 +543,10 @@ augment.lm_robust <- function(x, data = NULL, newdata = NULL, ...) {
     return(as_tibble(newdata))
   }
 
-  if (is.null(data)) data <- stats::model.frame(x)
+  # The variables as the call named them, not terms()'s centred expressions.
+  if (is.null(data)) {
+    data <- rebuild_model_data(x, stats::formula(x[["terms"]]))[["model_frame"]]
+  }
 
   fitted <- x[["fitted.values"]]
   resid <- x[["residuals"]]
