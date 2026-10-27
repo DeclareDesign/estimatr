@@ -678,3 +678,99 @@ test_that("C13: emmeans names the outcomes of a multivariate fit that carries no
   expect_equal(em_unnamed$emmean, em_named$emmean)
   expect_equal(em_unnamed$SE, em_named$SE)
 })
+
+# estimatr #422 ----
+# clubSandwich needs model.frame(), model.matrix() and sandwich::bread() on
+# lm_robust and lm_lin fits, and to tell the two apart by class. Before these
+# methods model.matrix() errored ("object 'mpg' not found"), model.frame() on an
+# lm_lin fit dropped the covariates, and bread() fell through to sandwich's
+# default, vcov(x) * nobs(x), which is the robust variance rather than the
+# inverse Gram matrix: 153.9 where lm() gives 5.72 on mtcars, silently.
+
+methods_422_data <- function() {
+  set.seed(343)
+  d <- data.frame(
+    y = rnorm(60), x = rnorm(60), z = rep(0:1, 30), z3 = rep(0:2, 20),
+    f = factor(sample(letters[1:3], 60, TRUE)), cl = rep(1:12, 5),
+    w = runif(60)
+  )
+  d$w[1:3] <- 0
+  d$cl[5] <- NA
+  d$x[7] <- NA
+  d
+}
+
+test_that("#422: model.frame() and model.matrix() reproduce every lm_robust surface fit", {
+  for (nm in names(fits)) {
+    fit <- fits[[nm]]
+    if (!inherits(fit, "lm_robust")) next
+    expect_equal(nrow(model.frame(fit)), nobs(fit), info = nm)
+    if (isTRUE(fit$fes)) next
+    expect_equal(
+      unname(model.matrix(fit) %*% as.matrix(coef(fit))),
+      unname(as.matrix(fit$fitted.values)),
+      tolerance = METH_TOL, info = nm
+    )
+  }
+})
+
+test_that("#422: model.matrix() and bread() match lm(), weighted or not", {
+  skip_if_not_installed("sandwich")
+  d <- methods_422_data()
+  fit <- lm_robust(y ~ x + f, data = d)
+  ref <- lm(y ~ x + f, data = d)
+  expect_equal(unname(model.matrix(fit)), unname(model.matrix(ref)))
+  expect_equal(sandwich::bread(fit), sandwich::bread(ref))
+  # Zero weights leave the observation count, as they do in lm().
+  fit_w <- lm_robust(y ~ x + f, data = d, weights = w)
+  ref_w <- lm(y ~ x + f, data = d, weights = w)
+  expect_equal(sandwich::bread(fit_w), sandwich::bread(ref_w))
+})
+
+test_that("#422: the rebuilt frame has the fit's rows under clusters and subset", {
+  d <- methods_422_data()
+  expect_warning(fit_cl <- lm_robust(y ~ x, data = d, clusters = cl), "cluster")
+  expect_equal(nrow(model.frame(fit_cl)), nobs(fit_cl))
+  fit_sub <- lm_robust(y ~ x, data = d, subset = z == 1)
+  expect_equal(nrow(model.frame(fit_sub)), nobs(fit_sub))
+})
+
+test_that("#422: an lm_lin fit is classed lm_lin and its design reproduces the fit", {
+  skip_if_not_installed("sandwich")
+  d <- methods_422_data()
+  for (f in list(y ~ z, y ~ z3, y ~ factor(z3))) {
+    fit <- lm_lin(f, ~ x + f, data = d)
+    lab <- deparse(f)
+    expect_identical(class(fit), c("lm_lin", "lm_robust"))
+    X <- model.matrix(fit)
+    expect_identical(colnames(X), names(coef(fit)), info = lab)
+    expect_equal(drop(X %*% coef(fit)), unname(fit$fitted.values),
+                 tolerance = METH_TOL, ignore_attr = TRUE, info = lab)
+    y <- model.response(model.frame(fit))
+    expect_equal(unname(sandwich::bread(fit)), unname(sandwich::bread(lm(y ~ X - 1))),
+                 info = lab)
+  }
+  fit_w <- lm_lin(y ~ z, ~ x, data = d, weights = w)
+  X <- model.matrix(fit_w)
+  y <- model.response(model.frame(fit_w))
+  expect_equal(unname(sandwich::bread(fit_w)),
+               unname(sandwich::bread(lm(y ~ X - 1, weights = fit_w$weights))))
+})
+
+test_that("#422: emmeans builds the lm_lin design on its grid", {
+  skip_if_not_installed("emmeans")
+  d <- methods_422_data()
+  fit <- lm_lin(y ~ z, ~ x, data = d)
+  emm <- summary(emmeans::emmeans(fit, ~ z))
+  expect_equal(diff(emm$emmean), unname(coef(fit)["z"]), tolerance = METH_TOL)
+})
+
+test_that("#422: bread() refuses what it cannot build", {
+  skip_if_not_installed("sandwich")
+  d <- methods_422_data()
+  fit_fe <- lm_robust(y ~ x, data = d, fixed_effects = ~ f)
+  expect_identical(colnames(model.matrix(fit_fe)), names(coef(fit_fe)))
+  expect_error(sandwich::bread(fit_fe), "fixed_effects")
+  fit_mv <- lm_robust(cbind(y, x) ~ z, data = d)
+  expect_error(sandwich::bread(fit_mv), "several outcomes")
+})

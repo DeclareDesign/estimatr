@@ -18,6 +18,10 @@ emm_basis.lm_robust <- function(object, trms, xlev, grid, ...) {
   n.mult <- ifelse(is.matrix(bhat), ncol(bhat), 1)
   m <- suppressWarnings(model.frame(trms, grid, na.action = na.pass, xlev = xlev))
   X <- model.matrix(trms, m, contrasts.arg = object$contrasts)
+  # The grid holds treatment and covariates; an lm_lin fit's coefficients are on
+  # the centred covariates and their interactions, so the plain model matrix
+  # was non-conformable with them.
+  if (!is.null(object$scaled_center)) X <- lin_design(object, X)
   V <- emmeans::.my.vcov(object, ...)
 
   if (!anyNA(bhat))

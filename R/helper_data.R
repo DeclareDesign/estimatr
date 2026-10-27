@@ -182,7 +182,8 @@ clean_model_data <- function(data, datargs, estimator = "") {
     outcome = y_resp,
     design_matrix = dm,
     formula = formula,
-    obs_names = obs_names
+    obs_names = obs_names,
+    model_frame = mf
   )
 
   if (estimator == "iv") {

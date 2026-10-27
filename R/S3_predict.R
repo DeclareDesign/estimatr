@@ -102,73 +102,8 @@ predict.lm_robust <- function(object,
 
   coefs <- as.matrix(coef(object))
 
-  # An lm_lin fit is the only one carrying scaled_center, and its design has to
-  # be rebuilt here exactly as lm_lin() built it: centred covariates, then every
-  # treatment column crossed with every covariate, covariate-major.
-  if (!is.null(object$scaled_center)) {
-    demeaned_covars <-
-      scale(
-        X[
-          ,
-          names(object$scaled_center),
-          drop = FALSE
-        ],
-        center = object$scaled_center,
-        scale = FALSE
-      )
-    colnames(demeaned_covars) <- lin_covar_names(names(object$scaled_center))
-
-    # `assign == 1` is the treatment, which is one column for a binary treatment
-    # and one per level for a factor. The previous code looked the treatment up
-    # by term label, so a factor `z` sent it to X[, "z"] when the design matrix
-    # holds `zb` and `zc` and there is no such column: subscript out of bounds
-    # for every multi-valued treatment.
-    treatment <- X[, attr(X, "assign") == 1, drop = FALSE]
-
-    # A numeric treatment taking values other than 0/1 is expanded into
-    # indicators against the levels seen at fit time. They have to come from the
-    # fit, not from `newdata`, or predicting on a subset silently builds a
-    # different design.
-    if (!is.null(object$treatment_vals)) {
-      treatment <- outer(
-        drop(treatment),
-        object$treatment_vals,
-        function(x, y) as.numeric(x == y)
-      )
-    }
-
-    n_covars <- ncol(demeaned_covars)
-    n_treat_cols <- ncol(treatment)
-    interacted_covars <- matrix(0, nrow = nrow(X), ncol = n_covars * n_treat_cols)
-    interacted_names <- character(n_covars * n_treat_cols)
-    for (i in seq_len(n_covars)) {
-      cols <- (i - 1) * n_treat_cols + seq_len(n_treat_cols)
-      interacted_covars[, cols] <- treatment * demeaned_covars[, i]
-      interacted_names[cols] <-
-        paste0(colnames(treatment), ":", colnames(demeaned_covars)[i])
-    }
-    colnames(interacted_covars) <- interacted_names
-
-    X <- cbind(
-      X[, attr(X, "assign") == 0, drop = FALSE],
-      treatment,
-      demeaned_covars,
-      interacted_covars
-    )
-
-    # Line the design up with the coefficients by name rather than by position.
-    # If the two ever disagree this errors here instead of returning a number
-    # built from the wrong columns.
-    missing_cols <- setdiff(rownames(coefs), colnames(X))
-    if (length(missing_cols)) {
-      stop(
-        "Cannot rebuild the lm_lin design from `newdata`. Missing: ",
-        paste(missing_cols, collapse = ", "),
-        call. = FALSE
-      )
-    }
-    X <- X[, rownames(coefs), drop = FALSE]
-  }
+  # An lm_lin fit is the only one carrying scaled_center.
+  if (!is.null(object$scaled_center)) X <- lin_design(object, X)
 
   if (isTRUE(object[["fes"]])) X <- drop_absorbed_intercept(X, rownames(coefs))
 
@@ -269,6 +204,77 @@ predict.iv_robust <- function(object,
   return(drop(preds))
 }
 
+# Rebuild an lm_lin design exactly as lm_lin() built it: centred covariates,
+# then every treatment column crossed with every covariate, covariate-major.
+# `X` is the plain model matrix of treatment and covariates, as get_X() or
+# model.matrix() returns it with its "assign" attribute intact.
+lin_design <- function(object, X) {
+  coef_names <- rownames(as.matrix(coef(object)))
+
+  demeaned_covars <-
+    scale(
+      X[
+        ,
+        names(object$scaled_center),
+        drop = FALSE
+      ],
+      center = object$scaled_center,
+      scale = FALSE
+    )
+  colnames(demeaned_covars) <- lin_covar_names(names(object$scaled_center))
+
+  # `assign == 1` is the treatment, which is one column for a binary treatment
+  # and one per level for a factor. The previous code looked the treatment up
+  # by term label, so a factor `z` sent it to X[, "z"] when the design matrix
+  # holds `zb` and `zc` and there is no such column: subscript out of bounds
+  # for every multi-valued treatment.
+  treatment <- X[, attr(X, "assign") == 1, drop = FALSE]
+
+  # A numeric treatment taking values other than 0/1 is expanded into
+  # indicators against the levels seen at fit time. They have to come from the
+  # fit, not from `newdata`, or predicting on a subset silently builds a
+  # different design.
+  if (!is.null(object$treatment_vals)) {
+    treatment <- outer(
+      drop(treatment),
+      object$treatment_vals,
+      function(x, y) as.numeric(x == y)
+    )
+  }
+
+  n_covars <- ncol(demeaned_covars)
+  n_treat_cols <- ncol(treatment)
+  interacted_covars <- matrix(0, nrow = nrow(X), ncol = n_covars * n_treat_cols)
+  interacted_names <- character(n_covars * n_treat_cols)
+  for (i in seq_len(n_covars)) {
+    cols <- (i - 1) * n_treat_cols + seq_len(n_treat_cols)
+    interacted_covars[, cols] <- treatment * demeaned_covars[, i]
+    interacted_names[cols] <-
+      paste0(colnames(treatment), ":", colnames(demeaned_covars)[i])
+  }
+  colnames(interacted_covars) <- interacted_names
+
+  X <- cbind(
+    X[, attr(X, "assign") == 0, drop = FALSE],
+    treatment,
+    demeaned_covars,
+    interacted_covars
+  )
+
+  # Line the design up with the coefficients by name rather than by position.
+  # If the two ever disagree this errors here instead of returning a number
+  # built from the wrong columns.
+  missing_cols <- setdiff(coef_names, colnames(X))
+  if (length(missing_cols)) {
+    stop(
+      "Cannot rebuild the lm_lin design from `newdata`. Missing: ",
+      paste(missing_cols, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  X[, coef_names, drop = FALSE]
+}
+
 # With fixed_effects the intercept is absorbed and dropped from the
 # coefficients, but the terms object still carries it, so the design matrix
 # rebuilt from newdata has a column the coefficients do not (estimatr #404).
@@ -344,6 +350,74 @@ model.frame.iv_robust <- function(formula, ...) {
 #' @importFrom stats variable.names
 #' @export
 variable.names.lm_robust <- function(object, ...) object[["term"]]
+
+#' @export
+model.frame.lm_robust <- function(formula, ...) {
+  # A fit stores no model frame, so it is rebuilt from the call as lm() does
+  # with `model = FALSE`. It goes through clean_model_data() rather than
+  # model.frame.default() so that the rows are the ones the fit used, including
+  # those dropped for a missing cluster, weight or fixed effect, and through the
+  # stored terms so that lm_lin()'s covariates, absent from its call's formula,
+  # are in it.
+  object <- formula
+  call <- object[["call"]]
+  env <- environment(object[["terms"]])
+  call_args <- c(
+    weights = "weights",
+    subset = "subset",
+    cluster = "clusters",
+    fixed_effects = "fixed_effects"
+  )
+  call_args <- call_args[call_args %in% names(call)]
+  datargs <- c(
+    list(formula = rlang::new_quosure(stats::formula(object[["terms"]]), env)),
+    lapply(call_args, function(arg) rlang::new_quosure(call[[arg]], env))
+  )
+  data <- rlang::new_quosure(
+    if (is.null(call[["data"]])) rlang::missing_arg() else call[["data"]],
+    env
+  )
+  # The fit has already given any warning about dropped rows.
+  model_data <- suppressWarnings(clean_model_data(data = data, datargs))
+  model_data[["model_frame"]]
+}
+
+#' @importFrom stats model.matrix
+#' @export
+model.matrix.lm_robust <- function(object, ...) {
+  X <- model.matrix(
+    delete.response(object[["terms"]]),
+    model.frame(object),
+    contrasts.arg = object[["contrasts"]]
+  )
+  if (!is.null(object$scaled_center)) X <- lin_design(object, X)
+  if (isTRUE(object[["fes"]])) {
+    X <- drop_absorbed_intercept(X, rownames(as.matrix(coef(object))))
+  }
+  X
+}
+
+# Without this method sandwich::bread() falls through to its default, which is
+# vcov(x) * nobs(x): the fit's robust variance, not the inverse Gram matrix, so
+# anything pairing it with sandwich::meat() returned a wrong number silently.
+# This is sandwich's bread.lm: (X'WX / n)^-1 on the estimated coefficients, with
+# n the observations carrying positive weight.
+#' @exportS3Method sandwich::bread
+bread.lm_robust <- function(x, ...) {
+  coefs <- as.matrix(coef(x))
+  if (ncol(coefs) > 1) {
+    stop("`bread()` is not available for a fit with several outcomes.",
+         call. = FALSE)
+  }
+  if (isTRUE(x[["fes"]])) {
+    stop("`bread()` is not available with `fixed_effects`: the absorbed ",
+         "design is not stored on the fit.", call. = FALSE)
+  }
+  X <- model.matrix(x)[, !is.na(coefs[, 1]), drop = FALSE]
+  w <- x[["weights"]]
+  if (is.null(w)) w <- rep(1, nrow(X))
+  solve(crossprod(X * sqrt(w))) * sum(w > 0)
+}
 
 #' @export
 variable.names.iv_robust <- function(object, ...) object[["term"]]

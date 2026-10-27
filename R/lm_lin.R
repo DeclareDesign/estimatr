@@ -68,7 +68,7 @@
 #'   units is large for a reason that does not affect the fit:
 #'   `kappa(sweep(X, 2, sqrt(colSums(X^2)), "/"), exact = TRUE)`.
 #'
-#' @return An object of class `"lm_robust"`, as returned by [lm_robust()],
+#' @return An object of class `c("lm_lin", "lm_robust")`, as returned by [lm_robust()],
 #'   with two additions: `scaled_center`, the covariate means used for
 #'   centering (taken after any function in the formula is evaluated), and
 #'   `treatment_levels`. The treatment row of `coefficients` is the estimate
@@ -317,6 +317,11 @@ lm_lin <- function(formula,
   return_list[["treatment_levels"]] <- treatment_levels
 
   return_list[["call"]] <- match.call()
+
+  # A subclass, so that methods and packages such as clubSandwich can tell an
+  # lm_lin fit from an lm_robust one by class rather than by parsing the call
+  # (estimatr #422). Everything still dispatches through lm_robust.
+  class(return_list) <- c("lm_lin", "lm_robust")
 
   return(return_list)
 }

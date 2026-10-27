@@ -94,7 +94,7 @@ units is large for a reason that does not affect the fit:
 \item{df_type}{(optional) The degrees of freedom (see \code{\link[=lm_robust]{lm_robust()}})}
 }
 \value{
-An object of class \code{"lm_robust"}, as returned by \code{\link[=lm_robust]{lm_robust()}},
+An object of class \code{c("lm_lin", "lm_robust")}, as returned by \code{\link[=lm_robust]{lm_robust()}},
 with two additions: \code{scaled_center}, the covariate means used for
 centering (taken after any function in the formula is evaluated), and
 \code{treatment_levels}. The treatment row of \code{coefficients} is the estimate
