@@ -700,6 +700,31 @@ methods_422_data <- function() {
   d
 }
 
+# clubSandwich 0.7.0 registers its own bread() and model.frame() for these
+# classes, and whichever package loads last wins. Seven earlier test files load
+# it, so without this the tests below measured clubSandwich's methods whenever
+# those files had run: its bread() errors when the call holds the formula in a
+# variable and on a collinear iv_robust fit, and builds one for fixed effects
+# and several outcomes.
+# Registers estimatr's methods and returns a function that puts back the ones
+# it replaced; the file calls that function at its end.
+use_estimatr_methods <- function() {
+  if (!requireNamespace("sandwich", quietly = TRUE)) return(function() NULL)
+  replaced <- list()
+  for (generic in c("bread", "model.frame")) {
+    ns <- asNamespace(if (generic == "bread") "sandwich" else "stats")
+    for (cls in c("lm_robust", "iv_robust")) {
+      replaced[[length(replaced) + 1]] <- list(generic, cls, getS3method(generic, cls, envir = ns), ns)
+      ours <- get(paste0(generic, ".", cls), envir = asNamespace("estimatr"))
+      registerS3method(generic, cls, ours, envir = ns)
+    }
+  }
+  function() {
+    for (r in replaced) registerS3method(r[[1]], r[[2]], r[[3]], envir = r[[4]])
+  }
+}
+restore_methods <- use_estimatr_methods()
+
 test_that("#422: model.frame() and model.matrix() reproduce every lm_robust surface fit", {
   for (nm in names(fits)) {
     fit <- fits[[nm]]
@@ -808,3 +833,113 @@ test_that("#422: bread() on an iv_robust fit is ivreg's bread.ivreg", {
   ref <- ivreg::ivreg(y ~ x + x2 | z1 + z2 + x2, data = d)
   expect_equal(unname(sandwich::sandwich(ref)), unname(vcov(fit)), tolerance = METH_TOL)
 })
+
+# Post-estimation contract ----
+# sandwich's estimators need estfun() and hatvalues() as well as bread(), and
+# none had a method, so vcovHC() and vcovCL() errored on every fit. deviance(),
+# sigma() and case.names() returned NULL or a zero-length vector. Each method is
+# lm's or ivreg's, so each is checked against the same call on lm() or ivreg().
+
+test_that("estfun(), hatvalues() and vcovHC() on lm_robust match lm(), weighted or not", {
+  skip_if_not_installed("sandwich")
+  d <- methods_422_data()
+  for (weighted in c(FALSE, TRUE)) {
+    if (weighted) {
+      fit <- lm_robust(y ~ x + f, data = d, weights = w)
+      ref <- lm(y ~ x + f, data = d, weights = w)
+    } else {
+      fit <- lm_robust(y ~ x + f, data = d)
+      ref <- lm(y ~ x + f, data = d)
+    }
+    lab <- if (weighted) "weighted" else "unweighted"
+    expect_equal(sandwich::estfun(fit), sandwich::estfun(ref), tolerance = METH_TOL, info = lab)
+    expect_equal(hatvalues(fit), hatvalues(ref), tolerance = METH_TOL, info = lab)
+    expect_equal(deviance(fit), deviance(ref), tolerance = METH_TOL, info = lab)
+    expect_equal(sigma(fit), sigma(ref), tolerance = METH_TOL, info = lab)
+    expect_identical(case.names(fit), case.names(ref), info = lab)
+  }
+  # sandwich's meatHC() pairs every row's residual with hat values for the
+  # positive-weight rows only, on lm() as well, so vcovHC() is compared at
+  # positive weights.
+  d$wp <- d$w + 0.1
+  fit <- lm_robust(y ~ x + f, data = d, weights = wp)
+  ref <- lm(y ~ x + f, data = d, weights = wp)
+  for (type in c("HC0", "HC2", "HC3")) {
+    expect_equal(sandwich::vcovHC(fit, type = type), sandwich::vcovHC(ref, type = type),
+                 tolerance = METH_TOL, info = type)
+  }
+  # The fit's own HC2 is sandwich's HC2.
+  fit <- lm_robust(y ~ x + f, data = d)
+  expect_equal(vcov(fit), sandwich::vcovHC(fit, type = "HC2"), tolerance = METH_TOL)
+})
+
+test_that("estfun(), hatvalues() and vcovHC() on lm_lin match lm() on its design", {
+  skip_if_not_installed("sandwich")
+  d <- methods_422_data()
+  d$wp <- d$w + 0.1
+  fit <- lm_lin(y ~ z, ~ x, data = d, weights = wp)
+  X <- model.matrix(fit)
+  y <- model.response(model.frame(fit))
+  ref <- lm(y ~ X - 1, weights = fit$weights)
+  expect_equal(unname(sandwich::estfun(fit)), unname(sandwich::estfun(ref)), tolerance = METH_TOL)
+  expect_equal(unname(hatvalues(fit)), unname(hatvalues(ref)), tolerance = METH_TOL)
+  expect_equal(unname(sandwich::vcovHC(fit, type = "HC2")),
+               unname(sandwich::vcovHC(ref, type = "HC2")), tolerance = METH_TOL)
+  expect_equal(sigma(fit), sigma(ref), tolerance = METH_TOL)
+})
+
+test_that("iv_robust's model.matrix(), estfun(), hatvalues() and vcovHC() are ivreg's", {
+  skip_if_not_installed("sandwich")
+  skip_if_not_installed("ivreg")
+  set.seed(343)
+  n <- 80
+  d <- data.frame(z1 = rnorm(n), z2 = rnorm(n), x2 = rbinom(n, 1, 0.5), w = runif(n))
+  d$x <- d$z1 + 0.5 * d$z2 + rnorm(n)
+  d$y <- d$x + d$x2 + rnorm(n)
+  d$w[1:4] <- 0
+  f <- y ~ x + x2 | z1 + z2 + x2
+  fit <- iv_robust(f, data = d)
+  ref <- ivreg::ivreg(f, data = d)
+  for (component in c("regressors", "projected", "instruments")) {
+    expect_equal(model.matrix(fit, component = component), model.matrix(ref, component = component),
+                 tolerance = METH_TOL, info = component)
+  }
+  expect_equal(sandwich::estfun(fit), sandwich::estfun(ref), tolerance = METH_TOL)
+  expect_equal(hatvalues(fit), hatvalues(ref), tolerance = METH_TOL)
+  # x2 is binary, so an exogenous column off by rounding where it is zero made
+  # meatHC()'s estfun() / model.matrix() infinite and the variance NaN.
+  for (type in c("HC0", "HC2", "HC3")) {
+    expect_equal(sandwich::vcovHC(fit, type = type), sandwich::vcovHC(ref, type = type),
+                 tolerance = METH_TOL, info = type)
+  }
+  expect_equal(deviance(fit), deviance(ref), tolerance = METH_TOL)
+  expect_equal(sigma(fit), sigma(ref), tolerance = METH_TOL)
+  fit_w <- iv_robust(f, data = d, weights = w)
+  ref_w <- ivreg::ivreg(f, data = d, weights = w)
+  expect_equal(sandwich::estfun(fit_w), sandwich::estfun(ref_w), tolerance = METH_TOL)
+  expect_equal(sigma(fit_w), sigma(ref_w), tolerance = METH_TOL)
+  # ivreg's own hatvalues() fails on zero weights.
+  expect_length(hatvalues(fit_w), sum(d$w > 0))
+  d$wp <- d$w + 0.1
+  fit_w <- iv_robust(f, data = d, weights = wp)
+  ref_w <- ivreg::ivreg(f, data = d, weights = wp)
+  expect_equal(hatvalues(fit_w), hatvalues(ref_w), tolerance = METH_TOL)
+  for (type in c("HC0", "HC2", "HC3")) {
+    expect_equal(sandwich::vcovHC(fit_w, type = type), sandwich::vcovHC(ref_w, type = type),
+                 tolerance = METH_TOL, info = paste("weighted", type))
+  }
+})
+
+test_that("estfun(), hatvalues() and deviance() refuse what they cannot build", {
+  skip_if_not_installed("sandwich")
+  d <- methods_422_data()
+  fit_fe <- lm_robust(y ~ x, data = d, fixed_effects = ~ f)
+  expect_error(sandwich::estfun(fit_fe), "fixed_effects")
+  expect_error(hatvalues(fit_fe), "fixed_effects")
+  fit_mv <- lm_robust(cbind(y, x) ~ z, data = d)
+  expect_error(sandwich::estfun(fit_mv), "several outcomes")
+  expect_error(hatvalues(fit_mv), "several outcomes")
+  expect_error(deviance(fit_mv), "several outcomes")
+})
+
+restore_methods()

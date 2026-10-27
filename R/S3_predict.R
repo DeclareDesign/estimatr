@@ -394,6 +394,26 @@ model.matrix.lm_robust <- function(object, ...) {
   X
 }
 
+# ivreg's model.matrix.ivreg, whose "projected" component is these same
+# lm.wfit() fitted values, zero weights included. Computing them another way
+# leaves an exogenous column off by rounding where it is exactly zero, and
+# sandwich's meatHC() divides estfun() by model.matrix().
+#' @export
+model.matrix.iv_robust <- function(object,
+                                   component = c("regressors", "projected", "instruments"),
+                                   ...) {
+  component <- match.arg(component)
+  model_data <- rebuild_model_data(object, object[["formula"]], estimator = "iv")
+  X <- model_data[["design_matrix"]]
+  Z <- model_data[["instrument_matrix"]]
+  rownames(X) <- rownames(Z) <- rownames(model_data[["model_frame"]])
+  if (component == "regressors") return(X)
+  if (component == "instruments") return(Z)
+  w <- object[["weights"]]
+  fit <- if (is.null(w)) lm.fit(Z, X) else lm.wfit(Z, X, w)
+  fit[["fitted.values"]]
+}
+
 # Without these methods sandwich::bread() falls through to its default, which
 # is vcov(x) * nobs(x): the fit's robust variance, not the inverse Gram matrix,
 # so anything pairing it with sandwich::meat() returned a wrong number silently.
@@ -401,44 +421,87 @@ model.matrix.lm_robust <- function(object, ...) {
 # estimated coefficients, with n the observations carrying positive weight.
 #' @exportS3Method sandwich::bread
 bread.lm_robust <- function(x, ...) {
-  keep <- bread_columns(x)
-  w <- x[["weights"]]
-  sw <- if (is.null(w)) 1 else sqrt(w)
-  bread_from(model.matrix(x)[, keep, drop = FALSE] * sw, w)
+  bread_from(sqrtw_design(x, "bread()"), x[["weights"]])
 }
 
-# ivreg's bread.ivreg: X is replaced by its projection on the instruments,
-# taken in the weighted metric.
 #' @exportS3Method sandwich::bread
 bread.iv_robust <- function(x, ...) {
-  keep <- bread_columns(x)
-  model_data <- rebuild_model_data(x, x[["formula"]], estimator = "iv")
-  w <- x[["weights"]]
-  sw <- if (is.null(w)) 1 else sqrt(w)
-  X_hat <- qr.fitted(
-    qr(model_data[["instrument_matrix"]] * sw),
-    model_data[["design_matrix"]][, keep, drop = FALSE] * sw
-  )
-  bread_from(X_hat, w)
+  bread_from(sqrtw_design(x, "bread()"), x[["weights"]])
 }
 
-bread_columns <- function(x) {
+# sandwich's estfun.lm and ivreg's estfun.ivreg, w * e * X, with the residuals
+# on the data's scale. Without them no sandwich estimator ran on a fit.
+#' @exportS3Method sandwich::estfun
+estfun.lm_robust <- function(x, ...) {
+  estfun_from(sqrtw_design(x, "estfun()"), x)
+}
+
+#' @exportS3Method sandwich::estfun
+estfun.iv_robust <- function(x, ...) {
+  estfun_from(sqrtw_design(x, "estfun()"), x)
+}
+
+# ivreg's vcovHC.ivreg: meatHC() recovers the residuals as estfun() divided by
+# model.matrix(), which holds only when the latter is the projected regressors.
+#' @exportS3Method sandwich::vcovHC
+vcovHC.iv_robust <- function(x, ...) {
+  class(x) <- c("iv_robust_projected", class(x))
+  sandwich::vcovHC.default(x, ...)
+}
+
+#' @export
+model.matrix.iv_robust_projected <- function(object, ...) {
+  model.matrix.iv_robust(object, component = "projected")
+}
+
+# The design the coefficients were estimated on, restricted to the estimated
+# ones and multiplied by the square roots of the weights. For iv_robust it is
+# ivreg's projected regressors, X's projection on the instruments taken in the
+# weighted metric.
+sqrtw_design <- function(x, what) {
   coefs <- as.matrix(coef(x))
   if (ncol(coefs) > 1) {
-    stop("`bread()` is not available for a fit with several outcomes.",
+    stop("`", what, "` is not available for a fit with several outcomes.",
          call. = FALSE)
   }
   if (isTRUE(x[["fes"]])) {
-    stop("`bread()` is not available with `fixed_effects`: the absorbed ",
+    stop("`", what, "` is not available with `fixed_effects`: the absorbed ",
          "design is not stored on the fit.", call. = FALSE)
   }
-  !is.na(coefs[, 1])
+  keep <- !is.na(coefs[, 1])
+  w <- x[["weights"]]
+  sw <- if (is.null(w)) 1 else sqrt(w)
+  component <- if (inherits(x, "iv_robust")) "projected" else NULL
+  model.matrix(x, component = component)[, keep, drop = FALSE] * sw
 }
 
-# `X_w` is the design already multiplied by the square roots of the weights.
+# lm's hatvalues(), and ivreg's stage-2 ones on the projected regressors: the
+# diagonal of the weighted hat matrix, for the rows with positive weight, as
+# lm.influence() drops the others.
+#' @importFrom stats hatvalues
+#' @export
+hatvalues.lm_robust <- function(model, ...) {
+  X_w <- sqrtw_design(model, "hatvalues()")
+  h <- rowSums((X_w %*% solve(crossprod(X_w))) * X_w)
+  names(h) <- rownames(model.frame(model))
+  w <- model[["weights"]]
+  if (is.null(w)) h else h[w > 0]
+}
+
+#' @export
+hatvalues.iv_robust <- hatvalues.lm_robust
+
 bread_from <- function(X_w, w) {
   n <- if (is.null(w)) nrow(X_w) else sum(w > 0)
   solve(crossprod(X_w)) * n
+}
+
+# w * e * X is e * sqrt(w) * X_w, which needs no division by sqrt(w) at a zero
+# weight.
+estfun_from <- function(X_w, x) {
+  w <- x[["weights"]]
+  sw <- if (is.null(w)) 1 else sqrt(w)
+  X_w * as.vector(x[["residuals"]] * sw)
 }
 
 #' @export
