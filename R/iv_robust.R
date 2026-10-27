@@ -374,19 +374,30 @@ get_dendf <- function(lm_fit) {
 # by a pivoted QR at the same tolerance. The weak-instrument F and the
 # overidentification tests are invariant to which basis of that space is used,
 # so where the names already line up no number moves beyond rounding.
+#
+# Both rank decisions are made in the metric the first stage was fit in, rows
+# scaled by sqrt(w). The fitted values are on the scale of the data, so where
+# zero weights make a dummy collinear (#305) the fit reproduces it on every
+# row that counts and misses it on the rows that do not. Measured unweighted,
+# that miss called an exogenous dummy endogenous, gave it a first-stage F of
+# its own, and left the overidentification test on -1 degrees of freedom.
 instrument_roles <- function(model_data, first_stage) {
   X <- model_data$design_matrix
   Z <- model_data$instrument_matrix
+  sw <- if (is.null(model_data$weights)) 1 else sqrt(model_data$weights)
 
-  resid_norm <- sqrt(colSums((X - first_stage[["fitted.values"]])^2))
-  reproduced <- resid_norm <= 1e-7 * sqrt(colSums(X^2))
+  resid_norm <- sqrt(colSums((sw * (X - first_stage[["fitted.values"]]))^2))
+  reproduced <- resid_norm <= 1e-7 * sqrt(colSums((sw * X)^2))
   exogenous <- colnames(X)[reproduced]
 
   candidates <- Z[, !(colnames(Z) %in% colnames(X)), drop = FALSE]
+  weighted_candidates <- sw * candidates
   if (length(exogenous)) {
     candidates <- qr.resid(qr(X[, exogenous, drop = FALSE]), candidates)
+    weighted_candidates <-
+      qr.resid(qr(sw * X[, exogenous, drop = FALSE]), weighted_candidates)
   }
-  basis <- qr(candidates, tol = 1e-7)
+  basis <- qr(weighted_candidates, tol = 1e-7)
 
   list(
     endog = colnames(X)[!reproduced],

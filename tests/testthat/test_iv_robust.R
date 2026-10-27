@@ -385,3 +385,39 @@ test_that("#305: the first-stage F skips an excluded instrument the weights made
   expect_equal(fs[["nomdf"]], 2)
   expect_equal(fs[["value"]], reference$F[2], tolerance = 1e-8)
 })
+
+test_that("#305: a regressor the weights made collinear stays exogenous", {
+  # The same zero weights, now with group among the regressors. The first
+  # stage reproduces the C dummy on every row with positive weight and misses
+  # it on group A, so measured unweighted C was called endogenous: it got a
+  # first-stage F of its own and the overidentification test ran on -1
+  # degrees of freedom. Every diagnostic should be the one the fit gives with
+  # the zero-weight rows dropped.
+  set.seed(343)
+  n <- 300
+  b <- data.frame(
+    group = factor(rep(c("A", "B", "C"), n / 3)),
+    weights = rep(c(0, 1, 2), n / 3),
+    z = rnorm(n),
+    z2 = rnorm(n)
+  )
+  b$x <- 2 * b$z + b$z2 + rnorm(n)
+  b$y <- 3 * b$x + rnorm(n)
+  pos <- b[b$weights > 0, ]
+
+  diagnostics_of <- function(formula, data, se_type) {
+    fit <- suppressMessages(suppressWarnings(
+      iv_robust(formula, data = data, weights = weights, se_type = se_type,
+                diagnostics = TRUE)
+    ))
+    unlist(fit[grep("^diagnostic", names(fit))])
+  }
+
+  for (se_type in c("classical", "HC2")) {
+    for (formula in list(y ~ group + x | z + group, y ~ group + x | z + z2 + group)) {
+      full <- diagnostics_of(formula, b, se_type)
+      expect_equal(full, diagnostics_of(formula, pos, se_type), tolerance = 1e-8)
+      expect_false(any(grepl("groupC", names(full))))
+    }
+  }
+})

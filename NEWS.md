@@ -26,7 +26,7 @@ A dropped column that is a multiple of one kept column, such as `x2 = 2 * x1`, w
 
 ## The `iv_robust()` first-stage F is no longer `NA` when the first stage drops an instrument
 
-When the first-stage regression returned an excluded instrument as `NA` (for example a dummy made collinear by zero weights), the coefficients were NA-padded while the variance matrix was not, so the tested rows were misaligned and `diagnostic_first_stage_fstatistic` came back `NA`. The F is now computed over the instruments that survived, with the degrees of freedom to match. The `lm_robust()` half of this report was fixed in 2.0.0. See #305.
+When the first-stage regression returned an excluded instrument as `NA` (for example a dummy made collinear by zero weights), the coefficients were NA-padded while the variance matrix was not, so the tested rows were misaligned and `diagnostic_first_stage_fstatistic` came back `NA`. The F is now computed over the instruments that survived, with the degrees of freedom to match. A regressor that zero weights make collinear, such as `group` in `y ~ group + x | z + group`, was also classed as endogenous, because the first stage's fit to it was judged on every row rather than on the rows with positive weight; it was given a first-stage F of its own, and the overidentification test ran on -1 degrees of freedom. Every diagnostic now equals the one the same fit gives with the zero-weight rows dropped. The `lm_robust()` half of this report was fixed in 2.0.0. See #305.
 
 # estimatr 2.0.1
 
