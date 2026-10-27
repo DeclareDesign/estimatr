@@ -34,9 +34,8 @@
 #'   in the cluster variable. Read under that `se_type` alone; `fe_rank` still
 #'   sets the residual degrees of freedom.
 #' @param df_type character or `NULL`, the degrees of freedom; see
-#'   [lm_robust()]. `"satterthwaite"` with `se_type = "HC2"` takes them from a
-#'   CR2 fit with every observation its own cluster, which needs `femat` under
-#'   absorbed fixed effects.
+#'   [lm_robust()]. `"satterthwaite"` with `se_type = "HC2"` needs `femat`
+#'   under absorbed fixed effects.
 #'
 #' @examples
 #' # The fitter behind lm_robust(), exported for packages that have already
@@ -524,21 +523,28 @@ lm_robust_fit <- function(y,
         return_list[["hypothesis_df"]] <- vcov_fit$hypothesis_dof
       }
 
-      # With every observation its own cluster CR2 is HC2, so its Satterthwaite
-      # degrees of freedom are Bell and McCaffrey's for HC2. Only the degrees
-      # of freedom are taken from that fit, which leaves every coefficient and
-      # variance above as the default HC2 fit returns them. Its messages and
-      # warnings are this fit's own, already given.
+      # Bell and McCaffrey's degrees of freedom for HC2, from the design alone.
+      # Only the degrees of freedom are replaced, so every coefficient and
+      # variance above is the default HC2 fit's.
       if (bm_df) {
-        df_fit <- suppressMessages(suppressWarnings(lm_robust_fit(
-          y = y, X = X, weights = weights, cluster = seq_len(NROW(X)),
-          ci = TRUE, se_type = "CR2", has_int = has_int, alpha = alpha,
-          return_vcov = FALSE, return_fit = FALSE, try_cholesky = try_cholesky,
-          iv_stage = iv_stage, fe_rank = fe_rank, femat = femat_df,
-          linear_hypothesis = linear_hypothesis, fe_rank_k = fe_rank_k
-        )))
-        return_list$df <- df_fit$df
-        return_list[["hypothesis_df"]] <- df_fit[["hypothesis_df"]]
+        bm_hypotheses <- NULL
+        if (!is.null(linear_hypothesis) && !multivariate) {
+          bm_hypotheses <- if (is.character(linear_hypothesis)) {
+            rbind(car::makeHypothesis(variable_names, linear_hypothesis))[, seq_len(k), drop = FALSE]
+          } else {
+            rbind(linear_hypothesis)[, seq_len(k), drop = FALSE]
+          }
+          bm_hypotheses <- bm_hypotheses[, covs_used, drop = FALSE]
+        }
+        bm <- hc2_bm_df(
+          X = take(data[["X"]]),
+          femat = femat_df,
+          hypotheses = bm_hypotheses
+        )
+        return_list$df[est_exists] <- rep(bm$df, ny)
+        if (!is.null(bm_hypotheses)) {
+          return_list[["hypothesis_df"]] <- bm$hypothesis_df
+        }
       }
     }
   }
@@ -793,6 +799,102 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE,
   }
 
   return(se_type)
+}
+
+# The Bell and McCaffrey (2002) degrees of freedom for HC2. A linear
+# combination c'b = sum_i a_i y_i of the coefficients has HC2 variance
+# V = sum_i a_i^2 e_i^2 / (1 - h_i), and its degrees of freedom are
+# 2 E[V]^2 / Var[V] with the errors normal under the working covariance the
+# weights imply, W^(-1), the identity when unweighted. In the sqrt(w)-scaled
+# design, with Z an orthonormal basis of it, H = ZZ' and s_i = a_i^2 / (1 - h_i),
+# V is a quadratic form in B = S^(1/2) (I - H) S^(1/2), so
+#     df = tr(B)^2 / ||B||_F^2,
+#     tr(B) = sum s_i (1 - h_i),
+#     ||B||_F^2 = sum s_i^2 (1 - 2 h_i) + ||Z'SZ||_F^2,
+# which is O(N p^2) per combination rather than the N by N matrix B. These are
+# clubSandwich's CR2 Satterthwaite degrees of freedom with every observation
+# its own cluster and `inverse_var = TRUE`, the convention HC2's variance
+# follows under weights. An observation HC2 discards for leverage at or near 1
+# carries s_i = 0, as it carries nothing in the variance.
+#
+# Under absorbed fixed effects X is demeaned and so orthogonal to the dummies
+# D, and H = H_X + H_D with H_D = D P D', P the pseudo-inverse of D'D. An
+# orthonormal basis of [X, D] is N by (number of levels) dense, which at 500 levels and 1e5 rows
+# took 70 seconds. Every H_D term reduces instead to sums over the nonzeros of
+# D, which number N times the factor count: h_i gains d_i' P d_i, and
+#     ||Z'SZ||_F^2 = ||Z_X'SZ_X||_F^2 + 2 tr((D'SZ_X)' P (D'SZ_X)) + tr(KPKP),
+# with K = D'SD. P and K are diagonal under one factor.
+#' @noRd
+hc2_bm_df <- function(X, femat = NULL, hypotheses = NULL) {
+  r <- ncol(X)
+  qx <- qr(X)
+  stopifnot(qx$rank == r)
+  Z <- qr.Q(qx)
+  # Column j of Q R^(-T) is the a for coefficient j.
+  A <- Z %*% t(backsolve(qr.R(qx), diag(r)))
+  h <- rowSums(Z^2)
+
+  if (!is.null(femat)) {
+    G <- ncol(femat)
+    nz <- which(femat != 0, arr.ind = TRUE)
+    nz_row <- nz[, 1]
+    nz_col <- nz[, 2]
+    nz_val <- femat[nz]
+    # Every pair of nonzeros that share a row, for D' diag(v) D.
+    pairs <- merge(
+      data.frame(row = nz_row, c1 = nz_col, v1 = nz_val),
+      data.frame(row = nz_row, c2 = nz_col, v2 = nz_val),
+      by = "row"
+    )
+    pair_ix <- pairs$c1 + (pairs$c2 - 1L) * G
+    pair_val <- pairs$v1 * pairs$v2
+    dvd <- function(v) {
+      out <- matrix(0, G, G)
+      agg <- rowsum(v[pairs$row] * pair_val, pair_ix)
+      out[as.integer(rownames(agg))] <- agg
+      out
+    }
+
+    DtD <- dvd(rep(1, nrow(X)))
+    one_way <- all(DtD[row(DtD) != col(DtD)] == 0)
+    if (one_way) {
+      d <- diag(DtD)
+      P <- diag(ifelse(d > 0, 1 / d, 0), G)
+    } else {
+      e <- eigen(DtD, symmetric = TRUE)
+      pos <- e$values > max(e$values) * 1e-10
+      P <- e$vectors[, pos, drop = FALSE] %*%
+        (t(e$vectors[, pos, drop = FALSE]) / e$values[pos])
+    }
+    h <- h + as.vector(rowsum(P[pair_ix] * pair_val, pairs$row,
+                              reorder = TRUE)[as.character(seq_len(nrow(X))), 1])
+  }
+
+  keep <- h <= 1 - sqrt(.Machine$double.eps)
+
+  bm <- function(a) {
+    s <- ifelse(keep, a^2 / (1 - h), 0)
+    tr <- sum(s * (1 - h))
+    fro <- sum(s^2 * (1 - 2 * h)) + sum(crossprod(Z, Z * s)^2)
+    if (!is.null(femat)) {
+      DSZ <- matrix(0, G, r)
+      agg <- rowsum(s[nz_row] * nz_val * Z[nz_row, , drop = FALSE], nz_col)
+      DSZ[as.integer(rownames(agg)), ] <- agg
+      K <- dvd(s)
+      fro <- fro + 2 * sum(DSZ * (P %*% DSZ)) +
+        if (one_way) sum((diag(K) * diag(P))^2) else {
+          KP <- K %*% P
+          sum(KP * t(KP))
+        }
+    }
+    if (fro > 0) tr^2 / fro else NA_real_
+  }
+
+  list(
+    df = apply(A, 2, bm),
+    hypothesis_df = if (!is.null(hypotheses))
+      apply(A %*% t(hypotheses), 2, bm)
+  )
 }
 
 # `df_type = NULL` keeps each se_type's own degrees of freedom: the residual

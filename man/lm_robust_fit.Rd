@@ -77,9 +77,8 @@ in the cluster variable. Read under that \code{se_type} alone; \code{fe_rank} st
 sets the residual degrees of freedom.}
 
 \item{df_type}{character or \code{NULL}, the degrees of freedom; see
-\code{\link[=lm_robust]{lm_robust()}}. \code{"satterthwaite"} with \code{se_type = "HC2"} takes them from a
-CR2 fit with every observation its own cluster, which needs \code{femat} under
-absorbed fixed effects.}
+\code{\link[=lm_robust]{lm_robust()}}. \code{"satterthwaite"} with \code{se_type = "HC2"} needs \code{femat}
+under absorbed fixed effects.}
 }
 \description{
 Internal method that creates linear fits

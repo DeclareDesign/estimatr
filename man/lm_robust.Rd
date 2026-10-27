@@ -142,8 +142,10 @@ N - K for \code{"HC0"} through \code{"HC3"} and \code{"classical"}, Satterthwait
 \code{"stata_nested"}. \code{"satterthwaite"} with \code{se_type = "HC2"} gives each
 coefficient, and each hypothesis in \code{\link[=lh_robust]{lh_robust()}}, the Bell and McCaffrey
 (2002) degrees of freedom that Imbens and Kolesar (2016) recommend with
-HC2: the CR2 Satterthwaite degrees of freedom with every observation its
-own cluster, where CR2 is HC2. They depend on which observations carry a
+HC2, computed under a working model of independent errors with variance
+proportional to 1 / \code{weights}. They are clubSandwich's CR2 Satterthwaite
+degrees of freedom with every observation its own cluster and
+\code{inverse_var = TRUE}. They depend on which observations carry a
 coefficient's variance, so a contrast in an interacted model and the same
 contrast fit on the subset get the same degrees of freedom. The estimates
 and standard errors are unchanged. Not available with both \code{weights} and
