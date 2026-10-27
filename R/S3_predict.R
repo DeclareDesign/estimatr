@@ -332,19 +332,13 @@ get_X <- function(object, newdata, na.action) {
 
 #' @export
 model.frame.iv_robust <- function(formula, ...) {
-  # The stored terms hold the two-part `y ~ x | z` formula, which
-  # model.frame.default cannot parse: it reads `|` as a logical operator and
-  # returns one garbage column (estimatr #397). Rebuild a one-part formula
-  # naming every variable and defer to the default method.
+  # The stored formula is the two-part `y ~ x | z`, which model.frame.default
+  # cannot parse: it reads `|` as a logical operator and returns one garbage
+  # column (estimatr #397). clean_model_data() reads it with the Formula
+  # package, as the fit did, and drops the same rows, where re-evaluating the
+  # call without its clusters had kept a row dropped for a missing cluster.
   object <- formula
-  vars <- all.vars(object[["terms"]])
-  flat <- stats::reformulate(unique(vars[-1L]), response = vars[1L])
-  environment(flat) <- environment(object[["terms"]])
-  object[["terms"]] <- stats::terms(flat)
-  call <- object[["call"]]
-  call[["formula"]] <- flat
-  object[["call"]] <- call
-  stats::model.frame.default(object, ...)
+  rebuild_model_data(object, object[["formula"]], estimator = "iv")[["model_frame"]]
 }
 
 #' @importFrom stats variable.names

@@ -421,3 +421,13 @@ test_that("#305: a regressor the weights made collinear stays exogenous", {
     }
   }
 })
+
+test_that("model.frame() on iv_robust keeps the fit's rows when a cluster is missing", {
+  d <- mtcars
+  d$cl <- rep(1:8, 4)
+  d$cl[2] <- NA
+  expect_warning(m <- iv_robust(mpg ~ wt + hp | am + hp, data = d, clusters = cl), "cluster")
+  mf <- estimatr:::model.frame.iv_robust(m)
+  expect_equal(nrow(mf), nobs(m))
+  expect_false("Mazda RX4 Wag" %in% rownames(mf))
+})
