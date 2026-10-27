@@ -17,7 +17,8 @@
 #'   `fixed_effects` at any number of factors: the second stage runs on fitted
 #'   regressors, but those are demeaned by the same fixed effects, so the
 #'   leverage decomposition [lm_robust()] describes applies unchanged. `"CR2"`
-#'   with `fixed_effects` expands the dummies, as in estimatr 1.0.6.
+#'   and `"CR3"` with `fixed_effects` expand the dummies, as CR2 did in
+#'   estimatr 1.0.6.
 #'   Defaults: `"HC2"` (no clusters, with or without FE), `"CR2"` (clusters, no
 #'   FE), `"CR0"` (clusters, with FE).
 #' @param ci (optional) Logical. Whether to compute p-values and confidence intervals.

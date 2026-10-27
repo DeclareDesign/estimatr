@@ -177,6 +177,9 @@ The cluster-robust estimators are the analogues of the heteroskedasticity-consis
 | `"CR0"` | $(\mathbf{X}^{\top}\mathbf{X})^{-1}\sum_{s=1}^{S}\left[\mathbf{X}_s^\top\mathbf{e}_s\mathbf{e}_s^\top\mathbf{X}_s\right](\mathbf{X}^{\top}\mathbf{X})^{-1}$ | $S-1$ |
 | `"stata"` | $\frac{N-1}{N-K}\frac{S}{S-1}\times$ the CR0 expression | $S-1$ |
 | `"CR2"` (default) | $(\mathbf{X}^{\top}\mathbf{X})^{-1}\sum_{s=1}^{S}\left[\mathbf{X}_s^\top\mathbf{A}_s\mathbf{e}_s\mathbf{e}_s^\top\mathbf{A}_s^\top\mathbf{X}_s\right](\mathbf{X}^{\top}\mathbf{X})^{-1}$ | Satterthwaite, below |
+| `"CR3"` | the CR2 expression with $\mathbf{A}_s = (\mathbf{I}_N - \mathbf{H})_{ss}^{+}$ | Satterthwaite, below |
+
+CR3 is the jackknife-type estimator of @bellmccaffrey2002: for OLS and WLS, $\widehat{\beta} - \widehat{\beta}_{(s)} = (\mathbf{X}^{\top}\mathbf{X})^{-1}\mathbf{X}_s^\top(\mathbf{I} - \mathbf{H}_{ss})^{-1}\mathbf{e}_s$, so CR3 is the sum of squared leave-one-cluster-out changes in the coefficients, without the $(S-1)/S$ factor of the textbook jackknife. It is computed on a $K \times K$ matrix whatever the cluster size, through the identity of @niccodemietal2020, and through the generalized inverse when dropping a cluster leaves a coefficient unidentified, where the leave-one-cluster-out sum still agrees with it.
 
 Transcribed, CR0 is the same bread with the meat summed over clusters instead of over observations, and `"stata"` is CR0 times two finite-sample corrections.
 

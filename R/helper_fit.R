@@ -232,7 +232,7 @@ lm_robust_fit <- function(y,
       colnames(ei_unw) <- colnames(data[["yunweighted"]])
       fit_vals[["ei.unweighted"]] <- ei_unw
 
-      if (se_type == "CR2") {
+      if (se_type %in% c("CR2", "CR3")) {
         data[["X"]] <- data[["weights"]] * data[["X"]]
         if (!is.null(data[["femat"]])) {
           data[["femat"]] <- data[["weights"]] * data[["femat"]]
@@ -258,7 +258,7 @@ lm_robust_fit <- function(y,
       # freedom, and returns a single hypothesis as a vector, which rbind()
       # makes a one-row matrix.
       hypotheses <- NULL
-      if (!is.null(linear_hypothesis) && se_type == "CR2" && ci && !multivariate) {
+      if (!is.null(linear_hypothesis) && se_type %in% c("CR2", "CR3") && ci && !multivariate) {
         hypotheses <- if (is.character(linear_hypothesis)) {
           rbind(car::makeHypothesis(variable_names, linear_hypothesis))[, seq_len(k), drop = FALSE]
         } else {
@@ -291,7 +291,7 @@ lm_robust_fit <- function(y,
           cbind(data[["Xunweighted"]], data[["fematunweighted"]])
           else data[["Xunweighted"]]),
         XtX_inv = fit$XtX_inv,
-        ei = take(if (se_type == "CR2" && weighted)
+        ei = take(if (se_type %in% c("CR2", "CR3") && weighted)
           fit_vals[["ei.unweighted"]]
           else fit_vals[["ei"]]),
         weight_mean = data[["weight_mean"]],
@@ -657,7 +657,7 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE,
                           has_fe_leverage = FALSE,
                           fe_dummies = FALSE, weighted = FALSE) {
 
-  cl_se_types  <- c("CR0", "CR2", "stata")
+  cl_se_types  <- c("CR0", "CR2", "CR3", "stata")
   rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata")
 
   if (clustered) {
@@ -684,7 +684,7 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE,
       se_type <- if (has_fe) "CR0" else "CR2"
     } else if (!(se_type %in% c(cl_se_types, "none"))) {
       stop(
-        "`se_type` must be either 'CR0', 'stata', 'CR2', or 'none' when ",
+        "`se_type` must be either 'CR0', 'stata', 'CR2', 'CR3', or 'none' when ",
         "`clusters` are specified.\nYou passed: ", se_type
       )
     }
@@ -727,17 +727,17 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE,
 
   # CR2 is the one case left that has to materialise the dummies: it needs the
   # whole per-cluster block of the hat matrix, which does not decompose.
-  if (has_fe && se_type %in% c("HC2", "HC3", "CR2")) {
+  if (has_fe && se_type %in% c("HC2", "HC3", "CR2", "CR3")) {
     # 1.0.6 refused this combination too: the CR2 adjustment needs the design
     # weighted by w rather than by sqrt(w), and the absorbed dummies are not
     # carried in a form that supports it.
-    if (se_type == "CR2" && weighted) {
+    if (se_type %in% c("CR2", "CR3") && weighted) {
       stop(
-        "`se_type = \"CR2\"` cannot be combined with `weights` and ",
+        "`se_type = \"", se_type, "\"` cannot be combined with `weights` and ",
         "`fixed_effects`.\nUse `se_type = \"stata\"`, or replace ",
         "`fixed_effects` with explicit dummies:\n",
         "  lm_robust(y ~ x + factor(fe_var), weights = w, clusters = cl, ",
-        "se_type = \"CR2\")"
+        "se_type = \"", se_type, "\")"
       )
     }
     if (!fe_dummies) {

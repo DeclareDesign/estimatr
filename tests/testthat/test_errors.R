@@ -40,6 +40,13 @@ test_that("an se_type off the menu is refused, and the menu depends on clusterin
                "with no `clusters`.\nYou passed: HC5", fixed = TRUE)
   expect_error(lm_robust(y ~ x, data = err_data, se_type = "CR2"),
                "reserved for a case with clusters")
+  expect_error(lm_robust(y ~ x, data = err_data, se_type = "CR3"),
+               "reserved for a case with clusters")
+  err_data$fe <- rep(1:2, length.out = nrow(err_data))
+  err_data$w <- 1 + seq_len(nrow(err_data)) / nrow(err_data)
+  expect_error(lm_robust(y ~ x, data = err_data, clusters = cl, weights = w,
+                         fixed_effects = ~fe, se_type = "CR3"),
+               "`se_type = \"CR3\"` cannot be combined with `weights`", fixed = TRUE)
   expect_error(iv_robust(y ~ x | z, data = err_data, se_type = "CR0"),
                "reserved for a case with clusters")
   expect_error(lm_robust(y ~ x, data = err_data, clusters = cl, se_type = "HC2"),

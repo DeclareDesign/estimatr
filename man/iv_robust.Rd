@@ -39,7 +39,8 @@ SE type restrictions). Diagnostics are not available with \code{fixed_effects}.}
 \code{fixed_effects} at any number of factors: the second stage runs on fitted
 regressors, but those are demeaned by the same fixed effects, so the
 leverage decomposition \code{\link[=lm_robust]{lm_robust()}} describes applies unchanged. \code{"CR2"}
-with \code{fixed_effects} expands the dummies, as in estimatr 1.0.6.
+and \code{"CR3"} with \code{fixed_effects} expand the dummies, as CR2 did in
+estimatr 1.0.6.
 Defaults: \code{"HC2"} (no clusters, with or without FE), \code{"CR2"} (clusters, no
 FE), \code{"CR0"} (clusters, with FE).}
 

@@ -40,12 +40,12 @@ Absorbing costs nothing in available standard error types. \code{"HC2"} and
 full design splits into the demeaned-X leverage plus a term that is cheap
 to compute, so no dummy hat matrix is built.
 
-\code{"CR2"} is the exception: its adjustment is built from cluster-level
+\code{"CR2"} and \code{"CR3"} are the exception: their adjustments are built from cluster-level
 blocks of the hat matrix rather than from the diagonal, and blocks do not
-split that way, so it expands the dummies and pays for the expansion.
+split that way, so they expand the dummies and pay for the expansion.
 That is why \code{fixed_effects} with \code{clusters} defaults to \code{"CR0"}. Asking
 for \code{se_type = "CR2"} still works and still gives the 1.0.6 number.
-Refused is the three together: \code{"CR2"} with both \code{weights} and
+Refused is the three together: \code{"CR2"} or \code{"CR3"} with both \code{weights} and
 \code{fixed_effects}, as in estimatr 1.0.6.
 
 The projection identity, the several-factor case, the exact-rank
@@ -57,14 +57,22 @@ and/or fixed effects are present:
 \itemize{
 \item No clusters, no FE: \code{"HC2"} (default), \code{"HC0"}, \code{"HC1"},
 \code{"HC3"}, \code{"classical"}, \code{"stata"}, \code{"none"}.
-\item Clusters, no FE: \code{"CR2"} (default), \code{"CR0"}, \code{"stata"}, \code{"none"}.
+\item Clusters, no FE: \code{"CR2"} (default), \code{"CR0"}, \code{"CR3"}, \code{"stata"},
+\code{"none"}.
 \item No clusters, with FE (any number of factors): \code{"HC2"} (default),
 \code{"HC0"}, \code{"HC1"}, \code{"HC3"}, \code{"classical"}, \code{"stata"}, \code{"none"}. The
 same menu as with no FE at all.
-\item Clusters, with FE: \code{"CR0"} (default), \code{"CR2"}, \code{"stata"},
-\code{"none"}. \code{"CR2"} expands the fixed effects into dummies, so it is not
-the default here; it is refused with \code{weights}.
+\item Clusters, with FE: \code{"CR0"} (default), \code{"CR2"}, \code{"CR3"}, \code{"stata"},
+\code{"none"}. \code{"CR2"} and \code{"CR3"} expand the fixed effects into dummies, so
+neither is the default here; both are refused with \code{weights}.
 }
+\code{"CR3"} is the Bell and McCaffrey (2002) jackknife-type estimator: the
+adjustment is the inverse of each cluster's block of I - H rather than its
+inverse square root, and for OLS and WLS it equals the sum of squared
+leave-one-cluster-out changes in the coefficients, with no (S-1)/S
+factor. Its degrees of freedom are Satterthwaite, as for \code{"CR2"}, and it
+matches \code{clubSandwich::vcovCR(type = "CR3")}.
+
 \code{"stata"} means two different things. With no clusters it is exactly
 \code{"HC1"}, and the fitted object reports \code{se_type = "HC1"}. With clusters it
 is \strong{not} an alias for \code{"CR0"}: it is CR0 scaled by Stata's finite-sample

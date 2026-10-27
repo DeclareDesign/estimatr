@@ -342,3 +342,87 @@ test_that("CR2 on a singleton cluster's own dummy matches clubSandwich, and is f
   ct <- clubSandwich::coef_test(m, vcov = target, test = "Satterthwaite")
   expect_equal(unname(fit$df), ct$df_Satt, tolerance = LIVE_TOL)
 })
+
+# ---- CR3 ----
+#
+# CR3 adjusts by the generalized inverse of each cluster's block of I - H where
+# CR2 takes its inverse square root. For OLS and WLS it is also the sum of
+# squared leave-one-cluster-out changes in the coefficients, which gives a
+# reference that does not share clubSandwich's arithmetic and that still exists
+# where clubSandwich's solve() fails.
+
+loco_sum <- function(formula, data, cluster, w = rep(1, nrow(data))) {
+  data$loco_w <- w
+  b <- coef(lm(formula, data, weights = loco_w))
+  dev <- lapply(unique(cluster), function(g) {
+    b_g <- coef(lm(formula, data[cluster != g, ], weights = loco_w))
+    replace(b - b_g, is.na(b_g), NA)
+  })
+  Reduce(`+`, lapply(dev, tcrossprod))
+}
+
+test_that("CR3 and its degrees of freedom match clubSandwich, weighted and not", {
+  for (cv in c("cl", "clu")) {
+    fit <- lm_robust(y ~ x + z, data = d, clusters = d[[cv]], se_type = "CR3")
+    m <- lm(y ~ x + z, data = d)
+    expect_equal(unname(fit$vcov),
+                 unname(as.matrix(clubSandwich::vcovCR(m, cluster = d[[cv]], type = "CR3"))),
+                 tolerance = LIVE_TOL, label = paste0("CR3 vcov, clusters = ", cv))
+    ct <- clubSandwich::coef_test(m, vcov = "CR3", cluster = d[[cv]], test = "Satterthwaite")
+    expect_equal(unname(fit$df), ct$df_Satt, tolerance = LIVE_TOL,
+                 label = paste0("CR3 df, clusters = ", cv))
+  }
+  fit <- lm_robust(y ~ x + z, data = d, clusters = cl, weights = w, se_type = "CR3")
+  m <- lm(y ~ x + z, data = d, weights = w)
+  expect_equal(unname(fit$vcov),
+               unname(as.matrix(clubSandwich::vcovCR(m, cluster = d$cl, type = "CR3", inverse_var = FALSE))),
+               tolerance = LIVE_TOL)
+  ct <- clubSandwich::coef_test(m, vcov = "CR3", cluster = d$cl, test = "Satterthwaite", inverse_var = FALSE)
+  expect_equal(unname(fit$df), ct$df_Satt, tolerance = LIVE_TOL)
+})
+
+test_that("CR3 is the leave-one-cluster-out sum, under weights and absorbed fixed effects", {
+  expect_equal(
+    unname(lm_robust(y ~ x + z, data = d, clusters = clu, se_type = "CR3")$vcov),
+    unname(loco_sum(y ~ x + z, d, d$clu)), tolerance = LIVE_TOL
+  )
+  expect_equal(
+    unname(lm_robust(y ~ x + z, data = d, clusters = cl, weights = w, se_type = "CR3")$vcov),
+    unname(loco_sum(y ~ x + z, d, d$cl, d$w)), tolerance = LIVE_TOL
+  )
+  d$fe <- factor(rep(1:4, length.out = nrow(d)))
+  expect_equal(
+    unname(lm_robust(y ~ x + z, data = d, clusters = clu, fixed_effects = ~fe, se_type = "CR3")$vcov),
+    unname(loco_sum(y ~ x + z + fe, d, d$clu)[2:3, 2:3]), tolerance = LIVE_TOL
+  )
+})
+
+# A one-row cluster carrying its own dummy leaves I - H singular in that block:
+# clubSandwich stops with "system is computationally singular", while dropping
+# the cluster still identifies the slope, and the generalized inverse agrees.
+test_that("CR3 on a cluster that identifies its own dummy is the leave-one-cluster-out sum", {
+  set.seed(343)
+  ds <- data.frame(cl = rep(1:12, c(1, rep(5, 11))), x1 = rnorm(56))
+  ds$y <- ds$x1 + rnorm(12)[ds$cl] + rnorm(56)
+  fit <- lm_robust(y ~ x1 + factor(cl), data = ds, clusters = cl, se_type = "CR3")
+  expect_equal(fit$vcov["x1", "x1"],
+               loco_sum(y ~ x1 + factor(cl), ds, ds$cl)[2, 2],
+               tolerance = LIVE_TOL)
+})
+
+test_that("iv_robust and lh_robust CR3 match clubSandwich", {
+  skip_if_not_installed("AER")
+  set.seed(343)
+  di <- data.frame(cl = rep(1:15, each = 8), x1 = rnorm(120), zz = rbinom(120, 1, 0.5))
+  di$d <- rbinom(120, 1, plogis(di$zz + di$x1))
+  di$y <- di$d + di$x1 + rnorm(15)[di$cl] + rnorm(120)
+  fit <- iv_robust(y ~ d + x1 | zz + x1, data = di, clusters = cl, se_type = "CR3")
+  target <- clubSandwich::vcovCR(AER::ivreg(y ~ d + x1 | zz + x1, data = di), cluster = di$cl, type = "CR3")
+  expect_equal(unname(fit$vcov), unname(as.matrix(target)), tolerance = LIVE_TOL)
+
+  lh <- lh_robust(y ~ x + z, data = d, clusters = cl, se_type = "CR3", linear_hypothesis = "x + z = 0")
+  lc <- clubSandwich::linear_contrast(lm(y ~ x + z, data = d), vcov = "CR3", cluster = d$cl,
+                                      contrasts = matrix(c(0, 1, 1), nrow = 1), test = "Satterthwaite")
+  expect_equal(lh$lh$std.error, lc$SE, tolerance = LIVE_TOL)
+  expect_equal(lh$lh$df, lc$df, tolerance = LIVE_TOL)
+})
