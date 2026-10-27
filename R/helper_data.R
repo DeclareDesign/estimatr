@@ -567,11 +567,15 @@ fe_dummy_matrix <- function(model_data) {
 # user asked for, before check_se_type() fills in a default: a default must
 # never trigger the expansion, which is what keeps absorption fast.
 #' @noRd
-needs_fe_dummies <- function(se_type) {
+needs_fe_dummies <- function(se_type, df_type = NULL, clustered = FALSE) {
   # HC2 and HC3 come from fe_leverage() for any number of factors. CR2 needs
   # the whole per-cluster block of the hat matrix, not just its diagonal, and
-  # has no such decomposition, so it is the only case left that expands.
-  isTRUE(se_type %in% c("CR2", "CR3"))
+  # has no such decomposition, so it is the only case left that expands. HC2's
+  # Satterthwaite degrees of freedom are computed as CR2's, so they expand too;
+  # `se_type` may still be NULL here, which is HC2 without clusters.
+  isTRUE(se_type %in% c("CR2", "CR3")) ||
+    (identical(df_type, "satterthwaite") && !clustered &&
+       (is.null(se_type) || identical(se_type, "HC2")))
 }
 
 # Whether the fit wants the leverage vector. It is asked before check_se_type()

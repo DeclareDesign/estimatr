@@ -15,7 +15,8 @@ lm_robust(
   ci = TRUE,
   alpha = 0.05,
   return_vcov = TRUE,
-  try_cholesky = FALSE
+  try_cholesky = FALSE,
+  df_type = NULL
 )
 }
 \arguments{
@@ -133,6 +134,20 @@ regressor whose true effect is zero. To check a design directly, scale the
 columns first, since the unscaled condition number of a design in mixed
 units is large for a reason that does not affect the fit:
 \code{kappa(sweep(X, 2, sqrt(colSums(X^2)), "/"), exact = TRUE)}.}
+
+\item{df_type}{(optional) The degrees of freedom for the t tests and
+confidence intervals. \code{NULL}, the default, gives each \code{se_type} its own:
+N - K for \code{"HC0"} through \code{"HC3"} and \code{"classical"}, Satterthwaite for
+\code{"CR2"} and \code{"CR3"}, and J - 1 for \code{"CR0"}, \code{"stata"}, and
+\code{"stata_nested"}. \code{"satterthwaite"} with \code{se_type = "HC2"} gives each
+coefficient, and each hypothesis in \code{\link[=lh_robust]{lh_robust()}}, the Bell and McCaffrey
+(2002) degrees of freedom that Imbens and Kolesar (2016) recommend with
+HC2: the CR2 Satterthwaite degrees of freedom with every observation its
+own cluster, where CR2 is HC2. They depend on which observations carry a
+coefficient's variance, so a contrast in an interacted model and the same
+contrast fit on the subset get the same degrees of freedom. The estimates
+and standard errors are unchanged. Not available with both \code{weights} and
+\code{fixed_effects}. \code{"residual"} is accepted where it is the default.}
 }
 \value{
 An object of class \code{"lm_robust"}, a list holding the estimate table in \code{coefficients}, \code{std.error}, \code{df}, \code{statistic},

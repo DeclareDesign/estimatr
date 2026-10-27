@@ -13,6 +13,7 @@
 #' @param subset (optional) A bare (unquoted) expression specifying a subset
 #' @param clusters (optional) A bare (unquoted) name of the cluster variable
 #' @param se_type (optional) The sort of standard error (see [lm_robust()])
+#' @param df_type (optional) The degrees of freedom (see [lm_robust()])
 #' @param ci (optional) Logical. Whether to compute p-values and confidence intervals.
 #' @param alpha (optional) The significance level, 0.05 by default.
 #' @param return_vcov (optional) Logical. Whether to return the vcov matrix.
@@ -120,7 +121,8 @@ lm_lin <- function(formula,
                    ci = TRUE,
                    alpha = .05,
                    return_vcov = TRUE,
-                   try_cholesky = FALSE) {
+                   try_cholesky = FALSE,
+                   df_type = NULL) {
 
   # Evaluating through enquo() applies `!!` and `{{ }}` at the call site, as
   # lm_robust() does, before update() deparses the formula into the full one.
@@ -286,7 +288,8 @@ lm_lin <- function(formula,
       return_vcov = return_vcov,
       try_cholesky = try_cholesky,
       has_int = has_intercept,
-      iv_stage = list(0)
+      iv_stage = list(0),
+      df_type = df_type
     )
 
   # Which treatment column each interaction was built from, taken from the

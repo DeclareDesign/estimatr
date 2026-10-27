@@ -72,6 +72,19 @@
 #' @param ci (optional) Logical. Whether to compute p-values and confidence intervals.
 #' @param alpha (optional) The significance level, 0.05 by default.
 #' @param return_vcov (optional) Logical. Whether to return the vcov matrix.
+#' @param df_type (optional) The degrees of freedom for the t tests and
+#'   confidence intervals. `NULL`, the default, gives each `se_type` its own:
+#'   N - K for `"HC0"` through `"HC3"` and `"classical"`, Satterthwaite for
+#'   `"CR2"` and `"CR3"`, and J - 1 for `"CR0"`, `"stata"`, and
+#'   `"stata_nested"`. `"satterthwaite"` with `se_type = "HC2"` gives each
+#'   coefficient, and each hypothesis in [lh_robust()], the Bell and McCaffrey
+#'   (2002) degrees of freedom that Imbens and Kolesar (2016) recommend with
+#'   HC2: the CR2 Satterthwaite degrees of freedom with every observation its
+#'   own cluster, where CR2 is HC2. They depend on which observations carry a
+#'   coefficient's variance, so a contrast in an interacted model and the same
+#'   contrast fit on the subset get the same degrees of freedom. The estimates
+#'   and standard errors are unchanged. Not available with both `weights` and
+#'   `fixed_effects`. `"residual"` is accepted where it is the default.
 #' @param try_cholesky (optional) Logical. Whether to solve by Cholesky
 #'   decomposition of `X'X` rather than by the default pivoted QR. `FALSE` by
 #'   default, and worth turning on in most applied settings: about 1.4 times
@@ -169,7 +182,8 @@ lm_robust <- function(formula,
                       ci = TRUE,
                       alpha = .05,
                       return_vcov = TRUE,
-                      try_cholesky = FALSE) {
+                      try_cholesky = FALSE,
+                      df_type = NULL) {
   datargs <- rlang::enquos(
     formula = formula,
     weights = weights,
@@ -287,12 +301,13 @@ lm_robust <- function(formula,
       iv_stage = list(0),
       fe_rank = fe_rank,
       fe_leverage = fe_lev,
-      femat = if (has_fe && needs_fe_dummies(se_type))
+      femat = if (has_fe && needs_fe_dummies(se_type, df_type, !is.null(model_data[["cluster"]])))
         fe_dummy_matrix(model_data)
         else NULL,
       # NULL here; the argument exists only in lm_robust_hypotheses() below.
       linear_hypothesis = get0("linear_hypothesis", envir = environment(), inherits = FALSE),
-      fe_rank_k = if (is.null(fe_rank_k)) fe_rank else fe_rank_k
+      fe_rank_k = if (is.null(fe_rank_k)) fe_rank else fe_rank_k,
+      df_type = df_type
     )
 
   return_list <- lm_return(

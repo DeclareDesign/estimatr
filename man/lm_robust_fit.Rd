@@ -21,7 +21,8 @@ lm_robust_fit(
   fe_leverage = NULL,
   femat = NULL,
   linear_hypothesis = NULL,
-  fe_rank_k = fe_rank
+  fe_rank_k = fe_rank,
+  df_type = NULL
 )
 }
 \arguments{
@@ -74,6 +75,11 @@ coefficients has the same degrees of freedom as each of them.}
 \code{se_type = "stata_nested"} factor: \code{fe_rank} less the fixed effects nested
 in the cluster variable. Read under that \code{se_type} alone; \code{fe_rank} still
 sets the residual degrees of freedom.}
+
+\item{df_type}{character or \code{NULL}, the degrees of freedom; see
+\code{\link[=lm_robust]{lm_robust()}}. \code{"satterthwaite"} with \code{se_type = "HC2"} takes them from a
+CR2 fit with every observation its own cluster, which needs \code{femat} under
+absorbed fixed effects.}
 }
 \description{
 Internal method that creates linear fits

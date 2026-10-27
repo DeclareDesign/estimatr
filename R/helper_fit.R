@@ -33,6 +33,10 @@
 #'   `se_type = "stata_nested"` factor: `fe_rank` less the fixed effects nested
 #'   in the cluster variable. Read under that `se_type` alone; `fe_rank` still
 #'   sets the residual degrees of freedom.
+#' @param df_type character or `NULL`, the degrees of freedom; see
+#'   [lm_robust()]. `"satterthwaite"` with `se_type = "HC2"` takes them from a
+#'   CR2 fit with every observation its own cluster, which needs `femat` under
+#'   absorbed fixed effects.
 #'
 #' @examples
 #' # The fitter behind lm_robust(), exported for packages that have already
@@ -64,7 +68,8 @@ lm_robust_fit <- function(y,
                           fe_leverage = NULL,
                           femat = NULL,
                           linear_hypothesis = NULL,
-                          fe_rank_k = fe_rank) {
+                          fe_rank_k = fe_rank,
+                          df_type = NULL) {
 
   # ----------
   # Check se type
@@ -75,6 +80,15 @@ lm_robust_fit <- function(y,
   se_type <- check_se_type(se_type, clustered, has_fe = (fe_rank > 0L),
                            has_fe_leverage = !is.null(fe_leverage),
                            fe_dummies = !is.null(femat), weighted = weighted)
+  df_type <- check_df_type(df_type, se_type, has_fe = (fe_rank > 0L),
+                           weighted = weighted)
+
+  # HC2 with Bell-McCaffrey degrees of freedom: the dummies are for the
+  # degrees-of-freedom pass alone, and the HC2 fit itself runs exactly as it
+  # does by default, on the leverage decomposition.
+  bm_df <- ci && identical(df_type, "satterthwaite") && se_type == "HC2"
+  femat_df <- femat
+  if (bm_df) femat <- NULL
 
   # -----------
   # Prep data for fitting
@@ -509,6 +523,23 @@ lm_robust_fit <- function(y,
       if (!is.null(hypotheses)) {
         return_list[["hypothesis_df"]] <- vcov_fit$hypothesis_dof
       }
+
+      # With every observation its own cluster CR2 is HC2, so its Satterthwaite
+      # degrees of freedom are Bell and McCaffrey's for HC2. Only the degrees
+      # of freedom are taken from that fit, which leaves every coefficient and
+      # variance above as the default HC2 fit returns them. Its messages and
+      # warnings are this fit's own, already given.
+      if (bm_df) {
+        df_fit <- suppressMessages(suppressWarnings(lm_robust_fit(
+          y = y, X = X, weights = weights, cluster = seq_len(NROW(X)),
+          ci = TRUE, se_type = "CR2", has_int = has_int, alpha = alpha,
+          return_vcov = FALSE, return_fit = FALSE, try_cholesky = try_cholesky,
+          iv_stage = iv_stage, fe_rank = fe_rank, femat = femat_df,
+          linear_hypothesis = linear_hypothesis, fe_rank_k = fe_rank_k
+        )))
+        return_list$df <- df_fit$df
+        return_list[["hypothesis_df"]] <- df_fit[["hypothesis_df"]]
+      }
     }
   }
 
@@ -762,6 +793,44 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE,
   }
 
   return(se_type)
+}
+
+# `df_type = NULL` keeps each se_type's own degrees of freedom: the residual
+# N - K for the HC family and classical, Satterthwaite for CR2 and CR3, and
+# J - 1 for CR0 and the Stata factors. Naming that default is accepted, and the
+# one alternative is Satterthwaite for HC2, where Bell and McCaffrey derived it.
+#' @noRd
+check_df_type <- function(df_type, se_type, has_fe = FALSE, weighted = FALSE) {
+  if (is.null(df_type) || se_type == "none") return(NULL)
+  if (!(identical(df_type, "residual") || identical(df_type, "satterthwaite"))) {
+    stop("`df_type` must be NULL, 'residual', or 'satterthwaite'.\nYou passed: ",
+         paste(df_type, collapse = ", "))
+  }
+  own <- if (se_type %in% c("CR2", "CR3")) {
+    "satterthwaite"
+  } else if (se_type %in% c("CR0", "stata", "stata_nested")) {
+    "clusters"
+  } else {
+    "residual"
+  }
+  if (df_type == own) return(df_type)
+  if (df_type == "satterthwaite" && se_type == "HC2") {
+    if (has_fe && weighted) {
+      stop(
+        "`df_type = \"satterthwaite\"` with `se_type = \"HC2\"` cannot be ",
+        "combined with `weights` and `fixed_effects`, for the reason `\"CR2\"` ",
+        "cannot: it expands the fixed effects into dummies.\nReplace ",
+        "`fixed_effects` with explicit dummies in the formula."
+      )
+    }
+    return(df_type)
+  }
+  stop(
+    "`df_type = \"", df_type, "\"` is not available with `se_type = \"",
+    se_type, "\"`.\n`\"satterthwaite\"` is available with \"HC2\", \"CR2\", ",
+    "and \"CR3\"; `\"residual\"` with \"HC0\", \"HC1\", \"HC2\", \"HC3\", ",
+    "and \"classical\"."
+  )
 }
 
 

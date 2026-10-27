@@ -46,6 +46,7 @@
 #'   test after aweights under `forceweights`, where Stata computes the
 #'   frequency-weight statistic instead.
 #' @param return_vcov (optional) Logical. Whether to return the vcov matrix.
+#' @param df_type (optional) The degrees of freedom (see [lm_robust()])
 #' @param try_cholesky (optional) Logical. Whether to solve by Cholesky
 #'   decomposition of `X'X` rather than by the default pivoted QR. `FALSE` by
 #'   default, and worth turning on in most applied settings: about 1.4 times
@@ -120,7 +121,8 @@ iv_robust <- function(formula,
                       alpha = .05,
                       diagnostics = FALSE,
                       return_vcov = TRUE,
-                      try_cholesky = FALSE) {
+                      try_cholesky = FALSE,
+                      df_type = NULL) {
   datargs <- rlang::enquos(
     formula = formula,
     weights = weights,
@@ -230,10 +232,11 @@ iv_robust <- function(formula,
       iv_stage = list(2, model_data$design_matrix),
       fe_rank = fe_rank,
       fe_leverage = fe_lev,
-      femat = if (has_fe && needs_fe_dummies(se_type))
+      femat = if (has_fe && needs_fe_dummies(se_type, df_type, !is.null(model_data[["cluster"]])))
         fe_dummy_matrix(model_data)
         else NULL,
-      fe_rank_k = if (is.null(fe_rank_k)) fe_rank else fe_rank_k
+      fe_rank_k = if (is.null(fe_rank_k)) fe_rank else fe_rank_k,
+      df_type = df_type
     )
 
   return_list <- lm_return(

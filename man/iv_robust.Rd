@@ -16,7 +16,8 @@ iv_robust(
   alpha = 0.05,
   diagnostics = FALSE,
   return_vcov = TRUE,
-  try_cholesky = FALSE
+  try_cholesky = FALSE,
+  df_type = NULL
 )
 }
 \arguments{
@@ -102,6 +103,8 @@ regressor whose true effect is zero. To check a design directly, scale the
 columns first, since the unscaled condition number of a design in mixed
 units is large for a reason that does not affect the fit:
 \code{kappa(sweep(X, 2, sqrt(colSums(X^2)), "/"), exact = TRUE)}.}
+
+\item{df_type}{(optional) The degrees of freedom (see \code{\link[=lm_robust]{lm_robust()}})}
 }
 \value{
 An object of class \code{"iv_robust"}, a list holding the estimate table in \code{coefficients}, \code{std.error}, \code{df}, \code{statistic},
