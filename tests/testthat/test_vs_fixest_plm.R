@@ -64,7 +64,8 @@ test_that("two-way absorption matches fixest", {
 # When every absorbed level sits inside one cluster, the two conventions for
 # the small-sample correction diverge: fixest's default `fixef.K = "nested"`
 # drops the nested absorbed parameters from K, and `fixef.K = "full"` keeps
-# them. This package keeps them, which is what Stata's areg does.
+# them. `se_type = "stata"` keeps them, which is what Stata's areg does, and
+# `se_type = "stata_nested"` drops them, which is what xtreg and reghdfe do.
 #
 # On data where the fixed effect is not nested in the cluster the two
 # conventions agree, so the tests above cannot tell them apart and the choice
@@ -81,6 +82,57 @@ test_that("absorbed parameters are counted in the cluster correction", {
   other <- ext_ref("fixest_nested_cluster_K_nested")
   expect_false(isTRUE(all.equal(unname(fit$std.error),
                                 unname(other$std.error), tolerance = 1e-6)))
+})
+
+# `se_type = "stata_nested"` is the other convention, `xtreg, fe` and
+# `reghdfe`'s, asked for by name (#337). The two-way cell is the shape of that
+# report: one factor nested in the cluster, whose levels leave K, and one not,
+# whose levels stay.
+test_that("stata_nested leaves nested absorbed parameters out of K", {
+  dn <- ext_data_fe_nested()
+  one <- lm_robust(y ~ x + z, fixed_effects = ~ g, clusters = cl, data = dn,
+                   se_type = "stata_nested")
+  expect_ext_equal(one, "fixest_nested_cluster_K_nested")
+  expect_ext_equal(
+    lm_robust(y ~ x + z, fixed_effects = ~ g + tm, clusters = cl, data = dn,
+              se_type = "stata_nested"),
+    "fixest_nested2_cluster_K_nested", tol = EXT_TOL_ITER
+  )
+
+  d_iv <- ext_data_fe_iv()
+  expect_ext_equal(
+    iv_robust(y ~ en + x | inst + x, data = d_iv, fixed_effects = ~ cl,
+              clusters = cl, se_type = "stata_nested"),
+    "fixest_iv_fecl_cluster_K_nested"
+  )
+  expect_ext_equal(
+    iv_robust(y ~ en + x | inst + x, data = d_iv, fixed_effects = ~ cl,
+              clusters = cl, weights = w, se_type = "stata_nested"),
+    "fixest_iv_fecl_w_cluster_K_nested"
+  )
+})
+
+# A factor counts as nested only when every one of its levels is. In the 2SLS
+# data `g` cycles through the clusters, so nothing is nested and the two
+# conventions are one number; the degrees of freedom are J - 1 under both.
+test_that("stata_nested is stata when no factor is nested", {
+  d_iv <- ext_data_fe_iv()
+  a <- lm_robust(y ~ x, fixed_effects = ~ g, clusters = cl, data = d_iv,
+                 se_type = "stata_nested")
+  b <- lm_robust(y ~ x, fixed_effects = ~ g, clusters = cl, data = d_iv,
+                 se_type = "stata")
+  expect_identical(a$std.error, b$std.error)
+  expect_identical(a$df, b$df)
+  expect_equal(a$se_type, "stata_nested")
+  expect_identical(
+    lm_robust(y ~ x, clusters = cl, data = d_iv, se_type = "stata_nested")$std.error,
+    lm_robust(y ~ x, clusters = cl, data = d_iv, se_type = "stata")$std.error
+  )
+  # Without clusters nothing is nested in anything.
+  expect_equal(
+    lm_robust(y ~ x, fixed_effects = ~ g, data = d_iv, se_type = "stata_nested")$se_type,
+    "HC1"
+  )
 })
 
 # ---- the 2SLS path ----

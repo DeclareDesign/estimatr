@@ -29,6 +29,10 @@
 #'   takes, whose `CR2` Satterthwaite degrees of freedom are returned as
 #'   `hypothesis_df`. Ignored for every other `se_type`, where a combination of
 #'   coefficients has the same degrees of freedom as each of them.
+#' @param fe_rank_k integer, the absorbed rank counted in K by the clustered
+#'   `se_type = "stata_nested"` factor: `fe_rank` less the fixed effects nested
+#'   in the cluster variable. Read under that `se_type` alone; `fe_rank` still
+#'   sets the residual degrees of freedom.
 #'
 #' @examples
 #' # The fitter behind lm_robust(), exported for packages that have already
@@ -59,7 +63,8 @@ lm_robust_fit <- function(y,
                           fe_rank = 0L,
                           fe_leverage = NULL,
                           femat = NULL,
-                          linear_hypothesis = NULL) {
+                          linear_hypothesis = NULL,
+                          fe_rank_k = fe_rank) {
 
   # ----------
   # Check se type
@@ -298,8 +303,10 @@ lm_robust_fit <- function(y,
         cluster = if (all_rows) data[["cluster"]] else data[["cluster"]][rows],
         J = data[["J_eff"]],
         ci = ci,
-        se_type = se_type,
-        fe_rank = fe_rank,
+        # The C++ knows one Stata factor; the nested convention differs from
+        # it only in K, which is the rank passed below.
+        se_type = if (se_type == "stata_nested") "stata" else se_type,
+        fe_rank = if (se_type == "stata_nested") fe_rank_k else fe_rank,
         # Only HC2/HC3 consume this; it is NULL for every other se_type and for
         # multi-way FE, so the C++ falls back to the plain hat value.
         fe_leverage = if (se_type %in% c("HC2", "HC3") && !is.null(fe_leverage))
@@ -657,8 +664,9 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE,
                           has_fe_leverage = FALSE,
                           fe_dummies = FALSE, weighted = FALSE) {
 
-  cl_se_types  <- c("CR0", "CR2", "CR3", "stata")
-  rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", "stata")
+  stata_se_types <- c("stata", "stata_nested")
+  cl_se_types  <- c("CR0", "CR2", "CR3", stata_se_types)
+  rob_se_types <- c("HC0", "HC1", "HC2", "HC3", "classical", stata_se_types)
 
   if (clustered) {
     if (is.null(se_type)) {
@@ -684,7 +692,8 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE,
       se_type <- if (has_fe) "CR0" else "CR2"
     } else if (!(se_type %in% c(cl_se_types, "none"))) {
       stop(
-        "`se_type` must be either 'CR0', 'stata', 'CR2', 'CR3', or 'none' when ",
+        "`se_type` must be either 'CR0', 'stata', 'stata_nested', 'CR2', ",
+        "'CR3', or 'none' when ",
         "`clusters` are specified.\nYou passed: ", se_type
       )
     }
@@ -695,7 +704,7 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE,
       # there is nothing to trade away and nothing to warn about. This is also
       # what 1.0.6 returned.
       se_type <- "HC2"
-    } else if (se_type %in% setdiff(cl_se_types, "stata")) {
+    } else if (se_type %in% setdiff(cl_se_types, stata_se_types)) {
       stop(
         "`se_type` must be either 'HC0', 'HC1', 'stata', 'HC2', 'HC3', ",
         "'classical' or 'none' with no `clusters`.\nYou passed: ", se_type,
@@ -707,7 +716,9 @@ check_se_type <- function(se_type, clustered, has_fe = FALSE,
         "'classical' or 'none' with no `clusters`.\nYou passed: ", se_type
       )
     }
-    if (se_type == "stata") se_type <- "HC1"
+    # Without clusters nothing is nested in anything, and both Stata
+    # conventions are HC1.
+    if (se_type %in% stata_se_types) se_type <- "HC1"
   }
 
   # Only now the fixed-effects branches. They used to run first and return

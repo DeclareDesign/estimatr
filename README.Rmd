@@ -34,6 +34,21 @@ To install the latest stable release of **estimatr**, please ensure that you are
 install.packages("estimatr")
 ```
 
+The development version, 2.0.1.9000, installs from GitHub:
+
+```r
+# install.packages("remotes")
+remotes::install_github("DeclareDesign/estimatr")
+```
+
+## In the development version
+
+Three changes since 2.0.1 on CRAN. `NEWS.md` has the detail.
+
+- **`se_type = "stata_nested"`** reproduces Stata's `xtreg, fe` and `reghdfe` when a fixed effect is nested in the cluster variable, as unit effects clustered by unit are. Stata counts K in its clustered small-sample factor two ways: `regress` with dummies and `areg` count every absorbed level, and `se_type = "stata"` still does, while `xtreg` and `reghdfe` leave out the nested levels. On the data in #337, `"stata"` gives 0.0136232 and `"stata_nested"` gives Stata's 0.0133478.
+- **`!!` and `{{ }}` in a formula** now work in `lm_lin()`, `difference_in_means()`, and `lh_robust()`, as they already did in `lm_robust()` and `iv_robust()`, so `lm_lin(!!sym(outcome) ~ z, covariates = ~ x, data = d)` works inside `purrr::map()` (#413).
+- **The `iv_robust()` first-stage F** is no longer `NA` when the first stage drops an excluded instrument (#305).
+
 ## Easy to use
 
 Once the package is installed, getting appropriate estimates and standard errors is both fast and easy.

@@ -27,6 +27,8 @@ values <- list()
 # is fixest's default, does not count nested absorbed parameters and differs
 # from estimatr by about 2e-3 on the nested data below.
 ssc_full <- ssc(adj = TRUE, fixef.K = "full", cluster.adj = TRUE)
+# What `se_type = "stata_nested"` corresponds to.
+ssc_nested <- ssc(adj = TRUE, fixef.K = "nested", cluster.adj = TRUE)
 
 d_fe <- ext_data_fe()
 
@@ -45,6 +47,11 @@ fe_fits$nested_cluster <- feols(y ~ x + z | g, data = d_nest,
                                 cluster = ~cl, ssc = ssc_full)
 fe_fits$nested_cluster_K_nested <-
   feols(y ~ x + z | g, data = d_nest, cluster = ~cl,
+        ssc = ssc(adj = TRUE, fixef.K = "nested", cluster.adj = TRUE))
+# `g` is nested in the cluster and `tm` is not, the shape of #337, so the
+# nested convention keeps one factor's levels in K and drops the other's.
+fe_fits$nested2_cluster_K_nested <-
+  feols(y ~ x + z | g + tm, data = d_nest, cluster = ~cl,
         ssc = ssc(adj = TRUE, fixef.K = "nested", cluster.adj = TRUE))
 
 for (nm in names(fe_fits)) {
@@ -73,7 +80,14 @@ iv_fits <- list(
   iv_fe2_hetero = feols(y ~ x | g + cl | en ~ inst, data = d_iv,
                           vcov = "hetero", ssc = ssc_full),
   iv_fe1_w_hetero = feols(y ~ x | g | en ~ inst, data = d_iv, weights = ~w,
-                          vcov = "hetero", ssc = ssc_full)
+                          vcov = "hetero", ssc = ssc_full),
+  # The cluster variable absorbed and clustered on, so the one factor is
+  # nested: `se_type = "stata_nested"` on the 2SLS path, with and without
+  # weights.
+  iv_fecl_cluster_K_nested = feols(y ~ x | cl | en ~ inst, data = d_iv,
+                          cluster = ~cl, ssc = ssc_nested),
+  iv_fecl_w_cluster_K_nested = feols(y ~ x | cl | en ~ inst, data = d_iv,
+                          weights = ~w, cluster = ~cl, ssc = ssc_nested)
 )
 
 for (nm in names(iv_fits)) {

@@ -1,5 +1,9 @@
 # estimatr (development version)
 
+## `se_type = "stata_nested"` reproduces `xtreg, fe` and `reghdfe`
+
+Stata counts K in its clustered small-sample factor two ways when a fixed effect is nested in the cluster variable, as unit effects clustered by unit are. `regress` with dummies and `areg` count every absorbed level, and so does `se_type = "stata"`, which is unchanged. `xtreg, fe` and `reghdfe` leave out the levels of a nested factor, as fixest's default `fixef.K = "nested"` does, and `se_type = "stata_nested"` now does the same in `lm_robust()` and `iv_robust()`. On the data in #337, two-way effects of 97 countries and 25 years clustered by country, `"stata"` gives 0.0136232 and `"stata_nested"` gives Stata's 0.0133478. A factor is nested only when every one of its levels sits inside one cluster. The two agree when no factor is nested, and without clusters both are `"HC1"`. See #337.
+
 ## `se_type = "CR3"`
 
 Clustered fits accept `se_type = "CR3"`, the jackknife-type estimator of Bell and McCaffrey (2002): each cluster's residuals are adjusted by the inverse of its block of I - H, where CR2 uses the inverse square root. For OLS and WLS it equals the sum of squared leave-one-cluster-out changes in the coefficients, with no (S-1)/S factor, and it matches `clubSandwich::vcovCR(type = "CR3")`, Satterthwaite degrees of freedom included, in `lm_robust()`, `iv_robust()`, and `lh_robust()`; `lm_lin()` passes it through. It is computed on a matrix the size of the coefficient vector whatever the cluster size, and through the generalized inverse where dropping a cluster leaves a coefficient unidentified, where clubSandwich stops with "system is computationally singular" and the leave-one-cluster-out sum still agrees with estimatr. As with CR2, absorbed fixed effects are expanded into dummies, and weights with absorbed fixed effects are refused. See #261.

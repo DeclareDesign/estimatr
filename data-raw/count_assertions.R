@@ -108,6 +108,9 @@ components <- list(
       "2SLS with absorbed fixed effects matches fixest" = "all",
       "two-way absorption on the 2SLS path matches fixest" = "all",
       "absorbed parameters are counted in the cluster correction" = "all",
+      "stata_nested leaves nested absorbed parameters out of K" = "all",
+      # estimatr against itself.
+      "stata_nested is stata when no factor is nested" = 0,
       "the within estimator matches plm with Arellano's variance" = "all",
       # Metadata on the recorded fixture, not a comparison.
       "the recorded reference is the one these versions produced" = 0
