@@ -16,7 +16,7 @@
 #'   `coefficients`, `std.error`, `statistic`, `p.value`, `alpha`, `conf.low`,
 #'   `conf.high`, `df`, `term`, and `outcome`; and `joint_hypothesis`, the Wald
 #'   F test of all of them at once, as `value`, `numdf`, `dendf`, and
-#'   `p.value`. Under `se_type = "CR2"` each hypothesis's `df` is its own
+#'   `p.value`. Under `se_type = "CR2"` or `"CR3"` each hypothesis's `df` is its own
 #'   Satterthwaite approximation, as `clubSandwich::linear_contrast()` computes
 #'   it, and `dendf` is the smallest of them.
 #'

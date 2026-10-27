@@ -571,7 +571,7 @@ needs_fe_dummies <- function(se_type) {
   # HC2 and HC3 come from fe_leverage() for any number of factors. CR2 needs
   # the whole per-cluster block of the hat matrix, not just its diagonal, and
   # has no such decomposition, so it is the only case left that expands.
-  isTRUE(se_type == "CR2")
+  isTRUE(se_type %in% c("CR2", "CR3"))
 }
 
 # Whether the fit wants the leverage vector. It is asked before check_se_type()

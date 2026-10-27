@@ -22,12 +22,12 @@
 #'   full design splits into the demeaned-X leverage plus a term that is cheap
 #'   to compute, so no dummy hat matrix is built.
 #'
-#'   `"CR2"` is the exception: its adjustment is built from cluster-level
+#'   `"CR2"` and `"CR3"` are the exception: their adjustments are built from cluster-level
 #'   blocks of the hat matrix rather than from the diagonal, and blocks do not
-#'   split that way, so it expands the dummies and pays for the expansion.
+#'   split that way, so they expand the dummies and pay for the expansion.
 #'   That is why `fixed_effects` with `clusters` defaults to `"CR0"`. Asking
 #'   for `se_type = "CR2"` still works and still gives the 1.0.6 number.
-#'   Refused is the three together: `"CR2"` with both `weights` and
+#'   Refused is the three together: `"CR2"` or `"CR3"` with both `weights` and
 #'   `fixed_effects`, as in estimatr 1.0.6.
 #'
 #'   The projection identity, the several-factor case, the exact-rank
@@ -38,15 +38,23 @@
 #'   \itemize{
 #'     \item No clusters, no FE: `"HC2"` (default), `"HC0"`, `"HC1"`,
 #'       `"HC3"`, `"classical"`, `"stata"`, `"none"`.
-#'     \item Clusters, no FE: `"CR2"` (default), `"CR0"`, `"stata"`,
+#'     \item Clusters, no FE: `"CR2"` (default), `"CR0"`, `"CR3"`, `"stata"`,
 #'       `"stata_nested"`, `"none"`.
 #'     \item No clusters, with FE (any number of factors): `"HC2"` (default),
 #'       `"HC0"`, `"HC1"`, `"HC3"`, `"classical"`, `"stata"`, `"none"`. The
 #'       same menu as with no FE at all.
-#'     \item Clusters, with FE: `"CR0"` (default), `"CR2"`, `"stata"`,
-#'       `"stata_nested"`, `"none"`. `"CR2"` expands the fixed effects into dummies, so it is not
-#'       the default here; it is refused with `weights`.
+#'     \item Clusters, with FE: `"CR0"` (default), `"CR2"`, `"CR3"`, `"stata"`,
+#'       `"stata_nested"`, `"none"`. `"CR2"` and `"CR3"` expand the fixed
+#'       effects into dummies, so neither is the default here; both are refused
+#'       with `weights`.
 #'   }
+#'   `"CR3"` is the Bell and McCaffrey (2002) jackknife-type estimator: the
+#'   adjustment is the inverse of each cluster's block of I - H rather than its
+#'   inverse square root, and for OLS and WLS it equals the sum of squared
+#'   leave-one-cluster-out changes in the coefficients, with no (S-1)/S
+#'   factor. Its degrees of freedom are Satterthwaite, as for `"CR2"`, and it
+#'   matches `clubSandwich::vcovCR(type = "CR3")`.
+#'
 #'   `"stata"` means two different things. With no clusters it is exactly
 #'   `"HC1"`, and the fitted object reports `se_type = "HC1"`. With clusters it
 #'   is **not** an alias for `"CR0"`: it is CR0 scaled by Stata's finite-sample
