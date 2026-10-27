@@ -353,13 +353,17 @@ variable.names.lm_robust <- function(object, ...) object[["term"]]
 
 #' @export
 model.frame.lm_robust <- function(formula, ...) {
-  # A fit stores no model frame, so it is rebuilt from the call as lm() does
-  # with `model = FALSE`. It goes through clean_model_data() rather than
-  # model.frame.default() so that the rows are the ones the fit used, including
-  # those dropped for a missing cluster, weight or fixed effect, and through the
-  # stored terms so that lm_lin()'s covariates, absent from its call's formula,
-  # are in it.
+  # Through the stored terms so that lm_lin()'s covariates, absent from its
+  # call's formula, are in it.
   object <- formula
+  rebuild_model_data(object, stats::formula(object[["terms"]]))[["model_frame"]]
+}
+
+# A fit stores no model frame, so it is rebuilt from the call as lm() does with
+# `model = FALSE`. It goes through clean_model_data() rather than
+# model.frame.default() so that the rows are the ones the fit used, including
+# those dropped for a missing cluster, weight or fixed effect.
+rebuild_model_data <- function(object, formula, estimator = "") {
   call <- object[["call"]]
   env <- environment(object[["terms"]])
   call_args <- c(
@@ -370,7 +374,7 @@ model.frame.lm_robust <- function(formula, ...) {
   )
   call_args <- call_args[call_args %in% names(call)]
   datargs <- c(
-    list(formula = rlang::new_quosure(stats::formula(object[["terms"]]), env)),
+    list(formula = rlang::new_quosure(formula, env)),
     lapply(call_args, function(arg) rlang::new_quosure(call[[arg]], env))
   )
   data <- rlang::new_quosure(
@@ -378,8 +382,7 @@ model.frame.lm_robust <- function(formula, ...) {
     env
   )
   # The fit has already given any warning about dropped rows.
-  model_data <- suppressWarnings(clean_model_data(data = data, datargs))
-  model_data[["model_frame"]]
+  suppressWarnings(clean_model_data(data = data, datargs, estimator = estimator))
 }
 
 #' @importFrom stats model.matrix
@@ -397,13 +400,35 @@ model.matrix.lm_robust <- function(object, ...) {
   X
 }
 
-# Without this method sandwich::bread() falls through to its default, which is
-# vcov(x) * nobs(x): the fit's robust variance, not the inverse Gram matrix, so
-# anything pairing it with sandwich::meat() returned a wrong number silently.
-# This is sandwich's bread.lm: (X'WX / n)^-1 on the estimated coefficients, with
-# n the observations carrying positive weight.
+# Without these methods sandwich::bread() falls through to its default, which
+# is vcov(x) * nobs(x): the fit's robust variance, not the inverse Gram matrix,
+# so anything pairing it with sandwich::meat() returned a wrong number silently.
+# Each is sandwich's bread for the matching model, (X'WX / n)^-1 on the
+# estimated coefficients, with n the observations carrying positive weight.
 #' @exportS3Method sandwich::bread
 bread.lm_robust <- function(x, ...) {
+  keep <- bread_columns(x)
+  w <- x[["weights"]]
+  sw <- if (is.null(w)) 1 else sqrt(w)
+  bread_from(model.matrix(x)[, keep, drop = FALSE] * sw, w)
+}
+
+# ivreg's bread.ivreg: X is replaced by its projection on the instruments,
+# taken in the weighted metric.
+#' @exportS3Method sandwich::bread
+bread.iv_robust <- function(x, ...) {
+  keep <- bread_columns(x)
+  model_data <- rebuild_model_data(x, x[["formula"]], estimator = "iv")
+  w <- x[["weights"]]
+  sw <- if (is.null(w)) 1 else sqrt(w)
+  X_hat <- qr.fitted(
+    qr(model_data[["instrument_matrix"]] * sw),
+    model_data[["design_matrix"]][, keep, drop = FALSE] * sw
+  )
+  bread_from(X_hat, w)
+}
+
+bread_columns <- function(x) {
   coefs <- as.matrix(coef(x))
   if (ncol(coefs) > 1) {
     stop("`bread()` is not available for a fit with several outcomes.",
@@ -413,10 +438,13 @@ bread.lm_robust <- function(x, ...) {
     stop("`bread()` is not available with `fixed_effects`: the absorbed ",
          "design is not stored on the fit.", call. = FALSE)
   }
-  X <- model.matrix(x)[, !is.na(coefs[, 1]), drop = FALSE]
-  w <- x[["weights"]]
-  if (is.null(w)) w <- rep(1, nrow(X))
-  solve(crossprod(X * sqrt(w))) * sum(w > 0)
+  !is.na(coefs[, 1])
+}
+
+# `X_w` is the design already multiplied by the square roots of the weights.
+bread_from <- function(X_w, w) {
+  n <- if (is.null(w)) nrow(X_w) else sum(w > 0)
+  solve(crossprod(X_w)) * n
 }
 
 #' @export

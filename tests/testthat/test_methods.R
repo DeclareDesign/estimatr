@@ -774,3 +774,37 @@ test_that("#422: bread() refuses what it cannot build", {
   fit_mv <- lm_robust(cbind(y, x) ~ z, data = d)
   expect_error(sandwich::bread(fit_mv), "several outcomes")
 })
+
+test_that("#422: bread() on an iv_robust fit is ivreg's bread.ivreg", {
+  skip_if_not_installed("sandwich")
+  skip_if_not_installed("ivreg")
+  set.seed(343)
+  n <- 80
+  d <- data.frame(z1 = rnorm(n), z2 = rnorm(n), x2 = rnorm(n), w = runif(n))
+  d$x <- d$z1 + 0.5 * d$z2 + rnorm(n)
+  d$y <- d$x + d$x2 + rnorm(n)
+  d$x3 <- 2 * d$x2
+  d$w[1:4] <- 0
+  cases <- list(
+    just = list(f = y ~ x + x2 | z1 + x2),
+    over = list(f = y ~ x + x2 | z1 + z2 + x2),
+    weighted = list(f = y ~ x + x2 | z1 + z2 + x2, weights = TRUE),
+    collinear = list(f = y ~ x + x2 + x3 | z1 + z2 + x2 + x3)
+  )
+  for (nm in names(cases)) {
+    cs <- cases[[nm]]
+    if (isTRUE(cs$weights)) {
+      fit <- iv_robust(cs$f, data = d, weights = w)
+      ref <- ivreg::ivreg(cs$f, data = d, weights = w)
+    } else {
+      fit <- suppressMessages(suppressWarnings(iv_robust(cs$f, data = d)))
+      ref <- suppressWarnings(ivreg::ivreg(cs$f, data = d))
+    }
+    expect_equal(unname(sandwich::bread(fit)), unname(sandwich::bread(ref)),
+                 tolerance = METH_TOL, info = nm)
+  }
+  # bread and meat compose to the fit's own HC0 variance.
+  fit <- iv_robust(y ~ x + x2 | z1 + z2 + x2, data = d, se_type = "HC0")
+  ref <- ivreg::ivreg(y ~ x + x2 | z1 + z2 + x2, data = d)
+  expect_equal(unname(sandwich::sandwich(ref)), unname(vcov(fit)), tolerance = METH_TOL)
+})
