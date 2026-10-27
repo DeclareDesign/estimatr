@@ -20,7 +20,8 @@ lm_robust_fit(
   fe_rank = 0L,
   fe_leverage = NULL,
   femat = NULL,
-  linear_hypothesis = NULL
+  linear_hypothesis = NULL,
+  fe_rank_k = fe_rank
 )
 }
 \arguments{
@@ -68,6 +69,11 @@ requested \code{se_type} requires it.}
 takes, whose \code{CR2} Satterthwaite degrees of freedom are returned as
 \code{hypothesis_df}. Ignored for every other \code{se_type}, where a combination of
 coefficients has the same degrees of freedom as each of them.}
+
+\item{fe_rank_k}{integer, the absorbed rank counted in K by the clustered
+\code{se_type = "stata_nested"} factor: \code{fe_rank} less the fixed effects nested
+in the cluster variable. Read under that \code{se_type} alone; \code{fe_rank} still
+sets the residual degrees of freedom.}
 }
 \description{
 Internal method that creates linear fits

@@ -19,7 +19,8 @@
 #'   leverage decomposition [lm_robust()] describes applies unchanged. `"CR2"`
 #'   with `fixed_effects` expands the dummies, as in estimatr 1.0.6.
 #'   Defaults: `"HC2"` (no clusters, with or without FE), `"CR2"` (clusters, no
-#'   FE), `"CR0"` (clusters, with FE).
+#'   FE), `"CR0"` (clusters, with FE). `"stata"` and `"stata_nested"` count
+#'   K as [lm_robust()] describes.
 #' @param ci (optional) Logical. Whether to compute p-values and confidence intervals.
 #' @param alpha (optional) The significance level, 0.05 by default.
 #' @param diagnostics (optional) Logical. Whether to compute IV diagnostic
@@ -131,6 +132,7 @@ iv_robust <- function(formula,
 
   has_fe  <- !is.null(model_data[["fixed_effects"]])
   fe_rank <- 0L
+  fe_rank_k <- NULL
   fe_lev <- NULL
   yoriginal <- NULL
 
@@ -165,6 +167,10 @@ iv_robust <- function(formula,
                            leverage = needs_fe_leverage(se_type, !is.null(model_data[["cluster"]])))
     fe_rank <- fe_proj[["rank"]]
     fe_lev <- fe_proj[["leverage"]]
+    if (identical(se_type, "stata_nested") && !is.null(model_data[["cluster"]])) {
+      fe_rank_k <- fe_rank_unnested(model_data[["fe_codes"]], model_data[["cluster"]],
+                                    model_data[["weights"]], fe_rank)
+    }
 
     # There is nothing to instrument once the fixed effects have absorbed the
     # whole design. 1.0.6 reached the solver and died on "length of 'dimnames'
@@ -225,7 +231,8 @@ iv_robust <- function(formula,
       fe_leverage = fe_lev,
       femat = if (has_fe && needs_fe_dummies(se_type))
         fe_dummy_matrix(model_data)
-        else NULL
+        else NULL,
+      fe_rank_k = if (is.null(fe_rank_k)) fe_rank else fe_rank_k
     )
 
   return_list <- lm_return(

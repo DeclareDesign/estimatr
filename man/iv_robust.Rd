@@ -41,7 +41,8 @@ regressors, but those are demeaned by the same fixed effects, so the
 leverage decomposition \code{\link[=lm_robust]{lm_robust()}} describes applies unchanged. \code{"CR2"}
 with \code{fixed_effects} expands the dummies, as in estimatr 1.0.6.
 Defaults: \code{"HC2"} (no clusters, with or without FE), \code{"CR2"} (clusters, no
-FE), \code{"CR0"} (clusters, with FE).}
+FE), \code{"CR0"} (clusters, with FE). \code{"stata"} and \code{"stata_nested"} count
+K as \code{\link[=lm_robust]{lm_robust()}} describes.}
 
 \item{ci}{(optional) Logical. Whether to compute p-values and confidence intervals.}
 

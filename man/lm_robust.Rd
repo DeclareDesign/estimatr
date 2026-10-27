@@ -57,19 +57,29 @@ and/or fixed effects are present:
 \itemize{
 \item No clusters, no FE: \code{"HC2"} (default), \code{"HC0"}, \code{"HC1"},
 \code{"HC3"}, \code{"classical"}, \code{"stata"}, \code{"none"}.
-\item Clusters, no FE: \code{"CR2"} (default), \code{"CR0"}, \code{"stata"}, \code{"none"}.
+\item Clusters, no FE: \code{"CR2"} (default), \code{"CR0"}, \code{"stata"},
+\code{"stata_nested"}, \code{"none"}.
 \item No clusters, with FE (any number of factors): \code{"HC2"} (default),
 \code{"HC0"}, \code{"HC1"}, \code{"HC3"}, \code{"classical"}, \code{"stata"}, \code{"none"}. The
 same menu as with no FE at all.
 \item Clusters, with FE: \code{"CR0"} (default), \code{"CR2"}, \code{"stata"},
-\code{"none"}. \code{"CR2"} expands the fixed effects into dummies, so it is not
+\code{"stata_nested"}, \code{"none"}. \code{"CR2"} expands the fixed effects into dummies, so it is not
 the default here; it is refused with \code{weights}.
 }
 \code{"stata"} means two different things. With no clusters it is exactly
 \code{"HC1"}, and the fitted object reports \code{se_type = "HC1"}. With clusters it
 is \strong{not} an alias for \code{"CR0"}: it is CR0 scaled by Stata's finite-sample
 factor, \code{(J / (J - 1)) * ((N - 1) / (N - K))} on the variance, and the
-object reports \code{se_type = "stata"} to keep the distinction visible.}
+object reports \code{se_type = "stata"} to keep the distinction visible.
+
+Stata itself counts K two ways when a fixed effect is nested in the
+cluster variable, as unit effects clustered by unit are. \code{"stata"} counts
+every absorbed level, as \code{regress} with dummies and \code{areg} do.
+\code{"stata_nested"} leaves out each factor in \code{fixed_effects} whose every
+level sits inside one cluster, as \verb{xtreg, fe}, \code{reghdfe}, and fixest's
+default \code{fixef.K = "nested"} do, and so gives the smaller standard error.
+The two agree when no factor is nested, and without clusters both are
+\code{"HC1"}. Dummies written into the formula are counted in full by either.}
 
 \item{ci}{(optional) Logical. Whether to compute p-values and confidence intervals.}
 

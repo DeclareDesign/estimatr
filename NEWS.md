@@ -1,5 +1,9 @@
 # estimatr (development version)
 
+## `se_type = "stata_nested"` reproduces `xtreg, fe` and `reghdfe`
+
+Stata counts K in its clustered small-sample factor two ways when a fixed effect is nested in the cluster variable, as unit effects clustered by unit are. `regress` with dummies and `areg` count every absorbed level, and so does `se_type = "stata"`, which is unchanged. `xtreg, fe` and `reghdfe` leave out the levels of a nested factor, as fixest's default `fixef.K = "nested"` does, and `se_type = "stata_nested"` now does the same in `lm_robust()` and `iv_robust()`. On the data in #337, two-way effects of 97 countries and 25 years clustered by country, `"stata"` gives 0.0136232 and `"stata_nested"` gives Stata's 0.0133478. A factor is nested only when every one of its levels sits inside one cluster. The two agree when no factor is nested, and without clusters both are `"HC1"`. See #337.
+
 ## `!!` in a formula now works in `lm_lin()`, `difference_in_means()`, and `lh_robust()`
 
 `lm_robust()` and `iv_robust()` apply `!!` and `{{ }}` in the formula at the call site, so `lm_robust(!!sym(outcome) ~ z, data = d)` works inside `purrr::map()`. The other three estimators forced the formula before capturing it, and failed with `could not find function "sym"`. They now capture it first. The `covariates` formula of `lm_lin()` gets the same treatment. See #413.

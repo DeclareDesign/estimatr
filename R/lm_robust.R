@@ -38,12 +38,13 @@
 #'   \itemize{
 #'     \item No clusters, no FE: `"HC2"` (default), `"HC0"`, `"HC1"`,
 #'       `"HC3"`, `"classical"`, `"stata"`, `"none"`.
-#'     \item Clusters, no FE: `"CR2"` (default), `"CR0"`, `"stata"`, `"none"`.
+#'     \item Clusters, no FE: `"CR2"` (default), `"CR0"`, `"stata"`,
+#'       `"stata_nested"`, `"none"`.
 #'     \item No clusters, with FE (any number of factors): `"HC2"` (default),
 #'       `"HC0"`, `"HC1"`, `"HC3"`, `"classical"`, `"stata"`, `"none"`. The
 #'       same menu as with no FE at all.
 #'     \item Clusters, with FE: `"CR0"` (default), `"CR2"`, `"stata"`,
-#'       `"none"`. `"CR2"` expands the fixed effects into dummies, so it is not
+#'       `"stata_nested"`, `"none"`. `"CR2"` expands the fixed effects into dummies, so it is not
 #'       the default here; it is refused with `weights`.
 #'   }
 #'   `"stata"` means two different things. With no clusters it is exactly
@@ -51,6 +52,15 @@
 #'   is **not** an alias for `"CR0"`: it is CR0 scaled by Stata's finite-sample
 #'   factor, `(J / (J - 1)) * ((N - 1) / (N - K))` on the variance, and the
 #'   object reports `se_type = "stata"` to keep the distinction visible.
+#'
+#'   Stata itself counts K two ways when a fixed effect is nested in the
+#'   cluster variable, as unit effects clustered by unit are. `"stata"` counts
+#'   every absorbed level, as `regress` with dummies and `areg` do.
+#'   `"stata_nested"` leaves out each factor in `fixed_effects` whose every
+#'   level sits inside one cluster, as `xtreg, fe`, `reghdfe`, and fixest's
+#'   default `fixef.K = "nested"` do, and so gives the smaller standard error.
+#'   The two agree when no factor is nested, and without clusters both are
+#'   `"HC1"`. Dummies written into the formula are counted in full by either.
 #' @param ci (optional) Logical. Whether to compute p-values and confidence intervals.
 #' @param alpha (optional) The significance level, 0.05 by default.
 #' @param return_vcov (optional) Logical. Whether to return the vcov matrix.
@@ -164,6 +174,7 @@ lm_robust <- function(formula,
 
   has_fe  <- !is.null(model_data[["fixed_effects"]])
   fe_rank <- 0L
+  fe_rank_k <- NULL
   fe_lev <- NULL
   yoriginal <- NULL
 
@@ -183,6 +194,10 @@ lm_robust <- function(formula,
                            leverage = needs_fe_leverage(se_type, !is.null(model_data[["cluster"]])))
     fe_rank <- fe_proj[["rank"]]
     fe_lev <- fe_proj[["leverage"]]
+    if (identical(se_type, "stata_nested") && !is.null(model_data[["cluster"]])) {
+      fe_rank_k <- fe_rank_unnested(model_data[["fe_codes"]], model_data[["cluster"]],
+                                    model_data[["weights"]], fe_rank)
+    }
 
     if (ncol(model_data$design_matrix) == 0L) {
       # A zero-weight row is not an observation here either; lm_robust_fit()
@@ -268,7 +283,8 @@ lm_robust <- function(formula,
         fe_dummy_matrix(model_data)
         else NULL,
       # NULL here; the argument exists only in lm_robust_hypotheses() below.
-      linear_hypothesis = get0("linear_hypothesis", envir = environment(), inherits = FALSE)
+      linear_hypothesis = get0("linear_hypothesis", envir = environment(), inherits = FALSE),
+      fe_rank_k = if (is.null(fe_rank_k)) fe_rank else fe_rank_k
     )
 
   return_list <- lm_return(

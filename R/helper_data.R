@@ -503,6 +503,32 @@ fe_leverage <- function(fe_codes, w = NULL, leverage = TRUE) {
        leverage = if (unweighted) lev else w * lev)
 }
 
+# The rank `se_type = "stata_nested"` counts in K: that of the fixed effects
+# left once every factor nested in the cluster variable is set aside, which is
+# how Stata's `xtreg, fe` and `reghdfe` and fixest's `fixef.K = "nested"` count
+# them. Nesting is a property of a whole factor, as in fixest: a factor is set
+# aside only when every one of its levels sits inside a single cluster, so a
+# factor with some levels inside one cluster and some spread across several
+# keeps all of them. The absorbed intercept is always counted, so a fit whose
+# every factor is nested has K = rank(X) + 1, which is what `xtreg` and fixest
+# both report. On the #337 data, two-way effects of 97 countries and 25 years
+# clustered by country, this is 25 against `fe_rank`'s 121, and the standard
+# error moves from 0.0136232 to Stata's 0.0133478.
+#' @noRd
+fe_rank_unnested <- function(fe_codes, cluster, w = NULL, fe_rank) {
+  # A zero-weight row is not an observation, so it cannot break a nesting.
+  rows <- if (is.null(w)) seq_along(cluster) else which(w > 0)
+  cl <- match(cluster[rows], unique(cluster[rows]))
+  nested <- vapply(fe_codes, function(f) {
+    f <- f[rows]
+    # Nested exactly when no level pairs with more than one cluster.
+    length(unique(f + max(f) * (cl - 1))) == length(unique(f))
+  }, logical(1))
+  if (!any(nested)) return(fe_rank)
+  if (all(nested)) return(1L)
+  fe_leverage(fe_codes[!nested], w, leverage = FALSE)[["rank"]]
+}
+
 # HC2, HC3 and CR2 are built from the hat values of the full [X | FE dummies]
 # design. Under a single factor those decompose into `fe_leverage` (see
 # demean_fes) and no dummy matrix is needed, but under two or more factors, and
