@@ -246,6 +246,22 @@ List lm_solver(const Eigen::Map<Eigen::MatrixXd>& X,
   );
 }
 
+// A^(-1/2) for a symmetric positive semi-definite A, with the eigenvalues at or
+// below 1e-12 sent to 0 rather than inverted: the generalized inverse square
+// root the CR2 adjustment is defined with.
+static Eigen::MatrixXd inv_sqrt_psd(const Eigen::MatrixXd& A) {
+  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eig(A);
+  Eigen::VectorXd eigvals = eig.eigenvalues();
+  for (int m = 0; m < eigvals.size(); ++m) {
+    if (eigvals(m) > std::pow(10.0, -12.0)) {
+      eigvals(m) = 1.0 / std::sqrt(eigvals(m));
+    } else {
+      eigvals(m) = 0;
+    }
+  }
+  return eig.eigenvectors() * eigvals.asDiagonal() * eig.eigenvectors().transpose();
+}
+
 // Satterthwaite degrees of freedom for one row of the CR2 components: a single
 // coefficient, or a linear combination of coefficients. Each row of H1s, H2s
 // and H3s is linear in the corresponding row of the per-cluster matrix the
@@ -563,32 +579,55 @@ List lm_variance(Eigen::Map<Eigen::MatrixXd>& X,
 
           if (cr2) {
 
-            Eigen::MatrixXd H =
-              Xoriginal.block(start_pos, 0, len, meat_cols) *
-              meatXtX_inv *
-              X.block(start_pos, 0, len, meat_cols).transpose();
+            const Eigen::MatrixXd U_c = Xoriginal.block(start_pos, 0, len, meat_cols);
+            const Eigen::MatrixXd X_c = X.block(start_pos, 0, len, meat_cols);
 
-            Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> At_WX(
-                (Eigen::MatrixXd::Identity(len, len) - H) - H.transpose() +
-                  Xoriginal.block(start_pos, 0, len, meat_cols) *
-                  MUWTWUM *
-                  Xoriginal.block(start_pos, 0, len, meat_cols).transpose()
-            );
+            // A = I - H - H' + U (M X'X M) U' with H = U M X', so A - I is spanned by
+            // the columns of [U, X], and by U alone when the fit is unweighted
+            // and X is U. With Q an orthonormal basis of a space containing
+            // those columns, A = I + Q (B - I) Q' for B = Q'AQ, and therefore
+            // A^(-1/2) X = X + Q (B^(-1/2) - I) Q'X: the eigenvalues of A are
+            // those of B and 1, so the 1e-12 cutoff falls on the same ones.
+            // Q need only contain the span, so the thin Q of a plain QR serves
+            // even when the cluster's columns are collinear, and no rank is
+            // decided. Eigendecomposing the len-by-len A costs O(len^3) time
+            // and O(len^2) memory, which is a bad_alloc for a cluster of
+            // 20,000 rows (#276, #318); B is at most 2 meat_cols square.
+            // Niccodemi, Alessie, Angelini, Mierau and Wansbeek (2020,
+            // "Refining clustered standard errors with few clusters", SOM
+            // Research Report 2020002-EEF, section 4) make the same reduction
+            // for unweighted OLS with a full-rank cluster, through
+            // R'(I - RR')^a = (I - R'R)^a R'. Under weights H is not symmetric
+            // and the span needs both U and X, and the cutoff above is what a
+            // rank-deficient cluster needs, so neither of those is in theirs.
+            const int k = Xunweighted.isNotNull() ? 2 * meat_cols : meat_cols;
 
-            Eigen::VectorXd eigvals = At_WX.eigenvalues();
-            for (int m = 0; m < eigvals.size(); ++m) {
-              if (eigvals(m) > std::pow(10.0, -12.0)) {
-                eigvals(m) = 1.0 / std::sqrt(eigvals(m));
-              } else {
-                eigvals(m) = 0;
-              }
+            if (len <= k) {
+              const Eigen::MatrixXd H = U_c * meatXtX_inv * X_c.transpose();
+              At_WX_inv =
+                inv_sqrt_psd(
+                  (Eigen::MatrixXd::Identity(len, len) - H) - H.transpose() +
+                    U_c * MUWTWUM * U_c.transpose()
+                ) * X_c;
+            } else {
+              Eigen::MatrixXd UX(len, k);
+              UX.leftCols(meat_cols) = U_c;
+              if (k > meat_cols) UX.rightCols(meat_cols) = X_c;
+              Eigen::HouseholderQR<Eigen::MatrixXd> qr(UX);
+              const Eigen::MatrixXd Q =
+                qr.householderQ() * Eigen::MatrixXd::Identity(len, k);
+
+              const Eigen::MatrixXd QU = Q.transpose() * U_c;
+              const Eigen::MatrixXd QX = Q.transpose() * X_c;
+              const Eigen::MatrixXd QHQ = QU * meatXtX_inv * QX.transpose();
+              const Eigen::MatrixXd B =
+                (Eigen::MatrixXd::Identity(k, k) - QHQ) - QHQ.transpose() +
+                  QU * MUWTWUM * QU.transpose();
+
+              At_WX_inv =
+                X_c +
+                Q * ((inv_sqrt_psd(B) - Eigen::MatrixXd::Identity(k, k)) * QX);
             }
-
-            At_WX_inv =
-              At_WX.eigenvectors() *
-              eigvals.asDiagonal() *
-              At_WX.eigenvectors().transpose() *
-              X.block(start_pos, 0, len, meat_cols);
 
             if (ci) {
 

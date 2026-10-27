@@ -165,6 +165,30 @@ test_that("CR2 on the hostile design matches CR2 written from its definition", {
   }
 })
 
+# A cluster with more rows than 2p (p without weights) has its adjustment
+# computed in the span of its design columns rather than from the full
+# n_c-by-n_c matrix (#276, #318). The sizes put clusters on both sides of that
+# switch, and `z` is constant within cluster, so the columns spanning a cluster
+# are collinear.
+test_that("CR2 agrees with its definition on both sides of the low-rank switch", {
+  set.seed(343)
+  sizes <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 30, 200)
+  d_lr <- data.frame(cl = rep(seq_along(sizes), sizes))
+  n_lr <- nrow(d_lr)
+  d_lr$z <- rbinom(length(sizes), 1, 0.5)[d_lr$cl]
+  d_lr$x <- rnorm(n_lr)
+  d_lr$w <- rexp(n_lr)
+  d_lr$y <- d_lr$z + d_lr$x + rnorm(length(sizes))[d_lr$cl] + rnorm(n_lr)
+  X <- model.matrix(~ z + x, d_lr)
+  fit <- lm_robust(y ~ z + x, data = d_lr, clusters = cl, se_type = "CR2")
+  expect_equal(unname(fit$vcov), cr2_by_definition(X, d_lr$y, d_lr$cl),
+               tolerance = LIVE_TOL)
+  fit <- lm_robust(y ~ z + x, data = d_lr, clusters = cl, weights = w,
+                   se_type = "CR2")
+  expect_equal(unname(fit$vcov), cr2_by_definition(X, d_lr$y, d_lr$cl, d_lr$w),
+               tolerance = LIVE_TOL)
+})
+
 test_that("CR2 and its degrees of freedom match clubSandwich on the hostile design", {
   fits <- list(
     unweighted = list(m = lm(hard_formula, data = dh), w = NULL),

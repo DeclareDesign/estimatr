@@ -612,6 +612,21 @@ test_that("the collinearity message says what the dropped column is spanned by",
   expect_true(any(grepl(
     "X_sum is a linear combination of Z and X_income", got$messages, fixed = TRUE
   )))
+
+  # One spanning column at a coefficient other than 1 used to fall through to
+  # the three-or-more branch and print "a linear combination of , and X_income".
+  span$X_double <- 2 * span$X_income
+  got <- collect_messages(lm_robust(y ~ Z + X_income + X_double, data = span))
+  expect_true(any(grepl(
+    "X_double is a multiple of X_income.", got$messages, fixed = TRUE
+  )))
+
+  span$X_three <- span$Z + span$X_income + 1
+  got <- collect_messages(lm_robust(y ~ Z + X_income + X_three, data = span))
+  expect_true(any(grepl(
+    "X_three is a linear combination of (Intercept), Z, and X_income",
+    got$messages, fixed = TRUE
+  )))
 })
 
 # ---- rank deficiency in lm_robust's own design ----
