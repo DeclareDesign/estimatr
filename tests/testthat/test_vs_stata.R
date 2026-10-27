@@ -158,20 +158,20 @@ test_that("iv_robust reproduces Stata's ivregress 2sls", {
   }
 })
 
-test_that("weighted 2SLS root MSE follows AER::ivreg rather than Stata", {
+test_that("weighted 2SLS root MSE follows ivreg rather than Stata", {
   # Stata rescales the weights when forming the root mean squared error for
   # aweighted 2SLS; R's ivreg does not, and this package follows ivreg. As with
   # the leverage case above, the divergence is pinned from both sides: equal to
   # the R reference, and different from Stata by a bounded amount.
-  skip_if_not_installed("AER")
+  skip_if_not_installed("ivreg")
   st <- read_stata_fixture(
     "stata-iv-ests.txt",
     c("model", "v_hp", "v_am", "v_cons", "F", "r2", "r2a", "rmse")
   )
   fit <- iv_robust(mpg ~ hp + am | wt + gear, data = d, weights = w, se_type = "classical")
-  aer <- AER::ivreg(mpg ~ hp + am | wt + gear, data = d, weights = w)
+  ref <- ivreg::ivreg(mpg ~ hp + am | wt + gear, data = d, weights = w)
 
-  expect_equal(sqrt(fit$res_var), aer$sigma, tolerance = LIVE_TOL)
+  expect_equal(sqrt(fit$res_var), ref$sigma, tolerance = LIVE_TOL)
 
   i <- match("classical_w", st$model)
   rel <- abs(sqrt(fit$res_var) - as.numeric(st$rmse[i])) / as.numeric(st$rmse[i])

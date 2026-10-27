@@ -25,20 +25,20 @@ iv_data <- function() {
 
 d <- iv_data()
 
-# Measured gaps against AER below are at most 4e-14.
+# Measured gaps against ivreg below are at most 4e-14.
 IV_TOL <- 1e-10
 
-test_that("2SLS matches AER::ivreg, with an exogenous covariate and with weights", {
-  # Classical, where AER's own vcov() is the same estimator. The robust
+test_that("2SLS matches ivreg, with an exogenous covariate and with weights", {
+  # Classical, where ivreg's own vcov() is the same estimator. The robust
   # variances are compared through sandwich in test_vs_sandwich.R.
-  skip_if_not_installed("AER")
+  skip_if_not_installed("ivreg")
   fit <- iv_robust(y ~ en + w | inst + w, data = d, se_type = "classical")
-  ref <- AER::ivreg(y ~ en + w | inst + w, data = d)
+  ref <- ivreg::ivreg(y ~ en + w | inst + w, data = d)
   expect_equal(unname(fit$coefficients), unname(coef(ref)), tolerance = IV_TOL)
   expect_equal(unname(fit$vcov), unname(vcov(ref)), tolerance = IV_TOL)
 
   fit <- iv_robust(y ~ en + w | inst + w, data = d, se_type = "classical", weights = wt)
-  ref <- AER::ivreg(y ~ en + w | inst + w, data = d, weights = wt)
+  ref <- ivreg::ivreg(y ~ en + w | inst + w, data = d, weights = wt)
   expect_equal(unname(fit$coefficients), unname(coef(ref)), tolerance = IV_TOL)
   expect_equal(unname(fit$vcov), unname(vcov(ref)), tolerance = IV_TOL)
 })
@@ -58,11 +58,11 @@ test_that("#345: iv_robust returns structural residuals", {
 
 # ---- diagnostics ----
 
-test_that("classical diagnostics match AER: weak instruments, Wu-Hausman, Sargan", {
-  skip_if_not_installed("AER")
+test_that("classical diagnostics match ivreg: weak instruments, Wu-Hausman, Sargan", {
+  skip_if_not_installed("ivreg")
   fit <- iv_robust(y ~ en + w | inst + inst2 + w, data = d, se_type = "classical",
                    diagnostics = TRUE)
-  ref <- summary(AER::ivreg(y ~ en + w | inst + inst2 + w, data = d),
+  ref <- summary(ivreg::ivreg(y ~ en + w | inst + inst2 + w, data = d),
                  diagnostics = TRUE)$diagnostics
 
   weak <- fit$diagnostic_first_stage_fstatistic
@@ -83,18 +83,15 @@ test_that("classical diagnostics match AER: weak instruments, Wu-Hausman, Sargan
   expect_equal(overid[["p.value"]], ref["Sargan", "p-value"], tolerance = IV_TOL)
 })
 
-test_that("robust weak-instrument and Wu-Hausman tests match AER given sandwich's variance", {
-  # AER computes both as Wald tests when handed a variance function, which
+test_that("robust weak-instrument and Wu-Hausman tests match ivreg given sandwich's variance", {
+  # ivreg computes both as Wald tests when handed a variance function, which
   # makes it a reference for the robust versions too. It computes no robust
   # over-identification test; Wooldridge's score test is held to Stata's
   # `estat overid` in test_vs_stata.R.
-  #
-  # This file runs before test_vs_sandwich.R loads the ivreg package, whose
-  # summary method then shadows AER's and cannot read an AER fit's hat values.
-  skip_if_not_installed("AER")
+  skip_if_not_installed("ivreg")
   skip_if_not_installed("sandwich")
   fml <- y ~ en + w | inst + inst2 + w
-  ref_fit <- AER::ivreg(fml, data = d)
+  ref_fit <- ivreg::ivreg(fml, data = d)
   for (ty in c("HC0", "HC1", "HC2", "HC3")) {
     fit <- iv_robust(fml, data = d, se_type = ty, diagnostics = TRUE)
     ref <- summary(ref_fit, vcov. = function(obj) sandwich::vcovHC(obj, type = ty),
@@ -353,8 +350,8 @@ test_that("a `.` on either side of the IV formula expands against the data", {
 
   # Second channel: the expansion is a formula question rather than an estimatr
   # one, so it is pinned against the package that owns the convention.
-  skip_if_not_installed("AER")
-  a <- AER::ivreg(y ~ en + x + w | inst + inst2 + x + w, data = d)
+  skip_if_not_installed("ivreg")
+  a <- ivreg::ivreg(y ~ en + x + w | inst + inst2 + x + w, data = d)
   expect_equal(cases$both$coefficients[kept], coef(a)[kept])
 })
 

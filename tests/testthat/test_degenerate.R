@@ -287,26 +287,27 @@ test_that("an underidentified regressor is NA and the rest of the fit stands", {
   expect_reduces_to(full, lm_robust(Y ~ W, data = b), "flat first stage, exogenous W")
 })
 
-test_that("AER::ivreg agrees where it drops the unidentified regressor", {
-  skip_if_not_installed("AER")
+test_that("ivreg agrees where it drops the unidentified regressor", {
+  skip_if_not_installed("ivreg")
   expect_message(full <- iv_robust(mpg ~ hp + cyl | am, data = mtcars),
                  "collinear with other regressors")
-  aer <- suppressWarnings(AER::ivreg(mpg ~ hp + cyl | am, data = mtcars))
-  expect_equal(coef(full), coef(aer), tolerance = DEG_TOL)
+  ref <- suppressWarnings(ivreg::ivreg(mpg ~ hp + cyl | am, data = mtcars))
+  expect_equal(coef(full), coef(ref), tolerance = DEG_TOL)
 
   b <- flat_iv_data()
   expect_message(full <- iv_robust(Y ~ X + W | Z + W, data = b), "returned as NA: X")
-  expect_equal(coef(full), coef(AER::ivreg(Y ~ X + W | Z + W, data = b)),
+  expect_equal(coef(full), coef(ivreg::ivreg(Y ~ X + W | Z + W, data = b)),
                tolerance = DEG_TOL)
 
-  # Where AER drops by column position it keeps the unidentified regressor
+  # Where ivreg drops by column position it keeps the unidentified regressor
   # instead, and this is the one case the two deliberately disagree. `en`'s
-  # fitted values lie in the span of the intercept and `x1` to 6e-16, so AER's
+  # fitted values lie in the span of the intercept and `x1` to 6e-16, so ivreg's
   # `en` coefficient is that combination wearing `en`'s name, and its residuals
   # are formed from `en` rather than from what was fitted.
-  aer <- AER::ivreg(y ~ en + x1 | x1 + dup, data = d)
-  expect_true(is.na(coef(aer)[["x1"]]))
-  expect_false(is.na(coef(aer)[["en"]]))
+  expect_warning(ref <- ivreg::ivreg(y ~ en + x1 | x1 + dup, data = d),
+                 "instrumental variables are collinear")
+  expect_true(is.na(coef(ref)[["x1"]]))
+  expect_false(is.na(coef(ref)[["en"]]))
   expect_message(full <- iv_robust(y ~ en + x1 | x1 + dup, data = d),
                  "returned as NA: en")
   expect_true(is.na(coef(full)[["en"]]))
@@ -1018,12 +1019,12 @@ test_that("iv_robust drops the later exogenous column, as ivreg does", {
   reduced <- iv_robust(y ~ en + a1 + a2 | inst + a1 + a2, data = od)
   expect_equal(coef(full)[!is.na(coef(full))], coef(reduced), tolerance = 1e-8)
 
-  skip_if_not_installed("AER")
-  aer <- suppressWarnings(
-    AER::ivreg(y ~ en + a1 + a2 + a3 | inst + a1 + a2 + a3, data = od)
+  skip_if_not_installed("ivreg")
+  ref <- suppressWarnings(
+    ivreg::ivreg(y ~ en + a1 + a2 + a3 | inst + a1 + a2 + a3, data = od)
   )
-  expect_equal(na_names(coef(aer)), "a3")
-  expect_equal(coef(full), coef(aer), tolerance = DEG_TOL)
+  expect_equal(na_names(coef(ref)), "a3")
+  expect_equal(coef(full), coef(ref), tolerance = DEG_TOL)
 })
 
 # try_cholesky selects the arithmetic and never the answer, which means the

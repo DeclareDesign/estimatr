@@ -120,8 +120,8 @@ test_that("CR2 with absorbed fixed effects matches clubSandwich on the dummy exp
 
 # ---- instrumental variables ----
 
-test_that("iv_robust CR2 matches clubSandwich on AER::ivreg", {
-  skip_if_not_installed("AER")
+test_that("iv_robust CR2 matches clubSandwich on ivreg", {
+  skip_if_not_installed("ivreg")
   set.seed(42)
   n <- 300
   di <- data.frame(x = rnorm(n), inst = rnorm(n), cl = rep(1:15, each = 20))
@@ -129,7 +129,7 @@ test_that("iv_robust CR2 matches clubSandwich on AER::ivreg", {
   di$y <- di$en + rnorm(n)
 
   fit <- iv_robust(y ~ en + x | inst + x, data = di, clusters = cl, se_type = "CR2")
-  mi <- AER::ivreg(y ~ en + x | inst + x, data = di)
+  mi <- ivreg::ivreg(y ~ en + x | inst + x, data = di)
   target <- clubSandwich::vcovCR(mi, cluster = di$cl, type = "CR2")
 
   expect_equal(unname(fit$coefficients), unname(coef(mi)), tolerance = LIVE_TOL)
@@ -209,9 +209,9 @@ test_that("CR2 and its degrees of freedom match clubSandwich on the hostile desi
     }
   }
 
-  skip_if_not_installed("AER")
+  skip_if_not_installed("ivreg")
   iv_formula <- y ~ en + z + income + share | inst + z + income + share
-  mi <- AER::ivreg(iv_formula, data = dh)
+  mi <- ivreg::ivreg(iv_formula, data = dh)
   target <- clubSandwich::vcovCR(mi, cluster = dh$cl, type = "CR2")
   ct <- clubSandwich::coef_test(mi, vcov = target, test = "Satterthwaite")
   fit <- iv_robust(iv_formula, data = dh, clusters = cl, se_type = "CR2")
@@ -226,8 +226,8 @@ test_that("CR2 and its degrees of freedom match clubSandwich on the hostile desi
 # inverse_var = FALSE, the working model estimatr's weighted CR2 uses, so a
 # change to clubSandwich's default cannot move what this package is held to.
 
-test_that("weighted iv_robust CR2 matches clubSandwich on AER::ivreg", {
-  skip_if_not_installed("AER")
+test_that("weighted iv_robust CR2 matches clubSandwich on ivreg", {
+  skip_if_not_installed("ivreg")
   set.seed(42)
   n_iv <- 300
   di <- data.frame(x = rnorm(n_iv), inst = rnorm(n_iv), cl = rep(1:15, each = 20),
@@ -236,7 +236,7 @@ test_that("weighted iv_robust CR2 matches clubSandwich on AER::ivreg", {
   di$y <- di$en + rnorm(n_iv)
 
   fit <- iv_robust(y ~ en + x | inst + x, data = di, weights = w, clusters = cl, se_type = "CR2")
-  mi <- AER::ivreg(y ~ en + x | inst + x, data = di, weights = w)
+  mi <- ivreg::ivreg(y ~ en + x | inst + x, data = di, weights = w)
   target <- clubSandwich::vcovCR(mi, cluster = di$cl, type = "CR2", inverse_var = FALSE)
   expect_equal(unname(fit$vcov), unname(as.matrix(target)), tolerance = LIVE_TOL)
   ct <- clubSandwich::coef_test(mi, vcov = target, test = "Satterthwaite")
@@ -411,13 +411,13 @@ test_that("CR3 on a cluster that identifies its own dummy is the leave-one-clust
 })
 
 test_that("iv_robust and lh_robust CR3 match clubSandwich", {
-  skip_if_not_installed("AER")
+  skip_if_not_installed("ivreg")
   set.seed(343)
   di <- data.frame(cl = rep(1:15, each = 8), x1 = rnorm(120), zz = rbinom(120, 1, 0.5))
   di$d <- rbinom(120, 1, plogis(di$zz + di$x1))
   di$y <- di$d + di$x1 + rnorm(15)[di$cl] + rnorm(120)
   fit <- iv_robust(y ~ d + x1 | zz + x1, data = di, clusters = cl, se_type = "CR3")
-  target <- clubSandwich::vcovCR(AER::ivreg(y ~ d + x1 | zz + x1, data = di), cluster = di$cl, type = "CR3")
+  target <- clubSandwich::vcovCR(ivreg::ivreg(y ~ d + x1 | zz + x1, data = di), cluster = di$cl, type = "CR3")
   expect_equal(unname(fit$vcov), unname(as.matrix(target)), tolerance = LIVE_TOL)
 
   lh <- lh_robust(y ~ x + z, data = d, clusters = cl, se_type = "CR3", linear_hypothesis = "x + z = 0")

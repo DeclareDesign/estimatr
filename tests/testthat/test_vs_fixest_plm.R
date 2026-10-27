@@ -138,7 +138,7 @@ test_that("stata_nested is stata when no factor is nested", {
 # ---- the 2SLS path ----
 #
 # Both stages have the fixed effects absorbed out of them. The other external
-# references reach weighted 2SLS (AER and sandwich) and clustered 2SLS
+# references reach weighted 2SLS (ivreg and sandwich) and clustered 2SLS
 # (clubSandwich), but none of them absorbs, so until these cells existed the
 # 2SLS-with-absorption path had no outside implementation to answer to at all
 # (review C4). fixest names the fitted endogenous coefficient `fit_en` and

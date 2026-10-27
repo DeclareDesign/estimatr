@@ -146,10 +146,10 @@ iv_test_data <- function() {
   di
 }
 
-test_that("iv_robust HC0, HC1 and CR0 match sandwich on AER::ivreg", {
-  skip_if_not_installed("AER")
+test_that("iv_robust HC0, HC1 and CR0 match sandwich on ivreg", {
+  skip_if_not_installed("ivreg")
   di <- iv_test_data()
-  mi <- AER::ivreg(y ~ en + x | inst + x, data = di)
+  mi <- ivreg::ivreg(y ~ en + x | inst + x, data = di)
 
   for (ty in c("HC0", "HC1")) {
     fit <- iv_robust(y ~ en + x | inst + x, data = di, se_type = ty)
@@ -395,6 +395,45 @@ test_that("the two conventions differ by 8.6% at HC2 and 18.5% at HC3 on mtcars"
   for (spec in list(list(p = 1, lo = 0.07, hi = 0.09),
                     list(p = 2, lo = 0.16, hi = 0.19))) {
     ratio <- 1 - se_of(h_second_stage, spec$p) / se_of(h_influence, spec$p)
+    expect_true(all(ratio > spec$lo & ratio < spec$hi))
+  }
+})
+
+# The vignette tells users that sandwich on an AER::ivreg fit gives these larger
+# standard errors, which depends on AER's hatvalues method, so AER is held to it
+# directly. AER and ivreg both register methods for class "ivreg", and loading
+# either namespace replaces the other's for the rest of the session: with AER
+# loaded first, hatvalues() on an AER fit reaches ivreg's method and errors. The
+# AER fit is therefore made in its own process, and its presence is checked
+# with system.file() because skip_if_not_installed() loads the namespace.
+
+test_that("sandwich on an AER::ivreg fit uses the influence diagonal", {
+  skip_if(!nzchar(system.file(package = "AER")), "AER is not installed")
+  script <- tempfile(fileext = ".R")
+  out <- tempfile(fileext = ".rds")
+  writeLines(c(
+    "fit <- AER::ivreg(mpg ~ hp + am | wt + gear, data = mtcars)",
+    "saveRDS(list(",
+    "  h = unname(hatvalues(fit)),",
+    "  HC2 = unname(sqrt(diag(sandwich::vcovHC(fit, type = 'HC2')))),",
+    "  HC3 = unname(sqrt(diag(sandwich::vcovHC(fit, type = 'HC3'))))",
+    sprintf("), %s)", deparse(out))
+  ), script)
+  status <- system2(file.path(R.home("bin"), "Rscript"), shQuote(script),
+                    stdout = FALSE, stderr = FALSE)
+  expect_equal(status, 0L)
+  aer <- readRDS(out)
+
+  X <- model.matrix(~ hp + am, mtcars)
+  Z <- model.matrix(~ wt + gear, mtcars)
+  xhat <- Z %*% solve(crossprod(Z), crossprod(Z, X))
+  h_influence <- rowSums((xhat %*% solve(crossprod(xhat))) * X)
+  expect_equal(aer$h, unname(h_influence), tolerance = LIVE_TOL)
+
+  for (spec in list(list(ty = "HC2", lo = 0.07, hi = 0.09),
+                    list(ty = "HC3", lo = 0.16, hi = 0.19))) {
+    fit <- iv_robust(mpg ~ hp + am | wt + gear, data = mtcars, se_type = spec$ty)
+    ratio <- 1 - unname(fit$std.error) / aer[[spec$ty]]
     expect_true(all(ratio > spec$lo & ratio < spec$hi))
   }
 })
