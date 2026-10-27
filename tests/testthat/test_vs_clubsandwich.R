@@ -355,7 +355,7 @@ loco_sum <- function(formula, data, cluster, w = rep(1, nrow(data))) {
   data$loco_w <- w
   b <- coef(lm(formula, data, weights = loco_w))
   dev <- lapply(unique(cluster), function(g) {
-    b_g <- coef(lm(formula, data[cluster != g, ], weights = loco_w))
+    b_g <- coef(lm(formula, data[cluster != g, ], weights = loco_w))[names(b)]
     replace(b - b_g, is.na(b_g), NA)
   })
   Reduce(`+`, lapply(dev, tcrossprod))
