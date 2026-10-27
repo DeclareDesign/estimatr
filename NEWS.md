@@ -1,5 +1,9 @@
 # estimatr (development version)
 
+## CR2 no longer runs out of memory on large clusters
+
+The CR2 adjustment took the inverse square root of an n_c-by-n_c matrix for every cluster, which is O(n_c^3) time and O(n_c^2) memory: a cluster of 20,000 rows needed a 3.2 GB matrix and failed with `std::bad_alloc`. That matrix is the identity plus a term spanned by the cluster's design columns, so the adjustment is now computed in that span, on a matrix at most twice the number of coefficients square, with the same eigenvalue cutoff. Standard errors and degrees of freedom are unchanged to rounding (at most 6e-12 relative across 18 fit types, inside the 2e-11 the old computation moved by when rows were reordered within cluster). Four weighted clusters of 1,500 rows went from 2.6 seconds to 0.005; four of 20,000 take 0.02 seconds. See #276 and #318.
+
 ## `!!` in a formula now works in `lm_lin()`, `difference_in_means()`, and `lh_robust()`
 
 `lm_robust()` and `iv_robust()` apply `!!` and `{{ }}` in the formula at the call site, so `lm_robust(!!sym(outcome) ~ z, data = d)` works inside `purrr::map()`. The other three estimators forced the formula before capturing it, and failed with `could not find function "sym"`. They now capture it first. The `covariates` formula of `lm_lin()` gets the same treatment. See #413.
