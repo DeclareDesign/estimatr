@@ -1,0 +1,74 @@
+# The post-estimation contract against whatever CRAN serves this month.
+#
+# R-CMD-check runs only when estimatr changes, so a release of sandwich,
+# clubSandwich or ivreg that moves a contract cell would go unseen until the
+# next push. This job installs estimatr from main and the current CRAN
+# consumers, and runs tests/testthat/test_contract.R alone. It fails on a skip
+# as well as a failure: the test skips when a consumer is missing, and a run
+# that skipped everything would otherwise read green.
+on:
+  schedule:
+    - cron: '23 7 3 * *'
+  workflow_dispatch:
+
+name: contract-consumers.yaml
+
+permissions: read-all
+
+jobs:
+  contract:
+    runs-on: ${{ matrix.os }}
+
+    name: ${{ matrix.os }} (release)
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      NOT_CRAN: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          # See R-CMD-check.yaml: pak cannot extract CRAN's zstd macOS binaries.
+          use-public-rspm: always
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          dependencies: '"hard"'
+          extra-packages: |
+            any::sandwich
+            any::clubSandwich
+            any::ivreg
+            any::testthat
+            local::.
+
+      - name: Run the contract
+        shell: Rscript {0}
+        run: |
+          pkgs <- c("estimatr", "sandwich", "clubSandwich", "ivreg", "testthat")
+          versions <- vapply(pkgs, function(p) as.character(packageVersion(p)), "")
+          print(versions)
+          cat("| package | version |\n|---|---|\n",
+              paste0("| ", pkgs, " | ", versions, " |\n"), sep = "",
+              file = Sys.getenv("GITHUB_STEP_SUMMARY"), append = TRUE)
+
+          res <- as.data.frame(testthat::test_file(
+            "tests/testthat/test_contract.R",
+            package = "estimatr", load_package = "installed",
+            load_helpers = FALSE, reporter = "summary"
+          ))
+          print(res[, c("test", "nb", "failed", "skipped", "error")])
+          stopifnot(
+            "the contract test did not run" = nrow(res) == 1,
+            "the contract test skipped" = !any(res$skipped),
+            "the contract test errored" = !any(res$error),
+            "a contract promise failed" = sum(res$failed) == 0,
+            "the contract checked fewer than 600 cells" = sum(res$nb) >= 600
+          )
