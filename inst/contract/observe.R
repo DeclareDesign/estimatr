@@ -17,13 +17,22 @@ contract_observe <- function(dir, source_dir = NULL) {
   rscript <- file.path(R.home("bin"), "Rscript")
   runner <- file.path(dir, "run_cells.R")
   # The parent's library paths, so a child under R CMD check finds the copy
-  # of estimatr being checked rather than the user's
-  env <- paste0("R_LIBS=", paste(.libPaths(), collapse = .Platform$path.sep))
+  # of estimatr being checked rather than the user's. Set in this process
+  # rather than through system2(env =), which Windows pastes after the
+  # command as an argument
+  old_libs <- Sys.getenv("R_LIBS", unset = NA)
+  on.exit(if (is.na(old_libs)) Sys.unsetenv("R_LIBS") else
+    Sys.setenv(R_LIBS = old_libs))
+  Sys.setenv(R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep))
 
   run <- function(args) {
-    status <- system2(rscript, c(shQuote(runner), args), env = env,
-                      stdout = FALSE, stderr = FALSE)
-    if (status != 0) stop("contract process failed: ", paste(args, collapse = " "))
+    err <- tempfile(fileext = ".txt")
+    status <- system2(rscript, c(shQuote(runner), args),
+                      stdout = FALSE, stderr = err)
+    if (status != 0) {
+      stop("contract process failed: ", paste(args, collapse = " "), "\n",
+           paste(utils::tail(readLines(err, warn = FALSE), 20), collapse = "\n"))
+    }
   }
 
   ref_file <- tempfile(fileext = ".rds")
