@@ -75,8 +75,8 @@
 "predict_sefit","predict","lm_fe","refuses","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,"Can't set `se.fit` or `interval` with `fixed_effects`",
 "predict_sefit","predict","lm_mv","refuses","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,"Can't set `se.fit` == TRUE with multivariate outcome","Alex 2026-10-27: multi-outcome refused"
 "predict_sefit","predict","lm_lin","agrees","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,
-"predict_sefit","predict","iv_plain","known_wrong","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,"known gap: predict(iv, se.fit = TRUE) ignores se.fit"
-"predict_sefit","predict","iv_cl","known_wrong","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,"known gap: predict(iv, se.fit = TRUE) ignores se.fit"
+"predict_sefit","predict","iv_plain","agrees","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,
+"predict_sefit","predict","iv_cl","agrees","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,
 "predict_sefit","predict","dim","errors","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,
 "predict_sefit","predict","ht","errors","predict(fit, newdata = d, se.fit = TRUE)$se.fit",,,,
 "predict_noarg","predict","lm_plain","agrees","predict(fit)","same",,,
@@ -85,8 +85,8 @@
 "predict_noarg","predict","lm_fe","agrees","predict(fit)","same",,,
 "predict_noarg","predict","lm_mv","agrees","predict(fit)","same",,,
 "predict_noarg","predict","lm_lin","agrees","predict(fit)","same",,,
-"predict_noarg","predict","iv_plain","known_wrong","predict(fit)","same",,,"known gap: predict(iv) without newdata errors"
-"predict_noarg","predict","iv_cl","known_wrong","predict(fit)","same",,,"known gap: predict(iv) without newdata errors"
+"predict_noarg","predict","iv_plain","agrees","predict(fit)","same",,,
+"predict_noarg","predict","iv_cl","agrees","predict(fit)","same",,,
 "predict_noarg","predict","dim","errors","predict(fit)","same",,,
 "predict_noarg","predict","ht","errors","predict(fit)",,,,
 "confint","confint","lm_plain","agrees","confint(fit)","contract_reference_confint(ref, V, fit_id, d)",,,
@@ -253,10 +253,10 @@
 "case.names","case.names","lm_wt0","agrees","case.names(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "case.names","case.names","lm_cl","agrees","case.names(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "case.names","case.names","lm_fe","agrees","case.names(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
-"case.names","case.names","lm_mv","none","case.names(fit)","same",,,
+"case.names","case.names","lm_mv","agrees","case.names(fit)","rownames(model.frame(ref))",,,"Alex 2026-10-27: implement with lm's meaning; the reference has no case.names() of its own"
 "case.names","case.names","lm_lin","agrees","case.names(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
-"case.names","case.names","iv_plain","none","case.names(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
-"case.names","case.names","iv_cl","none","case.names(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"case.names","case.names","iv_plain","agrees","case.names(fit)","rownames(model.frame(ref))",,,"Alex 2026-10-27: implement with lm's meaning; the reference has no case.names() of its own"
+"case.names","case.names","iv_cl","agrees","case.names(fit)","rownames(model.frame(ref))",,,"Alex 2026-10-27: implement with lm's meaning; the reference has no case.names() of its own"
 "case.names","case.names","dim","none","case.names(fit)","same",,,
 "case.names","case.names","ht","returns","case.names(fit)",,,,
 "variable.names","variable.names","lm_plain","agrees","variable.names(fit)","same",,,
@@ -577,8 +577,8 @@
 "bread","bread","lm_lin","agrees","sandwich::bread(fit)","same",,,
 "bread","bread","iv_plain","agrees","sandwich::bread(fit)","same",,,
 "bread","bread","iv_cl","agrees","sandwich::bread(fit)","same",,,
-"bread","bread","dim","known_wrong","sandwich::bread(fit)","same",,,"known gap: bread() falls through to vcov * n"
-"bread","bread","ht","known_wrong","sandwich::bread(fit)",,,,"known gap: bread() falls through to vcov * n"
+"bread","bread","dim","refuses","sandwich::bread(fit)","same",,"not built from a design matrix",
+"bread","bread","ht","refuses","sandwich::bread(fit)",,,"not built from a design matrix",
 "estfun","estfun","lm_plain","agrees","sandwich::estfun(fit)","same",,,
 "estfun","estfun","lm_wt0","agrees","sandwich::estfun(fit)","same",,,
 "estfun","estfun","lm_cl","agrees","sandwich::estfun(fit)","same",,,

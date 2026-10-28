@@ -1,7 +1,10 @@
 #' Predict method for `lm_robust` object
 #'
 #' Produces predicted values, obtained by evaluating the regression function in
-#' the frame `newdata` for fits from [lm_robust()] and [lm_lin()]. If `se.fit`
+#' the frame `newdata` for fits from [lm_robust()], [lm_lin()], and
+#' [iv_robust()]. For an [iv_robust()] fit the regression function is the
+#' second stage on the regressors themselves, as `predict()` on an `ivreg()`
+#' fit computes it. If `se.fit`
 #' is `TRUE`, standard errors of the predictions are calculated. Setting
 #' `interval` adds confidence or prediction (tolerance) intervals at the level
 #' set by `alpha`, sometimes called narrow and wide intervals respectively.
@@ -25,7 +28,7 @@
 #' weighted, the default is to assume constant prediction variance, with a
 #' warning.
 #'
-#' @param object An object of class `"lm_robust"`.
+#' @param object An object of class `"lm_robust"` or `"iv_robust"`.
 #' @param newdata A data frame in which to look for the variables to predict
 #'   from. If omitted, the fitted values are returned.
 #' @param se.fit Logical. Whether to return standard errors. `FALSE` by default.
@@ -44,7 +47,7 @@
 #'   predictions and their standard errors and interval bounds when `se.fit` or
 #'   `interval` is set.
 #'
-#' @seealso [lm_robust()], [lm_lin()]
+#' @seealso [lm_robust()], [lm_lin()], [iv_robust()]
 #'
 #' @examples
 #'
@@ -181,28 +184,13 @@ predict.lm_robust <- function(object,
   }
 }
 
+# get_X() builds an iv_robust design from the regressors' terms, so lm_robust's
+# method is ivreg's: without newdata the fitted values, and se.fit and the
+# intervals from the fit's own vcov. The separate method this replaced had
+# neither, ignoring se.fit and erroring without newdata.
+#' @rdname predict.lm_robust
 #' @export
-predict.iv_robust <- function(object,
-                              newdata,
-                              na.action = na.pass,
-                              ...) {
-
-  X <- get_X(object, newdata, na.action)
-
-  coefs <- as.matrix(coef(object))
-
-  # The same two steps predict.lm_robust() takes under fixed effects, which
-  # this method lacked: the rebuilt design still carries the absorbed intercept,
-  # so the product was non-conformable, and the group effects were never added
-  # back. 1.0.6 returned a number there.
-  if (isTRUE(object[["fes"]])) X <- drop_absorbed_intercept(X, rownames(coefs))
-
-  beta_na <- is.na(coefs[, 1])
-
-  preds <- X[, !beta_na, drop = FALSE] %*% coefs[!beta_na, ]
-  if (isTRUE(object[["fes"]])) preds <- add_fes(preds, object, newdata)
-  return(drop(preds))
-}
+predict.iv_robust <- predict.lm_robust
 
 # Rebuild an lm_lin design exactly as lm_lin() built it: centred covariates,
 # then every treatment column crossed with every covariate, covariate-major.
@@ -455,6 +443,25 @@ bread.lm_robust <- function(x, ...) {
 bread.iv_robust <- function(x, ...) {
   bread_from(sqrtw_design(x, "bread()"), x[["weights"]])
 }
+
+# A difference in means and a Horvitz-Thompson estimate are not built from a
+# design matrix, so there is no inverse Gram matrix to return, and sandwich's
+# default handed back vcov * n as if it were one. estfun() and hatvalues()
+# already error on these fits for want of a method.
+refuse_bread <- function(estimator) {
+  function(x, ...) {
+    stop("`bread()` is not available for `", estimator, "()` fits: the ",
+         "estimator is not built from a design matrix, so there is no bread ",
+         "to pair with `sandwich::meat()`. Fit the regression with ",
+         "`lm_robust()` for one.", call. = FALSE)
+  }
+}
+
+#' @exportS3Method sandwich::bread
+bread.difference_in_means <- refuse_bread("difference_in_means")
+
+#' @exportS3Method sandwich::bread
+bread.horvitz_thompson <- refuse_bread("horvitz_thompson")
 
 # sandwich's estfun.lm and ivreg's estfun.ivreg, w * e * X, with the residuals
 # on the data's scale. Without them no sandwich estimator ran on a fit.

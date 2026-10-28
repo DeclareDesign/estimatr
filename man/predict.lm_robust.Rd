@@ -2,6 +2,7 @@
 % Please edit documentation in R/S3_predict.R
 \name{predict.lm_robust}
 \alias{predict.lm_robust}
+\alias{predict.iv_robust}
 \title{Predict method for \code{lm_robust} object}
 \usage{
 \method{predict}{lm_robust}(
@@ -15,9 +16,21 @@
   weights,
   ...
 )
+
+\method{predict}{iv_robust}(
+  object,
+  newdata,
+  se.fit = FALSE,
+  interval = c("none", "confidence", "prediction"),
+  alpha = 0.05,
+  na.action = na.pass,
+  pred.var = NULL,
+  weights,
+  ...
+)
 }
 \arguments{
-\item{object}{An object of class \code{"lm_robust"}.}
+\item{object}{An object of class \code{"lm_robust"} or \code{"iv_robust"}.}
 
 \item{newdata}{A data frame in which to look for the variables to predict
 from. If omitted, the fitted values are returned.}
@@ -47,7 +60,10 @@ predictions and their standard errors and interval bounds when \code{se.fit} or
 }
 \description{
 Produces predicted values, obtained by evaluating the regression function in
-the frame \code{newdata} for fits from \code{\link[=lm_robust]{lm_robust()}} and \code{\link[=lm_lin]{lm_lin()}}. If \code{se.fit}
+the frame \code{newdata} for fits from \code{\link[=lm_robust]{lm_robust()}}, \code{\link[=lm_lin]{lm_lin()}}, and
+\code{\link[=iv_robust]{iv_robust()}}. For an \code{\link[=iv_robust]{iv_robust()}} fit the regression function is the
+second stage on the regressors themselves, as \code{predict()} on an \code{ivreg()}
+fit computes it. If \code{se.fit}
 is \code{TRUE}, standard errors of the predictions are calculated. Setting
 \code{interval} adds confidence or prediction (tolerance) intervals at the level
 set by \code{alpha}, sometimes called narrow and wide intervals respectively.
@@ -105,5 +121,5 @@ predict(lmlin_out1, newdata = dat, interval = "prediction")
 
 }
 \seealso{
-\code{\link[=lm_robust]{lm_robust()}}, \code{\link[=lm_lin]{lm_lin()}}
+\code{\link[=lm_robust]{lm_robust()}}, \code{\link[=lm_lin]{lm_lin()}}, \code{\link[=iv_robust]{iv_robust()}}
 }

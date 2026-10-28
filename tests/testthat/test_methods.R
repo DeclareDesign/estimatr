@@ -798,6 +798,11 @@ test_that("#422: bread() refuses what it cannot build", {
   expect_error(sandwich::bread(fit_fe), "fixed_effects")
   fit_mv <- lm_robust(cbind(y, x) ~ z, data = d)
   expect_error(sandwich::bread(fit_mv), "several outcomes")
+  # sandwich's default returned vcov * n for these.
+  expect_error(sandwich::bread(difference_in_means(y ~ z, data = d)),
+               "not built from a design matrix")
+  expect_error(sandwich::bread(horvitz_thompson(y ~ z, data = d, condition_prs = rep(0.5, 60))),
+               "not built from a design matrix")
 })
 
 test_that("#422: bread() on an iv_robust fit is ivreg's bread.ivreg", {
@@ -1035,6 +1040,37 @@ test_that("iv_robust's terms() are the regressors, as ivreg's are", {
   expect_identical(labels(fits$plain), c("z", "x"))
   expect_equal(attr(terms(Formula::as.Formula(formula(fits$plain)), rhs = 2), "term.labels"),
                c("iv", "x"))
+})
+
+test_that("predict() on iv_robust is ivreg's, with and without newdata", {
+  skip_if_not_installed("ivreg")
+  d <- methods_422_data()
+  d$iv <- ifelse(runif(60) < 0.8, d$z, 1 - d$z)
+  d$iv[11] <- NA
+  d$x2 <- 2 * d$x
+  rows <- complete.cases(d[c("y", "x", "z", "iv")])
+  for (spec in list(list(), list(weights = quote(w)), list(clusters = quote(cl)))) {
+    fit <- suppressWarnings(do.call(iv_robust, c(list(y ~ z + x | iv + x, data = d), spec)))
+    ref <- ivreg::ivreg(y ~ z + x | iv + x, data = d,
+                        subset = rownames(d) %in% case.names(fit),
+                        weights = if (!is.null(spec$weights)) w)
+    expect_equal(predict(fit), fitted(fit))
+    # ivreg's fitted() and case.names() leave out zero-weight rows, which
+    # lm's fitted values and ours keep.
+    expect_equal(unname(predict(fit)),
+                 unname(predict(ref, newdata = d[rownames(model.frame(fit)), ])),
+                 tolerance = METH_TOL)
+    X <- model.matrix(ref)
+    p <- predict(fit, newdata = d[rows, ], se.fit = TRUE, interval = "confidence")
+    expect_equal(unname(p$fit[, "fit"]), unname(predict(ref, newdata = d[rows, ])),
+                 tolerance = METH_TOL)
+    newX <- model.matrix(y ~ z + x, d[rows, ])
+    expect_equal(p$se.fit, sqrt(rowSums((newX %*% vcov(fit)) * newX)), tolerance = METH_TOL)
+  }
+  # A dropped regressor is left out of the design, as its coefficient is.
+  fit <- suppressMessages(iv_robust(y ~ z + x + x2 | iv + x + x2, data = d))
+  expect_false(anyNA(predict(fit, newdata = d[rows, ], se.fit = TRUE)$se.fit))
+  expect_error(predict(fit, se.fit = TRUE), "`newdata` is required")
 })
 
 test_that("iv_robust's terms() and model frame of a fixed_effects fit include the absorbed factors", {
