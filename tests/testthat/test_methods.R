@@ -805,6 +805,13 @@ test_that("#422: bread() refuses what it cannot build", {
                "not built from a design matrix")
 })
 
+test_that("df.residual() and case.names() refuse difference_in_means fits", {
+  d <- methods_422_data()
+  fit <- difference_in_means(y ~ z, data = d)
+  expect_error(df.residual(fit), "has no residuals")
+  expect_error(case.names(fit), "not stored on the fit")
+})
+
 test_that("#422: bread() on an iv_robust fit is ivreg's bread.ivreg", {
   skip_if_not_installed("sandwich")
   skip_if_not_installed("ivreg")

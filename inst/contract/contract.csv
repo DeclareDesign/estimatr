@@ -127,7 +127,7 @@
 "df.residual","df.residual","lm_lin","agrees","df.residual(fit)","same",,,"Alex 2026-10-27: N - K; consumers get upstream fixes"
 "df.residual","df.residual","iv_plain","agrees","df.residual(fit)","same",,,"Alex 2026-10-27: N - K; consumers get upstream fixes"
 "df.residual","df.residual","iv_cl","agrees","df.residual(fit)","same",,,"Alex 2026-10-27: N - K; consumers get upstream fixes"
-"df.residual","df.residual","dim","none","df.residual(fit)","same",,,"Alex 2026-10-27: N - K; consumers get upstream fixes"
+"df.residual","df.residual","dim","refuses","df.residual(fit)","same",,"the estimator has no residuals","Alex 2026-10-27: refused; the tests use fit$df"
 "df.residual","df.residual","ht","returns","df.residual(fit)",,,,"Alex 2026-10-27: N - K; consumers get upstream fixes"
 "deviance","deviance","lm_plain","agrees","deviance(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "deviance","deviance","lm_wt0","agrees","deviance(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
@@ -257,7 +257,7 @@
 "case.names","case.names","lm_lin","agrees","case.names(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "case.names","case.names","iv_plain","agrees","case.names(fit)","rownames(model.frame(ref))",,,"Alex 2026-10-27: implement with lm's meaning; the reference has no case.names() of its own"
 "case.names","case.names","iv_cl","agrees","case.names(fit)","rownames(model.frame(ref))",,,"Alex 2026-10-27: implement with lm's meaning; the reference has no case.names() of its own"
-"case.names","case.names","dim","none","case.names(fit)","same",,,
+"case.names","case.names","dim","refuses","case.names(fit)","same",,"the rows used are not stored on the fit","Alex 2026-10-27: refused"
 "case.names","case.names","ht","returns","case.names(fit)",,,,
 "variable.names","variable.names","lm_plain","agrees","variable.names(fit)","same",,,
 "variable.names","variable.names","lm_wt0","agrees","variable.names(fit)","same",,,

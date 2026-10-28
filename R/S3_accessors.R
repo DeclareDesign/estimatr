@@ -36,3 +36,20 @@ case.names.lm_robust <- function(object, full = FALSE, ...) {
 
 #' @export
 case.names.iv_robust <- case.names.lm_robust
+
+# A difference in means has no residuals and stores no rows. Its own tests use
+# `df`, which is Welch's, or the block or cluster count's, never N - K, so a
+# residual df would disagree with them.
+#' @importFrom stats df.residual
+#' @export
+df.residual.difference_in_means <- function(object, ...) {
+  stop("`df.residual()` is not available for `difference_in_means()` fits: ",
+       "the estimator has no residuals. The degrees of freedom its tests use ",
+       "are in `fit$df`.", call. = FALSE)
+}
+
+#' @export
+case.names.difference_in_means <- function(object, ...) {
+  stop("`case.names()` is not available for `difference_in_means()` fits: ",
+       "the rows used are not stored on the fit.", call. = FALSE)
+}
