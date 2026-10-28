@@ -337,8 +337,22 @@ model.frame.iv_robust <- function(formula, ...) {
   # column (estimatr #397). clean_model_data() reads it with the Formula
   # package, as the fit did, and drops the same rows, where re-evaluating the
   # call without its clusters had kept a row dropped for a missing cluster.
+  # With fixed_effects the absorbed factors join both parts, so that the frame
+  # holds the variables of terms(), as lm_robust's does.
   object <- formula
-  rebuild_model_data(object, object[["formula"]], estimator = "iv")[["model_frame"]]
+  f <- object[["formula"]]
+  if (isTRUE(object[["fes"]])) {
+    fe_formula <- eval_tidy(as.list(object[["call"]])[["fixed_effects"]])
+    fe <- paste(attr(terms(fe_formula), "term.labels"), collapse = " + ")
+    parts <- vapply(1:2, function(i) {
+      deparse1(formula(Formula::as.Formula(f), lhs = 0, rhs = i)[[2L]])
+    }, "")
+    f <- stats::as.formula(
+      paste(deparse1(f[[2L]]), "~", paste(parts, fe, sep = " + ", collapse = " | ")),
+      env = environment(f)
+    )
+  }
+  rebuild_model_data(object, f, estimator = "iv")[["model_frame"]]
 }
 
 #' @importFrom stats variable.names

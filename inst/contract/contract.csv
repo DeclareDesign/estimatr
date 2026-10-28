@@ -205,8 +205,8 @@
 "terms","terms","lm_fe","agrees","attr(terms(fit), ""term.labels"")","same",,,"Alex 2026-10-27: terms() full (lm_lin translated), formula() the call's"
 "terms","terms","lm_mv","agrees","attr(terms(fit), ""term.labels"")","same",,,
 "terms","terms","lm_lin","returns","attr(terms(fit), ""term.labels"")",,,,"Alex 2026-10-27: terms() full (lm_lin translated), formula() the call's"
-"terms","terms","iv_plain","known_wrong","attr(terms(fit), ""term.labels"")","same",,,"known gap: terms() on iv_robust is the two-part formula, instruments included"
-"terms","terms","iv_cl","known_wrong","attr(terms(fit), ""term.labels"")","same",,,"known gap: terms() on iv_robust is the two-part formula, instruments included"
+"terms","terms","iv_plain","agrees","attr(terms(fit), ""term.labels"")","same",,,"Alex 2026-10-27: the regressors, as ivreg's terms() default to"
+"terms","terms","iv_cl","agrees","attr(terms(fit), ""term.labels"")","same",,,"Alex 2026-10-27: the regressors, as ivreg's terms() default to"
 "terms","terms","dim","errors","attr(terms(fit), ""term.labels"")","same",,,
 "terms","terms","ht","errors","attr(terms(fit), ""term.labels"")",,,,
 "model.frame","model.frame","lm_plain","agrees","mf <- model.frame(fit); as.matrix(mf[vapply(mf, is.numeric, TRUE)])","same",,,
@@ -275,8 +275,8 @@
 "labels","labels","lm_fe","agrees","labels(fit)","same",,,"Alex 2026-10-27: terms() full (lm_lin translated), formula() the call's"
 "labels","labels","lm_mv","agrees","labels(fit)","same",,,
 "labels","labels","lm_lin","returns","labels(fit)",,,,"Alex 2026-10-27: terms() full (lm_lin translated), formula() the call's"
-"labels","labels","iv_plain","known_wrong","labels(fit)","c(""z"", ""x"")",,,"Alex 2026-10-27: implement with lm's meaning"
-"labels","labels","iv_cl","known_wrong","labels(fit)","c(""z"", ""x"")",,,"Alex 2026-10-27: implement with lm's meaning"
+"labels","labels","iv_plain","agrees","labels(fit)","c(""z"", ""x"")",,,"Alex 2026-10-27: implement with lm's meaning"
+"labels","labels","iv_cl","agrees","labels(fit)","c(""z"", ""x"")",,,"Alex 2026-10-27: implement with lm's meaning"
 "labels","labels","dim","none","labels(fit)","same",,,
 "labels","labels","ht","returns","labels(fit)",,,,
 "dummy.coef","dummy.coef","lm_plain","errors","unlist(dummy.coef(fit))","same",,,

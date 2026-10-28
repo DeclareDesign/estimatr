@@ -1011,6 +1011,46 @@ test_that("terms() of a fixed_effects fit include the absorbed factors", {
   expect_equal(labels(fit), c("x", "f"))
 })
 
+test_that("iv_robust's terms() are the regressors, as ivreg's are", {
+  skip_if_not_installed("ivreg")
+  d <- methods_422_data()
+  d$iv <- ifelse(runif(60) < 0.8, d$z, 1 - d$z)
+  d$iv[11] <- NA
+  fits <- list(
+    plain = iv_robust(y ~ z + x | iv + x, data = d),
+    weighted = iv_robust(y ~ z + x | iv + x, data = d, weights = w),
+    factor = iv_robust(y ~ z + f | iv + f, data = d),
+    subset = iv_robust(y ~ z + x | iv + x, data = d, subset = w > 0.2)
+  )
+  for (nm in names(fits)) {
+    fit <- fits[[nm]]
+    ref <- ivreg::ivreg(formula(fit), data = d, subset = rownames(d) %in% case.names(fit))
+    expect_identical(labels(fit), attr(terms(ref), "term.labels"), info = nm)
+    X <- model.matrix(fit)
+    expect_equal(terms_design(fit), matrix(X, nrow(X)), tolerance = METH_TOL, info = nm)
+    expect_identical(attr(terms(fit), "dataClasses"),
+                     attr(terms(lm(formula(terms(fit)), data = d)), "dataClasses"), info = nm)
+  }
+  # The instruments are left out, and formula() stays the call's.
+  expect_identical(labels(fits$plain), c("z", "x"))
+  expect_equal(attr(terms(Formula::as.Formula(formula(fits$plain)), rhs = 2), "term.labels"),
+               c("iv", "x"))
+})
+
+test_that("iv_robust's terms() and model frame of a fixed_effects fit include the absorbed factors", {
+  d <- methods_422_data()
+  d$iv <- ifelse(runif(60) < 0.8, d$z, 1 - d$z)
+  d$iv[11] <- NA
+  fit <- iv_robust(y ~ z + x | iv + x, data = d, fixed_effects = ~ f)
+  expect_identical(labels(fit), c("z", "x", "f"))
+  mf <- model.frame(fit)
+  expect_identical(rownames(mf), case.names(fit))
+  ref <- model.matrix(y ~ z + x + f, d[rownames(mf), ])
+  expect_equal(terms_design(fit), matrix(ref, nrow(ref)), tolerance = METH_TOL)
+  expect_gt(ncol(terms_design(fit)), length(coef(fit)))
+  expect_identical(attr(terms(fit), "dataClasses")[["f"]], "factor")
+})
+
 test_that("terms() carry the variable classes lm's terms carry", {
   # margins reads them off terms(fit) and failed without them.
   d <- methods_422_data()

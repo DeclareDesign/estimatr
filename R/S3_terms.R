@@ -12,6 +12,20 @@
 terms.lm_robust <- function(x, ...) {
   trms <- x[["terms"]]
   if (!isTRUE(x[["fes"]])) return(trms)
+  with_absorbed_factors(x, trms, attr(trms, "dataClasses"))
+}
+
+# iv_robust's stored terms are the two-part formula, instruments included. Its
+# design is the regressors, as ivreg's terms() default to.
+#' @export
+terms.iv_robust <- function(x, ...) {
+  trms <- x[["terms_regressors"]]
+  classes <- attr(x[["terms"]], "dataClasses")
+  if (!isTRUE(x[["fes"]])) return(with_data_classes(trms, classes))
+  with_absorbed_factors(x, trms, classes)
+}
+
+with_absorbed_factors <- function(x, trms, classes) {
   fe_formula <- eval_tidy(as.list(x[["call"]])[["fixed_effects"]])
   full <- reformulate(
     c(attr(trms, "term.labels"), attr(terms(fe_formula), "term.labels")),
@@ -23,7 +37,7 @@ terms.lm_robust <- function(x, ...) {
   # The absorbed factors are coerced to factors whatever their class in data.
   with_data_classes(
     terms(full),
-    c(attr(trms, "dataClasses"), setNames(rep("factor", length(fe_vars)), fe_vars))
+    c(classes, setNames(rep("factor", length(fe_vars)), fe_vars))
   )
 }
 
@@ -166,6 +180,9 @@ format_constant <- function(x) sprintf("%.17g", x)
 
 #' @export
 labels.lm_robust <- function(object, ...) attr(terms(object), "term.labels")
+
+#' @export
+labels.iv_robust <- labels.lm_robust
 
 # performance 0.17.0 registers a Gaussian logLik() for iv_robust fits, so
 # estimatr does not: whichever package loaded last would decide what AIC(fit)
