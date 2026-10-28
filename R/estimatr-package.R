@@ -11,5 +11,5 @@
 #' @name estimatr-package
 #' @useDynLib estimatr, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
-#' @importFrom stats coef var setNames delete.response model.frame model.matrix na.pass pt qt pf pnorm qnorm pchisq weighted.mean update reformulate formula printCoefmat .checkMFClasses .getXlevels
+#' @importFrom stats coef var setNames delete.response model.frame model.matrix na.pass pt qt pf pnorm qnorm pchisq weighted.mean update reformulate formula printCoefmat .checkMFClasses .getXlevels lm.fit lm.wfit
 "_PACKAGE"

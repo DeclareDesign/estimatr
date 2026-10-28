@@ -1011,6 +1011,28 @@ test_that("terms() of a fixed_effects fit include the absorbed factors", {
   expect_equal(labels(fit), c("x", "f"))
 })
 
+test_that("terms() carry the variable classes lm's terms carry", {
+  # margins reads them off terms(fit) and failed without them.
+  d <- methods_422_data()
+  for (fit in list(lm_robust(y ~ x, data = d, fixed_effects = ~ f), lm_lin(y ~ z, ~ x, data = d))) {
+    ref <- lm(formula(terms(fit)), data = d)
+    expect_identical(attr(terms(fit), "dataClasses"), attr(terms(ref), "dataClasses"))
+  }
+})
+
+test_that("lm_lin's model frame serves both terms() and formula()", {
+  # car builds from formula(fit) and the frame; insight and so ggeffects take
+  # a covariate's typical value from the first frame column named after it.
+  d <- methods_422_data()
+  fit <- lm_lin(y ~ z, ~ x, data = d)
+  mf <- model.frame(fit)
+  expect_identical(names(mf)[1:3], c("y", "z", "x"))
+  expect_identical(mf$x, d[rownames(mf), "x"])
+  expect_identical(formula(attr(mf, "terms")), formula(terms(fit)))
+  expect_equal(c(model.matrix(terms(fit), mf)), c(model.matrix(fit)), tolerance = METH_TOL)
+  expect_equal(c(model.matrix(formula(fit), mf)), c(model.matrix(y ~ z + x, d[rownames(mf), ])))
+})
+
 test_that("augment() keeps the call's variables on an lm_lin fit", {
   d <- methods_422_data()
   out <- augment(lm_lin(y ~ z, ~ x, data = d))

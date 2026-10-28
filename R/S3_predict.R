@@ -351,7 +351,19 @@ model.frame.lm_robust <- function(formula, ...) {
   # same design: the absorbed factors of a fixed_effects fit, and the centred
   # covariate expressions of an lm_lin() fit.
   object <- formula
-  rebuild_model_data(object, stats::formula(terms(object)))[["model_frame"]]
+  mf <- rebuild_model_data(object, stats::formula(terms(object)))[["model_frame"]]
+  if (is.null(object[["scaled_center"]])) return(mf)
+  # lm_lin()'s frame also carries the variables as the call named them, so that
+  # model.matrix(formula(fit), model.frame(fit)) works, and consumers that read
+  # covariates off the frame see x rather than the centred I(x - c).
+  call_mf <- rebuild_model_data(object, stats::formula(object[["terms"]]))[["model_frame"]]
+  stopifnot(nrow(call_mf) == nrow(mf))
+  # The call's variables come first: insight names a column by the variable
+  # inside it, so the first column it reads as `x` keeps that name.
+  out <- cbind(call_mf, mf[setdiff(names(mf), names(call_mf))])
+  attr(out, "terms") <- attr(mf, "terms")
+  attr(out, "na.action") <- attr(mf, "na.action")
+  out
 }
 
 # A fit stores no model frame, so it is rebuilt from the call as lm() does with

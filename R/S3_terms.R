@@ -19,7 +19,22 @@ terms.lm_robust <- function(x, ...) {
     intercept = attr(trms, "intercept"),
     env = environment(trms)
   )
-  terms(full)
+  fe_vars <- vapply(attr(terms(fe_formula), "variables")[-1L], deparse1, "")
+  # The absorbed factors are coerced to factors whatever their class in data.
+  with_data_classes(
+    terms(full),
+    c(attr(trms, "dataClasses"), setNames(rep("factor", length(fe_vars)), fe_vars))
+  )
+}
+
+# Consumers such as margins read the variable classes off terms(fit), as they
+# can off an lm fit's terms.
+with_data_classes <- function(trms, classes) {
+  vars <- vapply(attr(trms, "variables")[-1L], deparse1, "")
+  # Keyed as terms() deparses them, which rounds the %.17g constants.
+  names(classes) <- vapply(names(classes), function(v) deparse1(str2lang(v)), "")
+  attr(trms, "dataClasses") <- classes[vars]
+  trms
 }
 
 # lm_lin's coefficients are on the centred covariates, which are not data
@@ -71,7 +86,16 @@ terms.lm_lin <- function(x, ...) {
     paste(lhs, "~", paste(rhs, collapse = " + ")),
     env = environment(trms)
   )
-  terms(f, keep.order = TRUE)
+  # Every written-out treatment and covariate column is numeric.
+  classes <- attr(trms, "dataClasses")
+  with_data_classes(
+    terms(f, keep.order = TRUE),
+    c(
+      classes[c(lhs, if (is.null(x[["treatment_vals"]])) treat_label)],
+      setNames(rep("numeric", length(treat_terms) + length(covar_terms)),
+               c(if (!is.null(x[["treatment_vals"]])) treat_terms, covar_terms))
+    )
+  )
 }
 
 # One expression per centred design column, in the order of `scaled_center`.
@@ -150,13 +174,16 @@ labels.lm_robust <- function(object, ...) attr(terms(object), "term.labels")
 # compute, and lm's versions assume the homoskedastic model a robust fit does
 # not. Without a method each failed with "no applicable method"; now each says
 # why.
-refuse_method <- function(what, why) {
+refuse_method <- function(what, why, generic = function(model, ...) NULL) {
   force(what)
   force(why)
-  function(model, ...) {
+  f <- function(...) {
     stop("`", what, "()` is not available for estimatr fits: ", why,
          call. = FALSE)
   }
+  # R CMD check requires a method to carry its generic's arguments
+  formals(f) <- formals(generic)
+  f
 }
 
 no_likelihood <- paste(
@@ -170,10 +197,11 @@ no_influence <- paste(
 
 #' @importFrom stats logLik
 #' @export
-logLik.lm_robust <- refuse_method("logLik", no_likelihood)
+logLik.lm_robust <- refuse_method("logLik", no_likelihood, stats::logLik)
 #' @importFrom stats extractAIC
 #' @export
-extractAIC.lm_robust <- refuse_method("extractAIC", no_likelihood)
+extractAIC.lm_robust <- refuse_method("extractAIC", no_likelihood,
+                                      stats::extractAIC)
 
 #' @importFrom stats influence
 #' @export
