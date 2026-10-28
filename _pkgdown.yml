@@ -30,6 +30,8 @@ navbar:
        href: articles/estimatr-in-the-tidyverse.html
      - text: Regression tables with estimatr
        href: articles/regression-tables.html
+     - text: The post-estimation contract
+       href: articles/post-estimation-contract.html
   right:
   - text: declaredesign.org
     href: https://declaredesign.org
@@ -43,3 +45,4 @@ articles:
   - performance
   - estimatr-in-the-tidyverse
   - regression-tables
+  - post-estimation-contract

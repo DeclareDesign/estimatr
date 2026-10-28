@@ -1,0 +1,139 @@
+---
+title: "The post-estimation contract"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{The post-estimation contract}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", echo = FALSE)
+contract <- read.csv(
+  system.file("contract", "contract.csv", package = "estimatr"),
+  stringsAsFactors = FALSE
+)
+fit_ids <- c(
+  "lm_plain", "lm_wt0", "lm_cl", "lm_fe", "lm_mv", "lm_lin",
+  "iv_plain", "iv_cl", "dim", "ht"
+)
+n_promise <- table(factor(
+  contract$promise,
+  levels = c("agrees", "refuses", "errors", "returns", "known_wrong", "none")
+))
+```
+
+A fitted `lm_robust` object is handed to many functions estimatr did not write: `coef()`, `predict()`, `confint()`, `anova()`, `hatvalues()`, `sandwich::vcovHC()`, and dozens more. Some of these have estimatr methods, some fall through to a method written for `lm`, and some have no business running on a fit that does not store residuals or a QR decomposition. The post-estimation contract records, for every one of `r length(unique(contract$probe))` probes on each of `r length(fit_ids)` fits, what estimatr promises the call will do. The table below is rendered from `inst/contract/contract.csv`, the same file the test suite reads, so the page cannot drift from what is checked.
+
+## The promises
+
+Each cell carries exactly one promise:
+
+| code | promise | meaning |
+|---|---|---|
+| `=` | agrees | returns the same answer as the call on the reference fit (`lm()`, or `ivreg::ivreg()` for the IV fits), or on a stated reference |
+| `R` | refuses | stops with estimatr's own message saying the generic is not available for this fit |
+| `E` | errors | stops, rather than return something that would mislead |
+| `~` | returns | returns a value, with no reference answer to hold it to |
+| `!` | known_wrong | a recorded gap; the test fails if it starts agreeing, so a fix is entered here |
+
+Across the `r nrow(contract)` cells: `r n_promise[["agrees"]]` agree, `r n_promise[["refuses"]]` refuse, `r n_promise[["errors"]]` error, `r n_promise[["returns"]]` return, `r n_promise[["known_wrong"]]` are known wrong, and `r n_promise[["none"]]` make no promise.
+
+The test (`tests/testthat/test_contract.R`) runs each probe in a fresh R process holding estimatr and only the packages that probe needs, and runs the reference in a process that never loads estimatr. Isolation matters here: `clubSandwich` replaces estimatr's `bread()` and `model.frame()` methods when it is loaded second, and `performance` registers a `logLik()` method for `iv_robust`, so a probe run beside them measures them rather than estimatr.
+
+## The fits
+
+All ten are fit to one simulated dataset of 60 rows with a binary treatment `z`, a covariate `x`, a binary instrument `iv`, ten clusters `g`, a four-level factor `f`, weights `w` (three of them zero), and a second outcome `y2`.
+
+| fit | estimatr call | reference |
+|---|---|---|
+| `lm_plain` | `lm_robust(y ~ x + z, d)` | `lm(y ~ x + z, d)` |
+| `lm_wt0` | `lm_robust(y ~ x + z, d, weights = w)` | `lm(y ~ x + z, d, weights = w)` |
+| `lm_cl` | `lm_robust(y ~ x + z, d, clusters = g)` | `lm(y ~ x + z, d)` |
+| `lm_fe` | `lm_robust(y ~ x + z, d, fixed_effects = ~f)` | `lm(y ~ x + z + f, d)` |
+| `lm_mv` | `lm_robust(cbind(y, y2) ~ x + z, d)` | `lm(cbind(y, y2) ~ x + z, d)` |
+| `lm_lin` | `lm_lin(y ~ z, ~x, d)` | `lm(y ~ z + x_c + z:x_c, d)` |
+| `iv_plain` | `iv_robust(y ~ z + x \| iv + x, d)` | `ivreg::ivreg(y ~ z + x \| iv + x, data = d)` |
+| `iv_cl` | `iv_robust(y ~ z + x \| iv + x, d, clusters = g)` | `ivreg::ivreg(y ~ z + x \| iv + x, data = d)` |
+| `dim` | `difference_in_means(y ~ z, d)` | `lm(y ~ z, d)` |
+| `ht` | `horvitz_thompson(y ~ z, d, condition_prs = ...)` | none |
+
+The reference fits report classical variances, so a cell that concerns a variance, a standard error, or an interval refers instead to the variance estimatr reports by default: `sandwich::vcovHC(ref, type = "HC2")`, or `clubSandwich::vcovCR(ref, type = "CR2")` with Satterthwaite degrees of freedom for the clustered fits. `lm_wt0`'s variances refer to the same regression on its positive-weight rows, because `sandwich` counts zero-weight rows as observations. `x_c` is `x` centered, as `lm_lin()` centers it. `dim` and `ht` equal a regression on `z` only where a row says so.
+
+## The contract
+
+```{r matrix}
+codes <- c(
+  agrees = "=", refuses = "R", errors = "E", returns = "~",
+  known_wrong = "!", none = " "
+)
+probes <- unique(contract$probe)
+cells <- matrix(
+  "", length(probes), length(fit_ids),
+  dimnames = list(probes, fit_ids)
+)
+cells[cbind(contract$probe, contract$fit)] <- codes[contract$promise]
+generic <- contract$generic[match(probes, contract$probe)]
+call <- contract$call[match(probes, contract$probe)]
+compound <- c(
+  dollar_model = "fit$model",
+  naresid_na.action = "fit$na.action",
+  simulate = "simulate(fit, 1)",
+  plot = "plot(fit, which = 1)",
+  vcovBS = "sandwich::vcovBS(fit, R = 20)",
+  vcov_via_bread_meat = "bread(fit) %*% meat(fit) %*% bread(fit) / nobs(fit)"
+)
+call[probes %in% names(compound)] <- compound[probes[probes %in% names(compound)]]
+knitr::kable(
+  data.frame(call = paste0("`", call, "`"), cells, check.names = FALSE),
+  row.names = FALSE, align = c("l", rep("c", length(fit_ids)))
+)
+```
+
+## Why each refusal
+
+A refusal names what the fit lacks. These are the messages, and the cells that carry them:
+
+```{r refusals}
+refused <- contract[contract$promise == "refuses", ]
+by_message <- split(refused, refused$error_pattern)
+knitr::kable(data.frame(
+  message = names(by_message),
+  cells = vapply(by_message, function(rows) {
+    paste(unique(rows$generic), collapse = ", ")
+  }, ""),
+  fits = vapply(by_message, function(rows) {
+    paste(intersect(fit_ids, rows$fit), collapse = ", ")
+  }, "")
+), row.names = FALSE)
+```
+
+## Decisions
+
+Some cells could reasonably have gone either way: whether `df.residual()` reports N - K or the cluster-adjusted degrees of freedom, whether `logLik()` on a robust fit should exist at all. Where a cell's promise was a choice rather than a consequence, the maintainer's decision (all made on 2026-10-27) is recorded beside it:
+
+```{r decisions}
+decided <- contract[grepl("^Alex [0-9-]+: ", contract$decision), ]
+decided$decision <- sub("^Alex [0-9-]+: ", "", decided$decision)
+decided$decision <- gsub("(?<!`)\\$(?!`)", "\\\\$", decided$decision, perl = TRUE)
+cell_key <- paste(decided$generic, decided$promise, decided$decision, sep = "\r")
+by_generic <- split(decided, factor(cell_key, levels = unique(cell_key)))
+by_generic <- data.frame(
+  generic = vapply(by_generic, function(rows) rows$generic[1], ""),
+  fits = vapply(by_generic, function(rows) {
+    paste(intersect(fit_ids, rows$fit), collapse = ", ")
+  }, ""),
+  promise = vapply(by_generic, function(rows) rows$promise[1], ""),
+  decision = vapply(by_generic, function(rows) rows$decision[1], "")
+)
+row_key <- paste(by_generic$decision, by_generic$promise, by_generic$fits, sep = "\r")
+by_row <- split(by_generic, factor(row_key, levels = unique(row_key)))
+knitr::kable(data.frame(
+  decision = vapply(by_row, function(rows) rows$decision[1], ""),
+  promise = vapply(by_row, function(rows) rows$promise[1], ""),
+  generics = vapply(by_row, function(rows) {
+    paste(rows$generic, collapse = ", ")
+  }, ""),
+  fits = vapply(by_row, function(rows) rows$fits[1], "")
+), row.names = FALSE)
+```
