@@ -1,0 +1,701 @@
+"probe","generic","fit","promise","call","reference","tolerance","error_pattern","decision"
+"coef","coef","lm_plain","agrees","coef(fit)","same",,,
+"coef","coef","lm_wt0","agrees","coef(fit)","same",,,
+"coef","coef","lm_cl","agrees","coef(fit)","same",,,
+"coef","coef","lm_fe","agrees","coef(fit)","same",,,
+"coef","coef","lm_mv","agrees","coef(fit)","same",,,
+"coef","coef","lm_lin","agrees","coef(fit)","same",,,
+"coef","coef","iv_plain","agrees","coef(fit)","same",,,
+"coef","coef","iv_cl","agrees","coef(fit)","same",,,
+"coef","coef","dim","agrees","coef(fit)","same",,,
+"coef","coef","ht","returns","coef(fit)",,,,
+"coefficients","coefficients","lm_plain","agrees","coefficients(fit)","same",,,
+"coefficients","coefficients","lm_wt0","agrees","coefficients(fit)","same",,,
+"coefficients","coefficients","lm_cl","agrees","coefficients(fit)","same",,,
+"coefficients","coefficients","lm_fe","agrees","coefficients(fit)","same",,,
+"coefficients","coefficients","lm_mv","agrees","coefficients(fit)","same",,,
+"coefficients","coefficients","lm_lin","agrees","coefficients(fit)","same",,,
+"coefficients","coefficients","iv_plain","agrees","coefficients(fit)","same",,,
+"coefficients","coefficients","iv_cl","agrees","coefficients(fit)","same",,,
+"coefficients","coefficients","dim","agrees","coefficients(fit)","same",,,
+"coefficients","coefficients","ht","returns","coefficients(fit)",,,,
+"residuals","residuals","lm_plain","agrees","residuals(fit)","same",,,
+"residuals","residuals","lm_wt0","agrees","residuals(fit)","same",,,
+"residuals","residuals","lm_cl","agrees","residuals(fit)","same",,,
+"residuals","residuals","lm_fe","agrees","residuals(fit)","same",,,
+"residuals","residuals","lm_mv","agrees","residuals(fit)","same",,,
+"residuals","residuals","lm_lin","agrees","residuals(fit)","same",,,
+"residuals","residuals","iv_plain","agrees","residuals(fit)","same",,,
+"residuals","residuals","iv_cl","agrees","residuals(fit)","same",,,
+"residuals","residuals","dim","none","residuals(fit)","same",,,
+"residuals","residuals","ht","returns","residuals(fit)",,,,
+"resid","resid","lm_plain","agrees","resid(fit)","same",,,
+"resid","resid","lm_wt0","agrees","resid(fit)","same",,,
+"resid","resid","lm_cl","agrees","resid(fit)","same",,,
+"resid","resid","lm_fe","agrees","resid(fit)","same",,,
+"resid","resid","lm_mv","agrees","resid(fit)","same",,,
+"resid","resid","lm_lin","agrees","resid(fit)","same",,,
+"resid","resid","iv_plain","agrees","resid(fit)","same",,,
+"resid","resid","iv_cl","agrees","resid(fit)","same",,,
+"resid","resid","dim","none","resid(fit)","same",,,
+"resid","resid","ht","returns","resid(fit)",,,,
+"fitted","fitted","lm_plain","agrees","fitted(fit)","same",,,
+"fitted","fitted","lm_wt0","agrees","fitted(fit)","same",,,
+"fitted","fitted","lm_cl","agrees","fitted(fit)","same",,,
+"fitted","fitted","lm_fe","agrees","fitted(fit)","same",,,
+"fitted","fitted","lm_mv","agrees","fitted(fit)","same",,,
+"fitted","fitted","lm_lin","agrees","fitted(fit)","same",,,
+"fitted","fitted","iv_plain","agrees","fitted(fit)","same",,,
+"fitted","fitted","iv_cl","agrees","fitted(fit)","same",,,
+"fitted","fitted","dim","none","fitted(fit)","same",,,
+"fitted","fitted","ht","returns","fitted(fit)",,,,
+"fitted.values","fitted.values","lm_plain","agrees","fitted.values(fit)","same",,,
+"fitted.values","fitted.values","lm_wt0","agrees","fitted.values(fit)","same",,,
+"fitted.values","fitted.values","lm_cl","agrees","fitted.values(fit)","same",,,
+"fitted.values","fitted.values","lm_fe","agrees","fitted.values(fit)","same",,,
+"fitted.values","fitted.values","lm_mv","agrees","fitted.values(fit)","same",,,
+"fitted.values","fitted.values","lm_lin","agrees","fitted.values(fit)","same",,,
+"fitted.values","fitted.values","iv_plain","agrees","fitted.values(fit)","same",,,
+"fitted.values","fitted.values","iv_cl","agrees","fitted.values(fit)","same",,,
+"fitted.values","fitted.values","dim","none","fitted.values(fit)","same",,,
+"fitted.values","fitted.values","ht","returns","fitted.values(fit)",,,,
+"predict","predict","lm_plain","agrees","predict(fit, newdata = d)","same",,,
+"predict","predict","lm_wt0","agrees","predict(fit, newdata = d)","same",,,
+"predict","predict","lm_cl","agrees","predict(fit, newdata = d)","same",,,
+"predict","predict","lm_fe","agrees","predict(fit, newdata = d)","same",,,
+"predict","predict","lm_mv","agrees","predict(fit, newdata = d)","same",,,
+"predict","predict","lm_lin","agrees","predict(fit, newdata = d)","same",,,
+"predict","predict","iv_plain","agrees","predict(fit, newdata = d)","same",,,
+"predict","predict","iv_cl","agrees","predict(fit, newdata = d)","same",,,
+"predict","predict","dim","errors","predict(fit, newdata = d)","same",,,
+"predict","predict","ht","errors","predict(fit, newdata = d)",,,,
+"predict_sefit","predict","lm_plain","agrees","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,
+"predict_sefit","predict","lm_wt0","agrees","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,
+"predict_sefit","predict","lm_cl","agrees","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,
+"predict_sefit","predict","lm_fe","refuses","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,"Can't set `se.fit` or `interval` with `fixed_effects`",
+"predict_sefit","predict","lm_mv","refuses","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,"Can't set `se.fit` == TRUE with multivariate outcome","Alex 2026-10-27: multi-outcome refused"
+"predict_sefit","predict","lm_lin","agrees","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,
+"predict_sefit","predict","iv_plain","known_wrong","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,"known gap: predict(iv, se.fit = TRUE) ignores se.fit"
+"predict_sefit","predict","iv_cl","known_wrong","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,"known gap: predict(iv, se.fit = TRUE) ignores se.fit"
+"predict_sefit","predict","dim","errors","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,
+"predict_sefit","predict","ht","errors","predict(fit, newdata = d, se.fit = TRUE)$se.fit",,,,
+"predict_noarg","predict","lm_plain","agrees","predict(fit)","same",,,
+"predict_noarg","predict","lm_wt0","agrees","predict(fit)","same",,,
+"predict_noarg","predict","lm_cl","agrees","predict(fit)","same",,,
+"predict_noarg","predict","lm_fe","agrees","predict(fit)","same",,,
+"predict_noarg","predict","lm_mv","agrees","predict(fit)","same",,,
+"predict_noarg","predict","lm_lin","agrees","predict(fit)","same",,,
+"predict_noarg","predict","iv_plain","known_wrong","predict(fit)","same",,,"known gap: predict(iv) without newdata errors"
+"predict_noarg","predict","iv_cl","known_wrong","predict(fit)","same",,,"known gap: predict(iv) without newdata errors"
+"predict_noarg","predict","dim","errors","predict(fit)","same",,,
+"predict_noarg","predict","ht","errors","predict(fit)",,,,
+"confint","confint","lm_plain","agrees","confint(fit)","contract_reference_confint(ref, V, fit_id, d)",,,
+"confint","confint","lm_wt0","agrees","confint(fit)","contract_reference_confint(ref, V, fit_id, d)",,,
+"confint","confint","lm_cl","agrees","confint(fit)","contract_reference_confint(ref, V, fit_id, d)",,,
+"confint","confint","lm_fe","agrees","confint(fit)","contract_reference_confint(ref, V, fit_id, d)",,,
+"confint","confint","lm_mv","none","confint(fit)","contract_reference_confint(ref, V, fit_id, d)",,,
+"confint","confint","lm_lin","agrees","confint(fit)","contract_reference_confint(ref, V, fit_id, d)",,,
+"confint","confint","iv_plain","agrees","confint(fit)","contract_reference_confint(ref, V, fit_id, d)",,,
+"confint","confint","iv_cl","agrees","confint(fit)","contract_reference_confint(ref, V, fit_id, d)",,,
+"confint","confint","dim","agrees","confint(fit)","tt <- t.test(y ~ z, d); matrix(-rev(tt$conf.int), 1, dimnames = list(""z"", NULL))",,,
+"confint","confint","ht","returns","confint(fit)",,,,
+"vcov","vcov","lm_plain","agrees","vcov(fit)","V",,,
+"vcov","vcov","lm_wt0","agrees","vcov(fit)","V",,,
+"vcov","vcov","lm_cl","agrees","vcov(fit)","V",,,
+"vcov","vcov","lm_fe","agrees","vcov(fit)","V",,,
+"vcov","vcov","lm_mv","agrees","vcov(fit)","V",,,
+"vcov","vcov","lm_lin","agrees","vcov(fit)","V",,,
+"vcov","vcov","iv_plain","agrees","vcov(fit)","V",,,
+"vcov","vcov","iv_cl","agrees","vcov(fit)","V",,,
+"vcov","vcov","dim","agrees","vcov(fit)","V",,,
+"vcov","vcov","ht","returns","vcov(fit)",,,,
+"nobs","nobs","lm_plain","agrees","nobs(fit)","same",,,
+"nobs","nobs","lm_wt0","agrees","nobs(fit)","same",,,
+"nobs","nobs","lm_cl","agrees","nobs(fit)","same",,,
+"nobs","nobs","lm_fe","agrees","nobs(fit)","same",,,
+"nobs","nobs","lm_mv","agrees","nobs(fit)","same",,,
+"nobs","nobs","lm_lin","agrees","nobs(fit)","same",,,
+"nobs","nobs","iv_plain","agrees","nobs(fit)","same",,,
+"nobs","nobs","iv_cl","agrees","nobs(fit)","same",,,
+"nobs","nobs","dim","agrees","nobs(fit)","same",,,
+"nobs","nobs","ht","returns","nobs(fit)",,,,
+"df.residual","df.residual","lm_plain","agrees","df.residual(fit)","same",,,"Alex 2026-10-27: N - K; consumers get upstream fixes"
+"df.residual","df.residual","lm_wt0","agrees","df.residual(fit)","same",,,"Alex 2026-10-27: N - K; consumers get upstream fixes"
+"df.residual","df.residual","lm_cl","agrees","df.residual(fit)","same",,,"Alex 2026-10-27: N - K; consumers get upstream fixes"
+"df.residual","df.residual","lm_fe","agrees","df.residual(fit)","same",,,"Alex 2026-10-27: N - K; consumers get upstream fixes"
+"df.residual","df.residual","lm_mv","agrees","df.residual(fit)","same",,,"Alex 2026-10-27: N - K; consumers get upstream fixes"
+"df.residual","df.residual","lm_lin","agrees","df.residual(fit)","same",,,"Alex 2026-10-27: N - K; consumers get upstream fixes"
+"df.residual","df.residual","iv_plain","agrees","df.residual(fit)","same",,,"Alex 2026-10-27: N - K; consumers get upstream fixes"
+"df.residual","df.residual","iv_cl","agrees","df.residual(fit)","same",,,"Alex 2026-10-27: N - K; consumers get upstream fixes"
+"df.residual","df.residual","dim","none","df.residual(fit)","same",,,"Alex 2026-10-27: N - K; consumers get upstream fixes"
+"df.residual","df.residual","ht","returns","df.residual(fit)",,,,"Alex 2026-10-27: N - K; consumers get upstream fixes"
+"deviance","deviance","lm_plain","agrees","deviance(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"deviance","deviance","lm_wt0","agrees","deviance(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"deviance","deviance","lm_cl","agrees","deviance(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"deviance","deviance","lm_fe","agrees","deviance(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"deviance","deviance","lm_mv","refuses","deviance(fit)","same",,"`deviance()` is not available","Alex 2026-10-27: multi-outcome refused"
+"deviance","deviance","lm_lin","agrees","deviance(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"deviance","deviance","iv_plain","agrees","deviance(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"deviance","deviance","iv_cl","agrees","deviance(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"deviance","deviance","dim","none","deviance(fit)","same",,,
+"deviance","deviance","ht","returns","deviance(fit)",,,,
+"logLik","logLik","lm_plain","refuses","as.numeric(logLik(fit))","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"logLik","logLik","lm_wt0","refuses","as.numeric(logLik(fit))","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"logLik","logLik","lm_cl","refuses","as.numeric(logLik(fit))","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"logLik","logLik","lm_fe","refuses","as.numeric(logLik(fit))","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"logLik","logLik","lm_mv","refuses","as.numeric(logLik(fit))","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"logLik","logLik","lm_lin","refuses","as.numeric(logLik(fit))","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"logLik","logLik","iv_plain","errors","as.numeric(logLik(fit))","same",,,"Alex 2026-10-27: no likelihood method on iv_robust, so performance's cannot race ours"
+"logLik","logLik","iv_cl","errors","as.numeric(logLik(fit))","same",,,"Alex 2026-10-27: no likelihood method on iv_robust, so performance's cannot race ours"
+"logLik","logLik","dim","errors","as.numeric(logLik(fit))","same",,,
+"logLik","logLik","ht","errors","as.numeric(logLik(fit))",,,,
+"AIC","AIC","lm_plain","refuses","AIC(fit)","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"AIC","AIC","lm_wt0","refuses","AIC(fit)","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"AIC","AIC","lm_cl","refuses","AIC(fit)","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"AIC","AIC","lm_fe","refuses","AIC(fit)","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"AIC","AIC","lm_mv","refuses","AIC(fit)","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"AIC","AIC","lm_lin","refuses","AIC(fit)","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"AIC","AIC","iv_plain","errors","AIC(fit)","same",,,"Alex 2026-10-27: no likelihood method on iv_robust, so performance's cannot race ours"
+"AIC","AIC","iv_cl","errors","AIC(fit)","same",,,"Alex 2026-10-27: no likelihood method on iv_robust, so performance's cannot race ours"
+"AIC","AIC","dim","errors","AIC(fit)","same",,,
+"AIC","AIC","ht","errors","AIC(fit)",,,,
+"BIC","BIC","lm_plain","refuses","BIC(fit)","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"BIC","BIC","lm_wt0","refuses","BIC(fit)","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"BIC","BIC","lm_cl","refuses","BIC(fit)","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"BIC","BIC","lm_fe","refuses","BIC(fit)","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"BIC","BIC","lm_mv","refuses","BIC(fit)","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"BIC","BIC","lm_lin","refuses","BIC(fit)","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"BIC","BIC","iv_plain","errors","BIC(fit)","same",,,"Alex 2026-10-27: no likelihood method on iv_robust, so performance's cannot race ours"
+"BIC","BIC","iv_cl","errors","BIC(fit)","same",,,"Alex 2026-10-27: no likelihood method on iv_robust, so performance's cannot race ours"
+"BIC","BIC","dim","errors","BIC(fit)","same",,,
+"BIC","BIC","ht","errors","BIC(fit)",,,,
+"extractAIC","extractAIC","lm_plain","refuses","extractAIC(fit)","same",,"`extractAIC()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"extractAIC","extractAIC","lm_wt0","refuses","extractAIC(fit)","same",,"`extractAIC()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"extractAIC","extractAIC","lm_cl","refuses","extractAIC(fit)","same",,"`extractAIC()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"extractAIC","extractAIC","lm_fe","refuses","extractAIC(fit)","same",,"`extractAIC()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"extractAIC","extractAIC","lm_mv","refuses","extractAIC(fit)","same",,"`extractAIC()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"extractAIC","extractAIC","lm_lin","refuses","extractAIC(fit)","same",,"`extractAIC()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
+"extractAIC","extractAIC","iv_plain","errors","extractAIC(fit)","same",,,"Alex 2026-10-27: no likelihood method on iv_robust, so performance's cannot race ours"
+"extractAIC","extractAIC","iv_cl","errors","extractAIC(fit)","same",,,"Alex 2026-10-27: no likelihood method on iv_robust, so performance's cannot race ours"
+"extractAIC","extractAIC","dim","errors","extractAIC(fit)","same",,,
+"extractAIC","extractAIC","ht","errors","extractAIC(fit)",,,,
+"sigma","sigma","lm_plain","agrees","sigma(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"sigma","sigma","lm_wt0","agrees","sigma(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"sigma","sigma","lm_cl","agrees","sigma(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"sigma","sigma","lm_fe","agrees","sigma(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"sigma","sigma","lm_mv","refuses","sigma(fit)","same",,"`deviance()` is not available","Alex 2026-10-27: multi-outcome refused"
+"sigma","sigma","lm_lin","agrees","sigma(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"sigma","sigma","iv_plain","agrees","sigma(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"sigma","sigma","iv_cl","agrees","sigma(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"sigma","sigma","dim","none","sigma(fit)","same",,,
+"sigma","sigma","ht","returns","sigma(fit)",,,,
+"formula","formula","lm_plain","agrees","format(formula(fit))","""y ~ x + z""",,,
+"formula","formula","lm_wt0","agrees","format(formula(fit))","""y ~ x + z""",,,
+"formula","formula","lm_cl","agrees","format(formula(fit))","""y ~ x + z""",,,
+"formula","formula","lm_fe","agrees","format(formula(fit))","""y ~ x + z""",,,"Alex 2026-10-27: terms() full (lm_lin translated), formula() the call's"
+"formula","formula","lm_mv","agrees","format(formula(fit))","same",,,
+"formula","formula","lm_lin","agrees","format(formula(fit))","""y ~ z + x""",,,"Alex 2026-10-27: terms() full (lm_lin translated), formula() the call's"
+"formula","formula","iv_plain","agrees","format(formula(fit))","same",,,
+"formula","formula","iv_cl","agrees","format(formula(fit))","same",,,
+"formula","formula","dim","agrees","format(formula(fit))","same",,,
+"formula","formula","ht","returns","format(formula(fit))",,,,
+"terms","terms","lm_plain","agrees","attr(terms(fit), ""term.labels"")","same",,,
+"terms","terms","lm_wt0","agrees","attr(terms(fit), ""term.labels"")","same",,,
+"terms","terms","lm_cl","agrees","attr(terms(fit), ""term.labels"")","same",,,
+"terms","terms","lm_fe","agrees","attr(terms(fit), ""term.labels"")","same",,,"Alex 2026-10-27: terms() full (lm_lin translated), formula() the call's"
+"terms","terms","lm_mv","agrees","attr(terms(fit), ""term.labels"")","same",,,
+"terms","terms","lm_lin","returns","attr(terms(fit), ""term.labels"")",,,,"Alex 2026-10-27: terms() full (lm_lin translated), formula() the call's"
+"terms","terms","iv_plain","known_wrong","attr(terms(fit), ""term.labels"")","same",,,"known gap: terms() on iv_robust is the two-part formula, instruments included"
+"terms","terms","iv_cl","known_wrong","attr(terms(fit), ""term.labels"")","same",,,"known gap: terms() on iv_robust is the two-part formula, instruments included"
+"terms","terms","dim","errors","attr(terms(fit), ""term.labels"")","same",,,
+"terms","terms","ht","errors","attr(terms(fit), ""term.labels"")",,,,
+"model.frame","model.frame","lm_plain","agrees","mf <- model.frame(fit); as.matrix(mf[vapply(mf, is.numeric, TRUE)])","same",,,
+"model.frame","model.frame","lm_wt0","agrees","mf <- model.frame(fit); as.matrix(mf[vapply(mf, is.numeric, TRUE)])","same",,,
+"model.frame","model.frame","lm_cl","agrees","mf <- model.frame(fit); as.matrix(mf[vapply(mf, is.numeric, TRUE)])","same",,,
+"model.frame","model.frame","lm_fe","agrees","mf <- model.frame(fit); as.matrix(mf[vapply(mf, is.numeric, TRUE)])","same",,,
+"model.frame","model.frame","lm_mv","agrees","mf <- model.frame(fit); as.matrix(mf[vapply(mf, is.numeric, TRUE)])","same",,,
+"model.frame","model.frame","lm_lin","agrees","mf <- model.frame(fit); as.matrix(mf[vapply(mf, is.numeric, TRUE)])","same",,,
+"model.frame","model.frame","iv_plain","agrees","mf <- model.frame(fit); as.matrix(mf[vapply(mf, is.numeric, TRUE)])","same",,,
+"model.frame","model.frame","iv_cl","agrees","mf <- model.frame(fit); as.matrix(mf[vapply(mf, is.numeric, TRUE)])","same",,,
+"model.frame","model.frame","dim","errors","mf <- model.frame(fit); as.matrix(mf[vapply(mf, is.numeric, TRUE)])","same",,,
+"model.frame","model.frame","ht","errors","mf <- model.frame(fit); as.matrix(mf[vapply(mf, is.numeric, TRUE)])",,,,
+"model.matrix","model.matrix","lm_plain","agrees","model.matrix(fit)","same",,,
+"model.matrix","model.matrix","lm_wt0","agrees","model.matrix(fit)","same",,,
+"model.matrix","model.matrix","lm_cl","agrees","model.matrix(fit)","same",,,
+"model.matrix","model.matrix","lm_fe","agrees","model.matrix(fit)","same",,,
+"model.matrix","model.matrix","lm_mv","agrees","model.matrix(fit)","same",,,
+"model.matrix","model.matrix","lm_lin","agrees","model.matrix(fit)","same",,,
+"model.matrix","model.matrix","iv_plain","agrees","model.matrix(fit)","same",,,
+"model.matrix","model.matrix","iv_cl","agrees","model.matrix(fit)","same",,,
+"model.matrix","model.matrix","dim","errors","model.matrix(fit)","same",,,
+"model.matrix","model.matrix","ht","errors","model.matrix(fit)",,,,
+"family","family","lm_plain","errors","family(fit)$family","same",,,
+"family","family","lm_wt0","errors","family(fit)$family","same",,,
+"family","family","lm_cl","errors","family(fit)$family","same",,,
+"family","family","lm_fe","errors","family(fit)$family","same",,,
+"family","family","lm_mv","errors","family(fit)$family","same",,,
+"family","family","lm_lin","errors","family(fit)$family","same",,,
+"family","family","iv_plain","errors","family(fit)$family","same",,,
+"family","family","iv_cl","errors","family(fit)$family","same",,,
+"family","family","dim","errors","family(fit)$family","same",,,
+"family","family","ht","errors","family(fit)$family",,,,
+"weights","weights","lm_plain","agrees","weights(fit)","same",,,
+"weights","weights","lm_wt0","agrees","weights(fit)","same",,,
+"weights","weights","lm_cl","agrees","weights(fit)","same",,,
+"weights","weights","lm_fe","agrees","weights(fit)","same",,,
+"weights","weights","lm_mv","agrees","weights(fit)","same",,,
+"weights","weights","lm_lin","agrees","weights(fit)","same",,,
+"weights","weights","iv_plain","agrees","weights(fit)","same",,,
+"weights","weights","iv_cl","agrees","weights(fit)","same",,,
+"weights","weights","dim","agrees","weights(fit)","same",,,
+"weights","weights","ht","returns","weights(fit)",,,,
+"case.names","case.names","lm_plain","agrees","case.names(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"case.names","case.names","lm_wt0","agrees","case.names(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"case.names","case.names","lm_cl","agrees","case.names(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"case.names","case.names","lm_fe","agrees","case.names(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"case.names","case.names","lm_mv","none","case.names(fit)","same",,,
+"case.names","case.names","lm_lin","agrees","case.names(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"case.names","case.names","iv_plain","none","case.names(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"case.names","case.names","iv_cl","none","case.names(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"case.names","case.names","dim","none","case.names(fit)","same",,,
+"case.names","case.names","ht","returns","case.names(fit)",,,,
+"variable.names","variable.names","lm_plain","agrees","variable.names(fit)","same",,,
+"variable.names","variable.names","lm_wt0","agrees","variable.names(fit)","same",,,
+"variable.names","variable.names","lm_cl","agrees","variable.names(fit)","same",,,
+"variable.names","variable.names","lm_fe","agrees","variable.names(fit)","c(""x"", ""z"")",,,
+"variable.names","variable.names","lm_mv","agrees","variable.names(fit)","same",,,
+"variable.names","variable.names","lm_lin","agrees","variable.names(fit)","same",,,
+"variable.names","variable.names","iv_plain","agrees","variable.names(fit)","names(coef(ref))",,,
+"variable.names","variable.names","iv_cl","agrees","variable.names(fit)","names(coef(ref))",,,
+"variable.names","variable.names","dim","none","variable.names(fit)","same",,,
+"variable.names","variable.names","ht","returns","variable.names(fit)",,,,
+"labels","labels","lm_plain","agrees","labels(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"labels","labels","lm_wt0","agrees","labels(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"labels","labels","lm_cl","agrees","labels(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"labels","labels","lm_fe","agrees","labels(fit)","same",,,"Alex 2026-10-27: terms() full (lm_lin translated), formula() the call's"
+"labels","labels","lm_mv","agrees","labels(fit)","same",,,
+"labels","labels","lm_lin","returns","labels(fit)",,,,"Alex 2026-10-27: terms() full (lm_lin translated), formula() the call's"
+"labels","labels","iv_plain","known_wrong","labels(fit)","c(""z"", ""x"")",,,"Alex 2026-10-27: implement with lm's meaning"
+"labels","labels","iv_cl","known_wrong","labels(fit)","c(""z"", ""x"")",,,"Alex 2026-10-27: implement with lm's meaning"
+"labels","labels","dim","none","labels(fit)","same",,,
+"labels","labels","ht","returns","labels(fit)",,,,
+"dummy.coef","dummy.coef","lm_plain","errors","unlist(dummy.coef(fit))","same",,,
+"dummy.coef","dummy.coef","lm_wt0","errors","unlist(dummy.coef(fit))","same",,,
+"dummy.coef","dummy.coef","lm_cl","errors","unlist(dummy.coef(fit))","same",,,
+"dummy.coef","dummy.coef","lm_fe","errors","unlist(dummy.coef(fit))","same",,,
+"dummy.coef","dummy.coef","lm_mv","errors","unlist(dummy.coef(fit))","same",,,
+"dummy.coef","dummy.coef","lm_lin","errors","unlist(dummy.coef(fit))","same",,,
+"dummy.coef","dummy.coef","iv_plain","errors","unlist(dummy.coef(fit))","same",,,
+"dummy.coef","dummy.coef","iv_cl","errors","unlist(dummy.coef(fit))","same",,,
+"dummy.coef","dummy.coef","dim","errors","unlist(dummy.coef(fit))","same",,,
+"dummy.coef","dummy.coef","ht","errors","unlist(dummy.coef(fit))",,,,
+"effects","effects","lm_plain","errors","effects(fit)","same",,,
+"effects","effects","lm_wt0","errors","effects(fit)","same",,,
+"effects","effects","lm_cl","errors","effects(fit)","same",,,
+"effects","effects","lm_fe","errors","effects(fit)","same",,,
+"effects","effects","lm_mv","errors","effects(fit)","same",,,
+"effects","effects","lm_lin","errors","effects(fit)","same",,,
+"effects","effects","iv_plain","errors","effects(fit)","same",,,
+"effects","effects","iv_cl","errors","effects(fit)","same",,,
+"effects","effects","dim","errors","effects(fit)","same",,,
+"effects","effects","ht","errors","effects(fit)",,,,
+"alias","alias","lm_plain","errors","alias(fit)$Complete","same",,,
+"alias","alias","lm_wt0","errors","alias(fit)$Complete","same",,,
+"alias","alias","lm_cl","errors","alias(fit)$Complete","same",,,
+"alias","alias","lm_fe","errors","alias(fit)$Complete","same",,,
+"alias","alias","lm_mv","errors","alias(fit)$Complete","same",,,
+"alias","alias","lm_lin","errors","alias(fit)$Complete","same",,,
+"alias","alias","iv_plain","errors","alias(fit)$Complete","same",,,
+"alias","alias","iv_cl","errors","alias(fit)$Complete","same",,,
+"alias","alias","dim","errors","alias(fit)$Complete","same",,,
+"alias","alias","ht","errors","alias(fit)$Complete",,,,
+"qr","qr","lm_plain","errors","qr(fit)$rank","same",,,
+"qr","qr","lm_wt0","errors","qr(fit)$rank","same",,,
+"qr","qr","lm_cl","errors","qr(fit)$rank","same",,,
+"qr","qr","lm_fe","errors","qr(fit)$rank","same",,,
+"qr","qr","lm_mv","errors","qr(fit)$rank","same",,,
+"qr","qr","lm_lin","errors","qr(fit)$rank","same",,,
+"qr","qr","iv_plain","errors","qr(fit)$rank","same",,,
+"qr","qr","iv_cl","errors","qr(fit)$rank","same",,,
+"qr","qr","dim","errors","qr(fit)$rank","same",,,
+"qr","qr","ht","errors","qr(fit)$rank",,,,
+"kappa","kappa","lm_plain","errors","kappa(fit)","same",,,
+"kappa","kappa","lm_wt0","errors","kappa(fit)","same",,,
+"kappa","kappa","lm_cl","errors","kappa(fit)","same",,,
+"kappa","kappa","lm_fe","errors","kappa(fit)","same",,,
+"kappa","kappa","lm_mv","errors","kappa(fit)","same",,,
+"kappa","kappa","lm_lin","errors","kappa(fit)","same",,,
+"kappa","kappa","iv_plain","errors","kappa(fit)","same",,,
+"kappa","kappa","iv_cl","errors","kappa(fit)","same",,,
+"kappa","kappa","dim","errors","kappa(fit)","same",,,
+"kappa","kappa","ht","errors","kappa(fit)",,,,
+"proj","proj","lm_plain","errors","proj(fit)","same",,,
+"proj","proj","lm_wt0","errors","proj(fit)","same",,,
+"proj","proj","lm_cl","errors","proj(fit)","same",,,
+"proj","proj","lm_fe","errors","proj(fit)","same",,,
+"proj","proj","lm_mv","errors","proj(fit)","same",,,
+"proj","proj","lm_lin","errors","proj(fit)","same",,,
+"proj","proj","iv_plain","errors","proj(fit)","same",,,
+"proj","proj","iv_cl","errors","proj(fit)","same",,,
+"proj","proj","dim","errors","proj(fit)","same",,,
+"proj","proj","ht","errors","proj(fit)",,,,
+"hatvalues","hatvalues","lm_plain","agrees","hatvalues(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"hatvalues","hatvalues","lm_wt0","agrees","hatvalues(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"hatvalues","hatvalues","lm_cl","agrees","hatvalues(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"hatvalues","hatvalues","lm_fe","refuses","hatvalues(fit)","same",,"`hatvalues()` is not available","Alex 2026-10-27: implement with lm's meaning"
+"hatvalues","hatvalues","lm_mv","refuses","hatvalues(fit)","same",,"`hatvalues()` is not available","Alex 2026-10-27: multi-outcome refused"
+"hatvalues","hatvalues","lm_lin","agrees","hatvalues(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"hatvalues","hatvalues","iv_plain","agrees","hatvalues(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"hatvalues","hatvalues","iv_cl","agrees","hatvalues(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
+"hatvalues","hatvalues","dim","errors","hatvalues(fit)","same",,,
+"hatvalues","hatvalues","ht","errors","hatvalues(fit)",,,,
+"cooks.distance","cooks.distance","lm_plain","refuses","cooks.distance(fit)","same",,"`cooks.distance()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"cooks.distance","cooks.distance","lm_wt0","refuses","cooks.distance(fit)","same",,"`cooks.distance()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"cooks.distance","cooks.distance","lm_cl","refuses","cooks.distance(fit)","same",,"`cooks.distance()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"cooks.distance","cooks.distance","lm_fe","refuses","cooks.distance(fit)","same",,"`cooks.distance()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"cooks.distance","cooks.distance","lm_mv","refuses","cooks.distance(fit)","same",,"`cooks.distance()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"cooks.distance","cooks.distance","lm_lin","refuses","cooks.distance(fit)","same",,"`cooks.distance()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"cooks.distance","cooks.distance","iv_plain","refuses","cooks.distance(fit)","same",,"`cooks.distance()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"cooks.distance","cooks.distance","iv_cl","refuses","cooks.distance(fit)","same",,"`cooks.distance()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"cooks.distance","cooks.distance","dim","errors","cooks.distance(fit)","same",,,"Alex 2026-10-27: refuse case-deletion diagnostics"
+"cooks.distance","cooks.distance","ht","errors","cooks.distance(fit)",,,,"Alex 2026-10-27: refuse case-deletion diagnostics"
+"influence","influence","lm_plain","refuses","influence(fit)$hat","same",,"`influence()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"influence","influence","lm_wt0","refuses","influence(fit)$hat","same",,"`influence()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"influence","influence","lm_cl","refuses","influence(fit)$hat","same",,"`influence()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"influence","influence","lm_fe","refuses","influence(fit)$hat","same",,"`influence()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"influence","influence","lm_mv","refuses","influence(fit)$hat","same",,"`influence()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"influence","influence","lm_lin","refuses","influence(fit)$hat","same",,"`influence()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"influence","influence","iv_plain","refuses","influence(fit)$hat","same",,"`influence()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"influence","influence","iv_cl","refuses","influence(fit)$hat","same",,"`influence()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"influence","influence","dim","errors","influence(fit)$hat","same",,,"Alex 2026-10-27: refuse case-deletion diagnostics"
+"influence","influence","ht","errors","influence(fit)$hat",,,,"Alex 2026-10-27: refuse case-deletion diagnostics"
+"lm.influence","lm.influence","lm_plain","errors","lm.influence(fit)$hat","same",,,
+"lm.influence","lm.influence","lm_wt0","errors","lm.influence(fit)$hat","same",,,
+"lm.influence","lm.influence","lm_cl","errors","lm.influence(fit)$hat","same",,,
+"lm.influence","lm.influence","lm_fe","errors","lm.influence(fit)$hat","same",,,
+"lm.influence","lm.influence","lm_mv","errors","lm.influence(fit)$hat","same",,,
+"lm.influence","lm.influence","lm_lin","errors","lm.influence(fit)$hat","same",,,
+"lm.influence","lm.influence","iv_plain","errors","lm.influence(fit)$hat","same",,,
+"lm.influence","lm.influence","iv_cl","errors","lm.influence(fit)$hat","same",,,
+"lm.influence","lm.influence","dim","errors","lm.influence(fit)$hat","same",,,
+"lm.influence","lm.influence","ht","errors","lm.influence(fit)$hat",,,,
+"influence.measures","influence.measures","lm_plain","errors","influence.measures(fit)$infmat","same",,,
+"influence.measures","influence.measures","lm_wt0","errors","influence.measures(fit)$infmat","same",,,
+"influence.measures","influence.measures","lm_cl","errors","influence.measures(fit)$infmat","same",,,
+"influence.measures","influence.measures","lm_fe","errors","influence.measures(fit)$infmat","same",,,
+"influence.measures","influence.measures","lm_mv","errors","influence.measures(fit)$infmat","same",,,
+"influence.measures","influence.measures","lm_lin","errors","influence.measures(fit)$infmat","same",,,
+"influence.measures","influence.measures","iv_plain","errors","influence.measures(fit)$infmat","same",,,
+"influence.measures","influence.measures","iv_cl","errors","influence.measures(fit)$infmat","same",,,
+"influence.measures","influence.measures","dim","errors","influence.measures(fit)$infmat","same",,,
+"influence.measures","influence.measures","ht","errors","influence.measures(fit)$infmat",,,,
+"dfbeta","dfbeta","lm_plain","refuses","dfbeta(fit)","same",,"`dfbeta()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbeta","dfbeta","lm_wt0","refuses","dfbeta(fit)","same",,"`dfbeta()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbeta","dfbeta","lm_cl","refuses","dfbeta(fit)","same",,"`dfbeta()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbeta","dfbeta","lm_fe","refuses","dfbeta(fit)","same",,"`dfbeta()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbeta","dfbeta","lm_mv","refuses","dfbeta(fit)","same",,"`dfbeta()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbeta","dfbeta","lm_lin","refuses","dfbeta(fit)","same",,"`dfbeta()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbeta","dfbeta","iv_plain","refuses","dfbeta(fit)","same",,"`dfbeta()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbeta","dfbeta","iv_cl","refuses","dfbeta(fit)","same",,"`dfbeta()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbeta","dfbeta","dim","errors","dfbeta(fit)","same",,,"Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbeta","dfbeta","ht","errors","dfbeta(fit)",,,,"Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbetas","dfbetas","lm_plain","refuses","dfbetas(fit)","same",,"`dfbetas()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbetas","dfbetas","lm_wt0","refuses","dfbetas(fit)","same",,"`dfbetas()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbetas","dfbetas","lm_cl","refuses","dfbetas(fit)","same",,"`dfbetas()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbetas","dfbetas","lm_fe","refuses","dfbetas(fit)","same",,"`dfbetas()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbetas","dfbetas","lm_mv","refuses","dfbetas(fit)","same",,"`dfbetas()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbetas","dfbetas","lm_lin","refuses","dfbetas(fit)","same",,"`dfbetas()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbetas","dfbetas","iv_plain","refuses","dfbetas(fit)","same",,"`dfbetas()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbetas","dfbetas","iv_cl","refuses","dfbetas(fit)","same",,"`dfbetas()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbetas","dfbetas","dim","errors","dfbetas(fit)","same",,,"Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbetas","dfbetas","ht","errors","dfbetas(fit)",,,,"Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstandard","rstandard","lm_plain","refuses","rstandard(fit)","same",,"`rstandard()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstandard","rstandard","lm_wt0","refuses","rstandard(fit)","same",,"`rstandard()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstandard","rstandard","lm_cl","refuses","rstandard(fit)","same",,"`rstandard()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstandard","rstandard","lm_fe","refuses","rstandard(fit)","same",,"`rstandard()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstandard","rstandard","lm_mv","refuses","rstandard(fit)","same",,"`rstandard()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstandard","rstandard","lm_lin","refuses","rstandard(fit)","same",,"`rstandard()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstandard","rstandard","iv_plain","refuses","rstandard(fit)","same",,"`rstandard()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstandard","rstandard","iv_cl","refuses","rstandard(fit)","same",,"`rstandard()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstandard","rstandard","dim","errors","rstandard(fit)","same",,,"Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstandard","rstandard","ht","errors","rstandard(fit)",,,,"Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstudent","rstudent","lm_plain","refuses","rstudent(fit)","same",,"`rstudent()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstudent","rstudent","lm_wt0","refuses","rstudent(fit)","same",,"`rstudent()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstudent","rstudent","lm_cl","refuses","rstudent(fit)","same",,"`rstudent()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstudent","rstudent","lm_fe","refuses","rstudent(fit)","same",,"`rstudent()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstudent","rstudent","lm_mv","refuses","rstudent(fit)","same",,"`rstudent()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstudent","rstudent","lm_lin","refuses","rstudent(fit)","same",,"`rstudent()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstudent","rstudent","iv_plain","refuses","rstudent(fit)","same",,"`rstudent()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstudent","rstudent","iv_cl","refuses","rstudent(fit)","same",,"`rstudent()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstudent","rstudent","dim","errors","rstudent(fit)","same",,,"Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstudent","rstudent","ht","errors","rstudent(fit)",,,,"Alex 2026-10-27: refuse case-deletion diagnostics"
+"add1","add1","lm_plain","refuses","add1(fit, ~. + x2, data = d)","same",,"`extractAIC()` is not available",
+"add1","add1","lm_wt0","refuses","add1(fit, ~. + x2, data = d)","same",,"`extractAIC()` is not available",
+"add1","add1","lm_cl","refuses","add1(fit, ~. + x2, data = d)","same",,"`extractAIC()` is not available",
+"add1","add1","lm_fe","errors","add1(fit, ~. + x2, data = d)","same",,,
+"add1","add1","lm_mv","refuses","add1(fit, ~. + x2, data = d)","same",,"`extractAIC()` is not available",
+"add1","add1","lm_lin","errors","add1(fit, ~. + x2, data = d)","same",,,
+"add1","add1","iv_plain","errors","add1(fit, ~. + x2, data = d)","same",,,
+"add1","add1","iv_cl","errors","add1(fit, ~. + x2, data = d)","same",,,
+"add1","add1","dim","errors","add1(fit, ~. + x2, data = d)","same",,,
+"add1","add1","ht","errors","add1(fit, ~. + x2, data = d)",,,,
+"drop1","drop1","lm_plain","refuses","drop1(fit)","same",,"`extractAIC()` is not available",
+"drop1","drop1","lm_wt0","refuses","drop1(fit)","same",,"`extractAIC()` is not available",
+"drop1","drop1","lm_cl","refuses","drop1(fit)","same",,"`extractAIC()` is not available",
+"drop1","drop1","lm_fe","refuses","drop1(fit)","same",,"`extractAIC()` is not available",
+"drop1","drop1","lm_mv","refuses","drop1(fit)","same",,"`extractAIC()` is not available",
+"drop1","drop1","lm_lin","refuses","drop1(fit)","same",,"`extractAIC()` is not available",
+"drop1","drop1","iv_plain","errors","drop1(fit)","same",,,
+"drop1","drop1","iv_cl","errors","drop1(fit)","same",,,
+"drop1","drop1","dim","errors","drop1(fit)","same",,,
+"drop1","drop1","ht","errors","drop1(fit)",,,,
+"step","step","lm_plain","refuses","formula(step(fit, trace = 0))","same",,"`extractAIC()` is not available",
+"step","step","lm_wt0","refuses","formula(step(fit, trace = 0))","same",,"`extractAIC()` is not available",
+"step","step","lm_cl","refuses","formula(step(fit, trace = 0))","same",,"`extractAIC()` is not available",
+"step","step","lm_fe","refuses","formula(step(fit, trace = 0))","same",,"`extractAIC()` is not available",
+"step","step","lm_mv","refuses","formula(step(fit, trace = 0))","same",,"`extractAIC()` is not available",
+"step","step","lm_lin","refuses","formula(step(fit, trace = 0))","same",,"`extractAIC()` is not available",
+"step","step","iv_plain","errors","formula(step(fit, trace = 0))","same",,,
+"step","step","iv_cl","errors","formula(step(fit, trace = 0))","same",,,
+"step","step","dim","errors","formula(step(fit, trace = 0))","same",,,
+"step","step","ht","errors","formula(step(fit, trace = 0))",,,,
+"anova","anova","lm_plain","errors","anova(fit)","same",,,
+"anova","anova","lm_wt0","errors","anova(fit)","same",,,
+"anova","anova","lm_cl","errors","anova(fit)","same",,,
+"anova","anova","lm_fe","errors","anova(fit)","same",,,
+"anova","anova","lm_mv","errors","anova(fit)","same",,,
+"anova","anova","lm_lin","errors","anova(fit)","same",,,
+"anova","anova","iv_plain","errors","anova(fit)","same",,,
+"anova","anova","iv_cl","errors","anova(fit)","same",,,
+"anova","anova","dim","errors","anova(fit)","same",,,
+"anova","anova","ht","errors","anova(fit)",,,,
+"anova_two","anova","lm_plain","errors","anova(fit, update(fit, . ~ . - x))","same",,,
+"anova_two","anova","lm_wt0","errors","anova(fit, update(fit, . ~ . - x))","same",,,
+"anova_two","anova","lm_cl","errors","anova(fit, update(fit, . ~ . - x))","same",,,
+"anova_two","anova","lm_fe","errors","anova(fit, update(fit, . ~ . - x))","same",,,
+"anova_two","anova","lm_mv","errors","anova(fit, update(fit, . ~ . - x))","same",,,
+"anova_two","anova","lm_lin","errors","anova(fit, update(fit, . ~ . - x))","same",,,
+"anova_two","anova","iv_plain","errors","anova(fit, update(fit, . ~ . - x))","same",,,
+"anova_two","anova","iv_cl","errors","anova(fit, update(fit, . ~ . - x))","same",,,
+"anova_two","anova","dim","errors","anova(fit, update(fit, . ~ . - x))","same",,,
+"anova_two","anova","ht","errors","anova(fit, update(fit, . ~ . - x))",,,,
+"update","update","lm_plain","agrees","coef(update(fit, . ~ . - x))","same",,,
+"update","update","lm_wt0","agrees","coef(update(fit, . ~ . - x))","same",,,
+"update","update","lm_cl","agrees","coef(update(fit, . ~ . - x))","same",,,
+"update","update","lm_fe","agrees","coef(update(fit, . ~ . - x))","same",,,
+"update","update","lm_mv","agrees","coef(update(fit, . ~ . - x))","same",,,
+"update","update","lm_lin","agrees","coef(update(fit, . ~ . - x))","same",,,
+"update","update","iv_plain","agrees","coef(update(fit, . ~ . - x))","same",,,
+"update","update","iv_cl","agrees","coef(update(fit, . ~ . - x))","same",,,
+"update","update","dim","agrees","coef(update(fit, . ~ . - x))","same",,,
+"update","update","ht","returns","coef(update(fit, . ~ . - x))",,,,
+"simulate","simulate","lm_plain","errors","set.seed(1); as.matrix(simulate(fit, 1))","same",,,
+"simulate","simulate","lm_wt0","errors","set.seed(1); as.matrix(simulate(fit, 1))","same",,,
+"simulate","simulate","lm_cl","errors","set.seed(1); as.matrix(simulate(fit, 1))","same",,,
+"simulate","simulate","lm_fe","errors","set.seed(1); as.matrix(simulate(fit, 1))","same",,,
+"simulate","simulate","lm_mv","errors","set.seed(1); as.matrix(simulate(fit, 1))","same",,,
+"simulate","simulate","lm_lin","errors","set.seed(1); as.matrix(simulate(fit, 1))","same",,,
+"simulate","simulate","iv_plain","errors","set.seed(1); as.matrix(simulate(fit, 1))","same",,,
+"simulate","simulate","iv_cl","errors","set.seed(1); as.matrix(simulate(fit, 1))","same",,,
+"simulate","simulate","dim","errors","set.seed(1); as.matrix(simulate(fit, 1))","same",,,
+"simulate","simulate","ht","errors","set.seed(1); as.matrix(simulate(fit, 1))",,,,
+"plot","plot","lm_plain","errors","pdf(NULL); on.exit(dev.off()); plot(fit, which = 1); ""plotted""","same",,,
+"plot","plot","lm_wt0","errors","pdf(NULL); on.exit(dev.off()); plot(fit, which = 1); ""plotted""","same",,,
+"plot","plot","lm_cl","errors","pdf(NULL); on.exit(dev.off()); plot(fit, which = 1); ""plotted""","same",,,
+"plot","plot","lm_fe","errors","pdf(NULL); on.exit(dev.off()); plot(fit, which = 1); ""plotted""","same",,,
+"plot","plot","lm_mv","errors","pdf(NULL); on.exit(dev.off()); plot(fit, which = 1); ""plotted""","same",,,
+"plot","plot","lm_lin","errors","pdf(NULL); on.exit(dev.off()); plot(fit, which = 1); ""plotted""","same",,,
+"plot","plot","iv_plain","errors","pdf(NULL); on.exit(dev.off()); plot(fit, which = 1); ""plotted""","same",,,
+"plot","plot","iv_cl","errors","pdf(NULL); on.exit(dev.off()); plot(fit, which = 1); ""plotted""","same",,,
+"plot","plot","dim","errors","pdf(NULL); on.exit(dev.off()); plot(fit, which = 1); ""plotted""","same",,,
+"plot","plot","ht","errors","pdf(NULL); on.exit(dev.off()); plot(fit, which = 1); ""plotted""",,,,
+"summary_coef","summary","lm_plain","agrees","coef(summary(fit))","cbind(Estimate = coef(ref), ""Std. Error"" = sqrt(diag(V)))",,,
+"summary_coef","summary","lm_wt0","agrees","coef(summary(fit))","cbind(Estimate = coef(ref), ""Std. Error"" = sqrt(diag(V)))",,,
+"summary_coef","summary","lm_cl","agrees","coef(summary(fit))","cbind(Estimate = coef(ref), ""Std. Error"" = sqrt(diag(V)))",,,
+"summary_coef","summary","lm_fe","agrees","coef(summary(fit))","cbind(Estimate = coef(ref), ""Std. Error"" = sqrt(diag(V)))",,,
+"summary_coef","summary","lm_mv","none","coef(summary(fit))","cbind(Estimate = coef(ref), ""Std. Error"" = sqrt(diag(V)))",,,
+"summary_coef","summary","lm_lin","agrees","coef(summary(fit))","cbind(Estimate = coef(ref), ""Std. Error"" = sqrt(diag(V)))",,,
+"summary_coef","summary","iv_plain","agrees","coef(summary(fit))","cbind(Estimate = coef(ref), ""Std. Error"" = sqrt(diag(V)))",,,
+"summary_coef","summary","iv_cl","agrees","coef(summary(fit))","cbind(Estimate = coef(ref), ""Std. Error"" = sqrt(diag(V)))",,,
+"summary_coef","summary","dim","agrees","coef(summary(fit))","cbind(Estimate = coef(ref), ""Std. Error"" = sqrt(diag(V)))",,,
+"summary_coef","summary","ht","returns","coef(summary(fit))",,,,
+"summary_sigma","summary","lm_plain","none","summary(fit)$sigma","same",,,
+"summary_sigma","summary","lm_wt0","none","summary(fit)$sigma","same",,,
+"summary_sigma","summary","lm_cl","none","summary(fit)$sigma","same",,,
+"summary_sigma","summary","lm_fe","none","summary(fit)$sigma","same",,,
+"summary_sigma","summary","lm_mv","agrees","summary(fit)$sigma","same",,,
+"summary_sigma","summary","lm_lin","none","summary(fit)$sigma","same",,,
+"summary_sigma","summary","iv_plain","none","summary(fit)$sigma","same",,,
+"summary_sigma","summary","iv_cl","none","summary(fit)$sigma","same",,,
+"summary_sigma","summary","dim","none","summary(fit)$sigma","same",,,
+"summary_sigma","summary","ht","returns","summary(fit)$sigma",,,,
+"summary_r2","summary","lm_plain","agrees","summary(fit)$r.squared","same",,,
+"summary_r2","summary","lm_wt0","agrees","summary(fit)$r.squared","same",,,
+"summary_r2","summary","lm_cl","agrees","summary(fit)$r.squared","same",,,
+"summary_r2","summary","lm_fe","agrees","summary(fit)$r.squared","same",,,
+"summary_r2","summary","lm_mv","agrees","summary(fit)$r.squared","same",,,
+"summary_r2","summary","lm_lin","agrees","summary(fit)$r.squared","same",,,
+"summary_r2","summary","iv_plain","agrees","summary(fit)$r.squared","same",,,
+"summary_r2","summary","iv_cl","agrees","summary(fit)$r.squared","same",,,
+"summary_r2","summary","dim","none","summary(fit)$r.squared","same",,,
+"summary_r2","summary","ht","returns","summary(fit)$r.squared",,,,
+"summary_fstat","summary","lm_plain","agrees","summary(fit)$fstatistic","contract_reference_fstat(ref, V, fit_id, d)",,,
+"summary_fstat","summary","lm_wt0","agrees","summary(fit)$fstatistic","contract_reference_fstat(ref, V, fit_id, d)",,,
+"summary_fstat","summary","lm_cl","returns","summary(fit)$fstatistic",,,,
+"summary_fstat","summary","lm_fe","returns","summary(fit)$fstatistic",,,,
+"summary_fstat","summary","lm_mv","returns","summary(fit)$fstatistic",,,,
+"summary_fstat","summary","lm_lin","agrees","summary(fit)$fstatistic","contract_reference_fstat(ref, V, fit_id, d)",,,
+"summary_fstat","summary","iv_plain","returns","summary(fit)$fstatistic",,,,
+"summary_fstat","summary","iv_cl","returns","summary(fit)$fstatistic",,,,
+"summary_fstat","summary","dim","returns","summary(fit)$fstatistic",,,,
+"summary_fstat","summary","ht","returns","summary(fit)$fstatistic",,,,
+"dollar_model","$model","lm_plain","none","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","same",,,
+"dollar_model","$model","lm_wt0","none","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","same",,,
+"dollar_model","$model","lm_cl","none","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","same",,,
+"dollar_model","$model","lm_fe","none","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","same",,,
+"dollar_model","$model","lm_mv","none","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","same",,,
+"dollar_model","$model","lm_lin","none","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","same",,,
+"dollar_model","$model","iv_plain","none","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","same",,,
+"dollar_model","$model","iv_cl","none","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","same",,,
+"dollar_model","$model","dim","none","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","same",,,
+"dollar_model","$model","ht","returns","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])",,,,
+"naresid_na.action","$na.action","lm_plain","agrees","a <- fit$na.action; if (is.null(a)) ""NULL"" else length(a)","same",,,
+"naresid_na.action","$na.action","lm_wt0","agrees","a <- fit$na.action; if (is.null(a)) ""NULL"" else length(a)","same",,,
+"naresid_na.action","$na.action","lm_cl","agrees","a <- fit$na.action; if (is.null(a)) ""NULL"" else length(a)","same",,,
+"naresid_na.action","$na.action","lm_fe","agrees","a <- fit$na.action; if (is.null(a)) ""NULL"" else length(a)","same",,,
+"naresid_na.action","$na.action","lm_mv","agrees","a <- fit$na.action; if (is.null(a)) ""NULL"" else length(a)","same",,,
+"naresid_na.action","$na.action","lm_lin","agrees","a <- fit$na.action; if (is.null(a)) ""NULL"" else length(a)","same",,,
+"naresid_na.action","$na.action","iv_plain","agrees","a <- fit$na.action; if (is.null(a)) ""NULL"" else length(a)","same",,,
+"naresid_na.action","$na.action","iv_cl","agrees","a <- fit$na.action; if (is.null(a)) ""NULL"" else length(a)","same",,,
+"naresid_na.action","$na.action","dim","agrees","a <- fit$na.action; if (is.null(a)) ""NULL"" else length(a)","same",,,
+"naresid_na.action","$na.action","ht","returns","a <- fit$na.action; if (is.null(a)) ""NULL"" else length(a)",,,,
+"bread","bread","lm_plain","agrees","sandwich::bread(fit)","same",,,
+"bread","bread","lm_wt0","agrees","sandwich::bread(fit)","same",,,
+"bread","bread","lm_cl","agrees","sandwich::bread(fit)","same",,,
+"bread","bread","lm_fe","refuses","sandwich::bread(fit)","same",,"`bread()` is not available",
+"bread","bread","lm_mv","refuses","sandwich::bread(fit)","same",,"`bread()` is not available","Alex 2026-10-27: multi-outcome refused"
+"bread","bread","lm_lin","agrees","sandwich::bread(fit)","same",,,
+"bread","bread","iv_plain","agrees","sandwich::bread(fit)","same",,,
+"bread","bread","iv_cl","agrees","sandwich::bread(fit)","same",,,
+"bread","bread","dim","known_wrong","sandwich::bread(fit)","same",,,"known gap: bread() falls through to vcov * n"
+"bread","bread","ht","known_wrong","sandwich::bread(fit)",,,,"known gap: bread() falls through to vcov * n"
+"estfun","estfun","lm_plain","agrees","sandwich::estfun(fit)","same",,,
+"estfun","estfun","lm_wt0","agrees","sandwich::estfun(fit)","same",,,
+"estfun","estfun","lm_cl","agrees","sandwich::estfun(fit)","same",,,
+"estfun","estfun","lm_fe","refuses","sandwich::estfun(fit)","same",,"`estfun()` is not available",
+"estfun","estfun","lm_mv","refuses","sandwich::estfun(fit)","same",,"`estfun()` is not available","Alex 2026-10-27: multi-outcome refused"
+"estfun","estfun","lm_lin","agrees","sandwich::estfun(fit)","same",,,
+"estfun","estfun","iv_plain","agrees","sandwich::estfun(fit)","same",,,
+"estfun","estfun","iv_cl","agrees","sandwich::estfun(fit)","same",,,
+"estfun","estfun","dim","errors","sandwich::estfun(fit)","same",,,
+"estfun","estfun","ht","errors","sandwich::estfun(fit)",,,,
+"meat","meat","lm_plain","agrees","sandwich::meat(fit)","same",,,
+"meat","meat","lm_wt0","agrees","sandwich::meat(fit)","same",,,"equals lm(); with zero weights sandwich on lm() pairs 60 score rows with 57 hat values, so both are off the positive-weight answer (OPEN for Alex)"
+"meat","meat","lm_cl","agrees","sandwich::meat(fit)","same",,,
+"meat","meat","lm_fe","refuses","sandwich::meat(fit)","same",,"`estfun()` is not available",
+"meat","meat","lm_mv","refuses","sandwich::meat(fit)","same",,"`estfun()` is not available","Alex 2026-10-27: multi-outcome refused"
+"meat","meat","lm_lin","agrees","sandwich::meat(fit)","same",,,
+"meat","meat","iv_plain","agrees","sandwich::meat(fit)","same",,,
+"meat","meat","iv_cl","agrees","sandwich::meat(fit)","same",,,
+"meat","meat","dim","errors","sandwich::meat(fit)","same",,,
+"meat","meat","ht","errors","sandwich::meat(fit)",,,,
+"sandwich","sandwich","lm_plain","agrees","sandwich::sandwich(fit)","same",,,
+"sandwich","sandwich","lm_wt0","agrees","sandwich::sandwich(fit)","same",,,"equals lm(); with zero weights sandwich on lm() pairs 60 score rows with 57 hat values, so both are off the positive-weight answer (OPEN for Alex)"
+"sandwich","sandwich","lm_cl","agrees","sandwich::sandwich(fit)","same",,,
+"sandwich","sandwich","lm_fe","refuses","sandwich::sandwich(fit)","same",,"`bread()` is not available",
+"sandwich","sandwich","lm_mv","refuses","sandwich::sandwich(fit)","same",,"`bread()` is not available","Alex 2026-10-27: multi-outcome refused"
+"sandwich","sandwich","lm_lin","agrees","sandwich::sandwich(fit)","same",,,
+"sandwich","sandwich","iv_plain","agrees","sandwich::sandwich(fit)","same",,,
+"sandwich","sandwich","iv_cl","agrees","sandwich::sandwich(fit)","same",,,
+"sandwich","sandwich","dim","errors","sandwich::sandwich(fit)","same",,,
+"sandwich","sandwich","ht","errors","sandwich::sandwich(fit)",,,,
+"vcovHC_HC2","vcovHC","lm_plain","agrees","sandwich::vcovHC(fit, type = ""HC2"")","same",,,
+"vcovHC_HC2","vcovHC","lm_wt0","agrees","sandwich::vcovHC(fit, type = ""HC2"")","same",,,"equals lm(); with zero weights sandwich on lm() pairs 60 score rows with 57 hat values, so both are off the positive-weight answer (OPEN for Alex)"
+"vcovHC_HC2","vcovHC","lm_cl","agrees","sandwich::vcovHC(fit, type = ""HC2"")","same",,,
+"vcovHC_HC2","vcovHC","lm_fe","refuses","sandwich::vcovHC(fit, type = ""HC2"")","same",,"`estfun()` is not available",
+"vcovHC_HC2","vcovHC","lm_mv","refuses","sandwich::vcovHC(fit, type = ""HC2"")","same",,"`estfun()` is not available","Alex 2026-10-27: multi-outcome refused"
+"vcovHC_HC2","vcovHC","lm_lin","agrees","sandwich::vcovHC(fit, type = ""HC2"")","same",,,
+"vcovHC_HC2","vcovHC","iv_plain","agrees","sandwich::vcovHC(fit, type = ""HC2"")","same",,,
+"vcovHC_HC2","vcovHC","iv_cl","agrees","sandwich::vcovHC(fit, type = ""HC2"")","same",,,
+"vcovHC_HC2","vcovHC","dim","errors","sandwich::vcovHC(fit, type = ""HC2"")","same",,,
+"vcovHC_HC2","vcovHC","ht","errors","sandwich::vcovHC(fit, type = ""HC2"")",,,,
+"vcovHC_HC3","vcovHC","lm_plain","agrees","sandwich::vcovHC(fit, type = ""HC3"")","same",,,
+"vcovHC_HC3","vcovHC","lm_wt0","agrees","sandwich::vcovHC(fit, type = ""HC3"")","same",,,"equals lm(); with zero weights sandwich on lm() pairs 60 score rows with 57 hat values, so both are off the positive-weight answer (OPEN for Alex)"
+"vcovHC_HC3","vcovHC","lm_cl","agrees","sandwich::vcovHC(fit, type = ""HC3"")","same",,,
+"vcovHC_HC3","vcovHC","lm_fe","refuses","sandwich::vcovHC(fit, type = ""HC3"")","same",,"`estfun()` is not available",
+"vcovHC_HC3","vcovHC","lm_mv","refuses","sandwich::vcovHC(fit, type = ""HC3"")","same",,"`estfun()` is not available","Alex 2026-10-27: multi-outcome refused"
+"vcovHC_HC3","vcovHC","lm_lin","agrees","sandwich::vcovHC(fit, type = ""HC3"")","same",,,
+"vcovHC_HC3","vcovHC","iv_plain","agrees","sandwich::vcovHC(fit, type = ""HC3"")","same",,,
+"vcovHC_HC3","vcovHC","iv_cl","agrees","sandwich::vcovHC(fit, type = ""HC3"")","same",,,
+"vcovHC_HC3","vcovHC","dim","errors","sandwich::vcovHC(fit, type = ""HC3"")","same",,,
+"vcovHC_HC3","vcovHC","ht","errors","sandwich::vcovHC(fit, type = ""HC3"")",,,,
+"vcovHC_HC0","vcovHC","lm_plain","agrees","sandwich::vcovHC(fit, type = ""HC0"")","same",,,
+"vcovHC_HC0","vcovHC","lm_wt0","agrees","sandwich::vcovHC(fit, type = ""HC0"")","same",,,"equals lm(); with zero weights sandwich on lm() pairs 60 score rows with 57 hat values, so both are off the positive-weight answer (OPEN for Alex)"
+"vcovHC_HC0","vcovHC","lm_cl","agrees","sandwich::vcovHC(fit, type = ""HC0"")","same",,,
+"vcovHC_HC0","vcovHC","lm_fe","refuses","sandwich::vcovHC(fit, type = ""HC0"")","same",,"`estfun()` is not available",
+"vcovHC_HC0","vcovHC","lm_mv","refuses","sandwich::vcovHC(fit, type = ""HC0"")","same",,"`estfun()` is not available","Alex 2026-10-27: multi-outcome refused"
+"vcovHC_HC0","vcovHC","lm_lin","agrees","sandwich::vcovHC(fit, type = ""HC0"")","same",,,
+"vcovHC_HC0","vcovHC","iv_plain","agrees","sandwich::vcovHC(fit, type = ""HC0"")","same",,,
+"vcovHC_HC0","vcovHC","iv_cl","agrees","sandwich::vcovHC(fit, type = ""HC0"")","same",,,
+"vcovHC_HC0","vcovHC","dim","errors","sandwich::vcovHC(fit, type = ""HC0"")","same",,,
+"vcovHC_HC0","vcovHC","ht","errors","sandwich::vcovHC(fit, type = ""HC0"")",,,,
+"vcovCL_g","vcovCL","lm_plain","agrees","sandwich::vcovCL(fit, cluster = d$g)","sandwich::vcovCL(fit, cluster = d$g, type = 'HC0')",,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
+"vcovCL_g","vcovCL","lm_wt0","agrees","sandwich::vcovCL(fit, cluster = d$g)","sandwich::vcovCL(fit, cluster = d$g, type = 'HC0')",,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
+"vcovCL_g","vcovCL","lm_cl","agrees","sandwich::vcovCL(fit, cluster = d$g)","sandwich::vcovCL(fit, cluster = d$g, type = 'HC0')",,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
+"vcovCL_g","vcovCL","lm_fe","refuses","sandwich::vcovCL(fit, cluster = d$g)","same",,"`estfun()` is not available","sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
+"vcovCL_g","vcovCL","lm_mv","refuses","sandwich::vcovCL(fit, cluster = d$g)","same",,"`estfun()` is not available","sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
+"vcovCL_g","vcovCL","lm_lin","agrees","sandwich::vcovCL(fit, cluster = d$g)","sandwich::vcovCL(fit, cluster = d$g, type = 'HC0')",,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
+"vcovCL_g","vcovCL","iv_plain","agrees","sandwich::vcovCL(fit, cluster = d$g)","same",,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
+"vcovCL_g","vcovCL","iv_cl","agrees","sandwich::vcovCL(fit, cluster = d$g)","same",,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
+"vcovCL_g","vcovCL","dim","errors","sandwich::vcovCL(fit, cluster = d$g)","same",,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
+"vcovCL_g","vcovCL","ht","errors","sandwich::vcovCL(fit, cluster = d$g)",,,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
+"vcovCL_g_HC2","vcovCL","lm_plain","agrees","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,,
+"vcovCL_g_HC2","vcovCL","lm_wt0","agrees","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,,
+"vcovCL_g_HC2","vcovCL","lm_cl","agrees","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,,
+"vcovCL_g_HC2","vcovCL","lm_fe","refuses","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,"`estfun()` is not available",
+"vcovCL_g_HC2","vcovCL","lm_mv","refuses","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,"`estfun()` is not available","Alex 2026-10-27: multi-outcome refused"
+"vcovCL_g_HC2","vcovCL","lm_lin","agrees","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,,
+"vcovCL_g_HC2","vcovCL","iv_plain","agrees","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,,
+"vcovCL_g_HC2","vcovCL","iv_cl","agrees","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,,
+"vcovCL_g_HC2","vcovCL","dim","errors","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,,
+"vcovCL_g_HC2","vcovCL","ht","errors","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")",,,,
+"vcovHAC","vcovHAC","lm_plain","agrees","sandwich::vcovHAC(fit)","same",,,
+"vcovHAC","vcovHAC","lm_wt0","agrees","sandwich::vcovHAC(fit)","same",,,"equals lm(); with zero weights sandwich on lm() pairs 60 score rows with 57 hat values, so both are off the positive-weight answer (OPEN for Alex)"
+"vcovHAC","vcovHAC","lm_cl","agrees","sandwich::vcovHAC(fit)","same",,,
+"vcovHAC","vcovHAC","lm_fe","refuses","sandwich::vcovHAC(fit)","same",,"`estfun()` is not available",
+"vcovHAC","vcovHAC","lm_mv","refuses","sandwich::vcovHAC(fit)","same",,"`estfun()` is not available","Alex 2026-10-27: multi-outcome refused"
+"vcovHAC","vcovHAC","lm_lin","agrees","sandwich::vcovHAC(fit)","same",,,
+"vcovHAC","vcovHAC","iv_plain","agrees","sandwich::vcovHAC(fit)","same",,,
+"vcovHAC","vcovHAC","iv_cl","agrees","sandwich::vcovHAC(fit)","same",,,
+"vcovHAC","vcovHAC","dim","errors","sandwich::vcovHAC(fit)","same",,,
+"vcovHAC","vcovHAC","ht","errors","sandwich::vcovHAC(fit)",,,,
+"vcovBS","vcovBS","lm_plain","errors","set.seed(1); sandwich::vcovBS(fit, R = 20)","same",,,
+"vcovBS","vcovBS","lm_wt0","errors","set.seed(1); sandwich::vcovBS(fit, R = 20)","same",,,
+"vcovBS","vcovBS","lm_cl","errors","set.seed(1); sandwich::vcovBS(fit, R = 20)","same",,,
+"vcovBS","vcovBS","lm_fe","errors","set.seed(1); sandwich::vcovBS(fit, R = 20)","same",,,
+"vcovBS","vcovBS","lm_mv","errors","set.seed(1); sandwich::vcovBS(fit, R = 20)","same",,,
+"vcovBS","vcovBS","lm_lin","errors","set.seed(1); sandwich::vcovBS(fit, R = 20)","same",,,
+"vcovBS","vcovBS","iv_plain","errors","set.seed(1); sandwich::vcovBS(fit, R = 20)","same",,,
+"vcovBS","vcovBS","iv_cl","errors","set.seed(1); sandwich::vcovBS(fit, R = 20)","same",,,
+"vcovBS","vcovBS","dim","errors","set.seed(1); sandwich::vcovBS(fit, R = 20)","same",,,
+"vcovBS","vcovBS","ht","errors","set.seed(1); sandwich::vcovBS(fit, R = 20)",,,,
+"vcovOPG","vcovOPG","lm_plain","agrees","sandwich::vcovOPG(fit)","same",,,
+"vcovOPG","vcovOPG","lm_wt0","agrees","sandwich::vcovOPG(fit)","same",,,
+"vcovOPG","vcovOPG","lm_cl","agrees","sandwich::vcovOPG(fit)","same",,,
+"vcovOPG","vcovOPG","lm_fe","refuses","sandwich::vcovOPG(fit)","same",,"`estfun()` is not available",
+"vcovOPG","vcovOPG","lm_mv","refuses","sandwich::vcovOPG(fit)","same",,"`estfun()` is not available","Alex 2026-10-27: multi-outcome refused"
+"vcovOPG","vcovOPG","lm_lin","agrees","sandwich::vcovOPG(fit)","same",,,
+"vcovOPG","vcovOPG","iv_plain","agrees","sandwich::vcovOPG(fit)","same",,,
+"vcovOPG","vcovOPG","iv_cl","agrees","sandwich::vcovOPG(fit)","same",,,
+"vcovOPG","vcovOPG","dim","errors","sandwich::vcovOPG(fit)","same",,,
+"vcovOPG","vcovOPG","ht","errors","sandwich::vcovOPG(fit)",,,,
+"vcov_via_bread_meat","bread","lm_plain","agrees","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,,
+"vcov_via_bread_meat","bread","lm_wt0","agrees","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,,"equals lm(); with zero weights sandwich on lm() pairs 60 score rows with 57 hat values, so both are off the positive-weight answer (OPEN for Alex)"
+"vcov_via_bread_meat","bread","lm_cl","agrees","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,,
+"vcov_via_bread_meat","bread","lm_fe","refuses","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,"`bread()` is not available",
+"vcov_via_bread_meat","bread","lm_mv","refuses","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,"`bread()` is not available","Alex 2026-10-27: multi-outcome refused"
+"vcov_via_bread_meat","bread","lm_lin","agrees","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,,
+"vcov_via_bread_meat","bread","iv_plain","agrees","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,,
+"vcov_via_bread_meat","bread","iv_cl","agrees","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,,
+"vcov_via_bread_meat","bread","dim","errors","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,,
+"vcov_via_bread_meat","bread","ht","errors","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)",,,,
