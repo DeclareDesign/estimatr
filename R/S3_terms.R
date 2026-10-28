@@ -191,11 +191,13 @@ labels.iv_robust <- labels.lm_robust
 # compute, and lm's versions assume the homoskedastic model a robust fit does
 # not. Without a method each failed with "no applicable method"; now each says
 # why.
-refuse_method <- function(what, why, generic = function(model, ...) NULL) {
+refuse_method <- function(what, why, generic = function(model, ...) NULL,
+                          fits = "estimatr fits") {
   force(what)
   force(why)
+  force(fits)
   f <- function(...) {
-    stop("`", what, "()` is not available for estimatr fits: ", why,
+    stop("`", what, "()` is not available for ", fits, ": ", why,
          call. = FALSE)
   }
   # R CMD check requires a method to carry its generic's arguments
@@ -250,3 +252,36 @@ rstudent.iv_robust <- rstudent.lm_robust
 dfbeta.iv_robust <- dfbeta.lm_robust
 #' @export
 dfbetas.iv_robust <- dfbetas.lm_robust
+
+# A difference in means stores neither residuals nor a design, so the defaults
+# returned NULL, a vector of length zero, or (labels) the names of the fit's
+# fields, which a consumer took for a value.
+dim_fits <- "`difference_in_means()` fits"
+dim_no_residuals <- paste(
+  "the estimator has no residuals or fitted values. The estimate and its",
+  "standard error are in `tidy(fit)`."
+)
+dim_no_design <- "the estimator is not built from a design matrix."
+
+#' @importFrom stats residuals
+#' @export
+residuals.difference_in_means <- refuse_method("residuals", dim_no_residuals,
+                                               stats::residuals, dim_fits)
+#' @importFrom stats fitted
+#' @export
+fitted.difference_in_means <- refuse_method("fitted", dim_no_residuals,
+                                            stats::fitted, dim_fits)
+#' @export
+deviance.difference_in_means <- refuse_method("deviance", dim_no_residuals,
+                                              stats::deviance, dim_fits)
+#' @export
+sigma.difference_in_means <- refuse_method("sigma", dim_no_residuals,
+                                           stats::sigma, dim_fits)
+#' @export
+variable.names.difference_in_means <- refuse_method("variable.names",
+                                                    dim_no_design,
+                                                    stats::variable.names,
+                                                    dim_fits)
+#' @export
+labels.difference_in_means <- refuse_method("labels", dim_no_design,
+                                            base::labels, dim_fits)

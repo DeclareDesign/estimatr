@@ -27,7 +27,7 @@
 "residuals","residuals","lm_lin","agrees","residuals(fit)","same",,,
 "residuals","residuals","iv_plain","agrees","residuals(fit)","same",,,
 "residuals","residuals","iv_cl","agrees","residuals(fit)","same",,,
-"residuals","residuals","dim","none","residuals(fit)","same",,,
+"residuals","residuals","dim","refuses","residuals(fit)","same",,"the estimator has no residuals or fitted values","Alex 2026-10-27: refused"
 "residuals","residuals","ht","returns","residuals(fit)",,,,
 "resid","resid","lm_plain","agrees","resid(fit)","same",,,
 "resid","resid","lm_wt0","agrees","resid(fit)","same",,,
@@ -37,7 +37,7 @@
 "resid","resid","lm_lin","agrees","resid(fit)","same",,,
 "resid","resid","iv_plain","agrees","resid(fit)","same",,,
 "resid","resid","iv_cl","agrees","resid(fit)","same",,,
-"resid","resid","dim","none","resid(fit)","same",,,
+"resid","resid","dim","refuses","resid(fit)","same",,"the estimator has no residuals or fitted values","Alex 2026-10-27: refused"
 "resid","resid","ht","returns","resid(fit)",,,,
 "fitted","fitted","lm_plain","agrees","fitted(fit)","same",,,
 "fitted","fitted","lm_wt0","agrees","fitted(fit)","same",,,
@@ -47,7 +47,7 @@
 "fitted","fitted","lm_lin","agrees","fitted(fit)","same",,,
 "fitted","fitted","iv_plain","agrees","fitted(fit)","same",,,
 "fitted","fitted","iv_cl","agrees","fitted(fit)","same",,,
-"fitted","fitted","dim","none","fitted(fit)","same",,,
+"fitted","fitted","dim","refuses","fitted(fit)","same",,"the estimator has no residuals or fitted values","Alex 2026-10-27: refused"
 "fitted","fitted","ht","returns","fitted(fit)",,,,
 "fitted.values","fitted.values","lm_plain","agrees","fitted.values(fit)","same",,,
 "fitted.values","fitted.values","lm_wt0","agrees","fitted.values(fit)","same",,,
@@ -57,7 +57,7 @@
 "fitted.values","fitted.values","lm_lin","agrees","fitted.values(fit)","same",,,
 "fitted.values","fitted.values","iv_plain","agrees","fitted.values(fit)","same",,,
 "fitted.values","fitted.values","iv_cl","agrees","fitted.values(fit)","same",,,
-"fitted.values","fitted.values","dim","none","fitted.values(fit)","same",,,
+"fitted.values","fitted.values","dim","refuses","fitted.values(fit)","same",,"the estimator has no residuals or fitted values","Alex 2026-10-27: refused"
 "fitted.values","fitted.values","ht","returns","fitted.values(fit)",,,,
 "predict","predict","lm_plain","agrees","predict(fit, newdata = d)","same",,,
 "predict","predict","lm_wt0","agrees","predict(fit, newdata = d)","same",,,
@@ -93,7 +93,7 @@
 "confint","confint","lm_wt0","agrees","confint(fit)","contract_reference_confint(ref, V, fit_id, d)",,,
 "confint","confint","lm_cl","agrees","confint(fit)","contract_reference_confint(ref, V, fit_id, d)",,,
 "confint","confint","lm_fe","agrees","confint(fit)","contract_reference_confint(ref, V, fit_id, d)",,,
-"confint","confint","lm_mv","none","confint(fit)","contract_reference_confint(ref, V, fit_id, d)",,,
+"confint","confint","lm_mv","agrees","confint(fit)","contract_reference_confint(ref, V, fit_id, d)",,,"Alex 2026-10-27: per outcome, as lm() reports them"
 "confint","confint","lm_lin","agrees","confint(fit)","contract_reference_confint(ref, V, fit_id, d)",,,
 "confint","confint","iv_plain","agrees","confint(fit)","contract_reference_confint(ref, V, fit_id, d)",,,
 "confint","confint","iv_cl","agrees","confint(fit)","contract_reference_confint(ref, V, fit_id, d)",,,
@@ -137,7 +137,7 @@
 "deviance","deviance","lm_lin","agrees","deviance(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "deviance","deviance","iv_plain","agrees","deviance(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "deviance","deviance","iv_cl","agrees","deviance(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
-"deviance","deviance","dim","none","deviance(fit)","same",,,
+"deviance","deviance","dim","refuses","deviance(fit)","same",,"the estimator has no residuals or fitted values","Alex 2026-10-27: refused"
 "deviance","deviance","ht","returns","deviance(fit)",,,,
 "logLik","logLik","lm_plain","refuses","as.numeric(logLik(fit))","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
 "logLik","logLik","lm_wt0","refuses","as.numeric(logLik(fit))","same",,"`logLik()` is not available","Alex 2026-10-27: refuse; no likelihood (option 1)"
@@ -187,7 +187,7 @@
 "sigma","sigma","lm_lin","agrees","sigma(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "sigma","sigma","iv_plain","agrees","sigma(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "sigma","sigma","iv_cl","agrees","sigma(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
-"sigma","sigma","dim","none","sigma(fit)","same",,,
+"sigma","sigma","dim","refuses","sigma(fit)","same",,"the estimator has no residuals or fitted values","Alex 2026-10-27: refused"
 "sigma","sigma","ht","returns","sigma(fit)",,,,
 "formula","formula","lm_plain","agrees","format(formula(fit))","""y ~ x + z""",,,
 "formula","formula","lm_wt0","agrees","format(formula(fit))","""y ~ x + z""",,,
@@ -267,7 +267,7 @@
 "variable.names","variable.names","lm_lin","agrees","variable.names(fit)","same",,,
 "variable.names","variable.names","iv_plain","agrees","variable.names(fit)","names(coef(ref))",,,
 "variable.names","variable.names","iv_cl","agrees","variable.names(fit)","names(coef(ref))",,,
-"variable.names","variable.names","dim","none","variable.names(fit)","same",,,
+"variable.names","variable.names","dim","refuses","variable.names(fit)","same",,"the estimator is not built from a design matrix","Alex 2026-10-27: refused"
 "variable.names","variable.names","ht","returns","variable.names(fit)",,,,
 "labels","labels","lm_plain","agrees","labels(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "labels","labels","lm_wt0","agrees","labels(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
@@ -277,7 +277,7 @@
 "labels","labels","lm_lin","returns","labels(fit)",,,,"Alex 2026-10-27: terms() full (lm_lin translated), formula() the call's"
 "labels","labels","iv_plain","agrees","labels(fit)","c(""z"", ""x"")",,,"Alex 2026-10-27: implement with lm's meaning"
 "labels","labels","iv_cl","agrees","labels(fit)","c(""z"", ""x"")",,,"Alex 2026-10-27: implement with lm's meaning"
-"labels","labels","dim","none","labels(fit)","same",,,
+"labels","labels","dim","refuses","labels(fit)","same",,"the estimator is not built from a design matrix","Alex 2026-10-27: refused"
 "labels","labels","ht","returns","labels(fit)",,,,
 "dummy.coef","dummy.coef","lm_plain","errors","unlist(dummy.coef(fit))","same",,,
 "dummy.coef","dummy.coef","lm_wt0","errors","unlist(dummy.coef(fit))","same",,,
@@ -509,25 +509,25 @@
 "plot","plot","iv_cl","errors","pdf(NULL); on.exit(dev.off()); plot(fit, which = 1); ""plotted""","same",,,
 "plot","plot","dim","errors","pdf(NULL); on.exit(dev.off()); plot(fit, which = 1); ""plotted""","same",,,
 "plot","plot","ht","errors","pdf(NULL); on.exit(dev.off()); plot(fit, which = 1); ""plotted""",,,,
-"summary_coef","summary","lm_plain","agrees","coef(summary(fit))","cbind(Estimate = coef(ref), ""Std. Error"" = sqrt(diag(V)))",,,
-"summary_coef","summary","lm_wt0","agrees","coef(summary(fit))","cbind(Estimate = coef(ref), ""Std. Error"" = sqrt(diag(V)))",,,
-"summary_coef","summary","lm_cl","agrees","coef(summary(fit))","cbind(Estimate = coef(ref), ""Std. Error"" = sqrt(diag(V)))",,,
-"summary_coef","summary","lm_fe","agrees","coef(summary(fit))","cbind(Estimate = coef(ref), ""Std. Error"" = sqrt(diag(V)))",,,
-"summary_coef","summary","lm_mv","none","coef(summary(fit))","cbind(Estimate = coef(ref), ""Std. Error"" = sqrt(diag(V)))",,,
-"summary_coef","summary","lm_lin","agrees","coef(summary(fit))","cbind(Estimate = coef(ref), ""Std. Error"" = sqrt(diag(V)))",,,
-"summary_coef","summary","iv_plain","agrees","coef(summary(fit))","cbind(Estimate = coef(ref), ""Std. Error"" = sqrt(diag(V)))",,,
-"summary_coef","summary","iv_cl","agrees","coef(summary(fit))","cbind(Estimate = coef(ref), ""Std. Error"" = sqrt(diag(V)))",,,
-"summary_coef","summary","dim","agrees","coef(summary(fit))","cbind(Estimate = coef(ref), ""Std. Error"" = sqrt(diag(V)))",,,
+"summary_coef","summary","lm_plain","agrees","coef(summary(fit))","contract_reference_coef_table(ref, V)",,,
+"summary_coef","summary","lm_wt0","agrees","coef(summary(fit))","contract_reference_coef_table(ref, V)",,,
+"summary_coef","summary","lm_cl","agrees","coef(summary(fit))","contract_reference_coef_table(ref, V)",,,
+"summary_coef","summary","lm_fe","agrees","coef(summary(fit))","contract_reference_coef_table(ref, V)",,,
+"summary_coef","summary","lm_mv","agrees","coef(summary(fit))","contract_reference_coef_table(ref, V)",,,"Alex 2026-10-27: per outcome, as lm() reports them"
+"summary_coef","summary","lm_lin","agrees","coef(summary(fit))","contract_reference_coef_table(ref, V)",,,
+"summary_coef","summary","iv_plain","agrees","coef(summary(fit))","contract_reference_coef_table(ref, V)",,,
+"summary_coef","summary","iv_cl","agrees","coef(summary(fit))","contract_reference_coef_table(ref, V)",,,
+"summary_coef","summary","dim","agrees","coef(summary(fit))","contract_reference_coef_table(ref, V)",,,
 "summary_coef","summary","ht","returns","coef(summary(fit))",,,,
-"summary_sigma","summary","lm_plain","none","summary(fit)$sigma","same",,,
-"summary_sigma","summary","lm_wt0","none","summary(fit)$sigma","same",,,
-"summary_sigma","summary","lm_cl","none","summary(fit)$sigma","same",,,
-"summary_sigma","summary","lm_fe","none","summary(fit)$sigma","same",,,
+"summary_sigma","summary","lm_plain","agrees","summary(fit)$sigma","same",,,"Alex 2026-10-27: summary() carries sigma, as summary.lm() does"
+"summary_sigma","summary","lm_wt0","agrees","summary(fit)$sigma","same",,,"Alex 2026-10-27: summary() carries sigma, as summary.lm() does"
+"summary_sigma","summary","lm_cl","agrees","summary(fit)$sigma","same",,,"Alex 2026-10-27: summary() carries sigma, as summary.lm() does"
+"summary_sigma","summary","lm_fe","agrees","summary(fit)$sigma","same",,,"Alex 2026-10-27: summary() carries sigma, as summary.lm() does"
 "summary_sigma","summary","lm_mv","agrees","summary(fit)$sigma","same",,,
-"summary_sigma","summary","lm_lin","none","summary(fit)$sigma","same",,,
-"summary_sigma","summary","iv_plain","none","summary(fit)$sigma","same",,,
-"summary_sigma","summary","iv_cl","none","summary(fit)$sigma","same",,,
-"summary_sigma","summary","dim","none","summary(fit)$sigma","same",,,
+"summary_sigma","summary","lm_lin","agrees","summary(fit)$sigma","same",,,"Alex 2026-10-27: summary() carries sigma, as summary.lm() does"
+"summary_sigma","summary","iv_plain","agrees","summary(fit)$sigma","same",,,"Alex 2026-10-27: summary() carries sigma, as summary.lm() does"
+"summary_sigma","summary","iv_cl","agrees","summary(fit)$sigma","same",,,"Alex 2026-10-27: summary() carries sigma, as summary.lm() does"
+"summary_sigma","summary","dim","agrees","summary(fit)$sigma","NULL",,,"Alex 2026-10-27: dim has no residual quantities; `$` cannot refuse, so NULL is the promise"
 "summary_sigma","summary","ht","returns","summary(fit)$sigma",,,,
 "summary_r2","summary","lm_plain","agrees","summary(fit)$r.squared","same",,,
 "summary_r2","summary","lm_wt0","agrees","summary(fit)$r.squared","same",,,
@@ -537,7 +537,7 @@
 "summary_r2","summary","lm_lin","agrees","summary(fit)$r.squared","same",,,
 "summary_r2","summary","iv_plain","agrees","summary(fit)$r.squared","same",,,
 "summary_r2","summary","iv_cl","agrees","summary(fit)$r.squared","same",,,
-"summary_r2","summary","dim","none","summary(fit)$r.squared","same",,,
+"summary_r2","summary","dim","agrees","summary(fit)$r.squared","NULL",,,"Alex 2026-10-27: dim has no residual quantities; `$` cannot refuse, so NULL is the promise"
 "summary_r2","summary","ht","returns","summary(fit)$r.squared",,,,
 "summary_fstat","summary","lm_plain","agrees","summary(fit)$fstatistic","contract_reference_fstat(ref, V, fit_id, d)",,,
 "summary_fstat","summary","lm_wt0","agrees","summary(fit)$fstatistic","contract_reference_fstat(ref, V, fit_id, d)",,,
@@ -549,15 +549,15 @@
 "summary_fstat","summary","iv_cl","returns","summary(fit)$fstatistic",,,,
 "summary_fstat","summary","dim","returns","summary(fit)$fstatistic",,,,
 "summary_fstat","summary","ht","returns","summary(fit)$fstatistic",,,,
-"dollar_model","$model","lm_plain","none","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","same",,,
-"dollar_model","$model","lm_wt0","none","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","same",,,
-"dollar_model","$model","lm_cl","none","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","same",,,
-"dollar_model","$model","lm_fe","none","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","same",,,
-"dollar_model","$model","lm_mv","none","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","same",,,
-"dollar_model","$model","lm_lin","none","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","same",,,
-"dollar_model","$model","iv_plain","none","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","same",,,
-"dollar_model","$model","iv_cl","none","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","same",,,
-"dollar_model","$model","dim","none","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","same",,,
+"dollar_model","$model","lm_plain","agrees","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","NULL",,,"Alex 2026-10-27: not stored, as lm(model = FALSE); consumers fall back to model.frame()"
+"dollar_model","$model","lm_wt0","agrees","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","NULL",,,"Alex 2026-10-27: not stored, as lm(model = FALSE); consumers fall back to model.frame()"
+"dollar_model","$model","lm_cl","agrees","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","NULL",,,"Alex 2026-10-27: not stored, as lm(model = FALSE); consumers fall back to model.frame()"
+"dollar_model","$model","lm_fe","agrees","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","NULL",,,"Alex 2026-10-27: not stored, as lm(model = FALSE); consumers fall back to model.frame()"
+"dollar_model","$model","lm_mv","agrees","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","NULL",,,"Alex 2026-10-27: not stored, as lm(model = FALSE); consumers fall back to model.frame()"
+"dollar_model","$model","lm_lin","agrees","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","NULL",,,"Alex 2026-10-27: not stored, as lm(model = FALSE); consumers fall back to model.frame()"
+"dollar_model","$model","iv_plain","agrees","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","NULL",,,"Alex 2026-10-27: not stored, as lm(model = FALSE); consumers fall back to model.frame()"
+"dollar_model","$model","iv_cl","agrees","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","NULL",,,"Alex 2026-10-27: not stored, as lm(model = FALSE); consumers fall back to model.frame()"
+"dollar_model","$model","dim","agrees","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])","NULL",,,"Alex 2026-10-27: not stored, as lm(model = FALSE); consumers fall back to model.frame()"
 "dollar_model","$model","ht","returns","x <- fit$model; if (is.null(x)) NULL else as.matrix(x[vapply(x, is.numeric, TRUE)])",,,,
 "naresid_na.action","$na.action","lm_plain","agrees","a <- fit$na.action; if (is.null(a)) ""NULL"" else length(a)","same",,,
 "naresid_na.action","$na.action","lm_wt0","agrees","a <- fit$na.action; if (is.null(a)) ""NULL"" else length(a)","same",,,

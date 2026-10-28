@@ -97,6 +97,9 @@ summary_lm_model <- function(object) {
 
   return_list[["coefficients"]] <- summarize_tidy(object)
   return_list[["nobs"]] <- nobs(object)
+  # summary.lm()'s name for it; sigma() cannot be used here because the
+  # multi-outcome loop subsets res_var but not the residuals
+  return_list[["sigma"]] <- sqrt(object[["res_var"]])
 
   class(return_list) <- "summary.lm_robust"
   return(return_list)

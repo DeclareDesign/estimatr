@@ -79,13 +79,34 @@ contract_reference_confint <- function(ref, V, fit_id, d) {
     rownames(out) <- names(coef(ref))
     return(out)
   }
-  b <- coef(ref)
+  b <- contract_reference_coef(ref)
   se <- sqrt(diag(V))
   if (fit_id == "lm_wt0") ref <- contract_reference_positive(d)
   q <- qt(0.975, df.residual(ref))
   out <- cbind(b - q * se, b + q * se)
   rownames(out) <- names(b)
   out
+}
+
+# The coefficients as one vector; for several outcomes named "outcome:term",
+# as vcov() names them on both lm() and estimatr fits.
+contract_reference_coef <- function(ref) {
+  b <- coef(ref)
+  if (!is.matrix(b)) return(b)
+  setNames(as.vector(b),
+           paste0(rep(colnames(b), each = nrow(b)), ":", rownames(b)))
+}
+
+# The estimates and standard errors coef(summary()) reports; for several
+# outcomes one table per outcome, named as summary() names them.
+contract_reference_coef_table <- function(ref, V) {
+  b <- coef(ref)
+  if (!is.matrix(b)) return(cbind(Estimate = b, "Std. Error" = sqrt(diag(V))))
+  se <- matrix(sqrt(diag(V)), nrow(b))
+  tables <- lapply(seq_len(ncol(b)), function(j) {
+    cbind(Estimate = b[, j], "Std. Error" = se[, j])
+  })
+  setNames(tables, paste("Response", colnames(b)))
 }
 
 # The robust Wald F that summary() reports for the slopes.
@@ -103,6 +124,14 @@ contract_reference_fstat <- function(ref, V, fit_id, d) {
 # on those it reports. Returns NA when the two cannot be put side by side.
 contract_as_matrix <- function(x) {
   if (is.data.frame(x)) x <- as.matrix(x[vapply(x, is.numeric, TRUE)])
+  # One table per outcome, stacked with the outcome in the row names, so that
+  # the columns can still be matched by name
+  if (is.list(x) && length(x) && all(vapply(x, is.matrix, TRUE))) {
+    x <- do.call(rbind, Map(function(m, nm) {
+      rownames(m) <- paste0(nm, ":", rownames(m))
+      m
+    }, x, names(x)))
+  }
   if (is.list(x)) x <- unlist(x)
   if (!is.numeric(x) && !is.logical(x)) return(NULL)
   if (is.null(dim(x))) {
