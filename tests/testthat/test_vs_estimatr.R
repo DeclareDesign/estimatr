@@ -254,12 +254,14 @@ test_that("difference_in_means weighted: coefs identical, delegates to lm_robust
 # ---- lh_robust ----
 
 test_that("lh_robust lm_robust component identical to estimatr", {
+  skip_if_not_installed("car")
   e0 <- ref("lh")
   ez <- lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z + 2*x = 0")
   check_identical(e0$lm_robust, ez$lm_robust, INFERENCE_FIELDS, "lh-lmr")
 })
 
 test_that("lh_robust lh component identical to estimatr", {
+  skip_if_not_installed("car")
   e0 <- ref("lh")
   ez <- lh_robust(y ~ x + z, data = dat, linear_hypothesis = "z + 2*x = 0")
   for (nm in c("coefficients", "std.error", "statistic", "p.value", "conf.low", "conf.high")) {

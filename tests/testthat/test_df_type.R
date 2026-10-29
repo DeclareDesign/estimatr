@@ -54,6 +54,7 @@ test_that("the two-group degrees of freedom are the closed form", {
 # freedom of the fit on that group, whether it is a coefficient of the
 # interacted model or a linear hypothesis on it.
 test_that("an interacted contrast gets the subset fit's degrees of freedom (#289)", {
+  skip_if_not_installed("car")
   set.seed(343)
   dat <- data.frame(Y = rnorm(40), X = rbinom(40, 1, 0.5), Z = rbinom(40, 1, 0.5))
 
@@ -120,6 +121,7 @@ test_that("weighted iv_robust degrees of freedom are those of the second-stage d
 })
 
 test_that("lh_robust HC2 Satterthwaite degrees of freedom match clubSandwich's contrast", {
+  skip_if_not_installed("car")
   skip_if_not_installed("clubSandwich")
   m <- lm(y ~ x + z, data = d, weights = w)
   fit <- lh_robust(y ~ x + z, data = d, weights = w, df_type = "satterthwaite",

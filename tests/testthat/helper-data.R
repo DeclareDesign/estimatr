@@ -144,7 +144,7 @@ ref_surface_data <- function() {
 # Each entry returns a fit from whichever estimatr is loaded. The recorder runs
 # them under 1.0.6; the test runs them under this package.
 ref_surface_fits <- function(d) {
-  list(
+  fits <- list(
     lmr       = lm_robust(y ~ x + z, data = d),
     lmr_cl    = lm_robust(y ~ x + z, data = d, clusters = cl),
     lmr_w     = lm_robust(y ~ x + z, data = d, weights = w),
@@ -159,7 +159,11 @@ ref_surface_fits <- function(d) {
     iv_fe     = iv_robust(y ~ z | iv, data = d, fixed_effects = ~ id, se_type = "HC1"),
     dim       = difference_in_means(y ~ z, data = d),
     dim_bl    = difference_in_means(y ~ zb, data = d, blocks = bl),
-    dim_cl    = difference_in_means(y ~ zc, data = d, clusters = cl),
-    lh        = lh_robust(y ~ x + z, data = d, linear_hypothesis = "z + 2*x = 0")
+    dim_cl    = difference_in_means(y ~ zc, data = d, clusters = cl)
   )
+  # lh_robust parses its hypothesis with car, which is only suggested
+  if (requireNamespace("car", quietly = TRUE)) {
+    fits$lh <- lh_robust(y ~ x + z, data = d, linear_hypothesis = "z + 2*x = 0")
+  }
+  fits
 }

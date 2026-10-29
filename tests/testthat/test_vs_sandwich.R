@@ -408,7 +408,9 @@ test_that("the two conventions differ by 8.6% at HC2 and 18.5% at HC3 on mtcars"
 # with system.file() because skip_if_not_installed() loads the namespace.
 
 test_that("sandwich on an AER::ivreg fit uses the influence diagonal", {
-  skip_if(!nzchar(system.file(package = "AER")), "AER is not installed")
+  for (pkg in c("AER", "car")) {
+    skip_if(!nzchar(system.file(package = pkg)), paste(pkg, "is not installed"))
+  }
   script <- tempfile(fileext = ".R")
   out <- tempfile(fileext = ".rds")
   writeLines(c(
@@ -576,6 +578,7 @@ test_that("a multivariate lm_robust matches sandwich on the mlm fit", {
 })
 
 test_that("lh_robust is the linear combination of sandwich's variance, alone and jointly", {
+  skip_if_not_installed("car")
   # lh_robust parses its hypotheses with car::linearHypothesis, so car is not an
   # independent reference for it. The variance from sandwich and the algebra
   # written out here are.

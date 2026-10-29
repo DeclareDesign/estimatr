@@ -15,6 +15,7 @@ lh_data <- function() {
 dat <- lh_data()
 
 test_that("#405: lh_robust CIs match lm_robust CIs with clusters", {
+  skip_if_not_installed("car")
   m_cl <- lm_robust(y ~ x + z, data = dat, clusters = cl)
   lh_x <- lh_robust(y ~ x + z, data = dat, clusters = cl, linear_hypothesis = "x=0")
   expect_equal(lh_x$lh$conf.low, unname(confint(m_cl)["x", "2.5 %"]), tolerance = 1e-10)
@@ -22,6 +23,7 @@ test_that("#405: lh_robust CIs match lm_robust CIs with clusters", {
 })
 
 test_that("a single-coefficient hypothesis reproduces its lm_robust row under every cluster SE type", {
+  skip_if_not_installed("car")
   # Ported from the 1.0.6 lh-fixes branch (#418), which checked CR0 and stata;
   # 2.0 supports CR2 in lh_robust, so it is checked too.
   for (se in c("CR0", "stata", "CR2")) {
@@ -34,6 +36,7 @@ test_that("a single-coefficient hypothesis reproduces its lm_robust row under ev
 })
 
 test_that("#320: lh_robust returns the joint hypothesis", {
+  skip_if_not_installed("car")
   lh2 <- lh_robust(y ~ x + z, data = dat, linear_hypothesis = c("x=0", "z=0"))
   expect_true(all(c("value", "p.value") %in% names(lh2$joint_hypothesis)))
   expect_equal(unname(lh2$joint_hypothesis["numdf"]), 2)
@@ -42,6 +45,7 @@ test_that("#320: lh_robust returns the joint hypothesis", {
 })
 
 test_that("lh_robust handles an intercept-only model", {
+  skip_if_not_installed("car")
   # estimatr 1.0.6 errors here with "missing value where TRUE/FALSE needed".
   # Its df warning guards with `length(fit$df) > 0 && var(fit$df > 0)`, and
   # var() of a length-one vector is NA, so the `if` has nothing to branch on.
@@ -60,6 +64,7 @@ test_that("lh_robust handles an intercept-only model", {
 })
 
 test_that("lh_robust survives a single-coefficient fit", {
+  skip_if_not_installed("car")
   # estimatr 1.0.6 errored here. Its degrees-of-freedom check read
   #   if (length(lm_robust_fit$df) > 0 && var(lm_robust_fit$df > 0))
   # with the "> 0" inside var() rather than outside, so it took the variance of
@@ -83,6 +88,7 @@ test_that("lh_robust survives a single-coefficient fit", {
 })
 
 test_that("ci = FALSE withholds the p-value and the interval, and says nothing", {
+  skip_if_not_installed("car")
   # `ci = FALSE` leaves the fit with no degrees of freedom, and the
   # combination's df was min() of nothing: a base warning about missing
   # arguments that means nothing to the caller, an infinite df, and then a
@@ -123,6 +129,7 @@ test_that("se_type = 'none' is refused in terms of the argument the caller set",
 })
 
 test_that("C13: a hypothesis given as a matrix takes the same CR2 path as one given as text", {
+  skip_if_not_installed("car")
   # Under CR2 the hypothesis is passed into the fit so the Satterthwaite df can
   # be computed for the linear combination itself. That path parses a character
   # hypothesis with car::makeHypothesis and takes a matrix as it stands, and
@@ -146,6 +153,7 @@ test_that("C13: a hypothesis given as a matrix takes the same CR2 path as one gi
 })
 
 test_that("#413: a `!!` in the formula is applied at the call site", {
+  skip_if_not_installed("car")
   set.seed(343)
   b <- data.frame(y = rnorm(40), x = rnorm(40), z = rep(0:1, 20))
   outcome <- "y"
@@ -157,6 +165,7 @@ test_that("#413: a `!!` in the formula is applied at the call site", {
 })
 
 test_that("#414: a one-sided alternative applies to the hypothesis rows only", {
+  skip_if_not_installed("car")
   set.seed(343)
   dat <- data.frame(x = rnorm(60), z = rep(0:1, 30), cl = rep(1:12, each = 5))
   dat$y <- dat$x + 0.5 * dat$z + rnorm(60)

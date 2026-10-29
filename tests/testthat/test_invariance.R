@@ -160,6 +160,7 @@ test_that("an affine change to the outcome carries through every estimator exact
 })
 
 test_that("IV diagnostics and linear hypotheses follow the outcome's units", {
+  skip_if_not_installed("car")
   diagnostic_fields <- c("diagnostic_first_stage_fstatistic",
                          "diagnostic_endogeneity_test",
                          "diagnostic_overid_test")

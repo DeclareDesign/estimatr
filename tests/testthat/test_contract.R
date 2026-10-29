@@ -17,7 +17,7 @@
 
 test_that("every post-estimation promise in the contract holds", {
   skip_on_cran()
-  for (pkg in c("sandwich", "clubSandwich", "ivreg")) {
+  for (pkg in c("sandwich", "clubSandwich", "ivreg", "car")) {
     skip_if(!nzchar(system.file(package = pkg)), paste(pkg, "is not installed"))
   }
   dir <- system.file("contract", package = "estimatr")

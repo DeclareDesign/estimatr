@@ -230,6 +230,7 @@ test_that("difference_in_means is the regression it describes, design by design"
 })
 
 test_that("lh_robust is the linear combination of its own lm_robust fit", {
+  skip_if_not_installed("car")
   combination <- c(0, 2, 0, 1)
   for (st in c("HC2", "CR2", "classical")) {
     cluster_ids <- if (st == "CR2") d$cl else NULL

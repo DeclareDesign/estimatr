@@ -270,6 +270,7 @@ test_that("a multivariate lm_robust CR2 matches clubSandwich on the mlm fit", {
 })
 
 test_that("lh_robust CR2 matches clubSandwich's contrast, degrees of freedom included", {
+  skip_if_not_installed("car")
   # A combination of coefficients has its own Satterthwaite degrees of
   # freedom. lh_robust used to give it the smallest per-coefficient df, which
   # its comment called conservative and which is not a bound: on this data that
