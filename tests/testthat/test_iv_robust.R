@@ -431,3 +431,40 @@ test_that("model.frame() on iv_robust keeps the fit's rows when a cluster is mis
   expect_equal(nrow(mf), nobs(m))
   expect_false("Mazda RX4 Wag" %in% rownames(mf))
 })
+
+test_that("#335: each first-stage fit is the lm_robust fit of its endogenous regressor", {
+  di <- d
+  di$en2 <- di$inst2 - 0.3 * di$inst + rnorm(nrow(di))
+  di$cl <- rep(1:20, each = 10)
+  di$g <- rep(1:8, 25)
+  cases <- list(
+    list(),
+    list(se_type = "classical"),
+    list(clusters = quote(cl), se_type = "stata"),
+    list(weights = quote(wt), clusters = quote(cl)),
+    list(fixed_effects = quote(~ g), se_type = "HC2"),
+    list(fixed_effects = quote(~ g), clusters = quote(cl), se_type = "CR2"),
+    list(se_type = "HC2", df_type = "satterthwaite")
+  )
+  fields <- c("coefficients", "std.error", "df", "p.value", "conf.low", "conf.high",
+              "vcov", "r.squared", "adj.r.squared", "fstatistic", "proj_r.squared",
+              "nobs", "df.residual", "fitted.values", "residuals", "fixed_effects")
+  for (a in cases) {
+    fit <- do.call(iv_robust, c(list(y ~ en + en2 + w | inst + inst2 + w, data = quote(di)), a))
+    expect_identical(names(fit$first_stage), c("en", "en2"))
+    for (endog in c("en", "en2")) {
+      ref <- do.call(lm_robust, c(list(reformulate(c("inst", "inst2", "w"), endog), data = quote(di)), a))
+      expect_s3_class(fit$first_stage[[endog]], "lm_robust")
+      expect_equal(fit$first_stage[[endog]][fields], ref[fields], tolerance = 1e-12)
+      expect_equal(tidy(eval(fit$first_stage[[endog]]$call)), tidy(ref))
+    }
+  }
+})
+
+test_that("#335: a factor's dummy columns each get a first-stage fit and no call", {
+  fit <- iv_robust(mpg ~ factor(gear) + am | carb + wt + am, data = mtcars)
+  expect_identical(names(fit$first_stage), c("factor(gear)4", "factor(gear)5"))
+  expect_null(fit$first_stage[["factor(gear)4"]]$call)
+  ref <- lm_robust(as.numeric(gear == 4) ~ carb + wt + am, data = mtcars)
+  expect_equal(fit$first_stage[["factor(gear)4"]]$std.error, ref$std.error)
+})

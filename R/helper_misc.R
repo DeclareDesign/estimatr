@@ -459,6 +459,41 @@ fe_r2 <- function(yoriginal, residuals_proj, w) {
   }
 }
 
+# An absorbed fit's statistics on the scale of the data. lm_robust_fit() ran on
+# the demeaned outcome, so the R^2, total sum of squares, and F it returns are
+# the projected ones; they are kept under `proj_` names, and the fitted values,
+# R^2, and group effects are rebuilt from `yoriginal`. `model_data` is the
+# object returned by `demean_fes()`, with `Xoriginal` matching the columns of
+# the design the fit used.
+fe_full_scale <- function(return_list, yoriginal, model_data) {
+  for (nm in c("r.squared", "adj.r.squared", "tss", "fstatistic")) {
+    if (!is.null(return_list[[nm]])) {
+      return_list[[paste0("proj_", nm)]] <- return_list[[nm]]
+      return_list[[nm]] <- NULL
+    }
+  }
+
+  residuals_proj <- drop(return_list[["residuals"]])
+  fitted_full <- drop(yoriginal) - residuals_proj
+  # yoriginal comes from the stripped model data, so the names go back on
+  # here, exactly as lm_return() does it for a fit without fixed effects.
+  return_list[["fitted.values"]] <- attach_obs_names(fitted_full, model_data)
+
+  return_list[["fixed_effects"]] <- absorbed_group_effects(
+    return_list[["fitted.values"]], return_list[["coefficients"]], model_data
+  )
+
+  # The fit's own count, which leaves out zero-weight rows.
+  n_obs <- return_list[["nobs"]]
+  ss <- fe_r2(yoriginal, residuals_proj, model_data[["weights"]])
+  r2_full <- 1 - ss[["rss"]] / ss[["tss"]]
+  return_list[["r.squared"]] <- r2_full
+  return_list[["adj.r.squared"]] <- 1 - (1 - r2_full) * (n_obs - 1L) / return_list[["df.residual"]]
+  return_list[["tss"]] <- ss[["tss"]]
+  return_list[["felevels"]] <- model_data[["fe_level_names"]]
+  return_list
+}
+
 # A one-sided alternative puts all of alpha in one tail, so its interval is
 # unbounded on the other side, as in stats::t.test(). A normal test passes
 # df = Inf, at which pt() and qt() return pnorm() and qnorm().

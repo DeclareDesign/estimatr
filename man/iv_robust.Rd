@@ -116,7 +116,13 @@ and \code{res_var}; the summary statistics \code{r.squared}, \code{adj.r.squared
 
 \code{residuals} are the structural residuals, \verb{y - X beta}, rather than the
 second-stage ones. \code{ei.iv}, \code{terms_regressors}, and \code{formula} record the
-two-stage structure. With \code{diagnostics = TRUE} the object also holds
+two-stage structure. \code{first_stage} is a list of \code{\link[=lm_robust]{lm_robust()}} fits, one
+per endogenous regressor and named by it, each the regression of that
+regressor on every instrument with the fit's \code{se_type}, clusters, weights,
+fixed effects, and \code{df_type}, so \code{tidy()}, \code{summary()}, and table packages
+take them as they are (see the examples). Each equals the \code{\link[=lm_robust]{lm_robust()}}
+call recorded in its \code{call}, which is \code{NULL} for the dummy column of an
+endogenous factor. With \code{diagnostics = TRUE} the object also holds
 \code{diagnostic_first_stage_fstatistic}, \code{diagnostic_endogeneity_test}, and
 \code{diagnostic_overid_test}.
 }
@@ -139,6 +145,9 @@ tidy(fit)
 # The same variance menu as lm_robust()
 iv_robust(y ~ x | z, data = dat, se_type = "classical")
 iv_robust(y ~ x | z, data = dat, clusters = cl)
+
+# The first stage, one lm_robust fit per endogenous regressor
+tidy(fit$first_stage$x)
 
 # Weak-instrument, endogeneity, and overidentification tests
 summary(iv_robust(y ~ x | z, data = dat, diagnostics = TRUE))

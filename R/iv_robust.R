@@ -86,7 +86,13 @@
 #'
 #'   `residuals` are the structural residuals, `y - X beta`, rather than the
 #'   second-stage ones. `ei.iv`, `terms_regressors`, and `formula` record the
-#'   two-stage structure. With `diagnostics = TRUE` the object also holds
+#'   two-stage structure. `first_stage` is a list of [lm_robust()] fits, one
+#'   per endogenous regressor and named by it, each the regression of that
+#'   regressor on every instrument with the fit's `se_type`, clusters, weights,
+#'   fixed effects, and `df_type`, so `tidy()`, `summary()`, and table packages
+#'   take them as they are (see the examples). Each equals the [lm_robust()]
+#'   call recorded in its `call`, which is `NULL` for the dummy column of an
+#'   endogenous factor. With `diagnostics = TRUE` the object also holds
 #'   `diagnostic_first_stage_fstatistic`, `diagnostic_endogeneity_test`, and
 #'   `diagnostic_overid_test`.
 #'
@@ -105,6 +111,9 @@
 #' # The same variance menu as lm_robust()
 #' iv_robust(y ~ x | z, data = dat, se_type = "classical")
 #' iv_robust(y ~ x | z, data = dat, clusters = cl)
+#'
+#' # The first stage, one lm_robust fit per endogenous regressor
+#' tidy(fit$first_stage$x)
 #'
 #' # Weak-instrument, endogeneity, and overidentification tests
 #' summary(iv_robust(y ~ x | z, data = dat, diagnostics = TRUE))
@@ -154,6 +163,8 @@ iv_robust <- function(formula,
       diagnostics <- FALSE
     }
     yoriginal  <- as.matrix(model_data[["outcome"]])
+    zoriginal <- model_data[["instrument_matrix"]]
+    zoriginal <- zoriginal[, colnames(zoriginal) != "(Intercept)", drop = FALSE]
     model_data <- demean_fes(model_data)
     model_data[["instrument_matrix"]] <- demean_matrix_by_fes(
       model_data[["instrument_matrix"]], model_data
@@ -248,11 +259,62 @@ iv_robust <- function(formula,
   se_type <- return_list[["se_type"]]
 
   # ------
+  # First-stage fits
+  # ------
+  # One lm_robust fit per endogenous regressor, on every instrument, with the
+  # second stage's variance, clusters, weights, and absorbed fixed effects, so
+  # that each is the fit lm_robust() returns for `x ~ <instruments>` called
+  # with the same arguments (#335).
+  roles <- instrument_roles(model_data, first_stage)
+  iv_call <- match.call()
+  instruments_rhs <- formula(model_data[["formula"]], lhs = 0, rhs = 2)[[2]]
+  first_stage_data <- model_data
+  first_stage_data[["design_matrix"]] <- model_data[["instrument_matrix"]]
+  first_stage_data[["terms"]] <- terms(model_data[["formula"]], rhs = 2)
+  if (has_fe) first_stage_data[["Xoriginal"]] <- zoriginal
+  return_list[["first_stage"]] <- setNames(lapply(roles[["endog"]], function(endog) {
+    first_stage_data[["outcome"]] <- model_data[["design_matrix"]][, endog, drop = FALSE]
+    fit <- lm_robust_fit(
+      y = first_stage_data[["outcome"]],
+      X = first_stage_data[["design_matrix"]],
+      weights = model_data[["weights"]],
+      cluster = model_data[["cluster"]],
+      ci = ci,
+      se_type = se_type,
+      has_int = attr(first_stage_data[["terms"]], "intercept"),
+      alpha = alpha,
+      return_vcov = return_vcov,
+      try_cholesky = try_cholesky,
+      fe_rank = fe_rank,
+      fe_leverage = fe_lev,
+      femat = if (has_fe && needs_fe_dummies(se_type, df_type, !is.null(model_data[["cluster"]])))
+        fe_dummy_matrix(model_data)
+        else NULL,
+      fe_rank_k = if (is.null(fe_rank_k)) fe_rank else fe_rank_k,
+      df_type = df_type
+    )
+    fit <- lm_return(fit, model_data = first_stage_data, formula = NULL)
+    if (has_fe) {
+      fit <- fe_full_scale(fit, model_data[["Xoriginal"]][, endog], first_stage_data)
+    }
+    # The call lm_robust() would be given for this fit, where the endogenous
+    # regressor is a term of its own. A factor's dummy column is not, and
+    # there is no such call to record.
+    if (endog %in% attr(model_data[["terms_regressors"]], "term.labels")) {
+      fit_call <- iv_call[names(iv_call) != "diagnostics"]
+      fit_call[[1L]] <- quote(lm_robust)
+      fit_call[["formula"]] <- call("~", str2lang(endog), instruments_rhs)
+      fit[["call"]] <- fit_call
+    }
+    class(fit) <- "lm_robust"
+    fit
+  }), roles[["endog"]])
+
+  # ------
   # diagnostics
   # ------
   if (diagnostics) {
 
-    roles <- instrument_roles(model_data, first_stage)
     endog <- roles[["endog"]]
 
     first_stage_fits <- first_stage[["fitted.values"]][, endog, drop = FALSE]
@@ -313,31 +375,7 @@ iv_robust <- function(formula,
     return_list[["diagnostic_overid_test"]] <- overid_chisqtest_val
   }
   if (has_fe) {
-    for (nm in c("r.squared", "adj.r.squared", "tss", "fstatistic")) {
-      if (!is.null(return_list[[nm]])) {
-        return_list[[paste0("proj_", nm)]] <- return_list[[nm]]
-        return_list[[nm]] <- NULL
-      }
-    }
-    residuals_proj <- drop(return_list[["residuals"]])
-    fitted_full <- drop(yoriginal) - residuals_proj
-    # yoriginal comes from the stripped model data, so the names go back on
-    # here, exactly as lm_return() does it for a fit without fixed effects.
-    fitted_full <- attach_obs_names(fitted_full, model_data)
-    return_list[["fitted.values"]] <- fitted_full
-
-    # The fit's own count, which leaves out zero-weight rows.
-    n_obs <- return_list[["nobs"]]
-    ss <- fe_r2(yoriginal, residuals_proj, model_data[["weights"]])
-    tss_full <- ss[["tss"]]
-    r2_full  <- 1 - ss[["rss"]] / tss_full
-    return_list[["r.squared"]]     <- r2_full
-    return_list[["adj.r.squared"]] <- 1 - (1 - r2_full) * (n_obs - 1L) / return_list[["df.residual"]]
-    return_list[["tss"]]           <- tss_full
-    return_list[["felevels"]]      <- model_data[["fe_level_names"]]
-    return_list[["fixed_effects"]] <- absorbed_group_effects(
-      return_list[["fitted.values"]], return_list[["coefficients"]], model_data
-    )
+    return_list <- fe_full_scale(return_list, yoriginal, model_data)
   }
 
   return_list[["call"]] <- match.call()

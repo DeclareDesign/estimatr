@@ -1,5 +1,9 @@
 # estimatr (development version)
 
+## `iv_robust()` returns its first stage
+
+`fit$first_stage` is a list of `lm_robust()` fits, one for each endogenous regressor and named by it, each regressing that regressor on every instrument with the fit's `se_type`, clusters, weights, fixed effects, and `df_type`. Each equals `lm_robust()` called on that regressor with the same arguments, which its `call` records, so `tidy(fit$first_stage$x)` and `summary()` work as on any fit, and `modelsummary::modelsummary(c(fit$first_stage, list(IV = fit)))` sets the first and second stages side by side. The dummy columns of an endogenous factor each get a fit, with no `call`, since no formula names them. See #335.
+
 ## One-sided tests in `difference_in_means()`, `horvitz_thompson()`, and `lh_robust()`
 
 Each takes `alternative = c("two.sided", "less", "greater")`, as `stats::t.test()` does. A one-sided test takes its p-value from one tail and puts all of `alpha` in that tail, so its confidence interval is unbounded on the other side; `confint(level =)`, `tidy(conf.level =)`, and `summary()` follow the fit's alternative, and `summary()` labels the column `Pr(>t)` or `Pr(<t)`. For `difference_in_means()` and `horvitz_thompson()` the direction is that of `condition2` minus `condition1`. A one-sided test on a regression coefficient goes through `lh_robust()`, as in `lh_robust(y ~ z + x, data = dat, linear_hypothesis = "z = 0", alternative = "greater")`, where it applies to the hypothesis rows and leaves the fit's own coefficients and the joint F test two-sided. Two-sided output is unchanged. See #414.

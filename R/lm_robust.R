@@ -319,39 +319,7 @@ lm_robust <- function(formula,
   )
 
   if (has_fe) {
-    # Rename projected (demeaned) R2 stats
-    for (nm in c("r.squared", "adj.r.squared", "tss", "fstatistic")) {
-      if (!is.null(return_list[[nm]])) {
-        return_list[[paste0("proj_", nm)]] <- return_list[[nm]]
-        return_list[[nm]] <- NULL
-      }
-    }
-
-    # Reconstruct full fitted values: by FWL, projected residuals = full residuals
-    residuals_proj <- drop(return_list[["residuals"]])
-    fitted_full <- drop(yoriginal) - residuals_proj
-    # yoriginal comes from the stripped model data, so the names go back on
-    # here, exactly as lm_return() does it for a fit without fixed effects.
-    fitted_full <- attach_obs_names(fitted_full, model_data)
-    return_list[["fitted.values"]] <- fitted_full
-
-    # Absorbed group effects, so predict() can put them back.
-    return_list[["fixed_effects"]] <- absorbed_group_effects(
-      return_list[["fitted.values"]], return_list[["coefficients"]], model_data
-    )
-
-    # Full model R2 using original Y, weighted where the fit is and one value
-    # per outcome column, as the same model with explicit dummies reports.
-    # The fit's own count, which leaves out zero-weight rows.
-    n_obs <- return_list[["nobs"]]
-    ss <- fe_r2(yoriginal, residuals_proj, model_data[["weights"]])
-    tss_full <- ss[["tss"]]
-    rss_full <- ss[["rss"]]
-    r2_full  <- 1 - rss_full / tss_full
-    return_list[["r.squared"]]     <- r2_full
-    return_list[["adj.r.squared"]] <- 1 - (1 - r2_full) * (n_obs - 1L) / return_list[["df.residual"]]
-    return_list[["tss"]]           <- tss_full
-    return_list[["felevels"]]      <- model_data[["fe_level_names"]]
+    return_list <- fe_full_scale(return_list, yoriginal, model_data)
   }
 
   return_list[["call"]] <- match.call()
