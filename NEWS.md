@@ -10,6 +10,10 @@
 
 Without blocks or clusters, `difference_in_means()` is now `lm_robust(y ~ z, se_type = "HC2", df_type = "welch")` in every number, weighted or not. It already was unweighted. A weighted fit took `lm_robust()`'s n - 2 degrees of freedom instead, so constant weights changed the df and nothing else (with a message saying so); its estimate and standard error are unchanged, its df, p-value, and interval move, and the message is gone. The documentation gives the variance formula, which is not the one `weights::wtd.t.test()` computes: that one is built on an effective sample size rather than the design. Weights with matched pairs are still refused. See #95.
 
+## `difference_in_means()` says where to go when treatment varies within a cluster
+
+`difference_in_means()` still refuses a cluster whose units do not share a treatment condition, because its `clusters` are the units of assignment and its design-based estimators (blocked, matched-pair clustered) depend on that. The message used to stop there; it now says so and names the fit to use for clustering above the level of assignment, `lm_robust(y ~ z, clusters = cl, se_type = "CR2")`, which is the fit `difference_in_means()` makes on an unblocked clustered design. The `clusters` argument is documented the same way. See #278.
+
 ## `iv_robust()` returns its first stage
 
 `fit$first_stage` is a list of `lm_robust()` fits, one for each endogenous regressor and named by it, each regressing that regressor on every instrument with the fit's `se_type`, clusters, weights, fixed effects, and `df_type`. Each equals `lm_robust()` called on that regressor with the same arguments, which its `call` records, so `tidy(fit$first_stage$x)` and `summary()` work as on any fit, and `modelsummary::modelsummary(c(fit$first_stage, list(IV = fit)))` sets the first and second stages side by side. The dummy columns of an endogenous factor each get a fit, with no `call`, since no formula names them. See #335.

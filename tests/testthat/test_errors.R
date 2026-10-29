@@ -62,6 +62,8 @@ test_that("difference_in_means refuses designs it cannot estimate, and says why"
                "Treatment has > 2 values; must specify both `condition1` and `condition2`")
   expect_error(difference_in_means(y ~ z_within, data = err_data, clusters = cl),
                "All units within a cluster must have the same treatment condition")
+  expect_error(difference_in_means(y ~ z_within, data = err_data, clusters = cl),
+               "use `lm_robust(y ~ z, clusters = cl, se_type = \"CR2\")`", fixed = TRUE)
   expect_error(difference_in_means(y ~ z, data = err_data, blocks = pair, weights = w),
                "Cannot use `weights` with matched pairs design")
 })

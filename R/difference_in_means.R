@@ -10,7 +10,10 @@
 #' @param formula (required) An object of class formula with one variable on the RHS
 #' @param data (optional) A `data.frame`
 #' @param blocks (optional) A bare (unquoted) name of the block variable
-#' @param clusters (optional) A bare (unquoted) name of the cluster variable
+#' @param clusters (optional) A bare (unquoted) name of the cluster variable:
+#'   the units to which treatment was assigned, so every unit in a cluster must
+#'   share a treatment condition. To cluster standard errors above the level of
+#'   assignment, use [lm_robust()] with `clusters` and `se_type = "CR2"`.
 #' @param weights (optional) The bare (unquoted) name of the weights variable
 #' @param subset (optional) A bare (unquoted) expression specifying a subset
 #' @param se_type (optional) `"default"` or `"none"`
@@ -557,7 +560,11 @@ difference_in_means_internal <- function(condition1 = NULL,
 
     if (any(!tapply(data$t, data$cluster, function(x) all(x == x[1])))) {
       stop(
-        "All units within a cluster must have the same treatment condition."
+        "All units within a cluster must have the same treatment condition: ",
+        "`clusters` names the units of assignment. To cluster standard ",
+        "errors above the level of assignment, use ",
+        "`lm_robust(y ~ z, clusters = cl, se_type = \"CR2\")`, which is the ",
+        "fit `difference_in_means()` makes for an unblocked clustered design."
       )
     }
   }

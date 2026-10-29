@@ -26,7 +26,10 @@ difference_in_means(
 
 \item{blocks}{(optional) A bare (unquoted) name of the block variable}
 
-\item{clusters}{(optional) A bare (unquoted) name of the cluster variable}
+\item{clusters}{(optional) A bare (unquoted) name of the cluster variable:
+the units to which treatment was assigned, so every unit in a cluster must
+share a treatment condition. To cluster standard errors above the level of
+assignment, use \code{\link[=lm_robust]{lm_robust()}} with \code{clusters} and \code{se_type = "CR2"}.}
 
 \item{weights}{(optional) The bare (unquoted) name of the weights variable}
 
