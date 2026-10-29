@@ -624,8 +624,9 @@ demean_matrix_by_fes <- function(mat, model_data) {
   mat
 }
 
-# The three-part IV formula `y ~ ex | en | in` (ivreg 0.6, fixest, Stata's
-# `(en = in)`) names the exogenous regressors once. Everything downstream reads
+# The three-part IV formula `y ~ ex | en | in`, ivreg's syntax since 0.6,
+# names the exogenous regressors once. fixest's `y ~ ex | en ~ in` is not
+# accepted. Everything downstream reads
 # the two-part form, so it is rewritten here as `y ~ en + ex | in + ex`, the
 # order ivreg rewrites it in, so that the coefficients come out in ivreg's (and
 # fixest's and Stata's) order, endogenous first. One- and two-part formulas

@@ -23,9 +23,9 @@ iv_robust(
 \arguments{
 \item{formula}{(required) An object of class formula with regressors and
 instruments, in either of two forms. The two-part \code{y ~ x1 + d | x1 + z1 + z2} lists the regressors left of the bar and every instrument right of it,
-so an exogenous regressor appears on both sides. The three-part \code{y ~ x1 | d | z1 + z2}, as in \code{ivreg::ivreg()} and \code{fixest::feols()}, lists the
-exogenous regressors, the endogenous regressors, and the excluded
-instruments once each, and fits the same model; as in \code{ivreg::ivreg()},
+so an exogenous regressor appears on both sides. The three-part \code{y ~ x1 | d | z1 + z2}, the syntax of \code{ivreg::ivreg()}, lists the exogenous
+regressors, the endogenous regressors, and the excluded instruments once
+each, and fits the same model; as in \code{ivreg::ivreg()},
 \code{formula(fit)} returns its two-part form with the endogenous regressors
 first, \code{y ~ d + x1 | z1 + z2 + x1}, and the coefficients follow that
 order.}

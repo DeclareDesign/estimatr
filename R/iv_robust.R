@@ -8,9 +8,9 @@
 #'   instruments, in either of two forms. The two-part `y ~ x1 + d | x1 + z1 +
 #'   z2` lists the regressors left of the bar and every instrument right of it,
 #'   so an exogenous regressor appears on both sides. The three-part `y ~ x1 |
-#'   d | z1 + z2`, as in `ivreg::ivreg()` and `fixest::feols()`, lists the
-#'   exogenous regressors, the endogenous regressors, and the excluded
-#'   instruments once each, and fits the same model; as in `ivreg::ivreg()`,
+#'   d | z1 + z2`, the syntax of `ivreg::ivreg()`, lists the exogenous
+#'   regressors, the endogenous regressors, and the excluded instruments once
+#'   each, and fits the same model; as in `ivreg::ivreg()`,
 #'   `formula(fit)` returns its two-part form with the endogenous regressors
 #'   first, `y ~ d + x1 | z1 + z2 + x1`, and the coefficients follow that
 #'   order.
