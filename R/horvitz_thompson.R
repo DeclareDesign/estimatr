@@ -45,10 +45,15 @@
 #' @param se_type (optional) `"youngs"` (default) or `"none"`.
 #' @param ci (optional) Logical; whether to compute p-values and confidence intervals.
 #' @param alpha (optional) Significance level, 0.05 by default.
+#' @param alternative (optional) The alternative hypothesis: `"two.sided"`
+#'   (default), `"greater"` (the difference, `condition2` minus `condition1`, exceeds zero), or `"less"`. A one-sided
+#'   test puts all of `alpha` in one tail, so its p-value is from that tail and
+#'   its confidence interval is unbounded on the other side, as in
+#'   [stats::t.test()]. Decide the direction before seeing the data.
 #'
 #' @return An object of class `"horvitz_thompson"` with fields
 #'   `coefficients`, `std.error`, `statistic`,
-#'   `p.value`, `conf.low`, `conf.high`, `df`,
+#'   `p.value`, `conf.low`, `conf.high`, `df`, `alpha`, `alternative`,
 #'   `nobs` (the number of units in the design, including any arms
 #'   outside the contrast), `vcov`, `se_type`, `condition1`,
 #'   `condition2`, `outcome`, and `term`.
@@ -91,9 +96,11 @@ horvitz_thompson <- function(formula,
                               condition2 = NULL,
                               se_type = "youngs",
                               ci = TRUE,
-                              alpha = 0.05) {
+                              alpha = 0.05,
+                              alternative = c("two.sided", "less", "greater")) {
 
   se_type <- match.arg(se_type, c("youngs", "none"))
+  alternative <- match.arg(alternative)
 
   # ---- parse formula and data ----
 
@@ -220,18 +227,19 @@ horvitz_thompson <- function(formula,
 
   term <- as.character(condition2)
   vcov_mat <- matrix(std.error^2, 1L, 1L, dimnames = list(term, term))
-  stat <- estimate / std.error
+  tested <- test_and_ci(estimate, std.error, df = Inf, alpha = alpha,
+                        alternative = alternative)
 
   ret <- list(
     coefficients = setNames(estimate, term),
     std.error    = setNames(std.error, term),
-    statistic    = setNames(if (ci) stat else NA_real_, term),
-    p.value      = setNames(if (ci) 2 * stats::pt(abs(stat), Inf, lower.tail = FALSE)
-                            else NA_real_, term),
-    conf.low     = if (ci) estimate - stats::qnorm(1 - alpha / 2) * std.error else NA_real_,
-    conf.high    = if (ci) estimate + stats::qnorm(1 - alpha / 2) * std.error else NA_real_,
+    statistic    = setNames(if (ci) tested$statistic else NA_real_, term),
+    p.value      = setNames(if (ci) tested$p.value else NA_real_, term),
+    conf.low     = if (ci) tested$conf.low else NA_real_,
+    conf.high    = if (ci) tested$conf.high else NA_real_,
     df           = setNames(NA_real_, term),
     alpha        = alpha,
+    alternative  = alternative,
     nobs         = N,
     outcome      = deparse(m_formula[[2L]], nlines = 1L),
     term         = term,

@@ -263,3 +263,51 @@ test_that("#413: a `!!` in the formula is applied at the call site", {
   expect_equal(injected$coefficients, by_hand$coefficients)
   expect_equal(injected$std.error, by_hand$std.error)
 })
+
+test_that("#414: a one-sided alternative matches t.test() on Welch's test", {
+  set.seed(343)
+  dat <- data.frame(z = rep(0:1, 25), y = rnorm(50))
+  dat$y <- dat$y + 0.4 * dat$z
+
+  two_sided <- difference_in_means(y ~ z, data = dat)
+  expect_equal(two_sided$alternative, "two.sided")
+
+  for (alt in c("greater", "less")) {
+    fit <- difference_in_means(y ~ z, data = dat, alternative = alt)
+    ref <- t.test(dat$y[dat$z == 1], dat$y[dat$z == 0], alternative = alt)
+    expect_equal(fit$alternative, alt)
+    expect_equal(unname(fit$p.value), ref$p.value)
+    expect_equal(unname(c(fit$conf.low, fit$conf.high)), as.vector(ref$conf.int))
+    expect_equal(unname(fit$statistic), unname(two_sided$statistic))
+
+    # A requested level is rebuilt on the same side
+    ref90 <- t.test(dat$y[dat$z == 1], dat$y[dat$z == 0], alternative = alt,
+                    conf.level = 0.9)
+    expect_equal(unname(confint(fit, level = 0.9)[1, ]), as.vector(ref90$conf.int))
+    expect_equal(unname(unlist(tidy(fit, conf.level = 0.9)[c("conf.low", "conf.high")])),
+                 as.vector(ref90$conf.int))
+  }
+
+  expect_equal(colnames(summary(difference_in_means(y ~ z, data = dat, alternative = "greater"))$coefficients)[4],
+               "Pr(>t)")
+  expect_equal(colnames(summary(two_sided)$coefficients)[4], "Pr(>|t|)")
+  expect_error(difference_in_means(y ~ z, data = dat, alternative = "bigger"), "should be one of")
+})
+
+test_that("#414: a one-sided alternative applies to blocked and clustered designs", {
+  set.seed(343)
+  dat <- data.frame(bl = rep(1:5, each = 20), cl = rep(1:20, each = 5))
+  dat$z <- rep(rep(0:1, each = 5), 10)
+  dat$y <- rnorm(100) + 0.3 * dat$z
+
+  for (args in list(list(blocks = quote(bl)), list(clusters = quote(cl)))) {
+    two_sided <- do.call(difference_in_means, c(list(y ~ z, data = dat), args))
+    greater <- do.call(difference_in_means, c(list(y ~ z, data = dat, alternative = "greater"), args))
+    less <- do.call(difference_in_means, c(list(y ~ z, data = dat, alternative = "less"), args))
+    expect_equal(greater$p.value + less$p.value, c(z = 1))
+    expect_equal(two_sided$p.value, 2 * pmin(greater$p.value, less$p.value))
+    expect_equal(greater$conf.high, Inf)
+    expect_equal(less$conf.low, -Inf)
+    expect_equal(greater$conf.low, unname(greater$coefficients - qt(0.95, greater$df) * greater$std.error))
+  }
+})

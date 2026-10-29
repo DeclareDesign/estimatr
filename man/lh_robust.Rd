@@ -4,7 +4,12 @@
 \alias{lh_robust}
 \title{Linear Hypothesis Test for OLS with Robust Standard Errors}
 \usage{
-lh_robust(..., data, linear_hypothesis)
+lh_robust(
+  ...,
+  data,
+  linear_hypothesis,
+  alternative = c("two.sided", "less", "greater")
+)
 }
 \arguments{
 \item{...}{(optional) Other arguments passed to \code{\link[=lm_robust]{lm_robust()}}}
@@ -13,12 +18,20 @@ lh_robust(..., data, linear_hypothesis)
 
 \item{linear_hypothesis}{(required) A character string or matrix specifying the
 hypothesis, passed to \code{car::linearHypothesis}}
+
+\item{alternative}{(optional) The alternative hypothesis: \code{"two.sided"}
+(default), \code{"greater"} (the linear combination, left-hand side minus right, exceeds zero), or \code{"less"}. A one-sided
+test puts all of \code{alpha} in one tail, so its p-value is from that tail and
+its confidence interval is unbounded on the other side, as in
+\code{\link[stats:t.test]{stats::t.test()}}. Decide the direction before seeing the data.
+It applies to the rows of \code{lh} only: the coefficients of the underlying
+fit and the joint F test stay as they are.}
 }
 \value{
 An object of class \code{"lh_robust"} with three components:
 \code{lm_robust}, the underlying fit; \code{lh}, one row per hypothesis holding
-\code{coefficients}, \code{std.error}, \code{statistic}, \code{p.value}, \code{alpha}, \code{conf.low},
-\code{conf.high}, \code{df}, \code{term}, and \code{outcome}; and \code{joint_hypothesis}, the Wald
+\code{coefficients}, \code{std.error}, \code{statistic}, \code{p.value}, \code{alpha}, \code{alternative},
+\code{conf.low}, \code{conf.high}, \code{df}, \code{term}, and \code{outcome}; and \code{joint_hypothesis}, the Wald
 F test of all of them at once, as \code{value}, \code{numdf}, \code{dendf}, and
 \code{p.value}. Under \code{se_type = "CR2"} or \code{"CR3"} each hypothesis's \code{df} is its own
 Satterthwaite approximation, as \code{clubSandwich::linear_contrast()} computes

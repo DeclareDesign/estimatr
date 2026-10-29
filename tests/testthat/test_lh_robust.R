@@ -155,3 +155,32 @@ test_that("#413: a `!!` in the formula is applied at the call site", {
   expect_equal(injected$lh$std.error, by_hand$lh$std.error)
   expect_equal(injected$coefficients, by_hand$coefficients)
 })
+
+test_that("#414: a one-sided alternative applies to the hypothesis rows only", {
+  set.seed(343)
+  dat <- data.frame(x = rnorm(60), z = rep(0:1, 30), cl = rep(1:12, each = 5))
+  dat$y <- dat$x + 0.5 * dat$z + rnorm(60)
+
+  for (se in c("HC2", "CR2")) {
+    args <- list(y ~ x + z, data = dat, linear_hypothesis = c("z - x = 0", "z = 0"), se_type = se)
+    if (se == "CR2") args$clusters <- quote(cl)
+    two_sided <- do.call(lh_robust, args)
+    greater <- do.call(lh_robust, c(args, alternative = "greater"))
+    less <- do.call(lh_robust, c(args, alternative = "less"))
+
+    expect_equal(two_sided$lh$alternative, rep("two.sided", 2))
+    expect_equal(greater$lh$p.value, pt(two_sided$lh$statistic, two_sided$lh$df, lower.tail = FALSE))
+    expect_equal(less$lh$p.value, pt(two_sided$lh$statistic, two_sided$lh$df))
+    expect_equal(greater$lh$conf.low,
+                 two_sided$lh$coefficients - qt(0.95, two_sided$lh$df) * two_sided$lh$std.error)
+    expect_equal(greater$lh$conf.high, c(Inf, Inf))
+    expect_equal(less$lh$conf.low, c(-Inf, -Inf))
+
+    # The fit's own coefficients and the joint F test are two-sided as before
+    expect_equal(greater$lm_robust$p.value, two_sided$lm_robust$p.value)
+    expect_equal(greater$joint_hypothesis, two_sided$joint_hypothesis)
+    expect_equal(tidy(greater)[1:3, ], tidy(two_sided)[1:3, ])
+    expect_equal(unname(confint(greater$lh, level = 0.9)[, 2]), c(Inf, Inf))
+  }
+  expect_equal(colnames(summary(greater$lh))[4], "Pr(>t)")
+})

@@ -10,11 +10,18 @@
 #' @param data (optional) A `data.frame`
 #' @param linear_hypothesis (required) A character string or matrix specifying the
 #'   hypothesis, passed to `car::linearHypothesis`
+#' @param alternative (optional) The alternative hypothesis: `"two.sided"`
+#'   (default), `"greater"` (the linear combination, left-hand side minus right, exceeds zero), or `"less"`. A one-sided
+#'   test puts all of `alpha` in one tail, so its p-value is from that tail and
+#'   its confidence interval is unbounded on the other side, as in
+#'   [stats::t.test()]. Decide the direction before seeing the data.
+#'   It applies to the rows of `lh` only: the coefficients of the underlying
+#'   fit and the joint F test stay as they are.
 #'
 #' @return An object of class `"lh_robust"` with three components:
 #'   `lm_robust`, the underlying fit; `lh`, one row per hypothesis holding
-#'   `coefficients`, `std.error`, `statistic`, `p.value`, `alpha`, `conf.low`,
-#'   `conf.high`, `df`, `term`, and `outcome`; and `joint_hypothesis`, the Wald
+#'   `coefficients`, `std.error`, `statistic`, `p.value`, `alpha`, `alternative`,
+#'   `conf.low`, `conf.high`, `df`, `term`, and `outcome`; and `joint_hypothesis`, the Wald
 #'   F test of all of them at once, as `value`, `numdf`, `dendf`, and
 #'   `p.value`. Under `se_type = "CR2"` or `"CR3"` each hypothesis's `df` is its own
 #'   Satterthwaite approximation, as `clubSandwich::linear_contrast()` computes
@@ -42,7 +49,10 @@
 #' joint$joint_hypothesis
 #'
 #' @export
-lh_robust <- function(..., data, linear_hypothesis) {
+lh_robust <- function(..., data, linear_hypothesis,
+                      alternative = c("two.sided", "less", "greater")) {
+
+  alternative <- match.arg(alternative)
 
   requireNamespace("car")
 
@@ -113,10 +123,11 @@ lh_robust <- function(..., data, linear_hypothesis) {
 
   statistic <- estimate / std.error
   if (isTRUE(ci)) {
-    p.value    <- 2 * pt(abs(statistic), df_vec, lower.tail = FALSE)
-    half_width <- std.error * qt(1 - alpha / 2, df_vec)
-    ci_low     <- estimate - half_width
-    ci_high    <- estimate + half_width
+    tested  <- test_and_ci(estimate, std.error, df = df_vec, alpha = alpha,
+                           alternative = alternative)
+    p.value <- tested$p.value
+    ci_low  <- tested$conf.low
+    ci_high <- tested$conf.high
   } else {
     p.value <- rep(NA_real_, length(estimate))
     ci_low  <- rep(NA_real_, length(estimate))
@@ -129,6 +140,7 @@ lh_robust <- function(..., data, linear_hypothesis) {
     statistic    = statistic,
     p.value      = p.value,
     alpha        = alpha,
+    alternative  = alternative,
     conf.low     = unname(ci_low),
     conf.high    = unname(ci_high),
     df           = df_vec,

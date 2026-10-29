@@ -607,3 +607,24 @@ test_that("C13: conditions the declaration does not name are refused by name", {
     "not found in ra_declaration conditions: a, b"
   )
 })
+
+test_that("#414: a one-sided alternative takes one tail of the normal", {
+  set.seed(343)
+  dat <- data.frame(z = rep(0:1, 25), y = rnorm(50))
+  dat$y <- dat$y + 0.4 * dat$z
+  prs <- rep(0.5, 50)
+
+  two_sided <- horvitz_thompson(y ~ z, data = dat, condition_prs = prs)
+  greater <- horvitz_thompson(y ~ z, data = dat, condition_prs = prs, alternative = "greater")
+  less <- horvitz_thompson(y ~ z, data = dat, condition_prs = prs, alternative = "less")
+
+  expect_equal(two_sided$alternative, "two.sided")
+  expect_equal(unname(greater$p.value), pnorm(unname(two_sided$statistic), lower.tail = FALSE))
+  expect_equal(unname(less$p.value), pnorm(unname(two_sided$statistic)))
+  expect_equal(unname(greater$conf.low), unname(two_sided$coefficients - qnorm(0.95) * two_sided$std.error))
+  expect_equal(unname(greater$conf.high), Inf)
+  expect_equal(unname(less$conf.low), -Inf)
+  expect_equal(unname(confint(greater, level = 0.9)[1, ]),
+               unname(c(two_sided$coefficients - qnorm(0.9) * two_sided$std.error, Inf)))
+  expect_equal(colnames(summary(less)$coefficients)[4], "Pr(<z)")
+})

@@ -1,5 +1,9 @@
 # estimatr (development version)
 
+## One-sided tests in `difference_in_means()`, `horvitz_thompson()`, and `lh_robust()`
+
+Each takes `alternative = c("two.sided", "less", "greater")`, as `stats::t.test()` does. A one-sided test takes its p-value from one tail and puts all of `alpha` in that tail, so its confidence interval is unbounded on the other side; `confint(level =)`, `tidy(conf.level =)`, and `summary()` follow the fit's alternative, and `summary()` labels the column `Pr(>t)` or `Pr(<t)`. For `difference_in_means()` and `horvitz_thompson()` the direction is that of `condition2` minus `condition1`. A one-sided test on a regression coefficient goes through `lh_robust()`, as in `lh_robust(y ~ z + x, data = dat, linear_hypothesis = "z = 0", alternative = "greater")`, where it applies to the hypothesis rows and leaves the fit's own coefficients and the joint F test two-sided. Two-sided output is unchanged. See #414.
+
 ## `vignette("post-estimation-contract")` sets out what each generic does on each fit
 
 A new vignette renders `inst/contract/contract.csv`, the file `tests/testthat/test_contract.R` checks, as a table of 70 probes of stats and sandwich generics on ten fits, saying for each cell whether the call agrees with `lm()` or `ivreg::ivreg()`, refuses with estimatr's own message, errors, or returns a value with no reference to hold it to. It also lists each refusal's message and each cell whose promise was a decision rather than a consequence. Because the page is built from the same file the tests read, it cannot drift from what is checked.

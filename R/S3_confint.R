@@ -63,7 +63,8 @@ get_ci_mat <- function(object, level, ttest = TRUE) {
     if (!is.null(object[["alpha"]])) {
       object[["alpha"]] <- NULL
     }
-    object <- add_cis_pvals(object, alpha = 1 - level, ci = TRUE, ttest = ttest)
+    object <- add_cis_pvals(object, alpha = 1 - level, ci = TRUE, ttest = ttest,
+                            alternative = fit_alternative(object))
   } else {
     level <- 1 - object$alpha
   }

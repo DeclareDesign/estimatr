@@ -1,10 +1,9 @@
-add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
+add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE,
+                          alternative = "two.sided") {
   if (ci) {
     if (alpha <= 0 || alpha >= 1) {
       stop("`alpha` must be numeric between 0 and 1")
     }
-
-    return_frame$statistic <- with(return_frame, coefficients / std.error)
 
     if (ttest) {
       if (any(return_frame$df <= 0, na.rm = TRUE)) {
@@ -15,26 +14,26 @@ add_cis_pvals <- function(return_frame, alpha, ci, ttest = TRUE) {
 
         return_frame$df <- ifelse(return_frame$df <= 0, NA, return_frame$df)
       }
-
-      return_frame$p.value <- with(
-        return_frame,
-        2 * pt(abs(statistic), df = df, lower.tail = FALSE)
-      )
-
-      crit_se <- with(return_frame, qt(1 - alpha / 2, df = df) * std.error)
+      df <- return_frame$df
     } else {
-      return_frame$p.value <- with(
-        return_frame,
-        2 * pnorm(abs(statistic), lower.tail = FALSE)
-      )
-
-      crit_se <- with(return_frame, qnorm(1 - alpha / 2) * std.error)
-
-      return_frame$df <- NA
+      df <- Inf
     }
 
-    return_frame$conf.low <- with(return_frame, coefficients - crit_se)
-    return_frame$conf.high <- with(return_frame, coefficients + crit_se)
+    tested <- test_and_ci(
+      return_frame$coefficients,
+      return_frame$std.error,
+      df = df,
+      alpha = alpha,
+      alternative = alternative
+    )
+    return_frame$statistic <- tested$statistic
+    return_frame$p.value <- tested$p.value
+    return_frame$conf.low <- tested$conf.low
+    return_frame$conf.high <- tested$conf.high
+
+    if (!ttest) {
+      return_frame$df <- NA
+    }
 
     return(as.list(return_frame))
   } else {
@@ -458,4 +457,46 @@ fe_r2 <- function(yoriginal, residuals_proj, w) {
     ymw <- y - rep(drop(crossprod(w, y) / sum(w)), each = n)
     list(tss = colSums(ymw * ymw * w), rss = colSums(e * e * w))
   }
+}
+
+# A one-sided alternative puts all of alpha in one tail, so its interval is
+# unbounded on the other side, as in stats::t.test(). A normal test passes
+# df = Inf, at which pt() and qt() return pnorm() and qnorm().
+test_and_ci <- function(estimate, std.error, df, alpha,
+                        alternative = "two.sided") {
+  statistic <- estimate / std.error
+
+  if (alternative == "two.sided") {
+    crit_se <- qt(1 - alpha / 2, df = df) * std.error
+    return(list(
+      statistic = statistic,
+      p.value = 2 * pt(abs(statistic), df = df, lower.tail = FALSE),
+      conf.low = estimate - crit_se,
+      conf.high = estimate + crit_se
+    ))
+  }
+
+  crit_se <- qt(1 - alpha, df = df) * std.error
+  unbounded <- ifelse(is.na(crit_se), NA_real_, Inf)
+  if (alternative == "greater") {
+    list(
+      statistic = statistic,
+      p.value = pt(statistic, df = df, lower.tail = FALSE),
+      conf.low = estimate - crit_se,
+      conf.high = unbounded
+    )
+  } else {
+    list(
+      statistic = statistic,
+      p.value = pt(statistic, df = df),
+      conf.low = -unbounded,
+      conf.high = estimate + crit_se
+    )
+  }
+}
+
+# Fits made before `alternative` existed, and lm_robust() fits, carry none.
+fit_alternative <- function(object) {
+  alternative <- object[["alternative"]]
+  if (is.null(alternative)) "two.sided" else alternative[[1]]
 }

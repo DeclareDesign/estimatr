@@ -15,7 +15,8 @@ difference_in_means(
   condition1 = NULL,
   condition2 = NULL,
   ci = TRUE,
-  alpha = 0.05
+  alpha = 0.05,
+  alternative = c("two.sided", "less", "greater")
 )
 }
 \arguments{
@@ -40,12 +41,18 @@ difference_in_means(
 \item{ci}{(optional) Logical. Whether to compute p-values and confidence intervals.}
 
 \item{alpha}{(optional) The significance level, 0.05 by default.}
+
+\item{alternative}{(optional) The alternative hypothesis: \code{"two.sided"}
+(default), \code{"greater"} (the difference, \code{condition2} minus \code{condition1}, exceeds zero), or \code{"less"}. A one-sided
+test puts all of \code{alpha} in one tail, so its p-value is from that tail and
+its confidence interval is unbounded on the other side, as in
+\code{\link[stats:t.test]{stats::t.test()}}. Decide the direction before seeing the data.}
 }
 \value{
 An object of class \code{"difference_in_means"}, a list holding
 \code{coefficients}, \code{std.error}, \code{df}, \code{statistic}, \code{p.value}, \code{conf.low},
 \code{conf.high}, \code{term}, \code{outcome}, \code{condition1}, \code{condition2}, \code{vcov},
-\code{nobs}, \code{alpha}, \code{call}, and \code{design}, a string naming the case that applied:
+\code{nobs}, \code{alpha}, \code{alternative}, \code{call}, and \code{design}, a string naming the case that applied:
 \code{"Standard"}, \code{"Blocked"}, \code{"Small blocks"}, \code{"Hybrid blocked"},
 \code{"Matched-pair"}, \code{"Clustered"}, \code{"Block-clustered"}, or
 \code{"Matched-pair clustered"}.

@@ -18,6 +18,11 @@
 #' @param condition2 (optional) Value in treatment for the treatment condition
 #' @param ci (optional) Logical. Whether to compute p-values and confidence intervals.
 #' @param alpha (optional) The significance level, 0.05 by default.
+#' @param alternative (optional) The alternative hypothesis: `"two.sided"`
+#'   (default), `"greater"` (the difference, `condition2` minus `condition1`, exceeds zero), or `"less"`. A one-sided
+#'   test puts all of `alpha` in one tail, so its p-value is from that tail and
+#'   its confidence interval is unbounded on the other side, as in
+#'   [stats::t.test()]. Decide the direction before seeing the data.
 #'
 #' @details Selects the appropriate point estimate, standard errors, and degrees
 #'   of freedom for unit randomized, cluster randomized, block randomized,
@@ -56,7 +61,7 @@
 #' @return An object of class `"difference_in_means"`, a list holding
 #'   `coefficients`, `std.error`, `df`, `statistic`, `p.value`, `conf.low`,
 #'   `conf.high`, `term`, `outcome`, `condition1`, `condition2`, `vcov`,
-#'   `nobs`, `alpha`, `call`, and `design`, a string naming the case that applied:
+#'   `nobs`, `alpha`, `alternative`, `call`, and `design`, a string naming the case that applied:
 #'   `"Standard"`, `"Blocked"`, `"Small blocks"`, `"Hybrid blocked"`,
 #'   `"Matched-pair"`, `"Clustered"`, `"Block-clustered"`, or
 #'   `"Matched-pair clustered"`.
@@ -119,7 +124,10 @@ difference_in_means <- function(formula,
                                 condition1 = NULL,
                                 condition2 = NULL,
                                 ci = TRUE,
-                                alpha = .05) {
+                                alpha = .05,
+                                alternative = c("two.sided", "less", "greater")) {
+  alternative <- match.arg(alternative)
+
   # Evaluating through enquo() applies `!!` and `{{ }}` at the call site, as
   # lm_robust() does, before the formula is inspected below.
   formula <- rlang::eval_tidy(rlang::enquo(formula))
@@ -385,7 +393,7 @@ difference_in_means <- function(formula,
     design <- paste0(design, " (weighted)")
   }
 
-  return_list <- add_cis_pvals(return_frame, alpha, ci)
+  return_list <- add_cis_pvals(return_frame, alpha, ci, alternative = alternative)
 
   return_list <- dim_like_return(
     return_list,
@@ -394,6 +402,7 @@ difference_in_means <- function(formula,
     conditions = list(condition1, condition2)
   )
 
+  return_list[["alternative"]] <- alternative
   return_list[["design"]] <- design
   if (is.numeric(nblocks)) {
     return_list[["nblocks"]] <- nblocks

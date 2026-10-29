@@ -126,12 +126,18 @@ summarize_tidy <- function(object, test = "t", ...) {
   remove_cols <- c("term", "outcome")
 
   tidy_out <- tidy(object, ...)
+  p_label <- switch(
+    fit_alternative(object),
+    two.sided = paste0("Pr(>|", test, "|)"),
+    greater = paste0("Pr(>", test, ")"),
+    less = paste0("Pr(<", test, ")")
+  )
   colnames(tidy_out)[2:8] <-
     c(
       "Estimate",
       "Std. Error",
       paste0(test, " value"),
-      paste0("Pr(>|", test, "|)"),
+      p_label,
       "CI Lower",
       "CI Upper",
       "DF"

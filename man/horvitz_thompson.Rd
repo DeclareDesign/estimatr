@@ -12,7 +12,8 @@ horvitz_thompson(
   condition2 = NULL,
   se_type = "youngs",
   ci = TRUE,
-  alpha = 0.05
+  alpha = 0.05,
+  alternative = c("two.sided", "less", "greater")
 )
 }
 \arguments{
@@ -54,11 +55,17 @@ condition by default).}
 \item{ci}{(optional) Logical; whether to compute p-values and confidence intervals.}
 
 \item{alpha}{(optional) Significance level, 0.05 by default.}
+
+\item{alternative}{(optional) The alternative hypothesis: \code{"two.sided"}
+(default), \code{"greater"} (the difference, \code{condition2} minus \code{condition1}, exceeds zero), or \code{"less"}. A one-sided
+test puts all of \code{alpha} in one tail, so its p-value is from that tail and
+its confidence interval is unbounded on the other side, as in
+\code{\link[stats:t.test]{stats::t.test()}}. Decide the direction before seeing the data.}
 }
 \value{
 An object of class \code{"horvitz_thompson"} with fields
 \code{coefficients}, \code{std.error}, \code{statistic},
-\code{p.value}, \code{conf.low}, \code{conf.high}, \code{df},
+\code{p.value}, \code{conf.low}, \code{conf.high}, \code{df}, \code{alpha}, \code{alternative},
 \code{nobs} (the number of units in the design, including any arms
 outside the contrast), \code{vcov}, \code{se_type}, \code{condition1},
 \code{condition2}, \code{outcome}, and \code{term}.
