@@ -394,14 +394,21 @@ rebuild_model_data <- function(object, formula, estimator = "") {
   suppressWarnings(clean_model_data(data = data, datargs, estimator = estimator))
 }
 
+# With `data` the design is built from that data, as model.matrix.lm() does;
+# ignoring it returned the fit's own rows (insight's get_datagrid() test).
+# Rows with a missing value are dropped, model.frame()'s default.
 #' @importFrom stats model.matrix
 #' @export
-model.matrix.lm_robust <- function(object, ...) {
-  X <- model.matrix(
-    delete.response(object[["terms"]]),
-    rebuild_model_data(object, stats::formula(object[["terms"]]))[["model_frame"]],
-    contrasts.arg = object[["contrasts"]]
-  )
+model.matrix.lm_robust <- function(object, data, ...) {
+  X <- if (missing(data)) {
+    model.matrix(
+      delete.response(object[["terms"]]),
+      rebuild_model_data(object, stats::formula(object[["terms"]]))[["model_frame"]],
+      contrasts.arg = object[["contrasts"]]
+    )
+  } else {
+    get_X(object, data, na.action = stats::na.omit)
+  }
   if (!is.null(object$scaled_center)) X <- lin_design(object, X)
   if (isTRUE(object[["fes"]])) {
     X <- drop_absorbed_intercept(X, rownames(as.matrix(coef(object))))

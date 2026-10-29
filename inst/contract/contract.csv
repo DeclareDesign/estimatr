@@ -229,6 +229,16 @@
 "model.matrix","model.matrix","iv_cl","agrees","model.matrix(fit)","same",,,
 "model.matrix","model.matrix","dim","errors","model.matrix(fit)","same",,,
 "model.matrix","model.matrix","ht","errors","model.matrix(fit)",,,,
+"model.matrix_data","model.matrix","lm_plain","agrees","model.matrix(fit, data = transform(d, x = x + 1, x_c = x_c + 1))","same",,,
+"model.matrix_data","model.matrix","lm_wt0","agrees","model.matrix(fit, data = transform(d, x = x + 1, x_c = x_c + 1))","same",,,
+"model.matrix_data","model.matrix","lm_cl","agrees","model.matrix(fit, data = transform(d, x = x + 1, x_c = x_c + 1))","same",,,
+"model.matrix_data","model.matrix","lm_fe","agrees","model.matrix(fit, data = transform(d, x = x + 1, x_c = x_c + 1))","same",,,
+"model.matrix_data","model.matrix","lm_mv","agrees","model.matrix(fit, data = transform(d, x = x + 1, x_c = x_c + 1))","same",,,
+"model.matrix_data","model.matrix","lm_lin","agrees","model.matrix(fit, data = transform(d, x = x + 1, x_c = x_c + 1))","same",,,
+"model.matrix_data","model.matrix","iv_plain","agrees","model.matrix(fit, data = transform(d, x = x + 1, x_c = x_c + 1))","same",,,"ivreg ignores `data` too"
+"model.matrix_data","model.matrix","iv_cl","agrees","model.matrix(fit, data = transform(d, x = x + 1, x_c = x_c + 1))","same",,,"ivreg ignores `data` too"
+"model.matrix_data","model.matrix","dim","errors","model.matrix(fit, data = transform(d, x = x + 1, x_c = x_c + 1))","same",,,
+"model.matrix_data","model.matrix","ht","errors","model.matrix(fit, data = transform(d, x = x + 1, x_c = x_c + 1))",,,,
 "family","family","lm_plain","errors","family(fit)$family","same",,,
 "family","family","lm_wt0","errors","family(fit)$family","same",,,
 "family","family","lm_cl","errors","family(fit)$family","same",,,
