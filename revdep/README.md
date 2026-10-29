@@ -26,9 +26,3 @@
 
 # Revdeps
 
-## Failed to check (1)
-
-|package |version |error |warning |note |
-|:-------|:-------|:-----|:-------|:----|
-|lmw     |0.0.2   |1     |        |     |
-
