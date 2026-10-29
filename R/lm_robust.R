@@ -86,7 +86,12 @@
 #'   coefficient's variance, so a contrast in an interacted model and the same
 #'   contrast fit on the subset get the same degrees of freedom. The estimates
 #'   and standard errors are unchanged. Not available with both `weights` and
-#'   `fixed_effects`. `"residual"` is accepted where it is the default.
+#'   `fixed_effects`. `"welch"` with `se_type = "HC2"` gives the
+#'   Welch-Satterthwaite degrees of freedom on a two-group design, an
+#'   intercept and one regressor taking two values, as in `y ~ z` with a
+#'   binary `z`; weighted or not, `lm_robust(y ~ z, se_type = "HC2",
+#'   df_type = "welch")` is then [difference_in_means()] in every number.
+#'   `"residual"` is accepted where it is the default.
 #' @param try_cholesky (optional) Logical. Whether to solve by Cholesky
 #'   decomposition of `X'X` rather than by the default pivoted QR. `FALSE` by
 #'   default, and worth turning on in most applied settings: about 1.4 times

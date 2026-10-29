@@ -48,6 +48,62 @@ test_that("the two-group degrees of freedom are the closed form", {
   expect_equal(unname(fit$df["z"]), closed)
 })
 
+# ---- Welch ----
+
+# df_type = "welch" on a two-group design: each coefficient is a combination of
+# the two groups' weighted means, and its degrees of freedom are Welch's on the
+# two terms of its HC2 variance. Unweighted, the slope's are t.test()'s and the
+# intercept's are n0 - 1.
+test_that("the two-group Welch degrees of freedom are t.test()'s", {
+  set.seed(343)
+  g <- data.frame(y = c(rnorm(12), rnorm(18, sd = 3)), z = rep(0:1, c(12, 18)))
+  fit <- lm_robust(y ~ z, data = g, df_type = "welch")
+  default <- lm_robust(y ~ z, data = g)
+  expect_identical(fit$std.error, default$std.error)
+  expect_equal(unname(fit$df["z"]), unname(t.test(y ~ z, data = g)$parameter))
+  expect_equal(unname(fit$df["(Intercept)"]), 11)
+  # Any two values of the regressor, and a two-level factor, give the slope
+  # the same degrees of freedom.
+  g$z12 <- g$z + 1
+  g$zf <- factor(g$z)
+  expect_equal(unname(lm_robust(y ~ z12, data = g, df_type = "welch")$df["z12"]),
+               unname(fit$df["z"]))
+  expect_equal(unname(lm_robust(y ~ zf, data = g, df_type = "welch")$df["zf1"]),
+               unname(fit$df["z"]))
+})
+
+test_that("weighted Welch degrees of freedom are the closed form, and constant weights change nothing", {
+  set.seed(343)
+  g <- data.frame(y = rnorm(30), z = rep(0:1, 15), w = runif(30), one = 1)
+  g$w[1:2] <- 0
+  fit <- lm_robust(y ~ z, data = g, weights = w, df_type = "welch")
+  pos <- g[g$w > 0, ]
+  v <- vapply(split(pos, pos$z), function(gg) {
+    h <- gg$w / sum(gg$w)
+    e <- gg$y - sum(h * gg$y)
+    c(v = sum(h^2 * e^2 / (1 - h)), n = nrow(gg))
+  }, numeric(2))
+  expect_equal(unname(fit$std.error["z"]), sqrt(sum(v["v", ])))
+  expect_equal(unname(fit$df["z"]),
+               sum(v["v", ])^2 / sum(v["v", ]^2 / (v["n", ] - 1)))
+
+  unweighted <- lm_robust(y ~ z, data = g, df_type = "welch")
+  ones <- lm_robust(y ~ z, data = g, weights = one, df_type = "welch")
+  expect_equal(ones$std.error, unweighted$std.error)
+  expect_equal(ones$df, unweighted$df)
+})
+
+test_that("Welch degrees of freedom are per outcome and per hypothesis", {
+  set.seed(343)
+  g <- data.frame(y = rnorm(30), y2 = rexp(30), z = rep(0:1, 15), w = runif(30))
+  mv <- lm_robust(cbind(y, y2) ~ z, data = g, weights = w, df_type = "welch")
+  expect_equal(unname(mv$df[, 2]),
+               unname(lm_robust(y2 ~ z, data = g, weights = w, df_type = "welch")$df))
+  skip_if_not_installed("car")
+  lh <- lh_robust(y ~ z, data = g, df_type = "welch", linear_hypothesis = "z = 0")
+  expect_equal(unname(lh$lh$df), unname(lh$lm_robust$df["z"]))
+})
+
 # ---- #289 ----
 
 # A contrast that only one group's observations identify gets the degrees of
@@ -188,10 +244,16 @@ test_that("df_type refuses every pairing it does not implement", {
   expect_error(lm_robust(y ~ x, data = d, clusters = cl, se_type = "CR2",
                          df_type = "residual"),
                "not available with `se_type = \"CR2\"`")
-  expect_error(lm_robust(y ~ x, data = d, df_type = "welch"),
-               "must be NULL, 'residual', or 'satterthwaite'")
+  expect_error(lm_robust(y ~ x, data = d, df_type = "kenward-roger"),
+               "must be NULL, 'residual', 'satterthwaite', or 'welch'")
   expect_error(lm_robust(y ~ x, data = d, df_type = c("residual", "satterthwaite")),
-               "must be NULL, 'residual', or 'satterthwaite'")
+               "must be NULL, 'residual', 'satterthwaite', or 'welch'")
+  expect_error(lm_robust(y ~ x, data = d, se_type = "HC1", df_type = "welch"),
+               "not available with `se_type = \"HC1\"`")
+  expect_error(lm_robust(y ~ x, data = d, df_type = "welch"), "needs a two-group design")
+  expect_error(lm_robust(y ~ z + x, data = d, df_type = "welch"), "needs a two-group design")
+  expect_error(iv_robust(y ~ x | z, data = d, df_type = "welch"),
+               "not available for `iv_robust\\(\\)`")
 
   di <- ext_data_fe_iv()
   expect_error(lm_robust(y ~ x, data = di, weights = w, fixed_effects = ~g,

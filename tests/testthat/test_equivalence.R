@@ -196,13 +196,15 @@ test_that("difference_in_means is the regression it describes, design by design"
   expect_equal(unname(dim$df), unname(welch$parameter), tolerance = EQ_TOL)
   expect_equal(unname(dim$p.value), welch$p.value, tolerance = EQ_TOL)
 
-  # Clustered and weighted designs are delegated to lm_robust outright, df
-  # included.
+  # Clustered designs are delegated to lm_robust outright, df included, and
+  # unclustered ones are lm_robust with HC2 and Welch df, weighted or not (#95).
   pairs <- list(
     clustered = list(difference_in_means(y ~ zc, data = d, clusters = cl),
                      lm_robust(y ~ zc, data = d, clusters = cl, se_type = "CR2")),
+    unweighted = list(difference_in_means(y ~ z, data = d),
+                      lm_robust(y ~ z, data = d, se_type = "HC2", df_type = "welch")),
     weighted = list(difference_in_means(y ~ z, data = d, weights = w),
-                    lm_robust(y ~ z, data = d, weights = w, se_type = "HC2")),
+                    lm_robust(y ~ z, data = d, weights = w, se_type = "HC2", df_type = "welch")),
     weighted_clustered = list(difference_in_means(y ~ zc, data = d, weights = w, clusters = cl),
                               lm_robust(y ~ zc, data = d, weights = w, clusters = cl, se_type = "CR2"))
   )
@@ -212,6 +214,9 @@ test_that("difference_in_means is the regression it describes, design by design"
     expect_equal(unname(a$coefficients), unname(b$coefficients[2]), tolerance = EQ_TOL, label = nm)
     expect_equal(unname(a$std.error), unname(b$std.error[2]), tolerance = EQ_TOL, label = nm)
     expect_equal(unname(a$df), unname(b$df[2]), tolerance = EQ_TOL, label = nm)
+    expect_equal(unname(a$p.value), unname(b$p.value[2]), tolerance = EQ_TOL, label = nm)
+    expect_equal(unname(a$conf.low), unname(b$conf.low[2]), tolerance = EQ_TOL, label = nm)
+    expect_equal(unname(a$conf.high), unname(b$conf.high[2]), tolerance = EQ_TOL, label = nm)
   }
 
   # Blocked, with every block big: Lin's estimator with the block indicators as
@@ -270,17 +275,11 @@ test_that("weights that are all 1 are no weights", {
     "blocked difference in means"
   )
 
-  # The unblocked difference in means is the exception, and says so: any
-  # weights route it through lm_robust, so the degrees of freedom are n - 2
-  # rather than Welch's, while the estimate and standard error are unchanged.
-  expect_message(
-    weighted <- difference_in_means(y ~ z, data = d, weights = one),
-    "Welch-Satterthwaite approximation will not be used"
+  expect_same_inference(
+    difference_in_means(y ~ z, data = d, weights = one),
+    difference_in_means(y ~ z, data = d),
+    "unblocked difference in means"
   )
-  unweighted <- difference_in_means(y ~ z, data = d)
-  expect_equal(weighted$coefficients, unweighted$coefficients, tolerance = EQ_TOL)
-  expect_equal(weighted$std.error, unweighted$std.error, tolerance = EQ_TOL)
-  expect_equal(unname(weighted$df), n - 2)
 })
 
 # A zero weight is a row that is not in the fit, and every count the fit

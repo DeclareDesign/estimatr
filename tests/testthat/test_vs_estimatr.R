@@ -245,10 +245,12 @@ test_that("difference_in_means matched-pairs identical to estimatr", {
   expect_equal(e0$design, ez$design)
 })
 
-test_that("difference_in_means weighted: coefs identical, delegates to lm_robust", {
+# 1.0.6 gave the weighted fit lm_robust's n - 2 df; the df is now Welch's on
+# the HC2 terms (#95), so df and p.value are checked in test_equivalence.R.
+test_that("difference_in_means weighted: estimate and SE identical to estimatr", {
   e0 <- ref("dim_w")
   ez <- difference_in_means(y ~ z, weights = w, data = dat)
-  check_identical(e0, ez, c("coefficients", "std.error", "df", "p.value"), "dim-w")
+  check_identical(e0, ez, c("coefficients", "std.error"), "dim-w")
 })
 
 # ---- lh_robust ----

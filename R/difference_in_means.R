@@ -46,8 +46,16 @@
 #'   units. Both messages suggest merging blocks or using [lm_robust()] with
 #'   block fixed effects.
 #'
-#'   If weights are specified, estimation is handed to [lm_robust()] with HC2
-#'   standard errors.
+#'   Without blocks or clusters, weighted or not, the fit is
+#'   `lm_robust(y ~ z, se_type = "HC2", df_type = "welch")` on the two
+#'   conditions, in every returned number. The variance is
+#'   \eqn{\sum_g \sum_{i \in g} w_i^2 e_i^2 / (1 - w_i / W_g) / W_g^2}, where
+#'   \eqn{W_g} is the total weight in condition \eqn{g} and \eqn{e_i} the
+#'   deviation from that condition's weighted mean, and the degrees of freedom
+#'   are Welch-Satterthwaite's on its two terms; with constant weights these
+#'   are the unweighted Neyman variance and Welch's degrees of freedom. With
+#'   clusters and no blocks, the fit is `lm_robust(se_type = "CR2")`.
+#'   Weights are not supported with matched pairs.
 #'
 #'   **Blocks of clusters.** Pashley and Miratrix treat treatment assigned
 #'   within blocks, not blocks of clusters, so blocked designs with `clusters`
@@ -172,15 +180,6 @@ difference_in_means <- function(formula,
     data$weights <- model_data$weights / mean(model_data$weights)
   }
   data$block <- model_data$block
-
-  if (!is.null(data$weights) && length(unique(data$weights)) == 1
-  && is.null(data$cluster) && is.null(data$block)) {
-    message(
-      "Constant `weights` passed to `difference_in_means` will ",
-      "unnecessarily trigger `lm_robust()` and the Welch-Satterthwaite ",
-      "approximation will not be used for the degrees of freedom."
-    )
-  }
 
   rm(model_data)
 
@@ -647,6 +646,7 @@ difference_in_means_internal <- function(condition1 = NULL,
         y = data$y,
         X = cbind(1, t = as.numeric(data$t == condition2)),
         se_type = ifelse(se_type == "none", "none", "HC2"),
+        df_type = "welch",
         weights = data$weights,
         cluster = NULL,
         ci = TRUE,

@@ -149,7 +149,11 @@ degrees of freedom with every observation its own cluster and
 coefficient's variance, so a contrast in an interacted model and the same
 contrast fit on the subset get the same degrees of freedom. The estimates
 and standard errors are unchanged. Not available with both \code{weights} and
-\code{fixed_effects}. \code{"residual"} is accepted where it is the default.}
+\code{fixed_effects}. \code{"welch"} with \code{se_type = "HC2"} gives the
+Welch-Satterthwaite degrees of freedom on a two-group design, an
+intercept and one regressor taking two values, as in \code{y ~ z} with a
+binary \code{z}; weighted or not, \code{lm_robust(y ~ z, se_type = "HC2", df_type = "welch")} is then \code{\link[=difference_in_means]{difference_in_means()}} in every number.
+\code{"residual"} is accepted where it is the default.}
 }
 \value{
 An object of class \code{"lm_robust"}, a list holding the estimate table in \code{coefficients}, \code{std.error}, \code{df}, \code{statistic},

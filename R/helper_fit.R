@@ -88,6 +88,15 @@ lm_robust_fit <- function(y,
   bm_df <- ci && identical(df_type, "satterthwaite") && se_type == "HC2"
   femat_df <- femat
   if (bm_df) femat <- NULL
+  # Welch's degrees of freedom are read off the data as passed: prep_data()
+  # rescales X and y by the weights.
+  welch_df <- ci && identical(df_type, "welch")
+  if (welch_df) {
+    if (iv_stage[[1]] != 0) {
+      stop("`df_type = \"welch\"` is not available for `iv_robust()`.")
+    }
+    welch_data <- list(X = X, y = as.matrix(y), weights = weights)
+  }
 
   # -----------
   # Prep data for fitting
@@ -526,7 +535,7 @@ lm_robust_fit <- function(y,
       # Bell and McCaffrey's degrees of freedom for HC2, from the design alone.
       # Only the degrees of freedom are replaced, so every coefficient and
       # variance above is the default HC2 fit's.
-      if (bm_df) {
+      if (bm_df || welch_df) {
         bm_hypotheses <- NULL
         if (!is.null(linear_hypothesis) && !multivariate) {
           bm_hypotheses <- if (is.character(linear_hypothesis)) {
@@ -536,6 +545,20 @@ lm_robust_fit <- function(y,
           }
           bm_hypotheses <- bm_hypotheses[, covs_used, drop = FALSE]
         }
+      }
+      if (welch_df) {
+        welch <- hc2_welch_df(
+          X = welch_data[["X"]],
+          y = welch_data[["y"]],
+          weights = welch_data[["weights"]],
+          hypotheses = bm_hypotheses
+        )
+        return_list$df[est_exists] <- welch[seq_len(k), ]
+        if (!is.null(bm_hypotheses)) {
+          return_list[["hypothesis_df"]] <- welch[-seq_len(k), 1]
+        }
+      }
+      if (bm_df) {
         bm <- hc2_bm_df(
           X = take(data[["X"]]),
           femat = femat_df,
@@ -897,16 +920,75 @@ hc2_bm_df <- function(X, femat = NULL, hypotheses = NULL) {
   )
 }
 
+# Welch-Satterthwaite degrees of freedom for HC2 on a two-group design: an
+# intercept and one regressor taking two values on the positive-weight rows.
+# Every coefficient, and every hypothesis, is then a combination of the two
+# groups' weighted means, whose HC2 variances are
+#     v_g = sum(w^2 e^2 / (1 - w / W_g)) / W_g^2,
+# so its df is Welch's on its two terms. With constant weights v_g is
+# var(y_g) / n_g, and the df of the slope is the textbook Welch df. Returns one
+# row per coefficient, then one per hypothesis, and one column per outcome.
+#' @noRd
+hc2_welch_df <- function(X, y, weights = NULL, hypotheses = NULL) {
+  if (is.null(weights)) weights <- rep(1, nrow(X))
+  keep <- weights > 0
+  X <- X[keep, , drop = FALSE]
+  int_col <- apply(X, 2, function(x) all(x == 1))
+  vals <- if (ncol(X) == 2 && sum(int_col) == 1) sort(unique(X[, !int_col])) else NULL
+  if (length(vals) != 2) {
+    stop(
+      "`df_type = \"welch\"` needs a two-group design: an intercept and one ",
+      "regressor taking two values, as in `y ~ z` with a binary `z`, and no ",
+      "`fixed_effects`. Use `df_type = \"satterthwaite\"` for other designs."
+    )
+  }
+  a <- vals[1]
+  b <- vals[2]
+  # Each row is the weight a coefficient puts on the two group means.
+  A <- matrix(0, 2, 2)
+  A[int_col, ] <- c(b, -a) / (b - a)
+  A[!int_col, ] <- c(-1, 1) / (b - a)
+  if (!is.null(hypotheses)) A <- rbind(A, hypotheses %*% A)
+
+  w <- weights[keep]
+  in_b <- X[, !int_col] == b
+  n_g <- c(sum(!in_b), sum(in_b))
+  if (any(n_g < 2)) return(matrix(NA_real_, nrow(A), ncol(y)))
+  apply(y[keep, , drop = FALSE], 2, function(y_k) {
+    v <- vapply(list(!in_b, in_b), function(in_g) {
+      w_g <- w[in_g]
+      w_sum <- sum(w_g)
+      e <- y_k[in_g] - sum(w_g * y_k[in_g]) / w_sum
+      sum(w_g^2 * e^2 / (1 - w_g / w_sum)) / w_sum^2
+    }, numeric(1))
+    terms <- sweep(A^2, 2, v, "*")
+    df <- rowSums(terms)^2 / rowSums(sweep(terms^2, 2, n_g - 1, "/"))
+    df[!is.finite(df)] <- NA_real_
+    df
+  })
+}
+
 # `df_type = NULL` keeps each se_type's own degrees of freedom: the residual
 # N - K for the HC family and classical, Satterthwaite for CR2 and CR3, and
-# J - 1 for CR0 and the Stata factors. Naming that default is accepted, and the
-# one alternative is Satterthwaite for HC2, where Bell and McCaffrey derived it.
+# J - 1 for CR0 and the Stata factors. Naming that default is accepted. The
+# alternatives are for HC2: Satterthwaite, where Bell and McCaffrey derived
+# it, and Welch, on a two-group design.
 #' @noRd
 check_df_type <- function(df_type, se_type, has_fe = FALSE, weighted = FALSE) {
   if (is.null(df_type) || se_type == "none") return(NULL)
-  if (!(identical(df_type, "residual") || identical(df_type, "satterthwaite"))) {
-    stop("`df_type` must be NULL, 'residual', or 'satterthwaite'.\nYou passed: ",
+  if (!(identical(df_type, "residual") || identical(df_type, "satterthwaite") ||
+        identical(df_type, "welch"))) {
+    stop("`df_type` must be NULL, 'residual', 'satterthwaite', or 'welch'.\nYou passed: ",
          paste(df_type, collapse = ", "))
+  }
+  if (df_type == "welch" && se_type == "HC2") {
+    if (has_fe) {
+      stop(
+        "`df_type = \"welch\"` is not available with `fixed_effects`: it ",
+        "needs a two-group design, an intercept and one binary regressor."
+      )
+    }
+    return(df_type)
   }
   own <- if (se_type %in% c("CR2", "CR3")) {
     "satterthwaite"
@@ -930,8 +1012,8 @@ check_df_type <- function(df_type, se_type, has_fe = FALSE, weighted = FALSE) {
   stop(
     "`df_type = \"", df_type, "\"` is not available with `se_type = \"",
     se_type, "\"`.\n`\"satterthwaite\"` is available with \"HC2\", \"CR2\", ",
-    "and \"CR3\"; `\"residual\"` with \"HC0\", \"HC1\", \"HC2\", \"HC3\", ",
-    "and \"classical\"."
+    "and \"CR3\"; `\"welch\"` with \"HC2\"; `\"residual\"` with \"HC0\", ",
+    "\"HC1\", \"HC2\", \"HC3\", and \"classical\"."
   )
 }
 
