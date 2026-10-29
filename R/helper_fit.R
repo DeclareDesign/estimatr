@@ -357,7 +357,12 @@ lm_robust_fit <- function(y,
       # nearly equal quantities, to lose the difference to rounding. `sqrt()`
       # would then emit R's bare "NaNs produced", which names neither the fit
       # nor the reason. The NaN is kept and the reason is attached.
-      var_hat <- diag(vcov_fit$Vcov_hat)
+      # The diagonal is kept as computed for the numerically-zero rule below,
+      # which must see a variance of -1e-33 as the zero it is. Read after the
+      # NaN substitution, that rule skipped it, and a CR2 intercept fitted
+      # exactly by every row it rests on reported the singular-design warning.
+      var_raw <- diag(vcov_fit$Vcov_hat)
+      var_hat <- var_raw
       neg_var <- !is.na(var_hat) & var_hat < 0
       var_hat[neg_var] <- NaN
       return_list$std.error[est_exists] <- sqrt(var_hat)
@@ -406,8 +411,33 @@ lm_robust_fit <- function(y,
         }
         reference <- rep(tss_scale / dfres, each = x_rank) *
           rep(diag(fit$XtX_inv), times = ny)
-        no_variation <- !is.na(var_hat) &
-          var_hat <= .Machine$double.eps * reference
+        no_variation <- !is.na(var_raw) &
+          abs(var_raw) <= .Machine$double.eps * reference
+        # The HC0 variance, a sum of squared row scores, cannot cancel, so where
+        # it vanishes every row that identifies the coefficient is fitted
+        # exactly, and every sandwich built from those scores is zero. It
+        # settles two things the diagonal cannot. A clustered sandwich rounds
+        # coarser than the tolerance: for an intercept whose residuals are all
+        # 1e-16, CR0, stata, and weighted CR2 returned +1 to 2 times it and CR3
+        # -1.4 times it, so the same coefficient came back NA under one se_type
+        # and with a standard error of 7e-10 and p near 0 under the next. It
+        # also decides which wording a clustered NA gets. The classical
+        # variance pools the residuals rather than summing row scores, so it is
+        # left to the tolerance. Computed only for a variance already below
+        # sqrt(eps) of the reference, or for a clustered NA.
+        hc0 <- NULL
+        rows_exact_hc0 <- function() {
+          if (is.null(hc0)) {
+            row_scores <- (X_fit %*% fit$XtX_inv)^2
+            hc0 <<- as.vector(crossprod(row_scores, fit_vals[["ei"]]^2 * data[["weight_mean"]]))
+          }
+          hc0 <= .Machine$double.eps * reference
+        }
+        suspect <- !is.na(var_raw) & !no_variation &
+          var_raw < sqrt(.Machine$double.eps) * reference
+        if (se_type != "classical" && any(suspect)) {
+          no_variation <- no_variation | (suspect & rows_exact_hc0())
+        }
         # An outcome that is constant has no variation to estimate anything
         # from and a reference of 0, which no ratio can flag. Its variances
         # come back as exactly 0 rather than as rounding error.
@@ -435,23 +465,29 @@ lm_robust_fit <- function(y,
             )
           }
           named <- no_variation & !rep(exact, each = x_rank)
-          if (any(named)) {
+          # Which mechanism, read off the coefficient rather than the call: a
+          # clustered fit can reach either.
+          rows_exact <- named
+          if (clustered && any(named)) rows_exact <- named & rows_exact_hc0()
+          for (cluster_scores in c(FALSE, TRUE)) {
+            named_now <- named & (rows_exact != cluster_scores)
+            if (!any(named_now)) next
             # Two mechanisms reach a coefficient whose variance is numerically
             # zero while the fit around it is ordinary, and a sentence that
             # named only the first was false on a paired conjoint. Without
             # clusters, the rows that identify the coefficient are each fitted
             # exactly. With clusters, the variance is built from within-cluster
             # sums of scores, and those can cancel to zero while every residual
-            # in the cluster is far from it. The clustered wording also covers
-            # a clustered fit whose identifying rows are exact, since residuals
-            # that are all zero sum to zero.
-            one <- sum(named) == 1
+            # in the cluster is far from it. A clustered fit whose identifying
+            # rows are exact gets the first wording, since the second's
+            # "the residuals themselves are not zero" would be false there.
+            one <- sum(named_now) == 1
             message(
               "The standard error is NA for ",
-              paste(unique(rep(variable_names[covs_used], ny)[named]),
+              paste(unique(rep(variable_names[covs_used], ny)[named_now]),
                     collapse = ", "),
               ": ",
-              if (clustered) {
+              if (cluster_scores) {
                 paste0(
                   "the cluster-level scores for ",
                   if (one) "that coefficient sum " else "those coefficients sum ",
@@ -479,6 +515,9 @@ lm_robust_fit <- function(y,
       if (!isTRUE(n_lev > 0)) n_lev <- 0L
       return_list[["n_leverage_near_one"]] <- as.integer(n_lev)
 
+      # A negative entry the rule above reads as zero is already reported as NA
+      # with its reason; only one beyond rounding of zero is a singular design.
+      if (length(no_variation) == length(neg_var)) neg_var <- neg_var & !no_variation
       if (any(neg_var)) {
         warning(
           sum(neg_var), " of ", length(var_hat), " variance estimates came out ",

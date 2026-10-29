@@ -546,6 +546,64 @@ test_that("a cluster-constant coefficient with zero cluster scores is NA", {
   expect_length(hc2$messages, 0)
 })
 
+# The other mechanism under clustering. A one-sided encouragement design, where
+# no one in control takes the treatment, fits the first-stage intercept exactly
+# from the control rows, so every score behind it is zero. The clustered
+# sandwiches round that zero coarser than the numerically-zero tolerance: CR0,
+# stata, and weighted CR2 returned 5e-19, reported as a standard error of 7e-10
+# with p near 0, and unweighted CR2 and CR3 returned a negative diagonal and the
+# singular-design warning. The ?iv_robust example with `clusters = cl` printed
+# that warning from its first stage.
+one_sided <- local({
+  set.seed(343)
+  n <- 200
+  dat <- data.frame(z = rbinom(n, 1, 0.5), cl = rep(1:20, each = 10), w = runif(n))
+  dat$x <- dat$z * rbinom(n, 1, 0.7)
+  dat
+})
+
+test_that("an exactly fitted coefficient is NA under every clustered se_type", {
+  for (st in c("CR0", "CR2", "CR3", "stata")) {
+    for (wt in c(FALSE, TRUE)) {
+      label <- paste(st, if (wt) "weighted" else "unweighted")
+      ws <- character(0)
+      got <- withCallingHandlers(
+        collect_messages(lm_robust(
+          x ~ z, data = one_sided, clusters = cl, se_type = st,
+          weights = if (wt) w else NULL
+        )),
+        warning = function(w) {
+          ws <<- c(ws, conditionMessage(w))
+          invokeRestart("muffleWarning")
+        }
+      )
+      fit <- got$value
+
+      expect_true(is.na(fit$std.error[["(Intercept)"]]), label = label)
+      expect_false(is.na(fit$std.error[["z"]]), label = label)
+      expect_length(ws, 0)
+      # The residuals behind the intercept are zero, so the wording that says
+      # they are not would be false here.
+      expect_true(any(grepl(
+        "every observation that identifies that coefficient is fitted exactly",
+        got$messages, fixed = TRUE
+      )), label = label)
+      expect_false(any(grepl("cluster-level scores", got$messages, fixed = TRUE)),
+                   label = label)
+    }
+  }
+
+  # The classical variance pools the residuals, so the intercept keeps one.
+  classical <- lm_robust(x ~ z, data = one_sided, se_type = "classical")
+  expect_gt(classical$std.error[["(Intercept)"]], 0.01)
+
+  # And the IV fit that reaches it through its first stage is quiet.
+  one_sided$y <- one_sided$x + rnorm(nrow(one_sided))
+  expect_no_warning(suppressMessages(
+    iv_robust(y ~ x | z, data = one_sided, clusters = cl)
+  ))
+})
+
 test_that("a regressor that varies within cluster restores the variance", {
   # The discriminator, checked rather than assumed: the property belongs to
   # regressors that are constant within cluster on a design whose residuals

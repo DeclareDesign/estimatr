@@ -138,6 +138,35 @@ Fits a two-stage least squares instrumental variables regression and
 returns heteroskedasticity-robust or cluster-robust standard errors, with
 optional weak-instrument, Wu-Hausman, and overidentification diagnostics.
 }
+\section{Weak instruments}{
+
+The confidence intervals in \code{conf.low} and \code{conf.high} are Wald intervals,
+and they rely on a strong first stage. When the instruments barely move the
+endogenous regressor, they can cover the true coefficient far less often
+than \code{1 - alpha}; a small first-stage F from \code{diagnostics = TRUE} is the
+usual warning sign.
+
+The Anderson-Rubin (1949) test keeps its size however weak the instruments
+are, and \code{\link[=lm_robust]{lm_robust()}} computes it directly. To test that the coefficient
+on the endogenous regressor \code{x} equals \code{b}, regress \code{y - b * x} on the
+excluded instruments and the exogenous regressors, with the \code{se_type},
+\code{clusters}, \code{weights}, and \code{fixed_effects} of the IV fit, and test that the
+coefficients on the excluded instruments are zero. With one instrument that
+test is the instrument's own row of the fit; with several it is the
+\code{joint_hypothesis} of
+\code{lh_robust(..., linear_hypothesis = c("z1 = 0", "z2 = 0"))}. At
+\code{b = 0} the regression is the reduced form, which in an experiment that
+randomizes the instrument is the intent-to-treat regression.
+
+The Anderson-Rubin confidence set is every \code{b} that the test does not
+reject, found over a grid (see the examples). Under a weak first stage it
+need not be an interval: it can be the union of two rays or the whole real
+line, which says that the data rule out no value of the coefficient. A set
+that reaches either end of the grid should be checked on a wider one. With
+several endogenous regressors, the same regression with \code{y} minus each
+regressor times its hypothesized value tests all of them jointly.
+}
+
 \examples{
 set.seed(25)
 n <- 200
@@ -162,5 +191,15 @@ tidy(fit$first_stage$x)
 
 # Weak-instrument, endogeneity, and overidentification tests
 summary(iv_robust(y ~ x | z, data = dat, diagnostics = TRUE))
+
+# Anderson-Rubin confidence set: the values of b at which the regression of
+# y - b * x on the instrument finds no effect of z. range() reports the set
+# as one interval, so check ar_p for a set with more than one piece.
+b_grid <- seq(-2, 4, by = 0.01)
+ar_p <- sapply(b_grid, function(b) {
+  lm_robust(I(y - b * x) ~ z, data = dat)$p.value[["z"]]
+})
+range(b_grid[ar_p > 0.05])
+confint(fit)["x", ]
 
 }

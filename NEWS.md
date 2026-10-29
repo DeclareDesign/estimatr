@@ -1,5 +1,13 @@
 # estimatr (development version)
 
+## A coefficient fitted exactly is NA under every clustered `se_type`
+
+A coefficient whose identifying rows are all fitted exactly, such as the first-stage intercept in a one-sided encouragement design where no one in control takes the treatment, has a variance of zero, and `lm_robust()` reports its standard error as `NA` with a message saying why. The clustered sandwiches round that zero more coarsely than the rule's tolerance, so on the same fit CR0, `"stata"`, and weighted CR2 returned a standard error of about 1e-9 with p near 0, and unweighted CR2 and CR3 returned `NaN` with a warning blaming a near-singular design. The rule now also accepts a variance below `sqrt(.Machine$double.eps)` of its reference when the coefficient's row scores are all zero, which no robust variance can then distinguish from zero. Every robust `se_type` now gives `NA` and the exact-fit message, which a clustered fit had worded as cancelling cluster scores with residuals that "are not zero". The classical variance is unchanged. The `?iv_robust` example with `clusters = cl` no longer warns.
+
+## `?iv_robust` explains weak-instrument robust inference
+
+A new "Weak instruments" section shows how to compute the Anderson-Rubin test and confidence set with `lm_robust()`, under any `se_type`, with clusters, weights, and fixed effects, and an example inverts the test over a grid. No new function: the test of a coefficient `b` is the regression of `y - b * x` on the instruments. See #375.
+
 ## `iv_robust()` takes a three-part formula
 
 `iv_robust(y ~ x | d | z, data = dat)` lists the exogenous regressors, the endogenous regressors, and the excluded instruments once each, in the syntax of `ivreg::ivreg()`, and fits the same model as `y ~ d + x | z + x`, with every option. As in `ivreg()`, the endogenous regressors come first: `formula(fit)` and the first-stage calls hold that two-part form, which is the one `formula()` on an `ivreg()` fit returns, and the coefficients follow it, so the table matches `ivreg()`'s row for row, and the order is also that of `fixest::feols()` and Stata's `ivregress`. fixest's own IV syntax, `y ~ x | d ~ z`, is not accepted. `fit$call` keeps the formula as written. Two-part formulas are unchanged, and a formula with more than three parts is refused. See #376.
