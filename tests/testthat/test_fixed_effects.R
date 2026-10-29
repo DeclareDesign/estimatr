@@ -162,12 +162,31 @@ test_that("no FE fes flag is FALSE", {
   expect_false(m$fes)
 })
 
-test_that("iv_robust FE diagnostics are suppressed with warning", {
-  expect_warning(
-    iv_robust(y ~ z | iv, data = dat, fixed_effects = ~bl, diagnostics = TRUE,
-              se_type = "HC1"),
-    "Diagnostics"
+test_that("#409: iv_robust diagnostics with fixed effects are those of the dummies", {
+  set.seed(343)
+  n <- 160
+  di <- data.frame(z1 = rnorm(n), z2 = rnorm(n), x = rnorm(n), cl = rep(1:20, each = 8),
+                   g = factor(rep(1:8, 20)), h = factor(rep(1:5, 32)), w = runif(n))
+  di$d1 <- di$z1 + 0.5 * di$z2 + as.numeric(di$g) / 4 + rnorm(n)
+  di$y <- di$d1 + di$x + as.numeric(di$g) / 3 + rnorm(n) + 0.4 * (di$d1 - di$z1)
+  cases <- list(
+    list(se_type = "classical"),
+    list(se_type = "HC1"),
+    list(se_type = "HC2"),
+    list(clusters = quote(cl), se_type = "CR0"),
+    list(clusters = quote(cl), se_type = "CR2"),
+    list(clusters = quote(cl), se_type = "stata"),
+    list(weights = quote(w), se_type = "HC2")
   )
+  diagnostics <- c("diagnostic_first_stage_fstatistic", "diagnostic_endogeneity_test",
+                   "diagnostic_overid_test")
+  for (a in cases) {
+    absorbed <- do.call(iv_robust, c(list(y ~ d1 + x | z1 + z2 + x, data = quote(di),
+                                          fixed_effects = ~ g + h, diagnostics = TRUE), a))
+    dummies <- do.call(iv_robust, c(list(y ~ d1 + x + g + h | z1 + z2 + x + g + h,
+                                         data = quote(di), diagnostics = TRUE), a))
+    expect_equal(absorbed[diagnostics], dummies[diagnostics], tolerance = 1e-9)
+  }
 })
 
 # ---- The fixed-effects term keeps its name when rows are dropped ----

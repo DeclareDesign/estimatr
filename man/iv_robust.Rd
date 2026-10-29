@@ -34,7 +34,8 @@ e.g. \code{y ~ x1 + x2 | z1 + z2}.}
 
 \item{fixed_effects}{(optional) A one-sided formula of fixed effects to absorb,
 such as \code{~ blockID}. Uses FWL demeaning (see \code{\link[=lm_robust]{lm_robust()}} for details and
-SE type restrictions). Diagnostics are not available with \code{fixed_effects}.}
+SE type restrictions). The diagnostics are those of the same model with
+the fixed effects as dummies among both the regressors and the instruments.}
 
 \item{se_type}{(optional) The standard error type. \code{"HC2"} and \code{"HC3"} work with
 \code{fixed_effects} at any number of factors: the second stage runs on fitted

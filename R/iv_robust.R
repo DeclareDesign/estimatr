@@ -12,7 +12,8 @@
 #' @param clusters (optional) A bare (unquoted) name of the cluster variable
 #' @param fixed_effects (optional) A one-sided formula of fixed effects to absorb,
 #'   such as `~ blockID`. Uses FWL demeaning (see [lm_robust()] for details and
-#'   SE type restrictions). Diagnostics are not available with `fixed_effects`.
+#'   SE type restrictions). The diagnostics are those of the same model with
+#'   the fixed effects as dummies among both the regressors and the instruments.
 #' @param se_type (optional) The standard error type. `"HC2"` and `"HC3"` work with
 #'   `fixed_effects` at any number of factors: the second stage runs on fitted
 #'   regressors, but those are demeaned by the same fixed effects, so the
@@ -158,10 +159,6 @@ iv_robust <- function(formula,
   }
 
   if (has_fe) {
-    if (diagnostics) {
-      warning("Diagnostics are not available with `fixed_effects`. Skipping.")
-      diagnostics <- FALSE
-    }
     yoriginal  <- as.matrix(model_data[["outcome"]])
     zoriginal <- model_data[["instrument_matrix"]]
     zoriginal <- zoriginal[, colnames(zoriginal) != "(Intercept)", drop = FALSE]
@@ -199,6 +196,19 @@ iv_robust <- function(formula,
     }
   }
 
+  # The absorbed fixed effects as every fit on the demeaned data needs them:
+  # the second stage, the first-stage fits, and the regressions behind the
+  # diagnostics. By FWL each of those is the fit with the dummies, given the
+  # dummies' rank, leverage, and, for CR2 and CR3, the dummies themselves.
+  fe_args <- list(
+    fe_rank = fe_rank,
+    fe_leverage = fe_lev,
+    femat = if (has_fe && needs_fe_dummies(se_type, df_type, !is.null(model_data[["cluster"]])))
+      fe_dummy_matrix(model_data)
+      else NULL,
+    fe_rank_k = if (is.null(fe_rank_k)) fe_rank else fe_rank_k
+  )
+
   # -----------
   # First stage
   # -----------
@@ -228,27 +238,20 @@ iv_robust <- function(formula,
 
   fitted_values <- zero_underidentified(model_data, first_stage)
 
-  second_stage <-
-    lm_robust_fit(
-      y = model_data$outcome,
-      X = fitted_values,
-      weights = model_data$weights,
-      cluster = model_data$cluster,
-      ci = ci,
-      se_type = se_type,
-      has_int = attr(model_data$terms, "intercept"),
-      alpha = alpha,
-      return_vcov = return_vcov,
-      try_cholesky = try_cholesky,
-      iv_stage = list(2, model_data$design_matrix),
-      fe_rank = fe_rank,
-      fe_leverage = fe_lev,
-      femat = if (has_fe && needs_fe_dummies(se_type, df_type, !is.null(model_data[["cluster"]])))
-        fe_dummy_matrix(model_data)
-        else NULL,
-      fe_rank_k = if (is.null(fe_rank_k)) fe_rank else fe_rank_k,
-      df_type = df_type
-    )
+  second_stage <- do.call(lm_robust_fit, c(list(
+    y = model_data$outcome,
+    X = fitted_values,
+    weights = model_data$weights,
+    cluster = model_data$cluster,
+    ci = ci,
+    se_type = se_type,
+    has_int = attr(model_data$terms, "intercept"),
+    alpha = alpha,
+    return_vcov = return_vcov,
+    try_cholesky = try_cholesky,
+    iv_stage = list(2, model_data$design_matrix),
+    df_type = df_type
+  ), fe_args))
 
   return_list <- lm_return(
     second_stage,
@@ -274,7 +277,7 @@ iv_robust <- function(formula,
   if (has_fe) first_stage_data[["Xoriginal"]] <- zoriginal
   return_list[["first_stage"]] <- setNames(lapply(roles[["endog"]], function(endog) {
     first_stage_data[["outcome"]] <- model_data[["design_matrix"]][, endog, drop = FALSE]
-    fit <- lm_robust_fit(
+    fit <- do.call(lm_robust_fit, c(list(
       y = first_stage_data[["outcome"]],
       X = first_stage_data[["design_matrix"]],
       weights = model_data[["weights"]],
@@ -285,14 +288,8 @@ iv_robust <- function(formula,
       alpha = alpha,
       return_vcov = return_vcov,
       try_cholesky = try_cholesky,
-      fe_rank = fe_rank,
-      fe_leverage = fe_lev,
-      femat = if (has_fe && needs_fe_dummies(se_type, df_type, !is.null(model_data[["cluster"]])))
-        fe_dummy_matrix(model_data)
-        else NULL,
-      fe_rank_k = if (is.null(fe_rank_k)) fe_rank else fe_rank_k,
       df_type = df_type
-    )
+    ), fe_args))
     fit <- lm_return(fit, model_data = first_stage_data, formula = NULL)
     if (has_fe) {
       fit <- fe_full_scale(fit, model_data[["Xoriginal"]][, endog], first_stage_data)
@@ -340,7 +337,7 @@ iv_robust <- function(formula,
     # HC0 or CR0 sandwich under every robust se_type, as Wooldridge and Stata
     # define it: the leverage and small-sample refinements correct a
     # coefficient covariance and have no counterpart in a score test.
-    wu_hausman_ftest_val <- wu_hausman_reg_ftest(model_data, first_stage_residuals, se_type)
+    wu_hausman_ftest_val <- wu_hausman_reg_ftest(model_data, first_stage_residuals, se_type, fe_args)
 
     if (extra_instruments) {
       ss_residuals <- model_data$outcome - second_stage[["fitted.values"]]
@@ -368,7 +365,7 @@ iv_robust <- function(formula,
     }
     names(overid_chisqtest_val) <- c("value", "df", "p.value")
 
-    first_stage_ftest_val <- first_stage_ftest(model_data, roles, se_type)
+    first_stage_ftest_val <- first_stage_ftest(model_data, roles, se_type, fe_args)
 
     return_list[["diagnostic_first_stage_fstatistic"]] <- first_stage_ftest_val
     return_list[["diagnostic_endogeneity_test"]] <- wu_hausman_ftest_val
@@ -496,12 +493,12 @@ zero_underidentified <- function(model_data, first_stage) {
   fitted_values
 }
 
-first_stage_ftest <- function(model_data, roles, se_type) {
+first_stage_ftest <- function(model_data, roles, se_type, fe_args = list()) {
 
   endog <- roles[["endog"]]
   n_exogenous <- length(roles[["exogenous"]])
 
-  lm_instruments <- lm_robust_fit(
+  lm_instruments <- do.call(lm_robust_fit, c(list(
     y = model_data$design_matrix[, endog, drop = FALSE],
     X = cbind(
       model_data$design_matrix[, roles[["exogenous"]], drop = FALSE],
@@ -514,7 +511,7 @@ first_stage_ftest <- function(model_data, roles, se_type) {
     return_fit = TRUE,
     return_vcov = TRUE,
     ci = FALSE
-  )
+  ), fe_args))
   coef_inst <- as.matrix(lm_instruments[["coefficients"]])
 
   if (n_exogenous == 0L) {
@@ -566,11 +563,11 @@ first_stage_ftest <- function(model_data, roles, se_type) {
   )
 }
 
-wu_hausman_reg_ftest <- function(model_data, first_stage_residuals, se_type) {
+wu_hausman_reg_ftest <- function(model_data, first_stage_residuals, se_type, fe_args = list()) {
 
   has_int <- 0 %in% attr(model_data$design_matrix, "assign")
 
-  lm_noresids <- lm_robust_fit(
+  lm_noresids <- do.call(lm_robust_fit, c(list(
     y = model_data$outcome,
     X = model_data$design_matrix,
     weights = model_data$weights,
@@ -580,9 +577,9 @@ wu_hausman_reg_ftest <- function(model_data, first_stage_residuals, se_type) {
     ci = FALSE,
     return_fit = TRUE,
     return_vcov = FALSE
-  )
+  ), fe_args))
 
-  lm_resids <- lm_robust_fit(
+  lm_resids <- do.call(lm_robust_fit, c(list(
     y = model_data$outcome,
     X = cbind(model_data$design_matrix, first_stage_residuals),
     weights = model_data$weights,
@@ -592,7 +589,7 @@ wu_hausman_reg_ftest <- function(model_data, first_stage_residuals, se_type) {
     ci = FALSE,
     return_fit = TRUE,
     return_vcov = TRUE
-  )
+  ), fe_args))
 
   coef_noresids <- na.omit(lm_noresids[["coefficients"]])
   coef_resids   <- na.omit(lm_resids[["coefficients"]])
