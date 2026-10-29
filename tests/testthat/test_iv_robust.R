@@ -468,3 +468,54 @@ test_that("#335: a factor's dummy columns each get a first-stage fit and no call
   ref <- lm_robust(as.numeric(gear == 4) ~ carb + wt + am, data = mtcars)
   expect_equal(fit$first_stage[["factor(gear)4"]]$std.error, ref$std.error)
 })
+
+test_that("#376: a three-part formula is ivreg's two-part one, endogenous regressors first", {
+  d <- iv_data()
+  args <- list(
+    list(),
+    list(clusters = quote(round(x))),
+    list(weights = quote(wt)),
+    list(fixed_effects = ~ round(w)),
+    list(diagnostics = TRUE, se_type = "classical")
+  )
+  for (a in args) {
+    three <- do.call(iv_robust, c(list(y ~ x + w | en | inst + inst2, data = quote(d)), a))
+    two <- do.call(iv_robust, c(list(y ~ en + x + w | inst + inst2 + x + w, data = quote(d)), a))
+    lab <- paste(names(a), collapse = ", ")
+    expect_equal(tidy(three), tidy(two), label = lab)
+    expect_equal(three$first_stage, two$first_stage, label = lab)
+    expect_equal(three$diagnostic_overid_test, two$diagnostic_overid_test, label = lab)
+  }
+
+  # The stored formula is the two-part one, as ivreg stores it, so every
+  # method that rebuilds the design reads one form; the call keeps the user's.
+  fit <- iv_robust(y ~ x + w | en | inst + inst2, data = d)
+  expect_identical(deparse1(formula(fit)), "y ~ en + x + w | inst + inst2 + x + w")
+  expect_identical(deparse1(fit$call$formula), "y ~ x + w | en | inst + inst2")
+  expect_identical(deparse1(fit$first_stage$en$call$formula), "en ~ inst + inst2 + x + w")
+  two <- iv_robust(y ~ en + x + w | inst + inst2 + x + w, data = d)
+  expect_equal(coef(update(fit, . ~ . - w | . - w)),
+               coef(iv_robust(y ~ en + x | inst + inst2 + x, data = d)))
+  expect_equal(coef(update(fit, . ~ . - w)), coef(update(two, . ~ . - w)))
+  expect_equal(model.frame(fit), model.frame(two))
+
+  # With no exogenous regressors the first part is the intercept alone.
+  expect_equal(coef(iv_robust(y ~ 1 | en | inst, data = d)),
+               coef(iv_robust(y ~ en | inst, data = d)))
+
+  expect_error(iv_robust(y ~ x | en | inst | inst2, data = d), "at most three parts")
+
+  # Second channel: the same formula in ivreg, compared with the names on, so
+  # the order of the coefficients is pinned along with their values.
+  skip_if_not_installed("ivreg")
+  ref <- ivreg::ivreg(y ~ x + w | en | inst + inst2, data = d)
+  # ivreg's stored formula keeps the parentheses `en + (x + w)`; the terms of
+  # each part, in order, are the same.
+  part_labels <- function(f, i) attr(terms(Formula::as.Formula(f), rhs = i), "term.labels")
+  for (i in 1:2) {
+    expect_identical(part_labels(formula(fit), i), part_labels(formula(ref), i))
+  }
+  expect_equal(fit$coefficients, coef(ref), tolerance = IV_TOL)
+  expect_equal(predict(fit, newdata = d[1:5, ]), predict(ref, newdata = d[1:5, ]),
+               tolerance = IV_TOL)
+})

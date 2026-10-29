@@ -21,8 +21,14 @@ iv_robust(
 )
 }
 \arguments{
-\item{formula}{(required) An object of class formula with regressors and instruments,
-e.g. \code{y ~ x1 + x2 | z1 + z2}.}
+\item{formula}{(required) An object of class formula with regressors and
+instruments, in either of two forms. The two-part \code{y ~ x1 + d | x1 + z1 + z2} lists the regressors left of the bar and every instrument right of it,
+so an exogenous regressor appears on both sides. The three-part \code{y ~ x1 | d | z1 + z2}, as in \code{ivreg::ivreg()} and \code{fixest::feols()}, lists the
+exogenous regressors, the endogenous regressors, and the excluded
+instruments once each, and fits the same model; as in \code{ivreg::ivreg()},
+\code{formula(fit)} returns its two-part form with the endogenous regressors
+first, \code{y ~ d + x1 | z1 + z2 + x1}, and the coefficients follow that
+order.}
 
 \item{data}{(optional) A \code{data.frame}}
 
@@ -142,6 +148,10 @@ dat$y <- dat$x + rnorm(n)
 # Endogenous regressor on the left of the bar, instrument on the right
 fit <- iv_robust(y ~ x | z, data = dat)
 tidy(fit)
+
+# Exogenous regressors, endogenous regressors, and instruments, each once
+dat$w <- rnorm(n)
+iv_robust(y ~ w | x | z, data = dat)
 
 # The same variance menu as lm_robust()
 iv_robust(y ~ x | z, data = dat, se_type = "classical")

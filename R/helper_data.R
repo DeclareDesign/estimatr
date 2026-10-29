@@ -11,6 +11,8 @@ clean_model_data <- function(data, datargs, estimator = "") {
 
   stopifnot("`formula` argument must be a formula" = inherits(m_formula, "formula"))
 
+  if (estimator == "iv") m_formula <- iv_two_part_formula(m_formula)
+
   mfargs <- as.list(mfargs)
 
   args_ignored <- c("se_type", "fixed_effects")
@@ -190,7 +192,8 @@ clean_model_data <- function(data, datargs, estimator = "") {
     if (length(formula)[2] != 2) {
       stop(
         "Must specify a `formula` with both regressors and instruments. For ",
-        "example, `formula = y ~ x1 + x2 | x1 + z2`.\n\nSee ?iv_robust."
+        "example, `formula = y ~ x1 + x2 | x1 + z2`, or equivalently ",
+        "`formula = y ~ x1 | x2 | z2`.\n\nSee ?iv_robust."
       )
     }
     im <- stats::model.matrix(terms(formula, rhs = 2), data = mf)
@@ -619,4 +622,32 @@ demean_matrix_by_fes <- function(mat, model_data) {
   colnames(mat) <- orig_colnames
   if (has_int) mat <- mat[, colnames(mat) != "(Intercept)", drop = FALSE]
   mat
+}
+
+# The three-part IV formula `y ~ ex | en | in` (ivreg 0.6, fixest, Stata's
+# `(en = in)`) names the exogenous regressors once. Everything downstream reads
+# the two-part form, so it is rewritten here as `y ~ en + ex | in + ex`, the
+# order ivreg rewrites it in, so that the coefficients come out in ivreg's (and
+# fixest's and Stata's) order, endogenous first. One- and two-part formulas
+# pass through untouched.
+iv_two_part_formula <- function(formula) {
+  f <- Formula::as.Formula(formula)
+  n_rhs <- length(f)[2L]
+  if (n_rhs > 3L) {
+    stop(
+      "An IV `formula` has at most three parts on the right-hand side, ",
+      "`y ~ exogenous | endogenous | instruments`; this one has ", n_rhs, ".",
+      call. = FALSE
+    )
+  }
+  if (n_rhs < 3L) return(formula)
+  # Pasting the parts, rather than collapsing them with Formula, keeps the
+  # result free of the parentheses `x + (z1 + z2)` that `formula(fit)` and the
+  # first-stage calls would otherwise print.
+  part <- function(i) deparse1(formula(f, lhs = 0L, rhs = i)[[2L]])
+  ex <- part(1L)
+  stats::as.formula(
+    paste(deparse1(formula[[2L]]), "~", part(2L), "+", ex, "|", part(3L), "+", ex),
+    env = environment(formula)
+  )
 }

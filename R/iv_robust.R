@@ -4,8 +4,16 @@
 #' returns heteroskedasticity-robust or cluster-robust standard errors, with
 #' optional weak-instrument, Wu-Hausman, and overidentification diagnostics.
 #'
-#' @param formula (required) An object of class formula with regressors and instruments,
-#'   e.g. `y ~ x1 + x2 | z1 + z2`.
+#' @param formula (required) An object of class formula with regressors and
+#'   instruments, in either of two forms. The two-part `y ~ x1 + d | x1 + z1 +
+#'   z2` lists the regressors left of the bar and every instrument right of it,
+#'   so an exogenous regressor appears on both sides. The three-part `y ~ x1 |
+#'   d | z1 + z2`, as in `ivreg::ivreg()` and `fixest::feols()`, lists the
+#'   exogenous regressors, the endogenous regressors, and the excluded
+#'   instruments once each, and fits the same model; as in `ivreg::ivreg()`,
+#'   `formula(fit)` returns its two-part form with the endogenous regressors
+#'   first, `y ~ d + x1 | z1 + z2 + x1`, and the coefficients follow that
+#'   order.
 #' @param data (optional) A `data.frame`
 #' @param weights (optional) The bare (unquoted) name of the weights variable
 #' @param subset (optional) A bare (unquoted) expression specifying a subset
@@ -108,6 +116,10 @@
 #' # Endogenous regressor on the left of the bar, instrument on the right
 #' fit <- iv_robust(y ~ x | z, data = dat)
 #' tidy(fit)
+#'
+#' # Exogenous regressors, endogenous regressors, and instruments, each once
+#' dat$w <- rnorm(n)
+#' iv_robust(y ~ w | x | z, data = dat)
 #'
 #' # The same variance menu as lm_robust()
 #' iv_robust(y ~ x | z, data = dat, se_type = "classical")
@@ -378,7 +390,7 @@ iv_robust <- function(formula,
   return_list[["call"]] <- match.call()
 
   return_list[["terms_regressors"]] <- model_data[["terms_regressors"]]
-  return_list[["formula"]] <- formula(formula)
+  return_list[["formula"]] <- iv_two_part_formula(formula(formula))
   class(return_list) <- "iv_robust"
 
   return(return_list)

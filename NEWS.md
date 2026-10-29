@@ -1,5 +1,9 @@
 # estimatr (development version)
 
+## `iv_robust()` takes a three-part formula
+
+`iv_robust(y ~ x | d | z, data = dat)` lists the exogenous regressors, the endogenous regressors, and the excluded instruments once each, as `ivreg::ivreg()`, `fixest::feols()`, and Stata's `ivregress 2sls y x (d = z)` do, and fits the same model as `y ~ d + x | z + x`, with every option. As in `ivreg()`, the endogenous regressors come first: `formula(fit)` and the first-stage calls hold that two-part form, which is the one `formula()` on an `ivreg()` fit returns, and the coefficients follow it, so the table matches `ivreg()`'s row for row (and fixest's and Stata's). `fit$call` keeps the formula as written. Two-part formulas are unchanged, and a formula with more than three parts is refused. See #376.
+
 ## `difference_in_means()` is `lm_robust(df_type = "welch")`, weighted or not
 
 `lm_robust()` takes `df_type = "welch"` with `se_type = "HC2"` on a two-group design (an intercept and one regressor taking two values, as in `y ~ z`): the Welch-Satterthwaite degrees of freedom, for each coefficient and each `lh_robust()` hypothesis, on the two groups' terms of the HC2 variance. Unweighted, the slope's are `t.test()`'s. Other designs are refused with a pointer to `df_type = "satterthwaite"`.
