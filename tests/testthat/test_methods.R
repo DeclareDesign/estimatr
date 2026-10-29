@@ -1116,6 +1116,20 @@ test_that("lm_lin's model frame serves both terms() and formula()", {
   expect_equal(c(model.matrix(formula(fit), mf)), c(model.matrix(y ~ z + x, d[rownames(mf), ])))
 })
 
+test_that("#422: lm_lin's model frame is estimatr's when clubSandwich loads last", {
+  skip_if_not_installed("clubSandwich")
+  # Loading clubSandwich after estimatr puts its model.frame.lm_robust in the
+  # registry; an lm_lin fit must not reach it.
+  cs <- getS3method("model.frame", "lm_robust", envir = asNamespace("clubSandwich"))
+  registerS3method("model.frame", "lm_robust", cs, envir = asNamespace("stats"))
+  on.exit(registerS3method("model.frame", "lm_robust", model.frame.lm_robust, envir = asNamespace("stats")))
+  d <- methods_422_data()
+  fit <- lm_lin(y ~ z, ~ x, data = d)
+  mf <- model.frame(fit)
+  expect_identical(names(mf)[1:3], c("y", "z", "x"))
+  expect_equal(c(model.matrix(terms(fit), mf)), c(model.matrix(fit)), tolerance = METH_TOL)
+})
+
 test_that("augment() keeps the call's variables on an lm_lin fit", {
   d <- methods_422_data()
   out <- augment(lm_lin(y ~ z, ~ x, data = d))
