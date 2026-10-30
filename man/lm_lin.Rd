@@ -107,6 +107,30 @@ entered alongside it. Centering is what makes the treatment coefficient
 the effect estimate, and the interactions avoid the bias Freedman (2008)
 identified in ordinary covariate-adjusted regression.
 }
+\details{
+\strong{Factorial designs.} \code{formula} takes one treatment variable.
+For a two-by-two factorial with covariates, Lin's regression interacts
+every centered covariate with all four cells, and \code{\link[=lm_robust]{lm_robust()}} writes it
+directly once every term is centered:
+\code{lm_robust(y ~ z1_c * z2_c * (x1_c + x2_c))}, where \verb{_c} marks a variable
+minus its sample mean. The coefficient on \code{z1_c} is the effect of \code{z1}
+averaged over the two conditions of \code{z2} in proportion to the units each
+received, that on \code{z2_c} likewise, and \code{z1_c:z2_c} is the
+difference-in-differences of the covariate-adjusted cell means: each
+cell's own regression on the covariates, evaluated at their overall means.
+\code{lm_lin(y ~ cell, covariates = ~ x1 + x2)}, with \code{cell} the four-level
+factor, fits the same model, and the contrast \code{cell11 - cell10 - cell01}
+has the same estimate and standard error as \code{z1_c:z2_c}. Without
+covariates, \code{lm_robust(y ~ z1_c * z2_c)} is all it takes.
+
+Two shortcuts give something else. Entering the covariates additively,
+\code{lm_robust(y ~ z1_c * z2_c + x1_c + x2_c)}, holds all four cells to one
+set of slopes, which is the adjustment Freedman (2008) criticized.
+\code{lm_lin(y ~ z1, covariates = ~ z2 * (x1 + x2))} fits the right model, but
+\code{lm_lin()} centers the product \code{z2:x1} at its own mean, so \code{z1:z2_c} is
+the difference-in-differences at \code{x1 = x2 = 0}. It is the adjusted one
+only when the covariates are centered before they are passed in.
+}
 \examples{
 set.seed(20)
 dat <- data.frame(
@@ -138,6 +162,19 @@ lm_lin(y ~ factor(z3), covariates = ~ x, data = dat)
 
 # Dropping the intercept gives the mean outcome under each condition
 lm_lin(y ~ z3 - 1, covariates = ~ x, data = dat)
+
+# A two-by-two factorial: center every term and interact all of them.
+# The interaction is the difference-in-differences of adjusted cell means.
+dat$z2 <- rep(c(0, 0, 1, 1), 10)
+dat_c <- transform(dat, z1_c = z - mean(z), z2_c = z2 - mean(z2),
+                   x_c = x - mean(x))
+fit_fac <- lm_robust(y ~ z1_c * z2_c * x_c, data = dat_c)
+coef(fit_fac)[c("z1_c", "z2_c", "z1_c:z2_c")]
+
+# The same interaction from lm_lin() on the four cells
+dat$cell <- factor(paste0(dat$z, dat$z2))
+fit_cell <- lm_lin(y ~ cell, covariates = ~ x, data = dat)
+sum(coef(fit_cell)[c("cell11", "cell10", "cell01")] * c(1, -1, -1))
 
 }
 \references{

@@ -198,3 +198,45 @@ test_that("weighted and unweighted centring differ when the weights are informat
   fit_u <- lm_lin(y ~ zb, covariates = ~ x1 + x2, data = d)
   expect_gt(abs(fit_w$scaled_center[["x1"]] - fit_u$scaled_center[["x1"]]), 0.1)
 })
+
+# The factorial recipe in ?lm_lin's details (#131): the fully interacted
+# regression on centered terms and lm_lin() on the four cells are the same
+# model, and their interaction is the difference-in-differences of each
+# cell's own covariate regression evaluated at the overall means.
+test_that("a two-by-two factorial's interaction is the DiD of Lin-adjusted cell means", {
+  set.seed(343)
+  n <- 200
+  d <- data.frame(z1 = rbinom(n, 1, 0.4), z2 = rbinom(n, 1, 0.6),
+                  x1 = rnorm(n), x2 = runif(n))
+  d$y <- with(d, z1 + 0.5 * z2 + 0.8 * z1 * z2 +
+                x1 * (1 + z1 - z2 + 2 * z1 * z2) + x2 * (1 - z1) + rnorm(n))
+  d <- transform(d, z1_c = z1 - mean(z1), z2_c = z2 - mean(z2),
+                 x1_c = x1 - mean(x1), x2_c = x2 - mean(x2),
+                 cell = factor(paste0(z1, z2)))
+
+  at_means <- data.frame(x1 = mean(d$x1), x2 = mean(d$x2))
+  m <- vapply(split(d, d$cell), function(s) {
+    unname(predict(lm(y ~ x1 + x2, data = s), newdata = at_means))
+  }, numeric(1))
+  did <- m[["11"]] - m[["10"]] - m[["01"]] + m[["00"]]
+  p2 <- mean(d$z2)
+  z1_effect <- p2 * (m[["11"]] - m[["01"]]) + (1 - p2) * (m[["10"]] - m[["00"]])
+
+  full <- lm_robust(y ~ z1_c * z2_c * (x1_c + x2_c), data = d)
+  expect_equal(unname(coef(full)["z1_c:z2_c"]), did, tolerance = 1e-10)
+  expect_equal(unname(coef(full)["z1_c"]), z1_effect, tolerance = 1e-10)
+
+  cells <- lm_lin(y ~ cell, covariates = ~ x1 + x2, data = d)
+  L <- c(cell11 = 1, cell10 = -1, cell01 = -1)
+  V <- vcov(cells)[names(L), names(L)]
+  expect_equal(sum(coef(cells)[names(L)] * L), did, tolerance = 1e-10)
+  expect_equal(sqrt(drop(L %*% V %*% L)), unname(full$std.error["z1_c:z2_c"]),
+               tolerance = 1e-10)
+
+  # The shortcut documented as wrong with raw covariates, right with
+  # pre-centered ones.
+  raw <- lm_lin(y ~ z1, covariates = ~ z2 * (x1 + x2), data = d)
+  pre <- lm_lin(y ~ z1, covariates = ~ z2 * (x1_c + x2_c), data = d)
+  expect_gt(abs(coef(raw)[["z1:z2_c"]] - did), 0.05)
+  expect_equal(coef(pre)[["z1:z2_c"]], did, tolerance = 1e-10)
+})
