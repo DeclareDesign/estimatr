@@ -1189,10 +1189,10 @@ test_that("augment() keeps the call's variables on an lm_lin fit", {
   expect_equal(names(out), c("y", "z", "x", ".fitted", ".resid"))
 })
 
-test_that("likelihood and case-deletion methods refuse with a reason", {
+test_that("case-deletion methods refuse with a reason, and likelihood methods do not exist", {
   d <- methods_422_data()
   fit <- lm_robust(y ~ x, data = d)
-  for (f in list(logLik, AIC, BIC, extractAIC)) expect_error(f(fit), "no likelihood")
+  for (f in list(logLik, AIC, BIC, extractAIC)) expect_error(f(fit), "no applicable method")
   for (fit in list(fit, iv_robust(y ~ x | z, data = d))) {
     for (f in list(influence, cooks.distance, rstandard, rstudent, dfbeta, dfbetas)) {
       expect_error(f(fit), "case-deletion")

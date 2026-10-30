@@ -41,6 +41,15 @@ Across the `r nrow(contract)` cells: `r n_promise[["agrees"]]` agree, `r n_promi
 
 The test (`tests/testthat/test_contract.R`) runs each probe in a fresh R process holding estimatr and only the packages that probe needs, and runs the reference in a process that never loads estimatr. Isolation matters here: `clubSandwich` replaces estimatr's `bread()` and `model.frame()` methods when it is loaded second, and `performance` registers a `logLik()` method for `iv_robust`, so a probe run beside them measures them rather than estimatr.
 
+## What decides a cell
+
+One rule assigns every promise, so that the next generic is placed by it rather than by taste.
+
+- A cell **agrees** wherever `lm()` or `ivreg::ivreg()` answers the same call and the fit stores what the answer needs. Where estimatr has a method, it returns that answer; where it has none, the fall-through must already be right.
+- A cell **refuses** where the reference answers but the fit cannot, and the message names what the fit lacks: `difference_in_means()` and `horvitz_thompson()` store no residuals and no design, a `fixed_effects` fit does not store its absorbed design, a fit with several outcomes has one residual matrix for them all, and case-deletion diagnostics need leave-one-out refits that are not computed. A refusal replaces a `NULL`, a wrong number, or an unhelpful error with a sentence; it never replaces a working answer.
+- A cell **errors** where no package should answer. `logLik()`, `AIC()`, and `BIC()` are the case to know: the estimators assume no distribution, and estimatr registers no `logLik()` on any class, because performance registers one for `iv_robust()` fits and a refusal on `lm_robust()` fits alone would make the answer depend on which package loaded last. The rest are generics that read internals an estimatr fit does not have, such as `qr()`, `effects()`, `alias()`, and `anova()`.
+- A cell **returns** only on `horvitz_thompson()`, which has no reference fit.
+
 ## The fits
 
 All ten are fit to one simulated dataset of 60 rows with a binary treatment `z`, a covariate `x`, a binary instrument `iv`, ten clusters `g`, a four-level factor `f`, weights `w` (three of them zero), and a second outcome `y2`.
@@ -110,7 +119,7 @@ knitr::kable(data.frame(
 
 ## Decisions
 
-Some cells could reasonably have gone either way: whether `df.residual()` reports N - K or the cluster-adjusted degrees of freedom, whether `logLik()` on a robust fit should exist at all. Where a cell's promise was a choice rather than a consequence, the maintainer's decision (all made on 2026-10-27) is recorded beside it:
+Some cells could reasonably have gone either way: whether `df.residual()` reports N - K or the cluster-adjusted degrees of freedom, whether `logLik()` on a robust fit should exist at all. Where a cell's promise was a choice rather than a consequence, the maintainer's decision is recorded beside it:
 
 ```{r decisions}
 decided <- contract[grepl("^Alex [0-9-]+: ", contract$decision), ]

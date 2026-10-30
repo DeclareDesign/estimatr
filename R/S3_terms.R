@@ -184,13 +184,12 @@ labels.lm_robust <- function(object, ...) attr(terms(object), "term.labels")
 #' @export
 labels.iv_robust <- labels.lm_robust
 
-# performance 0.17.0 registers a Gaussian logLik() for iv_robust fits, so
-# estimatr does not: whichever package loaded last would decide what AIC(fit)
-# returns.
-# These rest on a likelihood or on leave-one-out refits that estimatr does not
-# compute, and lm's versions assume the homoskedastic model a robust fit does
-# not. Without a method each failed with "no applicable method"; now each says
-# why.
+# Case-deletion diagnostics rest on leave-one-out refits that estimatr does
+# not compute, and lm's versions assume the homoskedastic model a robust fit
+# does not. Without a method each failed with "no applicable method"; now each
+# says why. logLik() has no method on any class: performance 0.17.0 registers
+# a Gaussian one for iv_robust fits, so a refusal on lm_robust fits alone
+# would make AIC(fit) depend on which package loaded last.
 refuse_method <- function(what, why, generic = function(model, ...) NULL,
                           fits = "estimatr fits") {
   force(what)
@@ -205,22 +204,10 @@ refuse_method <- function(what, why, generic = function(model, ...) NULL,
   f
 }
 
-no_likelihood <- paste(
-  "the estimators make no distributional assumption about the errors, so",
-  "there is no likelihood, and no AIC or BIC built on one."
-)
 no_influence <- paste(
   "case-deletion diagnostics are not computed. `hatvalues()` gives the",
   "leverages; refit with `lm()` for the rest."
 )
-
-#' @importFrom stats logLik
-#' @export
-logLik.lm_robust <- refuse_method("logLik", no_likelihood, stats::logLik)
-#' @importFrom stats extractAIC
-#' @export
-extractAIC.lm_robust <- refuse_method("extractAIC", no_likelihood,
-                                      stats::extractAIC)
 
 #' @importFrom stats influence
 #' @export
