@@ -146,6 +146,14 @@ lm_robust(Y_bl ~ Z_bl + factor(block), data = dat)
 
 The absorbed levels are kept in the `felevels` element of the result. One caution: `fixed_effects` combined with `clusters` defaults to `se_type = "CR0"`, because CR2 is the one estimator that still has to expand the dummies, and it warns once per session to say so. Asking for `se_type = "CR2"` by name gets it. The full menu by case is in `?lm_robust`.
 
+Block fixed effects are not the blocked difference-in-means. They weight each block by $n_b p_b (1 - p_b)$ rather than by its size, so when the probability of treatment differs across blocks they target a precision-weighted average rather than the average treatment effect, and the model leaves out the block-by-treatment interactions that the blocked variance keeps. Here every block has probability 0.5, so the estimate coincides with `difference_in_means(Y_bl ~ Z_bl, data = dat, blocks = block)` and the standard error does not. The regression that reproduces the blocked difference-in-means in every number is `lm_lin()` with the block indicators as covariates:
+
+```{r}
+lm_lin(Y_bl ~ Z_bl, covariates = ~ factor(block), data = dat)
+```
+
+`?difference_in_means` says how far that equivalence goes with clusters, weights, and matched pairs.
+
 ### Weights
 
 `weights` takes a column of the data, and the fit is weighted least squares with the matching robust variance.

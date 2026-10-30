@@ -60,6 +60,25 @@
 #'   clusters and no blocks, the fit is `lm_robust(se_type = "CR2")`.
 #'   Weights are not supported with matched pairs.
 #'
+#'   With blocks in which every arm has at least two units, unweighted, the
+#'   fit is `lm_lin(y ~ z, covariates = ~ factor(blocks))`: treatment
+#'   interacted with centered block indicators averages the within-block
+#'   differences by block size, and its HC2 variance is the sum of the
+#'   within-block Neyman variances, so estimate, standard error, degrees of
+#'   freedom (N - 2B), and p-value all agree. With `clusters` as well,
+#'   `lm_lin(..., clusters = clusters)` gives the same estimate and standard
+#'   error, with Bell-McCaffrey degrees of freedom in place of the number of
+#'   clusters minus 2B. With weights the two differ: `difference_in_means()`
+#'   averages the weighted within-block differences by each block's number of
+#'   units, `lm_lin()` by each block's total weight. A block with a singleton
+#'   arm has leverage 1 in the Lin regression, so its HC2 standard error is
+#'   `NA`. Block fixed effects, `lm_robust(y ~ z, fixed_effects = ~ blocks)`,
+#'   are a different estimator: they weight each block by
+#'   \eqn{n_b p_b (1 - p_b)}, so with treatment probabilities that vary
+#'   across blocks they do not estimate the average treatment effect, and
+#'   even with a common probability, where the estimate coincides, the
+#'   standard error does not.
+#'
 #'   **Blocks of clusters.** Pashley and Miratrix treat treatment assigned
 #'   within blocks, not blocks of clusters, so blocked designs with `clusters`
 #'   use the earlier estimators. Every block must have at least two treated and
