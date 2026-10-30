@@ -864,7 +864,10 @@ test_that("estfun(), hatvalues() and vcovHC() on lm_robust match lm(), weighted 
       ref <- lm(y ~ x + f, data = d)
     }
     lab <- if (weighted) "weighted" else "unweighted"
-    expect_equal(sandwich::estfun(fit), sandwich::estfun(ref), tolerance = METH_TOL, info = lab)
+    # lm()'s estfun() keeps the three zero-weight rows; ours leaves them out.
+    ef_ref <- sandwich::estfun(ref)
+    if (weighted) ef_ref <- ef_ref[weights(ref) > 0, ]
+    expect_equal(sandwich::estfun(fit), ef_ref, tolerance = METH_TOL, info = lab)
     expect_equal(hatvalues(fit), hatvalues(ref), tolerance = METH_TOL, info = lab)
     expect_equal(deviance(fit), deviance(ref), tolerance = METH_TOL, info = lab)
     expect_equal(sigma(fit), sigma(ref), tolerance = METH_TOL, info = lab)
@@ -928,7 +931,13 @@ test_that("iv_robust's model.matrix(), estfun(), hatvalues() and vcovHC() are iv
   expect_equal(sigma(fit), sigma(ref), tolerance = METH_TOL)
   fit_w <- iv_robust(f, data = d, weights = w)
   ref_w <- ivreg::ivreg(f, data = d, weights = w)
-  expect_equal(sandwich::estfun(fit_w), sandwich::estfun(ref_w), tolerance = METH_TOL)
+  # ivreg's estfun() keeps the four zero-weight rows; ours leaves them out.
+  ref_wp <- ivreg::ivreg(f, data = d[d$w > 0, ], weights = w)
+  expect_equal(sandwich::estfun(fit_w), sandwich::estfun(ref_wp), tolerance = METH_TOL)
+  for (type in c("HC0", "HC2", "HC3")) {
+    expect_equal(sandwich::vcovHC(fit_w, type = type), sandwich::vcovHC(ref_wp, type = type),
+                 tolerance = METH_TOL, info = paste("zero weights", type))
+  }
   expect_equal(sigma(fit_w), sigma(ref_w), tolerance = METH_TOL)
   # ivreg's own hatvalues() fails on zero weights.
   expect_length(hatvalues(fit_w), sum(d$w > 0))
@@ -1128,6 +1137,54 @@ test_that("#422: lm_lin's model frame is estimatr's when clubSandwich loads last
   mf <- model.frame(fit)
   expect_identical(names(mf)[1:3], c("y", "z", "x"))
   expect_equal(c(model.matrix(terms(fit), mf)), c(model.matrix(fit)), tolerance = METH_TOL)
+})
+
+test_that("clubSandwich's vcovCR() reads the clusters and centred covariates off an lm_lin frame", {
+  skip_if_not_installed("clubSandwich")
+  loadNamespace("clubSandwich")
+  use_estimatr_methods()
+  # Our model.frame.lm_lin outranks clubSandwich's model.frame.lm_robust inside
+  # its namespace, so the frame carries the `x_c` and `(clusters)` columns that
+  # clubSandwich builds from.
+  d <- methods_422_data()
+  d$cl <- rep(1:10, length.out = nrow(d))
+  fit <- lm_lin(y ~ z, ~ x, data = d, clusters = cl)
+  expect_equal(unname(as.matrix(clubSandwich::vcovCR(fit, type = "CR2"))), unname(vcov(fit)),
+               tolerance = METH_TOL)
+  expect_equal(unname(as.matrix(clubSandwich::vcovCR(fit, cluster = d$cl, type = "CR2"))),
+               unname(vcov(fit)), tolerance = METH_TOL)
+  mf <- model.frame(fit)
+  expect_identical(names(mf)[1:3], c("y", "z", "x"))
+  expect_identical(mf[["(clusters)"]], mf[["(cluster)"]])
+  expect_identical(mf[["x_c"]], unname(model.matrix(fit)[, "x_c"]))
+})
+
+test_that("with zero weights, sandwich's estimators are lm()'s on the positive-weight rows", {
+  skip_if_not_installed("sandwich")
+  # estfun() leaves out zero-weight rows as nobs(), bread() and hatvalues() do;
+  # lm() keeps them in estfun() only, so its meat is divided by every row.
+  d <- methods_422_data()
+  d$g <- rep(1:10, length.out = nrow(d))
+  dp <- na.omit(d[d$w > 0, c("y", "x", "f", "w", "g")])
+  fit <- lm_robust(y ~ x + f, data = d, weights = w)
+  ref <- lm(y ~ x + f, data = dp, weights = w)
+  expect_equal(sandwich::estfun(fit), sandwich::estfun(ref), tolerance = METH_TOL)
+  expect_equal(sandwich::meat(fit), sandwich::meat(ref), tolerance = METH_TOL)
+  expect_equal(sandwich::sandwich(fit), sandwich::sandwich(ref), tolerance = METH_TOL)
+  expect_equal(sandwich::vcovHAC(fit), sandwich::vcovHAC(ref), tolerance = METH_TOL)
+  for (type in c("HC0", "HC2", "HC3")) {
+    expect_equal(sandwich::vcovHC(fit, type = type), sandwich::vcovHC(ref, type = type),
+                 tolerance = METH_TOL, info = type)
+  }
+  # vcovCL() is not a generic, so it can only be told the positive-weight rows
+  # through its cluster.
+  for (type in c("HC0", "HC1")) {
+    expect_equal(sandwich::vcovCL(fit, cluster = dp$g, type = type),
+                 sandwich::vcovCL(ref, cluster = dp$g, type = type), tolerance = METH_TOL, info = type)
+  }
+  expect_error(sandwich::vcovCL(fit, cluster = ~ g), "do not match")
+  # model.matrix() keeps every row outside vcovHC(), as lm's does.
+  expect_identical(nrow(model.matrix(fit)), nrow(model.matrix(lm(y ~ x + f, data = d, weights = w))))
 })
 
 test_that("augment() keeps the call's variables on an lm_lin fit", {

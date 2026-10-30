@@ -371,6 +371,15 @@ model.frame.lm_lin <- function(formula, ...) {
   # The call's variables come first: insight names a column by the variable
   # inside it, so the first column it reads as `x` keeps that name.
   out <- cbind(call_mf, mf[setdiff(names(mf), names(call_mf))])
+  # clubSandwich builds lm_lin()'s design from columns named as the
+  # coefficients, `x_c`, and finds the clusters in `(clusters)`; this method
+  # outranks its model.frame.lm_robust() even inside its namespace.
+  X <- model.matrix(object)
+  centred <- intersect(paste0(names(object[["scaled_center"]]), "_c"), colnames(X))
+  for (v in setdiff(centred, names(out))) out[[v]] <- X[, v]
+  if (!is.null(out[["(cluster)"]]) && is.null(out[["(clusters)"]])) {
+    out[["(clusters)"]] <- out[["(cluster)"]]
+  }
   attr(out, "terms") <- attr(mf, "terms")
   attr(out, "na.action") <- attr(mf, "na.action")
   out
@@ -495,7 +504,36 @@ estfun.iv_robust <- function(x, ...) {
 #' @exportS3Method sandwich::vcovHC
 vcovHC.iv_robust <- function(x, ...) {
   class(x) <- c("iv_robust_projected", class(x))
-  sandwich::vcovHC.default(x, ...)
+  sandwich::vcovHC.default(positive_weight_rows(x), ...)
+}
+
+#' @exportS3Method sandwich::vcovHC
+vcovHC.lm_robust <- function(x, ...) {
+  sandwich::vcovHC.default(positive_weight_rows(x), ...)
+}
+
+# A zero-weight row is not an observation: nobs(), bread() and hatvalues()
+# leave it out, and estfun() does too, so sandwich's meat is the
+# positive-weight answer. sandwich pairs estfun() row by row with
+# model.matrix() and weights(), so inside vcovHC() those are cut to the same
+# rows. Outside it model.matrix() keeps every row, as lm's does. vcovCL() is
+# not a generic, so its cluster must name the positive-weight rows.
+positive_weight_rows <- function(x) {
+  w <- x[["weights"]]
+  if (is.null(w) || all(w > 0)) return(x)
+  class(x) <- c("estimatr_positive_rows", class(x))
+  x
+}
+
+#' @export
+model.matrix.estimatr_positive_rows <- function(object, ...) {
+  NextMethod()[object[["weights"]] > 0, , drop = FALSE]
+}
+
+#' @export
+weights.estimatr_positive_rows <- function(object, ...) {
+  w <- object[["weights"]]
+  w[w > 0]
 }
 
 #' @export
@@ -508,6 +546,7 @@ model.matrix.iv_robust_projected <- function(object, ...) {
 # ivreg's projected regressors, X's projection on the instruments taken in the
 # weighted metric.
 sqrtw_design <- function(x, what) {
+  class(x) <- setdiff(class(x), "estimatr_positive_rows")
   coefs <- as.matrix(coef(x))
   if (ncol(coefs) > 1) {
     stop("`", what, "` is not available for a fit with several outcomes.",
@@ -545,12 +584,12 @@ bread_from <- function(X_w, w) {
   solve(crossprod(X_w)) * n
 }
 
-# w * e * X is e * sqrt(w) * X_w, which needs no division by sqrt(w) at a zero
-# weight.
+# w * e * X is e * sqrt(w) * X_w, for the rows with positive weight.
 estfun_from <- function(X_w, x) {
   w <- x[["weights"]]
-  sw <- if (is.null(w)) 1 else sqrt(w)
-  X_w * as.vector(x[["residuals"]] * sw)
+  if (is.null(w)) return(X_w * as.vector(x[["residuals"]]))
+  ef <- X_w * as.vector(x[["residuals"]] * sqrt(w))
+  ef[w > 0, , drop = FALSE]
 }
 
 #' @export

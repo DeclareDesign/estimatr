@@ -590,7 +590,7 @@
 "bread","bread","dim","refuses","sandwich::bread(fit)","same",,"not built from a design matrix",
 "bread","bread","ht","refuses","sandwich::bread(fit)",,,"not built from a design matrix",
 "estfun","estfun","lm_plain","agrees","sandwich::estfun(fit)","same",,,
-"estfun","estfun","lm_wt0","agrees","sandwich::estfun(fit)","same",,,
+"estfun","estfun","lm_wt0","agrees","sandwich::estfun(fit)","sandwich::estfun(ref_positive)",,,"one row per positive-weight observation; sandwich::estfun() on lm() keeps the zero-weight rows (Alex, 2026-10-29)"
 "estfun","estfun","lm_cl","agrees","sandwich::estfun(fit)","same",,,
 "estfun","estfun","lm_fe","refuses","sandwich::estfun(fit)","same",,"`estfun()` is not available",
 "estfun","estfun","lm_mv","refuses","sandwich::estfun(fit)","same",,"`estfun()` is not available","Alex 2026-10-27: multi-outcome refused"
@@ -600,7 +600,7 @@
 "estfun","estfun","dim","errors","sandwich::estfun(fit)","same",,,
 "estfun","estfun","ht","errors","sandwich::estfun(fit)",,,,
 "meat","meat","lm_plain","agrees","sandwich::meat(fit)","same",,,
-"meat","meat","lm_wt0","agrees","sandwich::meat(fit)","same",,,"equals lm(); with zero weights sandwich on lm() pairs 60 score rows with 57 hat values, so both are off the positive-weight answer (OPEN for Alex)"
+"meat","meat","lm_wt0","agrees","sandwich::meat(fit)","sandwich::meat(ref_positive)",,,"the positive-weight answer: estfun() leaves out zero-weight rows, as nobs(), bread() and hatvalues() do; sandwich on lm() keeps them in estfun() and is off by up to 17% (Alex, 2026-10-29)"
 "meat","meat","lm_cl","agrees","sandwich::meat(fit)","same",,,
 "meat","meat","lm_fe","refuses","sandwich::meat(fit)","same",,"`estfun()` is not available",
 "meat","meat","lm_mv","refuses","sandwich::meat(fit)","same",,"`estfun()` is not available","Alex 2026-10-27: multi-outcome refused"
@@ -610,7 +610,7 @@
 "meat","meat","dim","errors","sandwich::meat(fit)","same",,,
 "meat","meat","ht","errors","sandwich::meat(fit)",,,,
 "sandwich","sandwich","lm_plain","agrees","sandwich::sandwich(fit)","same",,,
-"sandwich","sandwich","lm_wt0","agrees","sandwich::sandwich(fit)","same",,,"equals lm(); with zero weights sandwich on lm() pairs 60 score rows with 57 hat values, so both are off the positive-weight answer (OPEN for Alex)"
+"sandwich","sandwich","lm_wt0","agrees","sandwich::sandwich(fit)","sandwich::sandwich(ref_positive)",,,"the positive-weight answer: estfun() leaves out zero-weight rows, as nobs(), bread() and hatvalues() do; sandwich on lm() keeps them in estfun() and is off by up to 17% (Alex, 2026-10-29)"
 "sandwich","sandwich","lm_cl","agrees","sandwich::sandwich(fit)","same",,,
 "sandwich","sandwich","lm_fe","refuses","sandwich::sandwich(fit)","same",,"`bread()` is not available",
 "sandwich","sandwich","lm_mv","refuses","sandwich::sandwich(fit)","same",,"`bread()` is not available","Alex 2026-10-27: multi-outcome refused"
@@ -620,7 +620,7 @@
 "sandwich","sandwich","dim","errors","sandwich::sandwich(fit)","same",,,
 "sandwich","sandwich","ht","errors","sandwich::sandwich(fit)",,,,
 "vcovHC_HC2","vcovHC","lm_plain","agrees","sandwich::vcovHC(fit, type = ""HC2"")","same",,,
-"vcovHC_HC2","vcovHC","lm_wt0","agrees","sandwich::vcovHC(fit, type = ""HC2"")","same",,,"equals lm(); with zero weights sandwich on lm() pairs 60 score rows with 57 hat values, so both are off the positive-weight answer (OPEN for Alex)"
+"vcovHC_HC2","vcovHC","lm_wt0","agrees","sandwich::vcovHC(fit, type = ""HC2"")","sandwich::vcovHC(ref_positive, type = ""HC2"")",,,"the positive-weight answer: estfun() leaves out zero-weight rows, as nobs(), bread() and hatvalues() do; sandwich on lm() keeps them in estfun() and is off by up to 17% (Alex, 2026-10-29)"
 "vcovHC_HC2","vcovHC","lm_cl","agrees","sandwich::vcovHC(fit, type = ""HC2"")","same",,,
 "vcovHC_HC2","vcovHC","lm_fe","refuses","sandwich::vcovHC(fit, type = ""HC2"")","same",,"`estfun()` is not available",
 "vcovHC_HC2","vcovHC","lm_mv","refuses","sandwich::vcovHC(fit, type = ""HC2"")","same",,"`estfun()` is not available","Alex 2026-10-27: multi-outcome refused"
@@ -630,7 +630,7 @@
 "vcovHC_HC2","vcovHC","dim","errors","sandwich::vcovHC(fit, type = ""HC2"")","same",,,
 "vcovHC_HC2","vcovHC","ht","errors","sandwich::vcovHC(fit, type = ""HC2"")",,,,
 "vcovHC_HC3","vcovHC","lm_plain","agrees","sandwich::vcovHC(fit, type = ""HC3"")","same",,,
-"vcovHC_HC3","vcovHC","lm_wt0","agrees","sandwich::vcovHC(fit, type = ""HC3"")","same",,,"equals lm(); with zero weights sandwich on lm() pairs 60 score rows with 57 hat values, so both are off the positive-weight answer (OPEN for Alex)"
+"vcovHC_HC3","vcovHC","lm_wt0","agrees","sandwich::vcovHC(fit, type = ""HC3"")","sandwich::vcovHC(ref_positive, type = ""HC3"")",,,"the positive-weight answer: estfun() leaves out zero-weight rows, as nobs(), bread() and hatvalues() do; sandwich on lm() keeps them in estfun() and is off by up to 17% (Alex, 2026-10-29)"
 "vcovHC_HC3","vcovHC","lm_cl","agrees","sandwich::vcovHC(fit, type = ""HC3"")","same",,,
 "vcovHC_HC3","vcovHC","lm_fe","refuses","sandwich::vcovHC(fit, type = ""HC3"")","same",,"`estfun()` is not available",
 "vcovHC_HC3","vcovHC","lm_mv","refuses","sandwich::vcovHC(fit, type = ""HC3"")","same",,"`estfun()` is not available","Alex 2026-10-27: multi-outcome refused"
@@ -640,7 +640,7 @@
 "vcovHC_HC3","vcovHC","dim","errors","sandwich::vcovHC(fit, type = ""HC3"")","same",,,
 "vcovHC_HC3","vcovHC","ht","errors","sandwich::vcovHC(fit, type = ""HC3"")",,,,
 "vcovHC_HC0","vcovHC","lm_plain","agrees","sandwich::vcovHC(fit, type = ""HC0"")","same",,,
-"vcovHC_HC0","vcovHC","lm_wt0","agrees","sandwich::vcovHC(fit, type = ""HC0"")","same",,,"equals lm(); with zero weights sandwich on lm() pairs 60 score rows with 57 hat values, so both are off the positive-weight answer (OPEN for Alex)"
+"vcovHC_HC0","vcovHC","lm_wt0","agrees","sandwich::vcovHC(fit, type = ""HC0"")","sandwich::vcovHC(ref_positive, type = ""HC0"")",,,"the positive-weight answer: estfun() leaves out zero-weight rows, as nobs(), bread() and hatvalues() do; sandwich on lm() keeps them in estfun() and is off by up to 17% (Alex, 2026-10-29)"
 "vcovHC_HC0","vcovHC","lm_cl","agrees","sandwich::vcovHC(fit, type = ""HC0"")","same",,,
 "vcovHC_HC0","vcovHC","lm_fe","refuses","sandwich::vcovHC(fit, type = ""HC0"")","same",,"`estfun()` is not available",
 "vcovHC_HC0","vcovHC","lm_mv","refuses","sandwich::vcovHC(fit, type = ""HC0"")","same",,"`estfun()` is not available","Alex 2026-10-27: multi-outcome refused"
@@ -650,7 +650,7 @@
 "vcovHC_HC0","vcovHC","dim","errors","sandwich::vcovHC(fit, type = ""HC0"")","same",,,
 "vcovHC_HC0","vcovHC","ht","errors","sandwich::vcovHC(fit, type = ""HC0"")",,,,
 "vcovCL_g","vcovCL","lm_plain","agrees","sandwich::vcovCL(fit, cluster = d$g)","sandwich::vcovCL(fit, cluster = d$g, type = 'HC0')",,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
-"vcovCL_g","vcovCL","lm_wt0","agrees","sandwich::vcovCL(fit, cluster = d$g)","sandwich::vcovCL(fit, cluster = d$g, type = 'HC0')",,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
+"vcovCL_g","vcovCL","lm_wt0","errors","sandwich::vcovCL(fit, cluster = d$g)",,,,"vcovCL() is not a generic and checks a full-length cluster against estfun()'s positive-weight rows, so it stops; cluster = d$g[d$w > 0] gives the positive-weight answer (Alex, 2026-10-29)"
 "vcovCL_g","vcovCL","lm_cl","agrees","sandwich::vcovCL(fit, cluster = d$g)","sandwich::vcovCL(fit, cluster = d$g, type = 'HC0')",,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
 "vcovCL_g","vcovCL","lm_fe","refuses","sandwich::vcovCL(fit, cluster = d$g)","same",,"`estfun()` is not available","sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
 "vcovCL_g","vcovCL","lm_mv","refuses","sandwich::vcovCL(fit, cluster = d$g)","same",,"`estfun()` is not available","sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
@@ -660,7 +660,7 @@
 "vcovCL_g","vcovCL","dim","errors","sandwich::vcovCL(fit, cluster = d$g)","same",,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
 "vcovCL_g","vcovCL","ht","errors","sandwich::vcovCL(fit, cluster = d$g)",,,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
 "vcovCL_g_HC2","vcovCL","lm_plain","agrees","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,,
-"vcovCL_g_HC2","vcovCL","lm_wt0","agrees","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,,
+"vcovCL_g_HC2","vcovCL","lm_wt0","errors","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")",,,,"vcovCL() is not a generic and checks a full-length cluster against estfun()'s positive-weight rows, so it stops; cluster = d$g[d$w > 0] gives the positive-weight answer (Alex, 2026-10-29)"
 "vcovCL_g_HC2","vcovCL","lm_cl","agrees","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,,
 "vcovCL_g_HC2","vcovCL","lm_fe","refuses","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,"`estfun()` is not available",
 "vcovCL_g_HC2","vcovCL","lm_mv","refuses","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,"`estfun()` is not available","Alex 2026-10-27: multi-outcome refused"
@@ -670,7 +670,7 @@
 "vcovCL_g_HC2","vcovCL","dim","errors","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,,
 "vcovCL_g_HC2","vcovCL","ht","errors","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")",,,,
 "vcovHAC","vcovHAC","lm_plain","agrees","sandwich::vcovHAC(fit)","same",,,
-"vcovHAC","vcovHAC","lm_wt0","agrees","sandwich::vcovHAC(fit)","same",,,"equals lm(); with zero weights sandwich on lm() pairs 60 score rows with 57 hat values, so both are off the positive-weight answer (OPEN for Alex)"
+"vcovHAC","vcovHAC","lm_wt0","agrees","sandwich::vcovHAC(fit)","sandwich::vcovHAC(ref_positive)",,,"the positive-weight answer: estfun() leaves out zero-weight rows, as nobs(), bread() and hatvalues() do; sandwich on lm() keeps them in estfun() and is off by up to 17% (Alex, 2026-10-29)"
 "vcovHAC","vcovHAC","lm_cl","agrees","sandwich::vcovHAC(fit)","same",,,
 "vcovHAC","vcovHAC","lm_fe","refuses","sandwich::vcovHAC(fit)","same",,"`estfun()` is not available",
 "vcovHAC","vcovHAC","lm_mv","refuses","sandwich::vcovHAC(fit)","same",,"`estfun()` is not available","Alex 2026-10-27: multi-outcome refused"
@@ -700,7 +700,7 @@
 "vcovOPG","vcovOPG","dim","errors","sandwich::vcovOPG(fit)","same",,,
 "vcovOPG","vcovOPG","ht","errors","sandwich::vcovOPG(fit)",,,,
 "vcov_via_bread_meat","bread","lm_plain","agrees","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,,
-"vcov_via_bread_meat","bread","lm_wt0","agrees","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,,"equals lm(); with zero weights sandwich on lm() pairs 60 score rows with 57 hat values, so both are off the positive-weight answer (OPEN for Alex)"
+"vcov_via_bread_meat","bread","lm_wt0","agrees","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","b <- sandwich::bread(ref_positive); m <- sandwich::meat(ref_positive); b %*% m %*% b/nobs(ref_positive)",,,"the positive-weight answer: estfun() leaves out zero-weight rows, as nobs(), bread() and hatvalues() do; sandwich on lm() keeps them in estfun() and is off by up to 17% (Alex, 2026-10-29)"
 "vcov_via_bread_meat","bread","lm_cl","agrees","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,,
 "vcov_via_bread_meat","bread","lm_fe","refuses","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,"`bread()` is not available",
 "vcov_via_bread_meat","bread","lm_mv","refuses","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,"`bread()` is not available","Alex 2026-10-27: multi-outcome refused"
