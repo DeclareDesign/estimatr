@@ -20,3 +20,4 @@
 ^README\.Rmd$
 ^\.integration_lib$
 ^CRAN-SUBMISSION$
+^tests/testthat/_problems$

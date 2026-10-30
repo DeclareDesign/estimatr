@@ -8,18 +8,18 @@ This version was written by the maintainers working with AI assistance (Claude, 
 
 ## Test environments
 
-* local macOS 26.6 (aarch64, Apple M4), R 4.6.1, with `NOT_CRAN=true`, on the 587,513-byte tarball built from this commit: `Status: 1 NOTE` (the URL note below), and `FAIL 0 | WARN 0 | SKIP 1 | PASS 8485`, the line the five GitHub Actions platforms print.
-* GitHub Actions: ubuntu-latest (devel, release, oldrel-1), macOS-latest (release), windows-latest (release). All five green at `FAIL 0 | SKIP 1 | PASS 8485` (run 40998422599), read per job. R-devel alone reports two test warnings, both raised inside `clubSandwich::vcovCR()` on an `mlm` fit that a test uses as its reference value ("Replacing special names '.Dimnames' is deprecated"); they come from clubSandwich, not from estimatr, and were present at 2.0.1.
+* local macOS 26.6 (aarch64, Apple M4), R 4.6.1, with `NOT_CRAN=true`, on the 587,513-byte tarball built from the working tree at the release commit: `Status: 1 NOTE` (the URL note, since resolved; see below), and `FAIL 0 | WARN 0 | SKIP 1 | PASS 8485`, the line the five GitHub Actions platforms print.
+* GitHub Actions: ubuntu-latest (devel, release, oldrel-1), macOS-latest (release), windows-latest (release). All five green at `FAIL 0 | SKIP 1 | PASS 8485` on the submitted commit (run 41075859231), read per job. R-devel alone reports two test warnings, both raised inside `clubSandwich::vcovCR()` on an `mlm` fit that a test uses as its reference value ("Replacing special names '.Dimnames' is deprecated"); they come from clubSandwich, not from estimatr, and were present at 2.0.1.
 * One test block skips by design, worth 18 assertions: the check that `blkvar`'s recorded values are still what `blkvar` and randomizr produce, that package being available only from GitHub. The 12 assertions comparing estimatr against the recording read the fixture and do not skip, on CRAN or anywhere else.
-* Under CRAN's own conditions, with `NOT_CRAN` unset, `test_contract.R` skips as well, so CRAN's check prints `FAIL 0 | WARN 0 | SKIP 2 | PASS 7775`, confirmed by a local `--as-cran` check of the same tarball with `NOT_CRAN` unset (`Status: 1 NOTE`, the URL note below). The 710 assertions that skip are the contract's; the other 18 are the blkvar block.
+* Under CRAN's own conditions, with `NOT_CRAN` unset, `test_contract.R` skips as well, so CRAN's check prints `FAIL 0 | WARN 0 | SKIP 2 | PASS 7775`, confirmed by a local `--as-cran` check with `NOT_CRAN` unset of the 568,609-byte tarball built from a clean export of the submitted commit, which is the tarball submitted: `Status: OK`. The 710 assertions that skip are the contract's; the other 18 are the blkvar block.
 * win-builder R-devel: [PENDING: not yet run; needs authorization].
 * win-builder R-release: [PENDING].
 
 ## R CMD check results
 
-0 errors | 0 warnings | 1 note
+0 errors | 0 warnings | 0 notes
 
-The note is CRAN incoming feasibility reporting six URLs under `https://declaredesign.org/r/estimatr/` as 404: the package URL in DESCRIPTION, `man/estimatr-package.Rd`, and README, and five article links from README and the getting-started vignette. [PENDING: the pkgdown site is down because the declaredesign.org build is failing, which is a website problem rather than a package one; the site must be back, or the URLs changed, before this is submitted, and this paragraph then rewritten.]
+An earlier check of the working-tree tarball reported one note, CRAN incoming feasibility finding six URLs under `https://declaredesign.org/r/estimatr/` as 404. The site's nightly pkgdown build had run while the package was at 2.0.1.9000 and so deployed to `r/estimatr/dev/` in place of the release path; rebuilding the site at 2.1.0 restored the six pages, and the check of the submitted tarball with CRAN incoming checks enabled reports no note.
 
 ## Reverse dependencies
 
