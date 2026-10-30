@@ -26,9 +26,3 @@
 
 # Revdeps
 
-## New problems (1)
-
-|package      |version |error  |warning |note |
-|:------------|:-------|:------|:-------|:----|
-|[clubSandwich](problems.md#clubsandwich)|0.7.0   |__+2__ |        |     |
-

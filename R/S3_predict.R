@@ -347,22 +347,19 @@ model.frame.iv_robust <- function(formula, ...) {
 #' @export
 variable.names.lm_robust <- function(object, ...) object[["term"]]
 
+# lm_lin() fits are a branch here, not a model.frame.lm_lin() method.
+# clubSandwich 0.7.0 calls model.frame() from its namespace, where its own
+# model.frame.lm_robust() is found before any registered lm_robust method but
+# after a registered lm_lin one; a method of ours for lm_lin would hand its
+# internals this frame, which is not the one they build from (#422).
 #' @export
 model.frame.lm_robust <- function(formula, ...) {
+  object <- formula
   # The variables of terms(), so that model.frame() and terms() describe the
   # same design: the absorbed factors of a fixed_effects fit, and the centred
   # covariate expressions of an lm_lin() fit.
-  rebuild_model_data(formula, stats::formula(terms(formula)))[["model_frame"]]
-}
-
-# A method of its own rather than a branch of model.frame.lm_robust():
-# clubSandwich 0.7.0 registers model.frame.lm_robust too, and when it loads
-# after estimatr its frame (x_c columns, no terms(fit)) breaks car::Anova() on
-# lm_lin fits (#422). It registers nothing for lm_lin.
-#' @export
-model.frame.lm_lin <- function(formula, ...) {
-  object <- formula
-  mf <- model.frame.lm_robust(object)
+  mf <- rebuild_model_data(object, stats::formula(terms(object)))[["model_frame"]]
+  if (!inherits(object, "lm_lin")) return(mf)
   # lm_lin()'s frame also carries the variables as the call named them, so that
   # model.matrix(formula(fit), model.frame(fit)) works, and consumers that read
   # covariates off the frame see x rather than the centred I(x - c).
@@ -371,15 +368,6 @@ model.frame.lm_lin <- function(formula, ...) {
   # The call's variables come first: insight names a column by the variable
   # inside it, so the first column it reads as `x` keeps that name.
   out <- cbind(call_mf, mf[setdiff(names(mf), names(call_mf))])
-  # clubSandwich builds lm_lin()'s design from columns named as the
-  # coefficients, `x_c`, and finds the clusters in `(clusters)`; this method
-  # outranks its model.frame.lm_robust() even inside its namespace.
-  X <- model.matrix(object)
-  centred <- intersect(paste0(names(object[["scaled_center"]]), "_c"), colnames(X))
-  for (v in setdiff(centred, names(out))) out[[v]] <- X[, v]
-  if (!is.null(out[["(cluster)"]]) && is.null(out[["(clusters)"]])) {
-    out[["(clusters)"]] <- out[["(cluster)"]]
-  }
   attr(out, "terms") <- attr(mf, "terms")
   attr(out, "na.action") <- attr(mf, "na.action")
   out

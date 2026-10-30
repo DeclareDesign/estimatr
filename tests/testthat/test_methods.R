@@ -1125,38 +1125,34 @@ test_that("lm_lin's model frame serves both terms() and formula()", {
   expect_equal(c(model.matrix(formula(fit), mf)), c(model.matrix(y ~ z + x, d[rownames(mf), ])))
 })
 
-test_that("#422: lm_lin's model frame is estimatr's when clubSandwich loads last", {
-  skip_if_not_installed("clubSandwich")
-  # Loading clubSandwich after estimatr puts its model.frame.lm_robust in the
-  # registry; an lm_lin fit must not reach it.
-  cs <- getS3method("model.frame", "lm_robust", envir = asNamespace("clubSandwich"))
-  registerS3method("model.frame", "lm_robust", cs, envir = asNamespace("stats"))
-  on.exit(registerS3method("model.frame", "lm_robust", model.frame.lm_robust, envir = asNamespace("stats")))
-  d <- methods_422_data()
-  fit <- lm_lin(y ~ z, ~ x, data = d)
-  mf <- model.frame(fit)
-  expect_identical(names(mf)[1:3], c("y", "z", "x"))
-  expect_equal(c(model.matrix(terms(fit), mf)), c(model.matrix(fit)), tolerance = METH_TOL)
-})
-
-test_that("clubSandwich's vcovCR() reads the clusters and centred covariates off an lm_lin frame", {
+test_that("clubSandwich's vcovCR() on an lm_lin fit is the fit's CR2 variance", {
   skip_if_not_installed("clubSandwich")
   loadNamespace("clubSandwich")
   use_estimatr_methods()
-  # Our model.frame.lm_lin outranks clubSandwich's model.frame.lm_robust inside
-  # its namespace, so the frame carries the `x_c` and `(clusters)` columns that
-  # clubSandwich builds from.
-  d <- methods_422_data()
+  # estimatr registers no lm_lin method of its own for model.frame(), so
+  # clubSandwich's internals find their own model.frame.lm_robust(). A factor
+  # covariate is the case a frame of ours had got wrong, since its coefficient
+  # is `(factor(f)b)_c` and clubSandwich looks for `factor(f)b_c`.
+  expect_false(is.function(utils::getS3method("model.frame", "lm_lin", optional = TRUE)))
+  # Complete rows: clubSandwich's na.action() on an lm_lin fit returns row
+  # names, so an explicit cluster vector fails on `-na.action(obj)` when rows
+  # are dropped, under estimatr 2.0.1 as well.
+  d <- na.omit(methods_422_data())
   d$cl <- rep(1:10, length.out = nrow(d))
-  fit <- lm_lin(y ~ z, ~ x, data = d, clusters = cl)
-  expect_equal(unname(as.matrix(clubSandwich::vcovCR(fit, type = "CR2"))), unname(vcov(fit)),
-               tolerance = METH_TOL)
-  expect_equal(unname(as.matrix(clubSandwich::vcovCR(fit, cluster = d$cl, type = "CR2"))),
-               unname(vcov(fit)), tolerance = METH_TOL)
-  mf <- model.frame(fit)
-  expect_identical(names(mf)[1:3], c("y", "z", "x"))
-  expect_identical(mf[["(clusters)"]], mf[["(cluster)"]])
-  expect_identical(mf[["x_c"]], unname(model.matrix(fit)[, "x_c"]))
+  # Written out, since clubSandwich re-evaluates the call and cannot find a
+  # covariates formula held in a variable.
+  fits <- list(
+    numeric = lm_lin(y ~ z, ~ x, data = d, clusters = cl),
+    factor = lm_lin(y ~ z, ~ x + factor(f), data = d, clusters = cl)
+  )
+  for (nm in names(fits)) {
+    fit <- fits[[nm]]
+    expect_equal(unname(as.matrix(clubSandwich::vcovCR(fit, type = "CR2"))), unname(vcov(fit)),
+                 tolerance = METH_TOL, info = nm)
+    expect_equal(unname(as.matrix(clubSandwich::vcovCR(fit, cluster = d$cl, type = "CR2"))),
+                 unname(vcov(fit)), tolerance = METH_TOL, info = nm)
+  }
+  expect_identical(names(model.frame(fits$factor))[1:4], c("y", "z", "x", "factor(f)"))
 })
 
 test_that("with zero weights, sandwich's estimators are lm()'s on the positive-weight rows", {
