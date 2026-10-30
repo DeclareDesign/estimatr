@@ -105,6 +105,10 @@ test_that("a formula that does not say what the estimator needs is refused", {
                "must be specified as a formula")
   expect_error(difference_in_means(y ~ z + x, data = err_data),
                "must have only one variable on the right-hand side")
+  # horvitz_thompson() read the first right-hand-side variable and fit on it
+  expect_error(horvitz_thompson(y ~ z + x, data = err_data,
+                                condition_prs = c("0" = 0.5, "1" = 0.5)),
+               "must have only one variable on the right-hand side")
 })
 
 test_that("blocks that cannot hold the design are refused", {

@@ -48,11 +48,11 @@ One rule assigns every promise, so that the next generic is placed by it rather 
 - A cell **agrees** wherever `lm()` or `ivreg::ivreg()` answers the same call and the fit stores what the answer needs. Where estimatr has a method, it returns that answer; where it has none, the fall-through must already be right.
 - A cell **refuses** where the reference answers but the fit cannot, and the message names what the fit lacks: `difference_in_means()` and `horvitz_thompson()` store no residuals and no design, a `fixed_effects` fit does not store its absorbed design, a fit with several outcomes has one residual matrix for them all, and case-deletion diagnostics need leave-one-out refits that are not computed. A refusal replaces a `NULL`, a wrong number, or an unhelpful error with a sentence; it never replaces a working answer.
 - A cell **errors** where no package should answer. `logLik()`, `AIC()`, and `BIC()` are the case to know: the estimators assume no distribution, and estimatr registers no `logLik()` on any class, because performance registers one for `iv_robust()` fits and a refusal on `lm_robust()` fits alone would make the answer depend on which package loaded last. The rest are generics that read internals an estimatr fit does not have, such as `qr()`, `effects()`, `alias()`, and `anova()`.
-- A cell **returns** only on `horvitz_thompson()`, which has no reference fit.
+- A cell **returns** where there is no reference to hold the value to: the fit-level generics on `horvitz_thompson()`, which has no reference fit; `summary(fit)$fstatistic` where the fit's F statistic is a robust Wald statistic rather than `lm()`'s; and `terms()` and `labels()` on `lm_lin()`, whose translated formula has no counterpart.
 
 ## The fits
 
-All ten are fit to one simulated dataset of 60 rows with a binary treatment `z`, a covariate `x`, a binary instrument `iv`, ten clusters `g`, a four-level factor `f`, weights `w` (three of them zero), and a second outcome `y2`.
+All eleven are fit to one simulated dataset of 60 rows with a binary treatment `z`, a covariate `x`, a binary instrument `iv`, ten clusters `g`, a four-level factor `f`, weights `w` (three of them zero), and a second outcome `y2`.
 
 | fit | estimatr call | reference |
 |---|---|---|
@@ -66,6 +66,7 @@ All ten are fit to one simulated dataset of 60 rows with a binary treatment `z`,
 | `iv_cl` | `iv_robust(y ~ z + x \| iv + x, d, clusters = g)` | `ivreg::ivreg(y ~ z + x \| iv + x, data = d)` |
 | `dim` | `difference_in_means(y ~ z, d)` | `lm(y ~ z, d)` |
 | `ht` | `horvitz_thompson(y ~ z, d, condition_prs = ...)` | none |
+| `lh` | `lh_robust(y ~ x + z, data = d, linear_hypothesis = "z = 0")` | `lm(y ~ x + z, d)` |
 
 The reference fits report classical variances, so a cell that concerns a variance, a standard error, or an interval refers instead to the variance estimatr reports by default: `sandwich::vcovHC(ref, type = "HC2")`, or `clubSandwich::vcovCR(ref, type = "CR2")` with Satterthwaite degrees of freedom for the clustered fits. `lm_wt0`'s variances refer to the same regression on its positive-weight rows, because `sandwich` counts zero-weight rows as observations. `x_c` is `x` centered, as `lm_lin()` centers it. `dim` and `ht` equal a regression on `z` only where a row says so.
 

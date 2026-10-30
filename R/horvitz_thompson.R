@@ -13,7 +13,9 @@
 #'   arm sizes. `data` must hold one row per unit of the design, in the
 #'   design's order, including units assigned to arms outside the contrast.
 #'
-#' @param formula (required) A formula `Y ~ Z`, with one outcome.
+#' @param formula (required) A formula `Y ~ Z`, with one outcome and one
+#'   right-hand-side variable, the treatment. Covariates are refused: the
+#'   estimator does not adjust for them.
 #' @param data (optional) A `data.frame` with one row per unit of the design.
 #' @param condition_prs (required) Treatment probability specification. One of:
 #'   \itemize{
@@ -111,6 +113,14 @@ horvitz_thompson <- function(formula,
 
   m_formula <- rlang::eval_tidy(rlang::enquo(formula))
   stopifnot("`formula` must be a formula" = inherits(m_formula, "formula"))
+  # The estimator read the first right-hand-side variable and fit on it, so
+  # `y ~ z + x` was the fit on `z` with `x` dropped without a word.
+  if (length(all.vars(rlang::f_rhs(m_formula))) > 1) {
+    stop(
+      "'formula' must have only one variable on the right-hand side: the ",
+      "treatment variable.", call. = FALSE
+    )
+  }
   mf <- stats::model.frame(m_formula, data = data_df, na.action = stats::na.omit)
   Y  <- stats::model.response(mf)
   # `as.numeric()` on a matrix response flattens it, and the estimator then

@@ -1198,3 +1198,33 @@ test_that("case-deletion methods refuse with a reason, and likelihood methods do
 })
 
 restore_methods()
+
+test_that("the generics that read residuals or a design refuse difference_in_means and horvitz_thompson fits", {
+  skip_if_not_installed("sandwich")
+  d <- methods_422_data()
+  fits <- list(
+    dim = difference_in_means(y ~ z, data = d),
+    ht = horvitz_thompson(y ~ z, data = d, condition_prs = rep(0.5, 60))
+  )
+  for (fit in fits) {
+    # The defaults returned NULL, numeric(0), or the names of the fit's fields
+    expect_error(residuals(fit), "has no residuals or fitted values")
+    expect_error(fitted(fit), "has no residuals or fitted values")
+    expect_error(deviance(fit), "has no residuals or fitted values")
+    expect_error(sigma(fit), "has no residuals or fitted values")
+    expect_error(df.residual(fit), "has no residuals")
+    expect_error(case.names(fit), "not stored on the fit")
+    expect_error(variable.names(fit), "not built from a design matrix")
+    expect_error(labels(fit), "not built from a design matrix")
+    # These failed with "no applicable method" or "no terms component"
+    expect_error(predict(fit), "not built from a design matrix")
+    expect_error(predict(fit, newdata = d), "not built from a design matrix")
+    expect_error(hatvalues(fit), "not built from a design matrix")
+    expect_error(sandwich::estfun(fit), "not built from a design matrix")
+    expect_error(sandwich::meat(fit), "`estfun\\(\\)` is not available")
+    for (g in c("influence", "cooks.distance", "rstandard", "rstudent",
+                "dfbeta", "dfbetas")) {
+      expect_error(do.call(g, list(fit)), "not built from a design matrix")
+    }
+  }
+})

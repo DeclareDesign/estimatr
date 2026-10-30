@@ -314,3 +314,103 @@ rstudent.lh_robust <- rstudent.lm_robust
 dfbeta.lh_robust <- dfbeta.lm_robust
 #' @export
 dfbetas.lh_robust <- dfbetas.lm_robust
+
+# A Horvitz-Thompson fit stores no residuals, no rows, and no design, as a
+# difference in means does not, so the same generics refuse it. The defaults
+# returned NULL, a vector of length zero, or (labels) the names of the fit's
+# fields.
+#' @export
+residuals.horvitz_thompson <- refuse_method("residuals", dim_no_residuals,
+                                            stats::residuals, ht_fits)
+#' @export
+fitted.horvitz_thompson <- refuse_method("fitted", dim_no_residuals,
+                                         stats::fitted, ht_fits)
+#' @export
+deviance.horvitz_thompson <- refuse_method("deviance", dim_no_residuals,
+                                           stats::deviance, ht_fits)
+#' @export
+sigma.horvitz_thompson <- refuse_method("sigma", dim_no_residuals,
+                                        stats::sigma, ht_fits)
+#' @export
+variable.names.horvitz_thompson <- refuse_method("variable.names",
+                                                 dim_no_design,
+                                                 stats::variable.names,
+                                                 ht_fits)
+#' @export
+labels.horvitz_thompson <- refuse_method("labels", dim_no_design,
+                                         base::labels, ht_fits)
+#' @export
+df.residual.horvitz_thompson <- refuse_method(
+  "df.residual",
+  paste("the estimator has no residuals. The degrees of freedom its tests use",
+        "are in `fit$df`."),
+  stats::df.residual, ht_fits
+)
+#' @export
+case.names.horvitz_thompson <- refuse_method("case.names", dim_no_rows,
+                                             stats::case.names, ht_fits)
+
+# predict(), hatvalues(), estfun(), and the case-deletion diagnostics all read
+# a design matrix. Without a method, predict() and estfun() failed with "no
+# applicable method", and hatvalues() with "no terms component"; the
+# lm_robust() refusal for case deletion points to hatvalues(), which here has
+# nothing to give.
+#' @export
+predict.difference_in_means <- refuse_method("predict", dim_no_design,
+                                             stats::predict, dim_fits)
+#' @export
+predict.horvitz_thompson <- refuse_method("predict", dim_no_design,
+                                          stats::predict, ht_fits)
+#' @export
+hatvalues.difference_in_means <- refuse_method("hatvalues", dim_no_design,
+                                               stats::hatvalues, dim_fits)
+#' @export
+hatvalues.horvitz_thompson <- refuse_method("hatvalues", dim_no_design,
+                                            stats::hatvalues, ht_fits)
+#' @exportS3Method sandwich::estfun
+estfun.difference_in_means <- refuse_method("estfun", dim_no_design,
+                                            sandwich::estfun, dim_fits)
+#' @exportS3Method sandwich::estfun
+estfun.horvitz_thompson <- refuse_method("estfun", dim_no_design,
+                                         sandwich::estfun, ht_fits)
+
+#' @export
+influence.difference_in_means <- refuse_method("influence", dim_no_design,
+                                               stats::influence, dim_fits)
+#' @export
+cooks.distance.difference_in_means <- refuse_method("cooks.distance",
+                                                    dim_no_design,
+                                                    stats::cooks.distance,
+                                                    dim_fits)
+#' @export
+rstandard.difference_in_means <- refuse_method("rstandard", dim_no_design,
+                                               stats::rstandard, dim_fits)
+#' @export
+rstudent.difference_in_means <- refuse_method("rstudent", dim_no_design,
+                                              stats::rstudent, dim_fits)
+#' @export
+dfbeta.difference_in_means <- refuse_method("dfbeta", dim_no_design,
+                                            stats::dfbeta, dim_fits)
+#' @export
+dfbetas.difference_in_means <- refuse_method("dfbetas", dim_no_design,
+                                             stats::dfbetas, dim_fits)
+#' @export
+influence.horvitz_thompson <- refuse_method("influence", dim_no_design,
+                                            stats::influence, ht_fits)
+#' @export
+cooks.distance.horvitz_thompson <- refuse_method("cooks.distance",
+                                                 dim_no_design,
+                                                 stats::cooks.distance,
+                                                 ht_fits)
+#' @export
+rstandard.horvitz_thompson <- refuse_method("rstandard", dim_no_design,
+                                            stats::rstandard, ht_fits)
+#' @export
+rstudent.horvitz_thompson <- refuse_method("rstudent", dim_no_design,
+                                           stats::rstudent, ht_fits)
+#' @export
+dfbeta.horvitz_thompson <- refuse_method("dfbeta", dim_no_design,
+                                         stats::dfbeta, ht_fits)
+#' @export
+dfbetas.horvitz_thompson <- refuse_method("dfbetas", dim_no_design,
+                                          stats::dfbetas, ht_fits)

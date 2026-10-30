@@ -30,7 +30,7 @@
 "residuals","residuals","iv_plain","agrees","residuals(fit)","same",,,
 "residuals","residuals","iv_cl","agrees","residuals(fit)","same",,,
 "residuals","residuals","dim","refuses","residuals(fit)","same",,"the estimator has no residuals or fitted values","Alex 2026-10-27: refused"
-"residuals","residuals","ht","returns","residuals(fit)",,,,
+"residuals","residuals","ht","refuses","residuals(fit)",,,"the estimator has no residuals or fitted values","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "residuals","residuals","lh","agrees","residuals(fit)","same",,,
 "resid","resid","lm_plain","agrees","resid(fit)","same",,,
 "resid","resid","lm_wt0","agrees","resid(fit)","same",,,
@@ -41,7 +41,7 @@
 "resid","resid","iv_plain","agrees","resid(fit)","same",,,
 "resid","resid","iv_cl","agrees","resid(fit)","same",,,
 "resid","resid","dim","refuses","resid(fit)","same",,"the estimator has no residuals or fitted values","Alex 2026-10-27: refused"
-"resid","resid","ht","returns","resid(fit)",,,,
+"resid","resid","ht","refuses","resid(fit)",,,"`residuals()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "resid","resid","lh","agrees","resid(fit)","same",,,
 "fitted","fitted","lm_plain","agrees","fitted(fit)","same",,,
 "fitted","fitted","lm_wt0","agrees","fitted(fit)","same",,,
@@ -52,7 +52,7 @@
 "fitted","fitted","iv_plain","agrees","fitted(fit)","same",,,
 "fitted","fitted","iv_cl","agrees","fitted(fit)","same",,,
 "fitted","fitted","dim","refuses","fitted(fit)","same",,"the estimator has no residuals or fitted values","Alex 2026-10-27: refused"
-"fitted","fitted","ht","returns","fitted(fit)",,,,
+"fitted","fitted","ht","refuses","fitted(fit)",,,"the estimator has no residuals or fitted values","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "fitted","fitted","lh","agrees","fitted(fit)","same",,,
 "fitted.values","fitted.values","lm_plain","agrees","fitted.values(fit)","same",,,
 "fitted.values","fitted.values","lm_wt0","agrees","fitted.values(fit)","same",,,
@@ -63,7 +63,7 @@
 "fitted.values","fitted.values","iv_plain","agrees","fitted.values(fit)","same",,,
 "fitted.values","fitted.values","iv_cl","agrees","fitted.values(fit)","same",,,
 "fitted.values","fitted.values","dim","refuses","fitted.values(fit)","same",,"the estimator has no residuals or fitted values","Alex 2026-10-27: refused"
-"fitted.values","fitted.values","ht","returns","fitted.values(fit)",,,,
+"fitted.values","fitted.values","ht","refuses","fitted.values(fit)",,,"`fitted()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "fitted.values","fitted.values","lh","agrees","fitted.values(fit)","same",,,
 "predict","predict","lm_plain","agrees","predict(fit, newdata = d)","same",,,
 "predict","predict","lm_wt0","agrees","predict(fit, newdata = d)","same",,,
@@ -73,8 +73,8 @@
 "predict","predict","lm_lin","agrees","predict(fit, newdata = d)","same",,,
 "predict","predict","iv_plain","agrees","predict(fit, newdata = d)","same",,,
 "predict","predict","iv_cl","agrees","predict(fit, newdata = d)","same",,,
-"predict","predict","dim","errors","predict(fit, newdata = d)","same",,,
-"predict","predict","ht","errors","predict(fit, newdata = d)",,,,
+"predict","predict","dim","refuses","predict(fit, newdata = d)","same",,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"predict","predict","ht","refuses","predict(fit, newdata = d)",,,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "predict","predict","lh","agrees","predict(fit, newdata = d)","same",,,
 "predict_sefit","predict","lm_plain","agrees","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,
 "predict_sefit","predict","lm_wt0","agrees","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,
@@ -84,8 +84,8 @@
 "predict_sefit","predict","lm_lin","agrees","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,
 "predict_sefit","predict","iv_plain","agrees","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,
 "predict_sefit","predict","iv_cl","agrees","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,
-"predict_sefit","predict","dim","errors","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,
-"predict_sefit","predict","ht","errors","predict(fit, newdata = d, se.fit = TRUE)$se.fit",,,,
+"predict_sefit","predict","dim","refuses","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"predict_sefit","predict","ht","refuses","predict(fit, newdata = d, se.fit = TRUE)$se.fit",,,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "predict_sefit","predict","lh","agrees","predict(fit, newdata = d, se.fit = TRUE)$se.fit","{X <- model.matrix(ref); sqrt(rowSums((X %*% V) * X))}",,,
 "predict_noarg","predict","lm_plain","agrees","predict(fit)","same",,,
 "predict_noarg","predict","lm_wt0","agrees","predict(fit)","same",,,
@@ -95,8 +95,8 @@
 "predict_noarg","predict","lm_lin","agrees","predict(fit)","same",,,
 "predict_noarg","predict","iv_plain","agrees","predict(fit)","same",,,
 "predict_noarg","predict","iv_cl","agrees","predict(fit)","same",,,
-"predict_noarg","predict","dim","errors","predict(fit)","same",,,
-"predict_noarg","predict","ht","errors","predict(fit)",,,,
+"predict_noarg","predict","dim","refuses","predict(fit)","same",,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"predict_noarg","predict","ht","refuses","predict(fit)",,,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "predict_noarg","predict","lh","agrees","predict(fit)","same",,,
 "confint","confint","lm_plain","agrees","confint(fit)","contract_reference_confint(ref, V, fit_id, d)",,,
 "confint","confint","lm_wt0","agrees","confint(fit)","contract_reference_confint(ref, V, fit_id, d)",,,
@@ -140,7 +140,7 @@
 "df.residual","df.residual","iv_plain","agrees","df.residual(fit)","same",,,"Alex 2026-10-27: N - K; consumers get upstream fixes"
 "df.residual","df.residual","iv_cl","agrees","df.residual(fit)","same",,,"Alex 2026-10-27: N - K; consumers get upstream fixes"
 "df.residual","df.residual","dim","refuses","df.residual(fit)","same",,"the estimator has no residuals","Alex 2026-10-27: refused; the tests use fit$df"
-"df.residual","df.residual","ht","returns","df.residual(fit)",,,,"Alex 2026-10-27: N - K; consumers get upstream fixes"
+"df.residual","df.residual","ht","refuses","df.residual(fit)",,,"the estimator has no residuals","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "df.residual","df.residual","lh","agrees","df.residual(fit)","same",,,"Alex 2026-10-27: N - K; consumers get upstream fixes"
 "deviance","deviance","lm_plain","agrees","deviance(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "deviance","deviance","lm_wt0","agrees","deviance(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
@@ -151,7 +151,7 @@
 "deviance","deviance","iv_plain","agrees","deviance(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "deviance","deviance","iv_cl","agrees","deviance(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "deviance","deviance","dim","refuses","deviance(fit)","same",,"the estimator has no residuals or fitted values","Alex 2026-10-27: refused"
-"deviance","deviance","ht","returns","deviance(fit)",,,,
+"deviance","deviance","ht","refuses","deviance(fit)",,,"the estimator has no residuals or fitted values","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "deviance","deviance","lh","agrees","deviance(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "logLik","logLik","lm_plain","errors","as.numeric(logLik(fit))","same",,,"Alex 2026-10-29: no logLik() method on any class; performance registers one for iv_robust, so a refusal on lm_robust alone made AIC(fit) depend on load order"
 "logLik","logLik","lm_wt0","errors","as.numeric(logLik(fit))","same",,,"Alex 2026-10-29: no logLik() method on any class; performance registers one for iv_robust, so a refusal on lm_robust alone made AIC(fit) depend on load order"
@@ -206,7 +206,7 @@
 "sigma","sigma","iv_plain","agrees","sigma(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "sigma","sigma","iv_cl","agrees","sigma(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "sigma","sigma","dim","refuses","sigma(fit)","same",,"the estimator has no residuals or fitted values","Alex 2026-10-27: refused"
-"sigma","sigma","ht","returns","sigma(fit)",,,,
+"sigma","sigma","ht","refuses","sigma(fit)",,,"the estimator has no residuals or fitted values","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "sigma","sigma","lh","agrees","sigma(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "formula","formula","lm_plain","agrees","format(formula(fit))","""y ~ x + z""",,,
 "formula","formula","lm_wt0","agrees","format(formula(fit))","""y ~ x + z""",,,
@@ -294,7 +294,7 @@
 "case.names","case.names","iv_plain","agrees","case.names(fit)","rownames(model.frame(ref))",,,"Alex 2026-10-27: implement with lm's meaning; the reference has no case.names() of its own"
 "case.names","case.names","iv_cl","agrees","case.names(fit)","rownames(model.frame(ref))",,,"Alex 2026-10-27: implement with lm's meaning; the reference has no case.names() of its own"
 "case.names","case.names","dim","refuses","case.names(fit)","same",,"the rows used are not stored on the fit","Alex 2026-10-27: refused"
-"case.names","case.names","ht","returns","case.names(fit)",,,,
+"case.names","case.names","ht","refuses","case.names(fit)",,,"the rows used are not stored on the fit","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "case.names","case.names","lh","agrees","case.names(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "variable.names","variable.names","lm_plain","agrees","variable.names(fit)","same",,,
 "variable.names","variable.names","lm_wt0","agrees","variable.names(fit)","same",,,
@@ -305,7 +305,7 @@
 "variable.names","variable.names","iv_plain","agrees","variable.names(fit)","names(coef(ref))",,,
 "variable.names","variable.names","iv_cl","agrees","variable.names(fit)","names(coef(ref))",,,
 "variable.names","variable.names","dim","refuses","variable.names(fit)","same",,"the estimator is not built from a design matrix","Alex 2026-10-27: refused"
-"variable.names","variable.names","ht","returns","variable.names(fit)",,,,
+"variable.names","variable.names","ht","refuses","variable.names(fit)",,,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "variable.names","variable.names","lh","agrees","variable.names(fit)","same",,,
 "labels","labels","lm_plain","agrees","labels(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "labels","labels","lm_wt0","agrees","labels(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
@@ -316,7 +316,7 @@
 "labels","labels","iv_plain","agrees","labels(fit)","c(""z"", ""x"")",,,"Alex 2026-10-27: implement with lm's meaning"
 "labels","labels","iv_cl","agrees","labels(fit)","c(""z"", ""x"")",,,"Alex 2026-10-27: implement with lm's meaning"
 "labels","labels","dim","refuses","labels(fit)","same",,"the estimator is not built from a design matrix","Alex 2026-10-27: refused"
-"labels","labels","ht","returns","labels(fit)",,,,
+"labels","labels","ht","refuses","labels(fit)",,,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "labels","labels","lh","agrees","labels(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "dummy.coef","dummy.coef","lm_plain","errors","unlist(dummy.coef(fit))","same",,,
 "dummy.coef","dummy.coef","lm_wt0","errors","unlist(dummy.coef(fit))","same",,,
@@ -392,8 +392,8 @@
 "hatvalues","hatvalues","lm_lin","agrees","hatvalues(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "hatvalues","hatvalues","iv_plain","agrees","hatvalues(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "hatvalues","hatvalues","iv_cl","agrees","hatvalues(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
-"hatvalues","hatvalues","dim","errors","hatvalues(fit)","same",,,
-"hatvalues","hatvalues","ht","errors","hatvalues(fit)",,,,
+"hatvalues","hatvalues","dim","refuses","hatvalues(fit)","same",,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"hatvalues","hatvalues","ht","refuses","hatvalues(fit)",,,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "hatvalues","hatvalues","lh","agrees","hatvalues(fit)","same",,,"Alex 2026-10-27: implement with lm's meaning"
 "cooks.distance","cooks.distance","lm_plain","refuses","cooks.distance(fit)","same",,"`cooks.distance()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "cooks.distance","cooks.distance","lm_wt0","refuses","cooks.distance(fit)","same",,"`cooks.distance()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
@@ -403,8 +403,8 @@
 "cooks.distance","cooks.distance","lm_lin","refuses","cooks.distance(fit)","same",,"`cooks.distance()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "cooks.distance","cooks.distance","iv_plain","refuses","cooks.distance(fit)","same",,"`cooks.distance()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "cooks.distance","cooks.distance","iv_cl","refuses","cooks.distance(fit)","same",,"`cooks.distance()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
-"cooks.distance","cooks.distance","dim","errors","cooks.distance(fit)","same",,,"Alex 2026-10-27: refuse case-deletion diagnostics"
-"cooks.distance","cooks.distance","ht","errors","cooks.distance(fit)",,,,"Alex 2026-10-27: refuse case-deletion diagnostics"
+"cooks.distance","cooks.distance","dim","refuses","cooks.distance(fit)","same",,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"cooks.distance","cooks.distance","ht","refuses","cooks.distance(fit)",,,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "cooks.distance","cooks.distance","lh","refuses","cooks.distance(fit)","same",,"`cooks.distance()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "influence","influence","lm_plain","refuses","influence(fit)$hat","same",,"`influence()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "influence","influence","lm_wt0","refuses","influence(fit)$hat","same",,"`influence()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
@@ -414,8 +414,8 @@
 "influence","influence","lm_lin","refuses","influence(fit)$hat","same",,"`influence()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "influence","influence","iv_plain","refuses","influence(fit)$hat","same",,"`influence()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "influence","influence","iv_cl","refuses","influence(fit)$hat","same",,"`influence()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
-"influence","influence","dim","errors","influence(fit)$hat","same",,,"Alex 2026-10-27: refuse case-deletion diagnostics"
-"influence","influence","ht","errors","influence(fit)$hat",,,,"Alex 2026-10-27: refuse case-deletion diagnostics"
+"influence","influence","dim","refuses","influence(fit)$hat","same",,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"influence","influence","ht","refuses","influence(fit)$hat",,,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "influence","influence","lh","refuses","influence(fit)$hat","same",,"`influence()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "lm.influence","lm.influence","lm_plain","errors","lm.influence(fit)$hat","same",,,
 "lm.influence","lm.influence","lm_wt0","errors","lm.influence(fit)$hat","same",,,
@@ -425,8 +425,8 @@
 "lm.influence","lm.influence","lm_lin","errors","lm.influence(fit)$hat","same",,,
 "lm.influence","lm.influence","iv_plain","errors","lm.influence(fit)$hat","same",,,
 "lm.influence","lm.influence","iv_cl","errors","lm.influence(fit)$hat","same",,,
-"lm.influence","lm.influence","dim","errors","lm.influence(fit)$hat","same",,,
-"lm.influence","lm.influence","ht","errors","lm.influence(fit)$hat",,,,
+"lm.influence","lm.influence","dim","refuses","lm.influence(fit)$hat","same",,"`residuals()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"lm.influence","lm.influence","ht","refuses","lm.influence(fit)$hat",,,"`residuals()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "lm.influence","lm.influence","lh","errors","lm.influence(fit)$hat","same",,,
 "influence.measures","influence.measures","lm_plain","errors","influence.measures(fit)$infmat","same",,,
 "influence.measures","influence.measures","lm_wt0","errors","influence.measures(fit)$infmat","same",,,
@@ -436,8 +436,8 @@
 "influence.measures","influence.measures","lm_lin","errors","influence.measures(fit)$infmat","same",,,
 "influence.measures","influence.measures","iv_plain","errors","influence.measures(fit)$infmat","same",,,
 "influence.measures","influence.measures","iv_cl","errors","influence.measures(fit)$infmat","same",,,
-"influence.measures","influence.measures","dim","errors","influence.measures(fit)$infmat","same",,,
-"influence.measures","influence.measures","ht","errors","influence.measures(fit)$infmat",,,,
+"influence.measures","influence.measures","dim","refuses","influence.measures(fit)$infmat","same",,"`residuals()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"influence.measures","influence.measures","ht","refuses","influence.measures(fit)$infmat",,,"`residuals()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "influence.measures","influence.measures","lh","errors","influence.measures(fit)$infmat","same",,,
 "dfbeta","dfbeta","lm_plain","refuses","dfbeta(fit)","same",,"`dfbeta()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "dfbeta","dfbeta","lm_wt0","refuses","dfbeta(fit)","same",,"`dfbeta()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
@@ -447,8 +447,8 @@
 "dfbeta","dfbeta","lm_lin","refuses","dfbeta(fit)","same",,"`dfbeta()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "dfbeta","dfbeta","iv_plain","refuses","dfbeta(fit)","same",,"`dfbeta()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "dfbeta","dfbeta","iv_cl","refuses","dfbeta(fit)","same",,"`dfbeta()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
-"dfbeta","dfbeta","dim","errors","dfbeta(fit)","same",,,"Alex 2026-10-27: refuse case-deletion diagnostics"
-"dfbeta","dfbeta","ht","errors","dfbeta(fit)",,,,"Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbeta","dfbeta","dim","refuses","dfbeta(fit)","same",,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"dfbeta","dfbeta","ht","refuses","dfbeta(fit)",,,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "dfbeta","dfbeta","lh","refuses","dfbeta(fit)","same",,"`dfbeta()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "dfbetas","dfbetas","lm_plain","refuses","dfbetas(fit)","same",,"`dfbetas()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "dfbetas","dfbetas","lm_wt0","refuses","dfbetas(fit)","same",,"`dfbetas()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
@@ -458,8 +458,8 @@
 "dfbetas","dfbetas","lm_lin","refuses","dfbetas(fit)","same",,"`dfbetas()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "dfbetas","dfbetas","iv_plain","refuses","dfbetas(fit)","same",,"`dfbetas()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "dfbetas","dfbetas","iv_cl","refuses","dfbetas(fit)","same",,"`dfbetas()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
-"dfbetas","dfbetas","dim","errors","dfbetas(fit)","same",,,"Alex 2026-10-27: refuse case-deletion diagnostics"
-"dfbetas","dfbetas","ht","errors","dfbetas(fit)",,,,"Alex 2026-10-27: refuse case-deletion diagnostics"
+"dfbetas","dfbetas","dim","refuses","dfbetas(fit)","same",,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"dfbetas","dfbetas","ht","refuses","dfbetas(fit)",,,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "dfbetas","dfbetas","lh","refuses","dfbetas(fit)","same",,"`dfbetas()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "rstandard","rstandard","lm_plain","refuses","rstandard(fit)","same",,"`rstandard()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "rstandard","rstandard","lm_wt0","refuses","rstandard(fit)","same",,"`rstandard()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
@@ -469,8 +469,8 @@
 "rstandard","rstandard","lm_lin","refuses","rstandard(fit)","same",,"`rstandard()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "rstandard","rstandard","iv_plain","refuses","rstandard(fit)","same",,"`rstandard()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "rstandard","rstandard","iv_cl","refuses","rstandard(fit)","same",,"`rstandard()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
-"rstandard","rstandard","dim","errors","rstandard(fit)","same",,,"Alex 2026-10-27: refuse case-deletion diagnostics"
-"rstandard","rstandard","ht","errors","rstandard(fit)",,,,"Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstandard","rstandard","dim","refuses","rstandard(fit)","same",,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"rstandard","rstandard","ht","refuses","rstandard(fit)",,,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "rstandard","rstandard","lh","refuses","rstandard(fit)","same",,"`rstandard()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "rstudent","rstudent","lm_plain","refuses","rstudent(fit)","same",,"`rstudent()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "rstudent","rstudent","lm_wt0","refuses","rstudent(fit)","same",,"`rstudent()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
@@ -480,8 +480,8 @@
 "rstudent","rstudent","lm_lin","refuses","rstudent(fit)","same",,"`rstudent()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "rstudent","rstudent","iv_plain","refuses","rstudent(fit)","same",,"`rstudent()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "rstudent","rstudent","iv_cl","refuses","rstudent(fit)","same",,"`rstudent()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
-"rstudent","rstudent","dim","errors","rstudent(fit)","same",,,"Alex 2026-10-27: refuse case-deletion diagnostics"
-"rstudent","rstudent","ht","errors","rstudent(fit)",,,,"Alex 2026-10-27: refuse case-deletion diagnostics"
+"rstudent","rstudent","dim","refuses","rstudent(fit)","same",,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"rstudent","rstudent","ht","refuses","rstudent(fit)",,,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "rstudent","rstudent","lh","refuses","rstudent(fit)","same",,"`rstudent()` is not available","Alex 2026-10-27: refuse case-deletion diagnostics"
 "add1","add1","lm_plain","errors","add1(fit, ~. + x2, data = d)","same",,,"Alex 2026-10-29: reaches extractAIC(), which has no method on any class"
 "add1","add1","lm_wt0","errors","add1(fit, ~. + x2, data = d)","same",,,"Alex 2026-10-29: reaches extractAIC(), which has no method on any class"
@@ -491,8 +491,8 @@
 "add1","add1","lm_lin","errors","add1(fit, ~. + x2, data = d)","same",,,
 "add1","add1","iv_plain","errors","add1(fit, ~. + x2, data = d)","same",,,
 "add1","add1","iv_cl","errors","add1(fit, ~. + x2, data = d)","same",,,
-"add1","add1","dim","errors","add1(fit, ~. + x2, data = d)","same",,,
-"add1","add1","ht","errors","add1(fit, ~. + x2, data = d)",,,,
+"add1","add1","dim","refuses","add1(fit, ~. + x2, data = d)","same",,"`terms()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"add1","add1","ht","refuses","add1(fit, ~. + x2, data = d)",,,"`terms()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "add1","add1","lh","errors","add1(fit, ~. + x2, data = d)","same",,,"Alex 2026-10-29: reaches extractAIC(), which has no method on any class"
 "drop1","drop1","lm_plain","errors","drop1(fit)","same",,,"Alex 2026-10-29: reaches extractAIC(), which has no method on any class"
 "drop1","drop1","lm_wt0","errors","drop1(fit)","same",,,"Alex 2026-10-29: reaches extractAIC(), which has no method on any class"
@@ -502,8 +502,8 @@
 "drop1","drop1","lm_lin","errors","drop1(fit)","same",,,"Alex 2026-10-29: reaches extractAIC(), which has no method on any class"
 "drop1","drop1","iv_plain","errors","drop1(fit)","same",,,
 "drop1","drop1","iv_cl","errors","drop1(fit)","same",,,
-"drop1","drop1","dim","errors","drop1(fit)","same",,,
-"drop1","drop1","ht","errors","drop1(fit)",,,,
+"drop1","drop1","dim","refuses","drop1(fit)","same",,"`terms()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"drop1","drop1","ht","refuses","drop1(fit)",,,"`terms()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "drop1","drop1","lh","errors","drop1(fit)","same",,,"Alex 2026-10-29: reaches extractAIC(), which has no method on any class"
 "step","step","lm_plain","errors","formula(step(fit, trace = 0))","same",,,"Alex 2026-10-29: reaches extractAIC(), which has no method on any class"
 "step","step","lm_wt0","errors","formula(step(fit, trace = 0))","same",,,"Alex 2026-10-29: reaches extractAIC(), which has no method on any class"
@@ -513,8 +513,8 @@
 "step","step","lm_lin","errors","formula(step(fit, trace = 0))","same",,,"Alex 2026-10-29: reaches extractAIC(), which has no method on any class"
 "step","step","iv_plain","errors","formula(step(fit, trace = 0))","same",,,
 "step","step","iv_cl","errors","formula(step(fit, trace = 0))","same",,,
-"step","step","dim","errors","formula(step(fit, trace = 0))","same",,,
-"step","step","ht","errors","formula(step(fit, trace = 0))",,,,
+"step","step","dim","refuses","formula(step(fit, trace = 0))","same",,"`terms()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"step","step","ht","refuses","formula(step(fit, trace = 0))",,,"`terms()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "step","step","lh","errors","formula(step(fit, trace = 0))","same",,,"Alex 2026-10-29: reaches extractAIC(), which has no method on any class"
 "anova","anova","lm_plain","errors","anova(fit)","same",,,
 "anova","anova","lm_wt0","errors","anova(fit)","same",,,
@@ -558,7 +558,7 @@
 "update_add","update","iv_plain","agrees","coef(update(fit, . ~ . + x2))","same",,,
 "update_add","update","iv_cl","agrees","coef(update(fit, . ~ . + x2))","same",,,
 "update_add","update","dim","refuses","coef(update(fit, . ~ . + x2))","same",,"only one variable on the right-hand side",
-"update_add","update","ht","known_wrong","coef(update(fit, . ~ . + x2))",,,,"2026-10-30: horvitz_thompson() accepts `y ~ z + x2` and fits on a term named `1` where difference_in_means() refuses; not yet decided"
+"update_add","update","ht","refuses","coef(update(fit, . ~ . + x2))",,,"only one variable on the right-hand side","Alex 2026-10-30: covariates on the right-hand side are refused, as difference_in_means() refuses them"
 "update_add","update","lh","agrees","coef(update(fit, . ~ . + x2))","same",,,
 "simulate","simulate","lm_plain","errors","set.seed(1); as.matrix(simulate(fit, 1))","same",,,
 "simulate","simulate","lm_wt0","errors","set.seed(1); as.matrix(simulate(fit, 1))","same",,,
@@ -667,8 +667,8 @@
 "estfun","estfun","lm_lin","agrees","sandwich::estfun(fit)","same",,,
 "estfun","estfun","iv_plain","agrees","sandwich::estfun(fit)","same",,,
 "estfun","estfun","iv_cl","agrees","sandwich::estfun(fit)","same",,,
-"estfun","estfun","dim","errors","sandwich::estfun(fit)","same",,,
-"estfun","estfun","ht","errors","sandwich::estfun(fit)",,,,
+"estfun","estfun","dim","refuses","sandwich::estfun(fit)","same",,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"estfun","estfun","ht","refuses","sandwich::estfun(fit)",,,"the estimator is not built from a design matrix","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "estfun","estfun","lh","agrees","sandwich::estfun(fit)","same",,,
 "meat","meat","lm_plain","agrees","sandwich::meat(fit)","same",,,
 "meat","meat","lm_wt0","agrees","sandwich::meat(fit)","sandwich::meat(ref_positive)",,,"the positive-weight answer: estfun() leaves out zero-weight rows, as nobs(), bread() and hatvalues() do; sandwich on lm() keeps them in estfun() and is off by up to 17% (Alex, 2026-10-29)"
@@ -678,8 +678,8 @@
 "meat","meat","lm_lin","agrees","sandwich::meat(fit)","same",,,
 "meat","meat","iv_plain","agrees","sandwich::meat(fit)","same",,,
 "meat","meat","iv_cl","agrees","sandwich::meat(fit)","same",,,
-"meat","meat","dim","errors","sandwich::meat(fit)","same",,,
-"meat","meat","ht","errors","sandwich::meat(fit)",,,,
+"meat","meat","dim","refuses","sandwich::meat(fit)","same",,"`estfun()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"meat","meat","ht","refuses","sandwich::meat(fit)",,,"`estfun()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "meat","meat","lh","agrees","sandwich::meat(fit)","same",,,
 "sandwich","sandwich","lm_plain","agrees","sandwich::sandwich(fit)","same",,,
 "sandwich","sandwich","lm_wt0","agrees","sandwich::sandwich(fit)","sandwich::sandwich(ref_positive)",,,"the positive-weight answer: estfun() leaves out zero-weight rows, as nobs(), bread() and hatvalues() do; sandwich on lm() keeps them in estfun() and is off by up to 17% (Alex, 2026-10-29)"
@@ -689,8 +689,8 @@
 "sandwich","sandwich","lm_lin","agrees","sandwich::sandwich(fit)","same",,,
 "sandwich","sandwich","iv_plain","agrees","sandwich::sandwich(fit)","same",,,
 "sandwich","sandwich","iv_cl","agrees","sandwich::sandwich(fit)","same",,,
-"sandwich","sandwich","dim","errors","sandwich::sandwich(fit)","same",,,
-"sandwich","sandwich","ht","errors","sandwich::sandwich(fit)",,,,
+"sandwich","sandwich","dim","refuses","sandwich::sandwich(fit)","same",,"`bread()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"sandwich","sandwich","ht","refuses","sandwich::sandwich(fit)",,,"`bread()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "sandwich","sandwich","lh","agrees","sandwich::sandwich(fit)","same",,,
 "vcovHC_HC2","vcovHC","lm_plain","agrees","sandwich::vcovHC(fit, type = ""HC2"")","same",,,
 "vcovHC_HC2","vcovHC","lm_wt0","agrees","sandwich::vcovHC(fit, type = ""HC2"")","sandwich::vcovHC(ref_positive, type = ""HC2"")",,,"the positive-weight answer: estfun() leaves out zero-weight rows, as nobs(), bread() and hatvalues() do; sandwich on lm() keeps them in estfun() and is off by up to 17% (Alex, 2026-10-29)"
@@ -700,8 +700,8 @@
 "vcovHC_HC2","vcovHC","lm_lin","agrees","sandwich::vcovHC(fit, type = ""HC2"")","same",,,
 "vcovHC_HC2","vcovHC","iv_plain","agrees","sandwich::vcovHC(fit, type = ""HC2"")","same",,,
 "vcovHC_HC2","vcovHC","iv_cl","agrees","sandwich::vcovHC(fit, type = ""HC2"")","same",,,
-"vcovHC_HC2","vcovHC","dim","errors","sandwich::vcovHC(fit, type = ""HC2"")","same",,,
-"vcovHC_HC2","vcovHC","ht","errors","sandwich::vcovHC(fit, type = ""HC2"")",,,,
+"vcovHC_HC2","vcovHC","dim","refuses","sandwich::vcovHC(fit, type = ""HC2"")","same",,"`model.matrix()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"vcovHC_HC2","vcovHC","ht","refuses","sandwich::vcovHC(fit, type = ""HC2"")",,,"`model.matrix()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "vcovHC_HC2","vcovHC","lh","agrees","sandwich::vcovHC(fit, type = ""HC2"")","same",,,
 "vcovHC_HC3","vcovHC","lm_plain","agrees","sandwich::vcovHC(fit, type = ""HC3"")","same",,,
 "vcovHC_HC3","vcovHC","lm_wt0","agrees","sandwich::vcovHC(fit, type = ""HC3"")","sandwich::vcovHC(ref_positive, type = ""HC3"")",,,"the positive-weight answer: estfun() leaves out zero-weight rows, as nobs(), bread() and hatvalues() do; sandwich on lm() keeps them in estfun() and is off by up to 17% (Alex, 2026-10-29)"
@@ -711,8 +711,8 @@
 "vcovHC_HC3","vcovHC","lm_lin","agrees","sandwich::vcovHC(fit, type = ""HC3"")","same",,,
 "vcovHC_HC3","vcovHC","iv_plain","agrees","sandwich::vcovHC(fit, type = ""HC3"")","same",,,
 "vcovHC_HC3","vcovHC","iv_cl","agrees","sandwich::vcovHC(fit, type = ""HC3"")","same",,,
-"vcovHC_HC3","vcovHC","dim","errors","sandwich::vcovHC(fit, type = ""HC3"")","same",,,
-"vcovHC_HC3","vcovHC","ht","errors","sandwich::vcovHC(fit, type = ""HC3"")",,,,
+"vcovHC_HC3","vcovHC","dim","refuses","sandwich::vcovHC(fit, type = ""HC3"")","same",,"`model.matrix()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"vcovHC_HC3","vcovHC","ht","refuses","sandwich::vcovHC(fit, type = ""HC3"")",,,"`model.matrix()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "vcovHC_HC3","vcovHC","lh","agrees","sandwich::vcovHC(fit, type = ""HC3"")","same",,,
 "vcovHC_HC0","vcovHC","lm_plain","agrees","sandwich::vcovHC(fit, type = ""HC0"")","same",,,
 "vcovHC_HC0","vcovHC","lm_wt0","agrees","sandwich::vcovHC(fit, type = ""HC0"")","sandwich::vcovHC(ref_positive, type = ""HC0"")",,,"the positive-weight answer: estfun() leaves out zero-weight rows, as nobs(), bread() and hatvalues() do; sandwich on lm() keeps them in estfun() and is off by up to 17% (Alex, 2026-10-29)"
@@ -722,8 +722,8 @@
 "vcovHC_HC0","vcovHC","lm_lin","agrees","sandwich::vcovHC(fit, type = ""HC0"")","same",,,
 "vcovHC_HC0","vcovHC","iv_plain","agrees","sandwich::vcovHC(fit, type = ""HC0"")","same",,,
 "vcovHC_HC0","vcovHC","iv_cl","agrees","sandwich::vcovHC(fit, type = ""HC0"")","same",,,
-"vcovHC_HC0","vcovHC","dim","errors","sandwich::vcovHC(fit, type = ""HC0"")","same",,,
-"vcovHC_HC0","vcovHC","ht","errors","sandwich::vcovHC(fit, type = ""HC0"")",,,,
+"vcovHC_HC0","vcovHC","dim","refuses","sandwich::vcovHC(fit, type = ""HC0"")","same",,"`model.matrix()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"vcovHC_HC0","vcovHC","ht","refuses","sandwich::vcovHC(fit, type = ""HC0"")",,,"`model.matrix()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "vcovHC_HC0","vcovHC","lh","agrees","sandwich::vcovHC(fit, type = ""HC0"")","same",,,
 "vcovCL_g","vcovCL","lm_plain","agrees","sandwich::vcovCL(fit, cluster = d$g)","sandwich::vcovCL(fit, cluster = d$g, type = 'HC0')",,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
 "vcovCL_g","vcovCL","lm_wt0","errors","sandwich::vcovCL(fit, cluster = d$g)",,,,"vcovCL() is not a generic and checks a full-length cluster against estfun()'s positive-weight rows, so it stops; cluster = d$g[d$w > 0] gives the positive-weight answer (Alex, 2026-10-29)"
@@ -733,8 +733,8 @@
 "vcovCL_g","vcovCL","lm_lin","agrees","sandwich::vcovCL(fit, cluster = d$g)","sandwich::vcovCL(fit, cluster = d$g, type = 'HC0')",,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
 "vcovCL_g","vcovCL","iv_plain","agrees","sandwich::vcovCL(fit, cluster = d$g)","same",,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
 "vcovCL_g","vcovCL","iv_cl","agrees","sandwich::vcovCL(fit, cluster = d$g)","same",,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
-"vcovCL_g","vcovCL","dim","errors","sandwich::vcovCL(fit, cluster = d$g)","same",,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
-"vcovCL_g","vcovCL","ht","errors","sandwich::vcovCL(fit, cluster = d$g)",,,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
+"vcovCL_g","vcovCL","dim","refuses","sandwich::vcovCL(fit, cluster = d$g)","same",,"`estfun()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"vcovCL_g","vcovCL","ht","refuses","sandwich::vcovCL(fit, cluster = d$g)",,,"`estfun()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "vcovCL_g","vcovCL","lh","agrees","sandwich::vcovCL(fit, cluster = d$g)","sandwich::vcovCL(fit, cluster = d$g, type = 'HC0')",,,"sandwich's vcovCL() defaults to HC1 only for class 'lm', HC0 otherwise"
 "vcovCL_g_HC2","vcovCL","lm_plain","agrees","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,,
 "vcovCL_g_HC2","vcovCL","lm_wt0","errors","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")",,,,"vcovCL() is not a generic and checks a full-length cluster against estfun()'s positive-weight rows, so it stops; cluster = d$g[d$w > 0] gives the positive-weight answer (Alex, 2026-10-29)"
@@ -744,8 +744,8 @@
 "vcovCL_g_HC2","vcovCL","lm_lin","agrees","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,,
 "vcovCL_g_HC2","vcovCL","iv_plain","agrees","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,,
 "vcovCL_g_HC2","vcovCL","iv_cl","agrees","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,,
-"vcovCL_g_HC2","vcovCL","dim","errors","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,,
-"vcovCL_g_HC2","vcovCL","ht","errors","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")",,,,
+"vcovCL_g_HC2","vcovCL","dim","refuses","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,"`estfun()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"vcovCL_g_HC2","vcovCL","ht","refuses","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")",,,"`estfun()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "vcovCL_g_HC2","vcovCL","lh","agrees","sandwich::vcovCL(fit, cluster = d$g, type = ""HC2"")","same",,,
 "vcovHAC","vcovHAC","lm_plain","agrees","sandwich::vcovHAC(fit)","same",,,
 "vcovHAC","vcovHAC","lm_wt0","agrees","sandwich::vcovHAC(fit)","sandwich::vcovHAC(ref_positive)",,,"the positive-weight answer: estfun() leaves out zero-weight rows, as nobs(), bread() and hatvalues() do; sandwich on lm() keeps them in estfun() and is off by up to 17% (Alex, 2026-10-29)"
@@ -755,8 +755,8 @@
 "vcovHAC","vcovHAC","lm_lin","agrees","sandwich::vcovHAC(fit)","same",,,
 "vcovHAC","vcovHAC","iv_plain","agrees","sandwich::vcovHAC(fit)","same",,,
 "vcovHAC","vcovHAC","iv_cl","agrees","sandwich::vcovHAC(fit)","same",,,
-"vcovHAC","vcovHAC","dim","errors","sandwich::vcovHAC(fit)","same",,,
-"vcovHAC","vcovHAC","ht","errors","sandwich::vcovHAC(fit)",,,,
+"vcovHAC","vcovHAC","dim","refuses","sandwich::vcovHAC(fit)","same",,"`estfun()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"vcovHAC","vcovHAC","ht","refuses","sandwich::vcovHAC(fit)",,,"`estfun()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "vcovHAC","vcovHAC","lh","agrees","sandwich::vcovHAC(fit)","same",,,
 "vcovBS","vcovBS","lm_plain","errors","set.seed(1); sandwich::vcovBS(fit, R = 20)","same",,,
 "vcovBS","vcovBS","lm_wt0","errors","set.seed(1); sandwich::vcovBS(fit, R = 20)","same",,,
@@ -777,8 +777,8 @@
 "vcovOPG","vcovOPG","lm_lin","agrees","sandwich::vcovOPG(fit)","same",,,
 "vcovOPG","vcovOPG","iv_plain","agrees","sandwich::vcovOPG(fit)","same",,,
 "vcovOPG","vcovOPG","iv_cl","agrees","sandwich::vcovOPG(fit)","same",,,
-"vcovOPG","vcovOPG","dim","errors","sandwich::vcovOPG(fit)","same",,,
-"vcovOPG","vcovOPG","ht","errors","sandwich::vcovOPG(fit)",,,,
+"vcovOPG","vcovOPG","dim","refuses","sandwich::vcovOPG(fit)","same",,"`estfun()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"vcovOPG","vcovOPG","ht","refuses","sandwich::vcovOPG(fit)",,,"`estfun()` is not available","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "vcovOPG","vcovOPG","lh","agrees","sandwich::vcovOPG(fit)","same",,,
 "vcov_via_bread_meat","bread","lm_plain","agrees","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,,
 "vcov_via_bread_meat","bread","lm_wt0","agrees","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","b <- sandwich::bread(ref_positive); m <- sandwich::meat(ref_positive); b %*% m %*% b/nobs(ref_positive)",,,"the positive-weight answer: estfun() leaves out zero-weight rows, as nobs(), bread() and hatvalues() do; sandwich on lm() keeps them in estfun() and is off by up to 17% (Alex, 2026-10-29)"
@@ -788,6 +788,6 @@
 "vcov_via_bread_meat","bread","lm_lin","agrees","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,,
 "vcov_via_bread_meat","bread","iv_plain","agrees","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,,
 "vcov_via_bread_meat","bread","iv_cl","agrees","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,,
-"vcov_via_bread_meat","bread","dim","errors","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,,
-"vcov_via_bread_meat","bread","ht","errors","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)",,,,
+"vcov_via_bread_meat","bread","dim","refuses","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,"the estimator is not built from a design matrix, so there is no bread to pair with `sandwich::meat()`","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
+"vcov_via_bread_meat","bread","ht","refuses","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)",,,"the estimator is not built from a design matrix, so there is no bread to pair with `sandwich::meat()`","Alex 2026-10-30: refuse what reads residuals or a design on dim and ht"
 "vcov_via_bread_meat","bread","lh","agrees","b <- sandwich::bread(fit); m <- sandwich::meat(fit); b %*% m %*% b/nobs(fit)","same",,,

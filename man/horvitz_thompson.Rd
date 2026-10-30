@@ -17,7 +17,9 @@ horvitz_thompson(
 )
 }
 \arguments{
-\item{formula}{(required) A formula \code{Y ~ Z}, with one outcome.}
+\item{formula}{(required) A formula \code{Y ~ Z}, with one outcome and one
+right-hand-side variable, the treatment. Covariates are refused: the
+estimator does not adjust for them.}
 
 \item{data}{(optional) A \code{data.frame} with one row per unit of the design.}
 
