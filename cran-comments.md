@@ -11,7 +11,7 @@ This version was written by the maintainers working with AI assistance (Claude, 
 * local macOS 26.6 (aarch64, Apple M4), R 4.6.1, with `NOT_CRAN=true`, on the 587,513-byte tarball built from this commit: `Status: 1 NOTE` (the URL note below), and `FAIL 0 | WARN 0 | SKIP 1 | PASS 8485`, the line the five GitHub Actions platforms print.
 * GitHub Actions: ubuntu-latest (devel, release, oldrel-1), macOS-latest (release), windows-latest (release). All five green at `FAIL 0 | SKIP 1 | PASS 8485` (run 40998422599), read per job. R-devel alone reports two test warnings, both raised inside `clubSandwich::vcovCR()` on an `mlm` fit that a test uses as its reference value ("Replacing special names '.Dimnames' is deprecated"); they come from clubSandwich, not from estimatr, and were present at 2.0.1.
 * One test block skips by design, worth 18 assertions: the check that `blkvar`'s recorded values are still what `blkvar` and randomizr produce, that package being available only from GitHub. The 12 assertions comparing estimatr against the recording read the fixture and do not skip, on CRAN or anywhere else.
-* Under CRAN's own conditions, with `NOT_CRAN` unset, `test_contract.R` skips as well, so CRAN's check prints [PENDING: `FAIL 0 | SKIP 2 | PASS 7775`, to be confirmed by a local check without `NOT_CRAN`].
+* Under CRAN's own conditions, with `NOT_CRAN` unset, `test_contract.R` skips as well, so CRAN's check prints `FAIL 0 | WARN 0 | SKIP 2 | PASS 7775`, confirmed by a local `--as-cran` check of the same tarball with `NOT_CRAN` unset (`Status: 1 NOTE`, the URL note below). The 710 assertions that skip are the contract's; the other 18 are the blkvar block.
 * win-builder R-devel: [PENDING: not yet run; needs authorization].
 * win-builder R-release: [PENDING].
 
