@@ -91,6 +91,14 @@
 #'   intercept and one regressor taking two values, as in `y ~ z` with a
 #'   binary `z`; weighted or not, `lm_robust(y ~ z, se_type = "HC2",
 #'   df_type = "welch")` is then [difference_in_means()] in every number.
+#'   `"satterthwaite"` and `"welch"` are one approximation under two working
+#'   models, and on `y ~ z` they differ: `"satterthwaite"` takes the errors
+#'   to share one variance and gives (1/n1 + 1/n0)^2 divided by
+#'   (1/n1)^2/(n1 - 1) + (1/n0)^2/(n0 - 1), which depends only on the group
+#'   sizes, while `"welch"` takes each group's own variance, as `t.test()`
+#'   does. On 20 against 40 observations with standard deviations 1 and 3 the
+#'   residual degrees of freedom are 58, `"satterthwaite"` gives 38.1, and
+#'   `"welch"` gives 50.3. Neither moves the estimate or the standard error.
 #'   `"residual"` is accepted where it is the default.
 #' @param try_cholesky (optional) Logical. Whether to solve by Cholesky
 #'   decomposition of `X'X` rather than by the default pivoted QR. `FALSE` by

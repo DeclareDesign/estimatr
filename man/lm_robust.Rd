@@ -153,6 +153,14 @@ and standard errors are unchanged. Not available with both \code{weights} and
 Welch-Satterthwaite degrees of freedom on a two-group design, an
 intercept and one regressor taking two values, as in \code{y ~ z} with a
 binary \code{z}; weighted or not, \code{lm_robust(y ~ z, se_type = "HC2", df_type = "welch")} is then \code{\link[=difference_in_means]{difference_in_means()}} in every number.
+\code{"satterthwaite"} and \code{"welch"} are one approximation under two working
+models, and on \code{y ~ z} they differ: \code{"satterthwaite"} takes the errors
+to share one variance and gives (1/n1 + 1/n0)^2 divided by
+(1/n1)^2/(n1 - 1) + (1/n0)^2/(n0 - 1), which depends only on the group
+sizes, while \code{"welch"} takes each group's own variance, as \code{t.test()}
+does. On 20 against 40 observations with standard deviations 1 and 3 the
+residual degrees of freedom are 58, \code{"satterthwaite"} gives 38.1, and
+\code{"welch"} gives 50.3. Neither moves the estimate or the standard error.
 \code{"residual"} is accepted where it is the default.}
 }
 \value{
