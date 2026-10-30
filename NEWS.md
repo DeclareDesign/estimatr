@@ -1,4 +1,4 @@
-# estimatr (development version)
+# estimatr 2.1.0
 
 Behaviour changes to existing calls come first, then what is new, then fixes. The release adds `df_type` and `alternative`, the clustered `se_type` values `"CR3"` and `"stata_nested"`, an `lm_lin` class, and the stats and sandwich methods set out in `vignette("post-estimation-contract")`, and it changes the degrees of freedom of a weighted `difference_in_means()`.
 

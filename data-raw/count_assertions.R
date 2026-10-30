@@ -36,7 +36,11 @@ components <- list(
       "weighted cluster-robust matches sandwich::vcovCL" = "all",
       # Both sides are estimatr: CR0 rescaled by the Stata correction factor.
       "the CR0 and Stata cluster corrections differ as expected" = 0,
-      "iv_robust HC0, HC1 and CR0 match sandwich on AER::ivreg" = "all",
+      "iv_robust HC0, HC1 and CR0 match sandwich on ivreg" = "all",
+      # Of four, the exit status and ivreg's hatvalues against a hand-built
+      # projection involve no estimatr value; the two ratio bounds put
+      # iv_robust's HC2 and HC3 against AER's on one side each.
+      "sandwich on an AER::ivreg fit uses the influence diagonal" = 2,
       # The third assertion compares ivreg's hatvalues to a hand-built
       # projection; no estimatr value appears on either side of it.
       "iv_robust HC2 and HC3 match sandwich on an ivreg::ivreg fit" = 2,
@@ -69,18 +73,25 @@ components <- list(
       # Properties of estimatr's own degrees of freedom.
       "CR2 degrees of freedom differ across coefficients" = 0,
       "CR2 with absorbed fixed effects matches clubSandwich on the dummy expansion" = "all",
-      "iv_robust CR2 matches clubSandwich on AER::ivreg" = "all",
+      "iv_robust CR2 matches clubSandwich on ivreg" = "all",
       # Against CR2 written out from its definition in helper-external.R, not
       # against clubSandwich, so left out for the reason given under blkvar.
       "CR2 on the hostile design matches CR2 written from its definition" = 0,
       "CR2 and its degrees of freedom match clubSandwich on the hostile design" = "all",
-      "weighted iv_robust CR2 matches clubSandwich on AER::ivreg" = "all",
+      "weighted iv_robust CR2 matches clubSandwich on ivreg" = "all",
       "weighted lm_lin CR2 matches clubSandwich on lm with the covariate centred on its weighted mean" = "all",
       "a multivariate lm_robust CR2 matches clubSandwich on the mlm fit" = "all",
       "lh_robust CR2 matches clubSandwich's contrast, degrees of freedom included" = "all",
       # The third assertion is that no standard error is NA, a property of
       # estimatr's own clamp rather than a comparison.
-      "CR2 on a singleton cluster's own dummy matches clubSandwich, and is finite" = 2
+      "CR2 on a singleton cluster's own dummy matches clubSandwich, and is finite" = 2,
+      # Both sides are written from CR2's definition on hand-built matrices.
+      "CR2 agrees with its definition on both sides of the low-rank switch" = 0,
+      "CR3 and its degrees of freedom match clubSandwich, weighted and not" = "all",
+      # The reference is a test-local leave-one-cluster-out sum, not a package.
+      "CR3 is the leave-one-cluster-out sum, under weights and absorbed fixed effects" = 0,
+      "CR3 on a cluster that identifies its own dummy is the leave-one-cluster-out sum" = 0,
+      "iv_robust and lh_robust CR3 match clubSandwich" = "all"
     )
   ),
   Stata = list(
@@ -93,7 +104,7 @@ components <- list(
       # One fixture check, and one assertion that areg reports no F statistic.
       "lm_robust with fixed_effects reproduces Stata's areg" = 6,
       "iv_robust reproduces Stata's ivregress 2sls" = 39,
-      "weighted 2SLS root MSE follows AER::ivreg rather than Stata" = "all",
+      "weighted 2SLS root MSE follows ivreg rather than Stata" = "all",
       # One assertion checks that the fixture holds the 108 rows the file expects.
       "iv_robust's first-stage and endogeneity tests reproduce Stata's estat" = 432,
       # One assertion checks that the fixture holds the six rows the file expects.
@@ -152,7 +163,10 @@ components <- list(
       "a zero weight is the same as removing the row" = 0,
       "the centring point is the weighted mean over complete cases only" = 0,
       "a missing covariate drops the row before centring" = 0,
-      "weighted and unweighted centring differ when the weights are informative" = 0
+      "weighted and unweighted centring differ when the weights are informative" = 0,
+      # Five of six put a coefficient or contrast against a DiD of per-cell
+      # lm() predictions; the sixth compares two estimatr standard errors.
+      "a two-by-two factorial's interaction is the DiD of Lin-adjusted cell means" = 5
     )
   )
 )

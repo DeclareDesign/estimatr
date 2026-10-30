@@ -15,21 +15,6 @@ To install the latest stable release of **estimatr**, please ensure that you are
 install.packages("estimatr")
 ```
 
-The development version, 2.0.1.9000, installs from GitHub:
-
-```r
-# install.packages("remotes")
-remotes::install_github("DeclareDesign/estimatr")
-```
-
-## In the development version
-
-Three changes since 2.0.1 on CRAN. `NEWS.md` has the detail.
-
-- **`se_type = "stata_nested"`** reproduces Stata's `xtreg, fe` and `reghdfe` when a fixed effect is nested in the cluster variable, as unit effects clustered by unit are. Stata counts K in its clustered small-sample factor two ways: `regress` with dummies and `areg` count every absorbed level, and `se_type = "stata"` still does, while `xtreg` and `reghdfe` leave out the nested levels. On the data in #337, `"stata"` gives 0.0136232 and `"stata_nested"` gives Stata's 0.0133478.
-- **`!!` and `{{ }}` in a formula** now work in `lm_lin()`, `difference_in_means()`, and `lh_robust()`, as they already did in `lm_robust()` and `iv_robust()`, so `lm_lin(!!sym(outcome) ~ z, covariates = ~ x, data = d)` works inside `purrr::map()` (#413).
-- **The `iv_robust()` first-stage F** is no longer `NA` when the first stage drops an excluded instrument (#305).
-
 ## Easy to use
 
 Once the package is installed, getting appropriate estimates and standard errors is both fast and easy.
@@ -127,7 +112,7 @@ Three vignettes ship with the package, and three more (performance, the tidyvers
 
 The six estimators are `lm_robust`, `lm_lin`, `iv_robust`, `lh_robust`, `difference_in_means`, and `horvitz_thompson`, now with a Pashley and Miratrix (2021) blocked-variance estimator that 1.x does not have.
 
-The six estimators keep their 1.0.6 signatures, except `horvitz_thompson()`, whose five probability arguments consolidate into `condition_prs`; the removals are below. Run side by side on one machine, 2.0 and 1.0.6 return the same estimates, standard errors, and degrees of freedom to 1e-12, across every supported standard error type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes. The test suite holds that claim at 695 assertions against answers recorded from an installed 1.0.6, with `data-raw/make_estimatr_reference.R` producing the recording. Those run at 1e-9 rather than 1e-12, because a fixture recorded on one platform meets a different BLAS on another, and the floor there is the linear algebra rather than this package.
+The six estimators keep their 1.0.6 signatures, except `horvitz_thompson()`, whose five probability arguments consolidate into `condition_prs`; the removals are below. Run side by side on one machine, 2.0 and 1.0.6 return the same estimates, standard errors, and degrees of freedom to 1e-12, across every supported standard error type, weighted and unweighted, clustered and unclustered, single and multivariate outcomes. The test suite holds that claim at 691 assertions against answers recorded from an installed 1.0.6, with `data-raw/make_estimatr_reference.R` producing the recording. Those run at 1e-9 rather than 1e-12, because a fixture recorded on one platform meets a different BLAS on another, and the floor there is the linear algebra rather than this package.
 
 ### What breaks
 
@@ -145,7 +130,7 @@ A clustered block holding a single treated or single control cluster is refused 
 
 ### Status
 
-`R CMD check --as-cran`: 0 errors, 0 warnings, 0 notes. Test suite 7,238 assertions under `R CMD check`, 0 failures, one skip worth 18 assertions: the check that `blkvar`'s recorded values are still what `blkvar` produces, that package being available only from GitHub. The 12 assertions comparing estimatr against the recording read the fixture and run everywhere.
+`R CMD check --as-cran`: 0 errors, 0 warnings, 0 notes. Test suite 8,485 assertions under `R CMD check` with `NOT_CRAN=true`, as GitHub Actions runs it (the 710 of `vignette("post-estimation-contract")` skip on CRAN), 0 failures, one skip worth 18 assertions: the check that `blkvar`'s recorded values are still what `blkvar` produces, that package being available only from GitHub. The 12 assertions comparing estimatr against the recording read the fixture and run everywhere.
 
 Every open estimatr issue was read against this implementation: 26 are fixed here, 23 are feature requests, 7 are out of scope, 6 are not reproducible, 5 are superseded by the rewrite, and 4 remain open. `vignette("estimatr2.0")` names the four.
 
