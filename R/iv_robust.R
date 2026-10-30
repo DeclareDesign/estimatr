@@ -54,6 +54,11 @@
 #'   the test suite's Stata fixture that Stata answers, except the robust score
 #'   test after aweights under `forceweights`, where Stata computes the
 #'   frequency-weight statistic instead.
+#' @param first_stage (optional) Logical. Whether to return the first-stage
+#'   regressions in `first_stage`, one [lm_robust()] fit per endogenous
+#'   regressor (see Value). `FALSE` by default, as `diagnostics` is: the fits
+#'   are not needed for the estimates, and on 100,000 rows they add about two
+#'   thirds to the running time and double the size of the object.
 #' @param return_vcov (optional) Logical. Whether to return the vcov matrix.
 #' @param df_type (optional) The degrees of freedom (see [lm_robust()])
 #' @param try_cholesky (optional) Logical. Whether to solve by Cholesky
@@ -95,8 +100,8 @@
 #'
 #'   `residuals` are the structural residuals, `y - X beta`, rather than the
 #'   second-stage ones. `ei.iv`, `terms_regressors`, and `formula` record the
-#'   two-stage structure. `first_stage` is a list of [lm_robust()] fits, one
-#'   per endogenous regressor and named by it, each the regression of that
+#'   two-stage structure. With `first_stage = TRUE`, `first_stage` is a list
+#'   of [lm_robust()] fits, one per endogenous regressor and named by it, each the regression of that
 #'   regressor on every instrument with the fit's `se_type`, clusters, weights,
 #'   fixed effects, and `df_type`, so `tidy()`, `summary()`, and table packages
 #'   take them as they are (see the examples). Each equals the [lm_robust()]
@@ -153,7 +158,8 @@
 #' iv_robust(y ~ x | z, data = dat, clusters = cl)
 #'
 #' # The first stage, one lm_robust fit per endogenous regressor
-#' tidy(fit$first_stage$x)
+#' fit_fs <- iv_robust(y ~ x | z, data = dat, first_stage = TRUE)
+#' tidy(fit_fs$first_stage$x)
 #'
 #' # Weak-instrument, endogeneity, and overidentification tests
 #' summary(iv_robust(y ~ x | z, data = dat, diagnostics = TRUE))
@@ -179,6 +185,7 @@ iv_robust <- function(formula,
                       ci = TRUE,
                       alpha = .05,
                       diagnostics = FALSE,
+                      first_stage = FALSE,
                       return_vcov = TRUE,
                       try_cholesky = FALSE,
                       df_type = NULL) {
@@ -263,7 +270,7 @@ iv_robust <- function(formula,
   # -----------
 
   has_int <- attr(model_data$terms, "intercept")
-  first_stage <-
+  stage1 <-
     lm_robust_fit(
       y = model_data$design_matrix,
       X = model_data$instrument_matrix,
@@ -283,9 +290,9 @@ iv_robust <- function(formula,
   # ------
   # Second stage
   # ------
-  colnames(first_stage$fitted.values) <- colnames(model_data$design_matrix)
+  colnames(stage1$fitted.values) <- colnames(model_data$design_matrix)
 
-  fitted_values <- zero_underidentified(model_data, first_stage)
+  fitted_values <- zero_underidentified(model_data, stage1)
 
   second_stage <- do.call(lm_robust_fit, c(list(
     y = model_data$outcome,
@@ -317,44 +324,46 @@ iv_robust <- function(formula,
   # second stage's variance, clusters, weights, and absorbed fixed effects, so
   # that each is the fit lm_robust() returns for `x ~ <instruments>` called
   # with the same arguments (#335).
-  roles <- instrument_roles(model_data, first_stage)
-  iv_call <- match.call()
-  instruments_rhs <- formula(model_data[["formula"]], lhs = 0, rhs = 2)[[2]]
-  first_stage_data <- model_data
-  first_stage_data[["design_matrix"]] <- model_data[["instrument_matrix"]]
-  first_stage_data[["terms"]] <- terms(model_data[["formula"]], rhs = 2)
-  if (has_fe) first_stage_data[["Xoriginal"]] <- zoriginal
-  return_list[["first_stage"]] <- setNames(lapply(roles[["endog"]], function(endog) {
-    first_stage_data[["outcome"]] <- model_data[["design_matrix"]][, endog, drop = FALSE]
-    fit <- do.call(lm_robust_fit, c(list(
-      y = first_stage_data[["outcome"]],
-      X = first_stage_data[["design_matrix"]],
-      weights = model_data[["weights"]],
-      cluster = model_data[["cluster"]],
-      ci = ci,
-      se_type = se_type,
-      has_int = attr(first_stage_data[["terms"]], "intercept"),
-      alpha = alpha,
-      return_vcov = return_vcov,
-      try_cholesky = try_cholesky,
-      df_type = df_type
-    ), fe_args))
-    fit <- lm_return(fit, model_data = first_stage_data, formula = NULL)
-    if (has_fe) {
-      fit <- fe_full_scale(fit, model_data[["Xoriginal"]][, endog], first_stage_data)
-    }
-    # The call lm_robust() would be given for this fit, where the endogenous
-    # regressor is a term of its own. A factor's dummy column is not, and
-    # there is no such call to record.
-    if (endog %in% attr(model_data[["terms_regressors"]], "term.labels")) {
-      fit_call <- iv_call[names(iv_call) != "diagnostics"]
-      fit_call[[1L]] <- quote(lm_robust)
-      fit_call[["formula"]] <- call("~", str2lang(endog), instruments_rhs)
-      fit[["call"]] <- fit_call
-    }
-    class(fit) <- "lm_robust"
-    fit
-  }), roles[["endog"]])
+  roles <- instrument_roles(model_data, stage1)
+  if (first_stage) {
+    iv_call <- match.call()
+    instruments_rhs <- formula(model_data[["formula"]], lhs = 0, rhs = 2)[[2]]
+    first_stage_data <- model_data
+    first_stage_data[["design_matrix"]] <- model_data[["instrument_matrix"]]
+    first_stage_data[["terms"]] <- terms(model_data[["formula"]], rhs = 2)
+    if (has_fe) first_stage_data[["Xoriginal"]] <- zoriginal
+    return_list[["first_stage"]] <- setNames(lapply(roles[["endog"]], function(endog) {
+      first_stage_data[["outcome"]] <- model_data[["design_matrix"]][, endog, drop = FALSE]
+      fit <- do.call(lm_robust_fit, c(list(
+        y = first_stage_data[["outcome"]],
+        X = first_stage_data[["design_matrix"]],
+        weights = model_data[["weights"]],
+        cluster = model_data[["cluster"]],
+        ci = ci,
+        se_type = se_type,
+        has_int = attr(first_stage_data[["terms"]], "intercept"),
+        alpha = alpha,
+        return_vcov = return_vcov,
+        try_cholesky = try_cholesky,
+        df_type = df_type
+      ), fe_args))
+      fit <- lm_return(fit, model_data = first_stage_data, formula = NULL)
+      if (has_fe) {
+        fit <- fe_full_scale(fit, model_data[["Xoriginal"]][, endog], first_stage_data)
+      }
+      # The call lm_robust() would be given for this fit, where the endogenous
+      # regressor is a term of its own. A factor's dummy column is not, and
+      # there is no such call to record.
+      if (endog %in% attr(model_data[["terms_regressors"]], "term.labels")) {
+        fit_call <- iv_call[!names(iv_call) %in% c("diagnostics", "first_stage")]
+        fit_call[[1L]] <- quote(lm_robust)
+        fit_call[["formula"]] <- call("~", str2lang(endog), instruments_rhs)
+        fit[["call"]] <- fit_call
+      }
+      class(fit) <- "lm_robust"
+      fit
+    }), roles[["endog"]])
+  }
 
   # ------
   # diagnostics
@@ -363,7 +372,7 @@ iv_robust <- function(formula,
 
     endog <- roles[["endog"]]
 
-    first_stage_fits <- first_stage[["fitted.values"]][, endog, drop = FALSE]
+    first_stage_fits <- stage1[["fitted.values"]][, endog, drop = FALSE]
     colnames(first_stage_fits) <- paste0("fit_", colnames(first_stage_fits))
 
     # Only the endogenous regressors. An exogenous regressor's first-stage
@@ -372,7 +381,7 @@ iv_robust <- function(formula,
     # Both stats::lm() and a pivoted QR at tol = 1e-7 keep such a column, which
     # adds a spurious degree of freedom to the test's numerator.
     first_stage_residuals <-
-      (model_data$design_matrix - first_stage[["fitted.values"]])[, endog, drop = FALSE]
+      (model_data$design_matrix - stage1[["fitted.values"]])[, endog, drop = FALSE]
     colnames(first_stage_residuals) <- paste0("resid_", endog)
 
     extra_instruments <- ncol(roles[["excluded"]]) - length(endog)

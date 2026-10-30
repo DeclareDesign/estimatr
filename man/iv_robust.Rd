@@ -15,6 +15,7 @@ iv_robust(
   ci = TRUE,
   alpha = 0.05,
   diagnostics = FALSE,
+  first_stage = FALSE,
   return_vcov = TRUE,
   try_cholesky = FALSE,
   df_type = NULL
@@ -79,6 +80,12 @@ the test suite's Stata fixture that Stata answers, except the robust score
 test after aweights under \code{forceweights}, where Stata computes the
 frequency-weight statistic instead.}
 
+\item{first_stage}{(optional) Logical. Whether to return the first-stage
+regressions in \code{first_stage}, one \code{\link[=lm_robust]{lm_robust()}} fit per endogenous
+regressor (see Value). \code{FALSE} by default, as \code{diagnostics} is: the fits
+are not needed for the estimates, and on 100,000 rows they add about two
+thirds to the running time and double the size of the object.}
+
 \item{return_vcov}{(optional) Logical. Whether to return the vcov matrix.}
 
 \item{try_cholesky}{(optional) Logical. Whether to solve by Cholesky
@@ -123,8 +130,8 @@ and \code{res_var}; the summary statistics \code{r.squared}, \code{adj.r.squared
 
 \code{residuals} are the structural residuals, \verb{y - X beta}, rather than the
 second-stage ones. \code{ei.iv}, \code{terms_regressors}, and \code{formula} record the
-two-stage structure. \code{first_stage} is a list of \code{\link[=lm_robust]{lm_robust()}} fits, one
-per endogenous regressor and named by it, each the regression of that
+two-stage structure. With \code{first_stage = TRUE}, \code{first_stage} is a list
+of \code{\link[=lm_robust]{lm_robust()}} fits, one per endogenous regressor and named by it, each the regression of that
 regressor on every instrument with the fit's \code{se_type}, clusters, weights,
 fixed effects, and \code{df_type}, so \code{tidy()}, \code{summary()}, and table packages
 take them as they are (see the examples). Each equals the \code{\link[=lm_robust]{lm_robust()}}
@@ -187,7 +194,8 @@ iv_robust(y ~ x | z, data = dat, se_type = "classical")
 iv_robust(y ~ x | z, data = dat, clusters = cl)
 
 # The first stage, one lm_robust fit per endogenous regressor
-tidy(fit$first_stage$x)
+fit_fs <- iv_robust(y ~ x | z, data = dat, first_stage = TRUE)
+tidy(fit_fs$first_stage$x)
 
 # Weak-instrument, endogeneity, and overidentification tests
 summary(iv_robust(y ~ x | z, data = dat, diagnostics = TRUE))

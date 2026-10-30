@@ -450,7 +450,7 @@ test_that("#335: each first-stage fit is the lm_robust fit of its endogenous reg
               "vcov", "r.squared", "adj.r.squared", "fstatistic", "proj_r.squared",
               "nobs", "df.residual", "fitted.values", "residuals", "fixed_effects")
   for (a in cases) {
-    fit <- do.call(iv_robust, c(list(y ~ en + en2 + w | inst + inst2 + w, data = quote(di)), a))
+    fit <- do.call(iv_robust, c(list(y ~ en + en2 + w | inst + inst2 + w, data = quote(di), first_stage = TRUE), a))
     expect_identical(names(fit$first_stage), c("en", "en2"))
     for (endog in c("en", "en2")) {
       ref <- do.call(lm_robust, c(list(reformulate(c("inst", "inst2", "w"), endog), data = quote(di)), a))
@@ -462,11 +462,20 @@ test_that("#335: each first-stage fit is the lm_robust fit of its endogenous reg
 })
 
 test_that("#335: a factor's dummy columns each get a first-stage fit and no call", {
-  fit <- iv_robust(mpg ~ factor(gear) + am | carb + wt + am, data = mtcars)
+  fit <- iv_robust(mpg ~ factor(gear) + am | carb + wt + am, data = mtcars, first_stage = TRUE)
   expect_identical(names(fit$first_stage), c("factor(gear)4", "factor(gear)5"))
   expect_null(fit$first_stage[["factor(gear)4"]]$call)
   ref <- lm_robust(as.numeric(gear == 4) ~ carb + wt + am, data = mtcars)
   expect_equal(fit$first_stage[["factor(gear)4"]]$std.error, ref$std.error)
+})
+
+test_that("#335: the first stage is returned only when asked for", {
+  fit <- iv_robust(mpg ~ hp | wt, data = mtcars)
+  expect_false("first_stage" %in% names(fit))
+  fit_fs <- iv_robust(mpg ~ hp | wt, data = mtcars, first_stage = TRUE)
+  expect_s3_class(fit_fs$first_stage$hp, "lm_robust")
+  expect_null(fit_fs$first_stage$hp$call$first_stage)
+  expect_equal(tidy(fit_fs), tidy(fit))
 })
 
 test_that("#376: a three-part formula is ivreg's two-part one, endogenous regressors first", {
@@ -479,8 +488,8 @@ test_that("#376: a three-part formula is ivreg's two-part one, endogenous regres
     list(diagnostics = TRUE, se_type = "classical")
   )
   for (a in args) {
-    three <- do.call(iv_robust, c(list(y ~ x + w | en | inst + inst2, data = quote(d)), a))
-    two <- do.call(iv_robust, c(list(y ~ en + x + w | inst + inst2 + x + w, data = quote(d)), a))
+    three <- do.call(iv_robust, c(list(y ~ x + w | en | inst + inst2, data = quote(d), first_stage = TRUE), a))
+    two <- do.call(iv_robust, c(list(y ~ en + x + w | inst + inst2 + x + w, data = quote(d), first_stage = TRUE), a))
     lab <- paste(names(a), collapse = ", ")
     expect_equal(tidy(three), tidy(two), label = lab)
     expect_equal(three$first_stage, two$first_stage, label = lab)
@@ -489,7 +498,7 @@ test_that("#376: a three-part formula is ivreg's two-part one, endogenous regres
 
   # The stored formula is the two-part one, as ivreg stores it, so every
   # method that rebuilds the design reads one form; the call keeps the user's.
-  fit <- iv_robust(y ~ x + w | en | inst + inst2, data = d)
+  fit <- iv_robust(y ~ x + w | en | inst + inst2, data = d, first_stage = TRUE)
   expect_identical(deparse1(formula(fit)), "y ~ en + x + w | inst + inst2 + x + w")
   expect_identical(deparse1(fit$call$formula), "y ~ x + w | en | inst + inst2")
   expect_identical(deparse1(fit$first_stage$en$call$formula), "en ~ inst + inst2 + x + w")
