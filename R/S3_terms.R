@@ -367,12 +367,17 @@ hatvalues.difference_in_means <- refuse_method("hatvalues", dim_no_design,
 #' @export
 hatvalues.horvitz_thompson <- refuse_method("hatvalues", dim_no_design,
                                             stats::hatvalues, ht_fits)
+# sandwich is in Suggests, so `sandwich::estfun` must not be evaluated here:
+# these definitions run at install time, and `R CMD check --as-cran` installs
+# with only Depends and Imports on the library path (CI on 76d94475 failed
+# with "there is no package called 'sandwich'"). The generic's formals are
+# `(x, ...)`, written out instead.
 #' @exportS3Method sandwich::estfun
 estfun.difference_in_means <- refuse_method("estfun", dim_no_design,
-                                            sandwich::estfun, dim_fits)
+                                            function(x, ...) NULL, dim_fits)
 #' @exportS3Method sandwich::estfun
 estfun.horvitz_thompson <- refuse_method("estfun", dim_no_design,
-                                         sandwich::estfun, ht_fits)
+                                         function(x, ...) NULL, ht_fits)
 
 #' @export
 influence.difference_in_means <- refuse_method("influence", dim_no_design,
