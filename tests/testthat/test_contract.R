@@ -1,7 +1,7 @@
 # The post-estimation contract ----
 #
 # inst/contract/contract.csv records, for each probe of a stats or sandwich
-# generic on each of ten fits, what estimatr promises: that the call agrees
+# generic on each of eleven fits, what estimatr promises: that the call agrees
 # with the same call on lm() or ivreg() (or a stated reference), refuses with
 # estimatr's own message, errors rather than return something, returns a
 # value there is nothing to hold to, or is a known gap. `none` makes no

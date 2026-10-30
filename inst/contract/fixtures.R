@@ -1,4 +1,4 @@
-# The post-estimation contract's fixtures: one data set, the ten estimatr fits
+# The post-estimation contract's fixtures: one data set, the eleven estimatr fits
 # each contract row names in its `fit` column, and the reference fits and
 # variances its `reference` column is evaluated against. Sourced by
 # run_cells.R, which is run once per probe in a fresh process.
@@ -22,6 +22,7 @@ contract_data <- function() {
   d$w <- runif(n)
   d$w[c(1, 7, 20)] <- 0
   d$x_c <- d$x - mean(d$x)
+  d$x2_c <- d$x2 - mean(d$x2)
   d
 }
 
@@ -35,11 +36,13 @@ contract_fits <- function(d) list(
   iv_plain = iv_robust(y ~ z + x | iv + x, d),
   iv_cl = iv_robust(y ~ z + x | iv + x, d, clusters = g),
   dim = difference_in_means(y ~ z, d),
-  ht = horvitz_thompson(y ~ z, d, condition_prs = c("0" = 0.5, "1" = 0.5))
+  ht = horvitz_thompson(y ~ z, d, condition_prs = c("0" = 0.5, "1" = 0.5)),
+  lh = lh_robust(y ~ x + z, data = d, linear_hypothesis = "z = 0")
 )
 
 # dim's and ht's references are the regressions they equal; they are
-# meaningful only where a row says so. lm_wt0's variances are referred to
+# meaningful only where a row says so. lh's reference is the regression its
+# lm_robust part fits; the hypothesis table has no lm() counterpart. lm_wt0's variances are referred to
 # `ref_positive`, the same regression on the positive-weight rows, because
 # sandwich counts zero-weight rows as observations.
 contract_reference_fits <- function(d) list(
@@ -52,7 +55,8 @@ contract_reference_fits <- function(d) list(
   iv_plain = ivreg::ivreg(y ~ z + x | iv + x, data = d),
   iv_cl = ivreg::ivreg(y ~ z + x | iv + x, data = d),
   dim = lm(y ~ z, d),
-  ht = lm(y ~ z, d)
+  ht = lm(y ~ z, d),
+  lh = lm(y ~ x + z, d)
 )
 
 contract_reference_positive <- function(d) {

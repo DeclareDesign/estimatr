@@ -15,7 +15,7 @@ contract <- read.csv(
 )
 fit_ids <- c(
   "lm_plain", "lm_wt0", "lm_cl", "lm_fe", "lm_mv", "lm_lin",
-  "iv_plain", "iv_cl", "dim", "ht"
+  "iv_plain", "iv_cl", "dim", "ht", "lh"
 )
 n_promise <- table(factor(
   contract$promise,

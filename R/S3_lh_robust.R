@@ -87,6 +87,17 @@ estfun.lh_robust <- function(x, ...) sandwich::estfun(x[["lm_robust"]], ...)
 #' @exportS3Method sandwich::vcovHC
 vcovHC.lh_robust <- function(x, ...) sandwich::vcovHC(x[["lm_robust"]], ...)
 
+# summary() on an lh_robust() fit is the container, printed one part at a
+# time. Its coefficient table is the fit's with the hypothesis rows appended,
+# as tidy() reports them; the column names are the fit's, so a one-sided
+# hypothesis's p-value sits in the same column as the fit's two-sided ones,
+# as it does in tidy()'s p.value column.
+#' @export
+coef.summary.lh_robust <- function(object, ...) {
+  rbind(coef(summary(object[["lm_robust"]])),
+        unclass(summary(object[["lh"]])))
+}
+
 # The hypothesis table on its own: one estimate per hypothesis, named by the
 # hypothesis as written, and the variance of those linear combinations, which
 # car::linearHypothesis() computed from the fit's vcov().

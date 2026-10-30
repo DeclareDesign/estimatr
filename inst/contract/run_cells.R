@@ -3,7 +3,7 @@
 #   Rscript run_cells.R estimatr <probe> <out.rds> [<source dir>]
 #   Rscript run_cells.R reference <out.rds>
 #
-# The estimatr mode evaluates one probe's `call` on each of the ten fits, with
+# The estimatr mode evaluates one probe's `call` on each of the eleven fits, with
 # nothing loaded but estimatr and whatever namespace that call reaches. Given a
 # source directory it loads estimatr with pkgload::load_all(), so that a
 # development session tests its own tree rather than the installed copy.

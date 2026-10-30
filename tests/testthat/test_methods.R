@@ -182,9 +182,6 @@ test_that("variable.names, augment, update and model.frame agree with the fit", 
                    tolerance = METH_TOL, label = paste(nm, "augment"))
     }
 
-    # update() on an lm_lin fit is not supported: formula() returns the
-    # expanded formula, which lm_lin() refuses.
-    if (!is.null(fit$scaled_center)) next
     expect_equal(update(fit, . ~ .)$coefficients, fit$coefficients,
                  tolerance = METH_TOL, label = paste(nm, "update"))
   }
