@@ -272,3 +272,45 @@ variable.names.difference_in_means <- refuse_method("variable.names",
 #' @export
 labels.difference_in_means <- refuse_method("labels", dim_no_design,
                                             base::labels, dim_fits)
+
+# Without a method, model.frame.default() evaluated the formula in the caller's
+# environment: in a workspace holding a `y` and a `z` it returned a frame built
+# from those, not from the fit, and the isolated contract test could not see it.
+# terms() and model.matrix() failed with "no terms component nor attribute".
+dim_no_rows <- "the rows used are not stored on the fit."
+ht_fits <- "`horvitz_thompson()` fits"
+
+#' @importFrom stats model.frame
+#' @export
+model.frame.difference_in_means <- refuse_method("model.frame", dim_no_rows,
+                                                 stats::model.frame, dim_fits)
+#' @export
+model.frame.horvitz_thompson <- refuse_method("model.frame", dim_no_rows,
+                                              stats::model.frame, ht_fits)
+#' @export
+terms.difference_in_means <- refuse_method("terms", dim_no_design,
+                                           stats::terms, dim_fits)
+#' @export
+terms.horvitz_thompson <- refuse_method("terms", dim_no_design,
+                                        stats::terms, ht_fits)
+#' @export
+model.matrix.difference_in_means <- refuse_method("model.matrix", dim_no_design,
+                                                  stats::model.matrix, dim_fits)
+#' @export
+model.matrix.horvitz_thompson <- refuse_method("model.matrix", dim_no_design,
+                                               stats::model.matrix, ht_fits)
+
+# The case-deletion refusals reach an lh_robust() fit as they reach the
+# lm_robust() fit it holds.
+#' @export
+influence.lh_robust <- influence.lm_robust
+#' @export
+cooks.distance.lh_robust <- cooks.distance.lm_robust
+#' @export
+rstandard.lh_robust <- rstandard.lm_robust
+#' @export
+rstudent.lh_robust <- rstudent.lm_robust
+#' @export
+dfbeta.lh_robust <- dfbeta.lm_robust
+#' @export
+dfbetas.lh_robust <- dfbetas.lm_robust
