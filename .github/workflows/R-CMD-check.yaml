@@ -1,15 +1,18 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 #
-# This is the rewrite branch's own workflow. `main`'s triggers on
-# [main, master] and would never fire here. Every dependency of this branch is
-# on CRAN. The comparisons against 1.0.6 read a recorded fixture rather than
-# installing the older version, so nothing here depends on estimatr itself.
+# Every dependency is on CRAN. The comparisons against 1.0.6 read a recorded
+# fixture rather than installing the older version, so nothing here depends on
+# estimatr itself. The weekly schedule catches breakage from new releases of
+# dependencies between pushes.
 on:
+  schedule:
+    - cron: "23 2 * * 1"
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 name: R-CMD-check.yaml
 
