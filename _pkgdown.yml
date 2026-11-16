@@ -33,6 +33,20 @@ navbar:
      - text: The post-estimation contract
        href: articles/post-estimation-contract.html
   right:
+  - text: "Software"
+    menu:
+      - text: DeclareDesign
+        href: https://declaredesign.org/r/declaredesign/
+      - text: randomizr
+        href: https://declaredesign.org/r/randomizr/
+      - text: fabricatr
+        href: https://declaredesign.org/r/fabricatr/
+      - text: estimatr
+        href: https://declaredesign.org/r/estimatr/
+      - text: rdss
+        href: https://declaredesign.org/r/rdss/
+      - text: DesignLibrary
+        href: https://declaredesign.org/r/designlibrary/
   - text: declaredesign.org
     href: https://declaredesign.org
 
