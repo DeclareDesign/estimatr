@@ -1,9 +1,11 @@
 .onLoad <- function(libname, pkgname) {
   if (suppressWarnings(requireNamespace("texreg", quietly = TRUE))) {
-    methods::setGeneric("extract",
+    # setGeneric() reports "creating formal generic function" with message(),
+    # which R-devel's check flags as a startup message that cannot be suppressed.
+    suppressMessages(methods::setGeneric("extract",
       function(model, ...) standardGeneric("extract"),
       package = "texreg"
-    )
+    ))
     methods::setMethod("extract",
       signature = methods::className("lm_robust", pkgname),
       definition = extract.lm_robust
