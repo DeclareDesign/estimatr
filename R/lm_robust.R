@@ -294,6 +294,7 @@ lm_robust <- function(formula,
         return_list[["fitted.values"]], return_list[["coefficients"]], model_data
       )
       return_list[["call"]] <- match.call()
+      return_list[["na.action"]] <- model_data[["na.action"]]
       # Without this the fit came back as a bare list, so print(), tidy(),
       # summary() and every other method dispatched on nothing.
       class(return_list) <- "lm_robust"
@@ -336,6 +337,7 @@ lm_robust <- function(formula,
   }
 
   return_list[["call"]] <- match.call()
+  return_list[["na.action"]] <- model_data[["na.action"]]
 
   return(return_list)
 }

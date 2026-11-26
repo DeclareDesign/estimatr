@@ -792,7 +792,6 @@ test_that("#422: bread() refuses what it cannot build", {
   d <- methods_422_data()
   fit_fe <- lm_robust(y ~ x, data = d, fixed_effects = ~ f)
   expect_identical(colnames(model.matrix(fit_fe)), names(coef(fit_fe)))
-  expect_error(sandwich::bread(fit_fe), "fixed_effects")
   fit_mv <- lm_robust(cbind(y, x) ~ z, data = d)
   expect_error(sandwich::bread(fit_mv), "several outcomes")
   # sandwich's default returned vcov * n for these.
@@ -951,9 +950,6 @@ test_that("iv_robust's model.matrix(), estfun(), hatvalues() and vcovHC() are iv
 test_that("estfun(), hatvalues() and deviance() refuse what they cannot build", {
   skip_if_not_installed("sandwich")
   d <- methods_422_data()
-  fit_fe <- lm_robust(y ~ x, data = d, fixed_effects = ~ f)
-  expect_error(sandwich::estfun(fit_fe), "fixed_effects")
-  expect_error(hatvalues(fit_fe), "fixed_effects")
   fit_mv <- lm_robust(cbind(y, x) ~ z, data = d)
   expect_error(sandwich::estfun(fit_mv), "several outcomes")
   expect_error(hatvalues(fit_mv), "several outcomes")
@@ -1227,4 +1223,31 @@ test_that("the generics that read residuals or a design refuse difference_in_mea
       expect_error(do.call(g, list(fit)), "not built from a design matrix")
     }
   }
+})
+
+# The rows dropped for a missing value were never stored, so na.action() was
+# NULL on every fit; the contract's probe ran on complete data and could not
+# see it (#422).
+test_that("#422: na.action() is lm's and ivreg's on fits that drop rows", {
+  # The stored field, which stats' na.action() returns: clubSandwich, attached
+  # by earlier tests, has its own na.action() for lm_robust that returns row
+  # names, and attaching it puts that method on the search path.
+  set.seed(25)
+  n <- 60
+  d <- data.frame(z = rbinom(n, 1, 0.5), cl = rep(1:12, each = 5), w = runif(n))
+  d$x <- d$z * rbinom(n, 1, 0.7)
+  d$y <- d$x + rnorm(n)
+  d$x[4:6] <- NA_real_
+  d$cl[10] <- NA
+  d$w[20] <- NA
+  ref <- na.action(na.omit(d[c("y", "x", "z", "cl", "w")]))
+  expect_identical(lm_robust(y ~ x + z, d, weights = w, clusters = cl)[["na.action"]], ref)
+  expect_identical(lm_lin(y ~ z, ~ x, d, weights = w, clusters = cl)[["na.action"]], ref)
+  expect_identical(iv_robust(y ~ x | z, d, weights = w, clusters = cl)[["na.action"]], ref)
+  expect_identical(
+    lm_robust(y ~ x, d, fixed_effects = ~ cl)[["na.action"]],
+    na.action(lm(y ~ x + factor(cl), d))
+  )
+  expect_identical(na.action(lm(y ~ x, d)), na.action(ivreg::ivreg(y ~ x | z, data = d)))
+  expect_null(lm_robust(y ~ z, d)[["na.action"]])
 })

@@ -278,6 +278,16 @@ clean_model_data <- function(data, datargs, estimator = "") {
   attr(ret[["terms"]], "dataClasses") <- dcs[setdiff(names(dcs), drop_vars)]
   ret[["xlevels"]] <- .getXlevels(ret[["terms"]], mf)
 
+  # lm's na.action(): the rows dropped for a missing value, in any variable the
+  # fit used, as class "omit". The detail of which variable dropped each row
+  # served the warnings above and is not part of it.
+  na_act <- attr(mf, "na.action")
+  if (!is.null(na_act)) {
+    attr(na_act, "why_omit") <- NULL
+    class(na_act) <- "omit"
+  }
+  ret[["na.action"]] <- na_act
+
   return(ret)
 }
 

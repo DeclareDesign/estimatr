@@ -478,3 +478,70 @@ test_that("every input shape gives the fixed-effects fits row names to re-attach
   expect_equal(names(lm_robust(m[, "y"] ~ m[, "x"], fixed_effects = ~ g)$fitted.values),
                as.character(seq_len(n)))
 })
+
+# By Frisch-Waugh-Lovell the absorbed design's bread is the coefficients' block
+# of the dummy fit's, and so is every sandwich built from it. bread() on a
+# fixed-effects fit had been refused, and a version built on model.matrix(),
+# the undemeaned design, ignored the fixed effects altogether (#422).
+test_that("#422: sandwich methods on a fixed-effects fit are the dummy fit's block", {
+  skip_if_not_installed("sandwich")
+  # Earlier test files load clubSandwich, whose bread() replaces estimatr's for
+  # the rest of the session. Its 0.7.0 bread on a weighted fixed-effects fit is
+  # not lm's block (about 4 percent off here). These are estimatr's methods
+  # under test.
+  with_estimatr_bread <- function(code) {
+    classes <- c("lm_robust", "iv_robust")
+    table <- asNamespace("sandwich")[[".__S3MethodsTable__."]]
+    old <- mget(paste0("bread.", classes), envir = table)
+    on.exit(for (i in seq_along(classes)) {
+      registerS3method("bread", classes[i], old[[i]], envir = asNamespace("sandwich"))
+    })
+    for (cls in classes) {
+      registerS3method("bread", cls, get(paste0("bread.", cls), envir = asNamespace("estimatr")),
+                       envir = asNamespace("sandwich"))
+    }
+    force(code)
+  }
+  set.seed(343)
+  n <- 300
+  d <- data.frame(
+    g = factor(sample(1:30, n, TRUE)), h = factor(sample(1:6, n, TRUE)),
+    x1 = rnorm(n), x2 = rnorm(n), w = runif(n)
+  )
+  d$w[1:4] <- 0
+  d$z <- d$x2 + rnorm(n)
+  d$x1 <- d$x1 + as.numeric(d$g) / 5
+  d$y <- as.numeric(d$g) / 10 + d$x1 + rnorm(n)
+
+  expect_block <- function(full, fe) {
+    b <- names(coef(fe))
+    expect_equal(sandwich::bread(full)[b, b], sandwich::bread(fe))
+    expect_equal(sandwich::sandwich(full)[b, b], sandwich::sandwich(fe))
+    for (type in c("HC0", "HC2", "HC3")) {
+      expect_equal(sandwich::vcovHC(full, type = type)[b, b],
+                   sandwich::vcovHC(fe, type = type))
+    }
+    expect_equal(unname(hatvalues(full)), unname(hatvalues(fe)))
+  }
+
+  with_estimatr_bread({
+  expect_block(lm(y ~ 0 + g + x1 + x2, d), lm_robust(y ~ x1 + x2, d, fixed_effects = ~g))
+  expect_block(lm(y ~ g + h + x1 + x2, d), lm_robust(y ~ x1 + x2, d, fixed_effects = ~g + h))
+  expect_block(
+    lm_robust(y ~ 0 + g + x1 + x2, d, weights = w),
+    lm_robust(y ~ x1 + x2, d, fixed_effects = ~g, weights = w)
+  )
+  expect_block(
+    iv_robust(y ~ 0 + g + x1 + x2 | g + z + x2, d),
+    iv_robust(y ~ x1 + x2 | z + x2, d, fixed_effects = ~g)
+  )
+  expect_block(
+    iv_robust(y ~ 0 + g + x1 + x2 | g + z + x2, d, weights = w),
+    iv_robust(y ~ x1 + x2 | z + x2, d, fixed_effects = ~g, weights = w)
+  )
+
+  # vcovHC(type = "HC2") is the fit's own HC2 variance
+  fe <- lm_robust(y ~ x1 + x2, d, fixed_effects = ~g + h, se_type = "HC2")
+  expect_equal(sandwich::vcovHC(fe, type = "HC2"), vcov(fe))
+  })
+})

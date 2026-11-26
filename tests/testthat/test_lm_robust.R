@@ -99,25 +99,31 @@ test_that("factor levels a subset removes are dropped", {
 
 test_that("a row with a missing value is the same fit as the row removed, field for field", {
   # test_equivalence.R holds the estimates of every estimator to this; here
-  # every returned field of lm_robust is.
+  # every returned field of lm_robust is, except na.action, which records the
+  # dropped row.
+  rm_na <- function(fit) {
+    fit[["na.action"]] <- NULL
+    rmcall(fit)
+  }
   set.seed(42)
   N <- 40
   d <- data.frame(Y = rnorm(N), Z = rbinom(N, 1, 0.5), X = rnorm(N), W = runif(N),
                   cl = rep(1:8, 5))
   missing_y <- d
   missing_y$Y[5] <- NA
-  expect_equal(rmcall(lm_robust(Y ~ Z + X, data = missing_y)),
-               rmcall(lm_robust(Y ~ Z + X, data = d[-5, ])))
+  expect_equal(rm_na(lm_robust(Y ~ Z + X, data = missing_y)),
+               rm_na(lm_robust(Y ~ Z + X, data = d[-5, ])))
   missing_x <- d
   missing_x$X[23] <- NA
-  expect_equal(rmcall(lm_robust(Y ~ Z + X, data = missing_x)),
-               rmcall(lm_robust(Y ~ Z + X, data = d[-23, ])))
+  expect_equal(rm_na(lm_robust(Y ~ Z + X, data = missing_x)),
+               rm_na(lm_robust(Y ~ Z + X, data = d[-23, ])))
   weighted <- d
   weighted$Y[39] <- NA
-  expect_equal(rmcall(lm_robust(Y ~ Z * X, weights = W, data = weighted)),
-               rmcall(lm_robust(Y ~ Z * X, weights = W, data = d[-39, ])))
-  expect_equal(rmcall(lm_robust(Y ~ X, clusters = cl, data = missing_y)),
-               rmcall(lm_robust(Y ~ X, clusters = cl, data = d[-5, ])))
+  expect_equal(rm_na(lm_robust(Y ~ Z * X, weights = W, data = weighted)),
+               rm_na(lm_robust(Y ~ Z * X, weights = W, data = d[-39, ])))
+  expect_equal(rm_na(lm_robust(Y ~ X, clusters = cl, data = missing_y)),
+               rm_na(lm_robust(Y ~ X, clusters = cl, data = d[-5, ])))
+  expect_equal(unclass(lm_robust(Y ~ Z + X, data = missing_x)[["na.action"]]), c(`23` = 23L))
 })
 
 test_that("#421: an ordered factor cluster does not crash", {

@@ -491,13 +491,23 @@ estfun.iv_robust <- function(x, ...) {
 # model.matrix(), which holds only when the latter is the projected regressors.
 #' @exportS3Method sandwich::vcovHC
 vcovHC.iv_robust <- function(x, ...) {
-  class(x) <- c("iv_robust_projected", class(x))
+  class(x) <- c(if (isTRUE(x[["fes"]])) "estimatr_absorbed" else "iv_robust_projected", class(x))
   sandwich::vcovHC.default(positive_weight_rows(x), ...)
 }
 
 #' @exportS3Method sandwich::vcovHC
 vcovHC.lm_robust <- function(x, ...) {
+  if (isTRUE(x[["fes"]])) class(x) <- c("estimatr_absorbed", class(x))
   sandwich::vcovHC.default(positive_weight_rows(x), ...)
+}
+
+# meatHC() recovers the residuals as estfun() divided by model.matrix(), so
+# under fixed_effects the latter has to be the demeaned design estfun() uses.
+#' @export
+model.matrix.estimatr_absorbed <- function(object, ...) {
+  X <- absorbed_design(object)
+  rownames(X) <- rownames(model.frame(object))
+  X[, !is.na(as.matrix(coef(object))[, 1]), drop = FALSE]
 }
 
 # A zero-weight row is not an observation: nobs(), bread() and hatvalues()
@@ -534,21 +544,63 @@ model.matrix.iv_robust_projected <- function(object, ...) {
 # ivreg's projected regressors, X's projection on the instruments taken in the
 # weighted metric.
 sqrtw_design <- function(x, what) {
-  class(x) <- setdiff(class(x), "estimatr_positive_rows")
+  class(x) <- setdiff(class(x), c("estimatr_positive_rows", "estimatr_absorbed"))
   coefs <- as.matrix(coef(x))
   if (ncol(coefs) > 1) {
     stop("`", what, "` is not available for a fit with several outcomes.",
          call. = FALSE)
   }
-  if (isTRUE(x[["fes"]])) {
-    stop("`", what, "` is not available with `fixed_effects`: the absorbed ",
-         "design is not stored on the fit.", call. = FALSE)
-  }
   keep <- !is.na(coefs[, 1])
   w <- x[["weights"]]
   sw <- if (is.null(w)) 1 else sqrt(w)
-  component <- if (inherits(x, "iv_robust")) "projected" else NULL
-  model.matrix(x, component = component)[, keep, drop = FALSE] * sw
+  X <- if (isTRUE(x[["fes"]])) {
+    absorbed_design(x)
+  } else {
+    component <- if (inherits(x, "iv_robust")) "projected" else NULL
+    model.matrix(x, component = component)
+  }
+  X[, keep, drop = FALSE] * sw
+}
+
+# Under fixed_effects the coefficients are estimated on the design demeaned by
+# the fixed effects, and by Frisch-Waugh-Lovell that design's inverse Gram
+# matrix is the coefficients' block of the one from the full [dummies | X]
+# design. model.matrix() is not demeaned, and a bread built on it ignores the
+# fixed effects (#422). For iv_robust both the
+# regressors and the instruments are demeaned before the projection, as the
+# fit does.
+absorbed_design <- function(x) {
+  class(x) <- setdiff(class(x), c("estimatr_positive_rows", "estimatr_absorbed"))
+  model_data <- fe_model_data(x)
+  if (inherits(x, "iv_robust")) {
+    X <- demean_matrix_by_fes(model_data[["design_matrix"]], model_data)
+    Z <- demean_matrix_by_fes(model_data[["instrument_matrix"]], model_data)
+    w <- x[["weights"]]
+    fit <- if (is.null(w)) lm.fit(Z, X) else lm.wfit(Z, X, w)
+    X <- as.matrix(fit[["fitted.values"]])
+    colnames(X) <- colnames(model_data[["design_matrix"]])[
+      colnames(model_data[["design_matrix"]]) != "(Intercept)"
+    ]
+    return(X)
+  }
+  demean_matrix_by_fes(model.matrix(x), model_data)
+}
+
+fe_model_data <- function(x) {
+  if (inherits(x, "iv_robust")) {
+    rebuild_model_data(x, x[["formula"]], estimator = "iv")
+  } else {
+    rebuild_model_data(x, stats::formula(x[["terms"]]))
+  }
+}
+
+# The leverage of the absorbed dummies, diag(P_D), which with the demeaned
+# design's leverage makes up the full design's hat values.
+absorbed_leverage <- function(x) {
+  model_data <- fe_model_data(x)
+  codes <- model_data[["fixed_effects"]]
+  fe_codes <- lapply(seq_len(ncol(codes)), function(k) codes[, k])
+  fe_leverage(fe_codes, model_data[["weights"]])[["leverage"]]
 }
 
 # lm's hatvalues(), and ivreg's stage-2 ones on the projected regressors: the
@@ -559,6 +611,7 @@ sqrtw_design <- function(x, what) {
 hatvalues.lm_robust <- function(model, ...) {
   X_w <- sqrtw_design(model, "hatvalues()")
   h <- rowSums((X_w %*% solve(crossprod(X_w))) * X_w)
+  if (isTRUE(model[["fes"]])) h <- h + absorbed_leverage(model)
   names(h) <- rownames(model.frame(model))
   w <- model[["weights"]]
   if (is.null(w)) h else h[w > 0]

@@ -353,6 +353,7 @@ lm_lin <- function(formula,
   return_list[["treatment_levels"]] <- treatment_levels
 
   return_list[["call"]] <- match.call()
+  return_list[["na.action"]] <- model_data[["na.action"]]
 
   # A subclass, so that methods and packages such as clubSandwich can tell an
   # lm_lin fit from an lm_robust one by class rather than by parsing the call

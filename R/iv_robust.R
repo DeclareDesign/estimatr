@@ -434,6 +434,7 @@ iv_robust <- function(formula,
   }
 
   return_list[["call"]] <- match.call()
+  return_list[["na.action"]] <- model_data[["na.action"]]
 
   return_list[["terms_regressors"]] <- model_data[["terms_regressors"]]
   return_list[["formula"]] <- iv_two_part_formula(formula(formula))
