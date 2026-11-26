@@ -78,7 +78,7 @@ DataFrame naomitwhy(DataFrame df, Function recursive_subset) {
 
   for(int i = 0; i < n; i++){
     SEXP dfi = df(i);
-    if(LENGTH(dfi) == m){
+    if(LENGTH(dfi) == m && Rf_getAttrib(dfi, R_DimSymbol) == R_NilValue){
       out[i] = generic_logical_subset(dfi, omit);
     } else {
       out[i] = recursive_subset(dfi, omit);

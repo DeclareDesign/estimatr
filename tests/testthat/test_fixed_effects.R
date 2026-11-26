@@ -545,3 +545,24 @@ test_that("#422: sandwich methods on a fixed-effects fit are the dummy fit's blo
   expect_equal(sandwich::vcovHC(fe, type = "HC2"), vcov(fe))
   })
 })
+
+test_that("a one-column fixed effects matrix keeps its shape when rows are dropped (#430)", {
+  d <- datasets::ChickWeight
+  d$Chick[3:8] <- NA_integer_
+  dropped <- suppressWarnings(
+    lm_robust(weight ~ Time:Diet, data = d, fixed_effects = ~Chick)
+  )
+  complete <- lm_robust(
+    weight ~ Time:Diet, data = d, subset = !is.na(Chick), fixed_effects = ~Chick
+  )
+  fe_dropped <- model.frame(dropped)[["(fixed_effects)"]]
+  fe_complete <- model.frame(complete)[["(fixed_effects)"]]
+  expect_equal(dim(fe_dropped), c(nrow(d) - 6L, 1L))
+  expect_identical(dimnames(fe_dropped), dimnames(fe_complete))
+  expect_equal(unname(fe_dropped), unname(fe_complete))
+
+  d$x <- d$Time
+  d$x[1:2] <- NA
+  scaled <- model.frame(lm_robust(weight ~ scale(x), data = d))
+  expect_equal(dim(scaled[["scale(x)"]]), c(nrow(d) - 2L, 1L))
+})

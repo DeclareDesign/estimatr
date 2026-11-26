@@ -86,6 +86,10 @@ A new vignette renders `inst/contract/contract.csv`, the file `tests/testthat/te
 
 `lm_robust()`, `lm_lin()`, and `iv_robust()` fits did not store the rows dropped for a missing value, so `na.action(fit)` was `NULL` on every fit. Each now stores `na.action`, of class `"omit"` as on an `lm()` fit, naming the rows dropped for a missing value in any variable the fit used, including its clusters, weights, and fixed effects. clubSandwich 0.7.0 has its own `na.action()` for `lm_robust`, which returns row names. See #422.
 
+### A one-column matrix in the model frame keeps its shape when rows are dropped
+
+Rows dropped for a missing value took the `dim` off any one-column matrix in the model frame, so `model.frame(fit)$"(fixed_effects)"` on a fit with one fixed effect was an N-by-1 matrix when no row was dropped and a plain vector when one was, and a term such as `scale(x)` lost its matrix shape the same way. The column now keeps its dimensions and names either way. Estimates and standard errors are unchanged. See #430.
+
 ### `update()` works on `lm_lin()` fits
 
 `formula()` on an `lm_lin()` fit is `y ~ z + x`, the treatment and the covariates together, so `update(fit, . ~ . + w)` handed the whole right-hand side to `formula`, which `lm_lin()` refused with a message about the user's formula. `update()` now splits the updated formula as `lm_lin()` reads it: the treatment stays in `formula` and every other term becomes `covariates`, so `update(fit, . ~ . + w)` equals `lm_lin(y ~ z, ~ x + w)`. Removing the treatment, or every covariate, stops with a message; the latter names the `lm_robust()` call that is the model with nothing to centre.
