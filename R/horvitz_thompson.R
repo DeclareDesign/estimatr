@@ -181,7 +181,7 @@ horvitz_thompson <- function(formula,
 
   # ---- resolve probabilities and design ----
 
-  prs <- ht_prs(cpr, Z, condition1, condition2, row_idx, data_df)
+  prs <- ht_prs(cpr, Z, condition1, condition2, row_idx, n_original)
 
   # Checked here, after every format has been turned into per-unit
   # probabilities, so one check covers them all. Probabilities outside [0, 1]
@@ -271,7 +271,7 @@ horvitz_thompson <- function(formula,
 # row_idx: integer vector of original-data row indices for the in-study units.
 # Using original row indices (not model-frame logical) ensures correct
 # probability lookup from pm even when rows were dropped via na.omit.
-ht_prs <- function(cpr, Z, condition1, condition2, row_idx, data_df) {
+ht_prs <- function(cpr, Z, condition1, condition2, row_idx, n_original) {
   n <- length(Z)  # in-study unit count
 
   if (inherits(cpr, "ra_declaration")) {
@@ -305,9 +305,10 @@ ht_prs <- function(cpr, Z, condition1, condition2, row_idx, data_df) {
                 design = "simple"))
   }
 
-  # Per-unit vector (length == n): treatment probability for each unit
-  if (is.numeric(cpr) && length(cpr) == n) {
-    return(list(pi1 = 1 - cpr, pi2 = cpr, design = "simple"))
+  # Per-unit vector (length == n_original): treatment probability for each unit
+  if (is.numeric(cpr) && length(cpr) == n_original) {
+    cpr_sub <- cpr[row_idx]
+    return(list(pi1 = 1 - cpr_sub, pi2 = cpr_sub, design = "simple"))
   }
 
   # A named vector of the wrong length is a named probability vector whose
@@ -325,12 +326,19 @@ ht_prs <- function(cpr, Z, condition1, condition2, row_idx, data_df) {
 
   # Two-column matrix or data frame
   if ((is.matrix(cpr) || is.data.frame(cpr)) && ncol(cpr) == 2L) {
+    if (nrow(cpr) != n_original) {
+      stop("`condition_prs` has ", nrow(cpr), " rows but the data has ",
+           n_original, " rows. Each row must match the corresponding row ",
+           "of the data.", call. = FALSE)
+    }
     cnames <- colnames(cpr)
     c1_col <- match(as.character(condition1), cnames)
     c2_col <- match(as.character(condition2), cnames)
     if (is.na(c1_col) || is.na(c2_col))
       stop("condition1/condition2 not found in condition_prs column names.")
-    return(list(pi1 = cpr[, c1_col], pi2 = cpr[, c2_col], design = "simple"))
+    pi1 <- if (is.data.frame(cpr)) cpr[[c1_col]][row_idx] else cpr[row_idx, c1_col]
+    pi2 <- if (is.data.frame(cpr)) cpr[[c2_col]][row_idx] else cpr[row_idx, c2_col]
+    return(list(pi1 = pi1, pi2 = pi2, design = "simple"))
   }
 
   if (is.null(cpr))
